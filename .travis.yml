@@ -7,105 +7,62 @@ cache:
   - "$HOME/.gradle/native"
   - "$HOME/.gradle/wrapper"
 before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 sudo: false
 branches:
   except:
-    - master
+  - master
 env:
   global:
   - GRADLE_OPTS="-Xms128m"
+  - secure: zEpnW2GWrNYAPsRbaujdWfz3PlukJ56CaKA7CryPL9dfq3n0+wIcBr+E/INBFB9Oq/C66jaX71TE6z85GxOsLRJ+HCCvfWGpwZNMNfpeUmOHxjOEcHAn04Oxxili92XiuKO3763d+o8xY1Vp+oo6EAb2Wr+aRbyw09e4uiaYKujaIekvmRTSCEqKfivyJOhnETtU5B4s5jz3HP0+lkfv82yuKSmhGLs4Ba8o9pTRhwoud3HyrDDjDdLUnXadQG+IZyT6YCeae0U+0YIY/YgLw95NJjQJQmRCzS5W5yGCxpiVzSMyNJiFphgPH1VDPsSCGePF4GXmKZDWSJD0ib0mfUpxXDf5Q9cP+0jtg+nAPGEo/fi1YDbxe6GGVNFmwe0ezpU5DRHdpNF1NteGZArz3cW8Z859V/rNT8XDqmXKgXJItK7eBRra+bbGiaiM9zCPQYAc7u44lETWz3dXUyJcPBHYzmS09aItqsWFbDe3+TwSXAP62CSwyn4E0tw6Cij/CXXHRbgfkf5tSLAdd2BuAVovulkBqPDM2UEwo2AlrceozTv9M3xbN0ztZXRPpDV8dBvKUtX3GuLve+W0MkiPuncuL26/FMLDUYY/b4iLaWZosbzqYMqst2sgJDiwryn8Jwfk1VhSktzaN0y8l7xyfZuj7PpHjB9lVml2jPhoISY=
+  - secure: Z2uyApW6+4KDXMRfR8YMvFNDqJpfBS9/U/3HdT5b8G9qnNXGN341QmvFcsSW+3z0lWLt/KDrc3irCwTrI07UlOJE4ohkdvPfFmCySWsZM9VrRVAKGVNEKtlyk6QIt0crKrGbqcoEOqWcjhPtS9cHEtOQ62Tdq7Wtb5HsBDZpO/qj9Ds80a85F5Xa9K9c7XFDCIXpoRaMW9IkqiA2v1NEsXsyDxDRPAfdkz18ndD7nsm5B2AbYdlzc78e7wUiGYZkJj8V8G0Zl3FwC4agboEInYiptzXKlVFI7r+eQF9SVQXRH593hWcMmeJ9/cDnEvVix2JkMgSKoNCxFkqIHhm5Rl84QpLI3EEWeQHs21btjV7f1ZzxxZ74k+P139FJEhgTG2nY2csDU7GIa2EPv768f6chpwgxkVQkrzewjYw+Olqhi9uENXA1axW15nGnhv73ZefFcRovcXPjFatYYJv0IulPy0iNtH8mpLqBzMmSD5xEGSjO/OJwpSvNEpftdehi9PTBBKuOB8vb2UUaxNN8Qs9gZU1x3IdLLeH8FqzF9Mjyt1pkzGy6F1zOvx5kiyG6C4aUmOroIaRr+ZJYdBCU/PNMcYpfuW82wCAaUR41jTzLNgfHwdST2EX0vmx2QxbVupMaz291R7VP+C9T3NTPNuz4/gkLBtcYZusQlVkeDDE=
+  - secure: hrLo+6XlDXikadSQT9VWTc2Erq9ckZeK0DKqpNoiY/5J+IKKuXTEH9GHumEPTyOtAFnmApd8QVXPJMNKA74f4Owy87nK52/SPAOcX77EW1dReSK6x6fefBhji9HRgMshTjbSJfKvwyjvBvwMnMK0Fantkuh072b7AsS6QvvL8Amm5FZD0A35WsqJ/IaY3KszNkvTMsP8Ma9gQQLS4Q4q9F7M1i/l60pp29WxYZD3WieDLfbJpfhtpy1LpQ2IF/P5XqYZ+7Rs//L8pa6h4yKUvvne67JM2oF8/Y3h7a4llufshCfRXXS4UiDTcPaa+c4/JIldi41byStZncIoKNhitqbYEmX1OZUKJZR1Miihd35nEDNpRboD2fOsDyDSvdB7tGfFGnhkOn9t24fcq7sDHqc8YKKB7DnX/SOK0YahD0Fhn/FnivnWFWyhSNd6mSyL85inHtryL31k58lPMHBHeAxqeXm3PeqHsEKCN4DiumLD1d7E3ikCkroxc2jDVeJqQEP7+Z/HZPuz6pabg+umrfNNSaQ48YCsns63O83JzVM6IEbsvIDOfobTMfsr41425Wbo4YbvdB6LKEzi7R7W+MSIr+6GzeuThKFd0Xg5LsYoNf12pBgnyAPCzp37Fa3M0TGn/eQXfAxpyvQPQe9KZun24AjgyTPqn+iKh9LW6Ec=
+  - ARTIFACTS_PERMISSIONS=public-read
   matrix:
   - ANDROID_TARGET=android-25  ANDROID_ABI=armeabi-v7a
 android:
   components:
-    - tools
-    - platform-tools
-    - tools
-
-    - build-tools-25.0.1
-    - android-25
-    - extra-google-google_play_services
-    - extra-google-m2repository
-    - extra-android-m2repository
-    - extra-android-support
-    - addon-google_apis-google-19
-    - sys-img-armeabi-v7a-android-19
+  - tools
+  - platform-tools
+  - tools
+  - build-tools-25.0.1
+  - android-25
+  - extra-google-google_play_services
+  - extra-google-m2repository
+  - extra-android-m2repository
+  - extra-android-support
+  - addon-google_apis-google-19
+  - sys-img-armeabi-v7a-android-19
   licenses:
-    - 'android-sdk-preview-license-.+'
-    - 'android-sdk-license-.+'
-    - 'google-gdk-license-.+'
+  - android-sdk-preview-license-.+
+  - android-sdk-license-.+
+  - google-gdk-license-.+
 before_install:
-- if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then openssl aes-256-cbc -K $encrypted_f97207d0a082_key
-  -iv $encrypted_f97207d0a082_iv -in translationstudio.keystore.enc -out translationstudio.keystore
-  -d; fi
-- if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then openssl aes-256-cbc -K $encrypted_1623d09f87af_key
-  -iv $encrypted_1623d09f87af_iv -in strings_private_app_pref.xml.enc -out app/src/main/res/values/strings_private_app_pref.xml
-  -d; fi
+- openssl aes-256-cbc -K $encrypted_e08b3ea16ca0_key -iv $encrypted_e08b3ea16ca0_iv -in secrets.tar.enc -out secrets.tar -d
+- tar xvf secrets.tar
+- mv strings_private_app_pref.xml app/src/main/res/values/strings_private_app_pref.xml
+- yes | sdkmanager "platforms;android-28"
+- yes | sdkmanager "build-tools;28.0.3"
 before_script:
 - chmod +x gradlew
-#- echo no | android create avd --force -n test -t $ANDROID_TARGET --abi $ANDROID_ABI
-#- emulator -avd test -no-skin -no-audio -no-window &
-#- android-wait-for-emulator
-#- adb devices
-#- adb shell input keyevent 82 &
 script:
-- ./gradlew test --stacktrace
-# - travis_wait ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.size=medium --continue --stacktrace
+- "./gradlew test --stacktrace"
 after_success:
-- test $TRAVIS_TEST_RESULT == 0 && $TRAVIS_PULL_REQUEST == "false"
-- ./gradlew assembleRelease
-- ./gradlew -q generateReleaseHtml
+- test $TRAVIS_TEST_RESULT == 0
+- "./gradlew assembleRelease"
 deploy:
-# develop branch
-- provider: surge
-  project: "./app/release/"
-  domain: develop.ts-android.surge.sh
-  skip_cleanup: true
-  on:
-    branch: develop
-# catch-all brach
-- provider: surge
-  project: "./app/release/"
-  domain: sandbox.ts-android.surge.sh
-  skip_cleanup: true
-  on:
-    all_branches: true
-    tags: false
-    condition: "$TRAVIS_BRANCH != develop && ! ($TRAVIS_BRANCH =~ ^release-.*$) && $TRAVIS_BRANCH != master"
-# release branch
-- provider: surge
-  project: "./app/release/"
-  domain: release.ts-android.surge.sh
-  skip_cleanup: true
-  on:
-    all_branches: true
-    tags: false
-    condition: "$TRAVIS_BRANCH =~ ^release-.*$"
-# tagged releases go to github
-- provider: releases
+  provider: releases
   api_key:
-    secure: brjmL3cyCTr6swNCqka2fkc41j+PO2tqXZhE9QyNoDEXcxR1FOwPoPut/8h4N/pISfkf2FibtsWqThhW1Xz1pVNNMBlHRblJsSecfvXOtn7kneCsAV+QBngbPuA8OKzfhXTUeIQNlIpfG+rwlDg28wOthDI/7ADBOYgGQWeOd7o=
-  file:
-    - ./app/release/release.apk
+    secure: urHtHCORCUh5aTSuyKtjWwzJkOlSIoklP/toHOelZNE87bK+0qAanpQVOQvj8Bvm10A511d1KNfY6v8diVKGZpynovukVRGQArsP7mcrmjbAuJylYVAKqW8dR/6Xd9DP8xhraWAwJcDA0ujc72nFLO17W6UeJvdCQOef9xpLuJsNzMVbr7x++6JdQgXCufUNkwWxFxnnsfWbwSeim8LSPeAcBXzrHi1IUCT1narUsS9gd3B3KlvzAyURK8CPsT+Yte/DnyRzN4lXG8VN/eeV5AlfeeBPCbdA8tGyhy2TMqeTxLded9cqQMKwb6a3DN8I2/UxsCxSnLVfG3aMTZRT0gJZjyFKQqYngxZNh6wPFliwlElfvL2GXg+DU+GfhiNw+PZKiLNZJqgM+KxMNMKgDmSgEeANDDyzkteNzSig1bAlVbFKrBDsBs2pQICT3m4cidctc/O7imaixKNnQWKDXwxeN6tnizjnm+PzC9YRco4Gqqm1kSaPSBLgFUNuh3pPZqXl3rXB4Kz8cm7p/wtqAi+qysga2A1htTcHDuxy3WvkKosgSDJMXlFPE70DkpqHHgh7MkHfVA9miERH/f+e4ymTJfgF+/XhKB7kRFkZlg7gbOuNpFK95mabkkwdg5uWQV9g/Br4GuAvYsky3AhjNZXm0haX8NWBAMuoX5OV2nk=
+  file: "./app/release/release.apk"
   file_glob: true
   skip_cleanup: true
-  overwrite: true
   on:
+    repo: WycliffeAssociates/ts-android
     tags: true
-    repo: unfoldingWord-dev/ts-android
-# everything goes to test fairy
-- provider: testfairy
-  on:
-    all_branches: true
-  skip_cleanup: true
-  api-key:
-    secure: Ly2BzebfVJmzCQa954vjiSlobVRWrk4A3q/99GzkjnfxdyCW8NecPzd7UHV+JpbRpD8Fs5P1WJ7CMKjEEGNX5Y/lQYdHhVCqkkPz1zy3FOHWgKH3DNB6JppQRHaYW0v+U0smr+Tzs/ht1uOuZ6OauJs5GohR3q/FjMPygK0wMfQ=
-  app-file: ./app/release/release.apk
-  file_glob: true
-  keystore-file: translationstudio.keystore
-  alias: translationstudio
-  storepass:
-    secure: DQPVq3oXh0odcvgcUPPgrGQYAP9Ke+9x3vhSxGwSglLV6MWJ7PBT49iNlqglJqBj6YguMtydbHKm77y0G3ZJgQ08olkNza3Uq/iOOZjmlirNjXRlOiIxS9DSpc1dqCF+djbmEb6SB41P2WQnTHpLB5q4q6pw5Bw3egDWdu/QxQA=
-  aliaspass:
-    secure: DQPVq3oXh0odcvgcUPPgrGQYAP9Ke+9x3vhSxGwSglLV6MWJ7PBT49iNlqglJqBj6YguMtydbHKm77y0G3ZJgQ08olkNza3Uq/iOOZjmlirNjXRlOiIxS9DSpc1dqCF+djbmEb6SB41P2WQnTHpLB5q4q6pw5Bw3egDWdu/QxQA=
+addons:
+  artifacts:
+    s3_region: us-east-1
+    paths:
+    - $(ls ./app/release/*.apk | tr "\n" ":")

@@ -133,4 +133,6 @@ Temporary Items
 .directory
 app/manifest-merger-release-report.txt
 captures
-/translationstudio.keystore
+translationstudio.keystore
+strings_private_app_pref.xml
+secrets.tar
