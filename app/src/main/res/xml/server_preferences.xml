@@ -14,15 +14,14 @@
         <!--android:negativeButtonText="@null"-->
         <!--android:positiveButtonText="@null" />-->
 
-    <EditTextPreference
-        android:key="auth_server"
-        android:title="@string/pref_title_auth_server"
-        android:defaultValue="@string/pref_default_auth_server"/>
-
-    <EditTextPreference
-        android:key="auth_server_port"
-        android:title="@string/pref_title_auth_server_port"
-        android:defaultValue="@string/pref_default_auth_server_port"/>
+    <ListPreference
+        android:key="content_server"
+        android:title="@string/content_server"
+        android:defaultValue="wacs_value"
+        android:entries="@array/content_server_names_array"
+        android:entryValues="@array/content_server_values_array"
+        android:summary="Select a content server"
+        />
 
     <EditTextPreference
         android:key="git_server"

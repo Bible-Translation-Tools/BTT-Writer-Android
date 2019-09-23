@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="content_server_names_array">
+        <item>WACS</item>
+        <item>DCS</item>
+    </string-array>
+
+    <string-array name="content_server_values_array">
+        <item>wacs_value</item>
+        <item>dcs_value</item>
+    </string-array>
+
+    <string-array name="content_server_git_server_values_array">
+        <item>git@wacs.bibletranslationtools.org</item>
+        <item>git@git.door43.org</item>
+    </string-array>
+
+    <string-array name="content_server_git_server_port_values_array">
+        <item>22</item>
+        <item>9299</item>
+    </string-array>
+
+    <string-array name="content_server_git_server_api_values_array">
+        <item>https://content.bibletranslationtools.org/api/v1</item>
+        <item>https://git.door43.org/api/v1</item>
+    </string-array>
+
+    <string-array name="content_server_media_server_values_array">
+        <item>https://api.bibletranslationtools.org</item>
+        <item>https://api.unfoldingword.org</item>
+    </string-array>
+
+</resources>

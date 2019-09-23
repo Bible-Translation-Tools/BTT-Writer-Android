@@ -35,6 +35,7 @@ import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.tasks.ExportProjectTask;
 import com.door43.translationstudio.tasks.ExportToUsfmTask;
 import com.door43.translationstudio.ui.ProfileActivity;
+import com.door43.translationstudio.ui.SettingsActivity;
 import com.door43.translationstudio.ui.filechooser.FileChooserActivity;
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity;
 import com.door43.translationstudio.tasks.CreateRepositoryTask;
@@ -784,7 +785,9 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
     private void showPushSuccess(final String message) {
         mDialogShown = eDialogShown.SHOW_PUSH_SUCCESS;
         mDialogMessage = message;
-        final Uri url = Uri.parse("https://door43.org/u/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
+        String api = App.getPref(SettingsActivity.KEY_PREF_GOGS_API, App.getRes(R.string.pref_default_git_server));
+        String server = api.replace("/api/v1", "");
+        final Uri url = Uri.parse(server + "/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
         new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
                 .setTitle(R.string.upload_complete)
                 .setMessage(String.format(getResources().getString(R.string.project_uploaded_to), url.toString()))

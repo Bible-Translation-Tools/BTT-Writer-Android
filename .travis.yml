@@ -42,6 +42,8 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_e08b3ea16ca0_key -iv $encrypted_e08b3ea16ca0_iv -in secrets.tar.enc -out secrets.tar -d
 - tar xvf secrets.tar
 - mv strings_private_app_pref.xml app/src/main/res/values/strings_private_app_pref.xml
+- wget --no-verbose "https://btt-writer-resources.s3.amazonaws.com/containers.zip"
+- if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
 - yes | sdkmanager "platforms;android-28"
 - yes | sdkmanager "build-tools;28.0.3"
 before_script:

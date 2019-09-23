@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <!-- The app name -->
-    <string name="app_name" translatable="false">translationStudio</string>
+    <string name="app_name" translatable="false">BTT Writer</string>
     <string name="title_projects">Project</string>
     <string name="title_frames">Frame</string>
     <!-- Acknowlogment or an affirmative statement -->
@@ -102,6 +102,7 @@
     <string name="git_rejected_remote_changed" translatable="false">[<xliff:g example="refs/heads/master" id="remote">%1$s</xliff:g>] Remote ref update was rejected,  because old object id on remote repository wasn\'t the same as defined expected old object.</string>
     <string name="git_uptodate" translatable="false">[<xliff:g example="refs/heads/master" id="remote">%1$s</xliff:g>] remote ref is up to date</string>
     <string name="git_server_details" translatable="false">Server: <xliff:g example="gitolite3@ts.door43.org:tS/46983314849sd54s6d/uw-obs-de" id="server">%1$s</xliff:g></string>
+    <string name="content_server">Content Server</string>
     <string name="opening_project">Opening project</string>
     <string name="loading_key_terms" translatable="false">@string/loading</string>
     <string name="loading_translation_notes" translatable="false">@string/loading</string>
@@ -172,25 +173,15 @@
     <string name="statement_of_faith" translatable="false">
 <![CDATA[
 <h1>Statement of Faith</h1>
-<p><em>The following statement of faith is subscribed to by all member organizations of and contributors to the <xliff:g id="organization_name">unfoldingWord</xliff:g> project. It is in agreement with the <xliff:g id="formal_statement_of_faith">Lausanne Covenant</xliff:g>.</em></p>
-<p>We believe that Christian belief can and should be divided into <strong>essential beliefs</strong> and <strong>peripheral beliefs</strong>.</p>
-<h3>Essential beliefs</h3>
-<p>Essential beliefs are what define a follower of Jesus Christ and can never be compromised or ignored.</p>
 <p>
-  We believe the Bible to be the only inspired, inerrant, sufficient, authoritative Word of God.
-  <br/><br/>We believe that there is one God, eternally existent in three persons: God the Father, Jesus Christ the Son and the Holy Spirit.
-  <br/><br/>We believe in the deity of Jesus Christ.
-  <br/><br/>We believe in the humanity of Jesus Christ, in His virgin birth, in His sinless life, in His miracles, in His vicarious and atoning death through His shed blood, in His bodily resurrection, in His ascension to the right hand of the Father.
-  <br/><br/>We believe that every person is inherently sinful and so is deserving of eternal hell.
-  <br/><br/>We believe that salvation from sin is a gift of God, provided through the sacrificial death and resurrection of Jesus Christ, attained by grace through faith, not by works.
-  <br/><br/>We believe that true faith is always accompanied by repentance and regeneration by the Holy Spirit.
-  <br/><br/>We believe in the present ministry of the Holy Spirit by whose indwelling the follower of Jesus Christ is enabled to live a godly life.
-  <br/><br/>We believe in the spiritual unity of all believers in the Lord Jesus Christ, from all nations and languages and people groups.
-  <br/><br/>We believe in the personal and physical return of Jesus Christ.
-  <br/><br/>We believe in the resurrection of both the saved and the lost; the unsaved will be resurrected to eternal damnation in hell and the saved will be resurrected to eternal blessing in heaven with God.
+    The divine inspiration and consequent authority of the whole canonical Scriptures.<br/><br/>
+    The doctrine of the Trinity -- God is one, existing in three persons, the Father, the Son and the Holy Spirit.<br/><br/>
+    The fall of man, his consequent moral depravity, and his need for regeneration.<br/><br/>
+    The atonement through the substitutionary death of Christ.<br/><br/>
+    The doctrine of justification by faith.<br/><br/>
+    The resurrection of the body, in the case of the just and the unjust.<br/><br/>
+    The eternal life of the saved and the eternal punishment of the lost.<br/><br/>
 </p>
-<h3>Peripheral beliefs</h3>
-<p>Peripheral beliefs are everything else that is in Scripture but about which sincere followers of Christ may disagree (e.g. Baptism, Lord\'s Supper, the Rapture, etc.). We choose to agree to disagree agreeably on these topics and press on together toward a common goal of making disciples of every people group (Matthew 28:18-20).</p>
 ]]>
     </string>
     <string name="view_statement_of_faith">Statement of Faith</string>
@@ -267,7 +258,7 @@
     <string name="import_from_storage_description">Projects will be imported from the external storage on this device</string>
     <string name="download_complete">Download complete</string>
     <string name="source_export_complete">Export complete</string>
-    <string name="exit_confirmation">Exit <xliff:g id="app_name">translationStudio</xliff:g>?</string>
+    <string name="exit_confirmation">Exit <xliff:g id="app_name">BTT Writer</xliff:g>?</string>
     <string name="read_chapter_menu">Read chapter</string>
     <string name="preview_chapter_translation">Preview translation</string>
     <string name="toggle_blind_draft_mode">Toggle blind draft</string>
@@ -291,7 +282,7 @@
     <string name="apk_update_available">A new version of the app is available</string>
     <string name="download_update">Download Update</string>
     <string name="upload_report_or_download_latest_apk">Downloading this update may fix your problem, continue?</string>
-    <string name="welcome">Welcome to translationStudio</string>
+    <string name="welcome">Welcome to BTT Writer</string>
     <string name="please_wait">Please wait</string>
     <string name="updating_app">Performing updates</string>
     <string name="preparing_for_first_use">Preparing app for first use. This may take a few minutes.</string>
@@ -378,7 +369,7 @@
     <string name="long_click_to_drag">Tap and hold to drag</string>
     <string name="feedback">Feedback</string>
     <string name="import_from_sd">Import from SD Card</string>
-    <string name="backup_to_door43">Upload to Door43</string>
+    <string name="backup_to_door43">Upload to Server</string>
     <string name="translation_export_failed">Translation could not be exported</string>
     <string name="invalid_file">Not a valid file</string>
     <string name="software_licenses" translatable="false">
@@ -691,7 +682,7 @@ Do you want to enable SD card access?  If so then:
     <string name="previous">Previous</string>
     <string name="title_activity_new_language">New Language Request</string>
     <string name="new_language_confirmation">Your new language code is \"<xliff:g example="zz-zzz" id="temp_language_code">%1$s</xliff:g>\" for \"<xliff:g example="Greek" id="language_name">%2$s</xliff:g>\".</string>
-    <string name="error_importing_unsupported_target_translation">The  translation of <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> into <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> was created by a different version of <xliff:g example="translationStudio" id="app_name">%3$s</xliff:g> and cannot be opened. Please update your app and try again.</string>
+    <string name="error_importing_unsupported_target_translation">The  translation of <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> into <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> was created by a different version of <xliff:g example="BTT Writer or translationStudio" id="app_name">%3$s</xliff:g> and cannot be opened. Please update your app and try again.</string>
     <string name="version">Version</string>
     <string name="username">login name</string>
     <string name="password">password</string>
@@ -705,19 +696,19 @@ Do you want to enable SD card access?  If so then:
     <string name="log_out">Log out</string>
     <string name="gogs_username_already_exists">That username already exists</string>
     <string name="registration_failed">Your account could not be created.</string>
-    <string name="title_door43_account_required">Door43 Account Required</string>
-    <string name="door43_account_required">You must connect to a Door43 account first.</string>
-    <string name="login_doo43">Login with Door43 Account</string>
-    <string name="register_door43">Create new Door43 Account</string>
+    <string name="title_door43_account_required">Server Account Required</string>
+    <string name="door43_account_required">You must connect to a server account first.</string>
+    <string name="login_doo43">Login with Server Account</string>
+    <string name="register_door43">Create new Server Account</string>
     <string name="create_offline_profile">Create offline Account</string>
-    <string name="still_possible_to_register_door43">You can still create or login to a Door43 account later</string>
-    <string name="title_connect_door43">Connect To Door43</string>
+    <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
+    <string name="title_connect_door43">Connect To Server</string>
     <string name="gogs_public_key_name">ts-android</string>
     <string name="restore_failed">The translation could not be imported</string>
-    <string name="import_from_door43">Import from Door43</string>
-    <string name="restore_from_door43">Restore from Door43</string>
+    <string name="import_from_door43">Import from Server</string>
+    <string name="restore_from_door43">Restore from Server</string>
     <string name="title_chunk_conflicts">Chunk Conflicts</string>
-    <string name="chunk_conflict_description">A conflict was found between the translation on Door43 and your device.</string>
+    <string name="chunk_conflict_description">A conflict was found between the translation on the server and your device.</string>
     <string name="review_conflicts">Review differences</string>
     <string name="keep_server_changes">Keep server changes</string>
     <string name="keep_local_changes">Keep my changes</string>
@@ -819,14 +810,14 @@ Do you want to enable SD card access?  If so then:
     <string name="title_new_language_code">New Language Code</string>
     <string name="confirm_start_new_language_code">You are about to request a new language code.</string>
     <string name="check_for_updates">Check for updates</string>
-    <string name="check_for_app_updates">Check the internet for updates to translationStudio App.</string>
-    <string name="have_latest_app_update">You are already using the latest version of translationStudio.</string>
+    <string name="check_for_app_updates">Check the internet for updates to BTT Writer App.</string>
+    <string name="have_latest_app_update">You are already using the latest version of BTT Writer.</string>
     <string name="download_latest_apk">Do you want to download this update?</string>
     <string name="updating_projects">Updating projects</string>
     <string name="view_online">View Online</string>
     <string name="change_detected">Project Change Detected</string>
-    <string name="upload_push_failure">There are changes to this translation on your Door43 account. You must import those changes before uploading.</string>
-    <string name="merge_request">There are changes to your translation of \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' in \'<xliff:g example="English" id="language">%2$s</xliff:g>\' on your Door43 account. Would you like to import those changes now?</string>
+    <string name="upload_push_failure">There are changes to this translation on your server account. You must import those changes before uploading.</string>
+    <string name="merge_request">There are changes to your translation of \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' in \'<xliff:g example="English" id="language">%2$s</xliff:g>\' on your server account. Would you like to import those changes now?</string>
     <string name="import_failed_title">Import failed</string>
     <string name="push_rejected">Upload failed because of changes on Server. Do you want to review conflicts?</string>
     <string name="backup_rejected">Backup failed because of changes on Server. Do you want to review conflicts?</string>
@@ -844,7 +835,7 @@ Do you want to enable SD card access?  If so then:
     <string name="menu_upload_export">Upload/Export</string>
     <string name="title_review">Project Review</string>
     <string name="title_book">Project</string>
-    <string name="tip_backup_to_door43">Uploads project to your Door43 Account.\nBy uploading the project to your Door43 account, the content is available to be downloaded by other translators, merged with other projects, or used as an online backup.</string>
+    <string name="tip_backup_to_door43">Uploads project to your server account.\nBy uploading the project to your server account, the content is available to be downloaded by other translators, merged with other projects, or used as an online backup.</string>
     <string name="tip_backup_to_sd">Creates a copy of your project file</string>
     <string name="draft_translation">Draft Level <xliff:g example="3" id="checking_level">%1$d</xliff:g>: <xliff:g example="Pig Latin" id="language">%2$s</xliff:g></string>
     <string name="title_download_source_language">Download from Online</string>
@@ -900,7 +891,7 @@ Do you want to enable SD card access?  If so then:
     <string name="warning_title">Warning</string>
     <string name="update_warning">Checking for new and updated source texts will close this project. This requires an Internet Connection.</string>
     <string name="download_sources">Download Available Source Texts</string>
-    <string name="check_app_update">Check for Update to translationStudio</string>
+    <string name="check_app_update">Check for Update to BTT Writer</string>
     <string name="all_up_to_date">All Source Texts already up to date!</string>
     <string name="loading_sources">Loading Source Texts\nPlease wait...</string>
     <string name="old_testament_label">Old Testament</string>
@@ -943,7 +934,7 @@ Do you want to enable SD card access?  If so then:
     <string name="translation_questions">Questions</string>
     <string name="translation_academy">Translation Academy</string>
     <string name="unsupported">Unsupported</string>
-    <string name="import_warning">The project \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' may not be supported in this app.  Currently, translationStudio only supports Scripture and Open Bible Stories projects. If this is not one of those types of projects it will not be imported into translationStudio.\n\nDo you want to try to import it anyway?</string>
+    <string name="import_warning">The project \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' may not be supported in this app.  Currently, BTT Writer only supports Scripture and Open Bible Stories projects. If this is not one of those types of projects it will not be imported into BTT Writer.\n\nDo you want to try to import it anyway?</string>
     <string name="overwrite_file_title">Overwrite File?</string>
     <string name="overwrite_file_warning">The same filename already exists.  Do you want to overwrite\n\<xliff:g example="project.usfm" id="project_name">%1$s</xliff:g>?\n\nSize: <xliff:g example="3.5 KB" id="size">%2$s</xliff:g>\t\nModified: <xliff:g example="2/23/2017" id="date">%3$s</xliff:g></string>
     <string name="overwrite_label">Overwrite</string>

@@ -71,7 +71,7 @@ public class App extends Application {
     public static final String EXTRA_CHAPTER_ID = "extra_chapter_id";
     public static final String EXTRA_FRAME_ID = "extra_frame_id";
     public static final String EXTRA_VIEW_MODE = "extra_view_mode_id";
-    public static final String PUBLIC_DATA_DIR = "translationStudio";
+    public static final String PUBLIC_DATA_DIR = "BTT-Writer";
     public static final String TAG = "App";
 
     private static final String PREFERENCES_NAME = "com.door43.translationstudio.general";

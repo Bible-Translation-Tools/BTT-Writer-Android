@@ -1,20 +1,9 @@
-[![Crowdin](https://d322cqt584bo4o.cloudfront.net/translation-studio/localized.png)](https://crowdin.com/project/translation-studio) [![Travis](https://travis-ci.org/unfoldingWord-dev/ts-android.svg)](https://travis-ci.org/unfoldingWord-dev/ts-android)
+BTT-Writer Android
+------------------
 
-translationStudio Android
---
+A tool to translate the Bible into your own language. 
 
-A tool to translate the Bible and [Open Bible Stories](https://unfoldingword.org/stories) into your own language. You can read more about the purpose of this project at [unfoldingWord](https://unfoldingword.org/apps/#tS).
-
-##Requirements
-The official development requirements are available at
-* [tS Requirements](https://github.com/unfoldingWord-dev/ts-requirements)
-
-Additional documentation specific to the android platform is available in the [wiki].
-
-##Contributing
-If you would like to contribute to this project please read the [Contributing](https://github.com/unfoldingWord-dev/ts-android/wiki/Contributing) article in the wiki.
-
-##Quck Start
+## Quck Start
 First make sure you have all the dependencies installed
 
 * [Android Studio](http://developer.android.com/sdk/index.html)
@@ -28,8 +17,8 @@ API 15 is currently the standard minimum sdk version so it is likely you will ha
 
 For more information please read the [wiki].
 
-##Building
-translationStudio relies on several native libraries. Therefore when building for a device or emulator you must choose the correct build varient for that platform. In Android Studio you can change the build varients by clicking on the `Build Variants` tab in the lower left corner of the IDE window. This will display an embeded window in which you can choose the correct build variant for the `app` module.
+## Building
+This application relies on several native libraries. Therefore when building for a device or emulator you must choose the correct build varient for that platform. In Android Studio you can change the build varients by clicking on the `Build Variants` tab in the lower left corner of the IDE window. This will display an embeded window in which you can choose the correct build variant for the `app` module.
 
 In most cases you should use the `x86Debug` variant for emulators and the `fatDebug` variant for physical devices.
 
