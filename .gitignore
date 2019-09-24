@@ -1,3 +1,6 @@
+# User files
+*.swp
+
 # Created by https://www.gitignore.io
 .sync
 ### Android ###

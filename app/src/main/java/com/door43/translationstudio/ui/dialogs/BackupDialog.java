@@ -785,7 +785,7 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
     private void showPushSuccess(final String message) {
         mDialogShown = eDialogShown.SHOW_PUSH_SUCCESS;
         mDialogMessage = message;
-        String api = App.getPref(SettingsActivity.KEY_PREF_GOGS_API, App.getRes(R.string.pref_default_git_server));
+        String api = App.getPref(SettingsActivity.KEY_PREF_GOGS_API, App.getRes(R.string.pref_default_gogs_api));
         String server = api.replace("/api/v1", "");
         final Uri url = Uri.parse(server + "/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
         new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
