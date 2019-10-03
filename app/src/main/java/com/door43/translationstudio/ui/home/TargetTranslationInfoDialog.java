@@ -10,7 +10,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v7.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,16 +34,11 @@ import com.door43.translationstudio.ui.publish.PublishActivity;
 import com.door43.translationstudio.ui.dialogs.BackupDialog;
 
 import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.SourceLanguage;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
-import org.unfoldingword.tools.taskmanager.ThreadableUI;
 
 import java.util.ArrayList;
 import java.util.List;

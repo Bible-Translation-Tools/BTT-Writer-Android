@@ -1,12 +1,6 @@
 package com.door43.translationstudio.core;
 
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.view.View;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,10 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by joel on 9/2/2015.

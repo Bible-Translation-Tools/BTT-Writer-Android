@@ -13,8 +13,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 
 import org.eclipse.jgit.api.errors.RejectCommitException;
@@ -26,9 +26,7 @@ import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.ui.home.HomeActivity;
 import com.door43.translationstudio.App;
-import com.door43.util.FileUtilities;
 
-import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 

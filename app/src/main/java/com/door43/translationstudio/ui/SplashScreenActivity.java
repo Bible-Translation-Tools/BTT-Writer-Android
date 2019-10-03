@@ -7,8 +7,8 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v7.app.AlertDialog;
-import android.util.Log;
+import androidx.appcompat.app.AlertDialog;
+
 import android.widget.ProgressBar;
 import android.widget.TextView;
 

@@ -5,11 +5,9 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
-
-import com.door43.widget.LinedEditText;
 
 /**
  * Created by blm on 12/7/2015.

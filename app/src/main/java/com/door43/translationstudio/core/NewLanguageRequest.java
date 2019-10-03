@@ -2,7 +2,7 @@ package com.door43.translationstudio.core;
 
 import android.content.Context;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import org.unfoldingword.tools.logger.Logger;
 

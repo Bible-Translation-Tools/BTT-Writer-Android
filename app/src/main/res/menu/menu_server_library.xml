@@ -9,7 +9,7 @@
         app:showAsAction="always|collapseActionView"
         android:icon="@drawable/ic_search_white_24dp"
         android:iconifiedByDefault="true"
-        app:actionViewClass="android.support.v7.widget.SearchView"/>
+        app:actionViewClass="androidx.appcompat.widget.SearchView"/>
 
     <item android:id="@+id/action_download_all"
         android:title="@string/action_download_all"

@@ -4,10 +4,10 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.ContentValues;
 import android.content.Context;
-import android.graphics.Typeface;
-import android.support.design.widget.TabLayout;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.RecyclerView;
+
+import com.google.android.material.tabs.TabLayout;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
@@ -48,7 +48,6 @@ import org.unfoldingword.tools.taskmanager.ThreadableUI;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**

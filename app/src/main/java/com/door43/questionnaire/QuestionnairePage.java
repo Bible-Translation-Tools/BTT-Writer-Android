@@ -1,6 +1,6 @@
 package com.door43.questionnaire;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import org.unfoldingword.door43client.models.Question;
 

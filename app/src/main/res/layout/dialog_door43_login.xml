@@ -29,7 +29,7 @@
                 android:textSize="@dimen/body"
                 android:textColor="@color/dark_secondary_text"/>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/dialog_content_margin">
@@ -55,9 +55,9 @@
                         android:text="@string/requires_internet"/>
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/register_door43"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -80,7 +80,7 @@
                         android:textColor="@color/dark_secondary_text"
                         android:text="@string/requires_internet"/>
                 </LinearLayout>
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
 
         <LinearLayout

@@ -26,7 +26,7 @@
             android:textSize="@dimen/body"
             android:textColor="@color/dark_secondary_text"/>
 
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/dialog_content_margin">
@@ -46,9 +46,9 @@
                     android:text="@string/review_conflicts"/>
             </LinearLayout>
 
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
 
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:id="@+id/keep_server"
             android:layout_marginBottom="@dimen/dialog_content_margin"
             android:layout_width="match_parent"
@@ -66,9 +66,9 @@
                     android:textColor="@color/dark_primary_text"
                     android:text="@string/keep_server_changes"/>
             </LinearLayout>
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
 
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:id="@+id/keep_local"
             android:layout_marginBottom="@dimen/dialog_content_margin"
             android:layout_width="match_parent"
@@ -86,7 +86,7 @@
                     android:textColor="@color/dark_primary_text"
                     android:text="@string/keep_local_changes"/>
             </LinearLayout>
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
     </LinearLayout>
 
     <LinearLayout

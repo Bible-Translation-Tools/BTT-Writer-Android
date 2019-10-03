@@ -4,14 +4,12 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.door43.translationstudio.App;
-import com.door43.translationstudio.services.BackupService;
 
-import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.tools.foreground.Foreground;
 import org.unfoldingword.tools.logger.Logger;
 

@@ -18,7 +18,7 @@
         android:background="@color/primary"
         android:fitsSystemWindows="true">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -31,7 +31,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:scrollbars="vertical"
             android:layout_width="match_parent"
@@ -48,7 +48,7 @@
             android:layout_alignParentBottom="true"
             android:id="@+id/linearLayout5">
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:card_view="http://schemas.android.com/apk/res-auto"
                 android:layout_width="wrap_content"
@@ -61,14 +61,14 @@
                     style="@style/Widget.Button.Blue"
                     android:clickable="false"
                     android:text="@string/previous"/>
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
                 android:gravity="right">
-                <android.support.v7.widget.CardView
+                <androidx.cardview.widget.CardView
                     xmlns:android="http://schemas.android.com/apk/res/android"
                     xmlns:card_view="http://schemas.android.com/apk/res-auto"
                     android:layout_width="wrap_content"
@@ -81,9 +81,9 @@
                         style="@style/Widget.Button.Blue"
                         android:clickable="false"
                         android:text="@string/next"/>
-                </android.support.v7.widget.CardView>
+                </androidx.cardview.widget.CardView>
 
-                <android.support.v7.widget.CardView
+                <androidx.cardview.widget.CardView
                     xmlns:android="http://schemas.android.com/apk/res/android"
                     xmlns:card_view="http://schemas.android.com/apk/res-auto"
                     android:layout_width="wrap_content"
@@ -96,7 +96,7 @@
                         style="@style/Widget.Button.Blue"
                         android:clickable="false"
                         android:text="@string/done"/>
-                </android.support.v7.widget.CardView>
+                </androidx.cardview.widget.CardView>
 
             </LinearLayout>
 

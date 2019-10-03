@@ -1,7 +1,7 @@
 package com.door43.translationstudio.ui.filechooser;
 
 import android.content.Context;
-import android.support.v4.provider.DocumentFile;
+import androidx.documentfile.provider.DocumentFile;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
