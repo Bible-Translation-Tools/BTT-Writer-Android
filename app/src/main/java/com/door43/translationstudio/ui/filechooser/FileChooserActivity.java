@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import androidx.documentfile.provider.DocumentFile;
@@ -41,6 +42,7 @@ public class FileChooserActivity extends BaseActivity {
     public static final String FILE_PATH_KEY = "file_path";
     public static final String SD_CARD_TYPE = "sd_card";
     public static final String INTERNAL_TYPE = "internal";
+    public static final String HOME_DIRECTORY = "Home";
 
     private ImageButton mUpButton;
     private Button mInternalButton;
@@ -266,11 +268,13 @@ public class FileChooserActivity extends BaseActivity {
             File sdCardFolder = SdUtils.getSdCardDirectory();
             if( (sdCardFolder != null) && SdUtils.isSdCardAccessableInMode(mWriteAccess) ) {
                 if (sdCardFolder.isDirectory() && sdCardFolder.exists() && sdCardFolder.canRead()) {
-                    File storagePath = Environment.getExternalStorageDirectory();
-                    if(!sdCardFolder.equals(storagePath)) { // make sure it doesn't reflect back to internal memory
-                        sdCardFound = true;
-                        sdCardHaveAccess = true;
-                        showFileFolder(sdCardFolder);
+                    if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) { // Android Q+ cannot write to the External Storage Directory
+                        File storagePath = Environment.getExternalStorageDirectory();
+                        if (!sdCardFolder.equals(storagePath)) { // make sure it doesn't reflect back to internal memory
+                            sdCardFound = true;
+                            sdCardHaveAccess = true;
+                            showFileFolder(sdCardFolder);
+                        }
                     }
                 }
             }
@@ -286,7 +290,12 @@ public class FileChooserActivity extends BaseActivity {
      * will display file list for external storage directory
      */
     private void showFileFolderFromInternalMemory() {
-        File storagePath = Environment.getExternalStorageDirectory();
+        File storagePath;
+        if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            storagePath = Environment.getExternalStorageDirectory();
+        } else {
+            storagePath = new File(App.context().getFilesDir(), HOME_DIRECTORY);
+        }
         showFileFolder(storagePath);
     }
 

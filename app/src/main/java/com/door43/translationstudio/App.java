@@ -483,6 +483,8 @@ public class App extends Application {
             } else {
                 dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), PUBLIC_DATA_DIR);
             }
+        } else if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+            dir = new File(context().getExternalFilesDir(null), Environment.DIRECTORY_DOWNLOADS);
         } else {
             dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), PUBLIC_DATA_DIR);
         }
@@ -600,14 +602,17 @@ public class App extends Application {
      */
     public static File publicDir() {
         String state = Environment.getExternalStorageState();
-        File sd = Environment.getExternalStorageDirectory();
-        File dir;
+        File dir = new File(Environment.getDataDirectory(), PUBLIC_DATA_DIR);
 
-        if(Environment.MEDIA_MOUNTED.equals(state) && sd.canWrite()) {
-            dir = new File(sd, PUBLIC_DATA_DIR);
+        if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            File sd = Environment.getExternalStorageDirectory();
+            if (Environment.MEDIA_MOUNTED.equals(state) && sd.canWrite()) {
+                dir = new File(sd, PUBLIC_DATA_DIR);
+            } else {
+                Log.w(TAG, "External storage was missing. Falling back to data dir.");
+            }
         } else {
-            Log.w(TAG, "External storage was missing. Falling back to data dir.");
-            dir = new File(Environment.getDataDirectory(), PUBLIC_DATA_DIR);
+            Log.i(TAG, "SDK Version is Android Q or higher. Falling back to data dir.");
         }
 
         if(!dir.exists()) {
