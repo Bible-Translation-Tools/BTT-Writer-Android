@@ -294,7 +294,7 @@ public class FileChooserActivity extends BaseActivity {
         if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             storagePath = Environment.getExternalStorageDirectory();
         } else {
-            storagePath = new File(App.context().getFilesDir(), HOME_DIRECTORY);
+            storagePath = new File(App.context().getExternalFilesDir(null), HOME_DIRECTORY);
         }
         showFileFolder(storagePath);
     }
