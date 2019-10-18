@@ -49,15 +49,13 @@ before_install:
 before_script:
 - chmod +x gradlew
 script:
-- "./gradlew test --stacktrace"
-after_success:
-- test $TRAVIS_TEST_RESULT == 0
-- "./gradlew assembleRelease"
+- ./gradlew test --stacktrace
+- ./gradlew assembleRelease
 deploy:
   provider: releases
   api_key:
     secure: urHtHCORCUh5aTSuyKtjWwzJkOlSIoklP/toHOelZNE87bK+0qAanpQVOQvj8Bvm10A511d1KNfY6v8diVKGZpynovukVRGQArsP7mcrmjbAuJylYVAKqW8dR/6Xd9DP8xhraWAwJcDA0ujc72nFLO17W6UeJvdCQOef9xpLuJsNzMVbr7x++6JdQgXCufUNkwWxFxnnsfWbwSeim8LSPeAcBXzrHi1IUCT1narUsS9gd3B3KlvzAyURK8CPsT+Yte/DnyRzN4lXG8VN/eeV5AlfeeBPCbdA8tGyhy2TMqeTxLded9cqQMKwb6a3DN8I2/UxsCxSnLVfG3aMTZRT0gJZjyFKQqYngxZNh6wPFliwlElfvL2GXg+DU+GfhiNw+PZKiLNZJqgM+KxMNMKgDmSgEeANDDyzkteNzSig1bAlVbFKrBDsBs2pQICT3m4cidctc/O7imaixKNnQWKDXwxeN6tnizjnm+PzC9YRco4Gqqm1kSaPSBLgFUNuh3pPZqXl3rXB4Kz8cm7p/wtqAi+qysga2A1htTcHDuxy3WvkKosgSDJMXlFPE70DkpqHHgh7MkHfVA9miERH/f+e4ymTJfgF+/XhKB7kRFkZlg7gbOuNpFK95mabkkwdg5uWQV9g/Br4GuAvYsky3AhjNZXm0haX8NWBAMuoX5OV2nk=
-  file: "./app/release/release.apk"
+  file: "./app/build/outputs/apk/release/release.apk"
   file_glob: true
   skip_cleanup: true
   on:
@@ -67,4 +65,4 @@ addons:
   artifacts:
     s3_region: us-east-1
     paths:
-    - $(ls ./app/release/*.apk | tr "\n" ":")
+    - $(ls ./app/build/outputs/apk/release/*.apk | tr "\n" ":")

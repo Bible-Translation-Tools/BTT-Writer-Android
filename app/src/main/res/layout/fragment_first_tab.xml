@@ -11,7 +11,7 @@
         android:descendantFocusability="blocksDescendants"
         android:clipChildren="false">
 
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginLeft="@dimen/stacked_card_margin"
@@ -26,9 +26,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical" />
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
 
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             card_view:cardElevation="3dp"
@@ -63,7 +63,7 @@
                     android:src="@drawable/icon_tabedit_normal"
                     android:id="@+id/newTabButton" />
             </LinearLayout>
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
 
     </FrameLayout>
 

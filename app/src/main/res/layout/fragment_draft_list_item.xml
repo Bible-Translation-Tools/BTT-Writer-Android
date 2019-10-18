@@ -8,7 +8,7 @@ android:fitsSystemWindows="true"
 android:descendantFocusability="blocksDescendants"
 android:clipChildren="false">
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
     android:id="@+id/source_translation_card"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -66,6 +66,6 @@ android:clipChildren="false">
             android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
     </LinearLayout>
-</android.support.v7.widget.CardView>
+</androidx.cardview.widget.CardView>
 
 </FrameLayout>

@@ -1,6 +1,6 @@
 package com.door43.util;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import org.unfoldingword.tools.logger.Logger;
 

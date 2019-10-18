@@ -1,7 +1,7 @@
 package com.door43.translationstudio.core;
 
 import android.content.Context;
-import android.support.v4.provider.DocumentFile;
+import androidx.documentfile.provider.DocumentFile;
 
 import com.door43.util.FileUtilities;
 import com.door43.util.Zip;

@@ -2,7 +2,7 @@ package com.door43.translationstudio.core;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import org.eclipse.jgit.api.ResetCommand;
 import org.unfoldingword.door43client.models.Translation;
@@ -11,7 +11,6 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.tools.logger.Logger;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.git.Repo;
 import com.door43.util.NumericStringComparator;
 import com.door43.util.FileUtilities;
@@ -23,17 +22,11 @@ import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.DeleteBranchCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.ListTagCommand;
-import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.MergeCommand;
 import org.eclipse.jgit.api.MergeResult;
-import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.FetchResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,15 +37,11 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 /**

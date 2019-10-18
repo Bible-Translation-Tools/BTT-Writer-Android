@@ -3,7 +3,7 @@ package com.door43.translationstudio.tasks;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Process;
-import android.support.v4.provider.DocumentFile;
+import androidx.documentfile.provider.DocumentFile;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;

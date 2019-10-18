@@ -24,7 +24,7 @@ package com.door43.widget;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;

@@ -7,8 +7,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.support.v4.os.EnvironmentCompat;
-import android.support.v4.provider.DocumentFile;
+import androidx.core.os.EnvironmentCompat;
+import androidx.documentfile.provider.DocumentFile;
 
 import org.unfoldingword.tools.logger.Logger;
 

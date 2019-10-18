@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -14,7 +14,6 @@ import android.widget.PopupMenu;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.Profile;
-import com.door43.translationstudio.ui.home.HomeActivity;
 import com.door43.widget.ViewUtil;
 
 public class ProfileActivity extends BaseActivity {
