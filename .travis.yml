@@ -42,7 +42,7 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_3b9f0b9d36d1_key -iv $encrypted_3b9f0b9d36d1_iv -in secrets.tar.enc -out secrets.tar -d
 - tar xvf secrets.tar
 - mv strings_private_app_pref.xml app/src/main/res/values/strings_private_app_pref.xml
-- wget --no-verbose "https://btt-writer-resources.s3.amazonaws.com/containers.zip?versionId=H.lmJaf66IOJUK.53Wd4OAD4mFFC030w"
+- wget --no-verbose -O containers.zip "https://btt-writer-resources.s3.amazonaws.com/containers.zip?versionId=H.lmJaf66IOJUK.53Wd4OAD4mFFC030w"
 - if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
 - yes | sdkmanager "platforms;android-28"
 - yes | sdkmanager "build-tools;28.0.3"
