@@ -1,5 +1,3 @@
-Repo is archived. New repo is here: https://github.com/Bible-Translation-Tools/BTT-Writer-Android
-
 BTT-Writer Android
 ------------------
 
