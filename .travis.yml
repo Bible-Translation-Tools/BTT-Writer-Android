@@ -9,9 +9,6 @@ cache:
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 sudo: false
-branches:
-  except:
-  - master
 env:
   global:
   - GRADLE_OPTS="-Xms128m"
