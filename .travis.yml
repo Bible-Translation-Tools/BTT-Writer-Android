@@ -51,18 +51,29 @@ before_script:
 script:
 - ./gradlew test --stacktrace
 - ./gradlew assembleRelease
+- mv ./app/build/outputs/apk/release/release.apk ./app/build/outputs/apk/release/btt-writer.apk
+before_deploy:
+  # Set up git user name and tag this commit
+  - git config --local user.name "wa-jenkins"
+  - git config --local user.email "ci-cd@example.com"
+  - for aapt_path in ${ANDROID_HOME}/build-tools/*/; do break; done && export PATH="$PATH:${aapt_path}" && versionName=`aapt dump badging ./app/build/outputs/apk/release/btt-writer.apk | grep versionName | awk '{print $4}' | sed s/versionName=//g | sed s/\'//g`
+  - echo $versionName
+  - export TRAVIS_TAG=${$versionName-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
+  - git tag $TRAVIS_TAG
 deploy:
   provider: releases
   api_key:
     secure: "s/Yy7CcMB0/BKbDg8r16fLBgUUJ8w6q+TC4KcXWsddjsVEl96/QH+aVQ3ViYsW0kI+khc6B0ejFJcMDleSSKsi5F9hQN2defS9mclMbpcJIydAQA+NYd3VH6ZMVtsNaM/eOIIURbG2AcuyB0jMTzRq3XGReUZeW4fXgGGy0Id/A2lKWJKRids4FaTs23Jc9HH7Zya8Kc8avZJmhw53Tycst1kb3YHQsb/njxPTXBiNBeNt2kdiQZpY/5VxVqR7NNZyND7m4DPL93xqIwO1fnYFcd8UOryyOqhXqoB8wNU/33/o4Vd0reeaFhPFiRk+1fxqpL87X2QDVodWJqaYyi8M3gdZYFJNsL797nTVxZ0lfphcjgZEBu+RXd7m9ze/nLPwYze/7//4veGqO0cn/PyxOE5Cvk1uJ8YASk5V/qULpISgNGvk8gm0/Qa6MdvfpnyOKTciTj992FGeNakt8OJcAIbe+FRG1ILLAcMQ5FSgAeG39aiCpK7PK4cgi6lO3XkLbTNIhyGl3v7Pt5pYctRXbanxCukI7Ma+LmdlfWZ5PzcMICnvVWnzixaI1HiHfo1cYe44cjmm/pZ6bWICEMy++B05wDyn/HKDMLamKf7r0TsNz6CwfK4G9wL1L9tFctjvQqgojhT+EZdR66kHsfP2ImExcrtTIYn1jZZCPMkpo="
-  file: "./app/build/outputs/apk/release/release.apk"
+  file: "./app/build/outputs/apk/release/btt-writer.apk"
   file_glob: true
   skip_cleanup: true
   on:
-    repo: WycliffeAssociates/ts-android
-    tags: true
+    repo: Bible-Translation-Tools/BTT-Writer-Android
+    branch: master
 addons:
   artifacts:
     s3_region: us-east-1
+    target_paths:
+    - "/BTT-Writer-Android/${TRAVIS_BUILD_NUMBER}/${TRAVIS_BRANCH}/${TRAVIS_TAG}"
     paths:
-    - $(ls ./app/build/outputs/apk/release/*.apk | tr "\n" ":")
+    - $(ls ./app/build/outputs/apk/release/btt-writer.apk | tr "\n" ":")
