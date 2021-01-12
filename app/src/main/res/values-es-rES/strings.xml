@@ -205,42 +205,42 @@
     <string name="updating_app">Realizando actualizaciones</string>
     <string name="preparing_for_first_use">Preparando la aplicación para el primer uso. Esto puede tomar unos minutos.</string>
     <string name="loading_languages">Preparando idiomas</string>
-    <string name="title_activity_target_translations">Your Translation Projects</string>
-    <string name="title_activity_new_target_translation">New Translation</string>
-    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the blue button in the top right.]]></string>
-    <string name="title_activity_target_translation_detail">Translation Project</string>
-    <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
-    <string name="Project">Project</string>
-    <string name="language">Language</string>
-    <string name="progress">Progress</string>
-    <string name="choose_first_source_translation">Choose source translation(s) to begin reading and translating</string>
-    <string name="choose_source_translations">Choose source translations</string>
-    <string name="confirm">Confirm</string>
-    <string name="selected">Selected</string>
-    <string name="available">Available</string>
-    <string name="action_translations">Home</string>
-    <string name="publish">Publish</string>
-    <string name="backup">Upload</string>
-    <string name="attached_files">Attached files</string>
-    <string name="requires_internet">This will use your Internet Connection</string>
-    <string name="input_required">Input cannot be empty</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="done">Done</string>
-    <string name="translate_first">Please provide a translation first</string>
-    <string name="consecutive_verse_markers">Verse markers are placed too close to each other. Please verify marker positions.</string>
-    <string name="outoforder_verse_markers">Verse markers are out of order</string>
-    <string name="outofrange_verse_marker">Verse marker is out of range</string>
-    <string name="duplicate_verse_marker">Duplicate verse marker</string>
-    <string name="failed_to_commit_chunk">The chunk could not be saved</string>
-    <string name="title_activity_publish">Publish Translation</string>
+    <string name="title_activity_target_translations">Sus proyectos de traducción</string>
+    <string name="title_activity_new_target_translation">Nueva traducción</string>
+    <string name="translations_welcome"><![CDATA[¡Bienvenido! \nEsta es tu pantalla de inicio. Cuando tengas proyectos de traducción en este dispositivo, aparecerán aquí. \n\nPuedes iniciar una nueva traducción en cualquier momento tocando el botón azul en la esquina superior derecha.]]></string>
+    <string name="title_activity_target_translation_detail">Proyecto de traducción</string>
+    <string name="duplicate_target_translation">Ya estás traduciendo <xliff:g ejemplo="Genesis" id="project">%1$s</xliff:g> en <xliff:g ejemplo="English" id="target_language">%2$s</xliff:g></string>
+    <string name="Project">Proyecto</string>
+    <string name="language">Idioma</string>
+    <string name="progress">Progreso</string>
+    <string name="choose_first_source_translation">Elije traducción(es) fuente para comenzar a leer y traducir</string>
+    <string name="choose_source_translations">Elije traducciones fuente</string>
+    <string name="confirm">Confirmar</string>
+    <string name="selected">Seleccionado</string>
+    <string name="available">Disponible</string>
+    <string name="action_translations">Hogar</string>
+    <string name="publish">Publicar</string>
+    <string name="backup">Subir</string>
+    <string name="attached_files">Ficheros adjuntos</string>
+    <string name="requires_internet">Esto usará tu conexión al Internet</string>
+    <string name="input_required">¡La entrada no puede estar vacía</string>
+    <string name="dismiss">Descartar</string>
+    <string name="done">Hecho</string>
+    <string name="translate_first">Por favor, primero proporcione una traducción</string>
+    <string name="consecutive_verse_markers">Los marcadores del versículo se encuentran demasiado cerca el uno del otro. Por favor verifica las posiciones del marcador.</string>
+    <string name="outoforder_verse_markers">Los marcadores de versículo están desordenados</string>
+    <string name="outofrange_verse_marker">El marcador de versículo está fuera de rango</string>
+    <string name="duplicate_verse_marker">Marcador del versículo duplicado</string>
+    <string name="failed_to_commit_chunk">El chunk no se pudo guardar</string>
+    <string name="title_activity_publish">Publicar traducción</string>
     <!-- The title of the dialog asking the user to verify completion of everything required to mark a chunk complete -->
-    <string name="chunk_checklist_title">Chunk Checklist</string>
+    <string name="chunk_checklist_title">Copiar lista de verificación</string>
     <!-- The text asking the user to verify that all required steps have been taken prior to marking a chunk complete -->
-    <string name="chunk_checklist_body"><![CDATA[<p>Are you sure you are done with this chunk?<p>
+    <string name="chunk_checklist_body"><![CDATA[<p>¿Estás seguro de que has terminado con este trozo?<p>
 <ul>
-  <li>I have placed the verses correctly</li>
-  <li>I have reviewed the words and meaning</li>
-  <li>I have reviewed the translation questions</li>
+  <li>He colocado los versículos correctamente</li>
+  <li>He revisado las palabras y el significado</li>
+  <li>He revisado las preguntas de traducción</li>
 </ul>]]></string>
     <string name="your_name">Your Name or Pseudonym</string>
     <string name="your_email">Your Email Address</string>
@@ -298,8 +298,8 @@
     <string name="include_images">Include images</string>
     <string name="include_incomplete_frames">Include incomplete chunks</string>
     <string name="backup_to_friend">Send to Friend</string>
-    <string name="device_network_alias_description">Choose a name or pseudonym others will see when sharing with your device</string>
-    <string name="device_name">Device Name</string>
+    <string name="device_network_alias_description">Elije un nombre o seudónimo que otros verán al compartirlo con tu dispositivo</string>
+    <string name="device_name">Nombre del dispositivo</string>
     <string name="confirm_import_target_translation">Do you want to import <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
     <string name="success_import_target_translation"><xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g> was successfully imported.</string>
     <string name="title_activity_custom_alert_dialog">CustomAlertDialog</string>
