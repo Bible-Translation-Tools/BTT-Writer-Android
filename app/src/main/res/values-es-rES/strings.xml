@@ -242,19 +242,19 @@
   <li>He revisado las palabras y el significado</li>
   <li>He revisado las preguntas de traducción</li>
 </ul>]]></string>
-    <string name="your_name">Your Name or Pseudonym</string>
-    <string name="your_email">Your Email Address</string>
-    <string name="your_phone">Your Phone Number</string>
-    <string name="name">Name or Pseudonym</string>
-    <string name="email">Email Address</string>
-    <string name="phone">Phone Number</string>
-    <string name="profile">Profile</string>
-    <string name="default_translator">Default translator name</string>
-    <string name="project_title_complex">Project: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
+    <string name="your_name">Tu nombre o seudónimo</string>
+    <string name="your_email">Su Dirección de Correo Electrónico</string>
+    <string name="your_phone">Su número de teléfono</string>
+    <string name="name">Nombre o Pseudónimo</string>
+    <string name="email">Dirección de correo electrónico</string>
+    <string name="phone">Número de Teléfono</string>
+    <string name="profile">Perfil</string>
+    <string name="default_translator">Nombre del traductor por defecto</string>
+    <string name="project_title_complex">Proyecto: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <!-- A warning shown, when publishing, indicating that names/pseudonyms (but not email or phone number) are published in the catealog -->
-    <string name="publishing_privacy_notice">Your name or pseudonym will be published along with your translation in the catalog.</string>
-    <string name="publish_to_unfoldingword">Publish your project directly to the server.</string>
-    <string name="checking_for_updates">Checking for updates</string>
+    <string name="publishing_privacy_notice">Su nombre o seudónimo se publicarán junto con su traducción en el catálogo.</string>
+    <string name="publish_to_unfoldingword">Publique su proyecto directamente al servidor.</string>
+    <string name="checking_for_updates">Comprobar actualizaciones</string>
     <string name="download">Download</string>
     <string name="source_language_already_downloaded">Language already downloaded. Download again?</string>
     <string name="confirm_delete_project">Delete this project? You can download it again later.</string>
