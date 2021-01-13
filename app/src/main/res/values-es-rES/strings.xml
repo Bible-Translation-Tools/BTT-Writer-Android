@@ -255,49 +255,49 @@
     <string name="publishing_privacy_notice">Su nombre o seudónimo se publicarán junto con su traducción en el catálogo.</string>
     <string name="publish_to_unfoldingword">Publique su proyecto directamente al servidor.</string>
     <string name="checking_for_updates">Comprobar actualizaciones</string>
-    <string name="download">Download</string>
-    <string name="source_language_already_downloaded">Language already downloaded. Download again?</string>
-    <string name="confirm_delete_project">Delete this project? You can download it again later.</string>
-    <string name="cannot_delete_project_with_translations">You cannot delete a project you are translating.</string>
-    <string name="missing_project">The project is missing</string>
-    <string name="menu_update_library">Update</string>
-    <string name="questions">Questions</string>
-    <string name="references">References</string>
-    <string name="question">Question</string>
-    <string name="answer">Answer</string>
-    <string name="begin_translating">Begin translating</string>
-    <string name="publishing_explanation"><![CDATA[<p>Publishing your work makes your content available:</p>
+    <string name="download">¡Descarga</string>
+    <string name="source_language_already_downloaded">Idioma ya descargado. ¿Volver a descargar?</string>
+    <string name="confirm_delete_project">¿Eliminar este proyecto? Puedes descargarlo de nuevo más tarde.</string>
+    <string name="cannot_delete_project_with_translations">No puedes eliminar un proyecto que estás traduciendo.</string>
+    <string name="missing_project">El proyecto no aparece</string>
+    <string name="menu_update_library">Actualización</string>
+    <string name="questions">Preguntas</string>
+    <string name="references">Referencias</string>
+    <string name="question">Pregunta</string>
+    <string name="answer">Respuesta</string>
+    <string name="begin_translating">Comienza a traducir</string>
+    <string name="publishing_explanation"><![CDATA[<p>La publicación de su trabajo hace que su contenido esté disponible:</p>
 <ul>
-    <li>Online in multiple formats</li>
-    <li>In the Mobile App</li>
-    <li>In a PDF suitable for printing</li>
+    <li>En línea en múltiples formatos</li>
+    <li>En la aplicación móvil</li>
+    <li>En un PDF apto para imprimir</li>
 </ul>]]></string>
-    <string name="confirm_delete_target_translation">This will permanently remove the translation. Continue?</string>
-    <string name="long_click_to_drag">Tap and hold to drag</string>
-    <string name="feedback">Feedback</string>
-    <string name="import_from_sd">Import from SD Card</string>
-    <string name="backup_to_door43">Upload to Server</string>
-    <string name="translation_export_failed">Translation could not be exported</string>
-    <string name="invalid_file">Not a valid file</string>
-    <string name="action_download_updates">Download updates</string>
-    <string name="list_may_be_outdated">The list may be out of date</string>
-    <string name="label_import">Import</string>
-    <string name="label_import_options">Import</string>
-    <string name="import_from_online">Import from Online (requires internet)</string>
-    <string name="automatic_backups">Automatic Backups</string>
-    <string name="export_to_sd">Export to SD Card</string>
-    <string name="chunk_done_prompt">"This chunk is done. Continue editing?"</string>
-    <string name="chunk_done_title">"Edit Chunk"</string>
-    <string name="edit">"Edit"</string>
-    <string name="share_apk">Share this app</string>
-    <string name="send_to">Send To</string>
-    <string name="translators">Contributors</string>
-    <string name="no_backups_online">There are no backups online</string>
-    <string name="translation_words_index">Words Index</string>
-    <string name="print">Print</string>
-    <string name="include_images">Include images</string>
-    <string name="include_incomplete_frames">Include incomplete chunks</string>
-    <string name="backup_to_friend">Send to Friend</string>
+    <string name="confirm_delete_target_translation">Esto eliminará la traducción permanentemente. ¿Deseas continuar?</string>
+    <string name="long_click_to_drag">Mantén presionado para reproducir</string>
+    <string name="feedback">Comentarios</string>
+    <string name="import_from_sd">Importar desde tarjeta SD</string>
+    <string name="backup_to_door43">Subir al servidor</string>
+    <string name="translation_export_failed">No se pudo exportar la traducción</string>
+    <string name="invalid_file">No es un archivo válido</string>
+    <string name="action_download_updates">Descarga la actualización</string>
+    <string name="list_may_be_outdated">La lista puede estar desactualizada</string>
+    <string name="label_import">Importar</string>
+    <string name="label_import_options">Importar</string>
+    <string name="import_from_online">Importar desde el internet (requiere internet)</string>
+    <string name="automatic_backups">Copias de seguridad automáticas</string>
+    <string name="export_to_sd">Exportar a la tarjeta SD</string>
+    <string name="chunk_done_prompt">"Este pedazo está terminado. ¿Continua editando?"</string>
+    <string name="chunk_done_title">"Editar Chunk"</string>
+    <string name="edit">"Editar"</string>
+    <string name="share_apk">Comparte esta app</string>
+    <string name="send_to">Enviar a</string>
+    <string name="translators">Colaboradores</string>
+    <string name="no_backups_online">No hay ninguna copia de seguridad guardada</string>
+    <string name="translation_words_index">Índice de palabras</string>
+    <string name="print">Imprimir</string>
+    <string name="include_images">Incluir imágenes</string>
+    <string name="include_incomplete_frames">Incluye fragmentos incompletos</string>
+    <string name="backup_to_friend">Enviar a amigo</string>
     <string name="device_network_alias_description">Elije un nombre o seudónimo que otros verán al compartirlo con tu dispositivo</string>
     <string name="device_name">Nombre del dispositivo</string>
     <string name="confirm_import_target_translation">Do you want to import <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
@@ -358,56 +358,56 @@
     <string name="footnote_confirm_delete">Are you sure you want to delete footnote?</string>
     <string name="footnote_label">Footnote</string>
     <string name="footnote_title_empty">Footnote Title cannot be empty</string>
-    <string name="footnote_message_empty">Footnote cannot be empty</string>
-    <string name="who_translated_notice">Who contributed to this translation?</string>
-    <string name="privacy_notice">Privacy Notice</string>
-    <string name="need_translator_notice">Please add a contributor</string>
-    <string name="duplicate_native_speaker">A contributor with that name has already been added</string>
-    <string name="edit_contributor">Edit Contributor</string>
-    <string name="registration_failure">Registration Failed. Please check your internet connection</string>
-    <string name="auth_failure_retry">Authentication Failed. Retry?</string>
-    <string name="registering_keys">Registering with server</string>
-    <string name="person_agrees_with_licenses">This person has agreed with the Statement of Faith and Translation Guidelines and agrees to release his/her work on this project under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
-    <string name="invalid_entry_title">Invalid Entry</string>
-    <string name="answers_missing_title">Answers Missing</string>
-    <string name="missing_question_answer">Missing answer for question</string>
-    <string name="answer_missing_for">Missing answer for question:\n%s</string>
-    <string name="answers_missing_continue">Answers are missing for questions.\nContinue anyway?</string>
-    <string name="previous">Previous</string>
-    <string name="title_activity_new_language">New Language Request</string>
-    <string name="new_language_confirmation">Your new language code is \"<xliff:g example="zz-zzz" id="temp_language_code">%1$s</xliff:g>\" for \"<xliff:g example="Greek" id="language_name">%2$s</xliff:g>\".</string>
-    <string name="error_importing_unsupported_target_translation">The  translation of <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> into <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> was created by a different version of <xliff:g example="BTT Writer or translationStudio" id="app_name">%3$s</xliff:g> and cannot be opened. Please update your app and try again.</string>
-    <string name="version">Version</string>
-    <string name="username">login name</string>
-    <string name="password">password</string>
-    <string name="password_confirm">re-type password</string>
-    <string name="logging_in">Logging in</string>
-    <string name="double_check_credentials">Double check your credentials and try again</string>
-    <string name="passwords_mismatch">Passwords do not match</string>
-    <string name="contributors">Contributors</string>
-    <string name="show_passwords">Show Passwords</string>
-    <string name="hide_passwords">Hide Passwords</string>
-    <string name="log_out">Log out</string>
-    <string name="gogs_username_already_exists">That username already exists</string>
-    <string name="registration_failed">Your account could not be created.</string>
-    <string name="title_door43_account_required">Server Account Required</string>
-    <string name="door43_account_required">You must connect to a server account first.</string>
-    <string name="login_doo43">Login with Server Account</string>
-    <string name="register_door43">Create new Server Account</string>
-    <string name="create_offline_profile">Create offline Account</string>
-    <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
-    <string name="title_connect_door43">Connect To Server</string>
+    <string name="footnote_message_empty">La nota no puede estar vacía</string>
+    <string name="who_translated_notice">¿Quién contribuyó a esta traducción?</string>
+    <string name="privacy_notice">Aviso de Privacidad</string>
+    <string name="need_translator_notice">Por favor agregue un colaborador</string>
+    <string name="duplicate_native_speaker">Ya se ha añadido un colaborador con ese nombre</string>
+    <string name="edit_contributor">Editar colaborador</string>
+    <string name="registration_failure">Registro fallido. Por favor revisa tu conexion a internet</string>
+    <string name="auth_failure_retry">Autenticación fallida. ¿Reintertar?</string>
+    <string name="registering_keys">Registrándose con el servidor</string>
+    <string name="person_agrees_with_licenses">Mediante el uso de esta aplicación está de acuerdo con la declaración de las directrices de fe y de traducción y para liberar a trabajar bajo los términos de la licencia Creative Commons Reconocimiento-Compartir bajo la misma licencia 4.0 Internacional.</string>
+    <string name="invalid_entry_title">Entrada inválida</string>
+    <string name="answers_missing_title">Faltan respuestas</string>
+    <string name="missing_question_answer">Falta la respuesta de la pregunta</string>
+    <string name="answer_missing_for">Falta la respuesta de la pregunta: \n%s</string>
+    <string name="answers_missing_continue">Faltan respuestas para preguntas.\n¿Continuar de todas formas?</string>
+    <string name="previous">Anterior</string>
+    <string name="title_activity_new_language">Solicitud de nuevo idioma</string>
+    <string name="new_language_confirmation">Tu nuevo código de idioma es \"<xliff:g example="zz-zzz" id="temp_language_code">%1$s</xliff:g>\" para \"<xliff:g example="Greek" id="language_name">%2$s</xliff:g>\".</string>
+    <string name="error_importing_unsupported_target_translation">La traducción de <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> a <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> fue creada por una versión diferente de <xliff:g example="BTT Writer or translationStudio" id="app_name">%3$s</xliff:g> y no se puede abrir. Por favor, actualiza tu aplicación e inténtalo de nuevo.</string>
+    <string name="version">Versión</string>
+    <string name="username">nombre de inicio</string>
+    <string name="password">contraseña</string>
+    <string name="password_confirm">vuelva a escribir la contraseña</string>
+    <string name="logging_in">Iniciando sesión</string>
+    <string name="double_check_credentials">Comprueba tus credenciales y vuelve a intentarlo</string>
+    <string name="passwords_mismatch">Las contraseñas no coinciden</string>
+    <string name="contributors">Colaboradores</string>
+    <string name="show_passwords">Mostrar contraseñas</string>
+    <string name="hide_passwords">Ocultar contraseñas</string>
+    <string name="log_out">Desconectarse</string>
+    <string name="gogs_username_already_exists">Ese nombre de usuario ya existe</string>
+    <string name="registration_failed">Tu cuenta no pudo ser creada.</string>
+    <string name="title_door43_account_required">Cuenta de servidor requerida</string>
+    <string name="door43_account_required">Primero debes conectarte a una cuenta del servidor.</string>
+    <string name="login_doo43">Iniciar sesión con la cuenta del servidor</string>
+    <string name="register_door43">Crear una nueva cuenta del servidor</string>
+    <string name="create_offline_profile">Crear cuenta fuera de línea</string>
+    <string name="still_possible_to_register_door43">Todavía puedes crear o iniciar sesión en una cuenta de servidor más tarde</string>
+    <string name="title_connect_door43">Conectar al servidor</string>
     <string name="gogs_public_key_name">ts-android</string>
-    <string name="restore_failed">The translation could not be imported</string>
-    <string name="import_from_door43">Import from Server</string>
-    <string name="restore_from_door43">Restore from Server</string>
-    <string name="title_chunk_conflicts">Chunk Conflicts</string>
-    <string name="chunk_conflict_description">A conflict was found between the translation on the server and your device.</string>
-    <string name="review_conflicts">Review differences</string>
-    <string name="keep_server_changes">Keep server changes</string>
-    <string name="keep_local_changes">Keep my changes</string>
-    <string name="translation_name">translation name</string>
-    <string name="project_uploaded_to">Your project has been uploaded to:\n\n<xliff:g example="http:/test.com/test" id="destination_url">%1$s</xliff:g></string>
+    <string name="restore_failed">No se ha podido importar la traducción</string>
+    <string name="import_from_door43">Importar del servidor</string>
+    <string name="restore_from_door43">Restaurar desde el servidor</string>
+    <string name="title_chunk_conflicts">Conflictos de Trozo</string>
+    <string name="chunk_conflict_description">Se ha encontrado un conflicto entre la traducción en el servidor y tu dispositivo.</string>
+    <string name="review_conflicts">Revisar diferencias</string>
+    <string name="keep_server_changes">Mantener cambios del servidor</string>
+    <string name="keep_local_changes">Mantener mis cambios</string>
+    <string name="translation_name">nombre de la traducción</string>
+    <string name="project_uploaded_to">Tu proyecto ha sido subido a:\n\n<xliff:g example="http:/test.com/test" id="destination_url">%1$s</xliff:g></string>
     <string name="label_open">Open</string>
     <string name="title_activity_import_usfm_language">Import USFM Project - Select Language</string>
     <string name="title_activity_import_usfm_book">Import USFM Project - Select Book For: </string>
@@ -458,27 +458,27 @@
     <string name="could_not_parse">Could not parse \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
     <string name="no_chunk_list">No chunk list found for \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
     <string name="chapter_count_invalid">Expected <xliff:g example="16" id="chunk_count">%1$s</xliff:g> chapters, but last chapter was <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
-    <string name="no_chapter">No chapter found</string>
-    <string name="label_restore">Restore</string>
-    <string name="title_import_success">Import Success</string>
-    <string name="title_import_failed">Import Failed!</string>
-    <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
-    <string name="table_of_contents">Table of Contents </string>
-    <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
-    <string name="new_lang_api_upload_failure_title">New Language Error</string>
-    <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
-    <string name="answer_not_saved">Your answer could not be saved. Please try again.</string>
-    <string name="try_again">Please try again</string>
-    <string name="copy">Copy</string>
-    <string name="submitting_new_language_requests">Submitting new language requests</string>
-    <string name="downloading_languages">Downloading languages</string>
-    <string name="confirm_leave_questionnaire">Are you sure you want to leave the questionnaire?</string>
-    <string name="continue_requesting_new_language">Continue requesting new language</string>
-    <string name="request_new_language">Request new language</string>
-    <string name="title_new_language_code">New Language Code</string>
-    <string name="confirm_start_new_language_code">You are about to request a new language code.</string>
-    <string name="check_for_updates">Check for updates</string>
-    <string name="check_for_app_updates">Check the internet for updates to BTT Writer App.</string>
+    <string name="no_chapter">Ningún capítulo encontrado</string>
+    <string name="label_restore">Restaura</string>
+    <string name="title_import_success">Importación exitosa</string>
+    <string name="title_import_failed">¡Importación Fallida!</string>
+    <string name="import_project_success">Importación exitosa de <xliff:g example="Mark" id="project">%1$s</xliff:g> desde:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
+    <string name="table_of_contents">Tabla de Contenido </string>
+    <string name="questionnaire_title">Página <xliff:g example="1" id="page_num">%1$d</xliff:g> de <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
+    <string name="new_lang_api_upload_failure_title">Error de nuevo idioma</string>
+    <string name="new_lang_api_upload_failure">No pudimos guardar las respuestas al Cuestionario del Idioma Nuevo. Intentaremos nuevamente la próxima vez que</string>
+    <string name="answer_not_saved">No se ha podido guardar tu firma, por favor inténtalo de nuevo.</string>
+    <string name="try_again">Por favor inténtalo de nuevo</string>
+    <string name="copy">Copia</string>
+    <string name="submitting_new_language_requests">Enviando nuevas solicitudes de idioma</string>
+    <string name="downloading_languages">Descargando idiomas</string>
+    <string name="confirm_leave_questionnaire">¿Estás seguro de que quieres abandonar el cuestionario?</string>
+    <string name="continue_requesting_new_language">Continúe solicitando nuevo idioma</string>
+    <string name="request_new_language">Solicitar nuevo idioma</string>
+    <string name="title_new_language_code">Código de idioma nuevo</string>
+    <string name="confirm_start_new_language_code">Estás a punto de solicitar un nuevo código de idioma.</string>
+    <string name="check_for_updates">Buscar actualizaciónes</string>
+    <string name="check_for_app_updates">Consulte Internet para obtener actualizaciones de BTT Writer App.</string>
     <string name="have_latest_app_update">You are already using the latest version of BTT Writer.</string>
     <string name="download_latest_apk">Do you want to download this update?</string>
     <string name="updating_projects">Updating projects</string>
