@@ -300,16 +300,16 @@
     <string name="backup_to_friend">Enviar a amigo</string>
     <string name="device_network_alias_description">Elije un nombre o seudónimo que otros verán al compartirlo con tu dispositivo</string>
     <string name="device_name">Nombre del dispositivo</string>
-    <string name="confirm_import_target_translation">Do you want to import <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
-    <string name="success_import_target_translation"><xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g> was successfully imported.</string>
-    <string name="title_activity_custom_alert_dialog">CustomAlertDialog</string>
-    <string name="neutral">Neutral</string>
-    <string name="mark_done">Mark chunk as done</string>
-    <string name="add_contributor">Add Contributor</string>
-    <string name="confirm_delete_translator">This will permanently remove the translator. Continue?</string>
-    <string name="delete_translator_title">Delete Translator</string>
-    <string name="title_activity_profile">ProfileActivity</string>
-    <string name="action_translate_resources">Translate Resources</string>
+    <string name="confirm_import_target_translation">¿Deseas importar <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
+    <string name="success_import_target_translation"><xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g> se importó con éxito.</string>
+    <string name="title_activity_custom_alert_dialog">Alerta personalizada</string>
+    <string name="neutral">Neutro</string>
+    <string name="mark_done">Marcar el fragmento como terminado</string>
+    <string name="add_contributor">Añadir Contribuyente</string>
+    <string name="confirm_delete_translator">Esto eliminará permanentemente al traductor. ¿Continuar?</string>
+    <string name="delete_translator_title">Borrar traductor</string>
+    <string name="title_activity_profile">Actividad de perfil</string>
+    <string name="action_translate_resources">Traducir recursos</string>
     <string name="publish_state">Publish State</string>
     <string name="publish_status_not">Not Published</string>
     <string name="publish_status_current">Published</string>
