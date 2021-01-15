@@ -409,55 +409,55 @@
     <string name="translation_name">nombre de la traducción</string>
     <string name="project_uploaded_to">Tu proyecto ha sido subido a:\n\n<xliff:g example="http:/test.com/test" id="destination_url">%1$s</xliff:g></string>
     <string name="label_open">Abrir</string>
-    <string name="title_activity_import_usfm_language">Import USFM Project - Select Language</string>
-    <string name="title_activity_import_usfm_book">Import USFM Project - Select Book For: </string>
-    <string name="label_import_usfm">Import USFM</string>
-    <string name="import_usfm_success">USFM file Import Success</string>
-    <string name="import_usfm_failed">USFM file Import Failed</string>
-    <string name="title_import_usfm_error_book">Error Importing USFM book \'%s\'</string>
-    <string name="title_import_usfm_error">Error Importing USFM</string>
-    <string name="title_processing_usfm_summary">USFM Processing Summary</string>
-    <string name="title_import_usfm_results">USFM Import Results</string>
-    <string name="zip_read_error">Error reading Zip</string>
-    <string name="file_read_error">Error reading File</string>
-    <string name="file_write_error">Error writing File</string>
-    <string name="file_write_for_verse">Error writing verse %s</string>
-    <string name="file_read_error_detail">Error reading File \'%s\'</string>
-    <string name="missing_book_short_name">Missing book short name (\\id or \\toc3)</string>
-    <string name="missing_book_name">Missing book name (\\toc1)</string>
-    <string name="missing_language">Missing language</string>
-    <string name="no_section_no_verse">No section nor verse markers found</string>
-    <string name="no_verse">No verse markers found</string>
-    <string name="no_section_no_chunk">No sections found and no chunking breakdown list</string>
-    <string name="book_parse_error">Error parsing book</string>
-    <string name="error_reading_file">Error reading file: %s</string>
-    <string name="could_not_find_chapter">Could not find chapter: %s</string>
-    <string name="could_not_find_verses_in_chapter">No verses in range <xliff:g example="1" id="start_verse">%1$d</xliff:g> to <xliff:g example="2" id="end_verse">%2$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%3$s</xliff:g></string>
-    <string name="missing_verses_in_chapter">Missing <xliff:g example="2" id="verse_count">%1$d</xliff:g> verse(s) in range <xliff:g example="1" id="start_verse">%2$d</xliff:g> to <xliff:g example="2" id="end_verse">%3$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
-    <string name="extra_verses_in_chapter">Extra <xliff:g example="2" id="verse_count">%1$d</xliff:g> verse(s) in range <xliff:g example="1" id="start_verse">%2$d</xliff:g> to <xliff:g example="2" id="end_verse">%3$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
-    <string name="could_not_parse_chapter">Could not parse chapter: %s</string>
-    <string name="missing_chapter_n">Missing chapter %s - will try to recover</string>
-    <string name="duplicate_chapter">Duplicate chapter: %s</string>
-    <string name="chapter_out_of_order">Chapter out of order: \'<xliff:g example="4" id="found">%1$s</xliff:g>\' after \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
-    <string name="missing_verses_in_section">No Verses in Section</string>
+    <string name="title_activity_import_usfm_language">Importar proyecto USFM - Seleccione idioma</string>
+    <string name="title_activity_import_usfm_book">Importar Proyecto USFM - Seleccione Libro para: </string>
+    <string name="label_import_usfm">Importar USFM</string>
+    <string name="import_usfm_success">Éxito al importar archivo USFM</string>
+    <string name="import_usfm_failed">Importación de archivo USFM falló</string>
+    <string name="title_import_usfm_error_book">Error importando el libro USFM \'%s\'</string>
+    <string name="title_import_usfm_error">Error importando USFM</string>
+    <string name="title_processing_usfm_summary">Resumen de procesamiento USFM</string>
+    <string name="title_import_usfm_results">Resultados de importación USFM</string>
+    <string name="zip_read_error">Error al leer el fichero zip</string>
+    <string name="file_read_error">Error al leer el archivo</string>
+    <string name="file_write_error">Error al escribir el archivo</string>
+    <string name="file_write_for_verse">Error al escribir versículo %s</string>
+    <string name="file_read_error_detail">Error al leer el archivo \'%s\'</string>
+    <string name="missing_book_short_name">Falta el nombre corto del libro (\\id o \\toc3)</string>
+    <string name="missing_book_name">Falta el nombre del libro (\\toc1)</string>
+    <string name="missing_language">Idioma ausente</string>
+    <string name="no_section_no_verse">No se encontraron marcadores de secciones ni versículos</string>
+    <string name="no_verse">No se encontraron marcadores de versículos</string>
+    <string name="no_section_no_chunk">No hay secciones y no hay lista de averías de trozos</string>
+    <string name="book_parse_error">Error al analizar el libro</string>
+    <string name="error_reading_file">Error al leer el archivo \'%s</string>
+    <string name="could_not_find_chapter">No se pudo encontrar el capítulo: %s</string>
+    <string name="could_not_find_verses_in_chapter">No hay versículos en el rango <xliff:g example="1" id="start_verse">%1$d</xliff:g> a <xliff:g example="2" id="end_verse">%2$d</xliff:g> en el capítulo: <xliff:g example="05" id="chapter">%3$s</xliff:g></string>
+    <string name="missing_verses_in_chapter">Falta <xliff:g example="2" id="verse_count">%1$d</xliff:g> versículo(s) en el rango <xliff:g example="1" id="start_verse">%2$d</xliff:g> a <xliff:g example="2" id="end_verse">%3$d</xliff:g> en el capítulo: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
+    <string name="extra_verses_in_chapter">Extra <xliff:g example="2" id="verse_count">%1$d</xliff:g> versículo (s) en el rango <xliff:g example="1" id="start_verse">%2$d</xliff:g> a <xliff:g example="2" id="end_verse">%3$d</xliff:g> en el capítulo: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
+    <string name="could_not_parse_chapter">No se pudo analizar el capítulo: %s</string>
+    <string name="missing_chapter_n">Falta el capítulo %s - intentará recuperar</string>
+    <string name="duplicate_chapter">Duplicado capítulo: %s</string>
+    <string name="chapter_out_of_order">Capítulo fuera de orden: \'<xliff:g example="4" id="found">%1$s</xliff:g>\' después de \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
+    <string name="missing_verses_in_section">No hay versículos en la sección</string>
     <string name="error_prefix">Error: %s</string>
-    <string name="no_error">No errors Found</string>
-    <string name="warning_prefix">Warning: %s</string>
-    <string name="found_book">Found book: %s</string>
-    <string name="importing_file">Importing: %s</string>
-    <string name="selected_language">Selected Language: %s</string>
-    <string name="initializing_import">Initializing Import</string>
-    <string name="finished_loading">Finished Loading Books</string>
-    <string name="processing_chapter">Processing Chapter: %s</string>
-    <string name="building_manifest">Building Manifest</string>
-    <string name="reading_usfm">Reading USFM</string>
-    <string name="importing_usfm">Importing USFM</string>
-    <string name="import_usfm_file">Import USFM File</string>
-    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nhas invalid book name: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\nDo you wish to select a book name?</string>
-    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nis missing book name\nDo you wish to select a book name?</string>
-    <string name="could_not_parse">Could not parse \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
-    <string name="no_chunk_list">No chunk list found for \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
-    <string name="chapter_count_invalid">Expected <xliff:g example="16" id="chunk_count">%1$s</xliff:g> chapters, but last chapter was <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
+    <string name="no_error">No se encontraron errores</string>
+    <string name="warning_prefix">Advertencia:% s</string>
+    <string name="found_book">Libro encontrado: %s</string>
+    <string name="importing_file">Importando: %s</string>
+    <string name="selected_language">Idioma seleccionado</string>
+    <string name="initializing_import">Iniciando importación</string>
+    <string name="finished_loading">Carga de Libros Terminada</string>
+    <string name="processing_chapter">Procesando el capítulo: %s</string>
+    <string name="building_manifest">Construyendo Manifiesto</string>
+    <string name="reading_usfm">Leyendo USFM</string>
+    <string name="importing_usfm">Importar USFM</string>
+    <string name="import_usfm_file">Importar archivo USFM</string>
+    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\' \ ntiene un nombre de libro no válido: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\' \ n¿Desea seleccionar un nombre del libro?</string>
+    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nle falta el nombre del libro\n¿Desea seleccionar el nombre del libro?</string>
+    <string name="could_not_parse">No se pudo analizar \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
+    <string name="no_chunk_list">No se encontró una lista de trozos para \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
+    <string name="chapter_count_invalid">Se esperaban los capítulos <xliff:g example="16" id="chunk_count">%1$s</xliff:g>, pero el último capítulo fue <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
     <string name="no_chapter">Ningún capítulo encontrado</string>
     <string name="label_restore">Restaura</string>
     <string name="title_import_success">Importación exitosa</string>
@@ -550,34 +550,34 @@
     <string name="options_update_failed">The update failed.  Check your Internet connection.</string>
     <string name="update_cancelled">The update was cancelled</string>
     <string name="update_menu_requires_internet">Requires internet Connection\nThese updates may take a while.</string>
-    <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> New Source Texts and <xliff:g example="10" id="updated">%2$d</xliff:g> Updated Source Texts are available to be downloaded.</string>
-    <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
-    <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
-    <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
-    <string name="available_online">Available Online</string>
-    <string name="update_sources_label">Exit to Update Source Text List</string>
-    <string name="warning_title">Warning</string>
-    <string name="update_warning">Checking for new and updated source texts will close this project. This requires an Internet Connection.</string>
-    <string name="download_sources">Download Available Source Texts</string>
-    <string name="check_app_update">Check for Update to BTT Writer</string>
-    <string name="all_up_to_date">All Source Texts already up to date!</string>
-    <string name="loading_sources">Loading Source Texts\nPlease wait...</string>
-    <string name="old_testament_label">Old Testament</string>
-    <string name="new_testament_label">New Testament</string>
-    <string name="ta_label">translationAcademy</string>
-    <string name="other_label">Other</string>
-    <string name="choose_language">Choose a Language</string>
-    <string name="choose_category">Choose a Category</string>
-    <string name="choose_sources">Choose Source(s)</string>
-    <string name="choose_book">Choose a Book</string>
-    <string name="by_language_label">By Language</string>
-    <string name="by_book_label">By Book</string>
-    <string name="select_all_label">Select All</string>
-    <string name="unselect_all_label">Unselect All</string>
-    <string name="downloads_success"><xliff:g example="6" id="success_count">%1$d</xliff:g> Source Texts have been successfully downloaded.</string>
-    <string name="downloads_fail"><xliff:g example="6" id="fail_count">%1$d</xliff:g> Source downloads have failed.</string>
-    <string name="download_cancelled">Download Cancelled</string>
-    <string name="download_errors">Download Errors</string>
+    <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> Textos fuentes nuevos y <xliff:g example="10" id="updated">%2$d</xliff:g> Textos fuentes actualizados disponibles para su descarga.</string>
+    <string name="updating_sources">Actualizando la lista de textos de origen. Esto puede tardar un tiempo. Por favor, espere...</string>
+    <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Se han agregado los idiomas receptores.</string>
+    <string name="updating_languages">Actualización de la lista de idiomas receptores. Esto puede tardar un rato. Por favor espera...</string>
+    <string name="available_online">Disponible en línea</string>
+    <string name="update_sources_label">Salir para actualizar la lista de textos fuente</string>
+    <string name="warning_title">Advertencia</string>
+    <string name="update_warning">La revisión de textos fuente nuevos y actualizados cerrará este proyecto. Esto requiere una conexión al Internet.</string>
+    <string name="download_sources">Descargar textos fuentes disponibles</string>
+    <string name="check_app_update">Comprobar Actualización a BTT Writer</string>
+    <string name="all_up_to_date">¡Todos los textos fuente ya están actualizados!</string>
+    <string name="loading_sources">Cargando textos fuente \nPor favor, espere...</string>
+    <string name="old_testament_label">Antiguo Testamento</string>
+    <string name="new_testament_label">Nuevo Testamento</string>
+    <string name="ta_label">academia de traducción</string>
+    <string name="other_label">Otro</string>
+    <string name="choose_language">Elige un Idioma</string>
+    <string name="choose_category">Elija una categoría</string>
+    <string name="choose_sources">Elige fuente (s)</string>
+    <string name="choose_book">Elige un libro</string>
+    <string name="by_language_label">Por idioma</string>
+    <string name="by_book_label">Por libro</string>
+    <string name="select_all_label">Seleccionar todo</string>
+    <string name="unselect_all_label">Anular selección de todo</string>
+    <string name="downloads_success"><xliff:g example="6" id="success_count">%1$d</xliff:g> Los textos fuentes se han descargado correctamente.</string>
+    <string name="downloads_fail"><xliff:g example="6" id="fail_count">%1$d</xliff:g> Las descargas de origen han fallado.</string>
+    <string name="download_cancelled">Descarga cancelada</string>
+    <string name="download_errors">Error de Descarga</string>
     <string name="helps_download_errors">Helps failed to download for: <xliff:g example="en_obs,fr_obs" id="fails">%1$s</xliff:g></string>
     <string name="source_not_found">Source Not Found on Server</string>
     <string name="search_for_language">Search for Language</string>
