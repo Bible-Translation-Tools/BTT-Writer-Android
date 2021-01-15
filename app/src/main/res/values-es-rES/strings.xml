@@ -408,7 +408,7 @@
     <string name="keep_local_changes">Mantener mis cambios</string>
     <string name="translation_name">nombre de la traducción</string>
     <string name="project_uploaded_to">Tu proyecto ha sido subido a:\n\n<xliff:g example="http:/test.com/test" id="destination_url">%1$s</xliff:g></string>
-    <string name="label_open">Open</string>
+    <string name="label_open">Abrir</string>
     <string name="title_activity_import_usfm_language">Import USFM Project - Select Language</string>
     <string name="title_activity_import_usfm_book">Import USFM Project - Select Book For: </string>
     <string name="label_import_usfm">Import USFM</string>
