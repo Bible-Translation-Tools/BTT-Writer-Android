@@ -500,21 +500,21 @@
     <string name="export_to_pdf">Exporte al archivo CSV</string>
     <string name="tip_export_to_pdf">Crea un archivo .pdf de tu proyecto</string>
     <string name="title_upload_export">Opciones de subir/Exportar</string>
-    <string name="menu_upload_export">Upload/Export</string>
-    <string name="title_review">Project Review</string>
-    <string name="title_book">Project</string>
-    <string name="tip_backup_to_door43">Uploads project to your server account.\nBy uploading the project to your server account, the content is available to be downloaded by other translators, merged with other projects, or used as an online backup.</string>
-    <string name="tip_backup_to_sd">Creates a copy of your project file</string>
-    <string name="draft_translation">Draft Level <xliff:g example="3" id="checking_level">%1$d</xliff:g>: <xliff:g example="Pig Latin" id="language">%2$s</xliff:g></string>
-    <string name="title_download_source_language">Download from Online</string>
-    <string name="download_source_language">Download \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' now? This requires an Internet Connection?</string>
-    <string name="downloading_source">Downloading source <xliff:g example="en" id="source_language">%1$s</xliff:g></string>
-    <string name="title_export_usfm">Export to USFM</string>
-    <string name="export_usfm_by_chapter">Do you want the USFM output separated into chapters or do you want the whole book as a single file?</string>
-    <string name="label_separate">Separate</string>
-    <string name="label_whole">Whole</string>
-    <string name="export_to_usfm">Export to USFM file</string>
-    <string name="export_failed">Export failed!</string>
+    <string name="menu_upload_export">Subir/Exportar</string>
+    <string name="title_review">Revisión del proyecto</string>
+    <string name="title_book">Proyecto</string>
+    <string name="tip_backup_to_door43">Sube el proyecto a tu cuenta Door43. \nPara cargar el proyecto en tu cuenta Door43, el contenido está disponible para ser descargado por otros traductores, fusionarse con otros proyectos o utilizarse como una copia de seguridad en línea.</string>
+    <string name="tip_backup_to_sd">Crea una copia del archivo de tu proyecto</string>
+    <string name="draft_translation">Borrador Nivel <xliff:g example="3" id="checking_level">%1$d</xliff:g>: <xliff:g example="Pig Latin" id="language">%2$s</xliff:g></string>
+    <string name="title_download_source_language">Descargar desde Online</string>
+    <string name="download_source_language">¿Descargar \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' ahora? Esto requiere una conexión a Internet?</string>
+    <string name="downloading_source">Descargando la fuente <xliff:g example="en" id="source_language">%1$s</xliff:g></string>
+    <string name="title_export_usfm">Exportar a USFM</string>
+    <string name="export_usfm_by_chapter">¿Deseas que la salida de USFM se divida en capítulos o deseas que el libro completo sea un solo archivo?</string>
+    <string name="label_separate">Separar</string>
+    <string name="label_whole">Entero</string>
+    <string name="export_to_usfm">Exportar a USFM</string>
+    <string name="export_failed">¡La Exportación falló!</string>
     <string name="export_success">Export successful!\n\nExported file is at:\n<xliff:g example="/sd_card/downloads" id="file_path">%1$s</xliff:g></string>
     <string name="update_source_language">Do you want to update \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' from Online (requires internet)?</string>
     <string name="conflict_exists">CONFLICT EXISTS!</string>
