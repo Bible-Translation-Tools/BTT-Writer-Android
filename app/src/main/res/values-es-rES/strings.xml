@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <!-- The app name -->
-    <string name="title_projects">Proyectos</string>
-    <string name="title_frames">Marcos</string>
+    <string name="title_projects">Proyecto</string>
+    <string name="title_frames">Cuadro</string>
     <!-- Acknowlogment or an affirmative statement -->
-    <string name="label_ok">ACEPTAR</string>
+    <string name="label_ok">OK</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
     <string name="label_close">Cerrar</string>
     <!-- Close or reject an action -->
@@ -602,27 +602,27 @@
     <string name="translation_questions">Preguntas</string>
     <string name="translation_academy">Academia de Traducciones</string>
     <string name="unsupported">No soportado</string>
-    <string name="import_warning">The project \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' may not be supported in this app.  Currently, BTT Writer only supports Scripture and Open Bible Stories projects. If this is not one of those types of projects it will not be imported into BTT Writer.\n\nDo you want to try to import it anyway?</string>
-    <string name="overwrite_file_title">Overwrite File?</string>
-    <string name="overwrite_file_warning">The same filename already exists.  Do you want to overwrite\n\<xliff:g example="project.usfm" id="project_name">%1$s</xliff:g>?\n\nSize: <xliff:g example="3.5 KB" id="size">%2$s</xliff:g>\t\nModified: <xliff:g example="2/23/2017" id="date">%3$s</xliff:g></string>
-    <string name="overwrite_label">Overwrite</string>
-    <string name="rename_label">Rename</string>
+    <string name="import_warning">El proyecto \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' puede no es compatible con esta aplicación. Actualmente, translationStudio solo es compatible con los proyectos de Escritura e historias bíblicas abiertas. Si este no es uno de esos tipos de proyectos, no se importará a translationStudio. \n\n¿Deseas intentar importarlo de todos modos?</string>
+    <string name="overwrite_file_title">¿Sobrescribir archivo?</string>
+    <string name="overwrite_file_warning">El mismo nombre de archivo ya existe. ¿Desea sobrescribir \n\ <xliff:g example="project.usfm" id="project_name">%1$s</xliff:g>? \n\ nTamaño: <xliff:g example="3.5 KB" id="size">%2$s</xliff:g> \ t \ n Modificado: <xliff:g example="2/23/2017" id="date">%3$s</xliff:g></string>
+    <string name="overwrite_label">Sobrescribir</string>
+    <string name="rename_label">Renombrar</string>
     <string name="bytes_short">B</string>
     <string name="kilobytes_short">KB</string>
     <string name="megabytes_short">MB</string>
-    <string name="has_warnings">\'<xliff:g example="Chapter 1" id="title">%1$s</xliff:g>\' has warnings:</string>
-    <string name="title">Title</string>
-    <string name="reference">Reference</string>
-    <string name="title_footnote">Footnote</string>
-    <string name="access_not_root">Failed to enable access to SD card base.\nYou may have selected a folder other than the SD CARD base.\nMake sure you pressed the \'SD card\' icon on the left, and then that the button you pressed on the bottom said \'SELECT \"SD card\"\'.</string>
-    <string name="merge_summary">The projects have been merged. There are (<xliff:g example="37" id="count">%1$d</xliff:g>) chunks that contain new conflicts that need your attention.</string>
-    <string name="merge_complete_title">Merge Complete</string>
-    <string name="access_success_title">Enable SD Card Access</string>
-    <string name="interrupting_download">Trying to interrupt download</string>
-    <string name="slow_device">Slow Device</string>
-    <string name="min_hardware_req_not_met">This device does not meet the minimum hardware requirements and may function poorly. You may also experience problems on some phones and other very small devices.</string>
-    <string name="do_not_show_again">Don\'t show again</string>
-    <string name="pref_title_check_hardware_requirements">Check Hardware Requirements</string>
-    <string name="pref_description_check_hardware_requirements">Check for suggested hardware when starting the app</string>
-    <string name="import_project_already_exists">This project (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) already exists locally. How would you like to proceed?</string>
+    <string name="has_warnings">\'<xliff:g example="Chapter 1" id="title">%1$s</xliff:g>\' tiene alertas:</string>
+    <string name="title">Título</string>
+    <string name="reference">Referencia</string>
+    <string name="title_footnote">Nota al pie</string>
+    <string name="access_not_root">Error al habilitar el acceso a la base de la tarjeta SD. \nPuedes haber seleccionado una carpeta que no sea la base SD CARD. \ NAsegúrate de presionar el icono \'SD card\' a la izquierda, y luego de que el botón que presionó en la parte inferior dice \' SELECCIONA \"Tarjeta SD\" \'.</string>
+    <string name="merge_summary">Los proyectos han sido combinados. Hay (<xliff:g example="37" id="count">%1$d</xliff:g>) fragmentos que contienen nuevos conflictos que requieren tu atención.</string>
+    <string name="merge_complete_title">Combinación completa</string>
+    <string name="access_success_title">Activar acceso a tarjeta SD</string>
+    <string name="interrupting_download">Intentando interrumpir la descarga</string>
+    <string name="slow_device">Dispositivo lento</string>
+    <string name="min_hardware_req_not_met">Este dispositivo no cumple con los requisitos mínimos de hardware y puede funcionar mal. También puede tener problemas en algunos teléfonos y otros dispositivos muy pequeños.</string>
+    <string name="do_not_show_again">No mostrar nuevamente</string>
+    <string name="pref_title_check_hardware_requirements">Comprobar Requisitos de Hardware</string>
+    <string name="pref_description_check_hardware_requirements">Revise el hardware sugerido al iniciar la aplicación</string>
+    <string name="import_project_already_exists">Este proyecto (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) ya existe localmente. ¿Cómo quieres continuar?</string>
 </resources>
