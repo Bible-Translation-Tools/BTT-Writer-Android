@@ -53,8 +53,8 @@ public class Request {
                 }
             }
             conn.setRequestProperty("Content-Type", "application/json");
-//            conn.setReadTimeout(this.readTimeout);
-//            conn.setConnectTimeout(this.connectionTimeout);
+            conn.setReadTimeout(this.readTimeout);
+            conn.setConnectTimeout(this.connectionTimeout);
 
             // custom request method
             if(requestMethod != null) {
@@ -72,16 +72,8 @@ public class Request {
                 dos.flush();
                 dos.close();
             }
-            Logger.w(Request.class.getName(), "Request: " + "\n" +
-                    "Requested url: " + url.toString() + "\n" +
-                    "User password: " + user.password + "\n" +
-                    "Token name: " + user.token.getName() + "- value: " + user.token);
 
             responseCode = conn.getResponseCode();
-
-            if (responseCode != 200 || responseCode != 204) {
-                Logger.w(Request.class.getName(), "Request failed " + responseCode);
-            }
 
             if(isRequestMethodReadable(conn.getRequestMethod())) {
                 // read response

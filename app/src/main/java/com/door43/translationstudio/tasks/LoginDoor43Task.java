@@ -111,22 +111,6 @@ public class LoginDoor43Task extends ManagedTask {
         return user;
     }
 
-    public void logOut(User user) {
-        Request request = new Request(App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api));
-        String path = String.format("/users/%s/tokens/%s", user.getUsername(), getTokenStub());
-        Response response = request.request(path, user, null, "DELETE");
-        if(response.code != 204) {
-            Logger.w(LoginDoor43Task.class.getName(), "delete token - gogs api responded with " + response.code + ": " + response.toString(), response.exception);
-            Logger.w(
-                    LoginDoor43Task.class.getName()+"."+"logOut",
-                    "User.username: " + user.getUsername() + "\n" +
-                            "User.password/token: " + user.token.toString() + "\n" +
-                            "Token name: " + user.token.getName() + "\n" +
-                            "Url: " + App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api) + " / " + path
-                    );
-        }
-    }
-
     public static String getTokenStub() {
         String defaultTokenName = App.context().getResources().getString(R.string.gogs_token_name);
         String androidId = Settings.Secure.getString(App.context().getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -134,7 +118,7 @@ public class LoginDoor43Task extends ManagedTask {
         if (nickname == null || nickname.isEmpty()) {
             nickname = Build.MODEL;
         }
-        String deviceToken = String.format("%s_%s__%s", Build.MANUFACTURER, Build.MODEL, androidId);
+        String deviceToken = String.format("%s_%s__%s", Build.MANUFACTURER, nickname, androidId);
         return defaultTokenName + "__" + deviceToken;
     }
 }
