@@ -235,6 +235,8 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
         User user = App.getProfile().gogsUser;
         LogoutTask task = new LogoutTask(user);
         TaskManager.addTask(task, LogoutTask.TASK_ID);
+        task.addOnFinishedListener(this);
+
 
         App.setProfile(null);
         Intent logoutIntent = new Intent(HomeActivity.this, ProfileActivity.class);
@@ -999,6 +1001,11 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                         SettingsActivity.promptUserToDownloadLatestVersion(HomeActivity.this, checkForLatestReleaseTask.getLatestRelease());
                     }
 
+                } else if(task instanceof LogoutTask) {
+                    if (progressDialog != null) {
+                        progressDialog.dismiss();
+                        progressDialog = null;
+                    }
                 } else {
                     if (progressDialog != null) {
                         progressDialog.dismiss();

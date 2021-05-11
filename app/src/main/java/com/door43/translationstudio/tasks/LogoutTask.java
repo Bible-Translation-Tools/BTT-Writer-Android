@@ -20,15 +20,19 @@ public class LogoutTask extends ManagedTask {
     private String tokenName;
     private String tokenSha1;
 
-    // logout with token name
     public LogoutTask (User user) {
         this.user = user;
-        this.tokenName = user.token.getName();
-        this.tokenSha1 = user.token.toString();
+        this.tokenName = (user != null && user.token != null) ? user.token.getName() : null;
+        this.tokenSha1 = (user != null && user.token != null) ? user.token.toString() : null;
     }
 
     @Override
     public void start() {
+        if (user == null) {
+            // local user (non-server account)
+            return;
+        }
+
         String apiServer = App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api);
         Request requester = new Request(apiServer);
 
