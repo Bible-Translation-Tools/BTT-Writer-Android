@@ -67,6 +67,8 @@ configurations {
         exclude module: 'httpclient'
         exclude module: 'commons-logging'
     }
+    cleanedAnnotations
+    compile.exclude group: 'org.jetbrains' , module:'annotations'
 }
 
 if (System.env.TRAVIS == 'true') {
@@ -111,6 +113,7 @@ dependencies {
     implementation project(':html-textview')
     implementation project(':seekbarhint')
     implementation 'com.google.android.gms:play-services-appindexing:9.8.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
     androidTestImplementation 'androidx.recyclerview:recyclerview:1.0.0'
     androidTestImplementation 'androidx.appcompat:appcompat:1.0.0'
     androidTestImplementation 'androidx.legacy:legacy-support-v4:1.0.0'

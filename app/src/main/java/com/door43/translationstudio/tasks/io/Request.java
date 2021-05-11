@@ -53,8 +53,8 @@ public class Request {
                 }
             }
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setReadTimeout(this.readTimeout);
-            conn.setConnectTimeout(this.connectionTimeout);
+//            conn.setReadTimeout(this.readTimeout);
+//            conn.setConnectTimeout(this.connectionTimeout);
 
             // custom request method
             if(requestMethod != null) {
