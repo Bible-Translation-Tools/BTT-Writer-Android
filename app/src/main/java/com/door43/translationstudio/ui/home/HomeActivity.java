@@ -234,7 +234,6 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
     private void doLogout() {
         User user = App.getProfile().gogsUser;
         LogoutTask task = new LogoutTask(user);
-//        task.addOnFinishedListener(HomeActivity.this);
         TaskManager.addTask(task, LogoutTask.TASK_ID);
 
         App.setProfile(null);
