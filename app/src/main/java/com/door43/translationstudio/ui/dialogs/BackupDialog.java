@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
+import com.door43.translationstudio.tasks.LogoutTask;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +25,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.unfoldingword.gogsclient.User;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
@@ -121,6 +124,12 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // log out
+                User user = App.getProfile().gogsUser;
+                LogoutTask task = new LogoutTask(user);
+                taskWatcher.watch(task);
+                TaskManager.addTask(task, LogoutTask.TASK_ID);
+
                 App.setProfile(null);
                 Intent logoutIntent = new Intent(getActivity(), ProfileActivity.class);
                 startActivity(logoutIntent);
