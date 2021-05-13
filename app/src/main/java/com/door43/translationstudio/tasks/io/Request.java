@@ -20,7 +20,6 @@ public class Request {
     private int readTimeout = 5000;
     private int connectionTimeout = 5000;
     private final String baseUrl;
-    private Response lastResponse = null;
 
     public Request(String apiUrl) {
         this.baseUrl = apiUrl.replaceAll("/+$", "") + "/";
@@ -29,12 +28,12 @@ public class Request {
     /**
      * Performs a request against the api
      * @param partialUrl the api command
-     * @param user the user authenticating this request. Requires token or username and pasword
+     * @param userAuth the user authenticating this request. Requires token or username and pasword
      * @param postData if not null the request will POST the data otherwise it will be a GET request
      * @param requestMethod if null the request method will default to POST or GET
      * @return
      */
-    public Response request(String partialUrl, User user, String postData, String requestMethod) {
+    public Response request(String partialUrl, User userAuth, String postData, String requestMethod) {
         int responseCode = 0;
         String responseData = null;
         Exception exception = null;
@@ -46,8 +45,8 @@ public class Request {
             } else {
                 conn = (HttpURLConnection)url.openConnection();
             }
-            if(user != null) {
-                String auth = encodeUserAuth(user);
+            if(userAuth != null) {
+                String auth = encodeUserAuth(userAuth);
                 if(auth != null) {
                     conn.addRequestProperty("Authorization", auth);
                 }
@@ -88,8 +87,8 @@ public class Request {
         } catch (Exception e) {
             exception = e;
         }
-        this.lastResponse = new Response(responseCode, responseData, exception);
-        return this.lastResponse;
+
+        return new Response(responseCode, responseData, exception);
     }
 
     /**
