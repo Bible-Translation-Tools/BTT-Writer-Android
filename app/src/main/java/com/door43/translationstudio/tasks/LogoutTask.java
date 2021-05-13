@@ -36,7 +36,7 @@ public class LogoutTask extends ManagedTask {
         String apiServer = App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api);
         Request requester = new Request(apiServer);
 
-        // uses Basic authorization scheme
+        // uses Basic authorization scheme, token should be null
         user.password = tokenSha1;
         user.token = null;
 
@@ -78,7 +78,7 @@ public class LogoutTask extends ManagedTask {
         Response response = requester.request(path, user, null, "DELETE");
 
         if(response.code != 204) {
-            Logger.w(LoginDoor43Task.class.getName(), "delete token - gogs api responded with code " + response.code + " - " + response.toString());
+            Logger.w(LogoutTask.class.getName(), "delete access token - gogs api responded with code " + response.code, response.exception);
         }
     }
 }
