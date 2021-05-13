@@ -118,7 +118,7 @@ public class LoginDoor43Task extends ManagedTask {
         return defaultTokenName + "__" + tokenSuffix;
     }
 
-    public static int getTokenId(String tokenName, User userAuth, Request requester) {
+    private int getTokenId(String tokenName, User userAuth, Request requester) {
         int tokenId = -1;
         String requestPath = String.format("users/%s/tokens", userAuth.getUsername());
 
@@ -142,7 +142,7 @@ public class LoginDoor43Task extends ManagedTask {
         return tokenId;
     }
 
-    public static void deleteToken(int tokenId, User userAuth, Request requester) {
+    private void deleteToken(int tokenId, User userAuth, Request requester) {
         String path = String.format("users/%s/tokens/%s", userAuth.getUsername(), tokenId);
         Response response = requester.request(path, userAuth, null, "DELETE");
 
