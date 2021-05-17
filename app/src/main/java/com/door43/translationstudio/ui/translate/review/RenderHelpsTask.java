@@ -58,7 +58,6 @@ public class RenderHelpsTask extends ManagedTask {
             for (Link link : links) {
                 if (interrupted()) return;
                 try {
-                    ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), link.language, link.project, link.resource);
                     ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), sourceLanguage.slug, link.project, link.resource);
                     if (interrupted()) return;
                     if (rc != null) {
