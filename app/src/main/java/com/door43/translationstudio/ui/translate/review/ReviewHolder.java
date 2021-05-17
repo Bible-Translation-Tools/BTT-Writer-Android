@@ -307,7 +307,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
      * Displays the words
      * @param language
      */
-    public void showWords(Language language) {
+    public void showWords(final Language language) {
         clearHelps();
         for(final Link word:mWords) {
             TextView wordView = (TextView) mInflater.inflate(R.layout.fragment_resources_list_item, null);
@@ -316,7 +316,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 @Override
                 public void onClick(View v) {
                     if (mListener != null) {
-                        ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), word.language, word.project, word.resource);
+                        ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), language.slug, word.project, word.resource);
                         mListener.onWordClick(rc.slug, word, getResourceCardWidth());
                     }
                 }
