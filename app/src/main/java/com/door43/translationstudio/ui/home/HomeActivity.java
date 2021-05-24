@@ -13,10 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.Nullable;
 
-import com.door43.translationstudio.tasks.LoginDoor43Task;
 import com.door43.translationstudio.tasks.LogoutTask;
-import com.door43.translationstudio.tasks.io.Request;
-import com.door43.translationstudio.ui.LoginDoor43Activity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import android.os.Bundle;
@@ -33,7 +30,6 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.gogsclient.Response;
 import org.unfoldingword.gogsclient.User;
 import org.unfoldingword.resourcecontainer.Project;
 import org.unfoldingword.tools.eventbuffer.EventBuffer;

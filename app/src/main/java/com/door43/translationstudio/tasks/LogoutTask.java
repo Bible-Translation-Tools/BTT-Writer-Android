@@ -3,7 +3,6 @@ package com.door43.translationstudio.tasks;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.tasks.io.OkHttpRequest;
-import com.door43.translationstudio.tasks.io.Request;
 import com.door43.translationstudio.tasks.io.RequestAPI;
 import com.door43.translationstudio.ui.SettingsActivity;
 
