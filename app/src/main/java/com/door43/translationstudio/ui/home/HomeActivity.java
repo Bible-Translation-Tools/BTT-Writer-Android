@@ -233,7 +233,6 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
         TaskManager.addTask(task, LogoutTask.TASK_ID);
         task.addOnFinishedListener(this);
 
-
         App.setProfile(null);
         Intent logoutIntent = new Intent(HomeActivity.this, ProfileActivity.class);
         startActivity(logoutIntent);
