@@ -2,7 +2,9 @@ package com.door43.translationstudio.tasks;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.tasks.io.OkHttpRequest;
 import com.door43.translationstudio.tasks.io.Request;
+import com.door43.translationstudio.tasks.io.RequestAPI;
 import com.door43.translationstudio.ui.SettingsActivity;
 
 import org.json.JSONArray;
@@ -24,6 +26,8 @@ public class LogoutTask extends ManagedTask {
         this.user = user;
         this.tokenName = (user != null && user.token != null) ? user.token.getName() : null;
         this.tokenSha1 = (user != null && user.token != null) ? user.token.toString() : null;
+
+
     }
 
     @Override
@@ -33,15 +37,14 @@ public class LogoutTask extends ManagedTask {
             return;
         }
 
-        String apiServer = App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api);
-        Request requester = new Request(apiServer);
-
         // uses Basic authorization scheme, token should be null
         user.password = tokenSha1;
         user.token = null;
 
-        int tokenId = getTokenId(requester);
+        String apiUrl = App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api);
+        RequestAPI requester = new OkHttpRequest(apiUrl);
 
+        int tokenId = getTokenId(requester);
         if (tokenId < 0) {
             return;
         }
@@ -49,11 +52,11 @@ public class LogoutTask extends ManagedTask {
         deleteToken(tokenId, requester);
     }
 
-    private int getTokenId(Request requester) {
+    private int getTokenId(RequestAPI requester) {
         int tokenId = -1;
-        String requestPath = String.format("users/%s/tokens", user.getUsername());
+        String requestPath = String.format("/users/%s/tokens", user.getUsername());
 
-        Response tokenResponse = requester.request(requestPath, user, null ,"GET");
+        Response tokenResponse = requester.get(requestPath, user);
         if(tokenResponse.code == 200) {
             try {
                 JSONArray data = new JSONArray(tokenResponse.data);
@@ -73,11 +76,11 @@ public class LogoutTask extends ManagedTask {
         return tokenId;
     }
 
-    private void deleteToken(int tokenId, Request requester) {
-        String path = String.format("users/%s/tokens/%s", user.getUsername(), tokenId);
-        Response response = requester.request(path, user, null, "DELETE");
+    private void deleteToken(int tokenId, RequestAPI requester) {
+        String path = String.format("/users/%s/tokens/%s", user.getUsername(), tokenId);
+        Response response = requester.delete(path, user);
 
-        if(response.code != 204) {
+        if(response.code != 200 || response.code != 204) {
             Logger.w(LogoutTask.class.getName(), "delete access token - gogs api responded with code " + response.code, response.exception);
         }
     }
