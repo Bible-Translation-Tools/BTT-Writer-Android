@@ -42,4 +42,9 @@
         android:key="media_server"
         android:title="@string/pref_title_media_server"
         android:defaultValue="@string/pref_default_media_server"/>
+
+    <EditTextPreference
+        android:key="reader_server"
+        android:title="@string/pref_title_reader_server"
+        android:defaultValue="@string/pref_default_reader_server"/>
 </PreferenceScreen>
