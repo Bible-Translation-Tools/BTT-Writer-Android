@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.Nullable;
+
+import com.door43.translationstudio.tasks.LogoutTask;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import android.os.Bundle;
@@ -28,6 +30,7 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.door43client.models.Translation;
+import org.unfoldingword.gogsclient.User;
 import org.unfoldingword.resourcecontainer.Project;
 import org.unfoldingword.tools.eventbuffer.EventBuffer;
 import org.unfoldingword.tools.logger.Logger;
@@ -225,6 +228,11 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
      * do logout activitity
      */
     private void doLogout() {
+        User user = App.getProfile().gogsUser;
+        LogoutTask task = new LogoutTask(user);
+        TaskManager.addTask(task, LogoutTask.TASK_ID);
+        task.addOnFinishedListener(this);
+
         App.setProfile(null);
         Intent logoutIntent = new Intent(HomeActivity.this, ProfileActivity.class);
         startActivity(logoutIntent);
@@ -988,6 +996,11 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                         SettingsActivity.promptUserToDownloadLatestVersion(HomeActivity.this, checkForLatestReleaseTask.getLatestRelease());
                     }
 
+                } else if(task instanceof LogoutTask) {
+                    if (progressDialog != null) {
+                        progressDialog.dismiss();
+                        progressDialog = null;
+                    }
                 } else {
                     if (progressDialog != null) {
                         progressDialog.dismiss();

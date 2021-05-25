@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
+import com.door43.translationstudio.tasks.LogoutTask;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +25,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.unfoldingword.gogsclient.User;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
@@ -121,6 +124,12 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // log out
+                User user = App.getProfile().gogsUser;
+                LogoutTask task = new LogoutTask(user);
+                taskWatcher.watch(task);
+                TaskManager.addTask(task, LogoutTask.TASK_ID);
+
                 App.setProfile(null);
                 Intent logoutIntent = new Intent(getActivity(), ProfileActivity.class);
                 startActivity(logoutIntent);
@@ -785,9 +794,8 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
     private void showPushSuccess(final String message) {
         mDialogShown = eDialogShown.SHOW_PUSH_SUCCESS;
         mDialogMessage = message;
-        String api = App.getPref(SettingsActivity.KEY_PREF_GOGS_API, App.getRes(R.string.pref_default_gogs_api));
-        String server = api.replace("/api/v1", "");
-        final Uri url = Uri.parse(server + "/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
+        String apiURL = App.getPref(SettingsActivity.KEY_PREF_READER_SERVER, App.getRes(R.string.pref_default_reader_server));
+        final Uri url = Uri.parse(apiURL + "/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
         new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
                 .setTitle(R.string.upload_complete)
                 .setMessage(String.format(getResources().getString(R.string.project_uploaded_to), url.toString()))

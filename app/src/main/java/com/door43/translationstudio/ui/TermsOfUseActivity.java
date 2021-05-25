@@ -8,13 +8,18 @@ import android.widget.Button;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.Profile;
+import com.door43.translationstudio.tasks.LogoutTask;
 import com.door43.translationstudio.ui.home.HomeActivity;
 import com.door43.translationstudio.ui.legal.LegalDocumentActivity;
+
+import org.unfoldingword.gogsclient.User;
+import org.unfoldingword.tools.taskmanager.ManagedTask;
+import org.unfoldingword.tools.taskmanager.TaskManager;
 
 /**
  * This activity checks if the user has accepted the terms of use before continuing to load the app
  */
-public class TermsOfUseActivity extends BaseActivity {
+public class TermsOfUseActivity extends BaseActivity implements ManagedTask.OnFinishedListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,10 @@ public class TermsOfUseActivity extends BaseActivity {
                 @Override
                 public void onClick(View view) {
                     // log out
+                    User user = App.getProfile().gogsUser;
+                    LogoutTask task = new LogoutTask(user);
+                    TaskManager.addTask(task, LogoutTask.TASK_ID);
+                    task.addOnFinishedListener(TermsOfUseActivity.this);
                     App.setProfile(null);
 
                     // return to login
@@ -96,5 +105,10 @@ public class TermsOfUseActivity extends BaseActivity {
         Intent intent = new Intent(this, LegalDocumentActivity.class);
         intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, stringResource);
         startActivity(intent);
+    }
+
+    @Override
+    public void onTaskFinished(ManagedTask task) {
+        TaskManager.clearTask(task);
     }
 }

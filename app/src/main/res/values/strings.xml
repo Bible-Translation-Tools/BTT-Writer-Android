@@ -716,7 +716,7 @@ Do you want to enable SD card access?  If so then:
     <string name="create_offline_profile">Create offline Account</string>
     <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
     <string name="title_connect_door43">Connect To Server</string>
-    <string name="gogs_public_key_name">ts-android</string>
+    <string name="gogs_public_key_name">btt-writer-android</string>
     <string name="restore_failed">The translation could not be imported</string>
     <string name="import_from_door43">Import from Server</string>
     <string name="restore_from_door43">Restore from Server</string>
