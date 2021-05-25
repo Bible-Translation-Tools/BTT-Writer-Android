@@ -146,18 +146,36 @@
     <string name="translation_guidlines" translatable="false">
 <![CDATA[
 <h1>Translation Guidelines</h1>
-<p>To create a translation of high quality we recommend the following guidelines:</p>
 <p>
-      <strong>1. Accurate</strong> - Translate accurately, without changing the meaning of the original text. Translated content should faithfully communicate as precisely as possible the meaning of the original text as it would have been understood by the original audience. Translators can achieve accuracy by recognizing the authority of the original language texts, and researching Biblical language tools to clarify difficulties.
-      <br/><br/><strong>2. Faithful</strong> - Avoid theological or other bias in your translation. Use key terms that are faithful to the vocabulary of the original biblical languages. <b>Use equivalent, biological, common language terms for the biblical words that describe the relationship between God the Father and God the Son.</b> These may be clarified, as needed, in footnotes or other supplemental resources.
-      <br/><br/><strong>3. Historical</strong> - Communicate historical events and facts accurately, providing additional information as needed in order to accurately communicate the intended message to people who do not share the same context and culture as the original recipients of the original content.
-      <br/><br/><strong>4. Clear and Natural</strong> - Use whatever language structures are necessary to achieve the highest level of comprehension, complying with common form and flow in the target language.
+      <strong>Accurate</strong> - Accurate translations effectively communicate the intended meaning of the original, divinely inspired text. An accurate translation expresses the meaning the author intended for the original audience in the original context.
+      <p>
+        1. To the extent that is possible, nothing is added, misconstrued, or deleted from the original message.
+        <br/>2. It does not recast the meaning of the original text to make it more relevant to the contemporary audience.
+        <br/>3. An accurate translation does not distort the meaning in order to favor a specific interpretive perspective. It should be free from theological, cultural, or personal biases.
+        <br/>4. An accurate translation communicates historical events and facts accurately.
+      <p>
+</p>
+<p>
+      <strong>Clear</strong> - Clear translations will use whatever language structures are needed to help readers easily read and understand it.
+      <p>
+        1. A clear translation may use as many or as few terms as necessary to communicate the original meaning as clearly as possible.
+        <br/>2. Making a clear translation does not mean that the translator clarifies something that is ambiguous in the source text.
+        <br/>3. Making a clear translation does not mean that the translator gives the reader a specific interpretation for every passage where meaning is genuinely debated.
+      </p>
+</p>
+<p>
+      <strong>Natural</strong> - Natural translations use language forms that are reflect the way the target language is used in corresponding contexts.
+      <p>
+        1. Natural Bible translations sound like they were produced by an adult native speaker who speaks and/or writes well.
+        <br/>2. A natural Bible translation does not use expressions that are particular to their own culture in order to make the translation appear natural.
+        <br/>3. It is more important for a portion of Scripture to be translated accurately than for it to sound perfectly natural to everyone who reads it.
+      </p>
 </p>
 <p> We believe that a translation has the highest likelihood of being good quality when after applying the guidelines above, the following are completed: </p>
-<ol>
-    <li>It is tested and approved by believers of the language community and their church leaders.</li>
-    <li>Ongoing revisions and improvements are made.</li>
-</ol>
+<p>
+    1. It is tested and approved by believers of the language community and their church leaders.
+    <br/>2. Ongoing revisions and improvements are made.
+</p>
 ]]>
     </string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
@@ -177,13 +195,6 @@
     <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
     <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
 </ul>
-<h2>Peripheral beliefs</h2>
-<p>Peripheral beliefs are those beliefs based on Scripture
-    where sincere believers may have disagreements in their
-    interpretation. These include areas such as modes of baptism,
-    the rapture, second coming of Christ, the Lord’s Supper and
-    church practices. On peripheral beliefs, we can agreeably
-    accept differences.</p>
 ]]>
     </string>
     <string name="view_statement_of_faith">Statement of Faith</string>
@@ -774,22 +785,23 @@ Do you want to enable SD card access?  If so then:
     <string name="table_of_contents">Table of Contents </string>
     <string name="license_pdf" translatable="false">
 <![CDATA[
-<h1>License</h1>
-<h2>Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)</h2>
-<p>This is a human-readable summary of (and not a substitute for) the license (<a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a>).
+<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
+<h3>Human-Readable Summary</h3>
+<p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
+<h4>This is a human-readable summary of (and not a substitute for) the License</h4>
 <br/>
 <h3>You are free to:</h3>
 <br/><b>&#8226; Share</b> - copy and redistribute the material in any medium or format
 <br/><b>&#8226; Adapt</b> - remix, transform, and build upon the material for any purpose, even commercially.
 <p>The licensor cannot revoke these freedoms as long as you follow the license terms.</p>
-<h3>Under the following conditions:</h3>
-<br/><b>&#8226; Attribution</b> - You must attribute the work as follows: “Original work available at <a href="https://door43.org" title="https://door43.org" >https://door43.org</a>”. Attribution statements in derivative works should not in any way suggest that we endorse you or your use of this work.
+<h3>Under the following terms:</h3>
+<br/><b>&#8226; Attribution</b> - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
 <br/><b>&#8226; ShareAlike</b> - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
-<p><b>No additional restrictions</b> - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.</p>
+<br/><b>&#8226; No additional restrictions</b> - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.</p>
 <h3>Notices:</h3>
-<p>You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
-<p>No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>
-</p>]]>
+<p><br/>&#8226; You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
+<p><br/>&#8226; No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>
+]]>
     </string>
     <string name="artwork_attribution_pdf" translatable="false">
 <![CDATA[
