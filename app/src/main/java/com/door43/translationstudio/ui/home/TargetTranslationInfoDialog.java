@@ -89,7 +89,7 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
 
         // Load a source translation
         Translation sourceTranslation;
-        List<Translation> translations = library.index.findTranslations(Locale.getDefault().getLanguage(), mTargetTranslation.getProjectId(), null, "book", null, App.MIN_CHECKING_LEVEL, -1);
+        List<Translation> translations = library.index.findTranslations(null, mTargetTranslation.getProjectId(), null, "book", null, App.MIN_CHECKING_LEVEL, -1);
         if(translations.size() == 0) {
             Logger.w("TargetTranslationInfoDialog", "Could not find source for target " + mTargetTranslation.getId());
             dismiss();
