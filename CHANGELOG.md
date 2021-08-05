@@ -1,7 +1,11 @@
 
 # Change log
 
-## [1.1.0 (build 6)](https://github.com/Bible-Translation-Tools/BTT-Writer-Android/releases) - latest
+## [1.1.1 (build 7)](https://github.com/Bible-Translation-Tools/BTT-Writer-Android/releases)
+
+- Updated Android SDK target to 29 for Google Play Store compatibility.
+
+## [1.1.0 (build 6)](https://github.com/Bible-Translation-Tools/BTT-Writer-Android/releases)
 The following changes are ported from [BTT Writer Desktop](https://github.com/Bible-Translation-Tools/BTT-Writer-Desktop)
 
 #### ADDED:
