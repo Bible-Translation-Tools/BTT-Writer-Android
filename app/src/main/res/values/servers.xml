@@ -31,4 +31,8 @@
         <item>https://api.unfoldingword.org</item>
     </string-array>
 
+    <string-array name="content_server_reader_server_values_array">
+        <item>http://read.bibletranslationtools.org/u</item>
+        <item>https://door43.org/u</item>
+    </string-array>
 </resources>

@@ -7,6 +7,7 @@ import com.door43.translationstudio.ui.translate.TranslationHelp;
 
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.Translation;
+import org.unfoldingword.resourcecontainer.Language;
 import org.unfoldingword.resourcecontainer.Link;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
@@ -51,12 +52,13 @@ public class RenderHelpsTask extends ManagedTask {
 
         if(interrupted()) return;
         if (config.containsKey("words")) {
-            List<Link> links = ContainerCache.cacheFromLinks(library, config.get("words"), item.getSource().language);
+            Language sourceLanguage = item.getSource().language;
+            List<Link> links = ContainerCache.cacheFromLinks(library, config.get("words"), sourceLanguage);
             Pattern titlePattern = Pattern.compile("#(.*)");
             for (Link link : links) {
                 if (interrupted()) return;
                 try {
-                    ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), link.language, link.project, link.resource);
+                    ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), sourceLanguage.slug, link.project, link.resource);
                     if (interrupted()) return;
                     if (rc != null) {
                         // TODO: 10/12/16 the words need to have their title placed into a "title" file instead of being inline in the chunk
