@@ -1,118 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <!-- The app name -->
-    <string name="title_projects">Project</string>
-    <string name="title_frames">Frame</string>
+    <string name="title_projects">প্রকল্প</string>
+    <string name="title_frames">ফ্রেম</string>
     <!-- Acknowlogment or an affirmative statement -->
-    <string name="label_ok">OK</string>
+    <string name="label_ok">ঠিক আছে</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
     <string name="label_close">Close</string>
     <!-- Close or reject an action -->
-    <string name="title_cancel">Cancel</string>
+    <string name="title_cancel">বাতিল করুন</string>
     <!-- The application is already executing a different task -->
     <!-- Theapplication is out of memory -->
     <!-- The remote git repository could not be found -->
     <!-- Local changes are being uploaded to the server -->
-    <string name="uploading">Uploading</string>
+    <string name="uploading">আপলোড</string>
     <!-- The repository could not be created-->
     <!-- The terms that users must agree with in order to use the app -->
-    <string name="terms_title">Terms of Use</string>
-    <string name="terms">By using this app you agree with the statement of faith and translation guidelines and to release your work under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
+    <string name="terms_title">ব্যবহারের শর্তাবলী</string>
+    <string name="terms">এই অ্যাপ্লিকেশন ব্যবহার করে আপনি বিশ্বাস এবং অনুবাদক নির্দেশিকা বিবৃতি সাথে একমত এবং আপনি ক্রিয়েটিভ কমন্স অ্যাট্রিবিউশন- ShareAlike 4.0 আন্তর্জাতিক লাইসেন্সের অধীনে কাজ মুক্তি.</string>
     <!-- stub needed for the drawer open and close listener -->
-    <string name="chapter_title_field">Chapter Title</string>
-    <string name="chapter_reference_field">Chapter Reference</string>
+    <string name="chapter_title_field">অধ্যায় শিরোনাম:</string>
+    <string name="chapter_reference_field">অধ্যায় রেফারেন্স:</string>
     <!-- The language from which a project is being translated -->
-    <string name="source_language_field">Source</string>
+    <string name="source_language_field">উত্স ভাষা:</string>
     <!-- The langage to which a project is being translated -->
-    <string name="target_language">Target Language</string>
-    <string name="title_activity_chapter_setting">Chapter Translation</string>
-    <string name="title_activity_language_selector">Language</string>
-    <string name="success">Success</string>
-    <string name="label_details">details</string>
-    <string name="title_activity_sharing">Share</string>
-    <string name="missing_external_storage">External storage not available</string>
+    <string name="target_language">উদ্দিষ্ট ভাষা:</string>
+    <string name="title_activity_chapter_setting">অধ্যায় সেটিংস</string>
+    <string name="title_activity_language_selector">ভাষা</string>
+    <string name="success">সাফল্য</string>
+    <string name="label_details">বিস্তারিত</string>
+    <string name="title_activity_sharing">ভাগ</string>
+    <string name="missing_external_storage">বাহ্যিক সংগ্রহস্থল উপলব্ধ নয়</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
-    <string name="project_exported_to">Project saved to <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
+    <string name="project_exported_to">প্রকল্প সংরক্ষিত</string>
     <!-- The file browser -->
-    <string name="title_activity_file_explorer">File Explorer</string>
+    <string name="title_activity_file_explorer">ফাইল এক্সপ্লোরার</string>
     <!-- Export a project to another app on the device -->
-    <string name="backup_to_app">Send to another app</string>
+    <string name="backup_to_app">অ্যাপ্লিকেশন থেকে রপ্তানি</string>
     <!-- Export a project to the sd card -->
-    <string name="backup_to_sd">Export Project File</string>
+    <string name="backup_to_sd">এসডি রপ্তানি</string>
     <!-- The translation could not be imported -->
-    <string name="translation_import_failed">Failed to import</string>
-    <string name="internet_not_available">No internet connection</string>
+    <string name="translation_import_failed">অনুবাদ আমদানি করতে ব্যর্থ</string>
+    <string name="internet_not_available">আপনি একটি সক্রিয় ইন্টারনেট সংযোগ না.</string>
     <!-- Backup and/or publish a project translation-->
-    <string name="backup_and_publish">Backup and Publish</string>
-    <string name="upload_wizard_intro">You are about to upload your translation.</string>
-    <string name="label_continue">Continue</string>
-    <string name="next">Next</string>
-    <string name="upload_wizard_overview">Upload Review</string>
-    <string name="label_project_details">Project details</string>
+    <string name="backup_and_publish">ব্যাকআপ এবং প্রকাশ করুন</string>
+    <string name="upload_wizard_intro">আপনি আপনার অনুবাদ আপলোড করতে চলেছেন.</string>
+    <string name="label_continue">চালিয়ে</string>
+    <string name="next">পরবর্তী</string>
+    <string name="upload_wizard_overview">আপলোড পর্যালোচনা</string>
+    <string name="label_project_details">প্রকল্প বিবরণ</string>
     <!-- Indicates how the project is being translated. e.g. Open Bible Stories is being translated from the English language into the Deutsch language -->
-    <string name="project_details"><xliff:g example="Open Bible Stories" id="project">\"%1$s\"</xliff:g> is being translated from the <xliff:g example="English" id="source_language">\"%2$s\"</xliff:g> language into the <xliff:g example="Deutsch" id="target_language">\"%3$s\"</xliff:g> language.</string>
-    <string name="click_for_details">Click for details</string>
-    <string name="title_project_settings">Project Languages</string>
-    <string name="error_target_and_source_are_same">Source and target languages must not match</string>
-    <string name="error_chapter_title_missing">Chapter title missing</string>
-    <string name="error_chapter_reference_missing">Chapter reference missing</string>
-    <string name="label_chapter_title_detailed">Chapter <xliff:g example="1. The Creation" id="chapter">%1$s</xliff:g></string>
-    <string name="label_frame_title_detailed">Frame: <xliff:g example="1" id="frame">%1$s</xliff:g></string>
+    <string name="project_details"><xliff:g id="project" example="Open Bible Stories"> \"%1$s\" </xliff:g> থেকে অনুবাদ করা হচ্ছে <xliff:g id="language" example="English"> \"%2$s\" </xliff:g> মধ্যে ভাষা <xliff:g id="language" example="Deutsch"> \"%3$s\" </xliff:g> ভাষা.</string>
+    <string name="click_for_details">বিস্তারিত জানার জন্য ক্লিক করুন</string>
+    <string name="title_project_settings">প্রকল্প সেটিংস</string>
+    <string name="error_target_and_source_are_same">সোর্স ও টার্গেট ভাষা একই</string>
+    <string name="error_chapter_title_missing">অধ্যায় শিরোনাম অনুপস্থিত</string>
+    <string name="error_chapter_reference_missing">অধ্যায় রেফারেন্স অনুপস্থিত</string>
+    <string name="label_chapter_title_detailed">অধ্যায় <xliff:g id="chapter" example="1. The Creation"> %1$s </xliff:g></string>
+    <string name="label_frame_title_detailed">ফ্রেম: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
-    <string name="dialog_validation_errors">Validation Errors</string>
-    <string name="validation_errors">Unresolved errors. Please correct them and try again</string>
+    <string name="dialog_validation_errors">ভ্যালিডেশন ত্রুটি</string>
+    <string name="validation_errors">অনুবাদ অমীমাংসিত ত্রুটি আছে. তারপর এই সংশোধন করে আবার চেষ্টা করুন.</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
-    <string name="error_frames_not_translated"><xliff:g example="5" id="number">%1$s</xliff:g> frames have not been translated.</string>
-    <string name="dialog_validation_warnings">Validation Warnings</string>
-    <string name="validation_warnings">There are unresolved warnings. Continue?</string>
-    <string name="no_translated_chapters">Nothing has been translated</string>
-    <string name="title_chapters">Chapter</string>
+    <string name="error_frames_not_translated">% 1 $ এর ফ্রেম অনুবাদ করা হয় নি.</string>
+    <string name="dialog_validation_warnings">ভ্যালিডেশন সতর্কতা</string>
+    <string name="validation_warnings">অমীমাংসিত সতর্কবার্তা আছে. আপনি এই অনুবাদ আপলোড করতে চান নিশ্চিত?</string>
+    <string name="no_translated_chapters">কিছুই এখনো অনুবাদ করা হয়েছে.</string>
+    <string name="title_chapters">অধ্যায়</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
-    <string name="now_viewing_frame">Viewing frame <xliff:g example="1" id="number">%1$s</xliff:g> in chapter <xliff:g example="1. The Creation" id="chapter">%2$s</xliff:g>.</string>
-    <string name="label_translation_notes">Notes</string>
-    <string name="label_passage_note">Passage note:</string>
-    <string name="label_delete">Delete</string>
+    <string name="now_viewing_frame">দেখা ফ্রেম <xliff:g id="number" example="1"> %1$s </xliff:g> অধ্যায়ে <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g> .</string>
+    <string name="label_translation_notes">অনুবাদ নোট</string>
+    <string name="label_passage_note">প্যাসেজ নোট:</string>
+    <string name="label_delete">মুছে দিন</string>
     <!-- Explaination of what a source language is -->
-    <string name="source_language_instructions">Completed translations</string>
+    <string name="source_language_instructions">উত্স ভাষায় অনুবাদের সম্পন্ন করা হয়.</string>
     <!-- Explaination of what a target language is -->
-    <string name="target_language_instructions">Not started or in-progress translations</string>
-    <string name="notes_cannot_overlap">Notes cannot overlap</string>
+    <string name="target_language_instructions">টার্গেট ভাষা অনুবাদ বা অগ্রগতি কাজ করা হয়েছে না হয়েছে.</string>
+    <string name="notes_cannot_overlap">নোট ওভারল্যাপ করতে পারবে না</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
-    <string name="currently_viewed_frame_index">Frame <xliff:g example="2" id="current_frame">%1$s</xliff:g> of <xliff:g example="10" id="total_frames">%2$s</xliff:g></string>
+    <string name="currently_viewed_frame_index">ফ্রেম <xliff:g id="current_frame" example="2"> %1$s </xliff:g> এর <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
     <string name="content_server">Content Server</string>
-    <string name="opening_project">Opening project</string>
+    <string name="opening_project">উদ্বোধনী প্রকল্প</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
-    <string name="loading_target_language">Loading target language: <xliff:g example="Deutsch" id="language">%1$s</xliff:g></string>
+    <string name="loading_target_language">লোড হচ্ছে টার্গেট ভাষা:% 1 $</string>
     <!-- Indicates the project that is being loaded. e.g. Loading project: Open Bible Stories -->
-    <string name="loading_project">Loading project: <xliff:g example="Open Bible Stories" id="project">%1$s</xliff:g></string>
+    <string name="loading_project">লোড হচ্ছে প্রকল্প:% 1 $</string>
     <!-- Uploading the device public ssh key to the server -->
-    <string name="submitting_security_keys">Transferring security keys</string>
-    <string name="choose_file">Choose file</string>
-    <string name="choose_source_language">Choose Source</string>
-    <string name="choose_target_language">Choose Target</string>
-    <string name="search_language">Search languages</string>
-    <string name="loading">Loading</string>
-    <string name="view_license_agreement">License Agreement</string>
-    <string name="license_deny">No Thanks</string>
-    <string name="license_accept">I Agree</string>
+    <string name="submitting_security_keys">নিরাপত্তা কি স্থানান্তরিত হচ্ছে ...</string>
+    <string name="choose_file">আপনার ফাইল চয়ন করুন</string>
+    <string name="choose_source_language">উত্স ভাষা পছন্দ</string>
+    <string name="choose_target_language">টার্গেট ভাষা বেছে নিন</string>
+    <string name="search_language">একটি ভাষা জন্য অনুসন্ধান করুন</string>
+    <string name="loading">লোড হচ্ছে ...</string>
+    <string name="view_license_agreement">দেখুন লাইসেন্সের</string>
+    <string name="license_deny">না ধন্যবাদ</string>
+    <string name="license_accept">আমি রাজি</string>
     <!-- Footnotes are not used in the current version of the app. However future versions will use it -->
-    <string name="label_note_phrase">Selected phrase:</string>
-    <string name="related_terms">See Also:</string>
-    <string name="term_examples">Examples:</string>
-    <string name="project_uploaded">Project successfully uploaded</string>
-    <string name="choose_frame_to_start">Open a project to start translating</string>
-    <string name="return_to_important_terms">Return to Words</string>
-    <string name="no_translation_notes">No notes</string>
-    <string name="translation_words">Words</string>
-    <string name="translation_check_notice">We will now perform a few checks to ensure your translation is ready.</string>
-    <string name="preparing_upload">Preparing upload</string>
-    <string name="choose_a_project">Please open a project</string>
-    <string name="choose_a_chapter">Please open a chapter</string>
-    <string name="title_activity_crash_reporter">Error Report</string>
-    <string name="title_activity_bug_reporter">Bug Report</string>
-    <string name="crash_details">What were you doing just before the app crashed?</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <string name="label_note_phrase">সিলেক্টেড ফ্রেজ:</string>
+    <string name="related_terms">এছাড়াও দেখুন:</string>
+    <string name="term_examples">উদাহরণ:</string>
+    <string name="project_uploaded">প্রকল্প সফলভাবে আপলোড করা হয় নি</string>
+    <string name="choose_frame_to_start">বাম ট্যাব থেকে কিছু সোর্স টেক্সট চয়ন করুন শুরু</string>
+    <string name="return_to_important_terms">গুরুত্বপূর্ণ শর্তাবলী ফিরে যান</string>
+    <string name="no_translation_notes">কোন অনুবাদ নোট আছে</string>
+    <string name="translation_words">মূল শর্তাবলী</string>
+    <string name="translation_check_notice">আমরা এখন আপনার অনুবাদ প্রস্তুত নিশ্চিত করার জন্য একটি কয়েক চেক সঞ্চালন করা হবে.</string>
+    <string name="preparing_upload">আপলোড করার জন্য প্রকল্প প্রস্তুতি</string>
+    <string name="choose_a_project">প্রথম একটি প্রকল্প খুলুন দয়া করে.</string>
+    <string name="choose_a_chapter">প্রথম একটি অধ্যায়ের খুলুন দয়া করে</string>
+    <string name="title_activity_crash_reporter">ত্রুটি প্রতিবেদন</string>
+    <string name="title_activity_bug_reporter">বাগ রিপোর্ট</string>
+    <string name="crash_details">আপনি কি অ্যাপ্লিকেশন ক্র্যাশ ঠিক আগে এরকম হয়?</string>
+    <string name="yes">হাঁ</string>
+    <string name="no">না</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
     <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
 <p>
@@ -156,14 +156,14 @@
     <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
     <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
 </ul>]]></string>
-    <string name="view_statement_of_faith">Statement of Faith</string>
-    <string name="view_translation_guidelines">Translation Guidelines</string>
+    <string name="view_statement_of_faith">বিশ্বাস দেখুন বিবৃতি</string>
+    <string name="view_translation_guidelines">দেখুন অনুবাদ নির্দেশাবলী</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
     <!-- Indicates the peer has connected to the server -->
-    <string name="language_resources">Versions</string>
-    <string name="import_project">Import Project</string>
-    <string name="no_projects_available_on_server">No projects available on server</string>
-    <string name="downloading">Downloading</string>
+    <string name="language_resources">সংস্করণ</string>
+    <string name="import_project">আমদানি প্রকল্প</string>
+    <string name="no_projects_available_on_server">কোন প্রকল্প এই সার্ভারে পাওয়া যায়</string>
+    <string name="downloading">ডাউনলোড</string>
     <string name="downloading_images">Downloading images</string>
     <string name="connecting_to_server">Connecting to remote server...</string>
     <string name="downloading_images_for_print_failed">The download failed to complete. Try printing without images.</string>
@@ -171,71 +171,71 @@
     <string name="out_of">out of</string>
     <string name="mb_downloaded">MB downloaded</string>
     <string name="image_large_download">Downloading images will take several megabytes. Are you sure you want to include images?</string>
-    <string name="confirm_import">Please confirm import data</string>
-    <string name="waiting_for_another_device">Waiting for another device</string>
-    <string name="label_back">Back</string>
-    <string name="bug_report">Describe the problem you are experiencing</string>
-    <string name="project_library">Library</string>
-    <string name="title_verse">Verse</string>
-    <string name="title_note">Note</string>
-    <string name="dialog_contact_form">Contact Form</string>
-    <string name="label_name">Name</string>
-    <string name="label_email">Email</string>
-    <string name="label_phone">Phone</string>
-    <string name="verse_out_of_bounds">Choose a verse between <xliff:g example="1" id="number">%1$s</xliff:g> and <xliff:g example="100" id="number">%2$s</xliff:g></string>
-    <string name="no_key_terms">There are no Words</string>
-    <string name="title_activity_developer">Developer Tools</string>
-    <string name="action_settings">Settings</string>
+    <string name="confirm_import">আপনি আমদানি করতে চান তা নিশ্চিত করুন.</string>
+    <string name="waiting_for_another_device">যন্ত্রের জন্য অপেক্ষা করতেছি</string>
+    <string name="label_back">পিছনে</string>
+    <string name="bug_report">আপনি এই অ্যাপ্লিকেশন দিয়ে সমস্যার বর্ণনা করুন.</string>
+    <string name="project_library">প্রকল্প লাইব্রেরী</string>
+    <string name="title_verse">পদ্য</string>
+    <string name="title_note">বিঃদ্রঃ</string>
+    <string name="dialog_contact_form">ফরম যোগাযোগ করুন</string>
+    <string name="label_name">নাম</string>
+    <string name="label_email">ইমেল</string>
+    <string name="label_phone">ফোন</string>
+    <string name="verse_out_of_bounds">এর মধ্যে একটি পদ্য নির্বাচন করুন <xliff:g id="number" example="1"> %1$s </xliff:g> এবং <xliff:g id="number" example="100"> %2$s </xliff:g></string>
+    <string name="no_key_terms">কোন গুরুত্বপূর্ণ পদ আছে</string>
+    <string name="title_activity_developer">ডেভেলপার টুলস</string>
+    <string name="action_settings">সেটিংস</string>
     <!-- displays the application build or version code -->
     <!-- displays the application version name -->
     <!-- displays the unique device id -->
-    <string name="downloading_project">Downloading project <xliff:g example="obs" id="project_id">%1$s</xliff:g></string>
+    <string name="downloading_project">ডাউনলোড প্রকল্প <xliff:g id="project_id" example="obs"> %1$s </xliff:g></string>
     <!-- This is the direction up. The opposite of down. -->
-    <string name="up">Up</string>
+    <string name="up">উপর</string>
     <!-- indicates the directory/folder on the device does not contain any files -->
-    <string name="empty_directory">Directory empty</string>
-    <string name="exporting">Exporting</string>
-    <string name="get_more_projects">Get more projects</string>
-    <string name="source_language_library">Source Library</string>
-    <string name="title_project_detail">Project Library Languages</string>
-    <string name="languages">Languages</string>
-    <string name="drafts">Drafts</string>
-    <string name="use_internet_confirmation">This will use your internet connection, continue?</string>
-    <string name="update_library">Update Library</string>
-    <string name="update_projects_description">View and download available updates from the server</string>
-    <string name="action_download_all">Download all</string>
-    <string name="title_activity_project_updates">Project Updates</string>
-    <string name="action_edit_projects">Edit Projects</string>
-    <string name="download_confirmation">You are about to download a potentially large amount of data, continue?</string>
-    <string name="action_cancel_edit_projects">Stop Editing Projects</string>
-    <string name="import_draft">Import Draft</string>
-    <string name="import_draft_confirmation">Replace existing translation with this draft?</string>
-    <string name="action_search">Search</string>
-    <string name="transfer_from_device">Transfer from device</string>
-    <string name="transfer_from_device_description">Transfer from nearby device over the network</string>
-    <string name="import_from_storage">Import from storage</string>
-    <string name="import_from_storage_description">Projects will be imported from the external storage on this device</string>
-    <string name="download_complete">Download complete</string>
-    <string name="source_export_complete">Export complete</string>
-    <string name="exit_confirmation">Exit <xliff:g id="app_name">BTT Writer</xliff:g>?</string>
-    <string name="read_chapter_menu">Read chapter</string>
-    <string name="preview_chapter_translation">Preview translation</string>
-    <string name="toggle_blind_draft_mode">Toggle blind draft</string>
-    <string name="indexing">Indexing</string>
-    <string name="title_upload">Upload</string>
-    <string name="preview_chapter_translation_draft">Preview draft</string>
-    <string name="choose_project_to_upload">Choose project to upload</string>
-    <string name="verify">Verify</string>
-    <string name="review">Review</string>
-    <string name="publish_translation">Publish translation</string>
-    <string name="notice">Notice</string>
-    <string name="complete_required_fields">Please complete all required fields</string>
-    <string name="required_field"><xliff:g id="marker">*</xliff:g> required</string>
-    <string name="upload_failed">Upload failed</string>
+    <string name="empty_directory">যে ডিরেক্টরি খালি</string>
+    <string name="exporting">ইম্পোর্ট কর্ম</string>
+    <string name="get_more_projects">আরো প্রকল্প পান</string>
+    <string name="source_language_library">উৎস ভাষা লাইব্রেরী</string>
+    <string name="title_project_detail">প্রকল্প লাইব্রেরী ভাষা</string>
+    <string name="languages">ভাষা</string>
+    <string name="drafts">অনুবাদ খসড়া</string>
+    <string name="use_internet_confirmation">এই সার্ভার থেকে তথ্য ডাউনলোড করতে আপনার ইন্টারনেট সংযোগ ব্যবহার করা হবে, অবিরত?</string>
+    <string name="update_library">আপডেট প্রকল্প</string>
+    <string name="update_projects_description">সার্ভার থেকে দেখুন এবং ডাউনলোড উপলব্ধ আপডেট</string>
+    <string name="action_download_all">সমস্ত ডাউনলোড করুন</string>
+    <string name="title_activity_project_updates">প্রকল্প আপডেট</string>
+    <string name="action_edit_projects">সম্পাদনা করুন প্রকল্প</string>
+    <string name="download_confirmation">আপনি তথ্য একটি সম্ভাব্য বৃহৎ পরিমাণ ডাউনলোড করতে চলেছেন অবিরত?</string>
+    <string name="action_cancel_edit_projects">বন্ধ করুন সম্পাদনা প্রকল্প</string>
+    <string name="import_draft">আমদানি খসড়া</string>
+    <string name="import_draft_confirmation">এই এই লক্ষ্য ভাষায় আপনার বিদ্যমান অনুবাদ প্রতিস্থাপন করবে, চালিয়ে যেতে চান?</string>
+    <string name="action_search">অনুসন্ধান</string>
+    <string name="transfer_from_device">ডিভাইস থেকে স্থানান্তর</string>
+    <string name="transfer_from_device_description">প্রকল্প একটি কাছাকাছি ডিভাইস থেকে নেটওয়ার্কের মাধ্যমে স্থানান্তরিত হবে</string>
+    <string name="import_from_storage">সংগ্রহস্থল থেকে আমদানি</string>
+    <string name="import_from_storage_description">প্রকল্প এই ডিভাইসে বহিরাগত সংগ্রহস্থল থেকে আমদানি করা হবে</string>
+    <string name="download_complete">সম্পূর্ণ ডাউনলোড করুন</string>
+    <string name="source_export_complete">উত্স রপ্তানি সম্পূর্ণ</string>
+    <string name="exit_confirmation">আপনি কি নিশ্চিত যে প্রস্থান করবেন?</string>
+    <string name="read_chapter_menu">পড়ুন অধ্যায়</string>
+    <string name="preview_chapter_translation">সম্পূর্ণ বিবরণের পূর্বরূপ দেখুন অনুবাদ</string>
+    <string name="toggle_blind_draft_mode">টগল অন্ধ খসড়া</string>
+    <string name="indexing">ইন্ডেক্স</string>
+    <string name="title_upload">আপলোড</string>
+    <string name="preview_chapter_translation_draft">সম্পূর্ণ বিবরণের পূর্বরূপ দেখুন খসড়া</string>
+    <string name="choose_project_to_upload">আপলোড করার জন্য প্রকল্প চয়ন করুন</string>
+    <string name="verify">যাচাই করুন</string>
+    <string name="review">পর্যালোচনা</string>
+    <string name="publish_translation">অনুবাদ প্রকাশ</string>
+    <string name="notice">বিজ্ঞপ্তি</string>
+    <string name="complete_required_fields">সমস্ত প্রয়োজনীয় ক্ষেত্রগুলি পূরণ করুন দয়া করে</string>
+    <string name="required_field"><xliff:g id="marker"> * </xliff:g> প্রয়োজনীয়</string>
+    <string name="upload_failed">আপলোড ব্যর্থ হয়েছে</string>
     <string name="download_failed">Download failed</string>
-    <string name="publishing_translation">Publishing translation</string>
-    <string name="backing_up_translation">Backing up translation</string>
-    <string name="review_all_checking_questions">Please review all questions</string>
+    <string name="publishing_translation">প্রকাশনা অনুবাদ</string>
+    <string name="backing_up_translation">অনুবাদ ব্যাক আপ</string>
+    <string name="review_all_checking_questions">সব প্রশ্নের পর্যালোচনা করুন</string>
     <string name="browse">Browse</string>
     <string name="please_enter_text">Please enter some text</string>
     <string name="apk_update_available">A new version of the app is available</string>
@@ -438,7 +438,7 @@
     <string name="create_offline_profile">Create offline Account</string>
     <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
     <string name="title_connect_door43">Connect To Server</string>
-    <string name="gogs_public_key_name">btt-writer-android</string>
+    <string name="gogs_public_key_name">ts-android</string>
     <string name="restore_failed">The translation could not be imported</string>
     <string name="import_from_door43">Import from Server</string>
     <string name="restore_from_door43">Restore from Server</string>
