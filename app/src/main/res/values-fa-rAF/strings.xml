@@ -1,128 +1,169 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <!-- The app name -->
-    <string name="title_projects">پروژه ها</string>
-    <string name="title_frames">فریم</string>
+    <string name="title_projects">Project</string>
+    <string name="title_frames">Frame</string>
     <!-- Acknowlogment or an affirmative statement -->
-    <string name="label_ok">تایید</string>
+    <string name="label_ok">OK</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
     <string name="label_close">Close</string>
     <!-- Close or reject an action -->
-    <string name="title_cancel">لغو</string>
+    <string name="title_cancel">Cancel</string>
     <!-- The application is already executing a different task -->
     <!-- Theapplication is out of memory -->
     <!-- The remote git repository could not be found -->
     <!-- Local changes are being uploaded to the server -->
-    <string name="uploading">آپلود</string>
+    <string name="uploading">Uploading</string>
     <!-- The repository could not be created-->
     <!-- The terms that users must agree with in order to use the app -->
-    <string name="terms_title">شرایط استفاده</string>
-    <string name="terms">با استفاده از این برنامه شما را با این بیانیه از دستورالعمل های ایمان و ترجمه به توافق برسند و به انتشار شما تحت شرایط کریتیو کامانز Attribution-ShareAlike در 4.0 مجوز بین المللی کار می کنند.</string>
+    <string name="terms_title">Terms of Use</string>
+    <string name="terms">By using this app you agree with the statement of faith and translation guidelines and to release your work under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
     <!-- stub needed for the drawer open and close listener -->
-    <string name="chapter_title_field">عنوان فصل:</string>
-    <string name="chapter_reference_field">ارجاع فصل:</string>
+    <string name="chapter_title_field">Chapter Title</string>
+    <string name="chapter_reference_field">Chapter Reference</string>
     <!-- The language from which a project is being translated -->
-    <string name="source_language_field">لسان مبدا:</string>
+    <string name="source_language_field">Source</string>
     <!-- The langage to which a project is being translated -->
-    <string name="target_language">لسان مقصد:</string>
-    <string name="title_activity_chapter_setting">تنظیمات فصل</string>
-    <string name="title_activity_language_selector">لسان</string>
-    <string name="success">موفقیت</string>
-    <string name="label_details">تفصیلات</string>
-    <string name="title_activity_sharing">به اشتراک‌گذاری</string>
-    <string name="missing_external_storage">ذخیره خارجی غیرقابل دسترسی است</string>
+    <string name="target_language">Target Language</string>
+    <string name="title_activity_chapter_setting">Chapter Translation</string>
+    <string name="title_activity_language_selector">Language</string>
+    <string name="success">Success</string>
+    <string name="label_details">details</string>
+    <string name="title_activity_sharing">Share</string>
+    <string name="missing_external_storage">External storage not available</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
-    <string name="project_exported_to">پروژه ذخیره شد در </string>
+    <string name="project_exported_to">Project saved to <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
     <!-- The file browser -->
-    <string name="title_activity_file_explorer">جستجوگر فایل</string>
+    <string name="title_activity_file_explorer">File Explorer</string>
     <!-- Export a project to another app on the device -->
-    <string name="backup_to_app">تصدیر به برنامه</string>
+    <string name="backup_to_app">Send to another app</string>
     <!-- Export a project to the sd card -->
-    <string name="backup_to_sd">تصدیر به SD</string>
+    <string name="backup_to_sd">Export Project File</string>
     <!-- The translation could not be imported -->
-    <string name="translation_import_failed">تورید ترجمه ناموفق بود</string>
-    <string name="internet_not_available">اتصال اینترنت شما فعال نیست.</string>
+    <string name="translation_import_failed">Failed to import</string>
+    <string name="internet_not_available">No internet connection</string>
     <!-- Backup and/or publish a project translation-->
-    <string name="backup_and_publish">پشتیبان گیری و انتشار</string>
-    <string name="upload_wizard_intro">شما در حال ارسال ترجمه خود هستید.</string>
-    <string name="label_continue">ادامه دادن</string>
-    <string name="next">بعد</string>
-    <string name="upload_wizard_overview">بارگذاری مرور</string>
-    <string name="label_project_details">تفصیلات پروژه</string>
+    <string name="backup_and_publish">Backup and Publish</string>
+    <string name="upload_wizard_intro">You are about to upload your translation.</string>
+    <string name="label_continue">Continue</string>
+    <string name="next">Next</string>
+    <string name="upload_wizard_overview">Upload Review</string>
+    <string name="label_project_details">Project details</string>
     <!-- Indicates how the project is being translated. e.g. Open Bible Stories is being translated from the English language into the Deutsch language -->
-    <string name="project_details"><xliff:g id="project" example="Open Bible Stories"> \"%1$s\" </xliff:g> از زبان <xliff:g id="language" example="English"> \"%2$s\" </xliff:g> است که به زبان <xliff:g id="language" example="Deutsch"> \"%3$s\" </xliff:g> ترجمه می شود.</string>
-    <string name="click_for_details">جهت اطلاع از تفصیلات کلیک کنید</string>
-    <string name="title_project_settings">تتظیمات پروژه</string>
-    <string name="error_target_and_source_are_same">لسان های مبدأ و مقصد یکی هستند</string>
-    <string name="error_chapter_title_missing">عنوان فصل گم شده است</string>
-    <string name="error_chapter_reference_missing">مرجع فصل گم شده است</string>
-    <string name="label_chapter_title_detailed">فصل <xliff:g id="chapter" example="1. The Creation"> %1$s </xliff:g></string>
-    <string name="label_frame_title_detailed">قاب: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
+    <string name="project_details"><xliff:g example="Open Bible Stories" id="project">\"%1$s\"</xliff:g> is being translated from the <xliff:g example="English" id="source_language">\"%2$s\"</xliff:g> language into the <xliff:g example="Deutsch" id="target_language">\"%3$s\"</xliff:g> language.</string>
+    <string name="click_for_details">Click for details</string>
+    <string name="title_project_settings">Project Languages</string>
+    <string name="error_target_and_source_are_same">Source and target languages must not match</string>
+    <string name="error_chapter_title_missing">Chapter title missing</string>
+    <string name="error_chapter_reference_missing">Chapter reference missing</string>
+    <string name="label_chapter_title_detailed">Chapter <xliff:g example="1. The Creation" id="chapter">%1$s</xliff:g></string>
+    <string name="label_frame_title_detailed">Frame: <xliff:g example="1" id="frame">%1$s</xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
-    <string name="dialog_validation_errors">خطاهای تصدیق</string>
-    <string name="validation_errors">خطاهای رفع نشده در ترجمه است. آنها را تصحیح کرده و مجددا سعی کنید.</string>
+    <string name="dialog_validation_errors">Validation Errors</string>
+    <string name="validation_errors">Unresolved errors. Please correct them and try again</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
-    <string name="error_frames_not_translated">فریم های %1$s ترجمه نشده است.</string>
-    <string name="dialog_validation_warnings">اخطارهای تصدیق</string>
-    <string name="validation_warnings">اخطارهای رفع نشده باقی مانده است. آیا یقین دارید که می خواهید این ترجمه را بارگذاری کنید؟</string>
-    <string name="no_translated_chapters">هنوز چیزی ترجمه نشده است.</string>
-    <string name="title_chapters">فصول</string>
+    <string name="error_frames_not_translated"><xliff:g example="5" id="number">%1$s</xliff:g> frames have not been translated.</string>
+    <string name="dialog_validation_warnings">Validation Warnings</string>
+    <string name="validation_warnings">There are unresolved warnings. Continue?</string>
+    <string name="no_translated_chapters">Nothing has been translated</string>
+    <string name="title_chapters">Chapter</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
-    <string name="now_viewing_frame">مشاهده از قاب <xliff:g id="number" example="1">%1$s </xliff:g> در فصل <xliff:g id="chapter" example="1. The Creation">%2$s </xliff:g>.</string>
-    <string name="label_translation_notes">نوت ها</string>
-    <string name="label_passage_note">نوت قبول:</string>
-    <string name="label_delete">حذف</string>
+    <string name="now_viewing_frame">Viewing frame <xliff:g example="1" id="number">%1$s</xliff:g> in chapter <xliff:g example="1. The Creation" id="chapter">%2$s</xliff:g>.</string>
+    <string name="label_translation_notes">Notes</string>
+    <string name="label_passage_note">Passage note:</string>
+    <string name="label_delete">Delete</string>
     <!-- Explaination of what a source language is -->
-    <string name="source_language_instructions">منبع زبان ترجمه کامل هستند.</string>
+    <string name="source_language_instructions">Completed translations</string>
     <!-- Explaination of what a target language is -->
-    <string name="target_language_instructions">زبان مقصد ترجمه شده است یا این نسخهها کار میکند در حال پیشرفت است.</string>
-    <string name="notes_cannot_overlap">نوت ها نمی توانند روی هم را بپوشانند</string>
+    <string name="target_language_instructions">Not started or in-progress translations</string>
+    <string name="notes_cannot_overlap">Notes cannot overlap</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
-    <string name="currently_viewed_frame_index">قاب <xliff:g id="current_frame" example="2">%1$s </xliff:g> از <xliff:g id="total_frames" example="10">%2$s </xliff:g></string>
+    <string name="currently_viewed_frame_index">Frame <xliff:g example="2" id="current_frame">%1$s</xliff:g> of <xliff:g example="10" id="total_frames">%2$s</xliff:g></string>
     <string name="content_server">Content Server</string>
-    <string name="opening_project">باز کردن پروژه</string>
+    <string name="opening_project">Opening project</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
-    <string name="loading_target_language">بارگذاری لسان مقصد: %1$s</string>
+    <string name="loading_target_language">Loading target language: <xliff:g example="Deutsch" id="language">%1$s</xliff:g></string>
     <!-- Indicates the project that is being loaded. e.g. Loading project: Open Bible Stories -->
-    <string name="loading_project">بارگذاری پروژه: %1$s</string>
+    <string name="loading_project">Loading project: <xliff:g example="Open Bible Stories" id="project">%1$s</xliff:g></string>
     <!-- Uploading the device public ssh key to the server -->
-    <string name="submitting_security_keys">در حال انتقال کليدهای امنیتی...</string>
-    <string name="choose_file">فايل خود را انتخاب کنید</string>
-    <string name="choose_source_language">لسان مبدا را انتخاب کنید</string>
-    <string name="choose_target_language">لسان مقصد را انتخاب کنید</string>
-    <string name="search_language">جستجو برای یک زبان</string>
-    <string name="loading">بارگذاری...</string>
-    <string name="view_license_agreement">مشاهده لایسنس</string>
-    <string name="license_deny">خیر با تشکر</string>
-    <string name="license_accept">موافقم</string>
+    <string name="submitting_security_keys">Transferring security keys</string>
+    <string name="choose_file">Choose file</string>
+    <string name="choose_source_language">Choose Source</string>
+    <string name="choose_target_language">Choose Target</string>
+    <string name="search_language">Search languages</string>
+    <string name="loading">Loading</string>
+    <string name="view_license_agreement">License Agreement</string>
+    <string name="license_deny">No Thanks</string>
+    <string name="license_accept">I Agree</string>
     <!-- Footnotes are not used in the current version of the app. However future versions will use it -->
-    <string name="label_note_phrase">عبارت انتخاب شده:</string>
-    <string name="related_terms">همچنين مراجعه کنید به:</string>
-    <string name="term_examples">مثال ها:</string>
-    <string name="project_uploaded">پروژه با موفقيت بارگذاری شد</string>
-    <string name="choose_frame_to_start">متن منبع را از بند چپ برای شروع را انتخاب کنید</string>
-    <string name="return_to_important_terms">بازگشت به لحاظ مهم</string>
-    <string name="no_translation_notes">یادداشت ترجمه بدون وجود دارد</string>
-    <string name="translation_words">شرایط کلیدی</string>
-    <string name="translation_check_notice">ما هم اکنون انجام چند چک برای اطمینان از ترجمه شما آماده است.</string>
-    <string name="preparing_upload">پروژه آماده برای آپلود</string>
-    <string name="choose_a_project">لطفا پروژه اول باز کنید.</string>
-    <string name="choose_a_chapter">لطفا فصل اول باز</string>
-    <string name="title_activity_crash_reporter">گزارش خطا</string>
-    <string name="title_activity_bug_reporter">گزارش اشکال</string>
-    <string name="crash_details">آنچه شما انجام می دهند درست قبل از برنامه سقوط کرد؟</string>
-    <string name="yes">بلی</string>
-    <string name="no">شماره.</string>
+    <string name="label_note_phrase">Selected phrase:</string>
+    <string name="related_terms">See Also:</string>
+    <string name="term_examples">Examples:</string>
+    <string name="project_uploaded">Project successfully uploaded</string>
+    <string name="choose_frame_to_start">Open a project to start translating</string>
+    <string name="return_to_important_terms">Return to Words</string>
+    <string name="no_translation_notes">No notes</string>
+    <string name="translation_words">Words</string>
+    <string name="translation_check_notice">We will now perform a few checks to ensure your translation is ready.</string>
+    <string name="preparing_upload">Preparing upload</string>
+    <string name="choose_a_project">Please open a project</string>
+    <string name="choose_a_chapter">Please open a chapter</string>
+    <string name="title_activity_crash_reporter">Error Report</string>
+    <string name="title_activity_bug_reporter">Bug Report</string>
+    <string name="crash_details">What were you doing just before the app crashed?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
+    <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
+<p>
+      <strong>Accurate</strong> - Accurate translations effectively communicate the intended meaning of the original, divinely inspired text. An accurate translation expresses the meaning the author intended for the original audience in the original context.
+      <p>
+        1. To the extent that is possible, nothing is added, misconstrued, or deleted from the original message.
+        <br/>2. It does not recast the meaning of the original text to make it more relevant to the contemporary audience.
+        <br/>3. An accurate translation does not distort the meaning in order to favor a specific interpretive perspective. It should be free from theological, cultural, or personal biases.
+        <br/>4. An accurate translation communicates historical events and facts accurately.
+      <p>
+</p>
+<p>
+      <strong>Clear</strong> - Clear translations will use whatever language structures are needed to help readers easily read and understand it.
+      <p>
+        1. A clear translation may use as many or as few terms as necessary to communicate the original meaning as clearly as possible.
+        <br/>2. Making a clear translation does not mean that the translator clarifies something that is ambiguous in the source text.
+        <br/>3. Making a clear translation does not mean that the translator gives the reader a specific interpretation for every passage where meaning is genuinely debated.
+      </p>
+</p>
+<p>
+      <strong>Natural</strong> - Natural translations use language forms that are reflect the way the target language is used in corresponding contexts.
+      <p>
+        1. Natural Bible translations sound like they were produced by an adult native speaker who speaks and/or writes well.
+        <br/>2. A natural Bible translation does not use expressions that are particular to their own culture in order to make the translation appear natural.
+        <br/>3. It is more important for a portion of Scripture to be translated accurately than for it to sound perfectly natural to everyone who reads it.
+      </p>
+</p>
+<p> We believe that a translation has the highest likelihood of being good quality when after applying the guidelines above, the following are completed: </p>
+<p>
+    1. It is tested and approved by believers of the language community and their church leaders.
+    <br/>2. Ongoing revisions and improvements are made.
+</p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="view_statement_of_faith">مشخصات اعتقاد</string>
-    <string name="view_translation_guidelines">نمایش راهنمای ترجمه</string>
+    <string name="statement_of_faith"><![CDATA[<h1>Statement of Faith</h1>
+<p>We believe:</p>
+<ul>
+    <li>The Bible is divinely inspired by God and has final authority.</li>
+    <li>God is one and exists in three persons: God the Father, God the Son and God the Holy Spirit.</li>
+    <li>Because of the fall of man, all humans are sinful, and in need of salvation.</li>
+    <li>The death of Christ is a substitute for sinners and provides for the cleansing of those who believe.</li>
+    <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
+    <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
+</ul>]]></string>
+    <string name="view_statement_of_faith">Statement of Faith</string>
+    <string name="view_translation_guidelines">Translation Guidelines</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
     <!-- Indicates the peer has connected to the server -->
-    <string name="language_resources">نسخه</string>
-    <string name="import_project">پروژه واردات</string>
-    <string name="no_projects_available_on_server">هیچ پروژه قابل دسترس در این سرور می باشد</string>
-    <string name="downloading">دانلود</string>
+    <string name="language_resources">Versions</string>
+    <string name="import_project">Import Project</string>
+    <string name="no_projects_available_on_server">No projects available on server</string>
+    <string name="downloading">Downloading</string>
     <string name="downloading_images">Downloading images</string>
     <string name="connecting_to_server">Connecting to remote server...</string>
     <string name="downloading_images_for_print_failed">The download failed to complete. Try printing without images.</string>
@@ -130,71 +171,71 @@
     <string name="out_of">out of</string>
     <string name="mb_downloaded">MB downloaded</string>
     <string name="image_large_download">Downloading images will take several megabytes. Are you sure you want to include images?</string>
-    <string name="confirm_import">لطفا تأیید کنید آنچه شما می خواهید به واردات.</string>
-    <string name="waiting_for_another_device">منتظر دستگاه</string>
-    <string name="label_back">پشت</string>
-    <string name="bug_report">شرح مشکل شما با این برنامه تجربه.</string>
-    <string name="project_library">کتابخانه</string>
-    <string name="title_verse">شعر</string>
-    <string name="title_note">نکته</string>
-    <string name="dialog_contact_form">فرم تماس</string>
-    <string name="label_name">نام</string>
-    <string name="label_email">ایمیل</string>
-    <string name="label_phone">تلفن</string>
-    <string name="verse_out_of_bounds">را انتخاب کنید یک آیه بین <xliff:g id="number" example="1"> %1$s </xliff:g> و <xliff:g id="number" example="100"> %2$s </xliff:g></string>
-    <string name="no_key_terms">هیچ نظر مهم وجود دارد</string>
-    <string name="title_activity_developer">ابزارهای برنامه نویسی</string>
-    <string name="action_settings">تنظیمات</string>
+    <string name="confirm_import">Please confirm import data</string>
+    <string name="waiting_for_another_device">Waiting for another device</string>
+    <string name="label_back">Back</string>
+    <string name="bug_report">Describe the problem you are experiencing</string>
+    <string name="project_library">Library</string>
+    <string name="title_verse">Verse</string>
+    <string name="title_note">Note</string>
+    <string name="dialog_contact_form">Contact Form</string>
+    <string name="label_name">Name</string>
+    <string name="label_email">Email</string>
+    <string name="label_phone">Phone</string>
+    <string name="verse_out_of_bounds">Choose a verse between <xliff:g example="1" id="number">%1$s</xliff:g> and <xliff:g example="100" id="number">%2$s</xliff:g></string>
+    <string name="no_key_terms">There are no Words</string>
+    <string name="title_activity_developer">Developer Tools</string>
+    <string name="action_settings">Settings</string>
     <!-- displays the application build or version code -->
     <!-- displays the application version name -->
     <!-- displays the unique device id -->
-    <string name="downloading_project">پروژه دانلود <xliff:g id="project_id" example="obs"> %1$s </xliff:g></string>
+    <string name="downloading_project">Downloading project <xliff:g example="obs" id="project_id">%1$s</xliff:g></string>
     <!-- This is the direction up. The opposite of down. -->
-    <string name="up">بالا</string>
+    <string name="up">Up</string>
     <!-- indicates the directory/folder on the device does not contain any files -->
-    <string name="empty_directory">این پوشه خالی است</string>
-    <string name="exporting">صادرات</string>
-    <string name="get_more_projects">دریافت پروژه های بیشتر</string>
-    <string name="source_language_library">منبع کتابخانه زبان</string>
-    <string name="title_project_detail">پروژه کتابخانه زبان</string>
-    <string name="languages">زبان</string>
-    <string name="drafts">پیش نویسهای ترجمه</string>
-    <string name="use_internet_confirmation">این اتصال به اینترنت خود را به دانلود اطلاعات از سرور استفاده کنید، ادامه دهید؟</string>
-    <string name="update_library">پروژه های به روز رسانی</string>
-    <string name="update_projects_description">مشاهده و دانلود به روز رسانی در دسترس از سرور</string>
-    <string name="action_download_all">دانلود همه</string>
-    <string name="title_activity_project_updates">پروژه به روز رسانی</string>
-    <string name="action_edit_projects">پروژه ویرایش</string>
-    <string name="download_confirmation">شما در مورد دانلود یک مقدار به طور بالقوه زیادی از داده ها هستند، ادامه دهید؟</string>
-    <string name="action_cancel_edit_projects">توقف پروژه های در حال ویرایش</string>
-    <string name="import_draft">واردات پیش نویس</string>
-    <string name="import_draft_confirmation">این ترجمه های موجود خود را در این زبان مقصد جایگزین، ادامه دهید؟</string>
-    <string name="action_search">جستجو</string>
-    <string name="transfer_from_device">انتقال از دستگاه</string>
-    <string name="transfer_from_device_description">پروژه ها در شبکه از یک دستگاه در نزدیکی منتقل</string>
-    <string name="import_from_storage">واردات از ذخیره سازی</string>
-    <string name="import_from_storage_description">پروژه خواهد شد از ذخیره سازی خارجی در این دستگاه وارد</string>
-    <string name="download_complete">دانلود کامل</string>
-    <string name="source_export_complete">صادرات منبع کامل</string>
-    <string name="exit_confirmation">آیا مطمئن هستید که میخواهید خارج شوید؟</string>
-    <string name="read_chapter_menu">فصل خوانده شده</string>
-    <string name="preview_chapter_translation">ترجمه پیشنمایش</string>
-    <string name="toggle_blind_draft_mode">پیش نویس تعویض کور</string>
-    <string name="indexing">نمایه سازی</string>
-    <string name="title_upload">بارگذاری</string>
-    <string name="preview_chapter_translation_draft">پیش نویس پیشنمایش</string>
-    <string name="choose_project_to_upload">را انتخاب کنید پروژه برای آپلود</string>
-    <string name="verify">تایید</string>
-    <string name="review">مرور</string>
-    <string name="publish_translation">ترجمه انتشار</string>
-    <string name="notice">اطلاع</string>
-    <string name="complete_required_fields">لطفا تمام زمینه های مورد نیاز تکمیل</string>
-    <string name="required_field"><xliff:g id="marker"> * * * * </xliff:g> ضروری</string>
-    <string name="upload_failed">آپلود انجام نشد</string>
+    <string name="empty_directory">Directory empty</string>
+    <string name="exporting">Exporting</string>
+    <string name="get_more_projects">Get more projects</string>
+    <string name="source_language_library">Source Library</string>
+    <string name="title_project_detail">Project Library Languages</string>
+    <string name="languages">Languages</string>
+    <string name="drafts">Drafts</string>
+    <string name="use_internet_confirmation">This will use your internet connection, continue?</string>
+    <string name="update_library">Update Library</string>
+    <string name="update_projects_description">View and download available updates from the server</string>
+    <string name="action_download_all">Download all</string>
+    <string name="title_activity_project_updates">Project Updates</string>
+    <string name="action_edit_projects">Edit Projects</string>
+    <string name="download_confirmation">You are about to download a potentially large amount of data, continue?</string>
+    <string name="action_cancel_edit_projects">Stop Editing Projects</string>
+    <string name="import_draft">Import Draft</string>
+    <string name="import_draft_confirmation">Replace existing translation with this draft?</string>
+    <string name="action_search">Search</string>
+    <string name="transfer_from_device">Transfer from device</string>
+    <string name="transfer_from_device_description">Transfer from nearby device over the network</string>
+    <string name="import_from_storage">Import from storage</string>
+    <string name="import_from_storage_description">Projects will be imported from the external storage on this device</string>
+    <string name="download_complete">Download complete</string>
+    <string name="source_export_complete">Export complete</string>
+    <string name="exit_confirmation">Exit <xliff:g id="app_name">BTT Writer</xliff:g>?</string>
+    <string name="read_chapter_menu">Read chapter</string>
+    <string name="preview_chapter_translation">Preview translation</string>
+    <string name="toggle_blind_draft_mode">Toggle blind draft</string>
+    <string name="indexing">Indexing</string>
+    <string name="title_upload">Upload</string>
+    <string name="preview_chapter_translation_draft">Preview draft</string>
+    <string name="choose_project_to_upload">Choose project to upload</string>
+    <string name="verify">Verify</string>
+    <string name="review">Review</string>
+    <string name="publish_translation">Publish translation</string>
+    <string name="notice">Notice</string>
+    <string name="complete_required_fields">Please complete all required fields</string>
+    <string name="required_field"><xliff:g id="marker">*</xliff:g> required</string>
+    <string name="upload_failed">Upload failed</string>
     <string name="download_failed">Download failed</string>
-    <string name="publishing_translation">ترجمه انتشارات</string>
-    <string name="backing_up_translation">تهیه نسخه پشتیبان از ترجمه</string>
-    <string name="review_all_checking_questions">لطفا تمام سوالات بررسی</string>
+    <string name="publishing_translation">Publishing translation</string>
+    <string name="backing_up_translation">Backing up translation</string>
+    <string name="review_all_checking_questions">Please review all questions</string>
     <string name="browse">Browse</string>
     <string name="please_enter_text">Please enter some text</string>
     <string name="apk_update_available">A new version of the app is available</string>
@@ -397,7 +438,7 @@
     <string name="create_offline_profile">Create offline Account</string>
     <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
     <string name="title_connect_door43">Connect To Server</string>
-    <string name="gogs_public_key_name">ts-android</string>
+    <string name="gogs_public_key_name">btt-writer-android</string>
     <string name="restore_failed">The translation could not be imported</string>
     <string name="import_from_door43">Import from Server</string>
     <string name="restore_from_door43">Restore from Server</string>
@@ -464,6 +505,22 @@
     <string name="title_import_failed">Import Failed!</string>
     <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Table of Contents </string>
+    <string name="license_pdf"><![CDATA[<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
+<h3>Human-Readable Summary</h3>
+<p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
+<h4>This is a human-readable summary of (and not a substitute for) the License</h4>
+<br/>
+<h3>You are free to:</h3>
+<br/><b>&#8226; Share</b> - copy and redistribute the material in any medium or format
+<br/><b>&#8226; Adapt</b> - remix, transform, and build upon the material for any purpose, even commercially.
+<p>The licensor cannot revoke these freedoms as long as you follow the license terms.</p>
+<h3>Under the following terms:</h3>
+<br/><b>&#8226; Attribution</b> - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+<br/><b>&#8226; ShareAlike</b> - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
+<br/><b>&#8226; No additional restrictions</b> - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.</p>
+<h3>Notices:</h3>
+<p><br/>&#8226; You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
+<p><br/>&#8226; No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>]]></string>
     <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
     <string name="new_lang_api_upload_failure_title">New Language Error</string>
     <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
