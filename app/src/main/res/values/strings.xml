@@ -143,7 +143,7 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
-    <string name="translation_guidlines" translatable="false">
+    <string name="translation_guidlines">
 <![CDATA[
 <h1>Translation Guidelines</h1>
 <p>
@@ -179,7 +179,7 @@
 ]]>
     </string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="statement_of_faith" translatable="false">
+    <string name="statement_of_faith">
 <![CDATA[
 <h1>Statement of Faith</h1>
 <p>We believe:</p>
@@ -779,7 +779,7 @@ Do you want to enable SD card access?  If so then:
     <string name="title_import_failed">Import Failed!</string>
     <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Table of Contents </string>
-    <string name="license_pdf" translatable="false">
+    <string name="license_pdf">
 <![CDATA[
 <h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
 <h3>Human-Readable Summary</h3>
