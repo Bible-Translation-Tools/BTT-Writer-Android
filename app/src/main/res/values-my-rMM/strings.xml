@@ -1,169 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <!-- The app name -->
-    <string name="title_projects">Project</string>
-    <string name="title_frames">Frame</string>
+    <string name="title_projects">စီမံကိန္းမ်ား</string>
+    <string name="title_frames">စီမံဖန္တီးမူမ်ား</string>
     <!-- Acknowlogment or an affirmative statement -->
-    <string name="label_ok">OK</string>
+    <string name="label_ok">အိုေက</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
     <string name="label_close">Close</string>
     <!-- Close or reject an action -->
-    <string name="title_cancel">Cancel</string>
+    <string name="title_cancel">ပယ္ဖ်က္သည္</string>
     <!-- The application is already executing a different task -->
     <!-- Theapplication is out of memory -->
     <!-- The remote git repository could not be found -->
     <!-- Local changes are being uploaded to the server -->
-    <string name="uploading">Uploading</string>
+    <string name="uploading">လွှင့်တင်</string>
     <!-- The repository could not be created-->
     <!-- The terms that users must agree with in order to use the app -->
-    <string name="terms_title">Terms of Use</string>
-    <string name="terms">By using this app you agree with the statement of faith and translation guidelines and to release your work under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
+    <string name="terms_title">သံုးစြဲမူ စည္းကမ္းခ်က္မ်ား</string>
+    <string name="terms">ဒီ app ကိုသုံးခြင်းအားဖြင့်သင်တို့ကိုယုံကြည်ခြင်းနှင့်ဘာသာပြန်လမ်းညွှန်ချက်များတို့၏ကြေငြာချက်နှင့်အတူသဘောတူနှင့်သင်ကို Creative Commons Attribution-ShareAlike 4.0 အပြည်ပြည်ဆိုင်ရာလိုင်စင်၏စည်းကမ်းချက်များကိုအောက်တွင်အလုပ်လုပ်လွှတ်ပေးရန်။</string>
     <!-- stub needed for the drawer open and close listener -->
-    <string name="chapter_title_field">Chapter Title</string>
-    <string name="chapter_reference_field">Chapter Reference</string>
+    <string name="chapter_title_field">အခဏ္း ေခါင္းစဥ္:</string>
+    <string name="chapter_reference_field">အခဏ္း ကိုးကားခ်က္:</string>
     <!-- The language from which a project is being translated -->
-    <string name="source_language_field">Source</string>
+    <string name="source_language_field">ရင္းျမစ္ ဘာသာစကား:</string>
     <!-- The langage to which a project is being translated -->
-    <string name="target_language">Target Language</string>
-    <string name="title_activity_chapter_setting">Chapter Translation</string>
-    <string name="title_activity_language_selector">Language</string>
-    <string name="success">Success</string>
-    <string name="label_details">details</string>
-    <string name="title_activity_sharing">Share</string>
-    <string name="missing_external_storage">External storage not available</string>
+    <string name="target_language">ရည္ရြယ္သည့္ ဘာသာစကား:</string>
+    <string name="title_activity_chapter_setting">အခဏ္း ဆက္တင္မ်ား</string>
+    <string name="title_activity_language_selector">ဘာသာစကား</string>
+    <string name="success">ေအာင္ျမင္သည္</string>
+    <string name="label_details">အေသးစိတ္</string>
+    <string name="title_activity_sharing">မ်ေ၀ျခင္း</string>
+    <string name="missing_external_storage">ျပင္သိုေလွာင္မူမရႏိုင္ပါ</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
-    <string name="project_exported_to">Project saved to <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
+    <string name="project_exported_to">စီမံကိန္းအား သို႔ သိမ္းဆည္းခဲ့သည္ </string>
     <!-- The file browser -->
-    <string name="title_activity_file_explorer">File Explorer</string>
+    <string name="title_activity_file_explorer">ဖိုင္ရွာသူ</string>
     <!-- Export a project to another app on the device -->
-    <string name="backup_to_app">Send to another app</string>
+    <string name="backup_to_app">အပ္စ္သို႔ တင္ပို႔သည္</string>
     <!-- Export a project to the sd card -->
-    <string name="backup_to_sd">Export Project File</string>
+    <string name="backup_to_sd">SD သို႔တင္ပို႔သည္</string>
     <!-- The translation could not be imported -->
-    <string name="translation_import_failed">Failed to import</string>
-    <string name="internet_not_available">No internet connection</string>
+    <string name="translation_import_failed">ဘာသာျပန္ျခင္းကို တင္သြင္းရန္ မေအာင္ျမင္ပါ</string>
+    <string name="internet_not_available">သင့္တြင္ ဖြင့္ထားသည့္ အင္တာနက္ မရွိပါ။</string>
     <!-- Backup and/or publish a project translation-->
-    <string name="backup_and_publish">Backup and Publish</string>
-    <string name="upload_wizard_intro">You are about to upload your translation.</string>
-    <string name="label_continue">Continue</string>
-    <string name="next">Next</string>
-    <string name="upload_wizard_overview">Upload Review</string>
-    <string name="label_project_details">Project details</string>
+    <string name="backup_and_publish">Backup နဲ့ Publish</string>
+    <string name="upload_wizard_intro">သင္၏ ဘာသာျပန္ဆိုမူကို သင္က အပ္လုပ္တင္ေတာ့မည္။</string>
+    <string name="label_continue">ဆက္ပါ</string>
+    <string name="next">နောက်တစ်ခု</string>
+    <string name="upload_wizard_overview">ျပန္ၾကည့္ပါကို တင္ပါ</string>
+    <string name="label_project_details">စီမံကိန္း အေသးစိတ္မ်ား</string>
     <!-- Indicates how the project is being translated. e.g. Open Bible Stories is being translated from the English language into the Deutsch language -->
-    <string name="project_details"><xliff:g example="Open Bible Stories" id="project">\"%1$s\"</xliff:g> is being translated from the <xliff:g example="English" id="source_language">\"%2$s\"</xliff:g> language into the <xliff:g example="Deutsch" id="target_language">\"%3$s\"</xliff:g> language.</string>
-    <string name="click_for_details">Click for details</string>
-    <string name="title_project_settings">Project Languages</string>
-    <string name="error_target_and_source_are_same">Source and target languages must not match</string>
-    <string name="error_chapter_title_missing">Chapter title missing</string>
-    <string name="error_chapter_reference_missing">Chapter reference missing</string>
-    <string name="label_chapter_title_detailed">Chapter <xliff:g example="1. The Creation" id="chapter">%1$s</xliff:g></string>
-    <string name="label_frame_title_detailed">Frame: <xliff:g example="1" id="frame">%1$s</xliff:g></string>
+    <string name="project_details"><xliff:g id="language" example="English">\"%1$s\"</xliff:g> သည္   <xliff:g id="language" example="English">\"%2$s\"</xliff:g> သာသာစကားကို  <xliff:g id="language" example="Deutsch">\"%3$s\"</xliff:g>ဘာသာစကား။</string>
+    <string name="click_for_details">အေသးစိတ္မ်ားအတြက္ ကလစ္ႏွိပ္ပါ</string>
+    <string name="title_project_settings">စီမံကိန္းဆက္တင္မ်ား</string>
+    <string name="error_target_and_source_are_same">ရင္းျမစ္ႏွင့္ ရည္ရြယ္သည့္ဘာသာစကားက ထပ္တူညီသည္</string>
+    <string name="error_chapter_title_missing">အခန္းေခါင္းစဥ္ ေပ်ာက္ေနသည္</string>
+    <string name="error_chapter_reference_missing">အခန္း ကိုးကားခ်က္ ေပ်ာက္ေနသည္</string>
+    <string name="label_chapter_title_detailed">အခနျး <xliff:g id="chapter" example="1. The Creation"> %1$s </xliff:g></string>
+    <string name="label_frame_title_detailed">Frame က: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
-    <string name="dialog_validation_errors">Validation Errors</string>
-    <string name="validation_errors">Unresolved errors. Please correct them and try again</string>
+    <string name="dialog_validation_errors">အေထာက္အထားျပျခင္း အမွားမ်ား</string>
+    <string name="validation_errors">၄င္းတို႔မွာ ဘာသာျပန္တြင္ မျပင္ရေသးသည့္ အမွားမ်ားျဖစ္သည္။ ေက်းဇူးျပဳ၍ ၄င္းတို႔ကိုျပင္ျပီး ျပန္ၾကိဳဳးစားပါ။</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
-    <string name="error_frames_not_translated"><xliff:g example="5" id="number">%1$s</xliff:g> frames have not been translated.</string>
-    <string name="dialog_validation_warnings">Validation Warnings</string>
-    <string name="validation_warnings">There are unresolved warnings. Continue?</string>
-    <string name="no_translated_chapters">Nothing has been translated</string>
-    <string name="title_chapters">Chapter</string>
+    <string name="error_frames_not_translated">%1$s စီမံဖန္တီးမူမ်ား အား ဘာသာမျပန္ဆိုထားပါ။</string>
+    <string name="dialog_validation_warnings">အေထာက္အထားျပျခင္း သတိေပးခ်က္မ်ား</string>
+    <string name="validation_warnings">၄င္းတို႔မွာ ဘာသာျပန္တြင္ မျပင္ရေသးသည့္ သတိေပးခ်က္မ်ား ျဖစ္သည္။ ဤဘာသာျပန္မူကို တင္ခ်င္တာ သင္ေသခ်ာလား?</string>
+    <string name="no_translated_chapters">ဘာမွ ဘာသာမျပန္ထားပါ။</string>
+    <string name="title_chapters">အခဏ္မ်ား</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
-    <string name="now_viewing_frame">Viewing frame <xliff:g example="1" id="number">%1$s</xliff:g> in chapter <xliff:g example="1. The Creation" id="chapter">%2$s</xliff:g>.</string>
-    <string name="label_translation_notes">Notes</string>
-    <string name="label_passage_note">Passage note:</string>
-    <string name="label_delete">Delete</string>
+    <string name="now_viewing_frame">ျမင္ရသည့္ ေဘာင္ <xliff:g id="number" example="1">%1$s</xliff:g>  ခန္း၌ <xliff:g id="chapter" example="1. The Creation">%2$s</xliff:g>။</string>
+    <string name="label_translation_notes">ဘာသာျပန္ျခင္း မွတ္ခ်က္မ်ား</string>
+    <string name="label_passage_note">စာပုဒ္ မွတ္ခ်က္:</string>
+    <string name="label_delete">ဖ်တ္ပါ</string>
     <!-- Explaination of what a source language is -->
-    <string name="source_language_instructions">Completed translations</string>
+    <string name="source_language_instructions">ရင္းျမစ္ဘာသာစကားမ်ားသည္ ျပီးျပည့္စံုသည့္ ဘာသာျပန္ဆိုမူမ်ားျဖစ္သည္။</string>
     <!-- Explaination of what a target language is -->
-    <string name="target_language_instructions">Not started or in-progress translations</string>
-    <string name="notes_cannot_overlap">Notes cannot overlap</string>
+    <string name="target_language_instructions">ပစ္မွတ္ထားသည့္ ဘာသာစကာမ်ားအား ဘာသာမျပန္ဆိုရေသးပါ သုိ႔မဟုတ္ ျပန္ဆိုေနတုန္းျဖစ္သည္။</string>
+    <string name="notes_cannot_overlap">မွတ္ခ်က္မ်ားသည္ ထပ္တူက်၍မရပါ။</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
-    <string name="currently_viewed_frame_index">Frame <xliff:g example="2" id="current_frame">%1$s</xliff:g> of <xliff:g example="10" id="total_frames">%2$s</xliff:g></string>
+    <string name="currently_viewed_frame_index">ေဘာင္<xliff:g id="current_frame" example="2">%1$s</xliff:g> ၏ <xliff:g id="total_frames" example="10">%2$s</xliff:g></string>
     <string name="content_server">Content Server</string>
-    <string name="opening_project">Opening project</string>
+    <string name="opening_project">စီမံကိန္းဖြင့္ေနသည္</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
-    <string name="loading_target_language">Loading target language: <xliff:g example="Deutsch" id="language">%1$s</xliff:g></string>
+    <string name="loading_target_language">ရည္ရြယ္သည့္ ဘာသာစကားကိုတင္ေနသည္: %1$s</string>
     <!-- Indicates the project that is being loaded. e.g. Loading project: Open Bible Stories -->
-    <string name="loading_project">Loading project: <xliff:g example="Open Bible Stories" id="project">%1$s</xliff:g></string>
+    <string name="loading_project">စီမံကိန္းတင္ေနသည္: %1$s</string>
     <!-- Uploading the device public ssh key to the server -->
-    <string name="submitting_security_keys">Transferring security keys</string>
-    <string name="choose_file">Choose file</string>
-    <string name="choose_source_language">Choose Source</string>
-    <string name="choose_target_language">Choose Target</string>
-    <string name="search_language">Search languages</string>
-    <string name="loading">Loading</string>
-    <string name="view_license_agreement">License Agreement</string>
-    <string name="license_deny">No Thanks</string>
-    <string name="license_accept">I Agree</string>
+    <string name="submitting_security_keys">လံုျခံဳေရးကီးမ်ား လႊဲေျပာင္းေနသည္...</string>
+    <string name="choose_file">သင့္ဖိုင္ကိုေရြးပါ</string>
+    <string name="choose_source_language">ရင္းျမစ္ဘာသာစကားကိုေရြးပါ</string>
+    <string name="choose_target_language">ရည္ရြယ္သည့္ ဘာသာစကားကိုေရြးပါ</string>
+    <string name="search_language">ဘာသာစကားရွာပါ</string>
+    <string name="loading">တင္ေနသည္...</string>
+    <string name="view_license_agreement">လိုင္စင္ၾကည့္ပါ</string>
+    <string name="license_deny">ရပါျပီ၊ ေက်းဇူးတင္ပါတယ္</string>
+    <string name="license_accept">ကၽြႏု္ပ္ သေဘာတူသည္</string>
     <!-- Footnotes are not used in the current version of the app. However future versions will use it -->
-    <string name="label_note_phrase">Selected phrase:</string>
-    <string name="related_terms">See Also:</string>
-    <string name="term_examples">Examples:</string>
-    <string name="project_uploaded">Project successfully uploaded</string>
-    <string name="choose_frame_to_start">Open a project to start translating</string>
-    <string name="return_to_important_terms">Return to Words</string>
-    <string name="no_translation_notes">No notes</string>
-    <string name="translation_words">Words</string>
-    <string name="translation_check_notice">We will now perform a few checks to ensure your translation is ready.</string>
-    <string name="preparing_upload">Preparing upload</string>
-    <string name="choose_a_project">Please open a project</string>
-    <string name="choose_a_chapter">Please open a chapter</string>
-    <string name="title_activity_crash_reporter">Error Report</string>
-    <string name="title_activity_bug_reporter">Bug Report</string>
-    <string name="crash_details">What were you doing just before the app crashed?</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <string name="label_note_phrase">ေရြးထားသည့္ စကားစု:</string>
+    <string name="related_terms">လည္းပဲ ၾကည့္ပါ:</string>
+    <string name="term_examples">ဥပမာ:</string>
+    <string name="project_uploaded">စီမံကိန္းအား ေအာင္ျမင္စြာ တင္ျပီးသည္</string>
+    <string name="choose_frame_to_start">စတင္ရန္ ဘယ္ဘက္အျပားမွ ရင္းျမစ္စာသားအခ်ိဳ႔ကို ေရြးပါ</string>
+    <string name="return_to_important_terms">အေရးၾကီးသည့္ အသံုးအႏူန္းမ်ားသို႔ ျပန္သြားပါ</string>
+    <string name="no_translation_notes">ဘာသာျပန္ဆိုမူ မွတ္စုမ်ားမရွိပါ</string>
+    <string name="translation_words">Key ကိုသက်မှတ်ချက်များ</string>
+    <string name="translation_check_notice">သင့္ဘာသာျပန္ဆိုမူက အဆင့္သင့္ျဖစ္တာေသခ်ာေစရန္ စစ္ေဆးမူ ကၽြႏု္ပ္တို႔က အနည္းငယ္ျပဳလုပ္မည္။</string>
+    <string name="preparing_upload">ပေရာဂ်က္အား အပ္လုပ္တင္ရန္ ျပင္ဆင္ေနသည္</string>
+    <string name="choose_a_project">ေက်းဇူးျပဳ၍ ပေရာဂ်က္ကို အရင္ဖြင့္ပါ။</string>
+    <string name="choose_a_chapter">ေက်းဇူးျပဳ၍ အခန္းကို အရင္ဖြင့္ပါ။</string>
+    <string name="title_activity_crash_reporter">အမွား အေၾကာင္းၾကားစာ</string>
+    <string name="title_activity_bug_reporter">bug အစီရင်ခံစာ</string>
+    <string name="crash_details">အပ္စ္မကြဲခင္က သင္ဘာလုပ္ေနလဲး?</string>
+    <string name="yes">ဟုတ်ကဲ့</string>
+    <string name="no">အဘယ်သူမျှမ</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
-    <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
-<p>
-      <strong>Accurate</strong> - Accurate translations effectively communicate the intended meaning of the original, divinely inspired text. An accurate translation expresses the meaning the author intended for the original audience in the original context.
-      <p>
-        1. To the extent that is possible, nothing is added, misconstrued, or deleted from the original message.
-        <br/>2. It does not recast the meaning of the original text to make it more relevant to the contemporary audience.
-        <br/>3. An accurate translation does not distort the meaning in order to favor a specific interpretive perspective. It should be free from theological, cultural, or personal biases.
-        <br/>4. An accurate translation communicates historical events and facts accurately.
-      <p>
-</p>
-<p>
-      <strong>Clear</strong> - Clear translations will use whatever language structures are needed to help readers easily read and understand it.
-      <p>
-        1. A clear translation may use as many or as few terms as necessary to communicate the original meaning as clearly as possible.
-        <br/>2. Making a clear translation does not mean that the translator clarifies something that is ambiguous in the source text.
-        <br/>3. Making a clear translation does not mean that the translator gives the reader a specific interpretation for every passage where meaning is genuinely debated.
-      </p>
-</p>
-<p>
-      <strong>Natural</strong> - Natural translations use language forms that are reflect the way the target language is used in corresponding contexts.
-      <p>
-        1. Natural Bible translations sound like they were produced by an adult native speaker who speaks and/or writes well.
-        <br/>2. A natural Bible translation does not use expressions that are particular to their own culture in order to make the translation appear natural.
-        <br/>3. It is more important for a portion of Scripture to be translated accurately than for it to sound perfectly natural to everyone who reads it.
-      </p>
-</p>
-<p> We believe that a translation has the highest likelihood of being good quality when after applying the guidelines above, the following are completed: </p>
-<p>
-    1. It is tested and approved by believers of the language community and their church leaders.
-    <br/>2. Ongoing revisions and improvements are made.
-</p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="statement_of_faith"><![CDATA[<h1>Statement of Faith</h1>
-<p>We believe:</p>
-<ul>
-    <li>The Bible is divinely inspired by God and has final authority.</li>
-    <li>God is one and exists in three persons: God the Father, God the Son and God the Holy Spirit.</li>
-    <li>Because of the fall of man, all humans are sinful, and in need of salvation.</li>
-    <li>The death of Christ is a substitute for sinners and provides for the cleansing of those who believe.</li>
-    <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
-    <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
-</ul>]]></string>
-    <string name="view_statement_of_faith">Statement of Faith</string>
-    <string name="view_translation_guidelines">Translation Guidelines</string>
+    <string name="view_statement_of_faith">ယုံကြည်ခြင်း၏မြင်ကွင်းထုတ်ပြန်ချက်</string>
+    <string name="view_translation_guidelines">ကြည့်ရန်ဘာသာပြန်စာပေလမ်းညွှန်ချက်များ</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
     <!-- Indicates the peer has connected to the server -->
-    <string name="language_resources">Versions</string>
-    <string name="import_project">Import Project</string>
-    <string name="no_projects_available_on_server">No projects available on server</string>
-    <string name="downloading">Downloading</string>
+    <string name="language_resources">ဗားရှင်း</string>
+    <string name="import_project">သွင်းကုန်စီမံကိန်းသည်</string>
+    <string name="no_projects_available_on_server">အဘယ်သူမျှမစီမံကိန်းများကိုဒီဆာဗာပေါ်တွင်ရရှိနိုင်ပါသည်</string>
+    <string name="downloading">Download လုပ်ခြင်း</string>
     <string name="downloading_images">Downloading images</string>
     <string name="connecting_to_server">Connecting to remote server...</string>
     <string name="downloading_images_for_print_failed">The download failed to complete. Try printing without images.</string>
@@ -171,71 +130,71 @@
     <string name="out_of">out of</string>
     <string name="mb_downloaded">MB downloaded</string>
     <string name="image_large_download">Downloading images will take several megabytes. Are you sure you want to include images?</string>
-    <string name="confirm_import">Please confirm import data</string>
-    <string name="waiting_for_another_device">Waiting for another device</string>
-    <string name="label_back">Back</string>
-    <string name="bug_report">Describe the problem you are experiencing</string>
-    <string name="project_library">Library</string>
-    <string name="title_verse">Verse</string>
-    <string name="title_note">Note</string>
-    <string name="dialog_contact_form">Contact Form</string>
-    <string name="label_name">Name</string>
-    <string name="label_email">Email</string>
-    <string name="label_phone">Phone</string>
-    <string name="verse_out_of_bounds">Choose a verse between <xliff:g example="1" id="number">%1$s</xliff:g> and <xliff:g example="100" id="number">%2$s</xliff:g></string>
-    <string name="no_key_terms">There are no Words</string>
-    <string name="title_activity_developer">Developer Tools</string>
-    <string name="action_settings">Settings</string>
+    <string name="confirm_import">သင်တင်သွင်းလိုလိုချင်တာတွေကိုအတည်ပြုပေးပါ။</string>
+    <string name="waiting_for_another_device">device တွေအတွက်စောင့်ဆိုင်းနေ</string>
+    <string name="label_back">ပြန်.</string>
+    <string name="bug_report">ဒီ app ကိုအတူတွေ့ကြုံနေရတဲ့ပြဿနာကိုဖော်ပြပါ။</string>
+    <string name="project_library">Project ကစာကြည့်တိုက်</string>
+    <string name="title_verse">လင်္ကာ</string>
+    <string name="title_note">မှတ်ချက်</string>
+    <string name="dialog_contact_form">Contact Form ကို</string>
+    <string name="label_name">Name ကို</string>
+    <string name="label_email">အီးမေးလ်</string>
+    <string name="label_phone">ဖုန်းနံပါတ်</string>
+    <string name="verse_out_of_bounds">အကြားတစ်ဦးကိုရွေးချယ်ပါဂါထာ <xliff:g id="number" example="1"> %1$s </xliff:g> နှင့် <xliff:g id="number" example="100"> %2$s </xliff:g></string>
+    <string name="no_key_terms">အဘယ်သူမျှမအရေးကြီးသောဝေါဟာရများရှိနေပါသည်</string>
+    <string name="title_activity_developer">Development Tools</string>
+    <string name="action_settings">ဆက္တင္မ်ား</string>
     <!-- displays the application build or version code -->
     <!-- displays the application version name -->
     <!-- displays the unique device id -->
-    <string name="downloading_project">Downloading project <xliff:g example="obs" id="project_id">%1$s</xliff:g></string>
+    <string name="downloading_project">ကိုဒေါင်းလုဒ်စီမံကိန်းကို <xliff:g id="project_id" example="obs"> %1$s </xliff:g></string>
     <!-- This is the direction up. The opposite of down. -->
-    <string name="up">Up</string>
+    <string name="up">အေပၚ</string>
     <!-- indicates the directory/folder on the device does not contain any files -->
-    <string name="empty_directory">Directory empty</string>
-    <string name="exporting">Exporting</string>
-    <string name="get_more_projects">Get more projects</string>
-    <string name="source_language_library">Source Library</string>
-    <string name="title_project_detail">Project Library Languages</string>
-    <string name="languages">Languages</string>
-    <string name="drafts">Drafts</string>
-    <string name="use_internet_confirmation">This will use your internet connection, continue?</string>
-    <string name="update_library">Update Library</string>
-    <string name="update_projects_description">View and download available updates from the server</string>
-    <string name="action_download_all">Download all</string>
-    <string name="title_activity_project_updates">Project Updates</string>
-    <string name="action_edit_projects">Edit Projects</string>
-    <string name="download_confirmation">You are about to download a potentially large amount of data, continue?</string>
-    <string name="action_cancel_edit_projects">Stop Editing Projects</string>
-    <string name="import_draft">Import Draft</string>
-    <string name="import_draft_confirmation">Replace existing translation with this draft?</string>
-    <string name="action_search">Search</string>
-    <string name="transfer_from_device">Transfer from device</string>
-    <string name="transfer_from_device_description">Transfer from nearby device over the network</string>
-    <string name="import_from_storage">Import from storage</string>
-    <string name="import_from_storage_description">Projects will be imported from the external storage on this device</string>
-    <string name="download_complete">Download complete</string>
-    <string name="source_export_complete">Export complete</string>
-    <string name="exit_confirmation">Exit <xliff:g id="app_name">BTT Writer</xliff:g>?</string>
-    <string name="read_chapter_menu">Read chapter</string>
-    <string name="preview_chapter_translation">Preview translation</string>
-    <string name="toggle_blind_draft_mode">Toggle blind draft</string>
-    <string name="indexing">Indexing</string>
-    <string name="title_upload">Upload</string>
-    <string name="preview_chapter_translation_draft">Preview draft</string>
-    <string name="choose_project_to_upload">Choose project to upload</string>
+    <string name="empty_directory">အဲဒီ directory ကိုအချည်းနှီးဖြစ်</string>
+    <string name="exporting">တင်ပို့</string>
+    <string name="get_more_projects">ပိုစီမံကိန်းများ Get</string>
+    <string name="source_language_library">source Language စာကြည့်တိုက်</string>
+    <string name="title_project_detail">Project ကစာကြည့်တိုက်ဘာသာစကားများ</string>
+    <string name="languages">ဘာသာစကားများ</string>
+    <string name="drafts">ဘာသာပြန်ချက်မူကြမ်း</string>
+    <string name="use_internet_confirmation">ဤရွေ့ကား, ဆာဗာကနေသတင်းအချက်အလက်ကို download လုပ်ကိုဆက်လက်သင့်ရဲ့အင်တာနက် connection ကိုအသုံးပြုမလဲ</string>
+    <string name="update_library">Update ကိုစီမံကိန်းများ</string>
+    <string name="update_projects_description">ထိုဆာဗာကနေရရှိနိုင်တဲ့ updates တွေကိုကြည့်ရှုခြင်းနှင့် download လုပ်</string>
+    <string name="action_download_all">အားလုံးကို Download လုပ်</string>
+    <string name="title_activity_project_updates">Project က Updates ကို</string>
+    <string name="action_edit_projects">Edit ကိုစီမံကိန်းများ</string>
+    <string name="download_confirmation">သင်, အချက်အလက်များ၏တစ်ဦးမည့်အလားအလာကြီးမားသောငွေပမာဏကို download လုပ်ကိုဆက်လက်လောက်ရှိပါသလဲ</string>
+    <string name="action_cancel_edit_projects">တည်းဖြတ်ခြင်းစီမံကိန်းများရပ်တန့်</string>
+    <string name="import_draft">သွင်းကုန်မူကြမ်း</string>
+    <string name="import_draft_confirmation">ဤရွေ့ကား, ဒီပစ်မှတ်ဘာသာစကား၌သင်တို့၏ရှိရင်းစွဲဘာသာပြန်ချက်အစားထိုးဖို့ဆက်လက်လိမ့်မည်လော</string>
+    <string name="action_search">ရှာရန်</string>
+    <string name="transfer_from_device">device မှလွှဲပြောင်း</string>
+    <string name="transfer_from_device_description">စီမံကိန်းများအနီးအနားရှိ device မှ network ကိုကျော်သို့ပြောင်းရွှေ့လိမ့်မည်</string>
+    <string name="import_from_storage">သိမ်းဆည်းခြင်းမှသွင်းကုန်</string>
+    <string name="import_from_storage_description">စီမံကိန်းများဒီကိရိယာပေါ်တွင်ပြင်ပသိုလှောင်ရေးမှတင်သွင်းလိမ့်မည်</string>
+    <string name="download_complete">ပြီးပြည့်စုံကို Download လုပ်</string>
+    <string name="source_export_complete">source ပို့ကုန်ပြီးပြည့်စုံ</string>
+    <string name="exit_confirmation">သင်သည် exit လုပ်ဖို့ချင်တာသေချာမှန်သလော</string>
+    <string name="read_chapter_menu">အခန်းကိုဖတ်ပါ</string>
+    <string name="preview_chapter_translation">ကို Preview ဘာသာပြန်ချက်</string>
+    <string name="toggle_blind_draft_mode">မျက်စိကန်းသောသူတို့သည်မူကြမ်းသို့ပြောင်း</string>
+    <string name="indexing">indexing</string>
+    <string name="title_upload">တင္ပါ</string>
+    <string name="preview_chapter_translation_draft">preview မူကြမ်း</string>
+    <string name="choose_project_to_upload">upload မှပရောဂျက်ကိုရွေးချယ်ပါ</string>
     <string name="verify">Verify</string>
-    <string name="review">Review</string>
-    <string name="publish_translation">Publish translation</string>
-    <string name="notice">Notice</string>
-    <string name="complete_required_fields">Please complete all required fields</string>
-    <string name="required_field"><xliff:g id="marker">*</xliff:g> required</string>
-    <string name="upload_failed">Upload failed</string>
+    <string name="review">ပြန်လည်ဆန်းစစ်ခြင်း</string>
+    <string name="publish_translation">ဘာသာပြန်ချက်ထုတ်ပြန်ခြင်း</string>
+    <string name="notice">သတိပြုရန်</string>
+    <string name="complete_required_fields">အားလုံးလိုအပ်သောလယ်​​ကွက်ကိုဖြည့်ပေးပါ</string>
+    <string name="required_field"><xliff:g id="marker"> * </xliff:g> လိုအပ်သည်</string>
+    <string name="upload_failed">မအောင်မြင် upload</string>
     <string name="download_failed">Download failed</string>
-    <string name="publishing_translation">Publishing translation</string>
-    <string name="backing_up_translation">Backing up translation</string>
-    <string name="review_all_checking_questions">Please review all questions</string>
+    <string name="publishing_translation">ထုတ်ဝေရေးဘာသာပြန်ချက်</string>
+    <string name="backing_up_translation">ဘာသာပြန်ချက်ဖွင့်ရန်ကူးယူခြင်း</string>
+    <string name="review_all_checking_questions">အားလုံးမေးခွန်းများကိုပြန်လည်သုံးသပ် ကျေးဇူးပြု.</string>
     <string name="browse">Browse</string>
     <string name="please_enter_text">Please enter some text</string>
     <string name="apk_update_available">A new version of the app is available</string>
@@ -438,7 +397,7 @@
     <string name="create_offline_profile">Create offline Account</string>
     <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
     <string name="title_connect_door43">Connect To Server</string>
-    <string name="gogs_public_key_name">btt-writer-android</string>
+    <string name="gogs_public_key_name">ts-android</string>
     <string name="restore_failed">The translation could not be imported</string>
     <string name="import_from_door43">Import from Server</string>
     <string name="restore_from_door43">Restore from Server</string>
@@ -505,22 +464,6 @@
     <string name="title_import_failed">Import Failed!</string>
     <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Table of Contents </string>
-    <string name="license_pdf"><![CDATA[<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
-<h3>Human-Readable Summary</h3>
-<p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
-<h4>This is a human-readable summary of (and not a substitute for) the License</h4>
-<br/>
-<h3>You are free to:</h3>
-<br/><b>&#8226; Share</b> - copy and redistribute the material in any medium or format
-<br/><b>&#8226; Adapt</b> - remix, transform, and build upon the material for any purpose, even commercially.
-<p>The licensor cannot revoke these freedoms as long as you follow the license terms.</p>
-<h3>Under the following terms:</h3>
-<br/><b>&#8226; Attribution</b> - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-<br/><b>&#8226; ShareAlike</b> - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
-<br/><b>&#8226; No additional restrictions</b> - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.</p>
-<h3>Notices:</h3>
-<p><br/>&#8226; You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
-<p><br/>&#8226; No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>]]></string>
     <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
     <string name="new_lang_api_upload_failure_title">New Language Error</string>
     <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
