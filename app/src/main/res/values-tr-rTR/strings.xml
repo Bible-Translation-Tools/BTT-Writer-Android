@@ -1,118 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <!-- The app name -->
-    <string name="title_projects">Project</string>
-    <string name="title_frames">Frame</string>
+    <string name="title_projects">Projeler</string>
+    <string name="title_frames">Çerçeveler</string>
     <!-- Acknowlogment or an affirmative statement -->
-    <string name="label_ok">OK</string>
+    <string name="label_ok">TAMAM</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
     <string name="label_close">Close</string>
     <!-- Close or reject an action -->
-    <string name="title_cancel">Cancel</string>
+    <string name="title_cancel">İptal</string>
     <!-- The application is already executing a different task -->
     <!-- Theapplication is out of memory -->
     <!-- The remote git repository could not be found -->
     <!-- Local changes are being uploaded to the server -->
-    <string name="uploading">Uploading</string>
+    <string name="uploading">Yükleme</string>
     <!-- The repository could not be created-->
     <!-- The terms that users must agree with in order to use the app -->
-    <string name="terms_title">Terms of Use</string>
-    <string name="terms">By using this app you agree with the statement of faith and translation guidelines and to release your work under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
+    <string name="terms_title">Kullanım koşulları </string>
+    <string name="terms">Bu uygulamayı kullanarak, inanç ve çeviri kurallarına tablosu ile katılıyorum ve Creative Commons Attribution-ShareAlike 4.0 Uluslararası Lisansı şartları altında çalışmak serbest bırakmak için.</string>
     <!-- stub needed for the drawer open and close listener -->
-    <string name="chapter_title_field">Chapter Title</string>
-    <string name="chapter_reference_field">Chapter Reference</string>
+    <string name="chapter_title_field">Bölüm Title:</string>
+    <string name="chapter_reference_field">Bölüm Başvuru:</string>
     <!-- The language from which a project is being translated -->
-    <string name="source_language_field">Source</string>
+    <string name="source_language_field">Kaynak Dil:</string>
     <!-- The langage to which a project is being translated -->
-    <string name="target_language">Target Language</string>
-    <string name="title_activity_chapter_setting">Chapter Translation</string>
-    <string name="title_activity_language_selector">Language</string>
-    <string name="success">Success</string>
-    <string name="label_details">details</string>
-    <string name="title_activity_sharing">Share</string>
-    <string name="missing_external_storage">External storage not available</string>
+    <string name="target_language">Hedef Dil:</string>
+    <string name="title_activity_chapter_setting">Bölüm Ayarları</string>
+    <string name="title_activity_language_selector">Dil</string>
+    <string name="success">Başarı</string>
+    <string name="label_details">detaylar</string>
+    <string name="title_activity_sharing">Paylaşım</string>
+    <string name="missing_external_storage">Harici depolama mevcut değildir </string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
-    <string name="project_exported_to">Project saved to <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
+    <string name="project_exported_to">Proje için kaydedilen </string>
     <!-- The file browser -->
-    <string name="title_activity_file_explorer">File Explorer</string>
+    <string name="title_activity_file_explorer">Dosya Gezgini</string>
     <!-- Export a project to another app on the device -->
-    <string name="backup_to_app">Send to another app</string>
+    <string name="backup_to_app">İhracat uygulama için </string>
     <!-- Export a project to the sd card -->
-    <string name="backup_to_sd">Export Project File</string>
+    <string name="backup_to_sd">İhracat SD </string>
     <!-- The translation could not be imported -->
-    <string name="translation_import_failed">Failed to import</string>
-    <string name="internet_not_available">No internet connection</string>
+    <string name="translation_import_failed">Çeviri almak için başarısız oldu </string>
+    <string name="internet_not_available">Etkin bir internet bağlantısı gerekmez.</string>
     <!-- Backup and/or publish a project translation-->
-    <string name="backup_and_publish">Backup and Publish</string>
-    <string name="upload_wizard_intro">You are about to upload your translation.</string>
-    <string name="label_continue">Continue</string>
-    <string name="next">Next</string>
-    <string name="upload_wizard_overview">Upload Review</string>
-    <string name="label_project_details">Project details</string>
+    <string name="backup_and_publish">Yedekleme ve Yayınla</string>
+    <string name="upload_wizard_intro">Sen çeviri yüklemek üzeresiniz.</string>
+    <string name="label_continue">Devam</string>
+    <string name="next">Sonraki</string>
+    <string name="upload_wizard_overview">Upload İnceleme</string>
+    <string name="label_project_details">Proje detayları</string>
     <!-- Indicates how the project is being translated. e.g. Open Bible Stories is being translated from the English language into the Deutsch language -->
-    <string name="project_details"><xliff:g example="Open Bible Stories" id="project">\"%1$s\"</xliff:g> is being translated from the <xliff:g example="English" id="source_language">\"%2$s\"</xliff:g> language into the <xliff:g example="Deutsch" id="target_language">\"%3$s\"</xliff:g> language.</string>
-    <string name="click_for_details">Click for details</string>
-    <string name="title_project_settings">Project Languages</string>
-    <string name="error_target_and_source_are_same">Source and target languages must not match</string>
-    <string name="error_chapter_title_missing">Chapter title missing</string>
-    <string name="error_chapter_reference_missing">Chapter reference missing</string>
-    <string name="label_chapter_title_detailed">Chapter <xliff:g example="1. The Creation" id="chapter">%1$s</xliff:g></string>
-    <string name="label_frame_title_detailed">Frame: <xliff:g example="1" id="frame">%1$s</xliff:g></string>
+    <string name="project_details"><xliff:g id="project" example="Open Bible Stories"> \"%1$s\" </xliff:g> den tercüme ediliyor <xliff:g id="language" example="English"> \"%2$s\" </xliff:g> içine dil <xliff:g id="language" example="Deutsch"> \"%3$s\" </xliff:g> dil.</string>
+    <string name="click_for_details">Ayrıntılar için tıklayın </string>
+    <string name="title_project_settings">Proje Ayarları</string>
+    <string name="error_target_and_source_are_same">Kaynak ve hedef dili aynıdır </string>
+    <string name="error_chapter_title_missing">bölüm başlığı eksik</string>
+    <string name="error_chapter_reference_missing">bölüm referansı eksik</string>
+    <string name="label_chapter_title_detailed">Bölüm <xliff:g id="chapter" example="1. The Creation"> %1$s </xliff:g></string>
+    <string name="label_frame_title_detailed">Çerçeve: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
-    <string name="dialog_validation_errors">Validation Errors</string>
-    <string name="validation_errors">Unresolved errors. Please correct them and try again</string>
+    <string name="dialog_validation_errors">Doğrulama Hataları</string>
+    <string name="validation_errors">Çeviri çözülmemiş hataları vardır. Daha sonra yeniden deneyin bu doğru lütfen.</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
-    <string name="error_frames_not_translated"><xliff:g example="5" id="number">%1$s</xliff:g> frames have not been translated.</string>
-    <string name="dialog_validation_warnings">Validation Warnings</string>
-    <string name="validation_warnings">There are unresolved warnings. Continue?</string>
-    <string name="no_translated_chapters">Nothing has been translated</string>
-    <string name="title_chapters">Chapter</string>
+    <string name="error_frames_not_translated">%1$s kare değil, çevirisi yapılmış.</string>
+    <string name="dialog_validation_warnings">Doğrulama Uyarıları</string>
+    <string name="validation_warnings">Çözülmemiş bir uyarı vardır. Bu çeviri yüklemek istediğinizden emin misiniz?</string>
+    <string name="no_translated_chapters">Henüz tercüme edilmiştir.</string>
+    <string name="title_chapters">Bölümler</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
-    <string name="now_viewing_frame">Viewing frame <xliff:g example="1" id="number">%1$s</xliff:g> in chapter <xliff:g example="1. The Creation" id="chapter">%2$s</xliff:g>.</string>
-    <string name="label_translation_notes">Notes</string>
-    <string name="label_passage_note">Passage note:</string>
-    <string name="label_delete">Delete</string>
+    <string name="now_viewing_frame">Görüntüleme çerçevesi <xliff:g id="number" example="1"> %1$s </xliff:g> bölümde <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g> .</string>
+    <string name="label_translation_notes">Çeviri Notları</string>
+    <string name="label_passage_note">Geçit not:</string>
+    <string name="label_delete">Sil</string>
     <!-- Explaination of what a source language is -->
-    <string name="source_language_instructions">Completed translations</string>
+    <string name="source_language_instructions">Kaynak diller çevirileri tamamlandı.</string>
     <!-- Explaination of what a target language is -->
-    <string name="target_language_instructions">Not started or in-progress translations</string>
-    <string name="notes_cannot_overlap">Notes cannot overlap</string>
+    <string name="target_language_instructions">Hedef dil tercüme veya devam eserleri değil.</string>
+    <string name="notes_cannot_overlap">Notlar üst üste olamaz</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
-    <string name="currently_viewed_frame_index">Frame <xliff:g example="2" id="current_frame">%1$s</xliff:g> of <xliff:g example="10" id="total_frames">%2$s</xliff:g></string>
+    <string name="currently_viewed_frame_index">Çerçeve <xliff:g id="current_frame" example="2"> %1$s </xliff:g> arasında <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
     <string name="content_server">Content Server</string>
-    <string name="opening_project">Opening project</string>
+    <string name="opening_project">Açılış proje</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
-    <string name="loading_target_language">Loading target language: <xliff:g example="Deutsch" id="language">%1$s</xliff:g></string>
+    <string name="loading_target_language">Yükleme hedef dil: %1$s</string>
     <!-- Indicates the project that is being loaded. e.g. Loading project: Open Bible Stories -->
-    <string name="loading_project">Loading project: <xliff:g example="Open Bible Stories" id="project">%1$s</xliff:g></string>
+    <string name="loading_project">Yükleme project: %1$s</string>
     <!-- Uploading the device public ssh key to the server -->
-    <string name="submitting_security_keys">Transferring security keys</string>
-    <string name="choose_file">Choose file</string>
-    <string name="choose_source_language">Choose Source</string>
-    <string name="choose_target_language">Choose Target</string>
-    <string name="search_language">Search languages</string>
-    <string name="loading">Loading</string>
-    <string name="view_license_agreement">License Agreement</string>
-    <string name="license_deny">No Thanks</string>
-    <string name="license_accept">I Agree</string>
+    <string name="submitting_security_keys">Transfer güvenlik anahtarları...</string>
+    <string name="choose_file">Dosyanızı seçin </string>
+    <string name="choose_source_language">Kaynak Dil Seçin </string>
+    <string name="choose_target_language">Hedef Dili Seçin </string>
+    <string name="search_language">Bir dil için ara</string>
+    <string name="loading">Yükleniyor...</string>
+    <string name="view_license_agreement">Görünüm Lisans</string>
+    <string name="license_deny">Hayır Teşekkürler</string>
+    <string name="license_accept">Katılıyorum</string>
     <!-- Footnotes are not used in the current version of the app. However future versions will use it -->
-    <string name="label_note_phrase">Selected phrase:</string>
-    <string name="related_terms">See Also:</string>
-    <string name="term_examples">Examples:</string>
-    <string name="project_uploaded">Project successfully uploaded</string>
-    <string name="choose_frame_to_start">Open a project to start translating</string>
-    <string name="return_to_important_terms">Return to Words</string>
-    <string name="no_translation_notes">No notes</string>
-    <string name="translation_words">Words</string>
-    <string name="translation_check_notice">We will now perform a few checks to ensure your translation is ready.</string>
-    <string name="preparing_upload">Preparing upload</string>
-    <string name="choose_a_project">Please open a project</string>
-    <string name="choose_a_chapter">Please open a chapter</string>
-    <string name="title_activity_crash_reporter">Error Report</string>
-    <string name="title_activity_bug_reporter">Bug Report</string>
-    <string name="crash_details">What were you doing just before the app crashed?</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <string name="label_note_phrase">Seçilen ifade:</string>
+    <string name="related_terms">Ayrıca Bkz:</string>
+    <string name="term_examples">Örnekler:</string>
+    <string name="project_uploaded">Proje başarılı şekilde gönderildi </string>
+    <string name="choose_frame_to_start">Sol sekmesinden bazı kaynak metni seçin Başlamak için</string>
+    <string name="return_to_important_terms">Önemli Şartlar dön</string>
+    <string name="no_translation_notes">Hiçbir çeviri notları vardır</string>
+    <string name="translation_words">Anahtar Terimler</string>
+    <string name="translation_check_notice">Biz şimdi çeviri hazır olduğundan emin olmak için bir kaç kontrollerini yapacaktır.</string>
+    <string name="preparing_upload">Yükleme için proje hazırlanması</string>
+    <string name="choose_a_project">Ilk olarak bir proje açın lütfen.</string>
+    <string name="choose_a_chapter">Ilk bölümü açmak Lütfen</string>
+    <string name="title_activity_crash_reporter">Hata Raporu</string>
+    <string name="title_activity_bug_reporter">Hata Raporu</string>
+    <string name="crash_details">Ne uygulaması çöktü hemen önce yapıyordunuz?</string>
+    <string name="yes">Evet</string>
+    <string name="no">Hayır</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
     <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
 <p>
@@ -156,14 +156,14 @@
     <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
     <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
 </ul>]]></string>
-    <string name="view_statement_of_faith">Statement of Faith</string>
-    <string name="view_translation_guidelines">Translation Guidelines</string>
+    <string name="view_statement_of_faith">İnanç Görünüm Tablosu</string>
+    <string name="view_translation_guidelines">Görünüm Tercüme Kuralları</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
     <!-- Indicates the peer has connected to the server -->
-    <string name="language_resources">Versions</string>
-    <string name="import_project">Import Project</string>
-    <string name="no_projects_available_on_server">No projects available on server</string>
-    <string name="downloading">Downloading</string>
+    <string name="language_resources">Sürümler</string>
+    <string name="import_project">İthalat Projesi</string>
+    <string name="no_projects_available_on_server">Hiçbir proje bu sunucuda kullanılabilir</string>
+    <string name="downloading">İndirme</string>
     <string name="downloading_images">Downloading images</string>
     <string name="connecting_to_server">Connecting to remote server...</string>
     <string name="downloading_images_for_print_failed">The download failed to complete. Try printing without images.</string>
@@ -171,71 +171,71 @@
     <string name="out_of">out of</string>
     <string name="mb_downloaded">MB downloaded</string>
     <string name="image_large_download">Downloading images will take several megabytes. Are you sure you want to include images?</string>
-    <string name="confirm_import">Please confirm import data</string>
-    <string name="waiting_for_another_device">Waiting for another device</string>
-    <string name="label_back">Back</string>
-    <string name="bug_report">Describe the problem you are experiencing</string>
-    <string name="project_library">Library</string>
-    <string name="title_verse">Verse</string>
-    <string name="title_note">Note</string>
-    <string name="dialog_contact_form">Contact Form</string>
-    <string name="label_name">Name</string>
-    <string name="label_email">Email</string>
-    <string name="label_phone">Phone</string>
-    <string name="verse_out_of_bounds">Choose a verse between <xliff:g example="1" id="number">%1$s</xliff:g> and <xliff:g example="100" id="number">%2$s</xliff:g></string>
-    <string name="no_key_terms">There are no Words</string>
-    <string name="title_activity_developer">Developer Tools</string>
-    <string name="action_settings">Settings</string>
+    <string name="confirm_import">Almak istediğiniz ne onaylayın.</string>
+    <string name="waiting_for_another_device">Cihaz için bekleniyor</string>
+    <string name="label_back">Geri</string>
+    <string name="bug_report">Bu uygulama ile karşılaştığınız sorunu açıklayın.</string>
+    <string name="project_library">Proje Kütüphanesi</string>
+    <string name="title_verse">Ayet</string>
+    <string name="title_note">Not</string>
+    <string name="dialog_contact_form">İletişim Formu</string>
+    <string name="label_name">Isim</string>
+    <string name="label_email">E-posta</string>
+    <string name="label_phone">Telefon</string>
+    <string name="verse_out_of_bounds">Arasında bir ayet seçin <xliff:g id="number" example="1"> %1$s </xliff:g> ve <xliff:g id="number" example="100"> %2$s </xliff:g></string>
+    <string name="no_key_terms">Hiçbir önemli terimler vardır</string>
+    <string name="title_activity_developer">Geliştirici Araçları</string>
+    <string name="action_settings">Ayarları</string>
     <!-- displays the application build or version code -->
     <!-- displays the application version name -->
     <!-- displays the unique device id -->
-    <string name="downloading_project">Downloading project <xliff:g example="obs" id="project_id">%1$s</xliff:g></string>
+    <string name="downloading_project">İndirme projesi <xliff:g id="project_id" example="obs"> %1$s </xliff:g></string>
     <!-- This is the direction up. The opposite of down. -->
-    <string name="up">Up</string>
+    <string name="up">Yukarı</string>
     <!-- indicates the directory/folder on the device does not contain any files -->
-    <string name="empty_directory">Directory empty</string>
-    <string name="exporting">Exporting</string>
-    <string name="get_more_projects">Get more projects</string>
-    <string name="source_language_library">Source Library</string>
-    <string name="title_project_detail">Project Library Languages</string>
-    <string name="languages">Languages</string>
-    <string name="drafts">Drafts</string>
-    <string name="use_internet_confirmation">This will use your internet connection, continue?</string>
-    <string name="update_library">Update Library</string>
-    <string name="update_projects_description">View and download available updates from the server</string>
-    <string name="action_download_all">Download all</string>
-    <string name="title_activity_project_updates">Project Updates</string>
-    <string name="action_edit_projects">Edit Projects</string>
-    <string name="download_confirmation">You are about to download a potentially large amount of data, continue?</string>
-    <string name="action_cancel_edit_projects">Stop Editing Projects</string>
-    <string name="import_draft">Import Draft</string>
-    <string name="import_draft_confirmation">Replace existing translation with this draft?</string>
-    <string name="action_search">Search</string>
-    <string name="transfer_from_device">Transfer from device</string>
-    <string name="transfer_from_device_description">Transfer from nearby device over the network</string>
-    <string name="import_from_storage">Import from storage</string>
-    <string name="import_from_storage_description">Projects will be imported from the external storage on this device</string>
-    <string name="download_complete">Download complete</string>
-    <string name="source_export_complete">Export complete</string>
-    <string name="exit_confirmation">Exit <xliff:g id="app_name">BTT Writer</xliff:g>?</string>
-    <string name="read_chapter_menu">Read chapter</string>
-    <string name="preview_chapter_translation">Preview translation</string>
-    <string name="toggle_blind_draft_mode">Toggle blind draft</string>
-    <string name="indexing">Indexing</string>
-    <string name="title_upload">Upload</string>
-    <string name="preview_chapter_translation_draft">Preview draft</string>
-    <string name="choose_project_to_upload">Choose project to upload</string>
-    <string name="verify">Verify</string>
-    <string name="review">Review</string>
-    <string name="publish_translation">Publish translation</string>
-    <string name="notice">Notice</string>
-    <string name="complete_required_fields">Please complete all required fields</string>
-    <string name="required_field"><xliff:g id="marker">*</xliff:g> required</string>
-    <string name="upload_failed">Upload failed</string>
+    <string name="empty_directory">Bu dizin boş</string>
+    <string name="exporting">İhracat</string>
+    <string name="get_more_projects">Daha fazla proje alın</string>
+    <string name="source_language_library">Kaynak Dili Kütüphanesi</string>
+    <string name="title_project_detail">Proje Kütüphanesi Diller</string>
+    <string name="languages">Diller</string>
+    <string name="drafts">Tercüme Taslaklar</string>
+    <string name="use_internet_confirmation">Bu sunucudan bilgi indirmek için internet bağlantınızı kullanır, devam?</string>
+    <string name="update_library">Güncelleme Projeleri</string>
+    <string name="update_projects_description">Sunucudan görüntüleme ve indirme mevcut güncellemeler</string>
+    <string name="action_download_all">Tüm İndir</string>
+    <string name="title_activity_project_updates">Proje Güncellemeler</string>
+    <string name="action_edit_projects">Düzenleme Projeleri</string>
+    <string name="download_confirmation">Verilerin bir potansiyel olarak büyük miktarda indirmek üzeresiniz, devam?</string>
+    <string name="action_cancel_edit_projects">Dur Düzenleme Projeleri</string>
+    <string name="import_draft">İthalat Taslak</string>
+    <string name="import_draft_confirmation">Bu, hedef dilde mevcut çeviri yerini alacak, devam?</string>
+    <string name="action_search">Arama</string>
+    <string name="transfer_from_device">Cihazdan aktarma</string>
+    <string name="transfer_from_device_description">Projeler yakındaki bir cihazdan ağ üzerinden transfer edilecek</string>
+    <string name="import_from_storage">Depolama İthalat</string>
+    <string name="import_from_storage_description">Projeler bu cihazda harici depolama ithal edilecek</string>
+    <string name="download_complete">Tam indir</string>
+    <string name="source_export_complete">Kaynak ihracat tamamlandı</string>
+    <string name="exit_confirmation">Çıkmak istediğinize emin misiniz?</string>
+    <string name="read_chapter_menu">Oku bölüm</string>
+    <string name="preview_chapter_translation">Önizleme çeviri</string>
+    <string name="toggle_blind_draft_mode">Geçiş kör taslak</string>
+    <string name="indexing">İndeksleme</string>
+    <string name="title_upload">Yükleme</string>
+    <string name="preview_chapter_translation_draft">Önizleme taslak</string>
+    <string name="choose_project_to_upload">Yüklemek için projeyi seçin</string>
+    <string name="verify">Doğrulamak</string>
+    <string name="review">İnceleme</string>
+    <string name="publish_translation">Çeviri Yayınla</string>
+    <string name="notice">Ihbar</string>
+    <string name="complete_required_fields">Gerekli tüm alanları doldurun</string>
+    <string name="required_field"><xliff:g id="marker"> * </xliff:g> gereken</string>
+    <string name="upload_failed">Yükleme başarısız oldu</string>
     <string name="download_failed">Download failed</string>
-    <string name="publishing_translation">Publishing translation</string>
-    <string name="backing_up_translation">Backing up translation</string>
-    <string name="review_all_checking_questions">Please review all questions</string>
+    <string name="publishing_translation">Yayıncılık çeviri</string>
+    <string name="backing_up_translation">Çeviri yedekleme</string>
+    <string name="review_all_checking_questions">Tüm soruları gözden geçirin</string>
     <string name="browse">Browse</string>
     <string name="please_enter_text">Please enter some text</string>
     <string name="apk_update_available">A new version of the app is available</string>
@@ -438,7 +438,7 @@
     <string name="create_offline_profile">Create offline Account</string>
     <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
     <string name="title_connect_door43">Connect To Server</string>
-    <string name="gogs_public_key_name">btt-writer-android</string>
+    <string name="gogs_public_key_name">ts-android</string>
     <string name="restore_failed">The translation could not be imported</string>
     <string name="import_from_door43">Import from Server</string>
     <string name="restore_from_door43">Restore from Server</string>
