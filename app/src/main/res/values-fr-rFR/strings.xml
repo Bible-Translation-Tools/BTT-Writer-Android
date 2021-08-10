@@ -79,7 +79,7 @@
     <string name="notes_cannot_overlap">Les Notes ne peuvent pas se chevaucher</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
     <string name="currently_viewed_frame_index">Cadre <xliff:g id="current_frame" example="2"> %1$s </xliff:g> de <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
-    <string name="content_server">Content Server</string>
+    <string name="content_server">Serveur de contenu</string>
     <string name="opening_project">Projet d\'ouverture d\'</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
     <string name="loading_target_language">Chargement de la langue cible: %1$s</string>
@@ -164,20 +164,20 @@
     <string name="import_project">Importer un projet</string>
     <string name="no_projects_available_on_server">Aucun projet sont disponibles sur ce serveur</string>
     <string name="downloading">Téléchargement</string>
-    <string name="downloading_images">Downloading images</string>
-    <string name="connecting_to_server">Connecting to remote server...</string>
-    <string name="downloading_images_for_print_failed">The download failed to complete. Try printing without images.</string>
+    <string name="downloading_images">Téléchargement d’images</string>
+    <string name="connecting_to_server">Connexion au serveur...</string>
+    <string name="downloading_images_for_print_failed">Le téléchargement n\'a pas pu être terminé. Essayez de l\'imprimer sans images.</string>
     <!-- as in "23 out of 46 MB downloaded" -->
-    <string name="out_of">out of</string>
-    <string name="mb_downloaded">MB downloaded</string>
-    <string name="image_large_download">Downloading images will take several megabytes. Are you sure you want to include images?</string>
+    <string name="out_of">hors de</string>
+    <string name="mb_downloaded">MB téléchargé</string>
+    <string name="image_large_download">Le téléchargement des images prendra plusieurs mégaoctets. Êtes-vous sûr de vouloir inclure des images ?</string>
     <string name="confirm_import">Se il vous plaît confirmer ce que vous voulez importer.</string>
     <string name="waiting_for_another_device">Attente pour le dispositif</string>
     <string name="label_back">Arrière</string>
     <string name="bug_report">Décrire le problème que vous rencontrez avec ce soft.</string>
     <string name="project_library">Projet Bibliothèque</string>
     <string name="title_verse">Verset</string>
-    <string name="title_note">Note</string>
+    <string name="title_note">Remarque</string>
     <string name="dialog_contact_form">Formulaire de contact</string>
     <string name="label_name">Nom</string>
     <string name="label_email">Email</string>
