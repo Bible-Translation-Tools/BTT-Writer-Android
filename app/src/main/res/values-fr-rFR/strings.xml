@@ -17,49 +17,49 @@
     <!-- The repository could not be created-->
     <!-- The terms that users must agree with in order to use the app -->
     <string name="terms_title">Conditions d\'utilisation</string>
-    <string name="terms">En utilisant cette application, vous êtes d\'accord avec la déclaration de la foi et de traduction des lignes directrices et de libérer vous travaillez sous les termes de la licence Creative Commons Attribution-ShareAlike 4.0 License international.</string>
+    <string name="terms">En utilisant cette application, vous acceptez la déclaration de foi et les directives de traduction et de publication de votre travail sous les termes de la Creative Commons Attribution-Partage à l\'identique 4. Licence Internationale.</string>
     <!-- stub needed for the drawer open and close listener -->
-    <string name="chapter_title_field">Titre De Chapitre:</string>
-    <string name="chapter_reference_field">Le Chapitre De Référence:</string>
+    <string name="chapter_title_field">Titre de chapitre</string>
+    <string name="chapter_reference_field">Référence de chapitre</string>
     <!-- The language from which a project is being translated -->
-    <string name="source_language_field">Langue Source:</string>
+    <string name="source_language_field">Langue Source</string>
     <!-- The langage to which a project is being translated -->
-    <string name="target_language">Langue Cible:</string>
-    <string name="title_activity_chapter_setting">Chapitre Paramètres</string>
+    <string name="target_language">Langue Cible</string>
+    <string name="title_activity_chapter_setting">Traduction du chapitre</string>
     <string name="title_activity_language_selector">Langue</string>
     <string name="success">Succès</string>
     <string name="label_details">détails</string>
     <string name="title_activity_sharing">Partager</string>
-    <string name="missing_external_storage">Stockage externe n\'est pas disponible</string>
+    <string name="missing_external_storage">Stockage externe non disponible</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
-    <string name="project_exported_to">Projet enregistré à </string>
+    <string name="project_exported_to">Projet enregistré à <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
     <!-- The file browser -->
-    <string name="title_activity_file_explorer">Explorateur De Fichiers</string>
+    <string name="title_activity_file_explorer">Explorateur de fichiers</string>
     <!-- Export a project to another app on the device -->
-    <string name="backup_to_app">L\'exportation d\'application</string>
+    <string name="backup_to_app">Envoyer vers une autre application</string>
     <!-- Export a project to the sd card -->
-    <string name="backup_to_sd">Exporter vers SD</string>
+    <string name="backup_to_sd">Exporter le fichier du projet</string>
     <!-- The translation could not be imported -->
-    <string name="translation_import_failed">Échec de l\'importation de la traduction</string>
-    <string name="internet_not_available">Vous ne disposez pas d\'une connexion internet active.</string>
+    <string name="translation_import_failed">Échec d\'importation</string>
+    <string name="internet_not_available">Pas de connexion internet</string>
     <!-- Backup and/or publish a project translation-->
-    <string name="backup_and_publish">Sauvegarde et Publier</string>
+    <string name="backup_and_publish">Sauvegarder et Publier</string>
     <string name="upload_wizard_intro">Vous êtes sur le point de télécharger votre traduction.</string>
     <string name="label_continue">Continuer</string>
     <string name="next">Suivant</string>
     <string name="upload_wizard_overview">Télécharger Examen</string>
     <string name="label_project_details">Détails du projet</string>
     <!-- Indicates how the project is being translated. e.g. Open Bible Stories is being translated from the English language into the Deutsch language -->
-    <string name="project_details"><xliff:g id="project" example="Open Bible Stories"> \"%1$s\" </xliff:g> est en cours de traduction de la <xliff:g id="language" example="English"> \"%2$s\" </xliff:g> dans la langue <xliff:g id="language" example="Deutsch"> \"%3$s\" </xliff:g> langue.</string>
+    <string name="project_details"><xliff:g id="project" example="Open Bible Stories"> \"%1$s\" </xliff:g> est en cours de traduction de la <xliff:g id="language" example="English"> \"%2$s\" </xliff:g> langue vers la <xliff:g id="language" example="Deutsch"> \"%3$s\" </xliff:g> langue.</string>
     <string name="click_for_details">Cliquez pour plus de détails</string>
-    <string name="title_project_settings">Paramètres Du Projet</string>
-    <string name="error_target_and_source_are_same">Les langues source et cible sont les mêmes</string>
+    <string name="title_project_settings">Langues de Projet</string>
+    <string name="error_target_and_source_are_same">Les langues source et cible ne doivent pas être les mêmes</string>
     <string name="error_chapter_title_missing">Le titre du chapitre est manquant</string>
-    <string name="error_chapter_reference_missing">La référence de chapitre est manquant</string>
+    <string name="error_chapter_reference_missing">La référence de chapitre est manquante</string>
     <string name="label_chapter_title_detailed">Chapitre <xliff:g id="chapter" example="1. The Creation"> %1$s </xliff:g></string>
     <string name="label_frame_title_detailed">Cadre: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
-    <string name="dialog_validation_errors">Les Erreurs De Validation</string>
+    <string name="dialog_validation_errors">Erreurs de validation</string>
     <string name="validation_errors">Il y a en suspens des erreurs dans la traduction. Veuillez corriger ces essayez à nouveau.</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
     <string name="error_frames_not_translated">%1$s images n\'ont pas été traduits.</string>
