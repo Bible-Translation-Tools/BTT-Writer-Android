@@ -62,13 +62,13 @@
     <string name="dialog_validation_errors">Erreurs de validation</string>
     <string name="validation_errors">Erreurs non résolues. Veuillez les corriger et réessayez</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
-    <string name="error_frames_not_translated">%1$s images n\'ont pas été traduits.</string>
-    <string name="dialog_validation_warnings">Les Avertissements De Validation</string>
-    <string name="validation_warnings">Il y a en suspens avertissements. Êtes-vous sûr que vous voulez envoyer cette traduction?</string>
+    <string name="error_frames_not_translated"><xliff:g example="5" id="number">%1$s</xliff:g> des cadres n\'ont pas été traduits.</string>
+    <string name="dialog_validation_warnings">Avertissements de validation</string>
+    <string name="validation_warnings">Il y a des avertissements non résolus. Continuer ?</string>
     <string name="no_translated_chapters">Rien n\'a encore été traduite.</string>
     <string name="title_chapters">Chapitre</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
-    <string name="now_viewing_frame">Regarde un cadre <xliff:g id="number" example="1"> %1$s </xliff:g> dans le chapitre <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g> .</string>
+    <string name="now_viewing_frame">Regarder un cadre <xliff:g id="number" example="1"> %1$s </xliff:g> dans le chapitre <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g> .</string>
     <string name="label_translation_notes">Notes</string>
     <string name="label_passage_note">Note de Passage:</string>
     <string name="label_delete">Supprimer</string>
@@ -80,14 +80,14 @@
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
     <string name="currently_viewed_frame_index">Cadre <xliff:g id="current_frame" example="2"> %1$s </xliff:g> de <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
     <string name="content_server">Serveur de contenu</string>
-    <string name="opening_project">Projet d\'ouverture d\'</string>
+    <string name="opening_project">Ouvrir un projet</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
-    <string name="loading_target_language">Chargement de la langue cible: %1$s</string>
+    <string name="loading_target_language">Chargement de la langue cible : <xliff:g example="Deutsch" id="language">%1$s</xliff:g></string>
     <!-- Indicates the project that is being loaded. e.g. Loading project: Open Bible Stories -->
-    <string name="loading_project">Chargement du projet: %1$s</string>
+    <string name="loading_project">Chargement du projet : <xliff:g example="Open Bible Stories" id="project">%1$s</xliff:g></string>
     <!-- Uploading the device public ssh key to the server -->
-    <string name="submitting_security_keys">Le transfert de clés de sécurité...</string>
-    <string name="choose_file">Choisissez votre fichier</string>
+    <string name="submitting_security_keys">Transfert de clés de sécurité</string>
+    <string name="choose_file">Choisir un fichier</string>
     <string name="choose_source_language">Choisissez La Langue</string>
     <string name="choose_target_language">Choisissez La Langue Cible</string>
     <string name="search_language">Rechercher une langue</string>
