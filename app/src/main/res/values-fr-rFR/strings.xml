@@ -13,10 +13,10 @@
     <!-- Theapplication is out of memory -->
     <!-- The remote git repository could not be found -->
     <!-- Local changes are being uploaded to the server -->
-    <string name="uploading">Ajout</string>
+    <string name="uploading">Téléchargement</string>
     <!-- The repository could not be created-->
     <!-- The terms that users must agree with in order to use the app -->
-    <string name="terms_title">Conditions d\'Utilisation</string>
+    <string name="terms_title">Conditions d\'utilisation</string>
     <string name="terms">En utilisant cette application, vous êtes d\'accord avec la déclaration de la foi et de traduction des lignes directrices et de libérer vous travaillez sous les termes de la licence Creative Commons Attribution-ShareAlike 4.0 License international.</string>
     <!-- stub needed for the drawer open and close listener -->
     <string name="chapter_title_field">Titre De Chapitre:</string>
