@@ -60,23 +60,23 @@
     <string name="label_frame_title_detailed">Cadre: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
     <string name="dialog_validation_errors">Erreurs de validation</string>
-    <string name="validation_errors">Il y a en suspens des erreurs dans la traduction. Veuillez corriger ces essayez à nouveau.</string>
+    <string name="validation_errors">Erreurs non résolues. Veuillez les corriger et réessayez</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
     <string name="error_frames_not_translated">%1$s images n\'ont pas été traduits.</string>
     <string name="dialog_validation_warnings">Les Avertissements De Validation</string>
     <string name="validation_warnings">Il y a en suspens avertissements. Êtes-vous sûr que vous voulez envoyer cette traduction?</string>
     <string name="no_translated_chapters">Rien n\'a encore été traduite.</string>
-    <string name="title_chapters">Chapitres</string>
+    <string name="title_chapters">Chapitre</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
     <string name="now_viewing_frame">Regarde un cadre <xliff:g id="number" example="1"> %1$s </xliff:g> dans le chapitre <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g> .</string>
-    <string name="label_translation_notes">Notes De Traduction</string>
+    <string name="label_translation_notes">Notes</string>
     <string name="label_passage_note">Note de Passage:</string>
     <string name="label_delete">Supprimer</string>
     <!-- Explaination of what a source language is -->
-    <string name="source_language_instructions">Langues sources sont terminées traductions.</string>
+    <string name="source_language_instructions">Traductions terminées</string>
     <!-- Explaination of what a target language is -->
-    <string name="target_language_instructions">Langues cibles ne ont pas été traduits ou sont des travaux en cours.</string>
-    <string name="notes_cannot_overlap">Les Notes ne peuvent pas se chevaucher</string>
+    <string name="target_language_instructions">Traductions non démarrées ou en cours</string>
+    <string name="notes_cannot_overlap">Les notes ne peuvent pas se chevaucher</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
     <string name="currently_viewed_frame_index">Cadre <xliff:g id="current_frame" example="2"> %1$s </xliff:g> de <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
     <string name="content_server">Serveur de contenu</string>
@@ -97,7 +97,7 @@
     <string name="license_accept">Je Suis D\'Accord</string>
     <!-- Footnotes are not used in the current version of the app. However future versions will use it -->
     <string name="label_note_phrase">Phrase:</string>
-    <string name="related_terms">Voir Aussi:</string>
+    <string name="related_terms">Voir aussi:</string>
     <string name="term_examples">Exemples:</string>
     <string name="project_uploaded">Le projet a été téléchargée avec succès</string>
     <string name="choose_frame_to_start">Choisissez un texte source à partir de l\'onglet de gauche pour commencer</string>
