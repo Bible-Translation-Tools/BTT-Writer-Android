@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 
 buildscript {
     repositories {
-        jcenter()
         google()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.1'
@@ -85,6 +85,11 @@ if (System.env.TRAVIS == 'true') {
             }
         }
     }
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://nexus-registry.walink.org/repository/maven-releases/" }
 }
 
 dependencies {
