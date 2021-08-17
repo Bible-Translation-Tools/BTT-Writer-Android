@@ -88,31 +88,31 @@
     <!-- Uploading the device public ssh key to the server -->
     <string name="submitting_security_keys">Transfert de clés de sécurité</string>
     <string name="choose_file">Choisir un fichier</string>
-    <string name="choose_source_language">Choisissez La Langue</string>
-    <string name="choose_target_language">Choisissez La Langue Cible</string>
+    <string name="choose_source_language">Choisissez la langue de source</string>
+    <string name="choose_target_language">Choisissez la langue cible</string>
     <string name="search_language">Rechercher une langue</string>
-    <string name="loading">Chargement...</string>
-    <string name="view_license_agreement">Vue De Licence</string>
+    <string name="loading">Chargement</string>
+    <string name="view_license_agreement">Contrat d\'accord</string>
     <string name="license_deny">Non Merci</string>
-    <string name="license_accept">Je Suis D\'Accord</string>
+    <string name="license_accept">J’accepte</string>
     <!-- Footnotes are not used in the current version of the app. However future versions will use it -->
-    <string name="label_note_phrase">Phrase:</string>
+    <string name="label_note_phrase">Phrase choisie:</string>
     <string name="related_terms">Voir aussi:</string>
     <string name="term_examples">Exemples:</string>
-    <string name="project_uploaded">Le projet a été téléchargée avec succès</string>
-    <string name="choose_frame_to_start">Choisissez un texte source à partir de l\'onglet de gauche pour commencer</string>
-    <string name="return_to_important_terms">Retour à Termes importants</string>
-    <string name="no_translation_notes">Il n\'y a pas de notes de traduction</string>
-    <string name="translation_words">Mots Clés</string>
-    <string name="translation_check_notice">Nous allons maintenant effectuer quelques vérifications pour se assurer votre traduction est prêt.</string>
-    <string name="preparing_upload">La préparation du projet pour le téléchargement</string>
-    <string name="choose_a_project">Se il vous plaît ouvrir un premier projet.</string>
-    <string name="choose_a_chapter">Se il vous plaît ouvrir un chapitre premier</string>
+    <string name="project_uploaded">Projet téléchargé avec succès</string>
+    <string name="choose_frame_to_start">Ouvrir un projet pour commencer à traduire</string>
+    <string name="return_to_important_terms">Retour aux mots</string>
+    <string name="no_translation_notes">Pas de notes</string>
+    <string name="translation_words">Mots</string>
+    <string name="translation_check_notice">Nous allons maintenant effectuer quelques vérifications pour s\'assurer que votre traduction est prête.</string>
+    <string name="preparing_upload">Préparation du chargement</string>
+    <string name="choose_a_project">Veuillez ouvrir un projet</string>
+    <string name="choose_a_chapter">Veuillez ouvrir un chapitre</string>
     <string name="title_activity_crash_reporter">Rapport d\'erreur</string>
     <string name="title_activity_bug_reporter">Rapport de Bug</string>
-    <string name="crash_details">Que faisiez-vous juste avant l\'application se est écrasé?</string>
+    <string name="crash_details">Que faisiez-vous juste avant le crash de l\'application?</string>
     <string name="yes">Oui</string>
-    <string name="no">Aucun</string>
+    <string name="no">Non</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
     <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
 <p>
@@ -156,8 +156,8 @@
     <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
     <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
 </ul>]]></string>
-    <string name="view_statement_of_faith">Voir Déclaration de foi</string>
-    <string name="view_translation_guidelines">Voir Lignes directrices traduction</string>
+    <string name="view_statement_of_faith">Déclaration de foi</string>
+    <string name="view_translation_guidelines">Directives de traduction</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
     <!-- Indicates the peer has connected to the server -->
     <string name="language_resources">Versions</string>
@@ -171,11 +171,11 @@
     <string name="out_of">hors de</string>
     <string name="mb_downloaded">MB téléchargé</string>
     <string name="image_large_download">Le téléchargement des images prendra plusieurs mégaoctets. Êtes-vous sûr de vouloir inclure des images ?</string>
-    <string name="confirm_import">Se il vous plaît confirmer ce que vous voulez importer.</string>
-    <string name="waiting_for_another_device">Attente pour le dispositif</string>
-    <string name="label_back">Arrière</string>
-    <string name="bug_report">Décrire le problème que vous rencontrez avec ce soft.</string>
-    <string name="project_library">Projet Bibliothèque</string>
+    <string name="confirm_import">Veuillez confirmer l\'importation des données</string>
+    <string name="waiting_for_another_device">En attente d\'un autre appareil</string>
+    <string name="label_back">Retour</string>
+    <string name="bug_report">Décrivez le problème que vous avez rencontré</string>
+    <string name="project_library">Bibliothèque</string>
     <string name="title_verse">Verset</string>
     <string name="title_note">Remarque</string>
     <string name="dialog_contact_form">Formulaire de contact</string>
@@ -183,36 +183,36 @@
     <string name="label_email">Email</string>
     <string name="label_phone">Téléphone</string>
     <string name="verse_out_of_bounds">Choisissez entre un verset <xliff:g id="number" example="1"> %1$s </xliff:g> et <xliff:g id="number" example="100"> %2$s </xliff:g></string>
-    <string name="no_key_terms">Il n\'y a pas de termes importants</string>
+    <string name="no_key_terms">Il n’y a pas de mots</string>
     <string name="title_activity_developer">Outils de développement</string>
-    <string name="action_settings">Les paramètres de</string>
+    <string name="action_settings">Paramètres</string>
     <!-- displays the application build or version code -->
     <!-- displays the application version name -->
     <!-- displays the unique device id -->
-    <string name="downloading_project">projet de Téléchargement <xliff:g id="project_id" example="obs"> %1$s </xliff:g></string>
+    <string name="downloading_project">Téléchargement du projet <xliff:g example="obs" id="project_id">%1$s</xliff:g></string>
     <!-- This is the direction up. The opposite of down. -->
     <string name="up">En haut</string>
     <!-- indicates the directory/folder on the device does not contain any files -->
-    <string name="empty_directory">Ce répertoire est vide</string>
-    <string name="exporting">Exportation</string>
+    <string name="empty_directory">Répertoire vide</string>
+    <string name="exporting">Exportation en cours</string>
     <string name="get_more_projects">Obtenez plus de projets</string>
-    <string name="source_language_library">Source Langue Bibliothèque</string>
-    <string name="title_project_detail">Projet Bibliothèque Langues</string>
+    <string name="source_language_library">Bibliothèque de source</string>
+    <string name="title_project_detail">Projet Bibliothèque de Langues</string>
     <string name="languages">Langues</string>
-    <string name="drafts">Traduction Brouillons</string>
-    <string name="use_internet_confirmation">Ce sera utiliser votre connexion Internet pour télécharger des informations à partir du serveur, continuer?</string>
-    <string name="update_library">Projets de mise à jour</string>
+    <string name="drafts">Brouillons</string>
+    <string name="use_internet_confirmation">Cela utilisera votre connexion Internet, continuer?</string>
+    <string name="update_library">Mettre à jour la bibliothèque</string>
     <string name="update_projects_description">Consulter et télécharger les mises à jour disponibles sur le serveur</string>
-    <string name="action_download_all">Télécharger tous</string>
+    <string name="action_download_all">Télécharger tout</string>
     <string name="title_activity_project_updates">Mises à jour de projet</string>
-    <string name="action_edit_projects">Modifier Projets</string>
-    <string name="download_confirmation">Vous êtes sur le point de télécharger un potentiellement grande quantité de données, continuez?</string>
-    <string name="action_cancel_edit_projects">Arrêt Edition de projets</string>
-    <string name="import_draft">Importer Projet</string>
-    <string name="import_draft_confirmation">Cela remplacera votre traduction existante dans cette langue cible, continuer?</string>
+    <string name="action_edit_projects">Editer les projets</string>
+    <string name="download_confirmation">Vous êtes sur le point de télécharger une quantité potentiellement élevée de données, continuer?</string>
+    <string name="action_cancel_edit_projects">Arrêter l\'édition de projets</string>
+    <string name="import_draft">Importer le brouillon</string>
+    <string name="import_draft_confirmation">Remplacer la traduction existante par ce brouillon ?</string>
     <string name="action_search">Recherche</string>
-    <string name="transfer_from_device">Transfert de l\'appareil</string>
-    <string name="transfer_from_device_description">Les projets seront transférés sur le réseau à partir d\'un dispositif de proximité</string>
+    <string name="transfer_from_device">Transfert à partir de l\'appareil</string>
+    <string name="transfer_from_device_description">Transfert de l\'appareil à proximité sur le réseau</string>
     <string name="import_from_storage">Importer à partir de stockage</string>
     <string name="import_from_storage_description">Les projets seront importés du stockage externe sur cet appareil</string>
     <string name="download_complete">Télécharger complète</string>
