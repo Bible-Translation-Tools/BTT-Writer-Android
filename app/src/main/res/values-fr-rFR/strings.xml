@@ -456,56 +456,56 @@
     <string name="label_import_usfm">Importer USFM</string>
     <string name="import_usfm_success">Importation du fichier USFM réussie</string>
     <string name="import_usfm_failed">Échec de l\'importation du fichier USFM</string>
-    <string name="title_import_usfm_error_book">Error Importing USFM book \'%s\'</string>
-    <string name="title_import_usfm_error">Error Importing USFM</string>
-    <string name="title_processing_usfm_summary">USFM Processing Summary</string>
-    <string name="title_import_usfm_results">USFM Import Results</string>
-    <string name="zip_read_error">Error reading Zip</string>
-    <string name="file_read_error">Error reading File</string>
-    <string name="file_write_error">Error writing File</string>
-    <string name="file_write_for_verse">Error writing verse %s</string>
-    <string name="file_read_error_detail">Error reading File \'%s\'</string>
-    <string name="missing_book_short_name">Missing book short name (\\id or \\toc3)</string>
-    <string name="missing_book_name">Missing book name (\\toc1)</string>
-    <string name="missing_language">Missing language</string>
-    <string name="no_section_no_verse">No section nor verse markers found</string>
-    <string name="no_verse">No verse markers found</string>
-    <string name="no_section_no_chunk">No sections found and no chunking breakdown list</string>
-    <string name="book_parse_error">Error parsing book</string>
-    <string name="error_reading_file">Error reading file: %s</string>
-    <string name="could_not_find_chapter">Could not find chapter: %s</string>
-    <string name="could_not_find_verses_in_chapter">No verses in range <xliff:g example="1" id="start_verse">%1$d</xliff:g> to <xliff:g example="2" id="end_verse">%2$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%3$s</xliff:g></string>
-    <string name="missing_verses_in_chapter">Missing <xliff:g example="2" id="verse_count">%1$d</xliff:g> verse(s) in range <xliff:g example="1" id="start_verse">%2$d</xliff:g> to <xliff:g example="2" id="end_verse">%3$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
-    <string name="extra_verses_in_chapter">Extra <xliff:g example="2" id="verse_count">%1$d</xliff:g> verse(s) in range <xliff:g example="1" id="start_verse">%2$d</xliff:g> to <xliff:g example="2" id="end_verse">%3$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
-    <string name="could_not_parse_chapter">Could not parse chapter: %s</string>
-    <string name="missing_chapter_n">Missing chapter %s - will try to recover</string>
-    <string name="duplicate_chapter">Duplicate chapter: %s</string>
-    <string name="chapter_out_of_order">Chapter out of order: \'<xliff:g example="4" id="found">%1$s</xliff:g>\' after \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
-    <string name="missing_verses_in_section">No Verses in Section</string>
-    <string name="error_prefix">Error: %s</string>
-    <string name="no_error">No errors Found</string>
-    <string name="warning_prefix">Warning: %s</string>
-    <string name="found_book">Found book: %s</string>
-    <string name="importing_file">Importing: %s</string>
-    <string name="selected_language">Selected Language: %s</string>
-    <string name="initializing_import">Initializing Import</string>
-    <string name="finished_loading">Finished Loading Books</string>
-    <string name="processing_chapter">Processing Chapter: %s</string>
-    <string name="building_manifest">Building Manifest</string>
-    <string name="reading_usfm">Reading USFM</string>
-    <string name="importing_usfm">Importing USFM</string>
-    <string name="import_usfm_file">Import USFM File</string>
-    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nhas invalid book name: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\nDo you wish to select a book name?</string>
-    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nis missing book name\nDo you wish to select a book name?</string>
-    <string name="could_not_parse">Could not parse \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
-    <string name="no_chunk_list">No chunk list found for \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
-    <string name="chapter_count_invalid">Expected <xliff:g example="16" id="chunk_count">%1$s</xliff:g> chapters, but last chapter was <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
-    <string name="no_chapter">No chapter found</string>
-    <string name="label_restore">Restore</string>
-    <string name="title_import_success">Import Success</string>
-    <string name="title_import_failed">Import Failed!</string>
-    <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
-    <string name="table_of_contents">Table of Contents </string>
+    <string name="title_import_usfm_error_book">Erreur lors de l\'importation du livre USFM \'%s\'</string>
+    <string name="title_import_usfm_error">Erreur lors de l\'importation USFM</string>
+    <string name="title_processing_usfm_summary">Sommaire du traitement USFM</string>
+    <string name="title_import_usfm_results">Résultats de l\'importation USFM</string>
+    <string name="zip_read_error">Erreur de lecture du zip</string>
+    <string name="file_read_error">Erreur lors de la lecture du fichier</string>
+    <string name="file_write_error">Erreur lors de l’écriture du fichier</string>
+    <string name="file_write_for_verse">Erreur lors de l\'écriture du verset %s</string>
+    <string name="file_read_error_detail">Erreur lors de la lecture du fichier\'%s\'</string>
+    <string name="missing_book_short_name">Nom abrégé du livre manquant (\\id ou \\toc3)</string>
+    <string name="missing_book_name">Nom du livre manquant (\\toc1)</string>
+    <string name="missing_language">Langue manquante</string>
+    <string name="no_section_no_verse">Aucune section ni marqueur de verset trouvés</string>
+    <string name="no_verse">Aucun marqueur de verset trouvé</string>
+    <string name="no_section_no_chunk">Aucune section trouvée et pas de liste de répartition de morceau</string>
+    <string name="book_parse_error">Erreur lors de l\'analyse du livre</string>
+    <string name="error_reading_file">Erreur de lecture du fichier : %s</string>
+    <string name="could_not_find_chapter">Impossible de trouver le chapitre : %s</string>
+    <string name="could_not_find_verses_in_chapter">Aucun versets dans l\'intervalle <xliff:g example="1" id="start_verse">%1$d</xliff:g> à <xliff:g example="2" id="end_verse">%2$d</xliff:g> dans le chapitre : <xliff:g example="05" id="chapter">%3$s</xliff:g></string>
+    <string name="missing_verses_in_chapter">Supplémentaire <xliff:g example="2" id="verse_count">%1$d</xliff:g> verset(s) dans l\'intervalle <xliff:g example="1" id="start_verse">%2$d</xliff:g> à <xliff:g example="2" id="end_verse">%3$d</xliff:g> en chapitre : <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
+    <string name="extra_verses_in_chapter">Supplémentaire <xliff:g example="2" id="verse_count">%1$d</xliff:g> verset(s) dans l\'intervalle <xliff:g example="1" id="start_verse">%2$d</xliff:g> à <xliff:g example="2" id="end_verse">%3$d</xliff:g> en chapitre : <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
+    <string name="could_not_parse_chapter">Impossible d\'analyser le chapitre : %s</string>
+    <string name="missing_chapter_n">Chapitre %s manquant - essayera de restaurer</string>
+    <string name="duplicate_chapter">Dupliquer le chapitre : %s</string>
+    <string name="chapter_out_of_order">Chapitre déclassé : \'<xliff:g example="4" id="found">%1$s</xliff:g>\' après \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
+    <string name="missing_verses_in_section">Aucun verset dans la section</string>
+    <string name="error_prefix">Erreur: %s</string>
+    <string name="no_error">Aucune erreur trouvée</string>
+    <string name="warning_prefix">Avertissement : %s</string>
+    <string name="found_book">Livre trouvé : %s</string>
+    <string name="importing_file">Importation : %s</string>
+    <string name="selected_language">Langue sélectionnée : %s</string>
+    <string name="initializing_import">Initialisation de l\'import</string>
+    <string name="finished_loading">Chargement des livres terminé</string>
+    <string name="processing_chapter">Chapitre en cours de traitement : %s</string>
+    <string name="building_manifest">Construction du Manifeste</string>
+    <string name="reading_usfm">Lecture d\'USFM</string>
+    <string name="importing_usfm">Importation USFM en cours</string>
+    <string name="import_usfm_file">Importer un fichier USFM</string>
+    <string name="invalid_book_name_prompt"><xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\na nom de livre invalide : \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\nVoulez-vous sélectionner un nom de livre ?</string>
+    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\n nom du livre manquant\nVoulez-vous sélectionner un nom de livre ?</string>
+    <string name="could_not_parse">Impossible d\'analyser \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
+    <string name="no_chunk_list">Aucune liste de morceau trouvée pour \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
+    <string name="chapter_count_invalid">Chapitres <xliff:g example="16" id="chunk_count">%1$s</xliff:g> attendus, mais le dernier chapitre était <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
+    <string name="no_chapter">Aucun chapitre trouvé</string>
+    <string name="label_restore">Restaurer</string>
+    <string name="title_import_success">Importation réussie</string>
+    <string name="title_import_failed">L\'importation a échoué !</string>
+    <string name="import_project_success">Importation réussie <xliff:g example="Mark" id="project">%1$s</xliff:g> de :\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
+    <string name="table_of_contents">Table des matières </string>
     <string name="license_pdf"><![CDATA[<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
 <h3>Human-Readable Summary</h3>
 <p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
@@ -550,10 +550,10 @@
     <string name="backup_failed_title">La sauvegarde a échoué</string>
     <string name="update_failed">La mise à jour a échoué</string>
     <string name="success_translation_update">Votre traduction a été mise à jour avec succès.</string>
-    <string name="success_translation_update_with_conflicts">Your translation has been successfully updated.\nSome chunks had conflicts and need review.</string>
+    <string name="success_translation_update_with_conflicts">Votre traduction a été mise à jour avec succès.\nCertains morceaux ont eu des conflits et ont besoin d\'être revus.</string>
     <string name="search_hint">Saisir la chaîne de recherche</string>
-    <string name="search_source">Search Source:</string>
-    <string name="search_translation">Search Translation:</string>
+    <string name="search_source">Recherche de source:</string>
+    <string name="search_translation">Recherche de traduction:</string>
     <string name="tip_export_to_usfm">Crée un fichier .usfm pour votre projet</string>
     <string name="export_to_pdf">Exporter au format PDF</string>
     <string name="tip_export_to_pdf">Crée un fichier .pdf de votre projet</string>
@@ -563,12 +563,12 @@
     <string name="title_book">Projet</string>
     <string name="tip_backup_to_door43">Télécharge le projet sur votre compte serveur.\nEn téléchargeant le projet sur votre compte serveur, le contenu est disponible pour être téléchargé par d\'autres traducteurs, fusionné avec d\'autres projets, ou utilisé comme une sauvegarde en ligne.</string>
     <string name="tip_backup_to_sd">Crée une copie de votre fichier de projet</string>
-    <string name="draft_translation">Draft Level <xliff:g example="3" id="checking_level">%1$d</xliff:g>: <xliff:g example="Pig Latin" id="language">%2$s</xliff:g></string>
+    <string name="draft_translation">En statut de brouillon <xliff:g example="3" id="checking_level">%1$d</xliff:g>: <xliff:g example="Pig Latin" id="language">%2$s</xliff:g></string>
     <string name="title_download_source_language">Télécharger depuis Internet</string>
     <string name="download_source_language">Télécharger \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' maintenant ? Cela nécessite une connexion Internet ?</string>
     <string name="downloading_source">Téléchargement de la source <xliff:g example="en" id="source_language">%1$s</xliff:g></string>
-    <string name="title_export_usfm">Export to USFM</string>
-    <string name="export_usfm_by_chapter">Do you want the USFM output separated into chapters or do you want the whole book as a single file?</string>
+    <string name="title_export_usfm">Exporter vers un fichier USFM</string>
+    <string name="export_usfm_by_chapter">Voulez-vous que la sortie USFM soit séparée en chapitres ou voulez-vous que le livre entier soit un seul fichier ?</string>
     <string name="label_separate">Séparer</string>
     <string name="label_whole">Tout entier</string>
     <string name="export_to_usfm">Exporter vers un fichier USFM</string>
