@@ -239,135 +239,135 @@
     <string name="review_all_checking_questions">Veuillez revoir toutes les questions</string>
     <string name="browse">Naviguer</string>
     <string name="please_enter_text">Veuillez saisir un texte</string>
-    <string name="apk_update_available">A new version of the app is available</string>
-    <string name="download_update">Download Update</string>
-    <string name="upload_report_or_download_latest_apk">Downloading this update may fix your problem, continue?</string>
-    <string name="welcome">Welcome to BTT Writer</string>
-    <string name="please_wait">Please wait</string>
-    <string name="updating_app">Performing updates</string>
-    <string name="preparing_for_first_use">Preparing app for first use. This may take a few minutes.</string>
-    <string name="loading_languages">Preparing languages</string>
-    <string name="title_activity_target_translations">Your Translation Projects</string>
-    <string name="title_activity_new_target_translation">New Translation</string>
-    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the blue button in the top right.]]></string>
-    <string name="title_activity_target_translation_detail">Translation Project</string>
-    <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
-    <string name="Project">Project</string>
-    <string name="language">Language</string>
-    <string name="progress">Progress</string>
-    <string name="choose_first_source_translation">Choose source translation(s) to begin reading and translating</string>
-    <string name="choose_source_translations">Choose source translations</string>
-    <string name="confirm">Confirm</string>
-    <string name="selected">Selected</string>
-    <string name="available">Available</string>
-    <string name="action_translations">Home</string>
-    <string name="publish">Publish</string>
-    <string name="backup">Upload</string>
-    <string name="attached_files">Attached files</string>
-    <string name="requires_internet">This will use your Internet Connection</string>
-    <string name="input_required">Input cannot be empty</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="done">Done</string>
-    <string name="translate_first">Please provide a translation first</string>
-    <string name="consecutive_verse_markers">Verse markers are placed too close to each other. Please verify marker positions.</string>
-    <string name="outoforder_verse_markers">Verse markers are out of order</string>
-    <string name="outofrange_verse_marker">Verse marker is out of range</string>
-    <string name="duplicate_verse_marker">Duplicate verse marker</string>
-    <string name="failed_to_commit_chunk">The chunk could not be saved</string>
-    <string name="title_activity_publish">Publish Translation</string>
+    <string name="apk_update_available">Une nouvelle version de l’application est disponible</string>
+    <string name="download_update">Télécharger la mise à jour</string>
+    <string name="upload_report_or_download_latest_apk">Télécharger cette mise à jour peut résoudre votre problème, continuer ?</string>
+    <string name="welcome">Bienvenue sur BTT Writer</string>
+    <string name="please_wait">Veuillez patienter</string>
+    <string name="updating_app">Exécution des mises à jour</string>
+    <string name="preparing_for_first_use">Préparation de l\'application pour la première utilisation. Cela peut prendre quelques minutes.</string>
+    <string name="loading_languages">Préparation des langues</string>
+    <string name="title_activity_target_translations">Vos projets de traduction</string>
+    <string name="title_activity_new_target_translation">Nouvelle traduction</string>
+    <string name="translations_welcome"><![CDATA[Bienvenue !\nCeci est votre écran d'accueil. Lorsque vous aurez des projets de traduction sur cet appareil, ils apparaîtront ici.\n\nVous pouvez commencer une nouvelle traduction à tout moment en appuyant sur le bouton bleu en haut à droite.]]></string>
+    <string name="title_activity_target_translation_detail">Projet de traduction</string>
+    <string name="duplicate_target_translation">Vous traduisez déjà <xliff:g example="Genesis" id="project">%1$s</xliff:g> en <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
+    <string name="Project">Projet</string>
+    <string name="language">Langue</string>
+    <string name="progress">En cours</string>
+    <string name="choose_first_source_translation">Choisir la(les) traduction(s) source(s) pour commencer à lire et traduire</string>
+    <string name="choose_source_translations">Choisir les traductions de source</string>
+    <string name="confirm">Confirmer</string>
+    <string name="selected">Sélectionné</string>
+    <string name="available">Disponible</string>
+    <string name="action_translations">Page d\'accueil</string>
+    <string name="publish">Publier</string>
+    <string name="backup">Télécharger</string>
+    <string name="attached_files">Fichiers joints</string>
+    <string name="requires_internet">Ceci utilisera votre connexion Internet</string>
+    <string name="input_required">La saisie ne peut pas être vide</string>
+    <string name="dismiss">Rejeter</string>
+    <string name="done">Terminé</string>
+    <string name="translate_first">Merci de fournir une traduction d\'abord</string>
+    <string name="consecutive_verse_markers">Les marqueurs de verset sont placés trop près les uns des autres. Veuillez vérifier les positions du marqueur.</string>
+    <string name="outoforder_verse_markers">Les marqueurs de verset ne sont pas en ordre</string>
+    <string name="outofrange_verse_marker">Le marqueur de verset est hors de portée</string>
+    <string name="duplicate_verse_marker">Répliquer le marqueur de verset</string>
+    <string name="failed_to_commit_chunk">Le morceau (fragment) n\'a pas pu être sauvegardé</string>
+    <string name="title_activity_publish">Publier la traduction</string>
     <!-- The title of the dialog asking the user to verify completion of everything required to mark a chunk complete -->
-    <string name="chunk_checklist_title">Chunk Checklist</string>
+    <string name="chunk_checklist_title">Checklist de morceaux</string>
     <!-- The text asking the user to verify that all required steps have been taken prior to marking a chunk complete -->
-    <string name="chunk_checklist_body"><![CDATA[<p>Are you sure you are done with this chunk?<p>
+    <string name="chunk_checklist_body"><![CDATA[<p>Êtes-vous sûr de que vous avez terminé avec ce morceau ?<p>
 <ul>
-  <li>I have placed the verses correctly</li>
-  <li>I have reviewed the words and meaning</li>
-  <li>I have reviewed the translation questions</li>
+  <li>J'ai placé correctement les versets</li>
+  <li>J'ai passé en revue les mots et la signification</li>
+  <li>J'ai passé en revue les questions de traduction</li>
 </ul>]]></string>
-    <string name="your_name">Your Name or Pseudonym</string>
-    <string name="your_email">Your Email Address</string>
-    <string name="your_phone">Your Phone Number</string>
-    <string name="name">Name or Pseudonym</string>
-    <string name="email">Email Address</string>
-    <string name="phone">Phone Number</string>
-    <string name="profile">Profile</string>
-    <string name="default_translator">Default translator name</string>
-    <string name="project_title_complex">Project: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
+    <string name="your_name">Votre nom ou pseudonyme</string>
+    <string name="your_email">Votre adresse email</string>
+    <string name="your_phone">Votre numéro de téléphone</string>
+    <string name="name">Nom ou Pseudonyme</string>
+    <string name="email">Adresse email</string>
+    <string name="phone">Numéro de téléphone</string>
+    <string name="profile">Profil</string>
+    <string name="default_translator">Nom du traducteur par défaut</string>
+    <string name="project_title_complex">Projet: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <!-- A warning shown, when publishing, indicating that names/pseudonyms (but not email or phone number) are published in the catealog -->
-    <string name="publishing_privacy_notice">Your name or pseudonym will be published along with your translation in the catalog.</string>
-    <string name="publish_to_unfoldingword">Publish your project directly to the server.</string>
-    <string name="checking_for_updates">Checking for updates</string>
-    <string name="download">Download</string>
-    <string name="source_language_already_downloaded">Language already downloaded. Download again?</string>
-    <string name="confirm_delete_project">Delete this project? You can download it again later.</string>
-    <string name="cannot_delete_project_with_translations">You cannot delete a project you are translating.</string>
-    <string name="missing_project">The project is missing</string>
-    <string name="menu_update_library">Update</string>
+    <string name="publishing_privacy_notice">Votre nom ou pseudonyme sera publié avec votre traduction dans le catalogue.</string>
+    <string name="publish_to_unfoldingword">Publier votre projet directement sur le serveur.</string>
+    <string name="checking_for_updates">Recherche des mises à jour</string>
+    <string name="download">Télécharger</string>
+    <string name="source_language_already_downloaded">Langue déjà téléchargée. Télécharger à nouveau ?</string>
+    <string name="confirm_delete_project">Supprimer ce projet ? Vous pourrez le télécharger à nouveau plus tard.</string>
+    <string name="cannot_delete_project_with_translations">Vous ne pouvez pas supprimer un projet que vous traduisez.</string>
+    <string name="missing_project">Le projet est manquant</string>
+    <string name="menu_update_library">Mise à jour</string>
     <string name="questions">Questions</string>
-    <string name="references">References</string>
+    <string name="references">Références</string>
     <string name="question">Question</string>
-    <string name="answer">Answer</string>
-    <string name="begin_translating">Begin translating</string>
-    <string name="publishing_explanation"><![CDATA[<p>Publishing your work makes your content available:</p>
+    <string name="answer">Réponse</string>
+    <string name="begin_translating">Commencer à traduire</string>
+    <string name="publishing_explanation"><![CDATA[<p>Publier votre travail rend votre contenu disponible :</p>
 <ul>
-    <li>Online in multiple formats</li>
-    <li>In the Mobile App</li>
-    <li>In a PDF suitable for printing</li>
+    <li>En ligne dans plusieurs formats</li>
+    <li>Dans l'application mobile</li>
+    <li>Dans un PDF adapté à l'impression</li>
 </ul>]]></string>
-    <string name="confirm_delete_target_translation">This will permanently remove the translation. Continue?</string>
-    <string name="long_click_to_drag">Tap and hold to drag</string>
-    <string name="feedback">Feedback</string>
-    <string name="import_from_sd">Import from SD Card</string>
-    <string name="backup_to_door43">Upload to Server</string>
-    <string name="translation_export_failed">Translation could not be exported</string>
-    <string name="invalid_file">Not a valid file</string>
-    <string name="action_download_updates">Download updates</string>
-    <string name="list_may_be_outdated">The list may be out of date</string>
-    <string name="label_import">Import</string>
-    <string name="label_import_options">Import</string>
-    <string name="import_from_online">Import from Online (requires internet)</string>
-    <string name="automatic_backups">Automatic Backups</string>
-    <string name="export_to_sd">Export to SD Card</string>
-    <string name="chunk_done_prompt">"This chunk is done. Continue editing?"</string>
-    <string name="chunk_done_title">"Edit Chunk"</string>
-    <string name="edit">"Edit"</string>
-    <string name="share_apk">Share this app</string>
-    <string name="send_to">Send To</string>
-    <string name="translators">Contributors</string>
-    <string name="no_backups_online">There are no backups online</string>
-    <string name="translation_words_index">Words Index</string>
-    <string name="print">Print</string>
-    <string name="include_images">Include images</string>
-    <string name="include_incomplete_frames">Include incomplete chunks</string>
-    <string name="backup_to_friend">Send to Friend</string>
-    <string name="device_network_alias_description">Choose a name or pseudonym others will see when sharing with your device</string>
-    <string name="device_name">Device Name</string>
-    <string name="confirm_import_target_translation">Do you want to import <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
-    <string name="success_import_target_translation"><xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g> was successfully imported.</string>
-    <string name="title_activity_custom_alert_dialog">CustomAlertDialog</string>
-    <string name="neutral">Neutral</string>
-    <string name="mark_done">Mark chunk as done</string>
-    <string name="add_contributor">Add Contributor</string>
-    <string name="confirm_delete_translator">This will permanently remove the translator. Continue?</string>
-    <string name="delete_translator_title">Delete Translator</string>
-    <string name="title_activity_profile">ProfileActivity</string>
-    <string name="action_translate_resources">Translate Resources</string>
-    <string name="publish_state">Publish State</string>
-    <string name="publish_status_not">Not Published</string>
-    <string name="publish_status_current">Published</string>
-    <string name="publish_status_not_current">Not Current</string>
-    <string name="error">Error</string>
-    <string name="enable_sd_card_access_title">Enable SD Card Access</string>
-    <string name="enable_sd_card_access"><![CDATA[Do you want to enable SD card access?  If so then:
+    <string name="confirm_delete_target_translation">Cela supprimera définitivement la traduction. Continuer ?</string>
+    <string name="long_click_to_drag">Appuyez et maintenez pour faire glisser</string>
+    <string name="feedback">Votre avis</string>
+    <string name="import_from_sd">Importer depuis la carte SD</string>
+    <string name="backup_to_door43">Télécharger vers le serveur</string>
+    <string name="translation_export_failed">La traduction n’a pas pu être exportée</string>
+    <string name="invalid_file">Fichier invalide</string>
+    <string name="action_download_updates">Télécharger les mises à jour</string>
+    <string name="list_may_be_outdated">La liste peut être périmée</string>
+    <string name="label_import">Importer</string>
+    <string name="label_import_options">Importer</string>
+    <string name="import_from_online">Importer depuis Internet (nécessite Internet)</string>
+    <string name="automatic_backups">Sauvegardes automatiques</string>
+    <string name="export_to_sd">Exporter vers la carte SD</string>
+    <string name="chunk_done_prompt">"Ce chunk est terminé. Continuer l'édition ?"</string>
+    <string name="chunk_done_title">"Editer le morceau"</string>
+    <string name="edit">"Editer"</string>
+    <string name="share_apk">Partager cette application</string>
+    <string name="send_to">Envoyer à</string>
+    <string name="translators">Contributeurs</string>
+    <string name="no_backups_online">Il n\'y a pas de sauvegarde en ligne</string>
+    <string name="translation_words_index">Index des mots</string>
+    <string name="print">Imprimer</string>
+    <string name="include_images">Inclure les images</string>
+    <string name="include_incomplete_frames">Inclure les morceaux incomplets</string>
+    <string name="backup_to_friend">Envoyer à un ami</string>
+    <string name="device_network_alias_description">Choisissez un nom ou un pseudonyme que les autres verront lors du partage avec votre appareil</string>
+    <string name="device_name">Nom du dispositif</string>
+    <string name="confirm_import_target_translation">Voulez-vous importer <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
+    <string name="success_import_target_translation"><xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g> a bien été importé.</string>
+    <string name="title_activity_custom_alert_dialog">Dialogue des alertes personnalisées</string>
+    <string name="neutral">Neutre</string>
+    <string name="mark_done">Marquer le morceau comme terminé</string>
+    <string name="add_contributor">Ajouter contributeur</string>
+    <string name="confirm_delete_translator">Cela supprimera définitivement le traducteur. Continuer ?</string>
+    <string name="delete_translator_title">Supprimer le traducteur</string>
+    <string name="title_activity_profile">Activité du profil</string>
+    <string name="action_translate_resources">Traduire les ressources</string>
+    <string name="publish_state">État de publication</string>
+    <string name="publish_status_not">Non publié</string>
+    <string name="publish_status_current">Publié</string>
+    <string name="publish_status_not_current">Non actuel</string>
+    <string name="error">Erreur</string>
+    <string name="enable_sd_card_access_title">Activer l\'accès à la carte SD</string>
+    <string name="enable_sd_card_access"><![CDATA[Souhaitez-vous activer l'accès à la carte SD? Si c'est le cas alors :
 \n
-\n\u00A0\u00A0 1. Tap \'Confirm\' at bottom of this message. This message will close and a new window will open.
+\n\u00A0\u00A0 1. Tapez sur \'Confirmer\' au bas de ce message. Ce message se fermera et une nouvelle fenêtre s'ouvrira.
 \n
-\n\u00A0\u00A0 2. If you do not see the \'SD card\' icon in the left column then tap on the 3-dot icon at the top right of the window, then tap on \'Show SD card.\'
+\n\u00A0\u00A0 2. Si vous ne voyez pas l'icône \'carte SD\' dans la colonne de gauche, appuyez ensuite sur l'icône à 3 points en haut à droite de la fenêtre, puis appuyez sur  \'Montrer SD card.\' 
 \n
-\n\u00A0\u00A0 3. If the \'SD card\' icon is in the left column then tap on the icon. The files on the SD card are then shown.  Tap on the words \'SELECT \"SD card\"\' at the bottom of the window.
+\n\u00A0\u00A0 3. Si l'icône de la \'carte SD\' se trouve dans la colonne de gauche, appuyez sur l'icône. Les fichiers de la carte SD sont alors affichés. Tapez sur les mots \'SELECTIONNER \"SD card\"\' au bas de la fenêtre.
 \n
-\nIf you tap on SKIP below, then Import/Export will use internal memory.]]></string>
-    <string name="access_title">Access Attempt</string>
+\nSi vous appuyez sur IGNORER ci-dessous, Importer/Exporter utilisera la mémoire interne.]]></string>
+    <string name="access_title">Tentative d\'accès</string>
     <string name="access_failed">Failed on access request to:\n\'%s\'\nYou may have selected a folder other than the SD CARD base.\nMake sure you pressed the \'SD card\' icon on the left, and then that the button you pressed on the bottom said \'SELECT \"SD card\"\'.</string>
     <string name="access_granted_sd_card">Success! Access Allowed.\n\nAfter tapping OK, choose the folder and then the file name for your import/export.</string>
     <string name="access_skipped">Access Request Cancelled</string>
