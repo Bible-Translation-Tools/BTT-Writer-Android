@@ -114,37 +114,42 @@
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
-    <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
+    <string name="translation_guidlines"><![CDATA[<h1>Directives de traduction</h1>
 <p>
-      <strong>Accurate</strong> - Accurate translations effectively communicate the intended meaning of the original, divinely inspired text. An accurate translation expresses the meaning the author intended for the original audience in the original context.
-      <p>
-        1. To the extent that is possible, nothing is added, misconstrued, or deleted from the original message.
-        <br/>2. It does not recast the meaning of the original text to make it more relevant to the contemporary audience.
-        <br/>3. An accurate translation does not distort the meaning in order to favor a specific interpretive perspective. It should be free from theological, cultural, or personal biases.
-        <br/>4. An accurate translation communicates historical events and facts accurately.
-      <p>
+     <strong>Précise</strong> - Les traductions précises communiquent éfficacement le sens voulu du texte original, divinement inspiré. Une traduction précise exprime le sens voulu par l'auteur pour le public d'origine dans le contexte original.
+    <p>
+        1.  Dans la mesure du possible, rien n'est ajouté, mal interprété ou supprimé du message original.
+        <br/>2. Il ne reformule pas le sens du texte original pour le rendre plus pertinent pour le public contemporain.
+        <br/>3.  Une traduction précise ne déforme pas le sens afin de favoriser une perspective interprétative specifique. Elle doit être exempte de tout préjugé théologique, culturel ou personnel.
+        <br/>4. Une traduction précise communique les événements et les faits historiques avec exactitude.
+      <p></p>
 </p>
 <p>
-      <strong>Clear</strong> - Clear translations will use whatever language structures are needed to help readers easily read and understand it.
+      <strong>Claire</strong> - Les traductions claires utiliseront toutes les structures linguistiques nécessaires pour aides les lecteurs à les lire et à les comprendre facilement.
       <p>
-        1. A clear translation may use as many or as few terms as necessary to communicate the original meaning as clearly as possible.
-        <br/>2. Making a clear translation does not mean that the translator clarifies something that is ambiguous in the source text.
-        <br/>3. Making a clear translation does not mean that the translator gives the reader a specific interpretation for every passage where meaning is genuinely debated.
+        1. Une traduction claire peut utiliser autant ou aussi peu de termes que nécessaire pour communiquer le sens original aussi clairement que possible.
+        <br/>2. Faire une traduction claire ne signifie pas que le traducteur clarifie quelque chose qui est ambigue dans le texte source. 
+        <br/>3.  Faire une traduction claire ne signifie pas que le traducteur donne au lecteur une interprétation spécifique pour chaque passage où le sens est véritablement débattu.
       </p>
 </p>
 <p>
-      <strong>Natural</strong> - Natural translations use language forms that are reflect the way the target language is used in corresponding contexts.
+      <strong>Naturelle</strong> - Les traductions naturelles utilisent des formes oinguistiques qui reflètent la façon dont la langue cible est utilisée dans les contextes correspondants.
       <p>
-        1. Natural Bible translations sound like they were produced by an adult native speaker who speaks and/or writes well.
-        <br/>2. A natural Bible translation does not use expressions that are particular to their own culture in order to make the translation appear natural.
-        <br/>3. It is more important for a portion of Scripture to be translated accurately than for it to sound perfectly natural to everyone who reads it.
+        1.  Les traductions naturelles de la Bible doit se lire comme elles avaient été produites par un adult de langue maternelle qui parle et / ou écrit bien.
+        <br/>2. Une traduction naturelle de la Bible n'utilise pas d'expressions propres à leur propre culture afin de rendre la traduction naturelle.
+        <br/>3. Il est plus important qu'une partie de l'Écriture soit traduite avec précision que d'être parfaitement naturelle pour tous ceux qui la lisent.
       </p>
 </p>
-<p> We believe that a translation has the highest likelihood of being good quality when after applying the guidelines above, the following are completed: </p>
-<p>
-    1. It is tested and approved by believers of the language community and their church leaders.
-    <br/>2. Ongoing revisions and improvements are made.
-</p>]]></string>
+    1. Elle est testée et approuvée par les croyants de la communauté linguistique et par leur responsables d'église.
+    <br/>2. Des révisions et des améliorations continues sont apportées.
+</p>
+
+
+
+
+
+
+   ]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
     <string name="statement_of_faith"><![CDATA[<h1>Déclaration de foi</h1>
 
