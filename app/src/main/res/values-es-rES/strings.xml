@@ -146,15 +146,15 @@
     <br/>2. Ongoing revisions and improvements are made.
 </p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="statement_of_faith"><![CDATA[<h1>Statement of Faith</h1>
-<p>We believe:</p>
+    <string name="statement_of_faith"><![CDATA[<h1>Declaración de Fe</h1>
+<p>Creemos:</p>
 <ul>
-    <li>The Bible is divinely inspired by God and has final authority.</li>
-    <li>God is one and exists in three persons: God the Father, God the Son and God the Holy Spirit.</li>
-    <li>Because of the fall of man, all humans are sinful, and in need of salvation.</li>
-    <li>The death of Christ is a substitute for sinners and provides for the cleansing of those who believe.</li>
-    <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
-    <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
+    <li>La Biblia es divinamente inspirada por Dios y tiene autoridad final.</li>
+    <li>Dios es uno y existe en tres personas:  Dios el Padre, Dios el Hijo,  y Dios el Espíritu Santo.</li>
+    <li>Debido a la caída del hombre, todos los humanos son pecadores, y necesitan salvación.</li>
+    <li>La muerte de Cristo es un sustituto de los pecadores y proporciona limpieza para los que creen.</li>
+    <li>Por la gracia de Dios, a través de la fe, el hombre recibe salvación como un regalo gratuito mediante la muerte y resurrección de Jesús.</li>
+    <li>La resurrección de todos --- los salvos a la vida eterna y los perdidos al castigo eterno.</li>
 </ul>]]></string>
     <string name="view_statement_of_faith">Ver Declaración de Fe</string>
     <string name="view_translation_guidelines">Ver Directrices de Traducción</string>
@@ -505,22 +505,23 @@
     <string name="title_import_failed">¡Importación Fallida!</string>
     <string name="import_project_success">Importación exitosa de <xliff:g example="Mark" id="project">%1$s</xliff:g> desde:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Tabla de Contenido </string>
-    <string name="license_pdf"><![CDATA[<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
-<h3>Human-Readable Summary</h3>
-<p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
-<h4>This is a human-readable summary of (and not a substitute for) the License</h4>
+    <string name="license_pdf"><![CDATA[<h2>Atribución Creative Commons-CompartirAlike 4.0 Internacional</h2>
+<h3>Resumen Legible </h3>
+<p>El Atribución Creative Commons-CompartirAlike 4.0 Internacional licencia está disponible en <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
+<h4>Este es un resumen legible de (y no un sustituto de) la licencia.</h4>
 <br/>
-<h3>You are free to:</h3>
-<br/><b>&#8226; Share</b> - copy and redistribute the material in any medium or format
-<br/><b>&#8226; Adapt</b> - remix, transform, and build upon the material for any purpose, even commercially.
-<p>The licensor cannot revoke these freedoms as long as you follow the license terms.</p>
-<h3>Under the following terms:</h3>
-<br/><b>&#8226; Attribution</b> - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-<br/><b>&#8226; ShareAlike</b> - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
-<br/><b>&#8226; No additional restrictions</b> - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.</p>
-<h3>Notices:</h3>
-<p><br/>&#8226; You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
-<p><br/>&#8226; No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>]]></string>
+<h3>Usted es libre de:</h3>
+<br/><b>&#8226; Compartir</b> - copia y redistribuye el material en cualquier medio o formato
+<br/><b>&#8226; Adaptar</b> - remezclar, transformar y construir sobre el material
+para cualquier propósito, incluso comercialmente.
+<p>El licenciante no puede revocar estas libertades siempre y cuando siga los términos de licencia.</p>
+<h3>En las siguientes condiciones</h3>
+<br/><b>&#8226; Atribución</b> - Debe dar el crédito adecuado, proporcionar un enlace a la licencia e indicar si se han realizado cambios. Usted puede hacerlo de cualquier forma razonable, pero no de ninguna manera que sugiera que el licenciante le respalde o su uso.
+<br/><b>&#8226; ShareAlike</b> - Si remezclas, transformas o construyes sobre el material, debes distribuir tus contribuciones bajo la misma licencia que el original.
+<br/><b>&#8226; Sin restricciones adicionales</b> - No puede aplicar términos legales o medidas tecnológicas que restrinjan legalmente a otros hacer cualquier cosa que la licencia permita.</p>
+<h3>Avisos:</h3>
+<p><br/>&#8226; Usted no tiene que cumplir con la licencia para elementos del material en el dominio público o cuando su uso está permitido por una excepción o limitación aplicable.</p>
+<p><br/>&#8226; No se dan garantías. Es posible que la licencia no le dé todos los permisos necesarios para su uso previsto. Por ejemplo, otros derechos como la publicidad, la privacidad o los derechos morales pueden limitar la forma en que utiliza el material.</p>]]></string>
     <string name="questionnaire_title">Página <xliff:g example="1" id="page_num">%1$d</xliff:g> de <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
     <string name="new_lang_api_upload_failure_title">Error de nuevo idioma</string>
     <string name="new_lang_api_upload_failure">No pudimos guardar las respuestas al Cuestionario del Idioma Nuevo. Intentaremos nuevamente la próxima vez que</string>
