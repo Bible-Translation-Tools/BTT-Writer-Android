@@ -19,12 +19,12 @@
     <string name="terms_title">Condiciones de Uso</string>
     <string name="terms">Mediante el uso de esta aplicación está de acuerdo con la declaración de las directrices de fe y de traducción y para liberar a trabajar bajo los términos de la licencia Creative Commons Reconocimiento-Compartir bajo la misma licencia 4.0 Internacional.</string>
     <!-- stub needed for the drawer open and close listener -->
-    <string name="chapter_title_field">Título De Capítulo:</string>
-    <string name="chapter_reference_field">El Capítulo De Referencia:</string>
+    <string name="chapter_title_field">Título De Capítulo</string>
+    <string name="chapter_reference_field">El Capítulo De Referencia</string>
     <!-- The language from which a project is being translated -->
-    <string name="source_language_field">Idioma De Origen:</string>
+    <string name="source_language_field">Idioma De Origen</string>
     <!-- The langage to which a project is being translated -->
-    <string name="target_language">Idioma De Destino:</string>
+    <string name="target_language">Idioma De Destino</string>
     <string name="title_activity_chapter_setting">Capítulo Configuración</string>
     <string name="title_activity_language_selector">Idioma</string>
     <string name="success">Éxito</string>
@@ -32,16 +32,16 @@
     <string name="title_activity_sharing">Compartir</string>
     <string name="missing_external_storage">De almacenamiento externo no está disponible</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
-    <string name="project_exported_to">Proyecto guardado en </string>
+    <string name="project_exported_to">Proyecto guardado en <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
     <!-- The file browser -->
     <string name="title_activity_file_explorer">El Explorador De Archivos</string>
     <!-- Export a project to another app on the device -->
     <string name="backup_to_app">De exportación para la aplicación</string>
     <!-- Export a project to the sd card -->
-    <string name="backup_to_sd">Exportar a tarjeta SD</string>
+    <string name="backup_to_sd">Exportar Proyecto</string>
     <!-- The translation could not be imported -->
     <string name="translation_import_failed">No se pudo importar la traducción</string>
-    <string name="internet_not_available">Usted no tiene una conexión activa a internet.</string>
+    <string name="internet_not_available">Usted no tiene una conexión activa a internet</string>
     <!-- Backup and/or publish a project translation-->
     <string name="backup_and_publish">Copia de seguridad y publicar</string>
     <string name="upload_wizard_intro">Vas a subir su traducción.</string>
@@ -60,38 +60,38 @@
     <string name="label_frame_title_detailed">Marco: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
     <string name="dialog_validation_errors">Los Errores De Validación</string>
-    <string name="validation_errors">Hay sin resolver errores en la traducción. Por favor corregir estos, a continuación, inténtelo de nuevo.</string>
+    <string name="validation_errors">Hay sin resolver errores en la traducción. Por favor corregir estos, a continuación, inténtelo de nuevo</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
-    <string name="error_frames_not_translated">%1$s marcos no han sido traducidos.</string>
+    <string name="error_frames_not_translated"><xliff:g example="5" id="number">%1$s</xliff:g> marcos no han sido traducidos.</string>
     <string name="dialog_validation_warnings">Las Advertencias De Validación</string>
     <string name="validation_warnings">Hay sin resolver advertencias. ¿Estás seguro de querer subir esta traducción?</string>
-    <string name="no_translated_chapters">Nada ha sido traducido aún.</string>
+    <string name="no_translated_chapters">Nada ha sido traducido aún</string>
     <string name="title_chapters">Capítulos</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
-    <string name="now_viewing_frame">Viendo el marco <xliff:g id="number" example="1"> %1$s </xliff:g> en el capítulo <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g> .</string>
+    <string name="now_viewing_frame">Viendo el marco <xliff:g id="number" example="1"> %1$s </xliff:g> en el capítulo <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g>.</string>
     <string name="label_translation_notes">Notas De Traducción</string>
     <string name="label_passage_note">Pasaje de la nota:</string>
     <string name="label_delete">Borrar</string>
     <!-- Explaination of what a source language is -->
-    <string name="source_language_instructions">Idiomas fuente se completan traducciones.</string>
+    <string name="source_language_instructions">Idiomas fuente se completan traducciones</string>
     <!-- Explaination of what a target language is -->
-    <string name="target_language_instructions">Idiomas de destino no se han traducido o son obras en curso.</string>
+    <string name="target_language_instructions">Idiomas de destino no se han traducido o son obras en curso</string>
     <string name="notes_cannot_overlap">Notas no se superponen</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
     <string name="currently_viewed_frame_index">Marco <xliff:g id="current_frame" example="2"> %1$s </xliff:g> de <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
     <string name="content_server">Servidor de contenido</string>
     <string name="opening_project">Proyecto de apertura de</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
-    <string name="loading_target_language">La carga de la lengua de destino: %1$s</string>
+    <string name="loading_target_language">La carga de la lengua de destino: <xliff:g example="Deutsch" id="language">%1$s</xliff:g></string>
     <!-- Indicates the project that is being loaded. e.g. Loading project: Open Bible Stories -->
-    <string name="loading_project">Cargar el proyecto: %1$s</string>
+    <string name="loading_project">Cargar el proyecto: <xliff:g example="Open Bible Stories" id="project">%1$s</xliff:g></string>
     <!-- Uploading the device public ssh key to the server -->
-    <string name="submitting_security_keys">La transferencia de claves de seguridad...</string>
+    <string name="submitting_security_keys">La transferencia de claves de seguridad</string>
     <string name="choose_file">Elija el archivo</string>
     <string name="choose_source_language">Elige El Idioma De Origen</string>
     <string name="choose_target_language">Seleccionar El Idioma De Destino</string>
     <string name="search_language">Búsqueda de una lengua</string>
-    <string name="loading">Cargando...</string>
+    <string name="loading">Cargando</string>
     <string name="view_license_agreement">Ver La Licencia</string>
     <string name="license_deny">No, Gracias</string>
     <string name="license_accept">Estoy De Acuerdo</string>
@@ -106,7 +106,7 @@
     <string name="translation_words">Términos Clave</string>
     <string name="translation_check_notice">Ahora vamos a realizar algunas verificaciones para asegurar que su traducción está lista.</string>
     <string name="preparing_upload">Preparación del proyecto para la carga</string>
-    <string name="choose_a_project">Por favor, abra un proyecto primero.</string>
+    <string name="choose_a_project">Por favor, abra un proyecto primero</string>
     <string name="choose_a_chapter">Por favor, abra un capítulo primero</string>
     <string name="title_activity_crash_reporter">Notificar un error</string>
     <string name="title_activity_bug_reporter">Informe De Error</string>
@@ -156,8 +156,8 @@
     <li>Por la gracia de Dios, a través de la fe, el hombre recibe salvación como un regalo gratuito mediante la muerte y resurrección de Jesús.</li>
     <li>La resurrección de todos --- los salvos a la vida eterna y los perdidos al castigo eterno.</li>
 </ul>]]></string>
-    <string name="view_statement_of_faith">Ver Declaración de Fe</string>
-    <string name="view_translation_guidelines">Ver Directrices de Traducción</string>
+    <string name="view_statement_of_faith">Declaración de Fe</string>
+    <string name="view_translation_guidelines">Directrices de Traducción</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
     <!-- Indicates the peer has connected to the server -->
     <string name="language_resources">Versiones</string>
@@ -171,10 +171,10 @@
     <string name="out_of">fuera de</string>
     <string name="mb_downloaded">MB descargado</string>
     <string name="image_large_download">Descargando imágenes tomará varios megabytes. ¿Está seguro de que desea incluir imágenes?</string>
-    <string name="confirm_import">Por favor, confirma lo que desea importar.</string>
+    <string name="confirm_import">Por favor, confirma lo que desea importar</string>
     <string name="waiting_for_another_device">Esperando al dispositivo</string>
     <string name="label_back">Espalda</string>
-    <string name="bug_report">Describa el problema que está experimentando con esta aplicación.</string>
+    <string name="bug_report">Describa el problema que está experimentando con esta aplicación</string>
     <string name="project_library">Biblioteca de Proyectos</string>
     <string name="title_verse">Verso</string>
     <string name="title_note">Nota</string>
@@ -217,7 +217,7 @@
     <string name="import_from_storage_description">Los proyectos se pueden importar desde el almacenamiento externo en este dispositivo</string>
     <string name="download_complete">Descarga completa</string>
     <string name="source_export_complete">Exportación completa Fuente</string>
-    <string name="exit_confirmation">Seguro que quieres salir?</string>
+    <string name="exit_confirmation">Salir <xliff:g id="app_name">BTT Writer</xliff:g>?</string>
     <string name="read_chapter_menu">Lea el capítulo</string>
     <string name="preview_chapter_translation">Traducción Prevista</string>
     <string name="toggle_blind_draft_mode">Proyecto ciego Toggle</string>
@@ -239,7 +239,7 @@
     <string name="browse">Navegar</string>
     <string name="please_enter_text">Por favor, introduzca algún texto</string>
     <string name="apk_update_available">Hay una nueva versión de la aplicación disponible</string>
-    <string name="download_update">Descarge la actualización</string>
+    <string name="download_update">Descargar la actualización</string>
     <string name="upload_report_or_download_latest_apk">Descargar esta actualización puede solucionar tu problema, ¿continuar?</string>
     <string name="welcome">Bienvenido al Escritor BTT</string>
     <string name="please_wait">Por favor espere</string>
@@ -286,7 +286,7 @@
     <string name="your_name">Tu nombre o seudónimo</string>
     <string name="your_email">Su Dirección de Correo Electrónico</string>
     <string name="your_phone">Su número de teléfono</string>
-    <string name="name">Nombre o Pseudónimo</string>
+    <string name="name">Nombre o Seudónimo</string>
     <string name="email">Dirección de correo electrónico</string>
     <string name="phone">Número de Teléfono</string>
     <string name="profile">Perfil</string>
@@ -361,13 +361,13 @@
 \n
 \n\u00A0\u00A0 1. Toque \'Confirmar\' en la parte inferior de este mensaje. Este mensaje se cerrará y se abrirá una nueva ventana.
 \n
-\n\u00A0\u00A0 2. Si no ves el icono \'tarjeta SD\' en la columna izquierda y pulsa en el icono de 3 puntos en la parte superior derecha de la ventana luego toca \'Mostrar tarjeta SD. "
+\n\u00A0\u00A0 2. Si no ves el icono \'tarjeta SD\' en la columna izquierda y pulsa en el icono de 3 puntos en la parte superior derecha de la ventana luego toca \'Mostrar tarjeta SD.\'
 \n
 \n\u00A0\u00A0 3. Si el icono \'SD card\' está en la columna de la izquierda, pulsa el icono. Los archivos de la tarjeta SD se mostrarán. Pulsa en las palabras \'SELECT \"Tarjeta SD\"\' en la parte inferior de la ventana.
 \n
 \nSi pulsa en SKIP abajo, entonces importar/exportar usará memoria interna.]]></string>
     <string name="access_title">Intento de Acceso</string>
-    <string name="access_failed">Falló en la solicitud de acceso a: \ n\'%s \'\ nPuede haber seleccionado una carpeta que no sea la base de SD CARD. \nAsegúrese de presionar el icono\' SD card \'a la izquierda, y luego de que el botón que presionó en la parte inferior dijo \'SELECCIONAR\' la tarjeta SD \"\'.</string>
+    <string name="access_failed">Falló en la solicitud de acceso a: \n\'%s\'\nPuede haber seleccionado una carpeta que no sea la base de SD CARD. \nAsegúrese de presionar el icono\' SD card \'a la izquierda, y luego de que el botón que presionó en la parte inferior dijo \'SELECCIONAR\' la tarjeta SD \"\'.</string>
     <string name="access_granted_sd_card">¡Éxito! Acceso permitido.\n\nDespués de tocar bien, elija la carpeta y luego el nombre del archivo para su importación/exportación.</string>
     <string name="access_skipped">Solicitud de Acceso cancelada</string>
     <string name="label_skip">Omitir</string>
@@ -385,7 +385,7 @@
     <string name="importing_draft">Importando borrador</string>
     <string name="draft_translation_exists">Un borrador de esta traducción está disponible</string>
     <string name="print_failed">Fallo al imprimir</string>
-    <string name="printing">Imprimiendo</string>
+    <string name="printing">Imprimiendo:\n</string>
     <string name="label_undo">Deshacer</string>
     <string name="label_redo">Rehacer</string>
     <string name="restored_to_time">Restaurado a %s</string>
@@ -405,8 +405,8 @@
     <string name="need_translator_notice">Por favor agregue un colaborador</string>
     <string name="duplicate_native_speaker">Ya se ha añadido un colaborador con ese nombre</string>
     <string name="edit_contributor">Editar colaborador</string>
-    <string name="registration_failure">Registro fallido. Por favor revisa tu conexion a internet</string>
-    <string name="auth_failure_retry">Autenticación fallida. ¿Reintertar?</string>
+    <string name="registration_failure">Registro fallido. Por favor revisa tu conexión a internet</string>
+    <string name="auth_failure_retry">Autenticación fallida. ¿Reintentar?</string>
     <string name="registering_keys">Registrándose con el servidor</string>
     <string name="person_agrees_with_licenses">Mediante el uso de esta aplicación está de acuerdo con la declaración de las directrices de fe y de traducción y para liberar a trabajar bajo los términos de la licencia Creative Commons Reconocimiento-Compartir bajo la misma licencia 4.0 Internacional.</string>
     <string name="invalid_entry_title">Entrada inválida</string>
@@ -483,10 +483,10 @@
     <string name="missing_verses_in_section">No hay versículos en la sección</string>
     <string name="error_prefix">Error: %s</string>
     <string name="no_error">No se encontraron errores</string>
-    <string name="warning_prefix">Advertencia:% s</string>
+    <string name="warning_prefix">Advertencia:%s</string>
     <string name="found_book">Libro encontrado: %s</string>
     <string name="importing_file">Importando: %s</string>
-    <string name="selected_language">Idioma seleccionado</string>
+    <string name="selected_language">Idioma seleccionado: %s</string>
     <string name="initializing_import">Iniciando importación</string>
     <string name="finished_loading">Carga de Libros Terminada</string>
     <string name="processing_chapter">Procesando el capítulo: %s</string>
@@ -494,7 +494,7 @@
     <string name="reading_usfm">Leyendo USFM</string>
     <string name="importing_usfm">Importar USFM</string>
     <string name="import_usfm_file">Importar archivo USFM</string>
-    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\' \ ntiene un nombre de libro no válido: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\' \ n¿Desea seleccionar un nombre del libro?</string>
+    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\ntiene un nombre de libro no válido: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\n¿Desea seleccionar un nombre del libro?</string>
     <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nle falta el nombre del libro\n¿Desea seleccionar el nombre del libro?</string>
     <string name="could_not_parse">No se pudo analizar \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
     <string name="no_chunk_list">No se encontró una lista de trozos para \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
@@ -535,7 +535,7 @@ para cualquier propósito, incluso comercialmente.
     <string name="request_new_language">Solicitar nuevo idioma</string>
     <string name="title_new_language_code">Código de idioma nuevo</string>
     <string name="confirm_start_new_language_code">Estás a punto de solicitar un nuevo código de idioma.</string>
-    <string name="check_for_updates">Buscar actualizaciónes</string>
+    <string name="check_for_updates">Buscar actualizaciones</string>
     <string name="check_for_app_updates">Consulte Internet para obtener actualizaciones de BTT Writer App.</string>
     <string name="have_latest_app_update">Ya estás utilizando la última versión de BTT Writer.</string>
     <string name="download_latest_apk">¿Quiere descargar este archivo?</string>
@@ -573,7 +573,7 @@ para cualquier propósito, incluso comercialmente.
     <string name="label_whole">Entero</string>
     <string name="export_to_usfm">Exportar a USFM</string>
     <string name="export_failed">¡La Exportación falló!</string>
-    <string name="export_success">¡Exportación exitosa! \ N \ nEl archivo exportado está en: \ n<xliff:g example="/sd_card/downloads" id="file_path">%1$s</xliff:g></string>
+    <string name="export_success">¡Exportación exitosa! \n\nEl archivo exportado está en:\n<xliff:g example="/sd_card/downloads" id="file_path">%1$s</xliff:g></string>
     <string name="update_source_language">¿Deseas actualizar \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' de Online (requiere internet)?</string>
     <string name="conflict_exists">¡EXISTEN CONFLICTOS!</string>
     <string name="resolve_confict_instructions">Conflicto: haz clic en la versión para guardar</string>
