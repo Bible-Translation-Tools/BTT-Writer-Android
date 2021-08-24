@@ -662,7 +662,7 @@ para cualquier propósito, incluso comercialmente.
     <string name="unsupported">No soportado</string>
     <string name="import_warning">El proyecto \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' puede no es compatible con esta aplicación. Actualmente, translationStudio solo es compatible con los proyectos de Escritura e historias bíblicas abiertas. Si este no es uno de esos tipos de proyectos, no se importará a translationStudio. \n\n¿Deseas intentar importarlo de todos modos?</string>
     <string name="overwrite_file_title">¿Sobrescribir archivo?</string>
-    <string name="overwrite_file_warning">El mismo nombre de archivo ya existe. ¿Desea sobrescribir \n\ <xliff:g example="project.usfm" id="project_name">%1$s</xliff:g>? \n\ nTamaño: <xliff:g example="3.5 KB" id="size">%2$s</xliff:g> \ t \ n Modificado: <xliff:g example="2/23/2017" id="date">%3$s</xliff:g></string>
+    <string name="overwrite_file_warning">El mismo nombre de archivo ya existe. ¿Desea sobrescribir\n\<xliff:g example="project.usfm" id="project_name">%1$s</xliff:g>?\n\nTamaño: <xliff:g example="3.5 KB" id="size">%2$s</xliff:g>\t\n Modificado: <xliff:g example="2/23/2017" id="date">%3$s</xliff:g></string>
     <string name="overwrite_label">Sobrescribir</string>
     <string name="rename_label">Renombrar</string>
     <string name="bytes_short">B</string>
@@ -672,7 +672,7 @@ para cualquier propósito, incluso comercialmente.
     <string name="title">Título</string>
     <string name="reference">Referencia</string>
     <string name="title_footnote">Nota al pie</string>
-    <string name="access_not_root">Error al habilitar el acceso a la base de la tarjeta SD. \nPuedes haber seleccionado una carpeta que no sea la base SD CARD. \ NAsegúrate de presionar el icono \'SD card\' a la izquierda, y luego de que el botón que presionó en la parte inferior dice \' SELECCIONA \"Tarjeta SD\" \'.</string>
+    <string name="access_not_root">Error al habilitar el acceso a la base de la tarjeta SD.\nPuedes haber seleccionado una carpeta que no sea la base SD CARD.\nAsegúrate de presionar el icono \'SD card\' a la izquierda, y luego de que el botón que presionó en la parte inferior dice \' SELECCIONA \"Tarjeta SD\" \'.</string>
     <string name="merge_summary">Los proyectos han sido combinados. Hay (<xliff:g example="37" id="count">%1$d</xliff:g>) fragmentos que contienen nuevos conflictos que requieren tu atención.</string>
     <string name="merge_complete_title">Combinación completa</string>
     <string name="access_success_title">Activar acceso a tarjeta SD</string>
