@@ -11,7 +11,7 @@ These projects use [Git] and [GitHub] to manage all code and issues. You must be
 ## Definitions
 * **upstream** refers to the repository owned by [Bible-Translation-Tools](https://github.com/Bible-Translation-Tools) e.g. [BTT-Writer-Desktop] or [BTT-Writer-Android].
 
-##Start to Finish
+## Start to Finish
 Contributing is very easy.
 
 1. Fork the upstream repository. See [Fork a repo] for instructions.
