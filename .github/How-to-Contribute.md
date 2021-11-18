@@ -2,13 +2,13 @@
 
 These rules apply to contributions made to the [BTT-Writer-Android] and [BTT-Writer-Desktop] repositories.
 
-##License
+## License
 By contributing to these projects you agree to the release your code according to the license specified in the LICENSE file in the relative repository.
 
-##Expectations
+## Expectations
 These projects use [Git] and [GitHub] to manage all code and issues. You must be familiar with both [Git] and [GitHub] in order to be an effective contributor. Please take the time to search for and read all relevant documentation on these tools before asking for help.
 
-##Definitions
+## Definitions
 * **upstream** refers to the repository owned by [Bible-Translation-Tools](https://github.com/Bible-Translation-Tools) e.g. [BTT-Writer-Desktop] or [BTT-Writer-Android].
 
 ##Start to Finish
@@ -21,7 +21,7 @@ Contributing is very easy.
 5. Push your local branch to your fork.
 6. Create a pull request to the development branch on the upstream repository. See [Creating a pull request](https://help.github.com/articles/creating-a-pull-request/) for instructions.
 
-##Cloning Instructions
+## Cloning Instructions
 If you are new to git or github all the cloning, branching, and forking can be confusing. Here is a quick step by step tutorial to help you set up your repositories.
 
 1. **Create a github account**. Once you have an account you'll probably want to generate an ssh key so you don't have to enter your username and password each time you push your code to github. Read the [Generating SSH Keys](https://help.github.com/articles/generating-ssh-keys/) article for further instructions.
