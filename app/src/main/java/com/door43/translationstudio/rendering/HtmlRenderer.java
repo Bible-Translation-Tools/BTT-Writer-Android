@@ -116,7 +116,7 @@ public class HtmlRenderer extends RenderingEngine {
 
     /**
      * Renders addresses to translation academy pages as html
-     * Example [[en:ta:vol1:translate:translate_unknown|How to Translate Unknowns]]
+     * Example [[en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
      * @param in
      * @return
      */

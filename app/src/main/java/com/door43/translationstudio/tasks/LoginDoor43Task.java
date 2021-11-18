@@ -1,9 +1,17 @@
 package com.door43.translationstudio.tasks;
 
+import android.os.Build;
+import android.provider.Settings;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.tasks.io.OkHttpRequest;
+import com.door43.translationstudio.tasks.io.RequestAPI;
 import com.door43.translationstudio.ui.SettingsActivity;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 
@@ -24,6 +32,7 @@ public class LoginDoor43Task extends ManagedTask {
     private final String tokenName;
     private final String fullName;
     private User user = null;
+    private String apiUrl = App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api);
 
     /**
      * Logs into a door43 account
@@ -33,7 +42,7 @@ public class LoginDoor43Task extends ManagedTask {
     public LoginDoor43Task(String username, String password) {
         this.username = username;
         this.password = password;
-        this.tokenName = App.context().getResources().getString(R.string.gogs_token_name);
+        this.tokenName = getTokenStub();
         this.fullName = null;
     }
 
@@ -46,36 +55,31 @@ public class LoginDoor43Task extends ManagedTask {
     public LoginDoor43Task(String username, String password, String fullName) {
         this.username = username;
         this.password = password;
-        this.tokenName = App.context().getResources().getString(R.string.gogs_token_name);
+        this.tokenName = getTokenStub();
         this.fullName = fullName;
     }
 
 
     @Override
     public void start() {
-        GogsAPI api = new GogsAPI(App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api));
+        GogsAPI api = new GogsAPI(this.apiUrl);
         User authUser = new User(this.username, this.password);
 
         // get user
         this.user = api.getUser(authUser, authUser);
         if(this.user != null) {
-
-            // retrieve existing token
-            List<Token> tokens = api.listTokens(authUser);
-            for (Token t : tokens) {
-                if (t.getName().equals(tokenName)) {
-                    this.user.token = t;
-                    break;
-                }
+            RequestAPI customRequester = new OkHttpRequest(this.apiUrl);
+            int tokenId = getTokenId(tokenName, authUser, customRequester);
+            if (tokenId != -1) {
+                // Delete (if exists) matching token for this device on server
+                deleteToken(tokenId, authUser, customRequester);
             }
 
-            // create new token
-            if (this.user.token == null) {
-                Token t = new Token(tokenName);
-                this.user.token = api.createToken(t, authUser);
-            }
+            // Create a new token
+            Token t = new Token(tokenName);
+            this.user.token = api.createToken(t, authUser);
 
-            // validate login
+            // validate access token
             if (this.user.token == null) {
                 this.user = null;
                 Response response = api.getLastResponse();
@@ -102,5 +106,49 @@ public class LoginDoor43Task extends ManagedTask {
      */
     public User getUser() {
         return user;
+    }
+
+    public static String getTokenStub() {
+        String defaultTokenName = App.context().getResources().getString(R.string.gogs_token_name);
+        String androidId = Settings.Secure.getString(App.context().getContentResolver(), Settings.Secure.ANDROID_ID);
+        String nickname = Settings.Secure.getString(App.context().getContentResolver(), "bluetooth_name");
+        if (nickname == null || nickname.isEmpty()) {
+            nickname = Build.MODEL;
+        }
+        String tokenSuffix = String.format("%s_%s__%s", Build.MANUFACTURER, nickname, androidId);
+        return defaultTokenName + "__" + tokenSuffix;
+    }
+
+    private int getTokenId(String tokenName, User userAuth, RequestAPI requester) {
+        int tokenId = -1;
+        String urlPath = String.format("/users/%s/tokens", userAuth.getUsername());
+        Response tokenResponse = requester.get(urlPath, userAuth);
+
+        if(tokenResponse.code == 200) {
+            try {
+                JSONArray data = new JSONArray(tokenResponse.data);
+                for(int i = 0; i < data.length(); i ++) {
+                    String tkName = data.getJSONObject(i).getString("name");
+
+                    if(tkName.equals(tokenName)) {
+                        tokenId = data.getJSONObject(i).getInt("id");
+                        break;
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return tokenId;
+    }
+
+    private void deleteToken(int tokenId, User userAuth, RequestAPI requester) {
+        String urlPath = String.format("/users/%s/tokens/%s", userAuth.getUsername(), tokenId);
+        Response response = requester.delete(urlPath, userAuth);
+
+        if(response.code != 204) {
+            Logger.w(LoginDoor43Task.class.getName(), "delete access token - gogs api responded with code " + response.code, response.exception);
+        }
     }
 }
