@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -27,6 +28,7 @@ import java.io.File;
  */
 public class SplashScreenActivity extends BaseActivity implements ManagedTask.OnFinishedListener, ManagedTask.OnStartListener {
     private static final String STATE_STARTED = "started";
+    private static final String LOGGING_TAG = "SplashScreenActivity";
     private TextView mProgressTextView;
     private ProgressBar mProgressBar;
     private boolean silentStart = true;
@@ -47,40 +49,72 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
             started = savedInstanceState.getBoolean(STATE_STARTED);
         }
 
-        // check minimum requirements
-        boolean checkHardware = App.getUserPreferences().getBoolean(SettingsActivity.KEY_PREF_CHECK_HARDWARE, true);
-        if(checkHardware && !started) {
-            int numProcessors = Runtime.getRuntime().availableProcessors();
-            long maxMem = Runtime.getRuntime().maxMemory();
+//        // check minimum requirements
+//        boolean checkHardware = App.getUserPreferences().getBoolean(SettingsActivity.KEY_PREF_CHECK_HARDWARE, true);
+//        if(checkHardware && !started) {
+//            int numProcessors = Runtime.getRuntime().availableProcessors();
+//            long maxMem = Runtime.getRuntime().maxMemory();
+//
+//            int screenMask = getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+//            boolean smallScreen = (screenMask == Configuration.SCREENLAYOUT_SIZE_SMALL
+//                                    || screenMask == Configuration.SCREENLAYOUT_SIZE_NORMAL
+//                                    || screenMask == Configuration.SCREENLAYOUT_SIZE_UNDEFINED);
+//
+//            if (numProcessors < App.minimumNumberOfProcessors || maxMem < App.minimumRequiredRAM || smallScreen) {
+//                silentStart = false;
+//                new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+//                        .setTitle(R.string.slow_device)
+//                        .setMessage(R.string.min_hardware_req_not_met)
+//                        .setCancelable(false)
+//                        .setNegativeButton(R.string.do_not_show_again, new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                SharedPreferences.Editor editor = App.getUserPreferences().edit();
+//                                editor.putBoolean(SettingsActivity.KEY_PREF_CHECK_HARDWARE, false);
+//                                editor.apply();
+//                                start();
+//                            }
+//                        })
+//                        .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                start();
+//                            }
+//                        })
+//                        .show();
+//            }
+//        }
 
-            int screenMask = getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-            boolean smallScreen = (screenMask == Configuration.SCREENLAYOUT_SIZE_SMALL
-                                    || screenMask == Configuration.SCREENLAYOUT_SIZE_NORMAL
-                                    || screenMask == Configuration.SCREENLAYOUT_SIZE_UNDEFINED);
+        // Request access to folder
+        silentStart = false;
+        new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                // TODO: Replace with R strings
+                .setTitle("Select Directory")
+                .setMessage("On the next screen, please select the directory in which BTT-Writer should put its files.")
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent("android.intent.action.OPEN_DOCUMENT_TREE");
+                        intent.putExtra("android.provider.extra.INITIAL_URI", Uri.encode("BTT-Writer")); // android.net.Uri
+                        if (intent.resolveActivity(getPackageManager()) != null) {
+                            startActivityForResult(intent, 42);
+                        }
+                    }
+                })
+                .show();
+    }
 
-            if (numProcessors < App.minimumNumberOfProcessors || maxMem < App.minimumRequiredRAM || smallScreen) {
-                silentStart = false;
-                new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.slow_device)
-                        .setMessage(R.string.min_hardware_req_not_met)
-                        .setCancelable(false)
-                        .setNegativeButton(R.string.do_not_show_again, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                SharedPreferences.Editor editor = App.getUserPreferences().edit();
-                                editor.putBoolean(SettingsActivity.KEY_PREF_CHECK_HARDWARE, false);
-                                editor.apply();
-                                start();
-                            }
-                        })
-                        .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                start();
-                            }
-                        })
-                        .show();
-            }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Ignore if not our code
+        if (requestCode != 42) {
+            return;
+        }
+        if (resultCode != RESULT_OK) {
+            //TODO: Handle gracefully
+            Logger.e(LOGGING_TAG, "Couldn't acquire public data dir.");
+            finish();
         }
     }
 
