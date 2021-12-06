@@ -29,6 +29,7 @@ import java.io.File;
 public class SplashScreenActivity extends BaseActivity implements ManagedTask.OnFinishedListener, ManagedTask.OnStartListener {
     private static final String STATE_STARTED = "started";
     private static final String LOGGING_TAG = "SplashScreenActivity";
+    private static final int DIRTREE_REQUEST_CODE = 777;
     private TextView mProgressTextView;
     private ProgressBar mProgressBar;
     private boolean silentStart = true;
@@ -98,7 +99,7 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
                         Intent intent = new Intent("android.intent.action.OPEN_DOCUMENT_TREE");
                         intent.putExtra("android.provider.extra.INITIAL_URI", Uri.encode("BTT-Writer")); // android.net.Uri
                         if (intent.resolveActivity(getPackageManager()) != null) {
-                            startActivityForResult(intent, 42);
+                            startActivityForResult(intent, DIRTREE_REQUEST_CODE);
                         }
                     }
                 })
@@ -108,14 +109,16 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Ignore if not our code
-        if (requestCode != 42) {
+        if (requestCode != DIRTREE_REQUEST_CODE) {
             return;
         }
         if (resultCode != RESULT_OK) {
-            //TODO: Handle gracefully
+            //TODO: Handle failure gracefully
             Logger.e(LOGGING_TAG, "Couldn't acquire public data dir.");
             finish();
+            return;
         }
+        Logger.i(LOGGING_TAG, "Granted access to public data dir:" + data);
     }
 
     @Override
