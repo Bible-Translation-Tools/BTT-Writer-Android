@@ -3,12 +3,14 @@ package com.door43.translationstudio.ui;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.UriPermission;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -22,6 +24,7 @@ import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * This activity initializes the app
@@ -86,39 +89,52 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
 //            }
 //        }
 
-        // Request access to folder
-        silentStart = false;
-        new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                // TODO: Replace with R strings
-                .setTitle("Select Directory")
-                .setMessage("On the next screen, please select the directory in which BTT-Writer should put its files.")
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent("android.intent.action.OPEN_DOCUMENT_TREE");
-                        intent.putExtra("android.provider.extra.INITIAL_URI", Uri.encode("BTT-Writer")); // android.net.Uri
-                        if (intent.resolveActivity(getPackageManager()) != null) {
-                            startActivityForResult(intent, DIRTREE_REQUEST_CODE);
+        // Check to see if we have an approved data dir.
+        // If not, request one.
+        List<UriPermission> uriPermissionList = getContentResolver().getPersistedUriPermissions();
+        if (uriPermissionList.size() > 0) {
+            Uri savedPublicDataDir = uriPermissionList.get(0).getUri();
+            Logger.i(LOGGING_TAG, "Found persisted access to public data dir:" + savedPublicDataDir);
+            App.publicDataDir = savedPublicDataDir;
+        } else {
+            // Request access to folder
+            silentStart = false;
+            new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                    // TODO: Replace with R strings
+                    .setTitle("Select Directory")
+                    .setMessage("On the next screen, please select the directory in which BTT-Writer should put its files.")
+                    .setCancelable(false)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent("android.intent.action.OPEN_DOCUMENT_TREE");
+                            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                            intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                            intent.putExtra("android.provider.extra.INITIAL_URI", Uri.encode("BTT-Writer")); // android.net.Uri
+                            if (intent.resolveActivity(getPackageManager()) != null) {
+                                startActivityForResult(intent, DIRTREE_REQUEST_CODE);
+                            }
                         }
-                    }
-                })
-                .show();
+                    })
+                    .show();
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // Ignore if not our code
-        if (requestCode != DIRTREE_REQUEST_CODE) {
-            return;
+        if (requestCode == DIRTREE_REQUEST_CODE) {
+            if (resultCode != RESULT_OK) {
+                //TODO: Handle failure gracefully
+                Logger.e(LOGGING_TAG, "Couldn't acquire public data dir.");
+                finish();
+                return;
+            }
+            Uri uri = data.getData();
+            Logger.i(LOGGING_TAG, "Granted access to public data dir:" + uri);
+            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            App.publicDataDir = uri;
         }
-        if (resultCode != RESULT_OK) {
-            //TODO: Handle failure gracefully
-            Logger.e(LOGGING_TAG, "Couldn't acquire public data dir.");
-            finish();
-            return;
-        }
-        Logger.i(LOGGING_TAG, "Granted access to public data dir:" + data);
+
     }
 
     @Override

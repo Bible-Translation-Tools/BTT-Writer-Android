@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -56,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -91,6 +93,7 @@ public class App extends Application {
     public final static long minimumRequiredRAM = 96 * 1024 * 1024; // 96 MB, Minimum RAM needed for reliable operation
     public final static long minimumNumberOfProcessors = 2; // Minimum number of processors needed for reliable operationB
     private static boolean mBackupsRunning = false;
+    public static Uri publicDataDir = null;
 
     public static File getImagesDir() {
         return imagesDir;
@@ -599,6 +602,9 @@ public class App extends Application {
      * @return
      */
     public static File publicDir() {
+
+        Log.i(TAG, "publicDir() called:\n" + Arrays.toString(new Throwable().getStackTrace()).replace(',', '\n'));
+
         String state = Environment.getExternalStorageState();
         File sd = Environment.getExternalStorageDirectory();
         File dir;
