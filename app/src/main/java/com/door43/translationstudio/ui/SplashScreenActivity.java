@@ -96,6 +96,8 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
             Uri savedPublicDataDir = uriPermissionList.get(0).getUri();
             Logger.i(LOGGING_TAG, "Found persisted access to public data dir:" + savedPublicDataDir);
             App.publicDataDir = savedPublicDataDir;
+            App.setupLogger();
+            App.setupCrashDir();
         } else {
             // Request access to folder
             silentStart = false;
@@ -133,6 +135,8 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
             Logger.i(LOGGING_TAG, "Granted access to public data dir:" + uri);
             getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             App.publicDataDir = uri;
+            App.setupLogger();
+            App.setupCrashDir();
         }
 
     }

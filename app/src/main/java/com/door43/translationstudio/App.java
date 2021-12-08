@@ -106,10 +106,24 @@ public class App extends Application {
 
         Foreground.init(this);
 
-        // configure logger
-        int minLogLevel = Integer.parseInt(getUserPreferences().getString(SettingsActivity.KEY_PREF_LOGGING_LEVEL, getResources().getString(R.string.pref_default_logging_level)));
-        configureLogger(minLogLevel);
+        // initialize default settings
+        // NOTE: make sure to add any new preference files here in order to have their default values properly loaded.
+        PreferenceManager.setDefaultValues(this, R.xml.general_preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.server_preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.sharing_preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.advanced_preferences, false);
+    }
 
+    public static void setupLogger() {
+        // configure logger
+        int minLogLevel = Integer.parseInt(
+                getUserPreferences().getString(
+                        SettingsActivity.KEY_PREF_LOGGING_LEVEL,
+                        sInstance.getResources().getString(R.string.pref_default_logging_level)));
+        configureLogger(minLogLevel);
+    }
+
+    public static void setupCrashDir() {
         File dir = new File(publicDir(), "crashes");
         if(!dir.exists()) {
             try {
@@ -119,13 +133,6 @@ public class App extends Application {
             }
         }
         Logger.registerGlobalExceptionHandler(dir);
-
-        // initialize default settings
-        // NOTE: make sure to add any new preference files here in order to have their default values properly loaded.
-        PreferenceManager.setDefaultValues(this, R.xml.general_preferences, false);
-        PreferenceManager.setDefaultValues(this, R.xml.server_preferences, false);
-        PreferenceManager.setDefaultValues(this, R.xml.sharing_preferences, false);
-        PreferenceManager.setDefaultValues(this, R.xml.advanced_preferences, false);
     }
 
     /**
