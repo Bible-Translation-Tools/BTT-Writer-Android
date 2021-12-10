@@ -12,9 +12,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.DocumentsContract;
 import android.provider.Settings;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -50,6 +53,7 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -93,7 +97,8 @@ public class App extends Application {
     public final static long minimumRequiredRAM = 96 * 1024 * 1024; // 96 MB, Minimum RAM needed for reliable operation
     public final static long minimumNumberOfProcessors = 2; // Minimum number of processors needed for reliable operationB
     private static boolean mBackupsRunning = false;
-    public static Uri publicDataDir = null;
+    public static Uri publicDataUri = null;
+    private static DocumentFile publicDataDir = null;
 
     public static File getImagesDir() {
         return imagesDir;
@@ -601,6 +606,12 @@ public class App extends Application {
         return commitHash;
     }
 
+    public static void setPublicUri(Uri uri) {
+        App.publicDataUri = uri;
+        App.setupLogger();
+        App.setupCrashDir();
+    }
+
     /**
      * Returns the path to the public files directory.
      * Files saved in this directory will not be removed when the application is uninstalled
@@ -610,19 +621,28 @@ public class App extends Application {
      */
     public static File publicDir() {
 
-        Log.i(TAG, "publicDir() called:\n" + Arrays.toString(new Throwable().getStackTrace()).replace(',', '\n'));
+//        Log.i(TAG, "publicDir() called:\n" + Arrays.toString(new Throwable().getStackTrace()).replace(',', '\n'));
 
-        String state = Environment.getExternalStorageState();
-        File sd = Environment.getExternalStorageDirectory();
-        File dir;
+//        String state = Environment.getExternalStorageState();
+//        File sd = Environment.getExternalStorageDirectory();
+//        File dir;
+//
+//        if(Environment.MEDIA_MOUNTED.equals(state) && sd.canWrite()) {
+//            dir = new File(sd, PUBLIC_DATA_DIR);
+//        } else {
+//            Log.w(TAG, "External storage was missing. Falling back to data dir.");
+//            dir = new File(Environment.getDataDirectory(), PUBLIC_DATA_DIR);
+//        }
 
-        if(Environment.MEDIA_MOUNTED.equals(state) && sd.canWrite()) {
-            dir = new File(sd, PUBLIC_DATA_DIR);
-        } else {
-            Log.w(TAG, "External storage was missing. Falling back to data dir.");
-            dir = new File(Environment.getDataDirectory(), PUBLIC_DATA_DIR);
+        if (publicDataUri == null) {
+            Log.w(TAG, "publicDir() called, but none exists!");
+            return null;
         }
 
+
+        DocumentFile documentFile = DocumentFile.fromTreeUri(sInstance.getApplicationContext(), publicDataUri);
+
+        File dir = new File(documentFile.getName());
         if(!dir.exists()) {
             dir.mkdirs();
         }

@@ -2,15 +2,12 @@ package com.door43.translationstudio.ui;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.UriPermission;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -93,11 +90,9 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
         // If not, request one.
         List<UriPermission> uriPermissionList = getContentResolver().getPersistedUriPermissions();
         if (uriPermissionList.size() > 0) {
-            Uri savedPublicDataDir = uriPermissionList.get(0).getUri();
-            Logger.i(LOGGING_TAG, "Found persisted access to public data dir:" + savedPublicDataDir);
-            App.publicDataDir = savedPublicDataDir;
-            App.setupLogger();
-            App.setupCrashDir();
+            Uri savedPublicDataUri = uriPermissionList.get(0).getUri();
+            Logger.i(LOGGING_TAG, "Found persisted access to public data dir:" + savedPublicDataUri);
+            App.setPublicUri(savedPublicDataUri);
         } else {
             // Request access to folder
             silentStart = false;
@@ -112,7 +107,7 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
                             Intent intent = new Intent("android.intent.action.OPEN_DOCUMENT_TREE");
                             intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                             intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                            intent.putExtra("android.provider.extra.INITIAL_URI", Uri.encode("BTT-Writer")); // android.net.Uri
+                            intent.putExtra("android.provider.extra.INITIAL_URI", Uri.encode(App.PUBLIC_DATA_DIR)); // android.net.Uri
                             if (intent.resolveActivity(getPackageManager()) != null) {
                                 startActivityForResult(intent, DIRTREE_REQUEST_CODE);
                             }
@@ -134,12 +129,10 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
             Uri uri = data.getData();
             Logger.i(LOGGING_TAG, "Granted access to public data dir:" + uri);
             getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            App.publicDataDir = uri;
-            App.setupLogger();
-            App.setupCrashDir();
+            App.setPublicUri(uri);
         }
-
     }
+
 
     @Override
     public void onResume() {
