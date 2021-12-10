@@ -642,7 +642,8 @@ public class App extends Application {
 
         DocumentFile documentFile = DocumentFile.fromTreeUri(sInstance.getApplicationContext(), publicDataUri);
 
-        File dir = new File(documentFile.getName());
+        // TODO: Figure out how to get from documentFile -> this path (it's the same dir)
+        File dir = new File("/storage/emulated/0/BTT-Writer");
         if(!dir.exists()) {
             dir.mkdirs();
         }
