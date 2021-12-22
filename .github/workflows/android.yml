@@ -31,6 +31,10 @@ jobs:
         LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
     - name: Acquire resource containers
       run: wget --no-verbose -O containers.zip "https://btt-writer-resources.s3.amazonaws.com/containers.zip"
+    - name: move new resource containers where they should go
+      run: if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
+    - name: android 28 env
+      run:  echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
     - name: Test with Gradle
       run: ./gradlew test --stacktrace
     - name: Assemble with Gradle
