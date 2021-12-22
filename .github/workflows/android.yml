@@ -36,7 +36,7 @@ jobs:
     - name: Assemble with Gradle
       run: ./gradlew assembleRelease
     - name: move apk
-      run: mv ./app/build/outputs/apk/release/release.apk ./release/btt-writer.apk
+      run: mkdir ./release && mv ./app/build/outputs/apk/release/release.apk ./release/btt-writer.apk
     - name: set s3 destination_dir for release or dev for install4j updates to work
       run: echo "CURRENT_S3_DESTINATION=$CI_REPOSITORY_OWNER/$CI_REPOSITORY_NAME/$CI_REF_NAME_SLUG" >> $GITHUB_ENV
     - name: Upload file to bucket
