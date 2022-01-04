@@ -40,7 +40,7 @@ jobs:
     - name: Test with Gradle
       run: ./gradlew test --stacktrace
     - name: Assemble with Gradle
-      run: ./gradlew assembleRelease
+      run: ./gradlew assembleRelease -PsignIt=true
     - name: move apk
       run: mkdir ./release && mv ./app/build/outputs/apk/release/release.apk ./release/btt-writer.apk
     - name: set s3 destination_dir for release or dev for install4j updates to work
