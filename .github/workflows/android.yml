@@ -41,6 +41,10 @@ jobs:
       run: ./gradlew test --stacktrace
     - name: Assemble with Gradle
       run: ./gradlew assembleRelease
+      env:
+        KEYSTORE_PASS: secrets.KEYSTORE_PASS
+        ALIAS_NAME: secrets.ALIAS_NAME
+        ALIAS_PASS: secrets.ALIAS_PASS
     - name: move apk
       run: mkdir ./release && mv ./app/build/outputs/apk/release/release.apk ./release/btt-writer.apk
     - name: set s3 destination_dir for release or dev for install4j updates to work
