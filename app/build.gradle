@@ -15,7 +15,7 @@ apply plugin: 'com.getkeepsafe.dexcount'
 
 android {
     signingConfigs {
-        if (System.getenv("TRAVIS")) {
+        if (System.getenv("CI")) {
             release {
                 storeFile rootProject.file('bttkey.jks')
                 storePassword System.getenv("KEYSTORE_PASS")
@@ -39,7 +39,7 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             testProguardFile('proguard-rules.pro')
-            if (System.getenv("TRAVIS")) {
+            if (System.getenv("CI")) {
                 signingConfig signingConfigs.release
             }
         }
@@ -71,7 +71,7 @@ configurations {
     compile.exclude group: 'org.jetbrains' , module:'annotations'
 }
 
-if (System.env.TRAVIS == 'true') {
+if (System.env.CI == 'true') {
     allprojects {
         tasks.withType(GroovyCompile) {
             groovyOptions.fork = false
