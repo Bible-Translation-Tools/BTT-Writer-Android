@@ -29,6 +29,19 @@ public class CheckForLatestReleaseTask extends ManagedTask {
 
     @Override
     public void start() {
+
+        //////////////////////////////////////////////////////////////////////////////////
+        // NOTE: This code is temporarily commented out during our change from
+        // one versioning system to another.  The code depends on the last part of
+        // the GitHub build tag to be the version code, e.g. -8 for build 8.  But
+        // currently the build code is the date, e.g. -20210404.  But that is likely
+        // to change to a new format, e.g. +10.  Once the format settles, we
+        // can re-enable this code.
+        //
+        // While commented out, it will always look like there is no new release available.
+        ///////////////////////////////////////////////////////////////////////////////////
+
+        /*
         String githubApiUrl = App.context().getResources().getString(R.string.github_repo_api);
         String url = githubApiUrl + "/releases/latest";
         String latestRelease;
@@ -73,6 +86,7 @@ public class CheckForLatestReleaseTask extends ManagedTask {
                 Logger.e(this.getClass().getName(), "Failed to parse the latest release", e);
             }
         }
+         */
     }
 
     /**
