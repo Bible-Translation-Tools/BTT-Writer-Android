@@ -44,7 +44,7 @@ public class CheckForLatestReleaseTask extends ManagedTask {
                 JSONObject latestReleaseJson = new JSONObject(latestRelease);
                 if(latestReleaseJson.has("tag_name")) {
                     String tag = latestReleaseJson.getString("tag_name");
-                    String[] tagParts = tag.split("-");
+                    String[] tagParts = tag.split("+");
                     if(tagParts.length == 2) {
                         int build = Integer.parseInt(tagParts[1]);
                         try {
