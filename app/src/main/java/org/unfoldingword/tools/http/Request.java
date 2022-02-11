@@ -1,5 +1,7 @@
 package org.unfoldingword.tools.http;
 
+/* Source: https://github.com/unfoldingWord-dev/android-http */
+
 import android.util.Base64;
 
 import java.io.BufferedInputStream;
@@ -36,7 +38,6 @@ public abstract class Request {
     public Request(URL url, String requestMethod) {
         this.url = url;
         this.requestMethod = requestMethod.toUpperCase();
-        System.out.println("GREETINGS FRIEND, ttl=" + ttl);
     }
 
     /**

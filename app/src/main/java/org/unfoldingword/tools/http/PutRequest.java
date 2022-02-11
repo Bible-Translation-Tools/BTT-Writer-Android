@@ -1,5 +1,7 @@
 package org.unfoldingword.tools.http;
 
+/* Source: https://github.com/unfoldingWord-dev/android-http */
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
