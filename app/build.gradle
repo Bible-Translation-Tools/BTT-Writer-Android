@@ -103,11 +103,17 @@ dependencies {
     implementation 'org.apmem.tools:layouts:1.10'
     implementation 'com.itextpdf:itextpdf:5.5.10'
     implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation 'org.unfoldingword.tools:gogs-client:1.6.1'
+    implementation('org.unfoldingword.tools:gogs-client:1.6.1') {
+        exclude group: 'org.unfoldingword.tools', module: 'http'
+    }
     implementation 'org.unfoldingword.tools:task-manager:1.5.3'
-    implementation 'org.unfoldingword.tools:door43-client:0.10.3'
-    implementation 'org.unfoldingword.tools:http:2.4.2'
-    implementation 'org.unfoldingword.tools:logger:2.0.0'
+    implementation('org.unfoldingword.tools:door43-client:0.10.3') {
+        exclude group: 'org.unfoldingword.tools', module: 'http'
+    }
+    //implementation 'org.unfoldingword.tools:http:2.4.2'
+    implementation('org.unfoldingword.tools:logger:2.0.0') {
+        exclude group: 'org.unfoldingword.tools', module: 'http'
+    }
     implementation 'org.unfoldingword.tools:event-buffer:1.0.2'
     implementation 'org.unfoldingword.tools:foreground:0.1.0'
     implementation project(':html-textview')
