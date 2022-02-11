@@ -1,6 +1,6 @@
 package org.unfoldingword.tools.http;
 
-/* Source: https://github.com/unfoldingWord-dev/android-http */
+/* Source: https://github.com/unfoldingWord-dev/android-http/tree/2.4.2 */
 
 import android.util.Base64;
 
@@ -23,7 +23,9 @@ import javax.net.ssl.HttpsURLConnection;
 public abstract class Request {
     private final URL url;
     private final String requestMethod;
-    private String auth = null;
+    private String token;
+    private String username;
+    private String password;
     private String contentType = null;
     private int responseCode = -1;
     private String responseMessage = null;
@@ -41,32 +43,13 @@ public abstract class Request {
     }
 
     /**
-     * Sets the authentication token for the request.
-     * The auth label will be "Bearer". Use {@link #setAuth(String, String)} to customize the label.
-     * @param token
+     * Sets the token used for authenticating the post request
+     * Tokens take precedence over credentials
+     * Token authentication.
+     * @param token the authentication token
      */
-    public void setAuth(String token) {
-        setAuth(token, "Bearer");
-    }
-
-    /**
-     * Sets the authentication for the request
-     * @param token
-     * @param label the auth label
-     */
-    public void setAuth(String token, String label) {
-        this.auth = label + " " + token;
-    }
-
-    /**
-     * Sets the username and password used for authenticating the request.
-     * @param username
-     * @param password
-     */
-    public void setCredentials(String username, String password) throws UnsupportedEncodingException {
-        String credentials = username + ":" + password;
-        String token = Base64.encodeToString(credentials.getBytes("UTF-8"), Base64.NO_WRAP);
-        setAuth(token, "Basic");
+    public void setAuthentication(String token) {
+        this.token = token;
     }
 
     /**
@@ -86,30 +69,32 @@ public abstract class Request {
     }
 
     /**
-     * Sets the token used for authenticating the post request
-     * Tokens take precedence over credentials
-     * Token authentication.
-     * @deprecated use {@link #setAuth(String)} instead
-     * @param token the authentication token
-     */
-    public void setAuthentication(String token) {
-        setAuth(token, "token");
-    }
-
-    /**
      * Sets the credentials used for authenticating the report
      * Basic authentication.
-     * @deprecated use {@link #setCredentials(String, String)} instead
      * @param username the username to be authenticated as
      * @param password the password to authenticate with
      */
     public void setAuthentication(String username, String password) {
-        try {
-            setCredentials(username, password);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            auth = null;
+        this.username = username;
+        this.password = password;
+    }
+
+    /**
+     * Generates and returns the auth information if available
+     * @return the formatted authentication request property
+     */
+    protected String getAuth() {
+        if(this.token != null) {
+            return "token " + this.token;
+        } else if(this.username != null && this.password != null){
+            String credentials = this.username + ":" + this.password;
+            try {
+                return "Basic " + Base64.encodeToString(credentials.getBytes("UTF-8"), Base64.NO_WRAP);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
         }
+        return null;
     }
 
     /**
@@ -132,8 +117,9 @@ public abstract class Request {
         } else {
             conn = (HttpURLConnection)url.openConnection();
         }
-        if(this.auth != null) {
-            conn.setRequestProperty("Authorization", this.auth);
+        String auth = getAuth();
+        if(auth != null) {
+            conn.setRequestProperty("Authorization", auth);
         }
         if(contentType != null) {
             conn.setRequestProperty("Content-Type", contentType);
