@@ -75,6 +75,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     public static final String KEY_PREF_ALWAYS_SHARE = "always_share";
     public static final String KEY_PREF_MEDIA_SERVER = "media_server";
     public static final String KEY_PREF_READER_SERVER = "reader_server";
+    public static final String KEY_PREF_CREATE_ACCOUNT_URL = "create_account_url";
 //    public static final String KEY_PREF_EXPORT_FORMAT = "export_format";
     public static final String KEY_PREF_TRANSLATION_TYPEFACE = "translation_typeface";
     public static final String KEY_PREF_TRANSLATION_TYPEFACE_SIZE = "typeface_size";
@@ -251,6 +252,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
 //        bindPreferenceSummaryToValue(findPreference(KEY_PREF_EXPORT_FORMAT));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_MEDIA_SERVER));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_READER_SERVER));
+        bindPreferenceSummaryToValue(findPreference(KEY_PREF_CREATE_ACCOUNT_URL));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_LOGGING_LEVEL));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_BACKUP_INTERVAL));
 
@@ -562,6 +564,11 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                         EditTextPreference readerServer = (EditTextPreference) findPreference(KEY_PREF_READER_SERVER);
                         readerServer.setText(readerServers[index]);
                         readerServer.setSummary(readerServers[index]);
+
+                        String[] createAccountUrls = getResources().getStringArray(R.array.content_server_account_create_urls_array);
+                        EditTextPreference createAccountUrl = (EditTextPreference) findPreference(KEY_PREF_CREATE_ACCOUNT_URL);
+                        createAccountUrl.setText(createAccountUrls[index]);
+                        createAccountUrl.setSummary(createAccountUrls[index]);
                     }
                 }
             });
@@ -577,6 +584,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_GIT_SERVER_PORT));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_MEDIA_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_READER_SERVER));
+            bindPreferenceSummaryToValue(findPreference(KEY_PREF_CREATE_ACCOUNT_URL));
 
             initSettings = false;
         }
