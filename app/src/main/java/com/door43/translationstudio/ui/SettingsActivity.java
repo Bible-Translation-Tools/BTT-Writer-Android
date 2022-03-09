@@ -11,6 +11,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -269,39 +270,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             @Override
             public boolean onPreferenceChange(Preference preference, Object value) {
                 String newValue = (String) value;
-                String[] values = getResources().getStringArray(R.array.content_server_values_array);
-                int index = Arrays.asList(values).indexOf(newValue);
-
-                String[] gitServers = getResources().getStringArray(R.array.content_server_git_server_values_array);
-                EditTextPreference gitServer = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER);
-                gitServer.setText(gitServers[index]);
-                gitServer.setSummary(gitServers[index]);
-
-                String[] gitServerPorts = getResources().getStringArray(R.array.content_server_git_server_port_values_array);
-                EditTextPreference gitServerPort = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER_PORT);
-                gitServerPort.setText(gitServerPorts[index]);
-                gitServerPort.setSummary(gitServerPorts[index]);
-
-                String[] gitServerApis = getResources().getStringArray(R.array.content_server_git_server_api_values_array);
-                EditTextPreference gitServerApi = (EditTextPreference) findPreference(KEY_PREF_GOGS_API);
-                gitServerApi.setText(gitServerApis[index]);
-                gitServerApi.setSummary(gitServerApis[index]);
-
-                String[] mediaServers = getResources().getStringArray(R.array.content_server_media_server_values_array);
-                EditTextPreference mediaServer = (EditTextPreference) findPreference(KEY_PREF_MEDIA_SERVER);
-                mediaServer.setText(mediaServers[index]);
-                mediaServer.setSummary(mediaServers[index]);
-
-                String[] readerServers = getResources().getStringArray(R.array.content_server_reader_server_values_array);
-                EditTextPreference readerServer = (EditTextPreference) findPreference(KEY_PREF_READER_SERVER);
-                readerServer.setText(readerServers[index]);
-                readerServer.setSummary(readerServers[index]);
-
-                String[] createAccountUrls = getResources().getStringArray(R.array.content_server_account_create_urls_array);
-                EditTextPreference createAccountUrl = (EditTextPreference) findPreference(KEY_PREF_CREATE_ACCOUNT_URL);
-                createAccountUrl.setText(createAccountUrls[index]);
-                createAccountUrl.setSummary(createAccountUrls[index]);
-
+                setAllServerPreferences(newValue);
                 return true;
             }
         });
@@ -560,6 +529,50 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
 
             initSettings = false;
         }
+    }
+
+    /**
+     * Sets all server preferences based on the value of newValue, which should
+     * be one of the values in R.array.content_server_values_array.
+     * @param newValue
+     */
+    private void setAllServerPreferences(String newValue) {
+
+        String[] values = getResources().getStringArray(R.array.content_server_values_array);
+        String[] serverNames = getResources().getStringArray(R.array.content_server_names_array);
+        int index = Arrays.asList(values).indexOf(newValue);
+        ListPreference contentServer = (ListPreference) findPreference(KEY_PREF_CONTENT_SERVER);
+        contentServer.setSummary(serverNames[index]);
+
+        String[] gitServers = getResources().getStringArray(R.array.content_server_git_server_values_array);
+        EditTextPreference gitServer = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER);
+        gitServer.setText(gitServers[index]);
+        gitServer.setSummary(gitServers[index]);
+
+        String[] gitServerPorts = getResources().getStringArray(R.array.content_server_git_server_port_values_array);
+        EditTextPreference gitServerPort = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER_PORT);
+        gitServerPort.setText(gitServerPorts[index]);
+        gitServerPort.setSummary(gitServerPorts[index]);
+
+        String[] gitServerApis = getResources().getStringArray(R.array.content_server_git_server_api_values_array);
+        EditTextPreference gitServerApi = (EditTextPreference) findPreference(KEY_PREF_GOGS_API);
+        gitServerApi.setText(gitServerApis[index]);
+        gitServerApi.setSummary(gitServerApis[index]);
+
+        String[] mediaServers = getResources().getStringArray(R.array.content_server_media_server_values_array);
+        EditTextPreference mediaServer = (EditTextPreference) findPreference(KEY_PREF_MEDIA_SERVER);
+        mediaServer.setText(mediaServers[index]);
+        mediaServer.setSummary(mediaServers[index]);
+
+        String[] readerServers = getResources().getStringArray(R.array.content_server_reader_server_values_array);
+        EditTextPreference readerServer = (EditTextPreference) findPreference(KEY_PREF_READER_SERVER);
+        readerServer.setText(readerServers[index]);
+        readerServer.setSummary(readerServers[index]);
+
+        String[] createAccountUrls = getResources().getStringArray(R.array.content_server_account_create_urls_array);
+        EditTextPreference createAccountUrl = (EditTextPreference) findPreference(KEY_PREF_CREATE_ACCOUNT_URL);
+        createAccountUrl.setText(createAccountUrls[index]);
+        createAccountUrl.setSummary(createAccountUrls[index]);
     }
 
     /**
