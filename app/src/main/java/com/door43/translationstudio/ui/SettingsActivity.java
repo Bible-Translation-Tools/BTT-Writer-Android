@@ -264,6 +264,48 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             e.printStackTrace();
         }
 
+        Preference gitServer = findPreference(KEY_PREF_CONTENT_SERVER);
+        gitServer.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object value) {
+                String newValue = (String) value;
+                String[] values = getResources().getStringArray(R.array.content_server_values_array);
+                int index = Arrays.asList(values).indexOf(newValue);
+
+                String[] gitServers = getResources().getStringArray(R.array.content_server_git_server_values_array);
+                EditTextPreference gitServer = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER);
+                gitServer.setText(gitServers[index]);
+                gitServer.setSummary(gitServers[index]);
+
+                String[] gitServerPorts = getResources().getStringArray(R.array.content_server_git_server_port_values_array);
+                EditTextPreference gitServerPort = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER_PORT);
+                gitServerPort.setText(gitServerPorts[index]);
+                gitServerPort.setSummary(gitServerPorts[index]);
+
+                String[] gitServerApis = getResources().getStringArray(R.array.content_server_git_server_api_values_array);
+                EditTextPreference gitServerApi = (EditTextPreference) findPreference(KEY_PREF_GOGS_API);
+                gitServerApi.setText(gitServerApis[index]);
+                gitServerApi.setSummary(gitServerApis[index]);
+
+                String[] mediaServers = getResources().getStringArray(R.array.content_server_media_server_values_array);
+                EditTextPreference mediaServer = (EditTextPreference) findPreference(KEY_PREF_MEDIA_SERVER);
+                mediaServer.setText(mediaServers[index]);
+                mediaServer.setSummary(mediaServers[index]);
+
+                String[] readerServers = getResources().getStringArray(R.array.content_server_reader_server_values_array);
+                EditTextPreference readerServer = (EditTextPreference) findPreference(KEY_PREF_READER_SERVER);
+                readerServer.setText(readerServers[index]);
+                readerServer.setSummary(readerServers[index]);
+
+                String[] createAccountUrls = getResources().getStringArray(R.array.content_server_account_create_urls_array);
+                EditTextPreference createAccountUrl = (EditTextPreference) findPreference(KEY_PREF_CREATE_ACCOUNT_URL);
+                createAccountUrl.setText(createAccountUrls[index]);
+                createAccountUrl.setSummary(createAccountUrls[index]);
+
+                return true;
+            }
+        });
+
         findPreference("app_updates").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
