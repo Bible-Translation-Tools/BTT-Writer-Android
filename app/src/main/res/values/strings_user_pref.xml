@@ -52,6 +52,8 @@
     <string name="pref_title_media_server">Media Server</string>
     <!-- The server used to review translation work in reader -->
     <string name="pref_title_reader_server">Reader Server</string>
+    <!-- The URL to create a new account. -->
+    <string name="pref_title_create_account_url">Account Creation URL</string>
 
     <!-- Section heading for Sharing settings -->
     <!--<string name="pref_header_sharing" translatable="false">Sharing</string>-->
