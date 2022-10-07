@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import android.view.MenuItem;
@@ -37,7 +38,13 @@ public class ProfileActivity extends BaseActivity {
         registerDoor43.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ProfileActivity.this, RegisterDoor43Activity.class);
+                String defaultAccountCreateUrl = App.context().getResources().getString(
+                        R.string.pref_default_create_account_url);
+                String accountCreateUrl = App.context().getUserPreferences().getString(
+                        SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
+                        defaultAccountCreateUrl);
+                Uri uri = Uri.parse(accountCreateUrl);
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                 startActivity(intent);
             }
         });

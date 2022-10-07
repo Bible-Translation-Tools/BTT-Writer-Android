@@ -53,12 +53,7 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
             int numProcessors = Runtime.getRuntime().availableProcessors();
             long maxMem = Runtime.getRuntime().maxMemory();
 
-            int screenMask = getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-            boolean smallScreen = (screenMask == Configuration.SCREENLAYOUT_SIZE_SMALL
-                                    || screenMask == Configuration.SCREENLAYOUT_SIZE_NORMAL
-                                    || screenMask == Configuration.SCREENLAYOUT_SIZE_UNDEFINED);
-
-            if (numProcessors < App.minimumNumberOfProcessors || maxMem < App.minimumRequiredRAM || smallScreen) {
+            if (numProcessors < App.minimumNumberOfProcessors || maxMem < App.minimumRequiredRAM) {
                 silentStart = false;
                 new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                         .setTitle(R.string.slow_device)

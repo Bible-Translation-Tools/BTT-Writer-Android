@@ -15,7 +15,7 @@ apply plugin: 'com.getkeepsafe.dexcount'
 
 android {
     signingConfigs {
-        if (System.getenv("TRAVIS")) {
+        if (project.hasProperty('signIt')) {
             release {
                 storeFile rootProject.file('bttkey.jks')
                 storePassword System.getenv("KEYSTORE_PASS")
@@ -25,21 +25,21 @@ android {
             }
         }
     }
-    compileSdkVersion 29
+    compileSdkVersion 28
     defaultConfig {
         applicationId "org.bibletranslationtools.writer.android"
         minSdkVersion 15
-        targetSdkVersion 29
-        versionCode 7
-        versionName "1.1.1"
+        targetSdkVersion 28
+        versionCode 12
+        versionName "1.1.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
+    } 
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             testProguardFile('proguard-rules.pro')
-            if (System.getenv("TRAVIS")) {
+            if (project.hasProperty('signIt')) {
                 signingConfig signingConfigs.release
             }
         }
@@ -71,21 +71,21 @@ configurations {
     compile.exclude group: 'org.jetbrains' , module:'annotations'
 }
 
-if (System.env.TRAVIS == 'true') {
-    allprojects {
-        tasks.withType(GroovyCompile) {
-            groovyOptions.fork = false
-        }
-        tasks.withType(Test) {
-            // containers (currently) have 2 dedicated cores and 4GB of memory
-            maxParallelForks = 2
-            minHeapSize = '128m'
-            testLogging {
-                // Custom configuration
-            }
-        }
-    }
-}
+// if (System.env.CI == 'true') {
+//     allprojects {
+//         tasks.withType(GroovyCompile) {
+//             groovyOptions.fork = false
+//         }
+//         tasks.withType(Test) {
+//             // containers (currently) have 2 dedicated cores and 4GB of memory
+//             maxParallelForks = 2
+//             minHeapSize = '128m'
+//             testLogging {
+//                 // Custom configuration
+//             }
+//         }
+//     }
+// }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -103,11 +103,16 @@ dependencies {
     implementation 'org.apmem.tools:layouts:1.10'
     implementation 'com.itextpdf:itextpdf:5.5.10'
     implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation 'org.unfoldingword.tools:gogs-client:1.6.1'
+    implementation('org.unfoldingword.tools:gogs-client:1.6.1') {
+        exclude group: 'org.unfoldingword.tools', module: 'http'
+    }
     implementation 'org.unfoldingword.tools:task-manager:1.5.3'
-    implementation 'org.unfoldingword.tools:door43-client:0.10.3'
-    implementation 'org.unfoldingword.tools:http:2.4.2'
-    implementation 'org.unfoldingword.tools:logger:2.0.0'
+    implementation('org.unfoldingword.tools:door43-client:0.10.3') {
+        exclude group: 'org.unfoldingword.tools', module: 'http'
+    }
+    implementation('org.unfoldingword.tools:logger:2.0.0') {
+        exclude group: 'org.unfoldingword.tools', module: 'http'
+    }
     implementation 'org.unfoldingword.tools:event-buffer:1.0.2'
     implementation 'org.unfoldingword.tools:foreground:0.1.0'
     implementation project(':html-textview')

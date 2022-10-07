@@ -35,4 +35,9 @@
         <item>http://read.bibletranslationtools.org/u</item>
         <item>https://door43.org/u</item>
     </string-array>
+
+    <string-array name="content_server_account_create_urls_array">
+        <item>https://content.bibletranslationtools.org/user/sign_up</item>
+        <item>https://git.door43.org/user/sign_up</item>
+    </string-array>
 </resources>
