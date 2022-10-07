@@ -3,7 +3,8 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@color/background_color">
 
     <FrameLayout
         android:id="@+id/card_container"
@@ -33,7 +34,8 @@
                 android:orientation="vertical"
                 style="@style/Widget.CardContent"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:background="@color/card_background_color">
 
                 <LinearLayout
                     android:gravity="center_vertical"

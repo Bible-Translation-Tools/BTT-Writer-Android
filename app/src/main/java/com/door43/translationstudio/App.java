@@ -13,7 +13,8 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AppCompatDelegate;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -123,6 +124,11 @@ public class App extends Application {
         PreferenceManager.setDefaultValues(this, R.xml.server_preferences, false);
         PreferenceManager.setDefaultValues(this, R.xml.sharing_preferences, false);
         PreferenceManager.setDefaultValues(this, R.xml.advanced_preferences, false);
+
+        String defaultColorTheme = getResources().getString(R.string.pref_default_color_theme);
+        String colorTheme = getPref(SettingsActivity.KEY_PREF_COLOR_THEME, defaultColorTheme);
+        int colorThemeId = getColorThemeId(colorTheme);
+        updateColorTheme(colorThemeId);
     }
 
     /**
@@ -1120,5 +1126,25 @@ public class App extends Application {
      */
     public static File makeTempDirectory() {
         return new File(context().getExternalCacheDir(), System.currentTimeMillis() + "_tmp");
+    }
+
+    public static void updateColorTheme(int theme) {
+        AppCompatDelegate.setDefaultNightMode(theme);
+    }
+
+    private int getColorThemeId(String theme) {
+        int colorTheme = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        switch (theme) {
+            case "Light":
+                colorTheme = AppCompatDelegate.MODE_NIGHT_NO;
+                break;
+            case "Dark":
+                colorTheme = AppCompatDelegate.MODE_NIGHT_YES;
+                break;
+            default:
+                colorTheme = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        }
+
+        return colorTheme;
     }
 }

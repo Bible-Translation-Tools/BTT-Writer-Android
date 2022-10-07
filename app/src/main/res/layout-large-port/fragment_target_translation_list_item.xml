@@ -17,7 +17,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/projectIcon"
-            android:background="@drawable/ic_library_books_black_24dp" />
+            style="@style/Widget.Alert.Button"
+            android:tint="@color/icon_color"
+            android:src="@drawable/ic_library_books_black_24dp" />
 
         <TextView
             android:id="@+id/projectTitle"
@@ -74,7 +76,9 @@
                 android:id="@+id/infoButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/ic_info_black_36dp"/>
+                style="@style/Widget.Alert.Button"
+                android:tint="@color/icon_color"
+                android:src="@drawable/ic_info_black_24dp"/>
         </LinearLayout>
     </RelativeLayout>
 

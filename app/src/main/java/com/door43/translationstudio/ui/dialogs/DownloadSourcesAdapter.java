@@ -648,7 +648,7 @@ a     * @param task
             }
             if(item.downloaded) { // display with a green check
                 holder.imageView.setBackgroundResource(R.drawable.ic_done_black_24dp);
-                ViewUtil.tintViewDrawable(holder.imageView, parent.getContext().getResources().getColor(R.color.green));
+                ViewUtil.tintViewDrawable(holder.imageView, parent.getContext().getResources().getColor(R.color.completed));
             } else if (item.selected) { // display checked box
                 holder.imageView.setBackgroundResource(R.drawable.ic_check_box_black_24dp);
                 ViewUtil.tintViewDrawable(holder.imageView, parent.getContext().getResources().getColor(R.color.accent));

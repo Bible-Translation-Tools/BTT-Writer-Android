@@ -4,7 +4,9 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+
 import com.google.android.material.snackbar.Snackbar;
+
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import android.text.method.MovementMethod;
@@ -50,7 +52,7 @@ public class ViewUtil {
     }
 
     /**
-     * Provides a backwards compatable way to tint drawables
+     * Provides a backwards compatable way to tint view drawables
      * @param view the view who's background drawable will be tinted
      * @param color the color that will be applied
      */

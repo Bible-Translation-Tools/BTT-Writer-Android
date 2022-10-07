@@ -85,7 +85,7 @@ public class ValidationAdapter extends RecyclerView.Adapter<ValidationAdapter.Vi
                 } else {
                     holder.mIcon.setBackgroundResource(R.drawable.ic_done_black_24dp);
                 }
-                ViewUtil.tintViewDrawable(holder.mIcon, mContext.getResources().getColor(R.color.green));
+                ViewUtil.tintViewDrawable(holder.mIcon, mContext.getResources().getColor(R.color.completed));
             } else {
                 holder.mIcon.setBackgroundResource(R.drawable.ic_report_black_24dp);
                 ViewUtil.tintViewDrawable(holder.mIcon, mContext.getResources().getColor(R.color.warning));

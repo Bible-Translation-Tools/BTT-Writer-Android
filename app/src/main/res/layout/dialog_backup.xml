@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:minWidth="@dimen/dialog_min_width"
     android:layout_height="wrap_content"
-    android:background="@color/white"
+    android:background="@color/background_color"
     android:animateLayoutChanges="true">
 
     <LinearLayout
@@ -68,7 +68,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginRight="5dp"
                         android:layout_marginEnd="5dp"
-                        android:background="@drawable/ic_wifi_black_18dp"
+                        android:src="@drawable/ic_wifi_black_18dp"
+                        android:tint="@color/icon_color"
                         android:layout_gravity="center_vertical" />
 
                     <TextView
@@ -111,7 +112,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <LinearLayout
                 android:id="@+id/export_to_usfm"
@@ -129,8 +130,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/export_to_usfm"
-                    android:drawableLeft="@drawable/icon_export_sd_dark"
-                    android:drawableStart="@drawable/icon_export_sd_dark"
+                    android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
+                    android:drawableStart="@drawable/icon_export_sd_secondary_24dp"
                     android:drawablePadding="10dp"
                     android:textColor="@color/dark_primary_text"
                     android:textAllCaps="false"
@@ -159,7 +160,7 @@
                 android:id="@+id/export_to_usfm_separator"
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator" />
+                android:background="@color/border_color" />
 
             <LinearLayout
                 android:id="@+id/export_to_pdf"
@@ -176,8 +177,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/export_to_pdf"
-                    android:drawableLeft="@drawable/icon_export_sd_dark"
-                    android:drawableStart="@drawable/icon_export_sd_dark"
+                    android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
+                    android:drawableStart="@drawable/icon_export_sd_secondary_24dp"
                     android:drawablePadding="10dp"
                     android:textColor="@color/dark_primary_text"
                     android:textAllCaps="false"
@@ -205,7 +206,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <LinearLayout
                 android:id="@+id/backup_to_sd"
@@ -222,8 +223,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/backup_to_sd"
-                    android:drawableLeft="@drawable/icon_export_sd_dark"
-                    android:drawableStart="@drawable/icon_export_sd_dark"
+                    android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
+                    android:drawableStart="@drawable/icon_export_sd_secondary_24dp"
                     android:drawablePadding="10dp"
                     android:textColor="@color/dark_primary_text"
                     android:textAllCaps="false"
@@ -251,7 +252,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <Button
                 android:id="@+id/backup_to_device"
@@ -270,7 +271,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <Button
                 android:id="@+id/backup_to_app"
@@ -289,7 +290,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
         </LinearLayout>
     </LinearLayout>

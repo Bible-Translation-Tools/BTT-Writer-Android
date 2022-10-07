@@ -83,6 +83,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
             } else {
                 mFragment = new ValidationFragment();
                 String sourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
+
                 if(sourceTranslationId == null) {
                     // use the default target translation if they have not chosen one.
                     Door43Client library = App.getLibrary();

@@ -5,9 +5,9 @@
     <color name="primary_dark">#003389</color>
 
     <!-- accent colors -->
-    <color name="accent_light">#6CF4C5</color>
-    <color name="accent">#29C38E</color>
-    <color name="accent_dark">#00905E</color>
+    <color name="accent_light">#A5E4FF</color>
+    <color name="accent">#00A56C</color>
+    <color name="accent_dark">#00B0FF</color>
 
     <!-- shadows -->
     <color name="shadow_light">#F3F3F3</color>
@@ -17,9 +17,15 @@
     <color name="half_transparent">#40000000</color>
     <color name="less_dark_primary_text">#de000000</color>
 
+    <color name="background_color">#EFEFEF</color>
+    <color name="card_background_color">#FFFFFF</color>
+    <color name="border_color">#DDDDDD</color>
+    <color name="icon_color">#161616</color>
+    <color name="reverse_text_color">#FFFFFF</color>
+
     <!-- dark text -->
-    <color name="dark_primary_text">#dd000000</color>
-    <color name="dark_secondary_text">#89000000</color>
+    <color name="dark_primary_text">#1C1C1C</color>
+    <color name="dark_secondary_text">#888888</color>
     <color name="dark_disabled_text">#42000000</color>
 
     <!-- light text -->
@@ -31,9 +37,10 @@
     <color name="graph_background">#12000000</color>
     <color name="icon_dark">#82000000</color>
 
-    <color name="danger">#ae2109</color>
-    <color name="warning">#f1913d</color>
+    <color name="danger">#FF0000</color>
+    <color name="warning">#FF9800</color>
     <color name="info">#42000000</color>
+    <color name="completed">#19C457</color>
 
     <color name="green">#01c853</color>
 

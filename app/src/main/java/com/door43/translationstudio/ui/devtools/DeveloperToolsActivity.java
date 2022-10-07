@@ -126,7 +126,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
         });
 
         // load tools
-        mDeveloperTools.add(new ToolItem("Regenerate SSH keys", "Discards and regenerates the ssh keys used for git", R.drawable.ic_security_black_24dp, new ToolItem.ToolAction() {
+        mDeveloperTools.add(new ToolItem("Regenerate SSH keys", "Discards and regenerates the ssh keys used for git", R.drawable.ic_security_secondary_24dp, new ToolItem.ToolAction() {
             @Override
             public void run() {
                 ManagedTask task = new ManagedTask() {
@@ -142,7 +142,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
             }
         }));
 
-        mDeveloperTools.add(new ToolItem("Read debugging log", "View the error logs that have been generated on this device.", R.drawable.ic_description_black_24dp, new ToolItem.ToolAction() {
+        mDeveloperTools.add(new ToolItem("Read debugging log", "View the error logs that have been generated on this device.", R.drawable.ic_description_secondary_24dp, new ToolItem.ToolAction() {
             @Override
             public void run() {
                 ErrorLogDialog dialog = new ErrorLogDialog();
@@ -155,7 +155,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
                 dialog.show(ft, "dialog");
             }
         }));
-        mDeveloperTools.add(new ToolItem("Simulate crash", "", R.drawable.ic_warning_black_24dp, new ToolItem.ToolAction() {
+        mDeveloperTools.add(new ToolItem("Simulate crash", "", R.drawable.ic_warning_secondary_24dp, new ToolItem.ToolAction() {
             @Override
             public void run() {
                 int killme = 1/0;
@@ -163,7 +163,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
         }));
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mDeveloperTools.add(new ToolItem("Reset SD Card Access", "", R.drawable.ic_warning_black_24dp, new ToolItem.ToolAction() {
+            mDeveloperTools.add(new ToolItem("Reset SD Card Access", "", R.drawable.ic_warning_secondary_24dp, new ToolItem.ToolAction() {
                 @Override
                 public void run() {
                     Logger.i(this.getClass().getSimpleName(), "User has reset SD Card access");
@@ -172,7 +172,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
             }));
         }
 
-        mDeveloperTools.add(new ToolItem("Check system resources", "Check for minimum system resources.", R.drawable.ic_description_black_24dp, new ToolItem.ToolAction() {
+        mDeveloperTools.add(new ToolItem("Check system resources", "Check for minimum system resources.", R.drawable.ic_description_secondary_24dp, new ToolItem.ToolAction() {
             @Override
             public void run() {
                 DeveloperToolsActivity context = DeveloperToolsActivity.this;
@@ -222,7 +222,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
             }
         }));
 
-        mDeveloperTools.add(new ToolItem("Delete Library", "Deletes the entire library database so it can be rebuilt from scratch", R.drawable.ic_delete_black_24dp, new ToolItem.ToolAction() {
+        mDeveloperTools.add(new ToolItem("Delete Library", "Deletes the entire library database so it can be rebuilt from scratch", R.drawable.ic_delete_dark_secondary_24dp, new ToolItem.ToolAction() {
             @Override
             public void run() {
                 App.deleteLibrary();

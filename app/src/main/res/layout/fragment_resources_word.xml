@@ -90,7 +90,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1px"
-        android:background="@color/list_separator"></LinearLayout>
+        android:background="@color/border_color"></LinearLayout>
 
     <Button
         android:id="@+id/wordsIndex"

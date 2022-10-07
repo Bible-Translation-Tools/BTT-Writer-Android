@@ -216,17 +216,18 @@ public class TranslationRepositoryAdapter extends BaseAdapter {
             targetLanguageName.setTypeface(typeface, 0);
 
             if(item.isPrivate) {
-                this.privacy.setImageResource(R.drawable.ic_lock_black_18dp);
+                this.privacy.setImageResource(R.drawable.ic_lock_secondary_18dp);
             } else {
-                this.privacy.setImageResource(R.drawable.ic_lock_open_black_18dp);
+                this.privacy.setImageResource(R.drawable.ic_lock_open_secondary_18dp);
             }
+
             String projectNameStr = item.projectName;
             if(item.isSupported()) {
                 projectName.setTypeface(null, Typeface.BOLD);
                 projectName.setTextColor(context.getResources().getColor(R.color.dark_primary_text));
             } else {
                 projectName.setTypeface(null, Typeface.NORMAL);
-                projectName.setTextColor(context.getResources().getColor(R.color.dark_disabled_text));
+                projectName.setTextColor(context.getResources().getColor(R.color.dark_secondary_text));
                 projectNameStr += " - " + context.getString(item.notSupportedId);
             }
             projectName.setText(projectNameStr);

@@ -51,7 +51,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
                 <LinearLayout
                     android:orientation="horizontal"
@@ -79,7 +79,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
                 <LinearLayout
                     android:id="@+id/license_review_button"
@@ -115,7 +115,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
                 <LinearLayout
                     android:id="@+id/guidelines_review_button"
@@ -151,7 +151,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
                 <LinearLayout
                     android:id="@+id/faith_review_button"

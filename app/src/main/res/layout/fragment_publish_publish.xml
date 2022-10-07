@@ -145,15 +145,15 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
                 <Button
                     android:id="@+id/export_to_sdcard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/export_to_sd"
-                    android:drawableLeft="@drawable/icon_export_sd_dark"
-                    android:drawableStart="@drawable/icon_export_sd_dark"
+                    android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
+                    android:drawableStart="@drawable/icon_export_sd_secondary_24dp"
                     android:gravity="left|center_vertical"
                     android:drawablePadding="10dp"
                     android:textAllCaps="false"
@@ -163,7 +163,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
                 <Button
                     android:visibility="gone"
@@ -180,7 +180,7 @@
                     android:visibility="gone"
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
                 <Button
                     android:id="@+id/backup_to_app"
@@ -198,7 +198,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>

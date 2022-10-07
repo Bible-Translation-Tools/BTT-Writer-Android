@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/accent</item>
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <item name="colorPrimary">#0250D3</item>
+        <item name="colorPrimaryDark">#003389</item>
+
+        <item name="colorAccent">#00A56C</item>
 
         <item name="android:textColor">@color/dark_primary_text</item>
+
         <item name="android:textColorLink">@color/accent</item>
         <item name="android:textColorLinkInverse">@color/accent_light</item>
 
@@ -14,7 +16,7 @@
         <item name="android:actionBarTabTextStyle">@style/AppActionBarTabText</item>
         <item name="android:actionMenuTextColor">@color/light_primary_text</item>
 
-        <!-- Support library compatability -->
+        <!-- Support library compatibility -->
         <item name="actionBarStyle">@style/AppActionBar</item>
         <item name="actionBarTabTextStyle">@style/AppActionBarTabText</item>
         <item name="actionMenuTextColor">@color/light_primary_text</item>
@@ -23,6 +25,7 @@
          colorControlHighlight, and colorSwitchThumbNormal. -->
         <item name="windowActionModeOverlay">true</item>
         <item name="android:popupMenuStyle">@style/UwPopupMenu</item>
+        <item name="android:itemBackground">@color/background_color</item>
     </style>
 
     <style name ="UwPopupMenu" parent="Widget.AppCompat.Light.PopupMenu.Overflow">

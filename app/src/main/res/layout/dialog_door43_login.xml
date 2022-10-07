@@ -2,7 +2,8 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minWidth="@dimen/dialog_min_width">
+    android:minWidth="@dimen/dialog_min_width"
+    android:background="@color/background_color">
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -39,7 +40,8 @@
                     style="@style/Widget.CardContent"
                     android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:background="@color/card_background_color">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -66,7 +68,8 @@
                     style="@style/Widget.CardContent"
                     android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:background="@color/card_background_color">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

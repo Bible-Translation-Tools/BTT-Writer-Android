@@ -8,7 +8,7 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/ic_library_books_black_24dp"
+        android:background="@drawable/ic_library_books_secondary_24dp"
         android:id="@+id/projectIcon" />
 
     <TextView android:id="@+id/projectName"
@@ -29,7 +29,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/ic_chevron_right_black_24dp"
+            android:background="@drawable/ic_chevron_right_secondary_24dp"
             android:id="@+id/moreIcon" />
     </LinearLayout>
 

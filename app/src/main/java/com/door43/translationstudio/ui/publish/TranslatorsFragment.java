@@ -110,7 +110,7 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
                     showAddNativeSpeakerDialog();
                 }
             });
-            ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.white));
+            ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
             snack.show();
         }
     }

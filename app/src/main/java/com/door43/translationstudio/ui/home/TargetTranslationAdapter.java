@@ -294,7 +294,6 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
             mProgressView = (ProgressPieView) view.findViewById(R.id.translationProgress);
             mProgressView.setMax(100);
             mInfoButton = (ImageButton) view.findViewById(R.id.infoButton);
-            ViewUtil.tintViewDrawable(mInfoButton, context.getResources().getColor(R.color.dark_disabled_text));
             view.setTag(this);
         }
 

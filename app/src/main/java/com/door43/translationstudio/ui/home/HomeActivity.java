@@ -918,7 +918,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                     progressDialog.setCanceledOnTouchOutside(false);
                     progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                     progressDialog.setOnCancelListener(HomeActivity.this);
-                    progressDialog.setIcon(R.drawable.ic_cloud_download_black_24dp);
+                    progressDialog.setIcon(R.drawable.ic_cloud_download_secondary_24dp);
                     progressDialog.setTitle(R.string.updating);
                     progressDialog.setMessage("");
 
