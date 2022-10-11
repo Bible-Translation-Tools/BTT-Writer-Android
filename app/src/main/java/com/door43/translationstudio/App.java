@@ -127,8 +127,7 @@ public class App extends Application {
 
         String defaultColorTheme = getResources().getString(R.string.pref_default_color_theme);
         String colorTheme = getPref(SettingsActivity.KEY_PREF_COLOR_THEME, defaultColorTheme);
-        int colorThemeId = getColorThemeId(colorTheme);
-        updateColorTheme(colorThemeId);
+        updateColorTheme(colorTheme);
     }
 
     /**
@@ -1132,8 +1131,12 @@ public class App extends Application {
         AppCompatDelegate.setDefaultNightMode(theme);
     }
 
-    private int getColorThemeId(String theme) {
-        int colorTheme = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+    public static void updateColorTheme(String theme) {
+        updateColorTheme(getColorThemeId(theme));
+    }
+
+    private static int getColorThemeId(String theme) {
+        int colorTheme;
         switch (theme) {
             case "Light":
                 colorTheme = AppCompatDelegate.MODE_NIGHT_NO;

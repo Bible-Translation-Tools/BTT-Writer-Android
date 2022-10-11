@@ -339,24 +339,9 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                 String newValue = (String) value;
                 System.out.println("Simple onPreferenceChange() newValue:" + newValue);
 
-                int theme;
-
-                switch (newValue) {
-                    case "Light":
-                        theme = AppCompatDelegate.MODE_NIGHT_NO;
-                        break;
-                    case "Dark":
-                        theme = AppCompatDelegate.MODE_NIGHT_YES;
-                        break;
-                    default:
-                        theme = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-                }
-
-                App.updateColorTheme(theme);
-
-                //AppCompatDelegate.setDefaultNightMode(theme);
-                //mDelegate.applyDayNight();
-                //recreate();
+                App.updateColorTheme(newValue);
+                mDelegate.applyDayNight();
+                recreate();
 
                 return true;
             }

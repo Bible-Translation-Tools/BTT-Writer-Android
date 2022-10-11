@@ -5,7 +5,7 @@
     <color name="primary_dark">#445E89</color>
 
     <!-- accent colors -->
-    <color name="accent_light">#6CF4C5</color>
+    <color name="accent_light">#A5E4FF</color>
     <color name="accent">#52A588</color>
     <color name="accent_dark">#80D8FF</color>
 
@@ -22,6 +22,7 @@
     <color name="border_color">#333333</color>
     <color name="icon_color">#A0A0A0</color>
     <color name="reverse_text_color">#1C1C1C</color>
+    <color name="merge_text_color">#272727</color>
 
     <!-- dark text -->
     <color name="dark_primary_text">#D2D2D2</color>

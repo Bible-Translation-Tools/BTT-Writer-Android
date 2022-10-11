@@ -365,7 +365,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             mMergeText = new ArrayList<>();
         }
 
-        int tailColor = mContext.getResources().getColor(R.color.tail_background);
+        int tailColor = mContext.getResources().getColor(R.color.accent_light);
 
         for(int i = 0; i < item.mergeItems.size(); i++) {
             CharSequence mergeConflictCard = item.mergeItems.get(i);
