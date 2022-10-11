@@ -26,7 +26,7 @@
     <!-- dark text -->
     <color name="dark_primary_text">#D2D2D2</color>
     <color name="dark_secondary_text">#A4A4A4</color>
-    <color name="dark_disabled_text">#42000000</color>
+    <color name="dark_disabled_text">#656565</color>
 
     <!-- light text -->
     <color name="light_primary_text">#ffffff</color>

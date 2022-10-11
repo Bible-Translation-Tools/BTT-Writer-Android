@@ -662,7 +662,6 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             mTargetTitle = (TextView)v.findViewById(R.id.target_translation_title);
             mTargetBody = (TextView)v.findViewById(R.id.target_translation_body);
             mTabLayout = (TabLayout)v.findViewById(R.id.source_translation_tabs);
-            mTabLayout.setTabTextColors(R.color.dark_disabled_text, R.color.dark_secondary_text);
             mNewTabButton = (ImageButton) v.findViewById(R.id.new_tab_button);
             mBeginButton = (Button) v.findViewById(R.id.begin_translating_button);
         }

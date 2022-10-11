@@ -145,7 +145,7 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
         if(listener != null) {
             new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
                     .setTitle(R.string.privacy_notice)
-                    .setIcon(R.drawable.ic_info_black_24dp)
+                    .setIcon(R.drawable.ic_info_secondary_24dp)
                     .setMessage(R.string.publishing_privacy_notice)
                     .setPositiveButton(R.string.label_continue, listener)
                     .setNegativeButton(R.string.title_cancel, null)
@@ -153,7 +153,7 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
         } else {
             new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
                     .setTitle(R.string.privacy_notice)
-                    .setIcon(R.drawable.ic_info_black_24dp)
+                    .setIcon(R.drawable.ic_info_secondary_24dp)
                     .setMessage(R.string.publishing_privacy_notice)
                     .setPositiveButton(R.string.dismiss, null)
                     .show();

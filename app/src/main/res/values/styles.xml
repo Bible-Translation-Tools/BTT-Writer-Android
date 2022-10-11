@@ -57,11 +57,11 @@
     <style name="AppActionBar" parent="@style/Widget.AppCompat.ActionBar">
 
         <item name="android:titleTextStyle">@style/AppActionBarTitleText</item>
-        <item name="android:background">?attr/colorPrimary</item>
+        <item name="android:background">@color/primary</item>
 
         <!-- Support library compatibility -->
         <item name="titleTextStyle">@style/AppActionBarTitleText</item>
-        <item name="background">?attr/colorPrimary</item>
+        <item name="background">@color/primary</item>
     </style>
 
     <style name="AppActionBar.Light">

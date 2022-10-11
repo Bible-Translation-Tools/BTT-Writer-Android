@@ -90,6 +90,8 @@
                     android:layout_marginRight="@dimen/stacked_card_margin"
                     android:layout_marginLeft="@dimen/stacked_card_margin"
                     android:layout_gravity="center_vertical|center_horizontal"
+                    app:tabSelectedTextColor="@color/dark_primary_text"
+                    app:tabTextColor="@color/dark_disabled_text"
                     app:layout_scrollFlags="scroll|enterAlways"/>
                 <ImageButton
                     android:id="@+id/new_tab_button"
@@ -101,7 +103,7 @@
                     android:paddingRight="@dimen/stacked_card_margin"
                     android:layout_gravity="right|center_vertical"
                     android:background="?attr/selectableItemBackground"
-                    android:src="@drawable/icon_tabedit_normal"/>
+                    android:src="@drawable/ic_tab_edit_secondary_24dp"/>
             </FrameLayout>
 
             <TextView
