@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:minWidth="@dimen/dialog_min_width"
     android:layout_height="wrap_content"
-    android:background="@color/white"
+    android:background="@color/background_color"
     android:animateLayoutChanges="true">
 
     <LinearLayout
@@ -32,8 +32,10 @@
                 android:id="@+id/infoButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                style="@style/Widget.Alert.Button"
                 android:layout_marginLeft="@dimen/card_margin"
-                android:background="@drawable/ic_info_black_24dp"/>
+                android:tint="@color/icon_color"
+                android:src="@drawable/ic_info_black_24dp"/>
         </LinearLayout>
 
         <LinearLayout
@@ -58,13 +60,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="5dp"
                 android:layout_marginEnd="5dp"
-                android:background="@drawable/ic_wifi_black_18dp"/>
+                style="@style/Widget.Alert.Button"
+                android:tint="@color/icon_color"
+                android:src="@drawable/ic_wifi_black_18dp"/>
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="1px"
-            android:background="@color/list_separator"/>
+            android:background="@color/border_color"/>
 
         <LinearLayout
             android:orientation="vertical"
@@ -102,7 +106,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <LinearLayout
                 android:id="@+id/download_sources"
@@ -133,7 +137,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <LinearLayout
                 android:id="@+id/update_languages"
@@ -164,7 +168,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <LinearLayout
                 android:id="@+id/update_app"
@@ -196,7 +200,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"
+                android:background="@color/border_color"
                 android:visibility="gone" />
 
             <LinearLayout
@@ -239,7 +243,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
         </LinearLayout>
     </LinearLayout>

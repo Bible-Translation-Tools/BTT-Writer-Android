@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="false"
-    android:background="@color/shadow_light"
+    android:background="@color/background_color"
     android:orientation="vertical"
     tools:context="com.door43.translationstudio.ui.publish.PublishActivity">
 

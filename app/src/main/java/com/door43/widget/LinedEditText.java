@@ -6,13 +6,13 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.ViewParent;
-import android.widget.EditText;
+import androidx.appcompat.widget.AppCompatEditText;
 
 /**
  * Created by blm on 11/25/15.
  */
 
-public class LinedEditText extends EditText {
+public class LinedEditText extends AppCompatEditText {
     private Rect mRect;
     private Paint mPaint;
     private boolean mEnableLines = false;

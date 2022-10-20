@@ -6,7 +6,7 @@
     <item android:id="@+id/action_translations"
         android:title="@string/action_translations"
         android:orderInCategory="100"
-        android:icon="@drawable/ic_library_books_black_24dp"
+        android:icon="@drawable/ic_library_books_secondary_24dp"
         app:showAsAction="never" />
 
     <!--<item android:id="@+id/action_translate_resources"-->
@@ -18,43 +18,43 @@
     <item android:id="@+id/action_drafts_available"
         android:title="@string/view_available_drafts"
         android:orderInCategory="120"
-        android:icon="@drawable/ic_translate_black_24dp"
+        android:icon="@drawable/ic_translate_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_publish"
         android:title="@string/title_review"
         android:orderInCategory="130"
-        android:icon="@drawable/ic_done_all_black_24dp"
+        android:icon="@drawable/ic_done_all_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_backup"
         android:title="@string/menu_upload_export"
         android:orderInCategory="140"
-        android:icon="@drawable/ic_file_upload_black_24dp"
+        android:icon="@drawable/ic_file_upload_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_print"
         android:title="@string/print"
         android:orderInCategory="150"
-        android:icon="@drawable/ic_print_black_24dp"
+        android:icon="@drawable/ic_print_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_feedback"
         android:title="@string/feedback"
         android:orderInCategory="200"
-        android:icon="@drawable/ic_feedback_black_24dp"
+        android:icon="@drawable/ic_feedback_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="300"
-        android:icon="@drawable/ic_settings_black_24dp"
+        android:icon="@drawable/ic_settings_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_search"
         android:title="@string/action_search"
         android:orderInCategory="250"
-        android:icon="@drawable/ic_search_black_24dp"
+        android:icon="@drawable/ic_search_secondary_24dp"
         app:showAsAction="never" />
 
 </menu>

@@ -13,7 +13,8 @@
         android:layout_gravity="center_vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/ic_info_white_24dp"
+        android:src="@drawable/ic_info_white_24dp"
+        android:tint="@color/icon_color"
         android:id="@+id/item_icon"
         android:layout_marginRight="@dimen/card_margin" />
 
@@ -31,7 +32,8 @@
         android:layout_gravity="center_vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/ic_chevron_right_black_24dp" />
+        android:tint="@color/icon_color"
+        android:src="@drawable/ic_chevron_right_black_24dp" />
 
 
 </LinearLayout>

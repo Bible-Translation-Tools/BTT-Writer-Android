@@ -22,7 +22,6 @@
             <LinearLayout
                 android:orientation="vertical"
                 style="@style/Widget.CardContent.Horizontal"
-                android:background="@drawable/paper_repeating"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical" />
@@ -60,7 +59,7 @@
                     android:layout_height="wrap_content"
                     android:paddingLeft="16dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/icon_tabedit_normal"
+                    android:src="@drawable/ic_tab_edit_secondary_24dp"
                     android:id="@+id/newTabButton" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -89,7 +88,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/icon_tabedit_normal" />
+            android:background="@drawable/ic_tab_edit_secondary_24dp" />
     </LinearLayout>
 
 </LinearLayout>

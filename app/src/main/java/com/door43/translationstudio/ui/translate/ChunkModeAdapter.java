@@ -538,7 +538,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         holder.mTargetTitle.setText(item.getTargetTitle());
 
         // indicate complete
-        indicateCardCompleted(item.isComplete, holder);
+        setCardStatus(item.isComplete, true, holder);
 
         holder.mTextWatcher = new TextWatcher() {
             @Override
@@ -576,15 +576,17 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         holder.mTargetBody.addTextChangedListener(holder.mTextWatcher);
     }
 
-    private void indicateCardCompleted(boolean finished, ViewHolder holder) {
-        if(finished) {
-            holder.mTargetBody.setEnabled(false);
+    private void setCardStatus(boolean finished, boolean closed, ViewHolder holder) {
+        if (closed) {
             holder.mTargetBody.setEnableLines(false);
-            holder.mTargetInnerCard.setBackgroundResource(R.color.white);
+            if (finished) {
+                holder.mTargetInnerCard.setBackgroundResource(R.color.card_background_color);
+            } else {
+                holder.mTargetInnerCard.setBackgroundResource(R.drawable.paper_repeating);
+            }
         } else {
-            holder.mTargetBody.setEnabled(true);
             holder.mTargetBody.setEnableLines(true);
-            holder.mTargetInnerCard.setBackgroundResource(R.color.white);
+            holder.mTargetInnerCard.setBackgroundResource(R.color.card_background_color);
         }
     }
 
@@ -679,10 +681,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    ((ChunkListItem)item).isTargetCardOpen = false;
+                    ((ChunkListItem) item).isTargetCardOpen = false;
                     if (getListener() != null) {
                         getListener().closeKeyboard();
                     }
+                    setCardStatus(((ChunkListItem) item).isComplete, true, holder);
                 }
 
                 @Override
@@ -725,12 +728,12 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             ViewUtil.animateSwapCards(holder.mSourceCard, holder.mTargetCard, TOP_ELEVATION, BOTTOM_ELEVATION, leftToRight, new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
-
+                    setCardStatus(((ChunkListItem) item).isComplete, false, holder);
                 }
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    ((ChunkListItem)item).isTargetCardOpen = true;
+                    ((ChunkListItem) item).isTargetCardOpen = true;
                     if (getListener() != null) {
                         getListener().closeKeyboard();
                     }
@@ -807,7 +810,6 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             mTargetTitle = (TextView)v.findViewById(R.id.target_translation_title);
             mTargetBody = (LinedEditText)v.findViewById(R.id.target_translation_body);
             mTabLayout = (TabLayout)v.findViewById(R.id.source_translation_tabs);
-            mTabLayout.setTabTextColors(R.color.dark_disabled_text, R.color.dark_secondary_text);
             mNewTabButton = (ImageButton) v.findViewById(R.id.new_tab_button);
         }
     }

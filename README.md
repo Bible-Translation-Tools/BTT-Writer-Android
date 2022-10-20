@@ -3,7 +3,7 @@ BTT-Writer Android
 
 A tool to translate the Bible into your own language. 
 
-## Quck Start
+## Quick Start
 First make sure you have all the dependencies installed
 
 * [Android Studio](http://developer.android.com/sdk/index.html)

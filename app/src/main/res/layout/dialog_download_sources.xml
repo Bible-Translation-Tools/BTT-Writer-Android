@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="wrap_content"
-    android:background="@color/white"
+    android:background="@color/background_color"
     android:layout_height="match_parent">
 
     <FrameLayout
@@ -43,7 +43,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1px"
-        android:background="@color/list_separator"
+        android:background="@color/border_color"
         android:layout_above="@+id/search_bar"/>
 
     <FrameLayout
@@ -65,7 +65,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="left|center_vertical"
                 android:paddingRight="16dp"
-                android:src="@drawable/ic_arrow_back_black_24dp"
+                android:src="@drawable/ic_arrow_back_secondary_24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:paddingLeft="16dp" />
 
@@ -164,13 +164,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right|center_vertical"
-            android:background="@drawable/ic_search_black_24dp"/>
+            android:src="@drawable/ic_search_secondary_24dp"/>
     </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1px"
-        android:background="@color/list_separator"
+        android:background="@color/border_color"
         android:layout_below="@+id/search_bar"/>
 
     <LinearLayout
@@ -220,7 +220,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1px"
-        android:background="@color/list_separator"
+        android:background="@color/border_color"
         android:layout_below="@+id/selection_bar"
         android:id="@+id/selection_bar_separator" />
 
