@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:minWidth="@dimen/dialog_min_width"
     android:layout_height="wrap_content"
-    android:background="@color/white"
+    android:background="@color/background_color"
     android:animateLayoutChanges="true">
 
     <LinearLayout
@@ -34,7 +34,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/card_margin"
-                android:background="@drawable/ic_info_black_24dp"/>
+                style="@style/Widget.Alert.Button"
+                android:tint="@color/icon_color"
+                android:src="@drawable/ic_info_black_24dp"/>
         </LinearLayout>
 
 
@@ -52,12 +54,12 @@
                 android:textColor="@color/dark_primary_text"
                 android:textAllCaps="false"
                 style="@style/Widget.Button.Secondary"
-                android:drawableRight="@drawable/ic_wifi_black_18dp" />
+                android:drawableRight="@drawable/ic_wifi_secondary_18dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <Button
                 android:id="@+id/import_target_translation"
@@ -71,7 +73,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <Button
                 android:id="@+id/import_usfm"
@@ -85,7 +87,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <Button
                 android:id="@+id/import_resource_container"
@@ -99,7 +101,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
             <Button
                 android:id="@+id/import_from_device"
@@ -113,9 +115,9 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
 
-                android:background="@color/list_separator"/>
+                android:background="@color/border_color"/>
         </LinearLayout>
     </LinearLayout>
 

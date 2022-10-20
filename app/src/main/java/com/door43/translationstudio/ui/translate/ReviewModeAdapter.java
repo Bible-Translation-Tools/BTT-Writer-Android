@@ -810,7 +810,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     if(item.isEditing) {
-                        // make sure to capture verse marker changes changes before dialog is displayed
+                        // make sure to capture verse marker changes before dialog is displayed
                         Editable changes = holder.mTargetEditableBody.getText();
                         item.renderedTargetText = changes;
                         String newBody = Translator.compileTranslation(changes);
@@ -936,7 +936,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             holder.mRedoButton.setVisibility(View.GONE);
             holder.mAddNoteButton.setVisibility(View.GONE);
             holder.mDoneSwitch.setChecked(true);
-            holder.mTargetInnerCard.setBackgroundResource(R.color.white);
+            holder.mTargetInnerCard.setBackgroundResource(R.color.card_background_color);
         } else {
             holder.mEditButton.setVisibility(View.VISIBLE);
             holder.mDoneSwitch.setChecked(false);

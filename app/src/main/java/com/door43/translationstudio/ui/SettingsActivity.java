@@ -24,6 +24,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.LayoutInflater;
@@ -77,6 +78,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     public static final String KEY_PREF_MEDIA_SERVER = "media_server";
     public static final String KEY_PREF_READER_SERVER = "reader_server";
     public static final String KEY_PREF_CREATE_ACCOUNT_URL = "create_account_url";
+    public static final String KEY_PREF_COLOR_THEME = "color_theme";
 //    public static final String KEY_PREF_EXPORT_FORMAT = "export_format";
     public static final String KEY_PREF_TRANSLATION_TYPEFACE = "translation_typeface";
     public static final String KEY_PREF_TRANSLATION_TYPEFACE_SIZE = "typeface_size";
@@ -94,6 +96,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     private static boolean initSettings = true;
 
     ProgressDialog mLoadingDialog = null;
+    private AppCompatDelegate mDelegate;
 
     /**
      * TRICKY: this was added after API 19 to fix a vulnerability.
@@ -122,6 +125,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+        getDelegate().onPostCreate(savedInstanceState);
 
         LinearLayout root = (LinearLayout)findViewById(android.R.id.list).getParent().getParent().getParent();
         Toolbar bar = (Toolbar) LayoutInflater.from(this).inflate(R.layout.toolbar_settings, root, false);
@@ -166,6 +170,8 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
 
         // Add 'general' preferences.
         addPreferencesFromResource(R.xml.general_preferences);
+
+        bindPreferenceSummaryToValue(findPreference(KEY_PREF_COLOR_THEME));
 
         // NOTE: this is a copy paste from GeneralPreferenceFragment
         // identify all typefaces in the assets directory
@@ -322,6 +328,21 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                 CheckForLatestReleaseTask task = new CheckForLatestReleaseTask();
                 task.addOnFinishedListener(SettingsActivity.this);
                 TaskManager.addTask(task, CheckForLatestReleaseTask.TASK_ID);
+                return true;
+            }
+        });
+
+        final Preference colorTheme = findPreference(KEY_PREF_COLOR_THEME);
+        colorTheme.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object value) {
+                String newValue = (String) value;
+                System.out.println("Simple onPreferenceChange() newValue:" + newValue);
+
+                App.updateColorTheme(newValue);
+                mDelegate.applyDayNight();
+                recreate();
+
                 return true;
             }
         });
@@ -714,5 +735,12 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
 
             initSettings = false;
         }
+    }
+
+    private AppCompatDelegate getDelegate() {
+        if (mDelegate == null) {
+            mDelegate = AppCompatDelegate.create(this, null);
+        }
+        return mDelegate;
     }
 }

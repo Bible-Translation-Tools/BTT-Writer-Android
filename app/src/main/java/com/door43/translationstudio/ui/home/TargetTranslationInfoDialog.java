@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
+
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,7 +43,6 @@ import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 
 /**
@@ -143,9 +143,9 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            new AlertDialog.Builder(getActivity(),R.style.AppTheme_Dialog)
+                new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
                     .setTitle(R.string.label_delete)
-                    .setIcon(R.drawable.ic_delete_black_24dp)
+                    .setIcon(R.drawable.ic_delete_dark_secondary_24dp)
                     .setMessage(R.string.confirm_delete_target_translation)
                     .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
                         @Override

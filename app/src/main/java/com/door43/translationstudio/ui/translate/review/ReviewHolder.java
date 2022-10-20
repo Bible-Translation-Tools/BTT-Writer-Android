@@ -114,7 +114,6 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         mResourceCard = (CardView)v.findViewById(R.id.resources_card);
         mResourceLayout = (LinearLayout)v.findViewById(R.id.resources_layout);
         mResourceTabs = (TabLayout)v.findViewById(R.id.resource_tabs);
-        mResourceTabs.setTabTextColors(R.color.dark_disabled_text, R.color.dark_secondary_text);
         mResourceList = (LinearLayout)v.findViewById(R.id.resources_list);
         mTargetCard = (CardView)v.findViewById(R.id.target_translation_card);
         mTargetInnerCard = (LinearLayout)v.findViewById(R.id.target_translation_inner_card);
@@ -127,7 +126,6 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         mUndoButton = (ImageButton)v.findViewById(R.id.undo_button);
         mRedoButton = (ImageButton)v.findViewById(R.id.redo_button);
         mDoneSwitch = (Switch)v.findViewById(R.id.done_button);
-        mTranslationTabs.setTabTextColors(R.color.dark_disabled_text, R.color.dark_secondary_text);
         mNewTabButton = (ImageButton) v.findViewById(R.id.new_tab_button);
         mMergeConflictLayout = (LinearLayout)v.findViewById(R.id.merge_cards);
         mConflictText = (TextView)v.findViewById(R.id.conflict_label);
@@ -367,7 +365,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             mMergeText = new ArrayList<>();
         }
 
-        int tailColor = mContext.getResources().getColor(R.color.tail_background);
+        int tailColor = mContext.getResources().getColor(R.color.accent_light);
 
         for(int i = 0; i < item.mergeItems.size(); i++) {
             CharSequence mergeConflictCard = item.mergeItems.get(i);
@@ -617,7 +615,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             boolean allowFootnote = currentItem.targetTranslationFormat == TranslationFormat.USFM
                     && currentItem.isChunk();
-            if(mEditButton != null) mEditButton.setImageResource(R.drawable.ic_done_black_24dp);
+            if(mEditButton != null) mEditButton.setImageResource(R.drawable.ic_done_secondary_24dp);
             if(mAddNoteButton != null) mAddNoteButton.setVisibility(allowFootnote ? View.VISIBLE : View.GONE);
             if(mUndoButton != null) mUndoButton.setVisibility(View.GONE);
             if(mRedoButton != null) mRedoButton.setVisibility(View.GONE);
@@ -626,9 +624,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 mTargetEditableBody.setVisibility(View.VISIBLE);
                 mTargetEditableBody.setEnableLines(true);
             }
-            if(mTargetInnerCard != null) mTargetInnerCard.setBackgroundResource(R.color.white);
         } else {
-            if(mEditButton != null) mEditButton.setImageResource(R.drawable.ic_mode_edit_black_24dp);
+            if(mEditButton != null) mEditButton.setImageResource(R.drawable.ic_mode_edit_secondary_24dp);
             if(mUndoButton != null) mUndoButton.setVisibility(View.GONE);
             if(mRedoButton != null) mRedoButton.setVisibility(View.GONE);
             if(mAddNoteButton != null) mAddNoteButton.setVisibility(View.GONE);
@@ -637,7 +634,6 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 mTargetEditableBody.setVisibility(View.GONE);
                 mTargetEditableBody.setEnableLines(false);
             }
-            if(mTargetInnerCard != null) mTargetInnerCard.setBackgroundResource(R.color.white);
         }
     }
 

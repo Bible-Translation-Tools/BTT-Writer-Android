@@ -79,7 +79,7 @@ public class ToolAdapter extends BaseAdapter {
         if (!getItem(i).isEnabled()) {
             titleText.setTextColor(mContext.getResources().getColor(R.color.gray));
         } else {
-            titleText.setTextColor(mContext.getResources().getColor(R.color.dark_gray));
+            titleText.setTextColor(mContext.getResources().getColor(R.color.dark_primary_text));
         }
 
         return view;

@@ -2,15 +2,18 @@ package com.door43.translationstudio.ui.dialogs;
 
 import android.app.DialogFragment;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import com.door43.translationstudio.App;
 import com.door43.translationstudio.ui.LoginDoor43Activity;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.ui.RegisterDoor43Activity;
+import com.door43.translationstudio.ui.SettingsActivity;
 
 /**
  * This dialog provides options for the user to login into or create a Door43 account
@@ -28,7 +31,13 @@ public class Door43LoginDialog extends DialogFragment {
         v.findViewById(R.id.register_door43).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), RegisterDoor43Activity.class);
+                String defaultAccountCreateUrl = App.context().getResources().getString(
+                        R.string.pref_default_create_account_url);
+                String accountCreateUrl = App.context().getUserPreferences().getString(
+                        SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
+                        defaultAccountCreateUrl);
+                Uri uri = Uri.parse(accountCreateUrl);
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
                 startActivity(intent);
                 dismiss();
             }

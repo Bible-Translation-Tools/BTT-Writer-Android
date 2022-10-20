@@ -27,7 +27,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:background="@drawable/ic_mode_edit_black_24dp" />
+            style="@style/Widget.Alert.Button"
+            android:tint="@color/icon_color"
+            android:src="@drawable/ic_mode_edit_black_24dp" />
 
     </LinearLayout>
 

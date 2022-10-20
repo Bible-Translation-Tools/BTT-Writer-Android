@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:background="@color/white"
+    android:background="@color/background_color"
     android:layout_height="match_parent">
 
     <LinearLayout
@@ -21,7 +21,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_internal"
                 android:layout_margin="@dimen/dialog_controls_margin"
-                android:drawableLeft="@drawable/ic_phone_android_white_24dp"
+                android:drawableLeft="@drawable/ic_phone_android_secondary_24dp"
                 android:drawablePadding="8dp"
                 style="@style/Widget.Button.Grey"
                 android:id="@+id/internal_button" />
@@ -31,7 +31,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_sd_card"
                 android:layout_margin="@dimen/dialog_controls_margin"
-                android:drawableLeft="@drawable/ic_sd_storage_white_24dp"
+                android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
                 android:drawablePadding="8dp"
                 style="@style/Widget.Button.Grey"
                 android:id="@+id/sd_card_button" />
@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/up_folder_button"
                     android:layout_marginLeft="@dimen/dialog_controls_margin"
-                    android:src="@drawable/ic_arrow_back_black_24dp"
+                    android:src="@drawable/ic_arrow_back_secondary_24dp"
                     android:paddingTop="@dimen/dialog_controls_margin"
                     android:paddingBottom="@dimen/dialog_controls_margin"
                     android:paddingLeft="@dimen/dialog_controls_margin"

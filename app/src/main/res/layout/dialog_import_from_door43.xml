@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="@color/white"
+    android:background="@color/background_color"
     android:minWidth="@dimen/dialog_min_width"
     android:layout_height="wrap_content">
 
@@ -66,8 +66,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/drawer_edge_width"
             android:layout_marginTop="@dimen/drawer_edge_width"
-            android:background="@color/list_separator"
-            android:minHeight="1px"></LinearLayout>
+            android:background="@color/border_color"
+            android:minHeight="1px" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -94,7 +94,7 @@
             android:id="@id/list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:divider="@color/list_separator"
+            android:divider="@color/border_color"
             android:dividerHeight="1px" />
     </LinearLayout>
 
