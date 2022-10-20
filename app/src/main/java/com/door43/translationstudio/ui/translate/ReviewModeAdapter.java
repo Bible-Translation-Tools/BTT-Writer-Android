@@ -1764,6 +1764,13 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         return (c ==' ') || (c == '\t') || (c == '\n') || (c == '\r');
     }
 
+    /**
+     * Highlights one word based on the given position (index) of the original string.
+     *
+     * @param position the drop position (index) to highlight
+     * @param text the original string
+     * @return a SpannableString with the highlighted range added
+     */
     private SpannableString highlightWordAt(final int position, CharSequence text) {
         int start = closestSpotForVerseMarker(position, text);
         // move start position toward the beginning of word (if currently not)
