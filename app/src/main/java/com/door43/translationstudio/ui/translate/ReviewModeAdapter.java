@@ -14,10 +14,12 @@ import androidx.appcompat.app.AlertDialog;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Layout;
-import android.text.Selection;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.style.BackgroundColorSpan;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.GestureDetector;
@@ -1572,8 +1574,12 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     // place the verse back at the beginning
                                     text = TextUtils.concat(pin.toCharSequence(), text);
                                 }
-                                item.renderedTargetText = text;
-                                editText.setText(text);
+
+                                SpannableString noHighlightText = new SpannableString(text);
+                                noHighlightText.setSpan(new BackgroundColorSpan(Color.TRANSPARENT), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                                item.renderedTargetText = noHighlightText;
+                                editText.setText(noHighlightText);
+
                                 String translation = Translator.compileTranslation((Editable)editText.getText());
                                 mTargetTranslation.applyFrameTranslation(frameTranslation, translation);
 
@@ -1604,8 +1610,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                 editText.setSelection(editText.getSelectionEnd());
                             } else if(event.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
                                 int offset = editText.getOffsetForPosition(event.getX(), event.getY());
-                                if(offset >= 0) {
-                                    Selection.setSelection(editText.getText(), offset);
+                                if (offset >= 0 && offset < editText.getText().length() - 1) {
+                                    CharSequence txt = editText.getText();
+                                    SpannableString str = highlightWordAt(offset, txt);
+                                    editText.setText(str);
                                 } else {
                                     editText.setSelection(editText.getSelectionEnd());
                                 }
@@ -1754,6 +1762,25 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      */
     private boolean isWhitespace(char c) {
         return (c ==' ') || (c == '\t') || (c == '\n') || (c == '\r');
+    }
+
+    private SpannableString highlightWordAt(final int position, CharSequence text) {
+        int start = closestSpotForVerseMarker(position, text);
+        // move start position toward the beginning of word (if currently not)
+        while (start > 0 && !isWhitespace(text.charAt(start))) {
+            start--;
+        }
+        int end = start + 1;
+        // move end position toward the end of word (if currently not)
+        while (end < text.length() && !isWhitespace(text.charAt(end))) {
+            end++;
+        }
+
+        SpannableString str = new SpannableString(text);
+        str.setSpan(new BackgroundColorSpan(Color.TRANSPARENT), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        str.setSpan(new BackgroundColorSpan(Color.YELLOW), start, end, 0);
+
+        return str;
     }
 
     /**
