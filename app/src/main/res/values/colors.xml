@@ -23,6 +23,8 @@
     <color name="icon_color">#161616</color>
     <color name="reverse_text_color">#FFFFFF</color>
     <color name="merge_text_color">#272727</color>
+    <color name="highlight_background_color">@color/accent</color>
+    <color name="highlighted_text_color">@color/reverse_text_color</color>
 
     <!-- dark text -->
     <color name="dark_primary_text">#1C1C1C</color>

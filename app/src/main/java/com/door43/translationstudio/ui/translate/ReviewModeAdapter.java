@@ -9,6 +9,8 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+
+import com.door43.util.ColorUtil;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AlertDialog;
 import android.text.Editable;
@@ -20,6 +22,7 @@ import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.GestureDetector;
@@ -1550,7 +1553,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         @Override
                         public boolean onDrag(View v, DragEvent event) {
                             EditText editText = ((EditText) view);
-                            // TODO: highlight the drop site.
                             if (event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
                                 // delete old span
                                 int[] spanRange = (int[])event.getLocalState();
@@ -1575,8 +1577,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     text = TextUtils.concat(pin.toCharSequence(), text);
                                 }
 
-                                SpannableString noHighlightText = new SpannableString(text);
-                                noHighlightText.setSpan(new BackgroundColorSpan(Color.TRANSPARENT), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                                SpannableString noHighlightText = resetHighlightColor(text);
                                 item.renderedTargetText = noHighlightText;
                                 editText.setText(noHighlightText);
 
@@ -1764,6 +1765,13 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         return (c ==' ') || (c == '\t') || (c == '\n') || (c == '\r');
     }
 
+    private SpannableString resetHighlightColor(CharSequence text) {
+        SpannableString noHighlightText = new SpannableString(text);
+        noHighlightText.setSpan(new BackgroundColorSpan(Color.TRANSPARENT), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        noHighlightText.setSpan(new ForegroundColorSpan(ColorUtil.getColor(mContext, R.color.dark_primary_text)), 0, text.length(), 0);
+        return noHighlightText;
+    }
+
     /**
      * Highlights one word based on the given position (index) of the original string.
      *
@@ -1783,9 +1791,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             end++;
         }
 
-        SpannableString str = new SpannableString(text);
-        str.setSpan(new BackgroundColorSpan(Color.TRANSPARENT), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        str.setSpan(new BackgroundColorSpan(Color.YELLOW), start, end, 0);
+        SpannableString str = resetHighlightColor(text);
+        str.setSpan(new BackgroundColorSpan(ColorUtil.getColor(mContext, R.color.highlight_background_color)), start, end, 0);
+        str.setSpan(new ForegroundColorSpan(ColorUtil.getColor(mContext, R.color.highlighted_text_color)), start, end, 0);
 
         return str;
     }
