@@ -1609,6 +1609,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                             } else if(event.getAction() == DragEvent.ACTION_DRAG_EXITED) {
                                 hasEntered = false;
                                 editText.setSelection(editText.getSelectionEnd());
+                                SpannableString noHighlightText = resetHighlightColor(editText.getText());
+                                editText.setText(noHighlightText);
                             } else if(event.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
                                 int offset = editText.getOffsetForPosition(event.getX(), event.getY());
                                 if (offset >= 0 && offset < editText.getText().length() - 1) {
