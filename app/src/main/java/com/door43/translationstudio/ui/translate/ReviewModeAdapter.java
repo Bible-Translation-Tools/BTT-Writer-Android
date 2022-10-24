@@ -1721,41 +1721,24 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @return
      */
     private int closestSpotForVerseMarker(int offset, CharSequence text) {
-        int charsToWhiteSpace = 0;
-        for (int j = offset; j >= 0; j--) {
-            if(j >= text.length()) j = text.length() - 1;
-            char c = text.charAt(j);
-            boolean whitespace = isWhitespace(c);
-            if(whitespace) {
-
-                if((j == offset) ||  // if this is already a good spot, then done
-                    (j == offset - 1)) {
-                    return offset;
-                }
-
-                charsToWhiteSpace = j - offset + 1;
-                break;
-            }
+        if (offset <= 0) {
+            return 0;
         }
 
-        int limit = offset - charsToWhiteSpace - 1;
-        if(limit > text.length()) {
-            limit = text.length();
+        if (offset >= text.length()) {
+            offset = text.length() - 1;
+        }
+        // move pointer toward the left until encountering a non-whitespace char
+        while (offset > 0 && isWhitespace(text.charAt(offset)) ) {
+            offset--;
+        }
+        // move pointer toward the left until encountering a whitespace
+        while (offset > 0 && !isWhitespace(text.charAt(offset))) {
+            offset--;
         }
 
-        for (int j = offset + 1; j < limit; j++) {
-            char c = text.charAt(j);
-            boolean whitespace = isWhitespace(c);
-            if(whitespace) {
-                charsToWhiteSpace = j - offset;
-                break;
-            }
-        }
-
-        if(charsToWhiteSpace != 0) {
-            offset += charsToWhiteSpace;
-        }
-        return offset;
+        // picks the non-whitespace char or the first index
+        return (offset > 0) ? offset + 1 : offset;
     }
 
     /**
@@ -1783,10 +1766,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      */
     private SpannableString highlightWordAt(final int position, CharSequence text) {
         int start = closestSpotForVerseMarker(position, text);
-        // move start position toward the beginning of word (if currently not)
-        while (start > 0 && !isWhitespace(text.charAt(start))) {
-            start--;
-        }
         int end = start + 1;
         // move end position toward the end of word (if currently not)
         while (end < text.length() && !isWhitespace(text.charAt(end))) {
