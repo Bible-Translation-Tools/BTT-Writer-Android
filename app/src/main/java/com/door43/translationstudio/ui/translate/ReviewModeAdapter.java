@@ -1715,7 +1715,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     /**
-     * find closest place to drop verse marker.  Weighted toward beginning of word.
+     * Find the closest position to drop verse marker.  Weighted toward beginning of word.
      * @param offset - initial drop position
      * @param text - edit text
      * @return
@@ -1728,16 +1728,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         if (offset >= text.length()) {
             offset = text.length() - 1;
         }
-        // move pointer toward the left until encountering a non-whitespace char
+
         while (offset > 0 && isWhitespace(text.charAt(offset)) ) {
             offset--;
         }
-        // move pointer toward the left until encountering a whitespace
+
         while (offset > 0 && !isWhitespace(text.charAt(offset))) {
             offset--;
         }
 
-        // picks the non-whitespace char or the first index
         return (offset > 0) ? offset + 1 : offset;
     }
 
