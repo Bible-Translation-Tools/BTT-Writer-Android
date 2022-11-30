@@ -9,15 +9,20 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+
+import com.door43.util.ColorUtil;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AlertDialog;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Layout;
-import android.text.Selection;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.GestureDetector;
@@ -1548,7 +1553,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         @Override
                         public boolean onDrag(View v, DragEvent event) {
                             EditText editText = ((EditText) view);
-                            // TODO: highlight the drop site.
                             if (event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
                                 // delete old span
                                 int[] spanRange = (int[])event.getLocalState();
@@ -1572,8 +1576,11 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     // place the verse back at the beginning
                                     text = TextUtils.concat(pin.toCharSequence(), text);
                                 }
-                                item.renderedTargetText = text;
-                                editText.setText(text);
+
+                                SpannableString noHighlightText = resetHighlightColor(text);
+                                item.renderedTargetText = noHighlightText;
+                                editText.setText(noHighlightText);
+
                                 String translation = Translator.compileTranslation((Editable)editText.getText());
                                 mTargetTranslation.applyFrameTranslation(frameTranslation, translation);
 
@@ -1602,10 +1609,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                             } else if(event.getAction() == DragEvent.ACTION_DRAG_EXITED) {
                                 hasEntered = false;
                                 editText.setSelection(editText.getSelectionEnd());
+                                SpannableString noHighlightText = resetHighlightColor(editText.getText());
+                                editText.setText(noHighlightText);
                             } else if(event.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
                                 int offset = editText.getOffsetForPosition(event.getX(), event.getY());
-                                if(offset >= 0) {
-                                    Selection.setSelection(editText.getText(), offset);
+                                if (offset >= 0 && offset < editText.getText().length() - 1) {
+                                    CharSequence txt = editText.getText();
+                                    SpannableString str = highlightWordAt(offset, txt);
+                                    editText.setText(str);
                                 } else {
                                     editText.setSelection(editText.getSelectionEnd());
                                 }
@@ -1704,47 +1715,29 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     /**
-     * find closest place to drop verse marker.  Weighted toward beginning of word.
+     * Find the closest position to drop verse marker.  Weighted toward beginning of word.
      * @param offset - initial drop position
      * @param text - edit text
      * @return
      */
     private int closestSpotForVerseMarker(int offset, CharSequence text) {
-        int charsToWhiteSpace = 0;
-        for (int j = offset; j >= 0; j--) {
-            if(j >= text.length()) j = text.length() - 1;
-            char c = text.charAt(j);
-            boolean whitespace = isWhitespace(c);
-            if(whitespace) {
-
-                if((j == offset) ||  // if this is already a good spot, then done
-                    (j == offset - 1)) {
-                    return offset;
-                }
-
-                charsToWhiteSpace = j - offset + 1;
-                break;
-            }
+        if (offset <= 0) {
+            return 0;
         }
 
-        int limit = offset - charsToWhiteSpace - 1;
-        if(limit > text.length()) {
-            limit = text.length();
+        if (offset >= text.length()) {
+            offset = text.length() - 1;
         }
 
-        for (int j = offset + 1; j < limit; j++) {
-            char c = text.charAt(j);
-            boolean whitespace = isWhitespace(c);
-            if(whitespace) {
-                charsToWhiteSpace = j - offset;
-                break;
-            }
+        while (offset > 0 && isWhitespace(text.charAt(offset)) ) {
+            offset--;
         }
 
-        if(charsToWhiteSpace != 0) {
-            offset += charsToWhiteSpace;
+        while (offset > 0 && !isWhitespace(text.charAt(offset))) {
+            offset--;
         }
-        return offset;
+
+        return (offset > 0) ? offset + 1 : offset;
     }
 
     /**
@@ -1754,6 +1747,35 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      */
     private boolean isWhitespace(char c) {
         return (c ==' ') || (c == '\t') || (c == '\n') || (c == '\r');
+    }
+
+    private SpannableString resetHighlightColor(CharSequence text) {
+        SpannableString noHighlightText = new SpannableString(text);
+        noHighlightText.setSpan(new BackgroundColorSpan(Color.TRANSPARENT), 0, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        noHighlightText.setSpan(new ForegroundColorSpan(ColorUtil.getColor(mContext, R.color.dark_primary_text)), 0, text.length(), 0);
+        return noHighlightText;
+    }
+
+    /**
+     * Highlights one word based on the given position (index) of the original string.
+     *
+     * @param position the drop position (index) to highlight
+     * @param text the original string
+     * @return a SpannableString with the highlighted range added
+     */
+    private SpannableString highlightWordAt(final int position, CharSequence text) {
+        int start = closestSpotForVerseMarker(position, text);
+        int end = start + 1;
+        // move end position toward the end of word (if currently not)
+        while (end < text.length() && !isWhitespace(text.charAt(end))) {
+            end++;
+        }
+
+        SpannableString str = resetHighlightColor(text);
+        str.setSpan(new BackgroundColorSpan(ColorUtil.getColor(mContext, R.color.highlight_background_color)), start, end, 0);
+        str.setSpan(new ForegroundColorSpan(ColorUtil.getColor(mContext, R.color.highlighted_text_color)), start, end, 0);
+
+        return str;
     }
 
     /**
