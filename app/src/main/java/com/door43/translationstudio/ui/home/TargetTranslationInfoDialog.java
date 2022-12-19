@@ -36,14 +36,12 @@ import com.door43.translationstudio.ui.dialogs.BackupDialog;
 
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.door43client.models.Translation;
+import org.unfoldingword.resourcecontainer.Project;
 import org.unfoldingword.tools.logger.Logger;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
-import java.util.List;
-
 
 /**
  * Displays detailed information about a target translation
@@ -87,15 +85,14 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         TextView languageTitleView = (TextView)v.findViewById(R.id.language_title);
         this.progressView = (TextView)v.findViewById(R.id.progress);
 
-        // Load a source translation
-        Translation sourceTranslation;
-        List<Translation> translations = library.index.findTranslations(null, mTargetTranslation.getProjectId(), null, "book", null, App.MIN_CHECKING_LEVEL, -1);
-        if(translations.size() == 0) {
-            Logger.w("TargetTranslationInfoDialog", "Could not find source for target " + mTargetTranslation.getId());
-            dismiss();
-            return v;
+        Project project;
+        String[] translations = App.getOpenSourceTranslations(mTargetTranslation.getId());
+        // Gets an existing source project or default if none selected
+        if(translations.length > 0) {
+            String lastSource = translations[translations.length - 1];
+            project = library.index.getTranslation(lastSource).project;
         } else {
-            sourceTranslation = translations.get(0);
+            project = library.index.getProject(App.getDeviceLanguageCode(), mTargetTranslation.getProjectId(), true);
         }
 
         // set typeface for language
@@ -104,8 +101,8 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         titleView.setTypeface(typeface, 0);
         languageTitleView.setTypeface(typeface, 0);
 
-        titleView.setText(sourceTranslation.project.name + " - " + mTargetTranslation.getTargetLanguageName());
-        projectTitleView.setText(sourceTranslation.project.name + " (" + sourceTranslation.project.slug + ")");
+        titleView.setText(project.name + " - " + mTargetTranslation.getTargetLanguageName());
+        projectTitleView.setText(project.name + " (" + project.slug + ")");
         languageTitleView.setText(mTargetTranslation.getTargetLanguageName() + " (" + mTargetTranslation.getTargetLanguageId() + ")");
 
         // calculate translation progress
