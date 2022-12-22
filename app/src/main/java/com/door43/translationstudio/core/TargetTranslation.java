@@ -469,7 +469,7 @@ public class TargetTranslation {
         }
     }
 
-    public void updateSourceTranslations(List<SourceTranslation> translations) throws JSONException {
+    public void setSourceTranslations(List<SourceTranslation> translations) throws JSONException {
         String targetTranslationId = getId();
 
         for (SourceTranslation src : translations) {
@@ -484,6 +484,10 @@ public class TargetTranslation {
             }
         }
 
+        updateSourcesInManifest(translations);
+    }
+
+    private void updateSourcesInManifest(List<SourceTranslation> translations) throws JSONException {
         JSONArray sourcesJson = new JSONArray();
         for (SourceTranslation src : translations) {
             JSONObject translationJson = new JSONObject();

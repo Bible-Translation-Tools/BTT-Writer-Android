@@ -670,30 +670,33 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         }
 
         if (sourceTranslationIds.size() > 0) {
-            List<SourceTranslation> sources = new ArrayList<>();
-            for (String slug : sourceTranslationIds) {
-                Translation translation = mLibrary.index.getTranslation(slug);
-                int modifiedAt = mLibrary.getResourceContainerLastModified(
+            setSelectedSources(sourceTranslationIds, targetTranslation);
+            String selectedSourceId = App.getSelectedSourceTranslationId(targetTranslationId);
+            openResourceContainer(selectedSourceId);
+        } else {
+            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+        }
+    }
+
+    private void setSelectedSources(List<String> sourceSlugs, TargetTranslation targetTranslation) {
+        List<SourceTranslation> sources = new ArrayList<>();
+        for (String slug : sourceSlugs) {
+            Translation translation = mLibrary.index.getTranslation(slug);
+            int modifiedAt = mLibrary.getResourceContainerLastModified(
                     translation.language.slug,
                     translation.project.slug,
                     translation.resource.slug
-                );
-                sources.add(new SourceTranslation(translation, modifiedAt));
-            }
+            );
+            sources.add(new SourceTranslation(translation, modifiedAt));
+        }
 
-            try {
-                targetTranslation.updateSourceTranslations(sources);
-            } catch (JSONException e) {
-                Logger.e(
+        try {
+            targetTranslation.setSourceTranslations(sources);
+        } catch (JSONException e) {
+            Logger.e(
                     this.getClass().getName(),
                     "Failed to set source translations for the target translation " + targetTranslation.getId(), e
-                );
-            }
-
-            String selectedSourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
-            openResourceContainer(selectedSourceTranslationId);
-        } else {
-            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+            );
         }
     }
 
