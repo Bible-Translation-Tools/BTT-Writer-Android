@@ -86,10 +86,10 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         this.progressView = (TextView)v.findViewById(R.id.progress);
 
         Project project;
-        String[] translations = App.getOpenSourceTranslations(mTargetTranslation.getId());
+        String[] existingSources = mTargetTranslation.getSourceTranslations();
         // Gets an existing source project or default if none selected
-        if(translations.length > 0) {
-            String lastSource = translations[translations.length - 1];
+        if(existingSources.length > 0) {
+            String lastSource = existingSources[existingSources.length - 1];
             project = library.index.getTranslation(lastSource).project;
         } else {
             project = library.index.getProject(App.getDeviceLanguageCode(), mTargetTranslation.getProjectId(), true);
