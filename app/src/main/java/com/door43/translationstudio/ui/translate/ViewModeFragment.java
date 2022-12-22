@@ -31,6 +31,7 @@ import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
+import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.ui.BaseFragment;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
@@ -39,9 +40,7 @@ import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by joel on 9/18/2015.
@@ -638,36 +637,38 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         }
 
         String[] oldSourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
-        for(String id:oldSourceTranslationIds) {
+        for (String id : oldSourceTranslationIds) {
             App.removeOpenSourceTranslation(targetTranslationId, id);
         }
 
-        if(sourceTranslationIds.size() > 0) {
-            Map<Translation, Integer> sources = new HashMap<>();
-
-            // save open source language tabs
-            for(String slug:sourceTranslationIds) {
-                Translation src = mLibrary.index.getTranslation(slug);
-                int modifiedAt = mLibrary.getResourceContainerLastModified(src.language.slug, src.project.slug, src.resource.slug);
-                sources.put(src, modifiedAt);
-                try {
-                    App.addOpenSourceTranslation(targetTranslationId, slug);
-                } catch (Exception e) {
-                    Logger.e(this.getClass().getName(), "Error while adding source translation " + slug + " for " + targetTranslationId);
-                    e.printStackTrace();
-                }
-            }
-
-            try {
-                targetTranslation.updateSourceTranslations(sources);
-            } catch (JSONException e) {
-                Logger.e(this.getClass().getName(), "Failed to set source translations for the target translation " + targetTranslation.getId(), e);
-            }
-
-            String selectedSourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
-            openResourceContainer(selectedSourceTranslationId);
+        if (sourceTranslationIds.size() > 0) {
+            setSelectedSources(sourceTranslationIds, targetTranslation);
+            String selectedSourceId = App.getSelectedSourceTranslationId(targetTranslationId);
+            openResourceContainer(selectedSourceId);
         } else {
-            if(mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+        }
+    }
+
+    private void setSelectedSources(List<String> sourceSlugs, TargetTranslation targetTranslation) {
+        List<SourceTranslation> sources = new ArrayList<>();
+        for (String slug : sourceSlugs) {
+            Translation translation = mLibrary.index.getTranslation(slug);
+            int modifiedAt = mLibrary.getResourceContainerLastModified(
+                    translation.language.slug,
+                    translation.project.slug,
+                    translation.resource.slug
+            );
+            sources.add(new SourceTranslation(translation, modifiedAt));
+        }
+
+        try {
+            targetTranslation.setSourceTranslations(sources);
+        } catch (JSONException e) {
+            Logger.e(
+                    this.getClass().getName(),
+                    "Failed to set source translations for the target translation " + targetTranslation.getId(), e
+            );
         }
     }
 
