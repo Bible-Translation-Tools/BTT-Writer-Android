@@ -11,6 +11,8 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.tools.logger.Logger;
 
+import com.door43.translationstudio.App;
+import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
 import com.door43.util.NumericStringComparator;
 import com.door43.util.FileUtilities;
@@ -464,6 +466,38 @@ public class TargetTranslation {
             translationJson.put("version", translation.resource.version);
             sourceTranslationsJson.put(translationJson);
             manifest.put(FIELD_SOURCE_TRANSLATIONS, sourceTranslationsJson);
+        }
+    }
+
+    public void setSourceTranslations(List<SourceTranslation> translations) throws JSONException {
+        String targetTranslationId = getId();
+
+        for (SourceTranslation src : translations) {
+            try {
+                App.addOpenSourceTranslation(targetTranslationId, src.resourceContainerSlug);
+            } catch (Exception e) {
+                Logger.e(
+                    this.getClass().getName(),
+                    "Error while adding source " + src.resourceContainerSlug + " for " + targetTranslationId
+                );
+                e.printStackTrace();
+            }
+        }
+
+        updateSourcesInManifest(translations);
+    }
+
+    private void updateSourcesInManifest(List<SourceTranslation> translations) throws JSONException {
+        JSONArray sourcesJson = new JSONArray();
+        for (SourceTranslation src : translations) {
+            JSONObject translationJson = new JSONObject();
+            translationJson.put("language_id", src.language.slug);
+            translationJson.put("resource_id", src.resource.slug);
+            translationJson.put("checking_level", src.resource.checkingLevel);
+            translationJson.put("date_modified", src.getModifiedTimestamp());
+            translationJson.put("version", src.resource.version);
+            sourcesJson.put(translationJson);
+            manifest.put(FIELD_SOURCE_TRANSLATIONS, sourcesJson);
         }
     }
 
