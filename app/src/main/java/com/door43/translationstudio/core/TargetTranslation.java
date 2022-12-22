@@ -11,6 +11,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.tools.logger.Logger;
 
+import com.door43.translationstudio.App;
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
 import com.door43.util.NumericStringComparator;
@@ -469,6 +470,20 @@ public class TargetTranslation {
     }
 
     public void updateSourceTranslations(List<SourceTranslation> translations) throws JSONException {
+        String targetTranslationId = getId();
+
+        for (SourceTranslation src : translations) {
+            try {
+                App.addOpenSourceTranslation(targetTranslationId, src.resourceContainerSlug);
+            } catch (Exception e) {
+                Logger.e(
+                    this.getClass().getName(),
+                    "Error while adding source " + src.resourceContainerSlug + " for " + targetTranslationId
+                );
+                e.printStackTrace();
+            }
+        }
+
         JSONArray sourcesJson = new JSONArray();
         for (SourceTranslation src : translations) {
             JSONObject translationJson = new JSONObject();

@@ -671,26 +671,23 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         if (sourceTranslationIds.size() > 0) {
             List<SourceTranslation> sources = new ArrayList<>();
-
-            // save open source language tabs
             for (String slug : sourceTranslationIds) {
                 Translation translation = mLibrary.index.getTranslation(slug);
-                int modifiedAt = mLibrary.getResourceContainerLastModified(translation.language.slug, translation.project.slug, translation.resource.slug);
-                SourceTranslation src = new SourceTranslation(translation, modifiedAt);
-                sources.add(src);
-
-                try {
-                    App.addOpenSourceTranslation(targetTranslationId, slug);
-                } catch (Exception e) {
-                    Logger.e(this.getClass().getName(), "Error while adding source translation " + slug + " for " + targetTranslationId);
-                    e.printStackTrace();
-                }
+                int modifiedAt = mLibrary.getResourceContainerLastModified(
+                    translation.language.slug,
+                    translation.project.slug,
+                    translation.resource.slug
+                );
+                sources.add(new SourceTranslation(translation, modifiedAt));
             }
 
             try {
                 targetTranslation.updateSourceTranslations(sources);
             } catch (JSONException e) {
-                Logger.e(this.getClass().getName(), "Failed to set source translations for the target translation " + targetTranslation.getId(), e);
+                Logger.e(
+                    this.getClass().getName(),
+                    "Failed to set source translations for the target translation " + targetTranslation.getId(), e
+                );
             }
 
             String selectedSourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
