@@ -10,9 +10,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -31,6 +33,7 @@ import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
+import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.ui.BaseFragment;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
@@ -39,9 +42,7 @@ import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by joel on 9/18/2015.
@@ -67,6 +68,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Returns an instance of the adapter
+     *
      * @param activity
      * @param targetTranslationSlug
      * @param startingChapterSlug
@@ -94,8 +96,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         Bundle args = getArguments();
         String targetTranslationSlug = args.getString(App.EXTRA_TARGET_TRANSLATION_ID, null);
         mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationSlug);
-        if(mTargetTranslation == null) {
-            Logger.e(getClass().getName() ,"A valid target translation id is required. Received '" + targetTranslationSlug + "' but the translation could not be found");
+        if (mTargetTranslation == null) {
+            Logger.e(getClass().getName(), "A valid target translation id is required. Received '" + targetTranslationSlug + "' but the translation could not be found");
             getActivity().finish();
         }
 
@@ -105,14 +107,15 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         try {
             String sourceTranslationSlug = App.getSelectedSourceTranslationId(targetTranslationSlug);
             mSourceTranslation = mLibrary.index().getTranslation(sourceTranslationSlug);
-            if(mSourceTranslation == null) App.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
+            if (mSourceTranslation == null)
+                App.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         // open selected tab
-        if(null == mSourceTranslation) {
-            if(mListener != null) mListener.onNoSourceTranslations(targetTranslationSlug);
+        if (null == mSourceTranslation) {
+            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationSlug);
         } else {
             mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
             // TRICKY: there is a bug in Android's LinearLayoutManager
@@ -133,7 +136,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
                     super.onScrolled(recyclerView, dx, dy);
                     if (mFingerScroll) {
                         int position = getCurrentPosition();
-                        if(mListener != null) mListener.onScrollProgress(position);
+                        if (mListener != null) mListener.onScrollProgress(position);
                     }
                 }
             });
@@ -143,7 +146,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
             mAdapter.setOnClickListener(this);
 
-            if(savedInstanceState == null) {
+            if (savedInstanceState == null) {
                 doScrollToPosition(mAdapter.getListStartPosition(), 0);
             }
         }
@@ -153,6 +156,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             private final float SWIPE_THRESHOLD_VELOCITY = 20f;
             private final float SWIPE_MIN_DISTANCE = 50f;
             private final float SWIPE_MAX_ANGLE_DEG = 30;
+
             @Override
             public boolean onDown(MotionEvent e) {
                 mLastOnDownEvent = e;
@@ -161,7 +165,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if(e1 == null) {
+                if (e1 == null) {
                     e1 = mLastOnDownEvent;
                 }
                 try {
@@ -193,38 +197,42 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * scroll panes to go to specific position with vertical offset
+     *
      * @param position
      * @param offset
      */
     public void doScrollToPosition(int position, int offset) {
-        if(mLayoutManager != null) {
+        if (mLayoutManager != null) {
             mLayoutManager.scrollToPositionWithOffset(position, offset);
             Logger.i(TAG, "doScrollToPosition: position=" + position + ", offset=" + offset);
         }
-        if(mListener != null) mListener.onScrollProgress(position);
+        if (mListener != null) mListener.onScrollProgress(position);
     }
 
     /**
      * set true if we want to initially show a summary of merge conflicts
+     *
      * @param showMergeSummary
      */
     public void setShowMergeSummary(boolean showMergeSummary) {
-        if(mAdapter != null) {
+        if (mAdapter != null) {
             mAdapter.setShowMergeSummary(showMergeSummary);
         }
     }
 
     /**
      * get the chapter slug for the position
+     *
      * @param position
      */
     public String getChapterSlug(int position) {
-        if(mAdapter != null) return mAdapter.getChapterSlug(position);
+        if (mAdapter != null) return mAdapter.getChapterSlug(position);
         return Integer.toString(position + 1);
     }
 
     /**
      * Called when the user performs a swipe towards the right
+     *
      * @param e1
      * @param e2
      */
@@ -234,6 +242,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Called when the user performs a swipe towards the left
+     *
      * @param e1
      * @param e2
      */
@@ -243,6 +252,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Returns the currently selected resource container
+     *
      * @return
      */
     protected ResourceContainer getSelectedResourceContainer() {
@@ -252,19 +262,21 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     /**
      * Scrolls to the given frame
      * // TODO: 11/2/16 this does not scroll to the correct chunk. see obs 1:15. it seems to always be 2 off.
+     *
      * @param chapterSlug
      * @param chunkSlug
      */
     public void scrollToChunk(String chapterSlug, String chunkSlug) {
         closeKeyboard();
         int position = mAdapter.getItemPosition(chapterSlug, chunkSlug);
-        if(position != -1) {
+        if (position != -1) {
             doScrollToPosition(position, 0);
         }
     }
 
     /**
      * Similar to scrollToChunk except it will automatically guess what chunk to scroll to.
+     *
      * @param chapterSlug
      * @param verseSlug
      */
@@ -275,12 +287,13 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Returns the adapter position of a view holder under the coordinates
+     *
      * @param x
      * @param y
      * @return
      */
     protected int findViewHolderAdapterPosition(float x, float y) {
-        if(mRecyclerView != null) {
+        if (mRecyclerView != null) {
             View view = mRecyclerView.findChildViewUnder(x, y);
             return mRecyclerView.getChildAdapterPosition(view);
         } else {
@@ -290,11 +303,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Returns a viewholder item for the adapter position
+     *
      * @param position
      * @return
      */
     protected RecyclerView.ViewHolder getViewHolderForAdapterPosition(int position) {
-        if(mRecyclerView != null) {
+        if (mRecyclerView != null) {
             return mRecyclerView.findViewHolderForAdapterPosition(position);
         } else {
             return null;
@@ -303,10 +317,11 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Returns a sample viewholder so we can check on the state of the ui
+     *
      * @return
      */
     protected RecyclerView.ViewHolder getViewHolderSample() {
-        if(mLayoutManager != null && mRecyclerView != null) {
+        if (mLayoutManager != null && mRecyclerView != null) {
             int position = getCurrentPosition();
             return mRecyclerView.findViewHolderForLayoutPosition(position);
         } else {
@@ -323,18 +338,18 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     public void onDataSetChanged(int count) {
-        if(mListener != null) mListener.onDataSetChanged(count);
+        if (mListener != null) mListener.onDataSetChanged(count);
     }
 
     public void onEnableMergeConflict(boolean showConflicted, boolean active) {
-        if(mListener != null) {
+        if (mListener != null) {
             mListener.onEnableMergeConflict(showConflicted, active);
         }
     }
 
     @Override
     public RecyclerView.ViewHolder getVisibleViewHolder(int position) {
-        if(mLayoutManager != null && mRecyclerView != null) {
+        if (mLayoutManager != null && mRecyclerView != null) {
             return mRecyclerView.findViewHolderForAdapterPosition(position);//.findViewHolderForLayoutPosition(position);
         }
         return null;
@@ -342,10 +357,11 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * gets item count of adapter
+     *
      * @return
      */
     public int getItemCount() {
-        if(mAdapter != null) {
+        if (mAdapter != null) {
             return mAdapter.getItemCount();
         }
         return 0;
@@ -355,9 +371,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     public void onResume() {
         super.onResume();
         showProgressDialog();
-        if(mSourceContainer == null) {
+        if (mSourceContainer == null) {
             // load the container
-            if(mAdapter != null) mAdapter.setSourceContainer(null);
+            if (mAdapter != null) mAdapter.setSourceContainer(null);
             onSourceContainerLoaded(null);
             ManagedTask task = new ManagedTask() {
                 @Override
@@ -369,7 +385,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             };
             task.addOnFinishedListener(this);
             TaskManager.addTask(task, TASK_ID_OPEN_SELECTED_SOURCE);
-        } else if(mAdapter != null) {
+        } else if (mAdapter != null) {
             mAdapter.setSourceContainer(mSourceContainer);
             doScrollToPosition(mAdapter.getListStartPosition(), 0);
             onSourceContainerLoaded(mSourceContainer);
@@ -380,12 +396,13 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     /**
      * Initiates a task to open a resource container.
      * This is used for switching the source translation.
+     *
      * @param slug
      */
     private void openResourceContainer(final String slug) {
         showProgressDialog();
         mSavedPosition = getCurrentPosition();
-        if(mAdapter != null) mAdapter.setSourceContainer(null);
+        if (mAdapter != null) mAdapter.setSourceContainer(null);
         onSourceContainerLoaded(null);
         ManagedTask task = new ManagedTask() {
             @Override
@@ -404,11 +421,11 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * removes progress dialog if shown
      */
     private void stopProgressDialog() {
-        if(mProgressDialog != null) {
+        if (mProgressDialog != null) {
             try {
                 mProgressDialog.dismiss();
                 mProgressDialog = null;
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -416,11 +433,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * create a general progress dialog
+     *
      * @param titleId
      * @return
      */
     private void showProgressDialog(int titleId) {
-        if(mProgressDialog != null) {
+        if (mProgressDialog != null) {
             mProgressDialog.dismiss(); // remove previous
         }
         mProgressDialog = new ProgressDialog(getActivity());
@@ -439,11 +457,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * enable/disable merge conflict filter in adapter
+     *
      * @param enableFilter
      * @param forceMergeConflict - if true, then will initialize have merge conflict flag to true
      */
     public final void setMergeConflictFilter(boolean enableFilter, boolean forceMergeConflict) {
-        if(getAdapter() != null) {
+        if (getAdapter() != null) {
             getAdapter().setMergeConflictFilter(enableFilter, forceMergeConflict);
             getAdapter().triggerNotifyDataSetChanged();
         }
@@ -451,11 +470,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Filters the adapter by the constraint
+     *
      * @param constraint the search will be cleared if null or an empty string
-     * @param subject the text to be searched
+     * @param subject    the text to be searched
      */
     public final void filter(CharSequence constraint, SearchSubject subject) {
-        if(getAdapter() != null) {
+        if (getAdapter() != null) {
             getAdapter().filter(constraint, subject, getCurrentPosition());
             getAdapter().triggerNotifyDataSetChanged();
         }
@@ -463,10 +483,11 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * move to next/previous search item
+     *
      * @param next if true then find next, otherwise will find previous
      */
     public void onMoveSearch(boolean next) {
-        if(getAdapter() != null) {
+        if (getAdapter() != null) {
             getAdapter().onMoveSearch(next);
         }
     }
@@ -475,17 +496,18 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * Checks if filtering is enabled.
      */
     public final boolean hasFilter() {
-        if(getAdapter() != null) return getAdapter().hasFilter();
+        if (getAdapter() != null) return getAdapter().hasFilter();
         return false;
     }
 
     /**
      * returns true if merge conflict summary dialog is being displayed.  Override in adapters that
-     *      support this.
+     * support this.
+     *
      * @return
      */
     public boolean ismMergeConflictSummaryDisplayed() {
-        if(getAdapter() != null) {
+        if (getAdapter() != null) {
             return getAdapter().ismMergeConflictSummaryDisplayed();
         }
         return false;
@@ -520,6 +542,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Require correct interface
+     *
      * @param activity
      */
     @Override
@@ -532,19 +555,21 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     /**
      * Deprecated on API 23
      * Require correct interface
+     *
      * @param activity
      */
     @Override
     @SuppressWarnings("deprecation")
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if(Build.VERSION.SDK_INT < 23) {
+        if (Build.VERSION.SDK_INT < 23) {
             onAttachToContext(activity);
         }
     }
 
     /**
      * This method will be called when the fragment attaches to the context/activity
+     *
      * @param context
      */
     protected void onAttachToContext(Context context) {
@@ -557,13 +582,14 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Called when the scroll progress manually changes
+     *
      * @param scrollProgress
-     * @param percent - percentage to scroll within card
+     * @param percent        - percentage to scroll within card
      */
     public void onScrollProgressUpdate(int scrollProgress, int percent) {
         mFingerScroll = false;
         Log.d(TAG, "onScrollProgressUpdate: scrollProgress=" + scrollProgress + ", percent=" + percent);
-        if(percent == 0) {
+        if (percent == 0) {
             mRecyclerView.scrollToPosition(scrollProgress);
         } else {
             fineScrollToPosition(scrollProgress, percent);
@@ -572,8 +598,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * makes sure view is visible, plus it scrolls down proportionally in view
+     *
      * @param position
-     * @param percent - percentage to scroll within card
+     * @param percent  - percentage to scroll within card
      * @return
      */
     private void fineScrollToPosition(int position, int percent) {
@@ -586,7 +613,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         }
 
         RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(visibleChild);
-        if(holder == null) {
+        if (holder == null) {
             return;
         }
 
@@ -638,18 +665,20 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         }
 
         String[] oldSourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
-        for(String id:oldSourceTranslationIds) {
+        for (String id : oldSourceTranslationIds) {
             App.removeOpenSourceTranslation(targetTranslationId, id);
         }
 
-        if(sourceTranslationIds.size() > 0) {
-            Map<Translation, Integer> sources = new HashMap<>();
+        if (sourceTranslationIds.size() > 0) {
+            List<SourceTranslation> sources = new ArrayList<>();
 
             // save open source language tabs
-            for(String slug:sourceTranslationIds) {
-                Translation src = mLibrary.index.getTranslation(slug);
-                int modifiedAt = mLibrary.getResourceContainerLastModified(src.language.slug, src.project.slug, src.resource.slug);
-                sources.put(src, modifiedAt);
+            for (String slug : sourceTranslationIds) {
+                Translation translation = mLibrary.index.getTranslation(slug);
+                int modifiedAt = mLibrary.getResourceContainerLastModified(translation.language.slug, translation.project.slug, translation.resource.slug);
+                SourceTranslation src = new SourceTranslation(translation, modifiedAt);
+                sources.add(src);
+
                 try {
                     App.addOpenSourceTranslation(targetTranslationId, slug);
                 } catch (Exception e) {
@@ -667,29 +696,30 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             String selectedSourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
             openResourceContainer(selectedSourceTranslationId);
         } else {
-            if(mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
         }
     }
 
     @Override
     public void onDestroy() {
         // save position state
-        if(mLayoutManager != null) {
+        if (mLayoutManager != null) {
             int lastItemPosition = getCurrentPosition();
             String chapterId = mAdapter.getFocusedChapterSlug(lastItemPosition);
             String frameId = mAdapter.getFocusedChunkSlug(lastItemPosition);
             App.setLastFocus(mTargetTranslation.getId(), chapterId, frameId);
         }
-        if(mAdapter != null) mAdapter.setOnClickListener(null);
+        if (mAdapter != null) mAdapter.setOnClickListener(null);
         super.onDestroy();
     }
 
     /**
      * gets the currently viewed position
+     *
      * @return
      */
     public int getCurrentPosition() {
-        if(mLayoutManager != null) {
+        if (mLayoutManager != null) {
             return mLayoutManager.findFirstVisibleItemPosition();
         }
         return 0;
@@ -704,7 +734,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     public boolean onTouchEvent(MotionEvent event) {
-        if(mGesture != null) {
+        if (mGesture != null) {
             return mGesture.onTouchEvent(event);
         } else {
             Logger.w(this.getClass().getName(), "The gesture detector was not initialized so the touch was not handled");
@@ -714,48 +744,52 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Opens a translation mode
+     *
      * @param mode
      */
     public void openTranslationMode(TranslationViewMode mode, Bundle extras) {
-        if(mListener != null) mListener.openTranslationMode(mode, extras);
+        if (mListener != null) mListener.openTranslationMode(mode, extras);
     }
 
     /**
      * Restarts the auto commit timer
      */
     public void restartAutoCommitTimer() {
-        if(mListener != null) mListener.restartAutoCommitTimer();
+        if (mListener != null) mListener.restartAutoCommitTimer();
     }
 
     /**
      * notify listener of search state changes
-     * @param doingSearch - search is currently processing
+     *
+     * @param doingSearch          - search is currently processing
      * @param numberOfChunkMatches - number of chunks that have the search string
-     * @param atEnd - we are at last search item highlighted
-     * @param atStart - we are at first search item highlighted
+     * @param atEnd                - we are at last search item highlighted
+     * @param atStart              - we are at first search item highlighted
      */
     public void onSearching(boolean doingSearch, int numberOfChunkMatches, boolean atEnd, boolean atStart) {
-        if(mListener != null) mListener.onSearching(doingSearch, numberOfChunkMatches, atEnd, atStart);
+        if (mListener != null)
+            mListener.onSearching(doingSearch, numberOfChunkMatches, atEnd, atStart);
     }
 
     /**
      * user has selected to update sources
      */
     public void onUpdateSources() {
-        if(mListener != null) mListener.onUpdateSources();
+        if (mListener != null) mListener.onUpdateSources();
     }
 
     @Override
     public void onTaskFinished(final ManagedTask task) {
         TaskManager.clearTask(task);
-        if(task.getTaskId().equals(TASK_ID_OPEN_SELECTED_SOURCE)) {
-            Handler hand  = new Handler(Looper.getMainLooper());
+        if (task.getTaskId().equals(TASK_ID_OPEN_SELECTED_SOURCE)) {
+            Handler hand = new Handler(Looper.getMainLooper());
             hand.post(new Runnable() {
                 @Override
                 public void run() {
-                    if(mSourceContainer == null) {
-                        if(mListener != null) mListener.onNoSourceTranslations(mTargetTranslation.getId());
-                    } else if(mAdapter != null) {
+                    if (mSourceContainer == null) {
+                        if (mListener != null)
+                            mListener.onNoSourceTranslations(mTargetTranslation.getId());
+                    } else if (mAdapter != null) {
                         mAdapter.setSourceContainer(mSourceContainer);
                         doScrollToPosition(mAdapter.getListStartPosition(), 0);
                         onSourceContainerLoaded(mSourceContainer);
@@ -763,19 +797,19 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
                     stopProgressDialog();
                 }
             });
-        } else if(task.getTaskId().equals(TASK_ID_OPEN_SOURCE)) {
-            Handler hand  = new Handler(Looper.getMainLooper());
+        } else if (task.getTaskId().equals(TASK_ID_OPEN_SOURCE)) {
+            Handler hand = new Handler(Looper.getMainLooper());
             hand.post(new Runnable() {
                 @Override
                 public void run() {
-                    if(task.getResult() == null) {
+                    if (task.getResult() == null) {
                         // failed to load the container
                         String slug = task.getArgs().getString("slug");
                         App.removeOpenSourceTranslation(mTargetTranslation.getId(), slug);
                         mAdapter.triggerNotifyDataSetChanged();
 
                         // TODO: 10/5/16 notify user we failed to select the source
-                    } else if(mAdapter != null) {
+                    } else if (mAdapter != null) {
                         mSourceContainer = (ResourceContainer) task.getResult();
                         mAdapter.setSourceContainer(mSourceContainer);
                         doScrollToPosition(mSavedPosition, 0);
@@ -789,8 +823,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * called to set new selected position
+     *
      * @param position
-     * @param offset - if greater than or equal to 0, then set specific offset
+     * @param offset   - if greater than or equal to 0, then set specific offset
      */
     public void onSetSelectedPosition(int position, int offset) {
         Log.d(TAG, "onSetSelectedPosition: position=" + position + ", offset=" + offset);
@@ -799,6 +834,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Allows child classes to perform operations that dependon the source container
+     *
      * @param sourceContainer
      */
     protected abstract void onSourceContainerLoaded(ResourceContainer sourceContainer);
@@ -807,24 +843,28 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         /**
          * Called when the user scrolls with their finger
+         *
          * @param progress
          */
         void onScrollProgress(int progress);
 
         /**
          * Called when the dataset in the adapter changed
+         *
          * @param count the number of items in the adapter
          */
         void onDataSetChanged(int count);
 
         /**
          * No source translation has been chosen for this target translation
+         *
          * @param targetTranslationId
          */
         void onNoSourceTranslations(String targetTranslationId);
 
         /**
          * Opens a particular translation mode
+         *
          * @param mode
          */
         void openTranslationMode(TranslationViewMode mode, Bundle extras);
@@ -836,15 +876,17 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         /**
          * notify listener of search state changes
-         * @param doingSearch - search is currently processing
+         *
+         * @param doingSearch          - search is currently processing
          * @param numberOfChunkMatches - number of chunks that have the search string
-         * @param atEnd - we are at last search item highlighted
-         * @param atStart - we are at first search item highlighted
+         * @param atEnd                - we are at last search item highlighted
+         * @param atStart              - we are at first search item highlighted
          */
         void onSearching(boolean doingSearch, int numberOfChunkMatches, boolean atEnd, boolean atStart);
 
         /**
          * enable/disable merge conflict indicator
+         *
          * @param showConflicted
          */
         void onEnableMergeConflict(boolean showConflicted, boolean active);
