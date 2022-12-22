@@ -38,7 +38,10 @@ import org.json.JSONException;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by joel on 9/18/2015.
@@ -629,30 +632,38 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public void onConfirmTabsDialog(String targetTranslationId, List<String> sourceTranslationIds) {
+        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
+        if (targetTranslation == null) {
+            return;
+        }
+
         String[] oldSourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
         for(String id:oldSourceTranslationIds) {
             App.removeOpenSourceTranslation(targetTranslationId, id);
         }
 
         if(sourceTranslationIds.size() > 0) {
+            Map<Translation, Integer> sources = new HashMap<>();
+
             // save open source language tabs
             for(String slug:sourceTranslationIds) {
-                Translation t = mLibrary.index().getTranslation(slug);
-                int modifiedAt = mLibrary.getResourceContainerLastModified(t.language.slug, t.project.slug, t.resource.slug);
+                Translation src = mLibrary.index.getTranslation(slug);
+                int modifiedAt = mLibrary.getResourceContainerLastModified(src.language.slug, src.project.slug, src.resource.slug);
+                sources.put(src, modifiedAt);
                 try {
                     App.addOpenSourceTranslation(targetTranslationId, slug);
-                    TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-                    if (targetTranslation != null) {
-                        try {
-                            targetTranslation.addSourceTranslation(t, modifiedAt);
-                        } catch (JSONException e) {
-                            Logger.e(this.getClass().getName(), "Failed to record source translation (" + slug + ") usage in the target translation " + targetTranslation.getId(), e);
-                        }
-                    }
                 } catch (Exception e) {
+                    Logger.e(this.getClass().getName(), "Error while adding source translation " + slug + " for " + targetTranslationId);
                     e.printStackTrace();
                 }
             }
+
+            try {
+                targetTranslation.updateSourceTranslations(sources);
+            } catch (JSONException e) {
+                Logger.e(this.getClass().getName(), "Failed to set source translations for the target translation " + targetTranslation.getId(), e);
+            }
+
             String selectedSourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
             openResourceContainer(selectedSourceTranslationId);
         } else {

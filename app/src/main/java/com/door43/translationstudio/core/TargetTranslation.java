@@ -467,6 +467,22 @@ public class TargetTranslation {
         }
     }
 
+    public void updateSourceTranslations(Map<Translation, Integer> translations) throws JSONException {
+        JSONArray sourcesJson = new JSONArray();
+
+        for (Map.Entry<Translation, Integer> entry : translations.entrySet()) {
+            Translation src = entry.getKey();
+            JSONObject translationJson = new JSONObject();
+            translationJson.put("language_id", src.language.slug);
+            translationJson.put("resource_id", src.resource.slug);
+            translationJson.put("checking_level", src.resource.checkingLevel);
+            translationJson.put("date_modified", entry.getValue());
+            translationJson.put("version", src.resource.version);
+            sourcesJson.put(translationJson);
+            manifest.put(FIELD_SOURCE_TRANSLATIONS, sourcesJson);
+        }
+    }
+
     /**
      * cleanup in case we have duplicates in the list
      * @param sourceTranslationsJson
