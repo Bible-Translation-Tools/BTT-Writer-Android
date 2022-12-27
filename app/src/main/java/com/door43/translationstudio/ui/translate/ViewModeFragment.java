@@ -653,6 +653,16 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     private void setSelectedSources(List<String> sourceSlugs, TargetTranslation targetTranslation) {
         List<SourceTranslation> sources = new ArrayList<>();
         for (String slug : sourceSlugs) {
+            try {
+                App.addOpenSourceTranslation(targetTranslation.getId(), slug);
+            } catch (Exception e) {
+                Logger.e(
+                        this.getClass().getName(),
+                        "Error while adding source " + slug + " for " + targetTranslation.getId()
+                );
+                e.printStackTrace();
+            }
+
             Translation translation = mLibrary.index.getTranslation(slug);
             int modifiedAt = mLibrary.getResourceContainerLastModified(
                     translation.language.slug,
