@@ -31,10 +31,14 @@ jobs:
       run: ./.github/scripts/decrypt_xml.sh
       env:
         LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
-    - name: Acquire resource containers
-      run: wget --no-verbose -O containers.zip "https://btt-writer-resources.s3.amazonaws.com/containers.zip"
+    - name: Acquire resource containers and sqlite
+      run: |
+        wget --no-verbose -O containers.zip "https://btt-writer-resources.s3.amazonaws.com/containers.zip"
+        wget --no-verbose -O index.sqlite "https://btt-writer-resources.s3.amazonaws.com/index.sqlite"      
     - name: move new resource containers where they should go
-      run: if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
+      run: |
+        if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
+        if [ -f index.sqlite ]; then rm ./app/src/main/assets/index.sqlite && mv ./index.sqlite ./app/src/main/assets/index.sqlite; fi
     - name: android 28 env
       run:  echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
     - name: Test with Gradle
@@ -45,7 +49,6 @@ jobs:
         KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
         ALIAS_NAME: ${{ secrets.ALIAS_NAME }}
         ALIAS_PASS: ${{ secrets.ALIAS_PASS }}
-
     - name: move apk
       run: mkdir ./release && mv ./app/build/outputs/apk/release/release.apk ./release/btt-writer.apk
     - name: set s3 destination_dir for release or dev for install4j updates to work
