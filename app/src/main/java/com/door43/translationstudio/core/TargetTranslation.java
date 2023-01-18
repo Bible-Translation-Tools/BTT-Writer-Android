@@ -11,6 +11,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.tools.logger.Logger;
 
+import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
 import com.door43.util.NumericStringComparator;
 import com.door43.util.FileUtilities;
@@ -464,6 +465,25 @@ public class TargetTranslation {
             translationJson.put("version", translation.resource.version);
             sourceTranslationsJson.put(translationJson);
             manifest.put(FIELD_SOURCE_TRANSLATIONS, sourceTranslationsJson);
+        }
+    }
+
+    /**
+     * Sets the list of associated sources for the current target translation.
+     * @param translations the list of source translations
+     * @throws JSONException
+     */
+    public void setSourceTranslations(List<SourceTranslation> translations) throws JSONException {
+        JSONArray sourcesJson = new JSONArray();
+        for (SourceTranslation src : translations) {
+            JSONObject translationJson = new JSONObject();
+            translationJson.put("language_id", src.language.slug);
+            translationJson.put("resource_id", src.resource.slug);
+            translationJson.put("checking_level", src.resource.checkingLevel);
+            translationJson.put("date_modified", src.getModifiedTimestamp());
+            translationJson.put("version", src.resource.version);
+            sourcesJson.put(translationJson);
+            manifest.put(FIELD_SOURCE_TRANSLATIONS, sourcesJson);
         }
     }
 
