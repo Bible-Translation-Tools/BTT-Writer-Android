@@ -124,6 +124,8 @@ public class USXRenderer extends ClickableRenderingEngine {
 
         out = trimWhitespace(out);
         if(isStopped()) return in;
+        out = removeCharTags(out);
+        if(isStopped()) return in;
         if(!mRenderLinebreaks) {
             out = renderLineBreaks(out);  // TODO: Eventually we may want to convert these to paragraphs.
         }
@@ -670,6 +672,12 @@ public class USXRenderer extends ClickableRenderingEngine {
         } else {
             return "";
         }
+    }
+
+    public CharSequence removeCharTags(CharSequence in) {
+        Pattern pattern = Pattern.compile("</?char[^<>]*>");
+        Matcher matcher = pattern.matcher(in);
+        return matcher.replaceAll("");
     }
 
     /**
