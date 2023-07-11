@@ -107,9 +107,7 @@ dependencies {
         exclude group: 'org.unfoldingword.tools', module: 'http'
     }
     implementation 'org.unfoldingword.tools:task-manager:1.5.3'
-    implementation('org.unfoldingword.tools:door43-client:0.10.3') {
-        exclude group: 'org.unfoldingword.tools', module: 'http'
-    }
+    implementation 'org.unfoldingword.tools:resource-container:0.7.19'
     implementation('org.unfoldingword.tools:logger:2.0.0') {
         exclude group: 'org.unfoldingword.tools', module: 'http'
     }
