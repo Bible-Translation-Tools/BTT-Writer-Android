@@ -1557,7 +1557,7 @@ class Library implements Index {
      * @param table the table that will lose all it's data.
      */
     protected void truncateTable(String table) {
-        db.rawQuery("delete from ".concat(table), null);
+        db.rawQuery("delete from ".concat(table), null).moveToNext();
     }
 
     /**
