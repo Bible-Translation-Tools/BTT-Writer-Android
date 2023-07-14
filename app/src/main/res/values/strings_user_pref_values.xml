@@ -40,6 +40,8 @@
 
     <string name="pref_default_reader_server" translatable="false">http://read.bibletranslationtools.org/u</string>
 
+    <string name="pref_default_language_url" translatable="false">https://langnames-temp.walink.org/langnames.json</string>
+
     <string name="pref_default_create_account_url" translatable="false">https://content.bibletranslationtools.org/user/sign_up</string>
 
     <!--<string name="pref_default_export_format" translatable="false">dokuwiki</string>-->
