@@ -354,23 +354,6 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             }
         });
 
-        final Preference languageUrl = findPreference(KEY_PREF_LANGUAGES_URL);
-        languageUrl.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object value) {
-                String newValue = (String) value;
-
-                try {
-                    App.getLibrary().updateLanguageUrl(newValue);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return false;
-                }
-
-                return true;
-            }
-        });
-
         initSettings = false;
     }
 
@@ -437,6 +420,15 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             } else if(preference.getKey().equals(KEY_PREF_LOGGING_LEVEL)) {
                 // TODO: only re-configure if changed
                 App.configureLogger(Integer.parseInt((String)value));
+            }
+
+            if (preference.getKey().equals(KEY_PREF_LANGUAGES_URL)) {
+                try {
+                    App.getLibrary().updateLanguageUrl(stringValue);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
             }
 
             if (preference instanceof ListPreference) {
