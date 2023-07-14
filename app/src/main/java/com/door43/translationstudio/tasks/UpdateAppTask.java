@@ -114,6 +114,14 @@ public class UpdateAppTask extends ManagedTask {
         }
         updateTargetTranslations();
         updateBuildNumbers();
+
+        // initialize the language url (langnames) from preference
+        try {
+            String languageUrl = App.getPref(SettingsActivity.KEY_PREF_LANGUAGES_URL, App.getRes(R.string.pref_default_language_url));
+            App.getLibrary().updateLanguageUrl(languageUrl);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
