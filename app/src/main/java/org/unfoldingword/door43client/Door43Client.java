@@ -101,6 +101,10 @@ public class Door43Client {
         api.updateCatalogs(listener);
     }
 
+    public void updateLanguageUrl(String url) throws Exception {
+        api.updateLanguageUrl(url);
+    }
+
     /**
      * Indexes the chunk markers
      * @param listener

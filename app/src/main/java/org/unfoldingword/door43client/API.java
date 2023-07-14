@@ -185,6 +185,10 @@ class API {
         updateCatalog(c, null);
     }
 
+    public void updateLanguageUrl(String url) {
+        LegacyTools.LANG_NAMES_URL = url;
+    }
+
     /**
      * Downloads a global catalog and indexes it.
      *
