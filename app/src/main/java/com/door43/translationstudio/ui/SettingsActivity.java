@@ -319,6 +319,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                 EditTextPreference langNameUrl = (EditTextPreference) findPreference(KEY_PREF_LANGUAGES_URL);
                 langNameUrl.setText(langNameUrls[index]);
                 langNameUrl.setSummary(langNameUrls[index]);
+                langNameUrl.getOnPreferenceChangeListener().onPreferenceChange(langNameUrl, langNameUrls[index]); // triggers the listener of language url
 
                 return true;
             }
