@@ -186,7 +186,7 @@ class API {
     }
 
     public void updateLanguageUrl(String url) {
-        LegacyTools.LANG_NAMES_URL = url;
+        LegacyTools.setLangNamesUrl(url);
     }
 
     /**

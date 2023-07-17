@@ -28,7 +28,7 @@ import java.util.Map;
 class LegacyTools {
 
     /** Defines a configurable languages URL to be used when updating catalogs */
-    public static String LANG_NAMES_URL = "https://langnames-temp.walink.org/langnames.json";
+    private static String LANG_NAMES_URL = "https://langnames-temp.walink.org/langnames.json";
 
     /**
      *
@@ -61,6 +61,8 @@ class LegacyTools {
         // tA
         updateTA(library, listener);
     }
+
+    public static void setLangNamesUrl(String url) { LANG_NAMES_URL = url; }
 
     /**
      * Pads a slug to 2 significant digits.
