@@ -362,11 +362,6 @@ public class NewTargetTranslationActivity extends BaseActivity implements Target
         } else {
             menu.findItem(R.id.action_update).setVisible(false);
         }
-        if(mFragment instanceof TargetLanguageListFragment) {
-            menu.findItem(R.id.action_add_language).setVisible(true);
-        } else {
-            menu.findItem(R.id.action_add_language).setVisible(false);
-        }
         SearchManager searchManager = (SearchManager)getSystemService(Context.SEARCH_SERVICE);
         final MenuItem searchMenuItem = menu.findItem(R.id.action_search);
         final SearchView searchViewAction = (SearchView) MenuItemCompat.getActionView(searchMenuItem);

@@ -13,7 +13,10 @@
         android:orderInCategory="200"
         android:title="@string/request_new_language"
         android:icon="@drawable/ic_add_white_24dp"
-        app:showAsAction="ifRoom"/>
+        android:checkable="false"
+        android:enabled="false"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_update"
         android:orderInCategory="300"
