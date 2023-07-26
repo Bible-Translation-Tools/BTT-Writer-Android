@@ -28,7 +28,7 @@ import java.util.Map;
 class LegacyTools {
 
     /** Defines a configurable languages URL to be used when updating catalogs */
-    private static String LANG_NAMES_URL = "https://langnames-temp.walink.org/langnames.json";
+    private static String LANG_NAMES_URL = "https://langnames.bibleineverylanguage.org/langnames.json";
 
     /**
      *
