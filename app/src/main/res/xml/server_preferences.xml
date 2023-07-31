@@ -52,4 +52,9 @@
         android:key="create_account_url"
         android:title="@string/pref_title_create_account_url"
         android:defaultValue="@string/pref_default_create_account_url"/>
+
+    <EditTextPreference
+        android:key="lang_names_url"
+        android:title="@string/pref_title_language_url"
+        android:defaultValue="@string/pref_default_language_url"/>
 </PreferenceScreen>

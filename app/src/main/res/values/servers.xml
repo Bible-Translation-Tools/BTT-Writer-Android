@@ -40,4 +40,9 @@
         <item>https://content.bibletranslationtools.org/user/sign_up</item>
         <item>https://git.door43.org/user/sign_up</item>
     </string-array>
+
+    <string-array name="content_server_lang_names_url_array">
+        <item>https://langnames.bibleineverylanguage.org/langnames.json</item>
+        <item>https://td.unfoldingword.org/exports/langnames.json</item>
+    </string-array>
 </resources>

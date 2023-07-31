@@ -78,6 +78,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     public static final String KEY_PREF_MEDIA_SERVER = "media_server";
     public static final String KEY_PREF_READER_SERVER = "reader_server";
     public static final String KEY_PREF_CREATE_ACCOUNT_URL = "create_account_url";
+    public static final String KEY_PREF_LANGUAGES_URL = "lang_names_url";
     public static final String KEY_PREF_COLOR_THEME = "color_theme";
 //    public static final String KEY_PREF_EXPORT_FORMAT = "export_format";
     public static final String KEY_PREF_TRANSLATION_TYPEFACE = "translation_typeface";
@@ -260,6 +261,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_MEDIA_SERVER));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_READER_SERVER));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_CREATE_ACCOUNT_URL));
+        bindPreferenceSummaryToValue(findPreference(KEY_PREF_LANGUAGES_URL));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_LOGGING_LEVEL));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_BACKUP_INTERVAL));
 
@@ -312,6 +314,12 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                 EditTextPreference createAccountUrl = (EditTextPreference) findPreference(KEY_PREF_CREATE_ACCOUNT_URL);
                 createAccountUrl.setText(createAccountUrls[index]);
                 createAccountUrl.setSummary(createAccountUrls[index]);
+
+                String[] langNameUrls = getResources().getStringArray(R.array.content_server_lang_names_url_array);
+                EditTextPreference langNameUrl = (EditTextPreference) findPreference(KEY_PREF_LANGUAGES_URL);
+                langNameUrl.setText(langNameUrls[index]);
+                langNameUrl.setSummary(langNameUrls[index]);
+                langNameUrl.getOnPreferenceChangeListener().onPreferenceChange(langNameUrl, langNameUrls[index]); // triggers the listener of language url preference
 
                 return true;
             }
@@ -413,6 +421,15 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             } else if(preference.getKey().equals(KEY_PREF_LOGGING_LEVEL)) {
                 // TODO: only re-configure if changed
                 App.configureLogger(Integer.parseInt((String)value));
+            }
+
+            if (preference.getKey().equals(KEY_PREF_LANGUAGES_URL)) {
+                try {
+                    App.getLibrary().updateLanguageUrl(stringValue);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
             }
 
             if (preference instanceof ListPreference) {
@@ -641,6 +658,11 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                         EditTextPreference createAccountUrl = (EditTextPreference) findPreference(KEY_PREF_CREATE_ACCOUNT_URL);
                         createAccountUrl.setText(createAccountUrls[index]);
                         createAccountUrl.setSummary(createAccountUrls[index]);
+
+                        String[] langNameUrls = getResources().getStringArray(R.array.content_server_lang_names_url_array);
+                        EditTextPreference langNameUrl = (EditTextPreference) findPreference(KEY_PREF_LANGUAGES_URL);
+                        langNameUrl.setText(langNameUrls[index]);
+                        langNameUrl.setSummary(langNameUrls[index]);
                     }
                 }
             });
@@ -657,6 +679,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_MEDIA_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_READER_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_CREATE_ACCOUNT_URL));
+            bindPreferenceSummaryToValue(findPreference(KEY_PREF_LANGUAGES_URL));
 
             initSettings = false;
         }
