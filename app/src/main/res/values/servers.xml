@@ -32,7 +32,7 @@
     </string-array>
 
     <string-array name="content_server_reader_server_values_array">
-        <item>https://read.bibletranslationtools.org/u</item>
+        <item>https://read.bibleineverylanguage.org</item>
         <item>https://door43.org/u</item>
     </string-array>
 
