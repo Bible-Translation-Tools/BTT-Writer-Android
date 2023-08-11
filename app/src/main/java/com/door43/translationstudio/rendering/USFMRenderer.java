@@ -14,6 +14,7 @@ import android.text.style.StyleSpan;
 import com.door43.translationstudio.ui.spannables.USFMChar;
 import com.door43.translationstudio.ui.spannables.USFMNoteSpan;
 import com.door43.translationstudio.ui.spannables.Span;
+import com.door43.translationstudio.ui.spannables.USFMParagraphSpan;
 import com.door43.translationstudio.ui.spannables.USFMVersePinSpan;
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
 
@@ -33,6 +34,7 @@ public class USFMRenderer extends ClickableRenderingEngine {
     private Span.OnClickListener mNoteListener;
     private Span.OnClickListener mVerseListener;
     private boolean mRenderLinebreaks = false;
+    private boolean mRenderParagraphs = true;
     private boolean mRenderVerses = true;
     private String mSearch;
     private int mHighlightColor = 0;
@@ -72,6 +74,15 @@ public class USFMRenderer extends ClickableRenderingEngine {
      */
     public void setLinebreaksEnabled(boolean enable) {
         mRenderLinebreaks = enable;
+    }
+
+    /**
+     * if set to true, then paragraphs (\p) will be rendered in the output.
+     *
+     * @param enable default is true
+     */
+    public void setParagraphsEnabled(boolean enable) {
+        mRenderParagraphs = enable;
     }
 
     /**
@@ -130,6 +141,8 @@ public class USFMRenderer extends ClickableRenderingEngine {
         out = renderMajorSectionHeading(out);
         if(isStopped()) return in;
         out = renderSectionHeading(out);
+        if(isStopped()) return in;
+        out = renderParagraphMarker(out);
         if(isStopped()) return in;
         out = renderParagraph(out);
         if(isStopped()) return in;
@@ -520,6 +533,32 @@ public class USFMRenderer extends ClickableRenderingEngine {
     }
 
     /**
+     * Replaces paragraph marker with new line
+     * @param in
+     * @return
+     */
+    public CharSequence renderParagraphMarker(CharSequence in) {
+        CharSequence out = "";
+        Pattern pattern = Pattern.compile(USFMParagraphSpan.PATTERN, Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(in);
+        int lastIndex = 0;
+        while(matcher.find()) {
+            if(isStopped()) return in;
+
+            if (mRenderParagraphs) {
+                USFMParagraphSpan span = new USFMParagraphSpan();
+                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), span.toCharSequence());
+            } else {
+                // just display \p marker
+                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
+            }
+            lastIndex = matcher.end();
+        }
+        out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
+        return out;
+    }
+
+    /**
      * Renders all blank line tags
      * @param in
      * @return
@@ -664,7 +703,7 @@ public class USFMRenderer extends ClickableRenderingEngine {
      * Return the leading section heading, if any. Non-leading major section headings, and leading
      * headings of other types, are not included.
      *
-     * @see http://ubs-icap.org/chm/usfm/2.4/paragraphs.htm
+     * @see <a href="http://ubs-icap.org/chm/usfm/2.4/paragraphs.htm">paragraphs</a>
      * @param in The string to examine for a leading major section heading.
      * @return The leading major section heading; or the empty string if there is none.
      */
