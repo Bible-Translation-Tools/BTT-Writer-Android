@@ -17,4 +17,5 @@ public interface OnResourceClickListener {
     void onSourceTabSelected(String sourceTranslationId);
     void onChooseSourceButtonSelected();
     void onTapResourceCard();
+    void onSourceRemoveClicked(String sourceTranslationId);
 }

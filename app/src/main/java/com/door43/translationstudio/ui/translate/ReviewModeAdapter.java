@@ -1,5 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
+import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
+
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ContentValues;
@@ -184,6 +186,13 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     public void onSourceTabSelected(String sourceTranslationId) {
         if(getListener() != null) {
             getListener().onSourceTranslationTabClick(sourceTranslationId);
+        }
+    }
+
+    @Override
+    public void onSourceRemoveClicked(String sourceTranslationId) {
+        if(getListener() != null) {
+            getListener().onSourceRemoveClicked(sourceTranslationId);
         }
     }
 
@@ -468,6 +477,12 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         }
 
         holder.renderSourceTabs(mTabs);
+
+        if (mTabs.length >= MAX_SOURCE_ITEMS) {
+            holder.mNewTabButton.setVisibility(View.GONE);
+        } else {
+            holder.mNewTabButton.setVisibility(View.VISIBLE);
+        }
     }
 
     /**
