@@ -608,7 +608,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     @Override
-    public void onSourceRemoveClicked(String sourceTranslationId) {
+    public void onSourceRemoveButtonClicked(String sourceTranslationId) {
         String targetTranslationId = mTargetTranslation.getId();
 
         TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);

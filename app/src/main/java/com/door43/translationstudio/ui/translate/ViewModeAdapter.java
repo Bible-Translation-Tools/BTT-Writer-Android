@@ -20,7 +20,7 @@ import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.tasks.CheckForMergeConflictsTask;
-import com.door43.translationstudio.ui.translate.review.OnResourceClickListener;
+import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
 import org.unfoldingword.door43client.models.Translation;
@@ -428,52 +428,29 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         return false;
     }
 
-    public static View createRemovableTabLayout(Context context, final OnResourceClickListener listener, String tag, String title) {
-        View root = createRemovableTabLayout(context, tag, title);
-        Button closeBtn = root.findViewById(R.id.close);
-        closeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final String sourceTranslationId = (String) view.getTag();
-                if (listener != null) {
-                    listener.onSourceRemoveClicked(sourceTranslationId);
-                }
-            }
-        });
-
-        return root;
-    }
-
-    public static View createRemovableTabLayout(Context context, final OnEventListener listener, String tag, String title) {
-        View root = createRemovableTabLayout(context, tag, title);
-        Button closeBtn = root.findViewById(R.id.close);
-        closeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final String sourceTranslationId = (String) view.getTag();
-                if (listener != null) {
-                    listener.onSourceRemoveClicked(sourceTranslationId);
-                }
-            }
-        });
-
-        return root;
-    }
-
-    private static View createRemovableTabLayout(Context context, String tag, String title) {
+    public static View createRemovableTabLayout(Context context, final OnViewModeListener listener, String tag, String title) {
         View root = LayoutInflater.from(context).inflate(R.layout.removable_tab, null);
         TextView tabText = root.findViewById(R.id.tab);
+        tabText.setText(title);
+
         Button closeBtn = root.findViewById(R.id.close);
         closeBtn.setTag(tag);
-        tabText.setText(title);
+
+        closeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final String sourceTranslationId = (String) view.getTag();
+                if (listener != null) {
+                    listener.onSourceRemoveButtonClicked(sourceTranslationId);
+                }
+            }
+        });
 
         return root;
     }
 
-    public interface OnEventListener {
-        void onSourceTranslationTabClick(String sourceTranslationId);
-        void onSourceRemoveClicked(String sourceTranslationId);
-        void onNewSourceTranslationTabClick();
+
+    public interface OnEventListener extends OnViewModeListener {
         void closeKeyboard();
         void openTranslationMode(TranslationViewMode mode, Bundle extras);
         void onTranslationWordClick(String resourceContainerSlug, String chapterSlug, int width);

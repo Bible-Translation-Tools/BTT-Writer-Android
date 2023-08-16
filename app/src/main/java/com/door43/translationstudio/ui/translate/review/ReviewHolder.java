@@ -572,7 +572,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             public void onTabSelected(TabLayout.Tab tab) {
                 final String sourceTranslationId = (String) tab.getTag();
                 if (mListener != null) {
-                    mListener.onSourceTabSelected(sourceTranslationId);
+                    mListener.onSourceTranslationTabClick(sourceTranslationId);
                 }
             }
 
@@ -592,7 +592,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
-                    mListener.onChooseSourceButtonSelected();
+                    mListener.onNewSourceTranslationTabClick();
                 }
             }
         });

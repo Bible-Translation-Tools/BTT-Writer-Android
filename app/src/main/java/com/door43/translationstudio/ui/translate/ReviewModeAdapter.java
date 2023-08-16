@@ -183,23 +183,23 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     @Override
-    public void onSourceTabSelected(String sourceTranslationId) {
+    public void onSourceTranslationTabClick(String sourceTranslationId) {
         if(getListener() != null) {
             getListener().onSourceTranslationTabClick(sourceTranslationId);
         }
     }
 
     @Override
-    public void onSourceRemoveClicked(String sourceTranslationId) {
+    public void onNewSourceTranslationTabClick() {
         if(getListener() != null) {
-            getListener().onSourceRemoveClicked(sourceTranslationId);
+            getListener().onNewSourceTranslationTabClick();
         }
     }
 
     @Override
-    public void onChooseSourceButtonSelected() {
+    public void onSourceRemoveButtonClicked(String sourceTranslationId) {
         if(getListener() != null) {
-            getListener().onNewSourceTranslationTabClick();
+            getListener().onSourceRemoveButtonClicked(sourceTranslationId);
         }
     }
 
