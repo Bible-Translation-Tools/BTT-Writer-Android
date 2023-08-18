@@ -30,8 +30,8 @@ android {
         applicationId "org.bibletranslationtools.writer.android"
         minSdkVersion 15
         targetSdkVersion 28
-        versionCode 14
-        versionName "1.2.0"
+        versionCode 15
+        versionName "1.2.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     } 
     buildTypes {
