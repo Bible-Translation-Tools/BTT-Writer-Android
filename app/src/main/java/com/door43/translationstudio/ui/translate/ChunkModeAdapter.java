@@ -602,6 +602,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
     private CharSequence renderText(String text, TranslationFormat format, boolean enableSearch) {
         RenderingGroup renderingGroup = new RenderingGroup();
+
         if (Clickables.isClickableFormat(format)) {
             // TODO: add click listeners for verses and notes
             Span.OnClickListener noteClickListener = new Span.OnClickListener() {
@@ -623,16 +624,16 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             };
             ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(format, renderingGroup, null, noteClickListener, true);
             renderer.setVersesEnabled(false);
-            if( enableSearch ) {
-                renderingGroup.setSearchString(filterConstraint, HIGHLIGHT_COLOR);
-            }
+            renderer.setParagraphsEnabled(false);
         } else {
             // TODO: add note click listener
             renderingGroup.addEngine(new DefaultRenderer(null));
-            if( enableSearch ) {
-                renderingGroup.setSearchString(filterConstraint, HIGHLIGHT_COLOR);
-            }
         }
+
+        if( enableSearch ) {
+            renderingGroup.setSearchString(filterConstraint, HIGHLIGHT_COLOR);
+        }
+
         renderingGroup.init(text);
         return renderingGroup.start();
     }

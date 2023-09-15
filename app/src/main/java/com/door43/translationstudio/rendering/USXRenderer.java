@@ -32,6 +32,7 @@ public class USXRenderer extends ClickableRenderingEngine {
     private Span.OnClickListener mNoteListener;
     private Span.OnClickListener mVerseListener;
     private boolean mRenderLinebreaks = false;
+    private boolean mRenderParagraphs = true;
     private boolean mRenderVerses = true;
     private String mSearch;
     private int mHighlightColor = 0;
@@ -75,6 +76,15 @@ public class USXRenderer extends ClickableRenderingEngine {
      */
     public void setLinebreaksEnabled(boolean enable) {
         mRenderLinebreaks = enable;
+    }
+
+    /**
+     * if set to true, then paragraphs (\p) will be rendered in the output.
+     *
+     * @param enable default is true
+     */
+    public void setParagraphsEnabled(boolean enable) {
+        mRenderParagraphs = enable;
     }
 
     /**
@@ -128,8 +138,8 @@ public class USXRenderer extends ClickableRenderingEngine {
         if(isStopped()) return in;
         if(!mRenderLinebreaks) {
             out = renderLineBreaks(out);  // TODO: Eventually we may want to convert these to paragraphs.
+            if(isStopped()) return in;
         }
-        if(isStopped()) return in;
 //        out = renderWhiteSpace(out);
         out = renderMajorSectionHeading(out);
         if(isStopped()) return in;

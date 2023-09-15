@@ -1530,6 +1530,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     private CharSequence renderTargetText(String text, TranslationFormat format, final FrameTranslation frameTranslation, final ReviewHolder holder, final ReviewListItem item) {
         RenderingGroup renderingGroup = new RenderingGroup();
         boolean enableSearch = mSearchText != null && searchSubject != null && searchSubject == SearchSubject.TARGET;
+
         if(Clickables.isClickableFormat(format)) {
             Span.OnClickListener verseClickListener = new Span.OnClickListener() {
                 @Override
@@ -1659,17 +1660,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(format, renderingGroup, verseClickListener, noteClickListener, true);
             renderer.setLinebreaksEnabled(true);
             renderer.setPopulateVerseMarkers(Frame.getVerseRange(item.sourceText, item.sourceTranslationFormat));
-            if(enableSearch) {
-                renderingGroup.setSearchString(mSearchText, HIGHLIGHT_COLOR);
-            }
-
         } else {
             // TODO: add note click listener
             renderingGroup.addEngine(new DefaultRenderer(null));
-            if(enableSearch) {
-                renderingGroup.setSearchString(mSearchText, HIGHLIGHT_COLOR);
-            }
         }
+
+        if(enableSearch) {
+            renderingGroup.setSearchString(mSearchText, HIGHLIGHT_COLOR);
+        }
+
         if((text != null) && !text.trim().isEmpty()) {
             renderingGroup.init(text);
             CharSequence results = renderingGroup.start();
@@ -1907,20 +1906,19 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             if(editable) {
                 if(!item.isComplete) {
                     renderingGroup.setVersesEnabled(false);
+                    renderingGroup.setParagraphsEnabled(false);
                 }
                 renderingGroup.setLinebreaksEnabled(true);
-            }
-
-            if( enableSearch ) {
-                renderingGroup.setSearchString(mSearchText, HIGHLIGHT_COLOR);
             }
         } else {
             // TODO: add note click listener
             renderingGroup.addEngine(new DefaultRenderer(null));
-            if( enableSearch ) {
-                renderingGroup.setSearchString(mSearchText, HIGHLIGHT_COLOR);
-            }
         }
+
+        if( enableSearch ) {
+            renderingGroup.setSearchString(mSearchText, HIGHLIGHT_COLOR);
+        }
+
         renderingGroup.init(text);
         CharSequence results = renderingGroup.start();
         item.hasMissingVerses = renderingGroup.isAddedMissingVerse();

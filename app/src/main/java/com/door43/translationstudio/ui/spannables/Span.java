@@ -16,14 +16,15 @@ import com.door43.widget.LongClickableSpan;
 public abstract class Span {
     private CharSequence mHumanReadable;
     private CharSequence mMachineReadable;
+    private Boolean mClickable = true;
     private OnClickListener mClickListener;
     private Bundle extras;
 
     /**
      * Creates a new empty span.
      * This is useful for classes that extends this class because they may need to perform
-     * some proccesing before fully initializing.
-     * You should manualy call init() if using this constructor
+     * some processing before fully initializing.
+     * You should manually call init() if using this constructor
      */
     public Span() {
         init("", "");
@@ -44,6 +45,10 @@ public abstract class Span {
 
     public void setExtras(Bundle extras) {
         this.extras = extras;
+    }
+
+    public void setClickable(boolean clickable) {
+        this.mClickable = clickable;
     }
 
     /**
@@ -81,30 +86,33 @@ public abstract class Span {
         }
         if (spannable.length() > 0) {
             spannable.setSpan(new SpannedString(mMachineReadable), 0, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            LongClickableSpan clickSpan = new LongClickableSpan() {
-                @Override
-                public void onLongClick(View view) {
-                    if(mClickListener != null) {
-                        TextView tv = (TextView)view;
-                        Spanned s = (Spanned)tv.getText();
-                        int start = s.getSpanStart(this);
-                        int end = s.getSpanEnd(this);
-                        mClickListener.onLongClick(view, Span.this, start, end);
-                    }
-                }
 
-                @Override
-                public void onClick(View view) {
-                    if (mClickListener != null) {
-                        TextView tv = (TextView)view;
-                        Spanned s = (Spanned)tv.getText();
-                        int start = s.getSpanStart(this);
-                        int end = s.getSpanEnd(this);
-                        mClickListener.onClick(view, Span.this, start, end);
+            if (mClickable) {
+                LongClickableSpan clickSpan = new LongClickableSpan() {
+                    @Override
+                    public void onLongClick(View view) {
+                        if(mClickListener != null) {
+                            TextView tv = (TextView)view;
+                            Spanned s = (Spanned)tv.getText();
+                            int start = s.getSpanStart(this);
+                            int end = s.getSpanEnd(this);
+                            mClickListener.onLongClick(view, Span.this, start, end);
+                        }
                     }
-                }
-            };
-            spannable.setSpan(clickSpan, 0, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                    @Override
+                    public void onClick(View view) {
+                        if (mClickListener != null) {
+                            TextView tv = (TextView)view;
+                            Spanned s = (Spanned)tv.getText();
+                            int start = s.getSpanStart(this);
+                            int end = s.getSpanEnd(this);
+                            mClickListener.onClick(view, Span.this, start, end);
+                        }
+                    }
+                };
+                spannable.setSpan(clickSpan, 0, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
         }
         return spannable;
     }
