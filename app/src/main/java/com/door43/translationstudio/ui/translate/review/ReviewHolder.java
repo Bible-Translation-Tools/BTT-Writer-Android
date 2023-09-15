@@ -82,7 +82,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     private final CardView mTargetCard;
     private final CardView mSourceCard;
     private final TabLayout mTranslationTabs;
-    private final ImageButton mNewTabButton;
+    public final ImageButton mNewTabButton;
     public TextView mSourceBody;
     private List<TextView> mMergeText;
     public final LinearLayout mMergeConflictLayout;
@@ -545,10 +545,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         mTranslationTabs.setOnTabSelectedListener(null);
         mTranslationTabs.removeAllTabs();
         for(ContentValues values:tabs) {
-            TabLayout.Tab tab = mTranslationTabs.newTab();
+            String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            tab.setText(title);
-            tab.setTag(values.getAsString("tag"));
+            View tabLayout = ViewModeAdapter.createRemovableTabLayout(mContext, mListener, tag, title);
+
+            TabLayout.Tab tab = mTranslationTabs.newTab();
+            tab.setTag(tag);
+            tab.setCustomView(tabLayout);
             mTranslationTabs.addTab(tab);
 
             ViewModeAdapter.applyLanguageTypefaceToTab(mContext, mTranslationTabs, values, title);
@@ -569,7 +572,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             public void onTabSelected(TabLayout.Tab tab) {
                 final String sourceTranslationId = (String) tab.getTag();
                 if (mListener != null) {
-                    mListener.onSourceTabSelected(sourceTranslationId);
+                    mListener.onSourceTranslationTabClick(sourceTranslationId);
                 }
             }
 
@@ -583,12 +586,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             }
         });
+
         // change tabs listener
         mNewTabButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
-                    mListener.onChooseSourceButtonSelected();
+                    mListener.onNewSourceTranslationTabClick();
                 }
             }
         });

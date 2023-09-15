@@ -608,6 +608,27 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     @Override
+    public void onSourceRemoveButtonClicked(String sourceTranslationId) {
+        String targetTranslationId = mTargetTranslation.getId();
+
+        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
+        if (targetTranslation == null) {
+            return;
+        }
+
+        App.removeOpenSourceTranslation(targetTranslationId, sourceTranslationId);
+
+        String[] sourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
+
+        if (sourceTranslationIds.length > 0) {
+            String selectedSourceId = App.getSelectedSourceTranslationId(targetTranslationId);
+            openResourceContainer(selectedSourceId);
+        } else {
+            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+        }
+    }
+
+    @Override
     public void onNewSourceTranslationTabClick() {
         FragmentTransaction ft = getFragmentManager().beginTransaction();
         Fragment prev = getFragmentManager().findFragmentByTag("tabsDialog");
