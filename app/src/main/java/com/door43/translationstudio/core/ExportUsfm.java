@@ -94,12 +94,18 @@ public class ExportUsfm {
 
         String id = "\\id " + bookCode + " " + bookTitle + ", " + bookName + ", " + (languageId + ", " + languageName);
         ps.println(id);
+        String ide = "\\ide usfm";
+        ps.println(ide);
+        String h = "\\h " + bookTitle;
+        ps.println(h);
         String bookID = "\\toc1 " + bookTitle;
         ps.println(bookID);
         String bookNameID = "\\toc2 " + bookName;
         ps.println(bookNameID);
         String shortBookID = "\\toc3 " + bookCode;
         ps.println(shortBookID);
+        String mt = "\\mt " + bookTitle;
+        ps.println(mt);
 
         for(ChapterTranslation chapter:chapters) {
             // TRICKY: the translation format doesn't matter for exporting
@@ -129,8 +135,6 @@ public class ExportUsfm {
                 FrameTranslation frame = frameList.get(0);
                 int verseID = Util.strToInt(frame.getId(),0);
                 if((verseID == 0)) {
-                    String text = frame.body;
-                    ps.print(text);
                     startChunk++;
                 }
             }

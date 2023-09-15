@@ -1,5 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
+import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
+
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
 import com.google.android.material.tabs.TabLayout;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
@@ -309,10 +312,13 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         holder.mTabLayout.setOnTabSelectedListener(null);
         holder.mTabLayout.removeAllTabs();
         for(ContentValues values:mTabs) {
-            TabLayout.Tab tab = holder.mTabLayout.newTab();
+            String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            tab.setText(title);
-            tab.setTag(values.getAsString("tag"));
+            View tabLayout = createRemovableTabLayout(mContext, getListener(), tag, title);
+
+            TabLayout.Tab tab = holder.mTabLayout.newTab();
+            tab.setTag(tag);
+            tab.setCustomView(tabLayout);
             holder.mTabLayout.addTab(tab);
 
             ViewModeAdapter.applyLanguageTypefaceToTab(mContext, holder.mTabLayout, values, title);
@@ -406,7 +412,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
         ViewUtil.makeLinksClickable(holder.mSourceBody);
 
-
+        if (mTabs.length >= MAX_SOURCE_ITEMS) {
+            holder.mNewTabButton.setVisibility(View.GONE);
+        } else {
+            holder.mNewTabButton.setVisibility(View.VISIBLE);
+        }
     }
 
     /**
