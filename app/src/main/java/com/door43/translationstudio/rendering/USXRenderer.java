@@ -134,8 +134,6 @@ public class USXRenderer extends ClickableRenderingEngine {
 
         out = trimWhitespace(out);
         if(isStopped()) return in;
-        out = removeCharTags(out);
-        if(isStopped()) return in;
         if(!mRenderLinebreaks) {
             out = renderLineBreaks(out);  // TODO: Eventually we may want to convert these to paragraphs.
             if(isStopped()) return in;
@@ -164,6 +162,8 @@ public class USXRenderer extends ClickableRenderingEngine {
         out = renderSelah(out);
         if(isStopped()) return in;
         out = renderBrokenMarkers(out);
+        if(isStopped()) return in;
+        out = renderCharTags(out);
         if(isStopped()) return in;
 
         return out;
@@ -684,10 +684,26 @@ public class USXRenderer extends ClickableRenderingEngine {
         }
     }
 
-    public CharSequence removeCharTags(CharSequence in) {
-        Pattern pattern = Pattern.compile("</?char[^<>]*>");
+    public CharSequence renderCharTags(CharSequence in) {
+        CharSequence out = "";
+        // Look for `char` tags that are not inside `<note>` tag
+        // Using {0,9} for spaces and {0,99} for tag attributes and text, because lookaround regex
+        // accepts only fixed sized quantifiers
+        String charRegex = "<char([^>]+)>([^<>]*)</char>";
+        String charLookBehindRegex = "(?:<char(?:[^>]{0,999})>(?:[^<>]{0,999})</char>){0,99}";
+        Pattern pattern = Pattern.compile("(?<!<note[^>]{0,999}>\\s{0,9}"+charLookBehindRegex+"\\s{0,9})"+charRegex+"(?!\\s*</note>)");
         Matcher matcher = pattern.matcher(in);
-        return matcher.replaceAll("");
+
+        int lastIndex = 0;
+        while(matcher.find()) {
+            if(isStopped()) return in;
+            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), matcher.group(2));
+            lastIndex = matcher.end();
+        }
+
+        out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
+
+        return out;
     }
 
     /**
