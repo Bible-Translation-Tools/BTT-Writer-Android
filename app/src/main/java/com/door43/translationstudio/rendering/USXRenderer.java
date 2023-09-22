@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.text.style.AlignmentSpan;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.StyleSpan;
+import android.util.Pair;
 
 import com.door43.translationstudio.ui.spannables.USXChar;
 import com.door43.translationstudio.ui.spannables.USXNoteSpan;
@@ -686,24 +687,45 @@ public class USXRenderer extends ClickableRenderingEngine {
 
     public CharSequence renderCharTags(CharSequence in) {
         CharSequence out = "";
-        // Look for `char` tags that are not inside `<note>` tag
-        // Using {0,9} for spaces and {0,99} for tag attributes and text, because lookaround regex
-        // accepts only fixed sized quantifiers
-        String charRegex = "<char([^>]+)>([^<>]*)</char>";
-        String charLookBehindRegex = "(?:<char(?:[^>]{0,999})>(?:[^<>]{0,999})</char>){0,99}";
-        Pattern pattern = Pattern.compile("(?<!<note[^>]{0,999}>\\s{0,9}"+charLookBehindRegex+"\\s{0,9})"+charRegex+"(?!\\s*</note>)");
-        Matcher matcher = pattern.matcher(in);
+
+        // Find and cache note tag positions first
+        Pattern notePattern = Pattern.compile(USXNoteSpan.PATTERN);
+        Matcher noteMatcher = notePattern.matcher(in);
+        List<Pair<Integer, Integer>> notes = new ArrayList<>();
+
+        while(noteMatcher.find()) {
+            if(isStopped()) return in;
+            notes.add(Pair.create(noteMatcher.start(), noteMatcher.end()));
+        }
+
+        Pattern charPattern = Pattern.compile(USXChar.PATTERN);
+        Matcher charMatcher = charPattern.matcher(in);
 
         int lastIndex = 0;
-        while(matcher.find()) {
+        while(charMatcher.find()) {
             if(isStopped()) return in;
-            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), matcher.group(2));
-            lastIndex = matcher.end();
+
+            // Check if this char is a note char, so we can ignore it and not process as a single char
+            if (isCharInNote(charMatcher.start(), charMatcher.end(), notes)) {
+                continue;
+            }
+
+            out = TextUtils.concat(out, in.subSequence(lastIndex, charMatcher.start()), charMatcher.group(USXChar.CHAR_TEXT_GROUP));
+            lastIndex = charMatcher.end();
         }
 
         out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
 
         return out;
+    }
+
+    private boolean isCharInNote(Integer start, Integer end, List<Pair<Integer, Integer>> notes) {
+        for (Pair<Integer, Integer> note: notes) {
+            if (start >= note.first && end <= note.second) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
