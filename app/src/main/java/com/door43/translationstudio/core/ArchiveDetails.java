@@ -49,7 +49,7 @@ public class ArchiveDetails {
      */
     public static ArchiveDetails newInstance(InputStream archiveStream, String preferredLocale, Door43Client library) throws Exception {
         if(archiveStream != null) {
-            File tempFile = File.createTempFile("targettranslation", "." + Translator.ARCHIVE_EXTENSION);
+            File tempFile = File.createTempFile("targettranslation", "." + Translator.TSTUDIO_EXTENSION);
             FileUtilities.copyInputStreamToFile(archiveStream, tempFile);
 
             String rawManifest = Zip.read(tempFile, MANIFEST_JSON);

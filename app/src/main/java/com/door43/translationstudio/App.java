@@ -544,7 +544,7 @@ public class App extends Application {
                 name += "." + sdf.format(new Date());
             }
 
-            String archiveExtension = Translator.ARCHIVE_EXTENSION;
+            String archiveExtension = Translator.TSTUDIO_EXTENSION;
             if (orphaned) {
                 archiveExtension = Translator.ZIP_EXTENSION;
             }

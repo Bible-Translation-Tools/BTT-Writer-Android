@@ -139,7 +139,7 @@ public class DocumentFileItem {
         return !isUpButton
                 && file != null
                 && !file.isDirectory()
-                && FileUtilities.getExtension(file.getName()).equalsIgnoreCase(Translator.ARCHIVE_EXTENSION);
+                && FileUtilities.getExtension(file.getName()).equalsIgnoreCase(Translator.TSTUDIO_EXTENSION);
     }
 
     /**

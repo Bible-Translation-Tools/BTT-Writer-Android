@@ -37,7 +37,7 @@ import org.unfoldingword.resourcecontainer.Resource;
 public class Translator {
     private static final int TSTUDIO_PACKAGE_VERSION = 2;
     private static final String GENERATOR_NAME = "ts-android";
-    public static final String ARCHIVE_EXTENSION = "tstudio";
+    public static final String TSTUDIO_EXTENSION = "tstudio";
     public static final String ZIP_EXTENSION = "zip";
     public static final String TAG = Translator.class.getName();
 
@@ -329,7 +329,7 @@ public class Translator {
      */
     public void exportArchive(TargetTranslation targetTranslation, OutputStream out, String fileName) throws Exception {
         if (!isValidArchiveExtension(fileName)) {
-            throw new Exception("Output file must have '" + ARCHIVE_EXTENSION + "' or '" + ZIP_EXTENSION + "' extension");
+            throw new Exception("Output file must have '" + TSTUDIO_EXTENSION + "' or '" + ZIP_EXTENSION + "' extension");
         }
         if(targetTranslation == null) {
             throw new Exception("Not a valid target translation");
@@ -360,7 +360,7 @@ public class Translator {
 
     public void exportArchive(File projectDir, File outputFile) throws Exception {
         if (!isValidArchiveExtension(outputFile.getPath())) {
-            throw new Exception("Output file must have '" + ARCHIVE_EXTENSION + "' or '" + ZIP_EXTENSION + "' extension");
+            throw new Exception("Output file must have '" + TSTUDIO_EXTENSION + "' or '" + ZIP_EXTENSION + "' extension");
         }
         if(!projectDir.exists()) {
             throw new Exception("Project directory doesn't exist.");
@@ -610,7 +610,7 @@ public class Translator {
      * @return boolean
      */
     private boolean isValidArchiveExtension(String fileName) {
-        boolean isTstudio = FileUtilities.getExtension(fileName).equalsIgnoreCase(ARCHIVE_EXTENSION);
+        boolean isTstudio = FileUtilities.getExtension(fileName).equalsIgnoreCase(TSTUDIO_EXTENSION);
         boolean isZip = FileUtilities.getExtension(fileName).equalsIgnoreCase(ZIP_EXTENSION);
 
         return isTstudio || isZip;

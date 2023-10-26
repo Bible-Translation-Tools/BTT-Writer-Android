@@ -15,7 +15,6 @@ import org.unfoldingword.tools.taskmanager.ManagedTask;
 
 
 import java.io.File;
-import java.util.Locale;
 
 /**
  * Created by blm on 5/13/16.
@@ -54,7 +53,7 @@ public class ExamineImportsForCollisionsTask extends ManagedTask {
     public void start() {
         mSuccess = false;
         try {
-            mProjectsFolder = File.createTempFile("targettranslation", "." + Translator.ARCHIVE_EXTENSION);
+            mProjectsFolder = File.createTempFile("targettranslation", "." + Translator.TSTUDIO_EXTENSION);
             FileUtilities.copyInputStreamToFile(resolver.openInputStream(mContentUri), mProjectsFolder);
             ArchiveDetails details = ArchiveDetails.newInstance(mProjectsFolder, App.getDeviceLanguageCode(), App.getLibrary());
             mProjectsFound = "";
