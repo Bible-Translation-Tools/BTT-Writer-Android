@@ -201,6 +201,16 @@ public class Translator {
     }
 
     /**
+     * Deletes a target translation from the device
+     * @param projectDir
+     */
+    public void deleteTargetTranslation(File projectDir) {
+        if(projectDir.exists()) {
+            FileUtilities.safeDelete(projectDir);
+        }
+    }
+
+    /**
      * Compiles all the editable text back into source that could be either USX or USFM.  It replaces
      *   the displayed text in spans with their mark-ups.
      * @param text
@@ -344,6 +354,23 @@ public class Translator {
         } finally {
             FileUtilities.closeQuietly(out);
             FileUtilities.deleteQuietly(tempCache);
+        }
+    }
+
+    public void exportArchive(File projectDir, File outputFile) throws Exception {
+        if(!FileUtilities.getExtension(outputFile.getPath()).equalsIgnoreCase(ARCHIVE_EXTENSION)) {
+            throw new Exception("Output file must have '" + ARCHIVE_EXTENSION + "' extension");
+        }
+        if(!projectDir.exists()) {
+            throw new Exception("Project directory doesn't exist.");
+        }
+        FileOutputStream outputStream = new FileOutputStream(outputFile);
+        BufferedOutputStream out = new BufferedOutputStream(outputStream);
+
+        try {
+            Zip.zipToStream(new File[]{projectDir}, out);
+        } finally {
+            FileUtilities.closeQuietly(out);
         }
     }
 

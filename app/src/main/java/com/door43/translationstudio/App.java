@@ -582,6 +582,40 @@ public class App extends Application {
     }
 
     /**
+     * Creates a backup of a project directory in all the right places
+     * @param projectDir the project directory that will be backed up
+     * @return true if the backup was actually performed
+     */
+    public static boolean backupTargetTranslation(File projectDir) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US);
+        String name = projectDir.getName() + "." + sdf.format(new Date());;
+
+        // backup locations
+        File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + Translator.ARCHIVE_EXTENSION);
+        File publicBackup = new File(publicDir(), "backups/" + name + "." + Translator.ARCHIVE_EXTENSION);
+
+        // run backup
+        File temp = null;
+        try {
+            temp = File.createTempFile(name, "." + Translator.ARCHIVE_EXTENSION);
+            getTranslator().exportArchive(projectDir, temp);
+            if (temp.exists() && temp.isFile()) {
+                // copy into backup locations
+                downloadsBackup.getParentFile().mkdirs();
+                publicBackup.getParentFile().mkdirs();
+
+                FileUtilities.copyFile(temp, downloadsBackup);
+                FileUtilities.copyFile(temp, publicBackup);
+                return true;
+            }
+        } finally {
+            FileUtilities.deleteQuietly(temp);
+        }
+
+        return false;
+    }
+
+    /**
      * safe fetch of commit hash
      * @param details
      * @return

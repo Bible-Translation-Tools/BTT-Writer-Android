@@ -11,6 +11,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.tools.logger.Logger;
 
+import com.door43.translationstudio.App;
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
 import com.door43.util.NumericStringComparator;
@@ -303,6 +304,13 @@ public class TargetTranslation {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+                    // Try to backup and delete corrupt project
+                    try {
+                        App.backupTargetTranslation(targetTranslationDir);
+                        App.getTranslator().deleteTargetTranslation(targetTranslationDir);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
             } else {
                 Logger.w(TargetTranslation.class.getName(), "Missing manifest file in target translation " + targetTranslationDir.getName());
@@ -1346,12 +1354,14 @@ public class TargetTranslation {
      */
     public String getCommitHash() throws Exception {
         String tag = null;
-        RevCommit commit = getGitHead(getRepo());
-        if(commit != null) {
-            String[] pieces = commit.toString().split(" ");
-            tag = pieces[1];
-        } else {
-            tag = null;
+        try {
+            RevCommit commit = getGitHead(getRepo());
+            if(commit != null) {
+                String[] pieces = commit.toString().split(" ");
+                tag = pieces[1];
+            }
+        } catch (Exception e) {
+            Logger.e(TAG, "Could not get commit hash", e);
         }
 
         return tag;
