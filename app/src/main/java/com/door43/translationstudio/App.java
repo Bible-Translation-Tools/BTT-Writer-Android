@@ -544,9 +544,14 @@ public class App extends Application {
                 name += "." + sdf.format(new Date());
             }
 
+            String archiveExtension = Translator.ARCHIVE_EXTENSION;
+            if (orphaned) {
+                archiveExtension = Translator.ZIP_EXTENSION;
+            }
+
             // backup locations
-            File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + Translator.ARCHIVE_EXTENSION);
-            File publicBackup = new File(publicDir(), "backups/" + name + "." + Translator.ARCHIVE_EXTENSION);
+            File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + archiveExtension);
+            File publicBackup = new File(publicDir(), "backups/" + name + "." + archiveExtension);
 
             // check if we need to backup
             if(!orphaned) {
@@ -562,7 +567,7 @@ public class App extends Application {
             // run backup
             File temp = null;
             try {
-                temp = File.createTempFile(name, "." + Translator.ARCHIVE_EXTENSION);
+                temp = File.createTempFile(name, "." + archiveExtension);
                 targetTranslation.setDefaultContributor(getProfile().getNativeSpeaker());
                 getTranslator().exportArchive(targetTranslation, temp);
                 if (temp.exists() && temp.isFile()) {
@@ -591,13 +596,13 @@ public class App extends Application {
         String name = projectDir.getName() + "." + sdf.format(new Date());;
 
         // backup locations
-        File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + Translator.ARCHIVE_EXTENSION);
-        File publicBackup = new File(publicDir(), "backups/" + name + "." + Translator.ARCHIVE_EXTENSION);
+        File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + Translator.ZIP_EXTENSION);
+        File publicBackup = new File(publicDir(), "backups/" + name + "." + Translator.ZIP_EXTENSION);
 
         // run backup
         File temp = null;
         try {
-            temp = File.createTempFile(name, "." + Translator.ARCHIVE_EXTENSION);
+            temp = File.createTempFile(name, "." + Translator.ZIP_EXTENSION);
             getTranslator().exportArchive(projectDir, temp);
             if (temp.exists() && temp.isFile()) {
                 // copy into backup locations
