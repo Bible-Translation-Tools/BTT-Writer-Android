@@ -29,7 +29,7 @@ public abstract class Request {
     private String contentType = null;
     private int responseCode = -1;
     private String responseMessage = null;
-    private int ttl = 30000;
+    private int ttl = 0;
     private OnProgressListener progressListener = null;
 
     /**
@@ -163,6 +163,10 @@ public abstract class Request {
     public final void download(File destination) throws IOException {
         HttpURLConnection connection = openConnection();
 
+        if (connection.getResponseCode() != 200) {
+            throw new IOException(connection.getResponseMessage());
+        }
+
         int responseSize = connection.getContentLength();
 
         destination.getParentFile().mkdirs();
@@ -209,6 +213,10 @@ public abstract class Request {
      */
     public final String read() throws IOException {
         HttpURLConnection connection = openConnection();
+
+        if (connection.getResponseCode() != 200) {
+            throw new IOException(connection.getResponseMessage());
+        }
 
         int responseSize = connection.getContentLength();
         ByteArrayOutputStream out = new ByteArrayOutputStream();

@@ -145,7 +145,6 @@ class LegacyTools {
     private static void downloadTA(Library library, String url) throws Exception {
         GetRequest get = new GetRequest(new URL(url));
         String data = get.read();
-        if(get.getResponseCode() != 200) throw new Exception(get.getResponseMessage());
         JSONObject ta = new JSONObject(data);
 
         // add language (right now only english)
@@ -198,12 +197,6 @@ class LegacyTools {
     private static void downloadSourceLanguages(Library library, JSONObject pJson, OnProgressListener listener) throws Exception {
         GetRequest request = new GetRequest(new URL(pJson.getString("lang_catalog")));
         String response = request.read();
-        if(request.getResponseCode() != 200) throw new Exception(request.getResponseMessage());
-
-        String chunksUrl = "";
-        if(!pJson.getString("slug").toLowerCase().equals("obs")) {
-            chunksUrl = "https://api.unfoldingword.org/bible/txt/1/" + pJson.getString("slug") + "/chunks.json";
-        }
 
         JSONArray languages = new JSONArray(response);
         for(int i = 0; i < languages.length(); i ++) {
@@ -221,22 +214,7 @@ class LegacyTools {
             // TODO: retrieve the correct versification name(s) from the source language
             library.addVersification(new Versification("en-US", "American English"), languageId);
 
-            Project project = new Project(pJson.getString("slug"),
-                    lJson.getJSONObject("project").getString("name"),
-                    pJson.getInt("sort"));
-            project.description = lJson.getJSONObject("project").getString("desc");
-            project.chunksUrl = chunksUrl;
-            List<Category> categories = new ArrayList<>();
-            if(pJson.has("meta")) {
-                for(int j = 0; j < pJson.getJSONArray("meta").length(); j ++) {
-                    String slug = pJson.getJSONArray("meta").getString(j);
-                    categories.add(new Category(slug, lJson.getJSONObject("project").getJSONArray("meta").getString(j)));
-                }
-            }
-
-            long projectId = library.addProject(project, categories, languageId);
-
-            downloadResources(library, projectId, pJson, languageId, lJson);
+            downloadResources(library, pJson, languageId, lJson);
             library.yieldSafely();
         }
     }
@@ -247,16 +225,14 @@ class LegacyTools {
      * words are added as a new project.
      *
      * @param library
-     * @param projectId
      * @param pJson
      * @param languageId
      * @param lJson
      * @throws Exception
      */
-    private static void downloadResources(Library library, long projectId, JSONObject pJson, long languageId, JSONObject lJson) throws Exception {
+    private static void downloadResources(Library library, JSONObject pJson, long languageId, JSONObject lJson) throws Exception {
         GetRequest request = new GetRequest(new URL(lJson.getString("res_catalog")));
         String response = request.read();
-        if(request.getResponseCode() != 200) throw new Exception(request.getResponseMessage());
 
         JSONArray resources = new JSONArray(response);
         for(int i = 0; i < resources.length(); i ++) {
@@ -272,6 +248,21 @@ class LegacyTools {
                     translateMode = "gl";
             }
 
+            Project project = new Project(pJson.getString("slug"),
+                    lJson.getJSONObject("project").getString("name"),
+                    pJson.getInt("sort"));
+            project.description = lJson.getJSONObject("project").getString("desc");
+            project.chunksUrl = rJson.getString("chunks");
+            List<Category> categories = new ArrayList<>();
+            if(pJson.has("meta")) {
+                for(int j = 0; j < pJson.getJSONArray("meta").length(); j ++) {
+                    String slug = pJson.getJSONArray("meta").getString(j);
+                    categories.add(new Category(slug, lJson.getJSONObject("project").getJSONArray("meta").getString(j)));
+                }
+            }
+
+            long projectId = library.addProject(project, categories, languageId);
+
             rJson.getJSONObject("status").put("translate_mode", translateMode);
             rJson.getJSONObject("status").put("pub_date", rJson.getJSONObject("status").getString("publish_date"));
             rJson.put("type", "book");
@@ -281,7 +272,7 @@ class LegacyTools {
             Resource.Format format = new Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("book"), rJson.getInt("date_modified"), rJson.getString("source"), false);
             resource.addFormat(format);
 
-            long resourceId = library.addResource(resource, projectId);
+            library.addResource(resource, projectId);
 
             // coerce notes to resource
             if(rJson.has("notes") && !rJson.getString("notes").isEmpty()) {
