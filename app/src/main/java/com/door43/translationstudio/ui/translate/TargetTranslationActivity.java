@@ -919,7 +919,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 //        position = handleItemCountIfChanged(position);
         // TODO: 2/16/17 record scroll position
         int progress = computeProgressFromPosition(position);
-        Log.d(TAG, "onScrollProgress: position=" + position + ", mapped to progressbar=" + progress);
+        // Too much logging
+        //Log.d(TAG, "onScrollProgress: position=" + position + ", mapped to progressbar=" + progress);
         mSeekBar.setProgress(progress);
         checkIfCursorStillOnScreen();
     }

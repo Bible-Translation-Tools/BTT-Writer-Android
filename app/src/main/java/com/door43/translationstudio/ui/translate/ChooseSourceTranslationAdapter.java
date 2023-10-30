@@ -107,10 +107,10 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * will check for updates for language if needed
      * @param item
      */
-    public void checkForItemUpdates(final ViewItem item) {
-        if(!item.checkedUpdates && item.downloaded)
-        {
-            ManagedTask task = new ManagedTask() {
+    public ManagedTask checkForItemUpdates(final ViewItem item) {
+        ManagedTask task = null;
+        if(!item.checkedUpdates && item.downloaded) {
+            task = new ManagedTask() {
                 @Override
                 public void start() {
                     Log.i(TAG, "Checking for updates on " + item.containerSlug);
@@ -148,8 +148,9 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
                     });
                 }
             });
-            item.currentTaskId = TaskManager.addTask(task);
         }
+
+        return task;
     }
 
     @Override
