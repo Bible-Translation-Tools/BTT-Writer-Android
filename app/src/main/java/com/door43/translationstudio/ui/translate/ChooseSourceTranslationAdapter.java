@@ -114,6 +114,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
                 @Override
                 public void start() {
                     Log.i(TAG, "Checking for updates on " + item.containerSlug);
+                    this.publishProgress(-1,"");
                     try {
                         if (interrupted()) return;
                         ResourceContainer container = App.getLibrary().open(item.containerSlug);

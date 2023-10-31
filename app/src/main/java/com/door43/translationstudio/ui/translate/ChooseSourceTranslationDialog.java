@@ -297,11 +297,17 @@ public class ChooseSourceTranslationDialog extends DialogFragment implements Man
     }
 
     private void checkForItemUpdates(final ChooseSourceTranslationAdapter.ViewItem item) {
+        if (mProgressDialog != null) {
+            mProgressDialog.setMessage("");
+        }
+
         ManagedTask task = mAdapter.checkForItemUpdates(item);
 
-        task.addOnFinishedListener(this);
-        task.addOnProgressListener(this);
-        item.currentTaskId = TaskManager.addTask(task, TASK_PREPARE_CONTAINER);
+        if (task != null) {
+            task.addOnFinishedListener(this);
+            task.addOnProgressListener(this);
+            item.currentTaskId = TaskManager.addTask(task, TASK_PREPARE_CONTAINER);
+        }
     }
 
     /**
