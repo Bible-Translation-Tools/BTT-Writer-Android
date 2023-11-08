@@ -133,7 +133,6 @@ class API {
         try {
             GetRequest getPrimaryCatalog = new GetRequest(new URL(url));
             String data = getPrimaryCatalog.read();
-            if(getPrimaryCatalog.getResponseCode() != 200) throw new Exception(getPrimaryCatalog.getResponseMessage());
             // process legacy catalog data
             LegacyTools.processCatalog(library, data, listener);
         } catch(Exception e) {
@@ -199,7 +198,6 @@ class API {
         if(catalog == null) throw new Exception("Unknown catalog");
         GetRequest request = new GetRequest(new URL(catalog.url));
         String data = request.read();
-        if(request.getResponseCode() != 200) throw new Exception(request.getResponseMessage());
         library.beginTransaction();
         try {
             switch (catalog.slug) {
