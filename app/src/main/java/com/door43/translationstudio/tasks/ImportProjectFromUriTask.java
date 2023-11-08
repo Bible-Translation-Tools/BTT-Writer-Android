@@ -44,7 +44,7 @@ public class ImportProjectFromUriTask extends ManagedTask {
         BufferedInputStream in = null;
         String readablePath = path.toString(); // default
         String importedSlug = "";
-        boolean validExtension = FileUtilities.getExtension(path.getPath()).toLowerCase().equals(Translator.ARCHIVE_EXTENSION);
+        boolean validExtension = FileUtilities.getExtension(path.getPath()).toLowerCase().equals(Translator.TSTUDIO_EXTENSION);
         boolean isDocumentFile = !SdUtils.isRegularFile(path);
 
         if(validExtension) {
