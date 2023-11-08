@@ -109,6 +109,38 @@
                 android:background="@color/border_color"/>
 
             <LinearLayout
+                android:id="@+id/download_index"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:contextClickable="true"
+                android:background="?attr/selectableItemBackground"
+                android:paddingBottom="@dimen/dialog_controls_margin"
+                android:visibility="visible">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/download_index"
+                    android:textColor="@color/dark_primary_text"
+                    android:focusable="false"
+                    android:clickable="false"
+                    android:textAllCaps="false"
+                    android:gravity="left"
+                    android:background="@null"
+                    android:duplicateParentState="true"
+                    style="@style/Widget.Alert.Button.Secondary"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="@color/border_color"/>
+
+            <LinearLayout
                 android:id="@+id/download_sources"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
