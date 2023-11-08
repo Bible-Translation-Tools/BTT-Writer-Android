@@ -1174,6 +1174,16 @@ public class App extends Application {
         updateColorTheme(getColorThemeId(theme));
     }
 
+    public static void restart() {
+        String packageName = context().getPackageName();
+        Intent intent = context().getPackageManager().getLaunchIntentForPackage(packageName);
+        if (intent != null) {
+            context().startActivity(Intent.makeRestartActivityTask(intent.getComponent()));
+            android.os.Process.killProcess(android.os.Process.myPid());
+            Runtime.getRuntime().exit(0);
+        }
+    }
+
     private static int getColorThemeId(String theme) {
         int colorTheme;
         switch (theme) {

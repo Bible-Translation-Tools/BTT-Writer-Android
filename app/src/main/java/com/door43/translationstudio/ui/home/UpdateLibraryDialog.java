@@ -24,6 +24,7 @@ public class UpdateLibraryDialog extends DialogFragment implements EventBuffer.O
     public static final int EVENT_UPDATE_ALL = 3;
     public static final int EVENT_SELECT_DOWNLOAD_SOURCES = 4;
     public static final int EVENT_UPDATE_APP = 5;
+    public static final int EVENT_DOWNLOAD_INDEX = 6;
     public static final String TAG = "update-library-dialog";
     private EventBuffer eventBuffer = new EventBuffer();
 
@@ -56,6 +57,12 @@ public class UpdateLibraryDialog extends DialogFragment implements EventBuffer.O
             @Override
             public void onClick(View v) {
                 eventBuffer.write(UpdateLibraryDialog.this, EVENT_UPDATE_SOURCE, null);
+            }
+        });
+        v.findViewById(R.id.download_index).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                eventBuffer.write(UpdateLibraryDialog.this, EVENT_DOWNLOAD_INDEX, null);
             }
         });
 
