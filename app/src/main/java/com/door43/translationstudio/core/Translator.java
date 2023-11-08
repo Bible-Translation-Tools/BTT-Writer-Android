@@ -37,7 +37,8 @@ import org.unfoldingword.resourcecontainer.Resource;
 public class Translator {
     private static final int TSTUDIO_PACKAGE_VERSION = 2;
     private static final String GENERATOR_NAME = "ts-android";
-    public static final String ARCHIVE_EXTENSION = "tstudio";
+    public static final String TSTUDIO_EXTENSION = "tstudio";
+    public static final String ZIP_EXTENSION = "zip";
     public static final String TAG = Translator.class.getName();
 
     private final File mRootDir;
@@ -201,6 +202,16 @@ public class Translator {
     }
 
     /**
+     * Deletes a target translation from the device
+     * @param projectDir
+     */
+    public void deleteTargetTranslation(File projectDir) {
+        if(projectDir.exists()) {
+            FileUtilities.safeDelete(projectDir);
+        }
+    }
+
+    /**
      * Compiles all the editable text back into source that could be either USX or USFM.  It replaces
      *   the displayed text in spans with their mark-ups.
      * @param text
@@ -317,8 +328,8 @@ public class Translator {
      * @param out
      */
     public void exportArchive(TargetTranslation targetTranslation, OutputStream out, String fileName) throws Exception {
-        if(!FileUtilities.getExtension(fileName).toLowerCase().equals(ARCHIVE_EXTENSION)) {
-            throw new Exception("Output file must have '" + ARCHIVE_EXTENSION + "' extension");
+        if (!isValidArchiveExtension(fileName)) {
+            throw new Exception("Output file must have '" + TSTUDIO_EXTENSION + "' or '" + ZIP_EXTENSION + "' extension");
         }
         if(targetTranslation == null) {
             throw new Exception("Not a valid target translation");
@@ -344,6 +355,23 @@ public class Translator {
         } finally {
             FileUtilities.closeQuietly(out);
             FileUtilities.deleteQuietly(tempCache);
+        }
+    }
+
+    public void exportArchive(File projectDir, File outputFile) throws Exception {
+        if (!isValidArchiveExtension(outputFile.getPath())) {
+            throw new Exception("Output file must have '" + TSTUDIO_EXTENSION + "' or '" + ZIP_EXTENSION + "' extension");
+        }
+        if(!projectDir.exists()) {
+            throw new Exception("Project directory doesn't exist.");
+        }
+        FileOutputStream outputStream = new FileOutputStream(outputFile);
+        BufferedOutputStream out = new BufferedOutputStream(outputStream);
+
+        try {
+            Zip.zipToStream(new File[]{projectDir}, out);
+        } finally {
+            FileUtilities.closeQuietly(out);
         }
     }
 
@@ -574,5 +602,17 @@ public class Translator {
             }
         }
         return false;
+    }
+
+    /**
+     * Check if file extension is supported archive extension
+     * @param fileName
+     * @return boolean
+     */
+    private boolean isValidArchiveExtension(String fileName) {
+        boolean isTstudio = FileUtilities.getExtension(fileName).equalsIgnoreCase(TSTUDIO_EXTENSION);
+        boolean isZip = FileUtilities.getExtension(fileName).equalsIgnoreCase(ZIP_EXTENSION);
+
+        return isTstudio || isZip;
     }
 }
