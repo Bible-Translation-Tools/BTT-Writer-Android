@@ -103,8 +103,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         try {
             String sourceTranslationSlug = App.getSelectedSourceTranslationId(targetTranslationSlug);
-            mSourceTranslation = mLibrary.index().getTranslation(sourceTranslationSlug);
-            if(mSourceTranslation == null) App.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
+            if (sourceTranslationSlug != null) {
+                mSourceTranslation = mLibrary.index().getTranslation(sourceTranslationSlug);
+                if(mSourceTranslation == null) App.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
