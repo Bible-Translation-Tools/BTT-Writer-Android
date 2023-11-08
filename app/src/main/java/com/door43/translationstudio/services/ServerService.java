@@ -7,7 +7,6 @@ import android.os.IBinder;
 
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
@@ -287,7 +286,7 @@ public class ServerService extends NetworkService {
                 }
                 final File exportFile;
                 try {
-                    exportFile = File.createTempFile(targetTranslationSlug, "." + Translator.ARCHIVE_EXTENSION);
+                    exportFile = File.createTempFile(targetTranslationSlug, "." + Translator.TSTUDIO_EXTENSION);
                 } catch (IOException e) {
                     Logger.e(this.getClass().getName(), "Could not create a temp file", e);
                     break;

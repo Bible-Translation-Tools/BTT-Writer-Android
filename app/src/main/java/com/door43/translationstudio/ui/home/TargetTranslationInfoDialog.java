@@ -149,11 +149,16 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
                         public void onClick(DialogInterface dialog, int which) {
 //                            task.stop();
                             if(mTargetTranslation != null) {
-                                mTranslator.deleteTargetTranslation(mTargetTranslation.getId());
-                                App.clearTargetTranslationSettings(mTargetTranslation.getId());
-                            }
-                            if(mListener != null) {
-                                mListener.onDeleteTargetTranslation(mTargetTranslation.getId());
+                                try {
+                                    deleteTargetTranslation(false);
+                                } catch (Exception e) {
+                                    // If delete failed, try again as orphaned
+                                    try {
+                                        deleteTargetTranslation(true);
+                                    } catch (Exception ex) {
+                                        throw new RuntimeException("Could not delete target translation.", ex);
+                                    }
+                                }
                             }
                             dismiss();
                         }
@@ -327,5 +332,16 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
             task.removeOnFinishedListener(this);
         }
         super.onDestroy();
+    }
+
+    private void deleteTargetTranslation(boolean orphaned) throws Exception {
+        App.backupTargetTranslation(mTargetTranslation, orphaned);
+
+        mTranslator.deleteTargetTranslation(mTargetTranslation.getId());
+        App.clearTargetTranslationSettings(mTargetTranslation.getId());
+
+        if(mListener != null) {
+            mListener.onDeleteTargetTranslation(mTargetTranslation.getId());
+        }
     }
 }
