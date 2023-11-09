@@ -49,6 +49,7 @@ public class ChooseSourceTranslationDialog extends DialogFragment implements Man
     public static final String ARG_TARGET_TRANSLATION_ID = "arg_target_translation_id";
     public static final String TAG = ChooseSourceTranslationDialog.class.getSimpleName();
     private static final String TASK_DOWNLOAD_CONTAINER = "download-container";
+    private static final String TASK_PREPARE_CONTAINER = "prepare-container";
     private static final String TASK_INIT = "init-data";
     private Translator mTranslator;
     private TargetTranslation mTargetTranslation;
@@ -151,7 +152,7 @@ public class ChooseSourceTranslationDialog extends DialogFragment implements Man
                     } else {
                         // toggle
                         mAdapter.toggleSelection(position);
-                        mAdapter.checkForItemUpdates(item);
+                        checkForItemUpdates(item);
                     }
                 }
             }
@@ -295,6 +296,20 @@ public class ChooseSourceTranslationDialog extends DialogFragment implements Man
         }
     }
 
+    private void checkForItemUpdates(final ChooseSourceTranslationAdapter.ViewItem item) {
+        if (mProgressDialog != null) {
+            mProgressDialog.setMessage("");
+        }
+
+        ManagedTask task = mAdapter.checkForItemUpdates(item);
+
+        if (task != null) {
+            task.addOnFinishedListener(this);
+            task.addOnProgressListener(this);
+            item.currentTaskId = TaskManager.addTask(task, TASK_PREPARE_CONTAINER);
+        }
+    }
+
     /**
      * adds this source translation to the adapter
      * @param sourceTranslation
@@ -350,6 +365,8 @@ public class ChooseSourceTranslationDialog extends DialogFragment implements Man
                     mAdapter.sort();
                 }
             });
+        } else if (TASK_PREPARE_CONTAINER.equals(task.getTaskId())) {
+            if(mProgressDialog != null && mProgressDialog.isShowing()) mProgressDialog.dismiss();
         }
     }
 

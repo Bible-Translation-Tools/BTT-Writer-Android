@@ -544,9 +544,14 @@ public class App extends Application {
                 name += "." + sdf.format(new Date());
             }
 
+            String archiveExtension = Translator.TSTUDIO_EXTENSION;
+            if (orphaned) {
+                archiveExtension = Translator.ZIP_EXTENSION;
+            }
+
             // backup locations
-            File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + Translator.ARCHIVE_EXTENSION);
-            File publicBackup = new File(publicDir(), "backups/" + name + "." + Translator.ARCHIVE_EXTENSION);
+            File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + archiveExtension);
+            File publicBackup = new File(publicDir(), "backups/" + name + "." + archiveExtension);
 
             // check if we need to backup
             if(!orphaned) {
@@ -562,7 +567,7 @@ public class App extends Application {
             // run backup
             File temp = null;
             try {
-                temp = File.createTempFile(name, "." + Translator.ARCHIVE_EXTENSION);
+                temp = File.createTempFile(name, "." + archiveExtension);
                 targetTranslation.setDefaultContributor(getProfile().getNativeSpeaker());
                 getTranslator().exportArchive(targetTranslation, temp);
                 if (temp.exists() && temp.isFile()) {
@@ -578,6 +583,40 @@ public class App extends Application {
                 FileUtilities.deleteQuietly(temp);
             }
         }
+        return false;
+    }
+
+    /**
+     * Creates a backup of a project directory in all the right places
+     * @param projectDir the project directory that will be backed up
+     * @return true if the backup was actually performed
+     */
+    public static boolean backupTargetTranslation(File projectDir) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US);
+        String name = projectDir.getName() + "." + sdf.format(new Date());;
+
+        // backup locations
+        File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + Translator.ZIP_EXTENSION);
+        File publicBackup = new File(publicDir(), "backups/" + name + "." + Translator.ZIP_EXTENSION);
+
+        // run backup
+        File temp = null;
+        try {
+            temp = File.createTempFile(name, "." + Translator.ZIP_EXTENSION);
+            getTranslator().exportArchive(projectDir, temp);
+            if (temp.exists() && temp.isFile()) {
+                // copy into backup locations
+                downloadsBackup.getParentFile().mkdirs();
+                publicBackup.getParentFile().mkdirs();
+
+                FileUtilities.copyFile(temp, downloadsBackup);
+                FileUtilities.copyFile(temp, publicBackup);
+                return true;
+            }
+        } finally {
+            FileUtilities.deleteQuietly(temp);
+        }
+
         return false;
     }
 
@@ -1133,6 +1172,16 @@ public class App extends Application {
 
     public static void updateColorTheme(String theme) {
         updateColorTheme(getColorThemeId(theme));
+    }
+
+    public static void restart() {
+        String packageName = context().getPackageName();
+        Intent intent = context().getPackageManager().getLaunchIntentForPackage(packageName);
+        if (intent != null) {
+            context().startActivity(Intent.makeRestartActivityTask(intent.getComponent()));
+            android.os.Process.killProcess(android.os.Process.myPid());
+            Runtime.getRuntime().exit(0);
+        }
     }
 
     private static int getColorThemeId(String theme) {

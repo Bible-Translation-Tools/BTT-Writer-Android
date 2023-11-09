@@ -136,7 +136,7 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
             }
         });
 
-        final String filename = targetTranslation.getId() + "." + Translator.ARCHIVE_EXTENSION;
+        final String filename = targetTranslation.getId() + "." + Translator.TSTUDIO_EXTENSION;
 
         initProgressWatcher(R.string.backup);
 
@@ -383,7 +383,7 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
      */
     private void showExportProjectPrompt() {
         mDialogShown = eDialogShown.EXPORT_PROJECT_PROMPT;
-        String filename = targetTranslation.getId() + "." + Translator.ARCHIVE_EXTENSION;
+        String filename = targetTranslation.getId() + "." + Translator.TSTUDIO_EXTENSION;
         showExportPathPrompt(R.string.project_output_filename_title_prompt, filename);
     }
 
