@@ -45,4 +45,9 @@
         <item>https://langnames.bibleineverylanguage.org/langnames.json</item>
         <item>https://td.unfoldingword.org/exports/langnames.json</item>
     </string-array>
+
+    <string-array name="content_server_index_sqlite_url_array">
+        <item>https://btt-writer-resources.s3.amazonaws.com/index.sqlite</item>
+        <item>https://btt-writer-resources.s3.amazonaws.com/index.sqlite</item>
+    </string-array>
 </resources>
