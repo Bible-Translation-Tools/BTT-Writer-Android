@@ -47,7 +47,7 @@
     </string-array>
 
     <string-array name="content_server_index_sqlite_url_array">
-        <item>https://btt-writer-resources.s3.amazonaws.com/index.sqlite</item>
-        <item>https://btt-writer-resources.s3.amazonaws.com/index.sqlite</item>
+        <item>https://writer-resources.bibletranslationtools.org/index.sqlite</item>
+        <item>https://writer-resources.bibletranslationtools.org/index.sqlite</item>
     </string-array>
 </resources>
