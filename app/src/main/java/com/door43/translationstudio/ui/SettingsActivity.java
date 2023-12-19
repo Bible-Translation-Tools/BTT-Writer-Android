@@ -79,6 +79,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     public static final String KEY_PREF_READER_SERVER = "reader_server";
     public static final String KEY_PREF_CREATE_ACCOUNT_URL = "create_account_url";
     public static final String KEY_PREF_LANGUAGES_URL = "lang_names_url";
+    public static final String KEY_PREF_INDEX_SQLITE_URL = "index_sqlite_url";
     public static final String KEY_PREF_COLOR_THEME = "color_theme";
 //    public static final String KEY_PREF_EXPORT_FORMAT = "export_format";
     public static final String KEY_PREF_TRANSLATION_TYPEFACE = "translation_typeface";
@@ -262,6 +263,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_READER_SERVER));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_CREATE_ACCOUNT_URL));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_LANGUAGES_URL));
+        bindPreferenceSummaryToValue(findPreference(KEY_PREF_INDEX_SQLITE_URL));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_LOGGING_LEVEL));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_BACKUP_INTERVAL));
 
@@ -320,6 +322,11 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                 langNameUrl.setText(langNameUrls[index]);
                 langNameUrl.setSummary(langNameUrls[index]);
                 langNameUrl.getOnPreferenceChangeListener().onPreferenceChange(langNameUrl, langNameUrls[index]); // triggers the listener of language url preference
+
+                String[] indexSqliteUrls = getResources().getStringArray(R.array.content_server_index_sqlite_url_array);
+                EditTextPreference indexSqliteUrl = (EditTextPreference) findPreference(KEY_PREF_INDEX_SQLITE_URL);
+                indexSqliteUrl.setText(indexSqliteUrls[index]);
+                indexSqliteUrl.setSummary(indexSqliteUrls[index]);
 
                 return true;
             }
@@ -663,6 +670,11 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                         EditTextPreference langNameUrl = (EditTextPreference) findPreference(KEY_PREF_LANGUAGES_URL);
                         langNameUrl.setText(langNameUrls[index]);
                         langNameUrl.setSummary(langNameUrls[index]);
+
+                        String[] indexSqliteUrls = getResources().getStringArray(R.array.content_server_index_sqlite_url_array);
+                        EditTextPreference indexSqliteUrl = (EditTextPreference) findPreference(KEY_PREF_INDEX_SQLITE_URL);
+                        indexSqliteUrl.setText(indexSqliteUrls[index]);
+                        indexSqliteUrl.setSummary(indexSqliteUrls[index]);
                     }
                 }
             });
@@ -680,6 +692,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_READER_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_CREATE_ACCOUNT_URL));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_LANGUAGES_URL));
+            bindPreferenceSummaryToValue(findPreference(KEY_PREF_INDEX_SQLITE_URL));
 
             initSettings = false;
         }

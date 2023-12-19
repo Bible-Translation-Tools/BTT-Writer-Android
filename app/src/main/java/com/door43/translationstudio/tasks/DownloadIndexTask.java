@@ -1,6 +1,8 @@
 package com.door43.translationstudio.tasks;
 
 import com.door43.translationstudio.App;
+import com.door43.translationstudio.R;
+import com.door43.translationstudio.ui.SettingsActivity;
 import com.door43.util.FileUtilities;
 
 import org.unfoldingword.door43client.Door43Client;
@@ -18,7 +20,6 @@ public class DownloadIndexTask extends ManagedTask {
     public static final String TAG = DownloadIndexTask.class.getName();
 
     private final File index = new File(App.databaseDir(), "index.sqlite");
-    private final String url = "https://btt-writer-resources.s3.amazonaws.com/index.sqlite";
 
     private int maxProgress = 0;
     private boolean success = false;
@@ -45,7 +46,11 @@ public class DownloadIndexTask extends ManagedTask {
                 library.tearDown();
             }
 
-            URL downloadUrl = new URL(this.url);
+            String url = App.getPref(
+                    SettingsActivity.KEY_PREF_INDEX_SQLITE_URL,
+                    App.getRes(R.string.pref_default_index_sqlite_url)
+            );
+            URL downloadUrl = new URL(url);
 
             connection = (HttpURLConnection) downloadUrl.openConnection();
             connection.connect();

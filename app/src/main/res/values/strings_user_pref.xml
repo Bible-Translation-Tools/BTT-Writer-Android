@@ -61,6 +61,7 @@
     <string name="pref_title_reader_server">Reader Server</string>
     <!-- The URL to download the list of languages -->
     <string name="pref_title_language_url">Language URL</string>
+    <string name="pref_title_index_sqlite_url">Index.sqlite URL</string>
     <!-- The URL to create a new account. -->
     <string name="pref_title_create_account_url">Account Creation URL</string>
 
