@@ -347,11 +347,11 @@
     </string>
 
     <!-- The title of the dialog asking the user to verify completion of everything required to mark all chunks in project complete -->
-    <string name="project_checklist_title">Project Checklist</string>
+    <string name="project_checklist_title">Project Chunks Checklist</string>
     <!-- The text asking the user to verify that all required steps have been taken prior to marking all chunks in project complete -->
     <string name="project_checklist_body">
 <![CDATA[
-<p>Are you sure you are done with all chunks?<p>
+<p>Are you sure you are Done with all the chunks in this project?<p>
 <ul>
   <li>I have placed the verses correctly</li>
   <li>I have reviewed the words and meaning</li>
