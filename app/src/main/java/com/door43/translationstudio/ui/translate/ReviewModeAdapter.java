@@ -415,6 +415,51 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         }
     }
 
+    @Override
+    public void markAllChunksDone() {
+        new AlertDialog.Builder(mContext,R.style.AppTheme_Dialog)
+                .setTitle(R.string.project_checklist_title)
+                .setMessage(Html.fromHtml(mContext.getString(R.string.project_checklist_body)))
+                .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int marked = 0;
+                        int total = mFilteredItems.size();
+                        for (ListItem item : mFilteredItems) {
+                            try {
+                                markChunkCompleted(item, mTargetTranslation.getFormat());
+                                marked++;
+                            } catch (Exception e) {
+                                String msg = String.format(
+                                        "There was an error in markAllChunksDone. Translation: %s, chapter: %s, chunk: %s. Error: %s",
+                                        mTargetTranslation.getId(),
+                                        item.chapterSlug,
+                                        item.chunkSlug,
+                                        e.getMessage());
+                                Logger.e(TAG, msg);
+                            }
+                        }
+
+                        try {
+                            mTargetTranslation.commit();
+
+                            new AlertDialog.Builder(mContext,R.style.AppTheme_Dialog)
+                                    .setTitle(R.string.result)
+                                    .setMessage(String.format(mContext.getString(R.string.mark_chunks_done_result), marked, total))
+                                    .setPositiveButton(R.string.label_ok, null)
+                                    .show();
+
+                        } catch (Exception e) {
+                            Logger.e(TAG, "Failed to commit translation of " + mTargetTranslation.getId(), e);
+                        }
+
+                        triggerNotifyDataSetChanged();
+                    }
+                })
+                .setNegativeButton(R.string.title_cancel, null)
+                .show();
+    }
+
      @Override
     public void onBindManagedViewHolder(final ReviewHolder holder, final int position) {
          final ReviewListItem item = (ReviewListItem) mFilteredItems.get(position);
@@ -841,11 +886,20 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                             .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                        boolean success = onConfirmChunk(item, item.chapterSlug, item.chunkSlug, mTargetTranslation.getFormat());
-                                        holder.mDoneSwitch.setChecked(success);
+                                    try {
+                                        markChunkCompleted(item, mTargetTranslation.getFormat());
+                                        mTargetTranslation.commit();
+                                    } catch (Exception e) {
+                                        Logger.e(TAG, "Failed to commit translation of " + mTargetTranslation.getId(), e);
+
+                                        Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), e.getMessage(), Snackbar.LENGTH_LONG);
+                                        ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
+                                        snack.show();
                                     }
+
+                                    triggerNotifyDataSetChanged();
                                 }
-                            )
+                            })
                             .setNegativeButton(R.string.title_cancel, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
@@ -1336,24 +1390,19 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     /**
      * Performs some validation, and commits changes if ready.
-     * @return true if the section was successfully confirmed; otherwise false.
+     * @throws IllegalStateException If there is an error with the chunk
      */
-    private boolean onConfirmChunk(final ReviewListItem item, final String chapter, final String frame, TranslationFormat format) {
-        boolean success = true; // So far, so good.
-
+    private void markChunkCompleted(final ListItem item, TranslationFormat format) throws IllegalStateException {
         // Check for empty translation.
         if (item.targetText.isEmpty()) {
-            Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), R.string.translate_first, Snackbar.LENGTH_LONG);
-            ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
-            snack.show();
-            success = false;
+            throw new IllegalStateException(mContext.getString(R.string.translate_first));
         }
 
         Matcher matcher;
         int lowVerse = -1;
         int highVerse = 999999999;
         int[] range = Frame.getVerseRange(item.targetText, item.targetTranslationFormat);
-        if ((range != null) && (range.length > 0)) {
+        if (range.length > 0) {
             lowVerse = range[0];
             highVerse = lowVerse;
             if (range.length > 1) {
@@ -1362,123 +1411,88 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         }
 
         // Check for contiguous verse numbers.
-        if (success) {
-            if (format == TranslationFormat.USFM) {
-                matcher = USFM_CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText);
-            } else {
-                matcher = CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText);
-            }
-            if (matcher.find()) {
-                Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), R.string.consecutive_verse_markers, Snackbar.LENGTH_LONG);
-                ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
-                snack.show();
-                success = false;
-            }
+        if (format == TranslationFormat.USFM) {
+            matcher = USFM_CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText);
+        } else {
+            matcher = CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText);
+        }
+        if (matcher.find()) {
+            throw new IllegalStateException(mContext.getString(R.string.consecutive_verse_markers));
         }
 
         // check for invalid verse markers
-        if(success) {
-            int error = 0;
-            if (format == TranslationFormat.USFM) {
-                matcher = USFM_VERSE_MARKER.matcher(item.targetText);
-            } else {
-                matcher = VERSE_MARKER.matcher(item.targetText);
-            }
-            int[] sourceVerseRange = Frame.getVerseRange(item.sourceText, item.sourceTranslationFormat);
-            if(sourceVerseRange != null && sourceVerseRange.length > 0) {
-                int min = sourceVerseRange[0];
-                int max = min;
-                if(sourceVerseRange.length == 2) max = sourceVerseRange[1];
-                while (matcher.find()) {
-                    int verse = Integer.valueOf(matcher.group(1));
-                    if (verse < min || verse > max) {
-                        error = R.string.outofrange_verse_marker;
-                        success = false;
-                        break;
-                    }
+        int error = 0;
+        if (format == TranslationFormat.USFM) {
+            matcher = USFM_VERSE_MARKER.matcher(item.targetText);
+        } else {
+            matcher = VERSE_MARKER.matcher(item.targetText);
+        }
+        int[] sourceVerseRange = Frame.getVerseRange(item.sourceText, item.sourceTranslationFormat);
+        if(sourceVerseRange.length > 0) {
+            int min = sourceVerseRange[0];
+            int max = min;
+            if(sourceVerseRange.length == 2) max = sourceVerseRange[1];
+            while (matcher.find()) {
+                int verse = Integer.parseInt(matcher.group(1));
+                if (verse < min || verse > max) {
+                    error = R.string.outofrange_verse_marker;
+                    break;
                 }
             }
-            if (!success) {
-                Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), error, Snackbar.LENGTH_LONG);
-                ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
-                snack.show();
-            }
+        }
+        if (error > 0) {
+            throw new IllegalStateException(mContext.getString(error));
         }
 
         // Check for out-of-order verse markers.
-        if (success) {
-            int error = 0;
-            if (format == TranslationFormat.USFM) {
-                matcher = USFM_VERSE_MARKER.matcher(item.targetText);
-            } else {
-                matcher = VERSE_MARKER.matcher(item.targetText);
-            }
-            int lastVerseSeen = 0;
-            while (matcher.find()) {
-                int currentVerse = Integer.valueOf(matcher.group(1));
-                if (currentVerse <= lastVerseSeen) {
-                    if (currentVerse == lastVerseSeen) {
-                        error = R.string.duplicate_verse_marker;
-                        success = false;
-                        break;
-                    } else {
-                        error = R.string.outoforder_verse_markers;
-                        success = false;
-                        break;
-                    }
-                } else if ((currentVerse < lowVerse) || (currentVerse > highVerse)) {
-                    error = R.string.outofrange_verse_marker;
-                    success = false;
-                    break;
+        if (format == TranslationFormat.USFM) {
+            matcher = USFM_VERSE_MARKER.matcher(item.targetText);
+        } else {
+            matcher = VERSE_MARKER.matcher(item.targetText);
+        }
+        int lastVerseSeen = 0;
+        while (matcher.find()) {
+            int currentVerse = Integer.parseInt(matcher.group(1));
+            if (currentVerse <= lastVerseSeen) {
+                if (currentVerse == lastVerseSeen) {
+                    error = R.string.duplicate_verse_marker;
                 } else {
-                    lastVerseSeen = currentVerse;
+                    error = R.string.outoforder_verse_markers;
                 }
-            }
-            if (!success) {
-                Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), error, Snackbar.LENGTH_LONG);
-                ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
-                snack.show();
-            }
-        }
-
-        // Everything looks good so far. Try and commit.
-        if (success) {
-            if (item.isChapterReference()) {
-                success = mTargetTranslation.finishChapterReference(item.chapterSlug);
-            } else if (item.isChapterTitle()) {
-                success = mTargetTranslation.finishChapterTitle(item.chapterSlug);
-            } else if (item.isProjectTitle()) {
-                success = mTargetTranslation.closeProjectTitle();
+                break;
+            } else if ((currentVerse < lowVerse) || (currentVerse > highVerse)) {
+                error = R.string.outofrange_verse_marker;
+                break;
             } else {
-                success = mTargetTranslation.finishFrame(item.chapterSlug, item.chunkSlug);
-            }
-
-            if (!success) {
-                // TODO: Use a more accurate (if potentially more opaque) error message.
-                Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), R.string.failed_to_commit_chunk, Snackbar.LENGTH_LONG);
-                ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
-                snack.show();
-            } else {
-                item.isComplete = true;
+                lastVerseSeen = currentVerse;
             }
         }
-
-        // Wrap up.
-        if (success) {
-            try {
-                mTargetTranslation.commit();
-            } catch (Exception e) {
-                String frameComplexId =  ":" + item.chapterSlug + "-" + item.chunkSlug;
-                Logger.e(TAG, "Failed to commit translation of " + mTargetTranslation.getId() + frameComplexId, e);
-            }
-            item.isEditing = false;
-            item.renderedTargetText = null;
-            triggerNotifyDataSetChanged();
+        if (error > 0) {
+            throw new IllegalStateException(mContext.getString(error));
         }
 
-        return success;
+        // Everything looks good so far.
+        boolean success;
+        if (item.isChapterReference()) {
+            success = mTargetTranslation.finishChapterReference(item.chapterSlug);
+        } else if (item.isChapterTitle()) {
+            success = mTargetTranslation.finishChapterTitle(item.chapterSlug);
+        } else if (item.isProjectTitle()) {
+            success = mTargetTranslation.closeProjectTitle();
+        } else {
+            success = mTargetTranslation.finishFrame(item.chapterSlug, item.chunkSlug);
+        }
+
+        if (!success) {
+            // TODO: Use a more accurate (if potentially more opaque) error message.
+            throw new IllegalStateException(mContext.getString(R.string.failed_to_commit_chunk));
+        } else {
+            item.isComplete = true;
+        }
+
+        item.isEditing = false;
+        item.renderedTargetText = null;
     }
-
 
     /**
      * Initiates rendering the resource card

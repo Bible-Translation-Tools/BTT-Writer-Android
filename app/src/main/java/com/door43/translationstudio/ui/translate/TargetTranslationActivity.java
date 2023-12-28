@@ -517,6 +517,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                                 case R.id.action_search:
                                     setSearchBarVisibility(true);
                                     return true;
+                                case R.id.mark_chunks_done:
+                                    ((ViewModeFragment)mFragment).markAllChunksDone();
+                                    return true;
                             }
                             return false;
                         }

@@ -837,6 +837,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      */
     protected abstract void onSourceContainerLoaded(ResourceContainer sourceContainer);
 
+    protected abstract void markAllChunksDone();
+
     public interface OnEventListener {
 
         /**
