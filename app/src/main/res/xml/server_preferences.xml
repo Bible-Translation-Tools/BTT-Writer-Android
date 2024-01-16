@@ -57,4 +57,9 @@
         android:key="lang_names_url"
         android:title="@string/pref_title_language_url"
         android:defaultValue="@string/pref_default_language_url"/>
+
+    <EditTextPreference
+        android:key="index_sqlite_url"
+        android:title="@string/pref_title_index_sqlite_url"
+        android:defaultValue="@string/pref_default_index_sqlite_url"/>
 </PreferenceScreen>

@@ -33,8 +33,8 @@ jobs:
         LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
     - name: Acquire resource containers and sqlite
       run: |
-        wget --no-verbose -O containers.zip "https://btt-writer-resources.s3.amazonaws.com/containers.zip"
-        wget --no-verbose -O index.sqlite "https://btt-writer-resources.s3.amazonaws.com/index.sqlite"      
+        wget --no-verbose -O containers.zip "https://writer-resources.bibletranslationtools.org/containers.zip"
+        wget --no-verbose -O index.sqlite "https://writer-resources.bibletranslationtools.org/index.sqlite"
     - name: move new resource containers where they should go
       run: |
         if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
