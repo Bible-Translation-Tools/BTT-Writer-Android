@@ -298,7 +298,7 @@
     <string name="loading_languages">Preparing languages</string>
     <string name="title_activity_target_translations">Your Translation Projects</string>
     <string name="title_activity_new_target_translation">New Translation</string>
-    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the blue button in the top right.]]></string>
+    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the green button in the top right.]]></string>
     <string name="title_activity_target_translation_detail">Translation Project</string>
 
     <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
@@ -315,6 +315,7 @@
     <string name="backup">Upload</string>
     <string name="attached_files">Attached files</string>
     <string name="requires_internet">This will use your Internet Connection</string>
+    <string name="maximum_limit">(Maximum: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
     <string name="input_required">Input cannot be empty</string>
     <string name="dismiss">Dismiss</string>
     <string name="done">Done</string>
@@ -867,6 +868,7 @@ Do you want to enable SD card access?  If so then:
     <string name="label_change">change</string>
     <string name="update_languages">Update List of Available Target Languages</string>
     <string name="update_source">Update List of Available Source Texts</string>
+    <string name="download_index">Download New index.sqlite</string>
     <string name="update_all">Update All</string>
     <string name="time_very_slow">Takes awhile</string>
     <string name="time_slow">May take many minutes (or longer)</string>
@@ -893,7 +895,9 @@ Do you want to enable SD card access?  If so then:
     <string name="update_cancelled">The update was cancelled</string>
     <string name="update_menu_requires_internet">Requires internet Connection\nThese updates may take a while.</string>
     <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> New Source Texts and <xliff:g example="10" id="updated">%2$d</xliff:g> Updated Source Texts are available to be downloaded.</string>
+    <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
     <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
+    <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
     <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
     <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
     <string name="available_online">Available Online</string>

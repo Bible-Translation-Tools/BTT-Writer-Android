@@ -4,7 +4,8 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true">
+    android:animateLayoutChanges="true"
+    android:background="@color/background_color">
 
     <TextView
         android:layout_width="match_parent"
@@ -29,7 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
             android:layout_marginEnd="5dp"
-            android:background="@drawable/ic_wifi_black_18dp"/>
+            android:background="@drawable/ic_wifi_secondary_18dp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -52,7 +53,7 @@
             android:layout_margin="@dimen/card_margin">
             <LinearLayout
                 style="@style/Widget.CardContent"
-                android:background="@color/white"
+                android:background="@color/card_background_color"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical">

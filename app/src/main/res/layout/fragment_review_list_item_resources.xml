@@ -42,6 +42,8 @@
                 android:layout_gravity="center_vertical"
                 android:layout_marginTop="0dp"
                 android:layout_marginBottom="@dimen/card_margin"
+                app:tabSelectedTextColor="@color/dark_primary_text"
+                app:tabTextColor="@color/dark_disabled_text"
                 app:layout_scrollFlags="scroll|enterAlways" />
 
             <LinearLayout

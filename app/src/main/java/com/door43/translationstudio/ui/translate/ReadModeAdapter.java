@@ -1,11 +1,14 @@
 package com.door43.translationstudio.ui.translate;
 
+import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
+
 import android.app.Activity;
 import android.content.ContentValues;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
 import com.google.android.material.tabs.TabLayout;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
@@ -464,10 +467,13 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         holder.mTabLayout.setOnTabSelectedListener(null);
         holder.mTabLayout.removeAllTabs();
         for(ContentValues values:mTabs) {
-            TabLayout.Tab tab = holder.mTabLayout.newTab();
+            String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            tab.setText(title);
-            tab.setTag(values.getAsString("tag"));
+            View tabLayout = createRemovableTabLayout(mContext, getListener(), tag, title);
+
+            TabLayout.Tab tab = holder.mTabLayout.newTab();
+            tab.setTag(tag);
+            tab.setCustomView(tabLayout);
             holder.mTabLayout.addTab(tab);
 
             applyLanguageTypefaceToTab(mContext, holder.mTabLayout, values, title);
@@ -517,6 +523,12 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             Typography.format(mContext, TranslationType.SOURCE, holder.mSourceBody, mSourceLanguage.slug, mSourceLanguage.direction);
             Typography.formatTitle(mContext, TranslationType.TARGET, holder.mTargetTitle, mTargetLanguage.slug, mTargetLanguage.direction);
             Typography.format(mContext, TranslationType.TARGET, holder.mTargetBody, mTargetLanguage.slug, mTargetLanguage.direction);
+        }
+
+        if (mTabs.length >= MAX_SOURCE_ITEMS) {
+            holder.mNewTabButton.setVisibility(View.GONE);
+        } else {
+            holder.mNewTabButton.setVisibility(View.VISIBLE);
         }
     }
 
@@ -662,7 +674,6 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             mTargetTitle = (TextView)v.findViewById(R.id.target_translation_title);
             mTargetBody = (TextView)v.findViewById(R.id.target_translation_body);
             mTabLayout = (TabLayout)v.findViewById(R.id.source_translation_tabs);
-            mTabLayout.setTabTextColors(R.color.dark_disabled_text, R.color.dark_secondary_text);
             mNewTabButton = (ImageButton) v.findViewById(R.id.new_tab_button);
             mBeginButton = (Button) v.findViewById(R.id.begin_translating_button);
         }

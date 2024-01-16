@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
+
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,15 +36,12 @@ import com.door43.translationstudio.ui.dialogs.BackupDialog;
 
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.door43client.models.Translation;
+import org.unfoldingword.resourcecontainer.Project;
 import org.unfoldingword.tools.logger.Logger;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
 
 /**
  * Displays detailed information about a target translation
@@ -87,15 +85,14 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         TextView languageTitleView = (TextView)v.findViewById(R.id.language_title);
         this.progressView = (TextView)v.findViewById(R.id.progress);
 
-        // Load a source translation
-        Translation sourceTranslation;
-        List<Translation> translations = library.index.findTranslations(null, mTargetTranslation.getProjectId(), null, "book", null, App.MIN_CHECKING_LEVEL, -1);
-        if(translations.size() == 0) {
-            Logger.w("TargetTranslationInfoDialog", "Could not find source for target " + mTargetTranslation.getId());
-            dismiss();
-            return v;
+        Project project;
+        String[] existingSources = mTargetTranslation.getSourceTranslations();
+        // Gets an existing source project or default if none selected
+        if(existingSources.length > 0) {
+            String lastSource = existingSources[existingSources.length - 1];
+            project = library.index.getTranslation(lastSource).project;
         } else {
-            sourceTranslation = translations.get(0);
+            project = library.index.getProject(App.getDeviceLanguageCode(), mTargetTranslation.getProjectId(), true);
         }
 
         // set typeface for language
@@ -104,8 +101,8 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         titleView.setTypeface(typeface, 0);
         languageTitleView.setTypeface(typeface, 0);
 
-        titleView.setText(sourceTranslation.project.name + " - " + mTargetTranslation.getTargetLanguageName());
-        projectTitleView.setText(sourceTranslation.project.name + " (" + sourceTranslation.project.slug + ")");
+        titleView.setText(project.name + " - " + mTargetTranslation.getTargetLanguageName());
+        projectTitleView.setText(project.name + " (" + project.slug + ")");
         languageTitleView.setText(mTargetTranslation.getTargetLanguageName() + " (" + mTargetTranslation.getTargetLanguageId() + ")");
 
         // calculate translation progress
@@ -143,20 +140,25 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            new AlertDialog.Builder(getActivity(),R.style.AppTheme_Dialog)
+                new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
                     .setTitle(R.string.label_delete)
-                    .setIcon(R.drawable.ic_delete_black_24dp)
+                    .setIcon(R.drawable.ic_delete_dark_secondary_24dp)
                     .setMessage(R.string.confirm_delete_target_translation)
                     .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
 //                            task.stop();
                             if(mTargetTranslation != null) {
-                                mTranslator.deleteTargetTranslation(mTargetTranslation.getId());
-                                App.clearTargetTranslationSettings(mTargetTranslation.getId());
-                            }
-                            if(mListener != null) {
-                                mListener.onDeleteTargetTranslation(mTargetTranslation.getId());
+                                try {
+                                    deleteTargetTranslation(false);
+                                } catch (Exception e) {
+                                    // If delete failed, try again as orphaned
+                                    try {
+                                        deleteTargetTranslation(true);
+                                    } catch (Exception ex) {
+                                        throw new RuntimeException("Could not delete target translation.", ex);
+                                    }
+                                }
                             }
                             dismiss();
                         }
@@ -330,5 +332,16 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
             task.removeOnFinishedListener(this);
         }
         super.onDestroy();
+    }
+
+    private void deleteTargetTranslation(boolean orphaned) throws Exception {
+        App.backupTargetTranslation(mTargetTranslation, orphaned);
+
+        mTranslator.deleteTargetTranslation(mTargetTranslation.getId());
+        App.clearTargetTranslationSettings(mTargetTranslation.getId());
+
+        if(mListener != null) {
+            mListener.onDeleteTargetTranslation(mTargetTranslation.getId());
+        }
     }
 }

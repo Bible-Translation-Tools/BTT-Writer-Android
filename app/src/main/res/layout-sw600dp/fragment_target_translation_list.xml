@@ -6,7 +6,8 @@
     android:orientation="horizontal"
     android:layout_gravity="center"
     android:gravity="center"
-    android:weightSum="1">
+    android:weightSum="1"
+    android:background="@color/background_color">
 
     <LinearLayout
         android:orientation="vertical"
@@ -54,7 +55,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
 
             </LinearLayout>
@@ -88,7 +89,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="1px"
-                    android:background="@color/list_separator"/>
+                    android:background="@color/border_color"/>
 
 
             </LinearLayout>
@@ -109,7 +110,8 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="40dp"
                 android:layout_weight="1"
-                android:text="@string/Project" />
+                android:text="@string/Project"
+                android:textColor="@color/dark_secondary_text"/>
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -123,7 +125,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingLeft="66dp"
-                    android:text="@string/language" />
+                    android:text="@string/language"
+                    android:textColor="@color/dark_secondary_text"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -131,7 +134,8 @@
                     android:gravity="right"
                     android:paddingRight="36dp"
                     android:layout_weight="1"
-                    android:text="@string/progress" />
+                    android:text="@string/progress"
+                    android:textColor="@color/dark_secondary_text"/>
             </LinearLayout>
 
         </LinearLayout>
@@ -140,7 +144,7 @@
             xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/translationsList"
             android:layout_width="match_parent"
-            android:background="@color/white"
+            android:background="@color/card_background_color"
             android:elevation="2dp"
             android:layout_height="wrap_content"/>
 

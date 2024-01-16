@@ -74,6 +74,19 @@ public class RenderingGroup {
     }
 
     /**
+     * if set to true, then paragraphs (\p) will be rendered in the output.
+     *
+     * @param enable default is true
+     */
+    public void setParagraphsEnabled(boolean enable) {
+        for (RenderingEngine engine : mEngines) {
+            if(engine instanceof ClickableRenderingEngine) {
+                ((ClickableRenderingEngine) engine).setParagraphsEnabled(enable);
+            }
+        }
+    }
+
+    /**
      * Begins the rendering operations
      */
     public CharSequence start() {

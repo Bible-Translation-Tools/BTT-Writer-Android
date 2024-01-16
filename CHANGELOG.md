@@ -1,6 +1,10 @@
 
 # Change log
 
+## [1.1.2 (build 8)](https://github.com/Bible-Translation-Tools/BTT-Writer-Android/releases)
+
+- Reverted back to API 28 to temporarily fix issues with newer devices.
+
 ## [1.1.1 (build 7)](https://github.com/Bible-Translation-Tools/BTT-Writer-Android/releases)
 
 - Updated Android SDK target to 29 for Google Play Store compatibility.

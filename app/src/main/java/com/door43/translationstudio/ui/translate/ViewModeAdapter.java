@@ -4,19 +4,23 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.SlugSorter;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.tasks.CheckForMergeConflictsTask;
+import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
 import org.unfoldingword.door43client.models.Translation;
@@ -26,6 +30,8 @@ import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 
 /**
  * Created by joel on 9/18/2015.
@@ -369,7 +375,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
             Typeface typeface = Typography.getBestFontForLanguage(context, TranslationType.SOURCE, code, direction);
             TextView view = ViewModeAdapter.findTab(layout, title);
             if(view != null) {
-                view.setTypeface(typeface, 0);
+                view.setTypeface(typeface, Typeface.NORMAL);
             }
         }
     }
@@ -422,9 +428,29 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         return false;
     }
 
-    public interface OnEventListener {
-        void onSourceTranslationTabClick(String sourceTranslationId);
-        void onNewSourceTranslationTabClick();
+    public static View createRemovableTabLayout(Context context, final OnViewModeListener listener, String tag, String title) {
+        View root = LayoutInflater.from(context).inflate(R.layout.removable_tab, null);
+        TextView tabText = root.findViewById(R.id.tab);
+        tabText.setText(title);
+
+        Button closeBtn = root.findViewById(R.id.close);
+        closeBtn.setTag(tag);
+
+        closeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final String sourceTranslationId = (String) view.getTag();
+                if (listener != null) {
+                    listener.onSourceRemoveButtonClicked(sourceTranslationId);
+                }
+            }
+        });
+
+        return root;
+    }
+
+
+    public interface OnEventListener extends OnViewModeListener {
         void closeKeyboard();
         void openTranslationMode(TranslationViewMode mode, Bundle extras);
         void onTranslationWordClick(String resourceContainerSlug, String chapterSlug, int width);

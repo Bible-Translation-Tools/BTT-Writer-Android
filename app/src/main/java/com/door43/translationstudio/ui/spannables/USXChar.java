@@ -20,6 +20,9 @@ public class USXChar {
     public static final String STYLE_FOOTNOTE_PARAGRAPH = "fp";
     public static final String STYLE_FOOTNOTE_VERSE = "fv";
     public static final String STYLE_FOOTNOTE_DEUTEROCANONICAL_APOCRYPHA = "fdc";
+    public static final String PATTERN = "<char\\s+((?:(?!>).)*)\\s*>\\s*((?:(?!(?:<\\/char>)).)*)\\s*<\\/char>";
+    public static final Integer CHAR_ATTRIBUTES_GROUP = 1;
+    public static final Integer CHAR_TEXT_GROUP = 2;
 
     // selah styles
     public static final String STYLE_SELAH = "qs";

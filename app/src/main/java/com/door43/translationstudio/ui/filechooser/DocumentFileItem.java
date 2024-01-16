@@ -106,15 +106,15 @@ public class DocumentFileItem {
      */
     public int getIconResource() {
         if(isUpButton) {
-            return R.drawable.ic_arrow_back_black_24dp;
+            return R.drawable.ic_arrow_back_secondary_24dp;
         } else if(isBackupsDir()) {
-            return R.drawable.ic_history_black_24dp;
+            return R.drawable.ic_history_secondary_24dp;
         } else if(isTranslationArchive()) {
-            return R.drawable.ic_library_books_black_24dp;
+            return R.drawable.ic_library_books_secondary_24dp;
         } else if(file.isDirectory()) {
-            return R.drawable.ic_folder_open_black_24dp;
+            return R.drawable.ic_folder_open_secondary_24dp;
         } else {
-            return R.drawable.ic_insert_drive_file_black_24dp;
+            return R.drawable.ic_insert_drive_file_secondary_24dp;
         }
     }
 
@@ -139,7 +139,7 @@ public class DocumentFileItem {
         return !isUpButton
                 && file != null
                 && !file.isDirectory()
-                && FileUtilities.getExtension(file.getName()).equalsIgnoreCase(Translator.ARCHIVE_EXTENSION);
+                && FileUtilities.getExtension(file.getName()).equalsIgnoreCase(Translator.TSTUDIO_EXTENSION);
     }
 
     /**

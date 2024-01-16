@@ -55,7 +55,7 @@ public class FileChooserActivity extends BaseActivity {
     private DocumentFile mCurrentDir;
 
     @Deprecated
-    private String[] mAcceptedExtensions = { Translator.ARCHIVE_EXTENSION };
+    private String[] mAcceptedExtensions = { Translator.TSTUDIO_EXTENSION};
 
     private SelectionMode mode;
     private String filters;
@@ -245,7 +245,7 @@ public class FileChooserActivity extends BaseActivity {
         if (isSdCardPresentLollipop) {
             sdCardFound = true;
             DocumentFile baseFolder = SdUtils.sdCardMkdirs(null);
-            String subFolder = SdUtils.searchFolderAndParentsForDocFile(baseFolder, Translator.ARCHIVE_EXTENSION);
+            String subFolder = SdUtils.searchFolderAndParentsForDocFile(baseFolder, Translator.TSTUDIO_EXTENSION);
             if (null != subFolder) {
 
                 path = SdUtils.documentFileMkdirs(baseFolder, subFolder);
@@ -297,7 +297,7 @@ public class FileChooserActivity extends BaseActivity {
     private void showFileFolder(File storagePath) {
         DocumentFile path = null;
         DocumentFile baseFolder = DocumentFile.fromFile(storagePath);
-        String subFolder = SdUtils.searchFolderAndParentsForDocFile(baseFolder, Translator.ARCHIVE_EXTENSION);
+        String subFolder = SdUtils.searchFolderAndParentsForDocFile(baseFolder, Translator.TSTUDIO_EXTENSION);
         if (null != subFolder) {
             path = SdUtils.documentFileMkdirs(baseFolder, subFolder);
         }else {

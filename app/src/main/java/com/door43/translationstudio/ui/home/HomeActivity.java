@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.Nullable;
 
+import com.door43.translationstudio.tasks.DownloadIndexTask;
 import com.door43.translationstudio.tasks.LogoutTask;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -285,6 +286,11 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
             task.addOnFinishedListener(this);
         }
         task = TaskManager.getTask(UpdateSourceTask.TASK_ID);
+        if(task != null) {
+            task.addOnProgressListener(this);
+            task.addOnFinishedListener(this);
+        }
+        task = TaskManager.getTask(DownloadIndexTask.TASK_ID);
         if(task != null) {
             task.addOnProgressListener(this);
             task.addOnFinishedListener(this);
@@ -812,6 +818,11 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
             task.removeOnProgressListener(this);
             task.removeOnFinishedListener(this);
         }
+        task = TaskManager.getTask(DownloadIndexTask.TASK_ID);
+        if(task != null) {
+            task.removeOnProgressListener(this);
+            task.removeOnFinishedListener(this);
+        }
         task = TaskManager.getTask(UpdateCatalogsTask.TASK_ID);
         if(task != null) {
             task.removeOnProgressListener(this);
@@ -876,6 +887,11 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                     ((UpdateSourceTask)task).setPrefix(this.getResources().getString(R.string.updating_sources));
                     taskId = UpdateSourceTask.TASK_ID;
                     break;
+                case UpdateLibraryDialog.EVENT_DOWNLOAD_INDEX:
+                    task = new DownloadIndexTask();
+                    ((DownloadIndexTask)task).setPrefix(this.getResources().getString(R.string.downloading_index));
+                    taskId = DownloadIndexTask.TASK_ID;
+                    break;
                 case UpdateLibraryDialog.EVENT_UPDATE_APP:
                 default:
                     task = new CheckForLatestReleaseTask();
@@ -918,7 +934,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                     progressDialog.setCanceledOnTouchOutside(false);
                     progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                     progressDialog.setOnCancelListener(HomeActivity.this);
-                    progressDialog.setIcon(R.drawable.ic_cloud_download_black_24dp);
+                    progressDialog.setIcon(R.drawable.ic_cloud_download_secondary_24dp);
                     progressDialog.setTitle(R.string.updating);
                     progressDialog.setMessage("");
 
@@ -1028,6 +1044,9 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                             UpdateCatalogsTask updTask = (UpdateCatalogsTask) task;
                             message = String.format(getResources().getString(R.string.update_languages_success), updTask.getAddedCnt());
                         }
+                        if (task instanceof DownloadIndexTask) {
+                            message = String.format(getResources().getString(R.string.download_index_success));
+                        }
                     }
                     final boolean finalFailed = failed;
                     final boolean showDownloadDialog = task instanceof UpdateSourceTask;
@@ -1041,6 +1060,9 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                                         public void onClick(DialogInterface dialog, int which) {
                                             if(!finalFailed && showDownloadDialog) {
                                                 selectDownloadSources(); // if not failed, immediately go to select downloads
+                                            }
+                                            if (task instanceof DownloadIndexTask) {
+                                                App.restart();
                                             }
                                         }
                                     });
@@ -1061,12 +1083,12 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
         boolean success = false;
         if(task instanceof UpdateAllTask) {
             success = ((UpdateAllTask) task).isSuccess();
-        } else
-        if(task instanceof UpdateCatalogsTask) {
+        } else if(task instanceof UpdateCatalogsTask) {
             success = ((UpdateCatalogsTask) task).isSuccess();
-        } else
-        if(task instanceof UpdateSourceTask) {
+        } else if(task instanceof UpdateSourceTask) {
             success = ((UpdateSourceTask) task).isSuccess();
+        } else if(task instanceof DownloadIndexTask) {
+            success = ((DownloadIndexTask) task).isSuccess();
         }
         return success;
     }
@@ -1077,6 +1099,8 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
         ManagedTask task = TaskManager.getTask(UpdateAllTask.TASK_ID);
         if(task != null) TaskManager.cancelTask(task);
         task = TaskManager.getTask(UpdateSourceTask.TASK_ID);
+        if(task != null) TaskManager.cancelTask(task);
+        task = TaskManager.getTask(DownloadIndexTask.TASK_ID);
         if(task != null) TaskManager.cancelTask(task);
         task = TaskManager.getTask(UpdateCatalogsTask.TASK_ID);
         if(task != null) TaskManager.cancelTask(task);

@@ -48,7 +48,7 @@
                 android:text="Start a new translation"
                 android:elevation="2dp"
                 android:translationZ="6dp"
-                style="@style/Widget.Button.Green"
+                style="@style/Widget.Button.Blue"
                 android:id="@+id/extraAddTargetTranslationButton" />
         </LinearLayout>
     </LinearLayout>

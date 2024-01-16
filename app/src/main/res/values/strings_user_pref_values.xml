@@ -6,6 +6,13 @@
 
     <!--<string name="pref_default_highlight_key_terms" translatable="false">false</string>-->
 
+    <string name="pref_default_color_theme" translatable="false">System</string>
+    <string-array name="pref_color_theme_values" translatable="false">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System</item>
+    </string-array>
+
     <string name="pref_default_translation_typeface" translatable="false">NotoSansMultiLanguage-Regular.ttf</string>
     <string-array name="pref_translation_typeface_values" translatable="false">
         <item>NotoSansMultiLanguage-Regular.ttf</item>
@@ -31,7 +38,13 @@
 
     <string name="pref_default_media_server" translatable="false">https://api.bibletranslationtools.org</string>
 
-    <string name="pref_default_reader_server" translatable="false">http://read.bibletranslationtools.org/u</string>
+    <string name="pref_default_reader_server" translatable="false">https://read.bibleineverylanguage.org</string>
+
+    <string name="pref_default_create_account_url" translatable="false">https://content.bibletranslationtools.org/user/sign_up</string>
+
+    <string name="pref_default_language_url" translatable="false">https://langnames.bibleineverylanguage.org/langnames.json</string>
+
+    <string name="pref_default_index_sqlite_url" translatable="false">https://writer-resources.bibletranslationtools.org/index.sqlite</string>
 
     <!--<string name="pref_default_export_format" translatable="false">dokuwiki</string>-->
     <!--<string-array name="pref_export_format_values" translatable="false">-->

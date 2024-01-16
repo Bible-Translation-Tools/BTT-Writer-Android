@@ -49,6 +49,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     public static final int TYPE_ITEM_NEED_DOWNLOAD = 2;
     public static final int TYPE_ITEM_SELECTABLE_UPDATABLE = 3;
     public static final String TAG = ChooseSourceTranslationAdapter.class.getSimpleName();
+    public static final int MAX_SOURCE_ITEMS = 3;
     private final Context mContext;
     private Map<String, ViewItem> mData = new HashMap<>();
     private List<String> mSelected = new ArrayList<>();
@@ -106,13 +107,14 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * will check for updates for language if needed
      * @param item
      */
-    public void checkForItemUpdates(final ViewItem item) {
-        if(!item.checkedUpdates && item.downloaded)
-        {
-            ManagedTask task = new ManagedTask() {
+    public ManagedTask checkForItemUpdates(final ViewItem item) {
+        ManagedTask task = null;
+        if(!item.checkedUpdates && item.downloaded) {
+            task = new ManagedTask() {
                 @Override
                 public void start() {
                     Log.i(TAG, "Checking for updates on " + item.containerSlug);
+                    this.publishProgress(-1,"");
                     try {
                         if (interrupted()) return;
                         ResourceContainer container = App.getLibrary().open(item.containerSlug);
@@ -147,8 +149,9 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
                     });
                 }
             });
-            item.currentTaskId = TaskManager.addTask(task);
         }
+
+        return task;
     }
 
     @Override
@@ -316,10 +319,11 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      */
     private CharSequence getSelectedText() {
         CharSequence text = mContext.getResources().getString(R.string.selected);
+        CharSequence limit = mContext.getResources().getString(R.string.maximum_limit, MAX_SOURCE_ITEMS);
         SpannableStringBuilder refresh = createImageSpannable(R.drawable.ic_refresh_black_24dp);
         CharSequence warning = mContext.getResources().getString(R.string.requires_internet);
         SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_black_18dp);
-        return TextUtils.concat(text, "    ", refresh, " ", warning, " ", wifi); // combine all on one line
+        return TextUtils.concat(text, " ", limit, "    ", refresh, " ", warning, " ", wifi); // combine all on one line
     }
 
     /**
@@ -433,11 +437,15 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
 
         Typeface typeface = Typography.getBestFontForLanguage(mContext, TranslationType.SOURCE, code, item.sourceTranslation.language.direction);
         if(typeface != Typeface.DEFAULT) {
-            holder.titleView.setTypeface(typeface, 0);
+            holder.titleView.setTypeface(typeface, Typeface.NORMAL);
         }
     }
 
     public void select(int position) {
+        if (mSelected.size() >= MAX_SOURCE_ITEMS) {
+            return;
+        }
+
         ViewItem item = getItem(position);
         item.selected = true;
         mSelected.remove(item.containerSlug);

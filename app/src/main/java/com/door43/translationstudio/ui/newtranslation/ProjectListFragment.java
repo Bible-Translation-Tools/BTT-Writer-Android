@@ -42,7 +42,7 @@ public class ProjectListFragment extends BaseFragment implements Searchable {
         searchBackButton.setVisibility(View.GONE);
 
         final ImageView updateIcon = (ImageView) rootView.findViewById(R.id.search_mag_icon);
-        updateIcon.setBackgroundResource(R.drawable.ic_refresh_black_24dp);
+        updateIcon.setBackgroundResource(R.drawable.ic_refresh_secondary_24dp);
         // TODO: set up update button
 
         ListView list = (ListView) rootView.findViewById(R.id.list);

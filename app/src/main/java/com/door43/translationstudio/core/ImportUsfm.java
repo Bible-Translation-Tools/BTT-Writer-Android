@@ -1213,8 +1213,15 @@ public class ImportUsfm {
                 if (matcher.find()) {
                     int verseStart = matcher.start();
                     if(verseStart > 0) {
-                        CharSequence intro = text.subSequence(0, verseStart);
-                        saveSection(getChapterFolderName(chapter), "intro", intro);
+                        int chapterTitleStart = 0;
+                        Pattern chapterTitlePattern = PATTERN_CHAPTER_TITLE_MARKER;
+                        Matcher chapterTitleMatcher = chapterTitlePattern.matcher(text);
+                        if (chapterTitleMatcher.find()) {
+                            chapterTitleStart = chapterTitleMatcher.start(1);
+                        }
+
+                        CharSequence title = text.subSequence(chapterTitleStart, verseStart);
+                        saveSection(getChapterFolderName(chapter), "title", title);
                     }
                 }
             }

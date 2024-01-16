@@ -7,36 +7,36 @@
     <item android:id="@+id/action_update"
         android:title="@string/menu_update_library"
         android:orderInCategory="100"
-        android:icon="@drawable/ic_local_library_black_24dp"
+        android:icon="@drawable/ic_local_library_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_import"
         android:title="@string/label_import_options"
         android:orderInCategory="200"
-        android:icon="@drawable/ic_file_download_black_24dp"
+        android:icon="@drawable/ic_file_download_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_feedback"
         android:title="@string/feedback"
         android:orderInCategory="300"
-        android:icon="@drawable/ic_feedback_black_24dp"
+        android:icon="@drawable/ic_feedback_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_share_apk"
         android:title="@string/share_apk"
         android:orderInCategory="400"
-        android:icon="@drawable/ic_android_black_24dp"
+        android:icon="@drawable/ic_android_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_log_out"
         android:title="@string/log_out"
         android:orderInCategory="450"
-        android:icon="@drawable/ic_exit_to_app_black_24dp"
+        android:icon="@drawable/ic_exit_to_app_secondary_24dp"
         app:showAsAction="never" />
 
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="500"
-        android:icon="@drawable/ic_settings_black_24dp"
+        android:icon="@drawable/ic_settings_secondary_24dp"
         app:showAsAction="never" />
 </menu>

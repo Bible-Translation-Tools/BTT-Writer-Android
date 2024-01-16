@@ -22,6 +22,13 @@ public abstract class ClickableRenderingEngine extends RenderingEngine {
     public abstract void setLinebreaksEnabled(boolean enable);
 
     /**
+     * if set to true, then paragraphs (\p) will be rendered in the output.
+     *
+     * @param enable default is true
+     */
+    public abstract void setParagraphsEnabled(boolean enable);
+
+    /**
      * If set to not null matched strings will be highlighted.
      *
      * @param searchString - null is disable

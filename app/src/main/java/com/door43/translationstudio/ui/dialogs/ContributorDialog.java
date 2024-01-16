@@ -152,7 +152,7 @@ public class ContributorDialog extends DialogFragment {
                             dismiss();
                         } else {
                             Snackbar snack = Snackbar.make(v, R.string.duplicate_native_speaker, Snackbar.LENGTH_SHORT);
-                            ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.white));
+                            ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
                             snack.show();
                         }
                     } else {
@@ -165,7 +165,7 @@ public class ContributorDialog extends DialogFragment {
                     }
                 } else {
                     Snackbar snack = Snackbar.make(v, R.string.complete_required_fields, Snackbar.LENGTH_SHORT);
-                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.white));
+                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
                     snack.show();
                 }
             }

@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.text.style.AlignmentSpan;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.StyleSpan;
+import android.util.Pair;
 
 import com.door43.translationstudio.ui.spannables.USXChar;
 import com.door43.translationstudio.ui.spannables.USXNoteSpan;
@@ -32,6 +33,7 @@ public class USXRenderer extends ClickableRenderingEngine {
     private Span.OnClickListener mNoteListener;
     private Span.OnClickListener mVerseListener;
     private boolean mRenderLinebreaks = false;
+    private boolean mRenderParagraphs = true;
     private boolean mRenderVerses = true;
     private String mSearch;
     private int mHighlightColor = 0;
@@ -75,6 +77,15 @@ public class USXRenderer extends ClickableRenderingEngine {
      */
     public void setLinebreaksEnabled(boolean enable) {
         mRenderLinebreaks = enable;
+    }
+
+    /**
+     * if set to true, then paragraphs (\p) will be rendered in the output.
+     *
+     * @param enable default is true
+     */
+    public void setParagraphsEnabled(boolean enable) {
+        mRenderParagraphs = enable;
     }
 
     /**
@@ -126,8 +137,8 @@ public class USXRenderer extends ClickableRenderingEngine {
         if(isStopped()) return in;
         if(!mRenderLinebreaks) {
             out = renderLineBreaks(out);  // TODO: Eventually we may want to convert these to paragraphs.
+            if(isStopped()) return in;
         }
-        if(isStopped()) return in;
 //        out = renderWhiteSpace(out);
         out = renderMajorSectionHeading(out);
         if(isStopped()) return in;
@@ -152,6 +163,8 @@ public class USXRenderer extends ClickableRenderingEngine {
         out = renderSelah(out);
         if(isStopped()) return in;
         out = renderBrokenMarkers(out);
+        if(isStopped()) return in;
+        out = renderCharTags(out);
         if(isStopped()) return in;
 
         return out;
@@ -670,6 +683,49 @@ public class USXRenderer extends ClickableRenderingEngine {
         } else {
             return "";
         }
+    }
+
+    public CharSequence renderCharTags(CharSequence in) {
+        CharSequence out = "";
+
+        // Find and cache note tag positions first
+        Pattern notePattern = Pattern.compile(USXNoteSpan.PATTERN);
+        Matcher noteMatcher = notePattern.matcher(in);
+        List<Pair<Integer, Integer>> notes = new ArrayList<>();
+
+        while(noteMatcher.find()) {
+            if(isStopped()) return in;
+            notes.add(Pair.create(noteMatcher.start(), noteMatcher.end()));
+        }
+
+        Pattern charPattern = Pattern.compile(USXChar.PATTERN);
+        Matcher charMatcher = charPattern.matcher(in);
+
+        int lastIndex = 0;
+        while(charMatcher.find()) {
+            if(isStopped()) return in;
+
+            // Check if this char is a note char, so we can ignore it and not process as a single char
+            if (isCharInNote(charMatcher.start(), charMatcher.end(), notes)) {
+                continue;
+            }
+
+            out = TextUtils.concat(out, in.subSequence(lastIndex, charMatcher.start()), charMatcher.group(USXChar.CHAR_TEXT_GROUP));
+            lastIndex = charMatcher.end();
+        }
+
+        out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
+
+        return out;
+    }
+
+    private boolean isCharInNote(Integer start, Integer end, List<Pair<Integer, Integer>> notes) {
+        for (Pair<Integer, Integer> note: notes) {
+            if (start >= note.first && end <= note.second) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
+import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
+
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
 import com.google.android.material.tabs.TabLayout;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
@@ -309,10 +312,13 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         holder.mTabLayout.setOnTabSelectedListener(null);
         holder.mTabLayout.removeAllTabs();
         for(ContentValues values:mTabs) {
-            TabLayout.Tab tab = holder.mTabLayout.newTab();
+            String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            tab.setText(title);
-            tab.setTag(values.getAsString("tag"));
+            View tabLayout = createRemovableTabLayout(mContext, getListener(), tag, title);
+
+            TabLayout.Tab tab = holder.mTabLayout.newTab();
+            tab.setTag(tag);
+            tab.setCustomView(tabLayout);
             holder.mTabLayout.addTab(tab);
 
             ViewModeAdapter.applyLanguageTypefaceToTab(mContext, holder.mTabLayout, values, title);
@@ -406,7 +412,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
         ViewUtil.makeLinksClickable(holder.mSourceBody);
 
-
+        if (mTabs.length >= MAX_SOURCE_ITEMS) {
+            holder.mNewTabButton.setVisibility(View.GONE);
+        } else {
+            holder.mNewTabButton.setVisibility(View.VISIBLE);
+        }
     }
 
     /**
@@ -538,7 +548,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         holder.mTargetTitle.setText(item.getTargetTitle());
 
         // indicate complete
-        indicateCardCompleted(item.isComplete, holder);
+        setCardStatus(item.isComplete, true, holder);
 
         holder.mTextWatcher = new TextWatcher() {
             @Override
@@ -576,20 +586,23 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         holder.mTargetBody.addTextChangedListener(holder.mTextWatcher);
     }
 
-    private void indicateCardCompleted(boolean finished, ViewHolder holder) {
-        if(finished) {
-            holder.mTargetBody.setEnabled(false);
+    private void setCardStatus(boolean finished, boolean closed, ViewHolder holder) {
+        if (closed) {
             holder.mTargetBody.setEnableLines(false);
-            holder.mTargetInnerCard.setBackgroundResource(R.color.white);
+            if (finished) {
+                holder.mTargetInnerCard.setBackgroundResource(R.color.card_background_color);
+            } else {
+                holder.mTargetInnerCard.setBackgroundResource(R.drawable.paper_repeating);
+            }
         } else {
-            holder.mTargetBody.setEnabled(true);
             holder.mTargetBody.setEnableLines(true);
-            holder.mTargetInnerCard.setBackgroundResource(R.color.white);
+            holder.mTargetInnerCard.setBackgroundResource(R.color.card_background_color);
         }
     }
 
     private CharSequence renderText(String text, TranslationFormat format, boolean enableSearch) {
         RenderingGroup renderingGroup = new RenderingGroup();
+
         if (Clickables.isClickableFormat(format)) {
             // TODO: add click listeners for verses and notes
             Span.OnClickListener noteClickListener = new Span.OnClickListener() {
@@ -611,16 +624,16 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             };
             ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(format, renderingGroup, null, noteClickListener, true);
             renderer.setVersesEnabled(false);
-            if( enableSearch ) {
-                renderingGroup.setSearchString(filterConstraint, HIGHLIGHT_COLOR);
-            }
+            renderer.setParagraphsEnabled(false);
         } else {
             // TODO: add note click listener
             renderingGroup.addEngine(new DefaultRenderer(null));
-            if( enableSearch ) {
-                renderingGroup.setSearchString(filterConstraint, HIGHLIGHT_COLOR);
-            }
         }
+
+        if( enableSearch ) {
+            renderingGroup.setSearchString(filterConstraint, HIGHLIGHT_COLOR);
+        }
+
         renderingGroup.init(text);
         return renderingGroup.start();
     }
@@ -679,10 +692,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    ((ChunkListItem)item).isTargetCardOpen = false;
+                    ((ChunkListItem) item).isTargetCardOpen = false;
                     if (getListener() != null) {
                         getListener().closeKeyboard();
                     }
+                    setCardStatus(((ChunkListItem) item).isComplete, true, holder);
                 }
 
                 @Override
@@ -725,12 +739,12 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             ViewUtil.animateSwapCards(holder.mSourceCard, holder.mTargetCard, TOP_ELEVATION, BOTTOM_ELEVATION, leftToRight, new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
-
+                    setCardStatus(((ChunkListItem) item).isComplete, false, holder);
                 }
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    ((ChunkListItem)item).isTargetCardOpen = true;
+                    ((ChunkListItem) item).isTargetCardOpen = true;
                     if (getListener() != null) {
                         getListener().closeKeyboard();
                     }
@@ -807,7 +821,6 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             mTargetTitle = (TextView)v.findViewById(R.id.target_translation_title);
             mTargetBody = (LinedEditText)v.findViewById(R.id.target_translation_body);
             mTabLayout = (TabLayout)v.findViewById(R.id.source_translation_tabs);
-            mTabLayout.setTabTextColors(R.color.dark_disabled_text, R.color.dark_secondary_text);
             mNewTabButton = (ImageButton) v.findViewById(R.id.new_tab_button);
         }
     }
