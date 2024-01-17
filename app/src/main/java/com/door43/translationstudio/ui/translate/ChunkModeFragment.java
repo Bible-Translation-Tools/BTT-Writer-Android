@@ -56,4 +56,7 @@ public class ChunkModeFragment extends ViewModeFragment {
     protected void onSourceContainerLoaded(ResourceContainer sourceContainer) {
 
     }
+
+    @Override
+    public void markAllChunksDone() {}
 }

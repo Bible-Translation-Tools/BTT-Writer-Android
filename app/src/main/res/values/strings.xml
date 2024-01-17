@@ -265,6 +265,7 @@
     <string name="import_draft">Import Draft</string>
     <string name="import_draft_confirmation">Replace existing translation with this draft?</string>
     <string name="action_search">Search</string>
+    <string name="mark_chunks_done">Mark All Chunks Done</string>
     <string name="transfer_from_device">Transfer from device</string>
     <string name="transfer_from_device_description">Transfer from nearby device over the network</string>
     <string name="import_from_storage">Import from storage</string>
@@ -345,6 +346,22 @@
 ]]>
     </string>
 
+    <!-- The title of the dialog asking the user to verify completion of everything required to mark all chunks in project complete -->
+    <string name="project_checklist_title">Project Chunks Checklist</string>
+    <!-- The text asking the user to verify that all required steps have been taken prior to marking all chunks in project complete -->
+    <string name="project_checklist_body">
+<![CDATA[
+<p>Are you sure you are Done with all the chunks in this project?<p>
+<ul>
+  <li>I have placed the verses correctly</li>
+  <li>I have reviewed the words and meaning</li>
+  <li>I have reviewed the translation questions</li>
+</ul>
+]]>
+    </string>
+
+    <string name="result">Result</string>
+    <string name="mark_chunks_done_result">Marked <xliff:g example="1" id="marked">%1$d</xliff:g> chunks out of <xliff:g example="1" id="total">%2$d</xliff:g></string>
     <string name="your_name">Your Name or Pseudonym</string>
     <string name="your_email">Your Email Address</string>
     <string name="your_phone">Your Phone Number</string>

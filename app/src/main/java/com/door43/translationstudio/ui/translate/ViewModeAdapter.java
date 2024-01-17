@@ -271,6 +271,8 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      */
     public abstract ListItem createListItem(String chapterSlug, String chunkSlug);
 
+    public abstract void markAllChunksDone();
+
     /**
      * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
      */

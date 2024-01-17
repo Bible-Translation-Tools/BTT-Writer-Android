@@ -211,6 +211,11 @@ public class ReviewModeFragment extends ViewModeFragment {
         openResourcesDrawer(width);
     }
 
+    @Override
+    public void markAllChunksDone() {
+        getAdapter().markAllChunksDone();
+    }
+
     /**
      * Prepares the resources drawer with the translation words index
      */
