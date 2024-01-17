@@ -450,6 +450,10 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                     boolean searchSupported = isSearchSupported();
                     searchMenuItem.setVisible(searchSupported);
 
+                    MenuItem markAllChunksItem = moreMenu.getMenu().findItem(R.id.mark_chunks_done);
+                    boolean markAllChunksSupported = isMarkAllChunksSupported();
+                    markAllChunksItem.setVisible(markAllChunksSupported);
+
                     moreMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
@@ -517,6 +521,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                                 case R.id.action_search:
                                     setSearchBarVisibility(true);
                                     return true;
+                                case R.id.mark_chunks_done:
+                                    ((ViewModeFragment)mFragment).markAllChunksDone();
+                                    return true;
                             }
                             return false;
                         }
@@ -542,6 +549,16 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     public boolean isSearchSupported() {
         if(mFragment instanceof ViewModeFragment) {
             return ((ViewModeFragment) mFragment).hasFilter();
+        }
+        return false;
+    }
+
+    /**
+     * Check to see if marking all chunks done is supported
+     */
+    public boolean isMarkAllChunksSupported() {
+        if(mFragment instanceof ReviewModeFragment) {
+            return true;
         }
         return false;
     }

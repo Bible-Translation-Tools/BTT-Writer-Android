@@ -218,6 +218,9 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         return vh;
     }
 
+    @Override
+    public void markAllChunksDone() {}
+
     /**
      * Rebuilds the card tabs
      */
