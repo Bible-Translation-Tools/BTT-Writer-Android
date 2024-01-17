@@ -114,48 +114,7 @@
     <string name="yes">Ja</string>
     <string name="no">Geen</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
-    <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
-<p>
-      <strong>Accurate</strong> - Accurate translations effectively communicate the intended meaning of the original, divinely inspired text. An accurate translation expresses the meaning the author intended for the original audience in the original context.
-      <p>
-        1. To the extent that is possible, nothing is added, misconstrued, or deleted from the original message.
-        <br/>2. It does not recast the meaning of the original text to make it more relevant to the contemporary audience.
-        <br/>3. An accurate translation does not distort the meaning in order to favor a specific interpretive perspective. It should be free from theological, cultural, or personal biases.
-        <br/>4. An accurate translation communicates historical events and facts accurately.
-      <p>
-</p>
-<p>
-      <strong>Clear</strong> - Clear translations will use whatever language structures are needed to help readers easily read and understand it.
-      <p>
-        1. A clear translation may use as many or as few terms as necessary to communicate the original meaning as clearly as possible.
-        <br/>2. Making a clear translation does not mean that the translator clarifies something that is ambiguous in the source text.
-        <br/>3. Making a clear translation does not mean that the translator gives the reader a specific interpretation for every passage where meaning is genuinely debated.
-      </p>
-</p>
-<p>
-      <strong>Natural</strong> - Natural translations use language forms that are reflect the way the target language is used in corresponding contexts.
-      <p>
-        1. Natural Bible translations sound like they were produced by an adult native speaker who speaks and/or writes well.
-        <br/>2. A natural Bible translation does not use expressions that are particular to their own culture in order to make the translation appear natural.
-        <br/>3. It is more important for a portion of Scripture to be translated accurately than for it to sound perfectly natural to everyone who reads it.
-      </p>
-</p>
-<p> We believe that a translation has the highest likelihood of being good quality when after applying the guidelines above, the following are completed: </p>
-<p>
-    1. It is tested and approved by believers of the language community and their church leaders.
-    <br/>2. Ongoing revisions and improvements are made.
-</p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="statement_of_faith"><![CDATA[<h1>Statement of Faith</h1>
-<p>We believe:</p>
-<ul>
-    <li>The Bible is divinely inspired by God and has final authority.</li>
-    <li>God is one and exists in three persons: God the Father, God the Son and God the Holy Spirit.</li>
-    <li>Because of the fall of man, all humans are sinful, and in need of salvation.</li>
-    <li>The death of Christ is a substitute for sinners and provides for the cleansing of those who believe.</li>
-    <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
-    <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
-</ul>]]></string>
     <string name="view_statement_of_faith">Bekijk Geloofsbelijdenis</string>
     <string name="view_translation_guidelines">Bekijk Vertaling Richtlijnen</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
@@ -211,6 +170,7 @@
     <string name="import_draft">Import Draft</string>
     <string name="import_draft_confirmation">Dit zal uw bestaande vertalingen in deze doeltaal vervangen, doorgaan?</string>
     <string name="action_search">Zoeken</string>
+    <string name="mark_chunks_done">Mark All Chunks Done</string>
     <string name="transfer_from_device">Transfer van het apparaat</string>
     <string name="transfer_from_device_description">De projecten zullen worden overgebracht via het netwerk van een toestel in de buurt</string>
     <string name="import_from_storage">Importeren uit opslag</string>
@@ -248,7 +208,7 @@
     <string name="loading_languages">Preparing languages</string>
     <string name="title_activity_target_translations">Your Translation Projects</string>
     <string name="title_activity_new_target_translation">New Translation</string>
-    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the blue button in the top right.]]></string>
+    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the green button in the top right.]]></string>
     <string name="title_activity_target_translation_detail">Translation Project</string>
     <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
     <string name="Project">Project</string>
@@ -264,6 +224,7 @@
     <string name="backup">Upload</string>
     <string name="attached_files">Attached files</string>
     <string name="requires_internet">This will use your Internet Connection</string>
+    <string name="maximum_limit">(Maximum: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
     <string name="input_required">Input cannot be empty</string>
     <string name="dismiss">Dismiss</string>
     <string name="done">Done</string>
@@ -283,6 +244,17 @@
   <li>I have reviewed the words and meaning</li>
   <li>I have reviewed the translation questions</li>
 </ul>]]></string>
+    <!-- The title of the dialog asking the user to verify completion of everything required to mark all chunks in project complete -->
+    <string name="project_checklist_title">Project Chunks Checklist</string>
+    <!-- The text asking the user to verify that all required steps have been taken prior to marking all chunks in project complete -->
+    <string name="project_checklist_body"><![CDATA[<p>Are you sure you are Done with all the chunks in this project?<p>
+<ul>
+  <li>I have placed the verses correctly</li>
+  <li>I have reviewed the words and meaning</li>
+  <li>I have reviewed the translation questions</li>
+</ul>]]></string>
+    <string name="result">Result</string>
+    <string name="mark_chunks_done_result">Marked <xliff:g example="1" id="marked">%1$d</xliff:g> chunks out of <xliff:g example="1" id="total">%2$d</xliff:g></string>
     <string name="your_name">Your Name or Pseudonym</string>
     <string name="your_email">Your Email Address</string>
     <string name="your_phone">Your Phone Number</string>
@@ -505,22 +477,6 @@
     <string name="title_import_failed">Import Failed!</string>
     <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Table of Contents </string>
-    <string name="license_pdf"><![CDATA[<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
-<h3>Human-Readable Summary</h3>
-<p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
-<h4>This is a human-readable summary of (and not a substitute for) the License</h4>
-<br/>
-<h3>You are free to:</h3>
-<br/><b>&#8226; Share</b> - copy and redistribute the material in any medium or format
-<br/><b>&#8226; Adapt</b> - remix, transform, and build upon the material for any purpose, even commercially.
-<p>The licensor cannot revoke these freedoms as long as you follow the license terms.</p>
-<h3>Under the following terms:</h3>
-<br/><b>&#8226; Attribution</b> - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-<br/><b>&#8226; ShareAlike</b> - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
-<br/><b>&#8226; No additional restrictions</b> - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.</p>
-<h3>Notices:</h3>
-<p><br/>&#8226; You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
-<p><br/>&#8226; No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>]]></string>
     <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
     <string name="new_lang_api_upload_failure_title">New Language Error</string>
     <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
@@ -582,6 +538,7 @@
     <string name="label_change">change</string>
     <string name="update_languages">Update List of Available Target Languages</string>
     <string name="update_source">Update List of Available Source Texts</string>
+    <string name="download_index">Download New index.sqlite</string>
     <string name="update_all">Update All</string>
     <string name="time_very_slow">Takes awhile</string>
     <string name="time_slow">May take many minutes (or longer)</string>
@@ -608,7 +565,9 @@
     <string name="update_cancelled">The update was cancelled</string>
     <string name="update_menu_requires_internet">Requires internet Connection\nThese updates may take a while.</string>
     <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> New Source Texts and <xliff:g example="10" id="updated">%2$d</xliff:g> Updated Source Texts are available to be downloaded.</string>
+    <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
     <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
+    <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
     <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
     <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
     <string name="available_online">Available Online</string>
