@@ -114,48 +114,7 @@
     <string name="yes">Si</string>
     <string name="no">No</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
-    <string name="translation_guidlines"><![CDATA[<h1> Consideraciones para la Traducción</h1>
-<p>
-      <strong>Precisa</strong> - Las traducciones precisas comunican eficazmente el significado pretendido del texto original inspirado por Dios. Una traducción precisa expresa el significado que el autor pretendía para la audiencia original en el contexto original.
-      <p>
-        1. En la medida de lo posible, no se agrega, malinterpreta o elimina nada del mensaje original.
-        <br/> 2. No reformula el significado del texto original para hacerlo más relevante para la audiencia contemporánea.
-        <br/>3. Una traducción precisa no distorsiona el significado para favorecer una perspectiva interpretativa específica. Debe estar libre de prejuicios teológicos, culturales o personales.
-        <br/>4. Una traducción precisa comunica hechos y acontecimientos históricos con precisión.
-      <p>
-</p>
-<p>
-      <strong>Clara</strong> - Las traducciones claras utilizarán las estructuras lingüísticas necesarias para ayudar a los lectores a leerlas y comprenderlas fácilmente.
-      <p>
-        1. Una traducción clara puede utilizar tantos términos como sea necesario para comunicar el significado original con la mayor claridad posible.
-        <br/>2. Hacer una traducción clara no significa que el traductor aclara algo que es ambiguo en el texto fuente.
-        <br/>3. Hacer una traducción clara no significa que el traductor le dé al lector una interpretación específica para cada pasaje donde el significado se debata genuinamente.
-      </p>
-</p>
-<p>
-      <strong>Natural</strong> - Las traducciones naturales usan formas de lenguaje que reflejan la forma en que se usa el idioma de destino en los contextos correspondientes.
-      <p>
-        1. Las traducciones naturales de la Biblia parecen haber sido producidas por un hablante nativo adulto que habla y / o escribe bien.
-        <br/>2. Una traducción bíblica natural no utiliza expresiones que sean particulares a su propia cultura con el fin de hacer que la traducción parezca natural.
-        <br/>3. Es más importante que una parte de la Escritura se traduzca con precisión a que suene perfectamente natural para todos los que la lean.
-      </p>
-</p>
-<p> Creemos que una traducción tiene la mayor probabilidad de ser de buena calidad cuando, después de aplicar las pautas anteriores, se completa lo siguiente: </p>
-<p>
-    1. Es probada y aprobada por los creyentes de la comunidad lingüística y los líderes de su iglesia.
-    <br/>2. Se realizan revisiones y mejoras continuas.
-</p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="statement_of_faith"><![CDATA[<h1>Declaración de Fe</h1>
-<p>Creemos:</p>
-<ul>
-    <li>La Biblia es divinamente inspirada por Dios y tiene autoridad final.</li>
-    <li>Dios es uno y existe en tres personas:  Dios el Padre, Dios el Hijo,  y Dios el Espíritu Santo.</li>
-    <li>Debido a la caída del hombre, todos los humanos son pecadores, y necesitan salvación.</li>
-    <li>La muerte de Cristo es un sustituto de los pecadores y proporciona limpieza para los que creen.</li>
-    <li>Por la gracia de Dios, a través de la fe, el hombre recibe salvación como un regalo gratuito mediante la muerte y resurrección de Jesús.</li>
-    <li>La resurrección de todos --- los salvos a la vida eterna y los perdidos al castigo eterno.</li>
-</ul>]]></string>
     <string name="view_statement_of_faith">Declaración de Fe</string>
     <string name="view_translation_guidelines">Directrices de Traducción</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
@@ -211,6 +170,7 @@
     <string name="import_draft">Proyecto de Importación</string>
     <string name="import_draft_confirmation">Esto reemplazará su traducción existente en este idioma de destino, continúe?</string>
     <string name="action_search">Búsqueda</string>
+    <string name="mark_chunks_done">Mark All Chunks Done</string>
     <string name="transfer_from_device">Traslado del dispositivo</string>
     <string name="transfer_from_device_description">Los proyectos serán transferidos a través de la red desde un dispositivo cercano</string>
     <string name="import_from_storage">Importar de almacenamiento</string>
@@ -248,7 +208,7 @@
     <string name="loading_languages">Preparando idiomas</string>
     <string name="title_activity_target_translations">Sus proyectos de traducción</string>
     <string name="title_activity_new_target_translation">Nueva traducción</string>
-    <string name="translations_welcome"><![CDATA[¡Bienvenido! \nEsta es tu pantalla de inicio. Cuando tengas proyectos de traducción en este dispositivo, aparecerán aquí. \n\nPuedes iniciar una nueva traducción en cualquier momento tocando el botón azul en la esquina superior derecha.]]></string>
+    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the green button in the top right.]]></string>
     <string name="title_activity_target_translation_detail">Proyecto de traducción</string>
     <string name="duplicate_target_translation">Ya estás traduciendo <xliff:g ejemplo="Genesis" id="project">%1$s</xliff:g> en <xliff:g ejemplo="English" id="target_language">%2$s</xliff:g></string>
     <string name="Project">Proyecto</string>
@@ -264,6 +224,7 @@
     <string name="backup">Subir</string>
     <string name="attached_files">Ficheros adjuntos</string>
     <string name="requires_internet">Esto usará tu conexión al Internet</string>
+    <string name="maximum_limit">(Maximum: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
     <string name="input_required">¡La entrada no puede estar vacía</string>
     <string name="dismiss">Descartar</string>
     <string name="done">Hecho</string>
@@ -283,6 +244,17 @@
   <li>He revisado las palabras y el significado</li>
   <li>He revisado las preguntas de traducción</li>
 </ul>]]></string>
+    <!-- The title of the dialog asking the user to verify completion of everything required to mark all chunks in project complete -->
+    <string name="project_checklist_title">Project Chunks Checklist</string>
+    <!-- The text asking the user to verify that all required steps have been taken prior to marking all chunks in project complete -->
+    <string name="project_checklist_body"><![CDATA[<p>Are you sure you are Done with all the chunks in this project?<p>
+<ul>
+  <li>I have placed the verses correctly</li>
+  <li>I have reviewed the words and meaning</li>
+  <li>I have reviewed the translation questions</li>
+</ul>]]></string>
+    <string name="result">Result</string>
+    <string name="mark_chunks_done_result">Marked <xliff:g example="1" id="marked">%1$d</xliff:g> chunks out of <xliff:g example="1" id="total">%2$d</xliff:g></string>
     <string name="your_name">Tu nombre o seudónimo</string>
     <string name="your_email">Su Dirección de Correo Electrónico</string>
     <string name="your_phone">Su número de teléfono</string>
@@ -505,23 +477,6 @@
     <string name="title_import_failed">¡Importación Fallida!</string>
     <string name="import_project_success">Importación exitosa de <xliff:g example="Mark" id="project">%1$s</xliff:g> desde:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Tabla de Contenido </string>
-    <string name="license_pdf"><![CDATA[<h2>Atribución Creative Commons-CompartirAlike 4.0 Internacional</h2>
-<h3>Resumen Legible </h3>
-<p>El Atribución Creative Commons-CompartirAlike 4.0 Internacional licencia está disponible en <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
-<h4>Este es un resumen legible de (y no un sustituto de) la licencia.</h4>
-<br/>
-<h3>Usted es libre de:</h3>
-<br/><b>&#8226; Compartir</b> - copia y redistribuye el material en cualquier medio o formato
-<br/><b>&#8226; Adaptar</b> - remezclar, transformar y construir sobre el material
-para cualquier propósito, incluso comercialmente.
-<p>El licenciante no puede revocar estas libertades siempre y cuando siga los términos de licencia.</p>
-<h3>En las siguientes condiciones</h3>
-<br/><b>&#8226; Atribución</b> - Debe dar el crédito adecuado, proporcionar un enlace a la licencia e indicar si se han realizado cambios. Usted puede hacerlo de cualquier forma razonable, pero no de ninguna manera que sugiera que el licenciante le respalde o su uso.
-<br/><b>&#8226; ShareAlike</b> - Si remezclas, transformas o construyes sobre el material, debes distribuir tus contribuciones bajo la misma licencia que el original.
-<br/><b>&#8226; Sin restricciones adicionales</b> - No puede aplicar términos legales o medidas tecnológicas que restrinjan legalmente a otros hacer cualquier cosa que la licencia permita.</p>
-<h3>Avisos:</h3>
-<p><br/>&#8226; Usted no tiene que cumplir con la licencia para elementos del material en el dominio público o cuando su uso está permitido por una excepción o limitación aplicable.</p>
-<p><br/>&#8226; No se dan garantías. Es posible que la licencia no le dé todos los permisos necesarios para su uso previsto. Por ejemplo, otros derechos como la publicidad, la privacidad o los derechos morales pueden limitar la forma en que utiliza el material.</p>]]></string>
     <string name="questionnaire_title">Página <xliff:g example="1" id="page_num">%1$d</xliff:g> de <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
     <string name="new_lang_api_upload_failure_title">Error de nuevo idioma</string>
     <string name="new_lang_api_upload_failure">No pudimos guardar las respuestas al Cuestionario del Idioma Nuevo. Intentaremos nuevamente la próxima vez que</string>
@@ -583,6 +538,7 @@ para cualquier propósito, incluso comercialmente.
     <string name="label_change">cambiar</string>
     <string name="update_languages">Actualizar la lista de idiomas receptores disponibles</string>
     <string name="update_source">Actualizar lista de textos fuente disponibles</string>
+    <string name="download_index">Download New index.sqlite</string>
     <string name="update_all">Actualizar todos</string>
     <string name="time_very_slow">Toma un tiempo</string>
     <string name="time_slow">Puede tardar muchos minutos (o más)</string>
@@ -609,7 +565,9 @@ para cualquier propósito, incluso comercialmente.
     <string name="update_cancelled">La actualización fue cancelada</string>
     <string name="update_menu_requires_internet">Requiere conexión al Internet \nEstas actualizaciones pueden demorar un tiempo.</string>
     <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> Textos fuentes nuevos y <xliff:g example="10" id="updated">%2$d</xliff:g> Textos fuentes actualizados disponibles para su descarga.</string>
+    <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
     <string name="updating_sources">Actualizando la lista de textos de origen. Esto puede tardar un tiempo. Por favor, espere...</string>
+    <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
     <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Se han agregado los idiomas receptores.</string>
     <string name="updating_languages">Actualización de la lista de idiomas receptores. Esto puede tardar un rato. Por favor espera...</string>
     <string name="available_online">Disponible en línea</string>
