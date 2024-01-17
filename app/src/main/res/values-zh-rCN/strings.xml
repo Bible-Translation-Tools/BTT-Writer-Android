@@ -114,48 +114,7 @@
     <string name="yes">是的</string>
     <string name="no">无</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
-    <string name="translation_guidlines"><![CDATA[<h1>翻译指南</h1>
-<p>
-      <strong>准确的</strong> - 准确的翻译有效地传达了原始的、受神启发的文本的预期含义。准确的翻译会表达出作者在原始文本中对原始读者的意图。
-      <p>
-        1. 在可能的范围内，不从原始信息中添加、误解或删除任何内容。
-        <br/>2. 不重新诠释原文的含义，使其与当代群众更相关连。
-        <br/>3. 准确的翻译不会为了支持特定的解释视角而歪曲意思。它应该没有神学、文化或个人偏见。
-        <br/>4. 准确的翻译要准确地传达历史的事件和事实。
-      <p>
-</p>
-<p>
-      <strong>清晰</strong> - 清晰的翻译将使用任何需要的语言结构来帮助读者轻松阅读和理解。
-      <p>
-        1. 清晰的翻译可以使用或多或或少的字词来尽可能清楚地传达原始含义。
-        <br/>2. 清晰的翻译并不意味着译者要澄清源文本中有歧义的东西。
-        <br/>3. 清晰的翻译并不意味着译者在对每一个史上曾有争议的段落都给予读者一个特定的解释。
-      </p>
-</p>
-<p>
-      <strong>自然</strong> - 自然翻译中使用的语言形式应该反映出目标语言在信件往来的景况下使用的方式。
-      <p>
-        1. 自然的圣经翻译，在听读的时候，会像是由一位母语说的很好或写得很好的成年人士说写的。
-        <br/>2. 自然的圣经翻译不会为了使翻译显得自然而去用他们自己文化里特定的表达方式。
-        <br/>3. 翻译一段圣经时，其准确度要比让人读的自然度来得更重要。
-      </p>
-</p>
-<p> 我们相信，在应用上述准则后，翻译质量就很可能达到一个高水平。再来就靠以下行动把翻译完结。</p>
-<p>
-     1. 由语言社区的信徒和他们的教会领袖测试和认可。
-    <br/> 2. 不断修改完善。
-</p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="statement_of_faith"><![CDATA[<h1>信仰宣言</h1>
-<p>我们相信</p>
-<ul>
-    <li>圣经是神所默示的，拥有最终权威。</li>
-    <li>圣经是神所默示的，拥有最终权威。</li>
-    <li>因为人的堕落，所有的人都是有罪的，都需要救赎。</li>
-    <li>基督是替代罪人而死，叫凡相信的人都得洁净。</li>
-    <li>藉着神的恩典和人的相信，因着耶稣的死和复活，人类就可以得着无偿的救恩。</li>
-    <li>所有人的复活——得救的人得永生，失丧的人永远受罚。</li>
-</ul>]]></string>
     <string name="view_statement_of_faith">信仰观声明</string>
     <string name="view_translation_guidelines">查看翻译指南</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
@@ -211,6 +170,7 @@
     <string name="import_draft">进口草案</string>
     <string name="import_draft_confirmation">这将替换该目标语言你现有的翻译，是否继续？</string>
     <string name="action_search">搜索</string>
+    <string name="mark_chunks_done">Mark All Chunks Done</string>
     <string name="transfer_from_device">从设备转移</string>
     <string name="transfer_from_device_description">项目将被从附近的一个设备通过网络传输</string>
     <string name="import_from_storage">从存储中导入</string>
@@ -248,7 +208,7 @@
     <string name="loading_languages">Preparing languages</string>
     <string name="title_activity_target_translations">Your Translation Projects</string>
     <string name="title_activity_new_target_translation">New Translation</string>
-    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the blue button in the top right.]]></string>
+    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the green button in the top right.]]></string>
     <string name="title_activity_target_translation_detail">Translation Project</string>
     <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
     <string name="Project">Project</string>
@@ -264,6 +224,7 @@
     <string name="backup">Upload</string>
     <string name="attached_files">Attached files</string>
     <string name="requires_internet">This will use your Internet Connection</string>
+    <string name="maximum_limit">(Maximum: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
     <string name="input_required">Input cannot be empty</string>
     <string name="dismiss">Dismiss</string>
     <string name="done">Done</string>
@@ -283,6 +244,17 @@
   <li>I have reviewed the words and meaning</li>
   <li>I have reviewed the translation questions</li>
 </ul>]]></string>
+    <!-- The title of the dialog asking the user to verify completion of everything required to mark all chunks in project complete -->
+    <string name="project_checklist_title">Project Chunks Checklist</string>
+    <!-- The text asking the user to verify that all required steps have been taken prior to marking all chunks in project complete -->
+    <string name="project_checklist_body"><![CDATA[<p>Are you sure you are Done with all the chunks in this project?<p>
+<ul>
+  <li>I have placed the verses correctly</li>
+  <li>I have reviewed the words and meaning</li>
+  <li>I have reviewed the translation questions</li>
+</ul>]]></string>
+    <string name="result">Result</string>
+    <string name="mark_chunks_done_result">Marked <xliff:g example="1" id="marked">%1$d</xliff:g> chunks out of <xliff:g example="1" id="total">%2$d</xliff:g></string>
     <string name="your_name">Your Name or Pseudonym</string>
     <string name="your_email">Your Email Address</string>
     <string name="your_phone">Your Phone Number</string>
@@ -505,22 +477,6 @@
     <string name="title_import_failed">Import Failed!</string>
     <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Table of Contents </string>
-    <string name="license_pdf"><![CDATA[<h2>知识共享署名-相同方式共享 4.0 国际</h2>
-<h3>免责声明</h3>
-<p>此处包含知识共享署名-相同方式共享 4.0 国际许可证，可在 <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
-<h4> 许可权免责声明摘要(此声明不替代作品许可权)</h4>
-<br/>
-<h3> 您可以自由地：</h3>
-<br/><b>&#8226; 共享</b> - 在任何媒介以任何形式复制、发行本作品
-<br/><b>&#8226; 演绎</b> - 修改、转换或以本作品为基础进行创作在任何用途下，甚至商业目的
-<p> 只要你遵守许可协议条款，许可人就无法收回你的这些权利</p>
-<h3>惟须遵守下列条件：</h3>
-<br/><b>&#8226; 署名</b> - 您必须给出适当的署名，提供指向本许可协议的链接，同时标明是否（对原始作品）作了修改。您可以用任何合理的方式来署名，但是不得以任何方式暗示许可人为您或您的使用背书。
-<br/><b>&#8226; 相同方式共享</b> - 如果您再混合、转换或者基于本作品进行创作，您必须基于与原先许可协议相同的许可协议 分发您贡献的作品。
-<br/><b>&#8226; 没有附加限制</b> - 您不得适用法律术语或者 技术措施 从而限制其他人做许可协议允许的事情。</p>
-<h3> 声明：</h3>
-<p><br/>&#8226; 您不必因为公共领域的作品要素而遵守许可协议，或者您的使用被可适用的 例外或限制所允许。</p>
-<p><br/>&#8226; 不提供担保。许可协议可能不会给与您意图使用的所必须的所有许可。例如，其他权利比如形象权、隐私权或人格权可能限制您如何使用作品。]]></string>
     <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
     <string name="new_lang_api_upload_failure_title">New Language Error</string>
     <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
@@ -582,6 +538,7 @@
     <string name="label_change">change</string>
     <string name="update_languages">Update List of Available Target Languages</string>
     <string name="update_source">Update List of Available Source Texts</string>
+    <string name="download_index">Download New index.sqlite</string>
     <string name="update_all">Update All</string>
     <string name="time_very_slow">Takes awhile</string>
     <string name="time_slow">May take many minutes (or longer)</string>
@@ -608,7 +565,9 @@
     <string name="update_cancelled">The update was cancelled</string>
     <string name="update_menu_requires_internet">Requires internet Connection\nThese updates may take a while.</string>
     <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> New Source Texts and <xliff:g example="10" id="updated">%2$d</xliff:g> Updated Source Texts are available to be downloaded.</string>
+    <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
     <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
+    <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
     <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
     <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
     <string name="available_online">Available Online</string>
