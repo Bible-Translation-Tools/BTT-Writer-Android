@@ -129,6 +129,8 @@ public class ExportUsfm {
                 ps.println(chapterRef);
             }
 
+            ps.println("\\p"); // paragraph marker
+
             ArrayList<FrameTranslation> frameList = sortFrameTranslations(frames);
             int startChunk = 0;
             if(frameList.size() > 0) {
