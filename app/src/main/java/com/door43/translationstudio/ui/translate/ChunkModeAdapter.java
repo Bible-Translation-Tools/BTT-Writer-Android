@@ -798,6 +798,9 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         }
     }
 
+    @Override
+    public void markAllChunksDone() {}
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public int mLayoutBuildNumber = -1;
         public TextWatcher mTextWatcher;
