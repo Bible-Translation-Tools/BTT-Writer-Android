@@ -238,12 +238,16 @@
     <!-- The title of the dialog asking the user to verify completion of everything required to mark a chunk complete -->
     <string name="chunk_checklist_title">Checklist de morceaux</string>
     <!-- The text asking the user to verify that all required steps have been taken prior to marking a chunk complete -->
-    <string name="chunk_checklist_body"><![CDATA[<p>Êtes-vous sûr de que vous avez terminé avec ce morceau ?<p>
+    <string name="chunk_checklist_body">
+<![CDATA[
+<p>Êtes-vous sûr de que vous avez terminé avec ce morceau ?<p>
 <ul>
-  <li>J'ai placé correctement les versets</li>
-  <li>J'ai passé en revue les mots et la signification</li>
-  <li>J'ai passé en revue les questions de traduction</li>
-</ul>]]></string>
+  <li>J\'ai placé correctement les versets</li>
+  <li>J\'ai passé en revue les mots et la signification</li>
+  <li>J\'ai passé en revue les questions de traduction</li>
+</ul>
+]]>
+    </string>
     <!-- The title of the dialog asking the user to verify completion of everything required to mark all chunks in project complete -->
     <string name="project_checklist_title">Project Chunks Checklist</string>
     <!-- The text asking the user to verify that all required steps have been taken prior to marking all chunks in project complete -->
@@ -282,8 +286,8 @@
     <string name="publishing_explanation"><![CDATA[<p>Publier votre travail rend votre contenu disponible :</p>
 <ul>
     <li>En ligne dans plusieurs formats</li>
-    <li>Dans l'application mobile</li>
-    <li>Dans un PDF adapté à l'impression</li>
+    <li>Dans l\'application mobile</li>
+    <li>Dans un PDF adapté à l\'impression</li>
 </ul>]]></string>
     <string name="confirm_delete_target_translation">Cela supprimera définitivement la traduction. Continuer ?</string>
     <string name="long_click_to_drag">Appuyez et maintenez pour faire glisser</string>
@@ -329,13 +333,14 @@
     <string name="publish_status_not_current">Non actuel</string>
     <string name="error">Erreur</string>
     <string name="enable_sd_card_access_title">Activer l\'accès à la carte SD</string>
-    <string name="enable_sd_card_access"><![CDATA[Souhaitez-vous activer l'accès à la carte SD? Si c'est le cas alors :
+    <string name="enable_sd_card_access">
+<![CDATA[Souhaitez-vous activer l\'accès à la carte SD? Si c\'est le cas alors :
 \n
-\n\u00A0\u00A0 1. Tapez sur \'Confirmer\' au bas de ce message. Ce message se fermera et une nouvelle fenêtre s'ouvrira.
+\n\u00A0\u00A0 1. Tapez sur \'Confirmer\' au bas de ce message. Ce message se fermera et une nouvelle fenêtre s\'ouvrira.
 \n
-\n\u00A0\u00A0 2. Si vous ne voyez pas l'icône \'carte SD\' dans la colonne de gauche, appuyez ensuite sur l'icône à 3 points en haut à droite de la fenêtre, puis appuyez sur  \'Montrer SD card.\' 
+\n\u00A0\u00A0 2. Si vous ne voyez pas l\'icône \'carte SD\' dans la colonne de gauche, appuyez ensuite sur l\'icône à 3 points en haut à droite de la fenêtre, puis appuyez sur  \'Montrer SD card.\'
 \n
-\n\u00A0\u00A0 3. Si l'icône de la \'carte SD\' se trouve dans la colonne de gauche, appuyez sur l'icône. Les fichiers de la carte SD sont alors affichés. Tapez sur les mots \'SELECTIONNER \"SD card\"\' au bas de la fenêtre.
+\n\u00A0\u00A0 3. Si l\'icône de la \'carte SD\' se trouve dans la colonne de gauche, appuyez sur l\'icône. Les fichiers de la carte SD sont alors affichés. Tapez sur les mots \'SELECTIONNER \"SD card\"\' au bas de la fenêtre.
 \n
 \nSi vous appuyez sur IGNORER ci-dessous, Importer/Exporter utilisera la mémoire interne.]]></string>
     <string name="access_title">Tentative d\'accès</string>
