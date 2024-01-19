@@ -50,14 +50,14 @@
     <string name="upload_wizard_overview">Subir Revisión</string>
     <string name="label_project_details">Detalles del proyecto</string>
     <!-- Indicates how the project is being translated. e.g. Open Bible Stories is being translated from the English language into the Deutsch language -->
-    <string name="project_details"><xliff:g id="project" example="Open Bible Stories"> \"%1$s\" </xliff:g> está siendo traducida del <xliff:g id="language" example="English"> \"%2$s\" </xliff:g> idioma en el <xliff:g id="language" example="Deutsch"> \"%3$s\" </xliff:g> idioma.</string>
+    <string name="project_details"><xliff:g example="Open Bible Stories" id="project">\"%1$s\"</xliff:g> is being translated from the <xliff:g example="English" id="source_language">\"%2$s\"</xliff:g> language into the <xliff:g example="Deutsch" id="target_language">\"%3$s\"</xliff:g> language.</string>
     <string name="click_for_details">Haga clic para detalles</string>
     <string name="title_project_settings">Configuración Del Proyecto</string>
     <string name="error_target_and_source_are_same">Los idiomas de origen y destino son el mismo</string>
     <string name="error_chapter_title_missing">El título del capítulo que falta</string>
     <string name="error_chapter_reference_missing">La referencia el capítulo que falta</string>
-    <string name="label_chapter_title_detailed">Capítulo <xliff:g id="chapter" example="1. The Creation"> %1$s </xliff:g></string>
-    <string name="label_frame_title_detailed">Marco: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
+    <string name="label_chapter_title_detailed">Chapter <xliff:g example="1. The Creation" id="chapter">%1$s</xliff:g></string>
+    <string name="label_frame_title_detailed">Frame: <xliff:g example="1" id="frame">%1$s</xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
     <string name="dialog_validation_errors">Los Errores De Validación</string>
     <string name="validation_errors">Hay sin resolver errores en la traducción. Por favor corregir estos, a continuación, inténtelo de nuevo</string>
@@ -68,7 +68,7 @@
     <string name="no_translated_chapters">Nada ha sido traducido aún</string>
     <string name="title_chapters">Capítulos</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
-    <string name="now_viewing_frame">Viendo el marco <xliff:g id="number" example="1"> %1$s </xliff:g> en el capítulo <xliff:g id="chapter" example="1. The Creation"> %2$s </xliff:g>.</string>
+    <string name="now_viewing_frame">Viewing frame <xliff:g example="1" id="number">%1$s</xliff:g> in chapter <xliff:g example="1. The Creation" id="chapter">%2$s</xliff:g>.</string>
     <string name="label_translation_notes">Notas De Traducción</string>
     <string name="label_passage_note">Pasaje de la nota:</string>
     <string name="label_delete">Borrar</string>
@@ -78,7 +78,7 @@
     <string name="target_language_instructions">Idiomas de destino no se han traducido o son obras en curso</string>
     <string name="notes_cannot_overlap">Notas no se superponen</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
-    <string name="currently_viewed_frame_index">Marco <xliff:g id="current_frame" example="2"> %1$s </xliff:g> de <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
+    <string name="currently_viewed_frame_index">Frame <xliff:g example="2" id="current_frame">%1$s</xliff:g> of <xliff:g example="10" id="total_frames">%2$s</xliff:g></string>
     <string name="content_server">Servidor de contenido</string>
     <string name="opening_project">Proyecto de apertura de</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
@@ -141,14 +141,14 @@
     <string name="label_name">Nombre</string>
     <string name="label_email">Correo electrónico</string>
     <string name="label_phone">Teléfono</string>
-    <string name="verse_out_of_bounds">Elija un verso entre <xliff:g id="number" example="1"> %1$s </xliff:g> y <xliff:g id="number" example="100"> %2$s </xliff:g></string>
+    <string name="verse_out_of_bounds">Choose a verse between <xliff:g example="1" id="number">%1$s</xliff:g> and <xliff:g example="100" id="number">%2$s</xliff:g></string>
     <string name="no_key_terms">No hay términos importantes</string>
     <string name="title_activity_developer">Herramientas De Desarrollo</string>
     <string name="action_settings">Configuración</string>
     <!-- displays the application build or version code -->
     <!-- displays the application version name -->
     <!-- displays the unique device id -->
-    <string name="downloading_project">Descarga de proyecto <xliff:g id="project_id" example="obs"> %1$s </xliff:g></string>
+    <string name="downloading_project">Downloading project <xliff:g example="obs" id="project_id">%1$s</xliff:g></string>
     <!-- This is the direction up. The opposite of down. -->
     <string name="up">Arriba</string>
     <!-- indicates the directory/folder on the device does not contain any files -->
@@ -190,7 +190,7 @@
     <string name="publish_translation">Publicar traducción</string>
     <string name="notice">Aviso</string>
     <string name="complete_required_fields">Por favor complete todos los campos requeridos</string>
-    <string name="required_field"><xliff:g id="marker"> * </xliff:g> necesario</string>
+    <string name="required_field"><xliff:g id="marker">*</xliff:g> required</string>
     <string name="upload_failed">No subir</string>
     <string name="download_failed">Descarga fracasó</string>
     <string name="publishing_translation">Traducción editorial</string>
@@ -210,7 +210,7 @@
     <string name="title_activity_new_target_translation">Nueva traducción</string>
     <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the green button in the top right.]]></string>
     <string name="title_activity_target_translation_detail">Proyecto de traducción</string>
-    <string name="duplicate_target_translation">Ya estás traduciendo <xliff:g ejemplo="Genesis" id="project">%1$s</xliff:g> en <xliff:g ejemplo="English" id="target_language">%2$s</xliff:g></string>
+    <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
     <string name="Project">Proyecto</string>
     <string name="language">Idioma</string>
     <string name="progress">Progreso</string>
