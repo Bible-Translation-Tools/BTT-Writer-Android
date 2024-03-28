@@ -72,7 +72,6 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     private static final boolean ALWAYS_SIMPLE_PREFS = true;
 //    public static final String KEY_PREF_AUTOSAVE = "autosave";
     public static final String KEY_PREF_CONTENT_SERVER = "content_server";
-    public static final String KEY_PREF_GIT_SERVER = "git_server";
     public static final String KEY_PREF_GIT_SERVER_PORT = "git_server_port";
     public static final String KEY_PREF_ALWAYS_SHARE = "always_share";
     public static final String KEY_PREF_MEDIA_SERVER = "media_server";
@@ -254,7 +253,6 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
         // to reflect the new value, per the Android Design guidelines.
 //        bindPreferenceSummaryToValue(findPreference(KEY_PREF_AUTOSAVE));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_CONTENT_SERVER));
-        bindPreferenceSummaryToValue(findPreference(KEY_PREF_GIT_SERVER));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_GIT_SERVER_PORT));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_GOGS_API));
 //        bindPreferenceSummaryToValue(findPreference(KEY_PREF_EXPORT_FORMAT));
@@ -285,11 +283,6 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                 int index = Arrays.asList(values).indexOf(newValue);
                 ListPreference contentServer = (ListPreference) findPreference(KEY_PREF_CONTENT_SERVER);
                 contentServer.setSummary(serverNames[index]);
-
-                String[] gitServers = getResources().getStringArray(R.array.content_server_git_server_values_array);
-                EditTextPreference gitServer = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER);
-                gitServer.setText(gitServers[index]);
-                gitServer.setSummary(gitServers[index]);
 
                 String[] gitServerPorts = getResources().getStringArray(R.array.content_server_git_server_port_values_array);
                 EditTextPreference gitServerPort = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER_PORT);
@@ -635,11 +628,6 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                         String[] values = resources.getStringArray(R.array.content_server_values_array);
                         int index = Arrays.asList(values).indexOf(newValue);
 
-                        String[] gitServers = resources.getStringArray(R.array.content_server_git_server_values_array);
-                        EditTextPreference gitServer = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER);
-                        gitServer.setText(gitServers[index]);
-                        gitServer.setSummary(gitServers[index]);
-
                         String[] gitServerPorts = resources.getStringArray(R.array.content_server_git_server_port_values_array);
                         EditTextPreference gitServerPort = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER_PORT);
                         gitServerPort.setText(gitServerPorts[index]);
@@ -684,7 +672,6 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
             // guidelines.
 //            bindPreferenceSummaryToValue(findPreference(KEY_PREF_AUTOSAVE));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_CONTENT_SERVER));
-            bindPreferenceSummaryToValue(findPreference(KEY_PREF_GIT_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_GOGS_API));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_GIT_SERVER_PORT));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_MEDIA_SERVER));

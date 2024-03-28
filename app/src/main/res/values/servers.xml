@@ -11,11 +11,6 @@
         <item>dcs_value</item>
     </string-array>
 
-    <string-array name="content_server_git_server_values_array">
-        <item>git@wacs.bibletranslationtools.org</item>
-        <item>git@git.door43.org</item>
-    </string-array>
-
     <string-array name="content_server_git_server_port_values_array">
         <item>22</item>
         <item>9299</item>
