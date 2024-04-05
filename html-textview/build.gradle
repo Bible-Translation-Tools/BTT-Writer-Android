@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 android {
-    compileSdk 28
 
     defaultConfig {
+        compileSdk 30
         minSdk 22
         targetSdk 28
     }

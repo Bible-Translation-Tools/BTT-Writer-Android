@@ -68,7 +68,9 @@ public class PullTargetTranslationTask extends ManagedTask {
                     GetRepositoryTask repoTask = new GetRepositoryTask(profile.gogsUser, targetTranslation);
                     delegate(repoTask);
 
-                    sourceURL = repoTask.getRepository().getSshUrl();
+                    if (repoTask.getRepository() != null) {
+                        sourceURL = repoTask.getRepository().getSshUrl();
+                    }
                 }
 
                 try {
@@ -120,7 +122,7 @@ public class PullTargetTranslationTask extends ManagedTask {
         try {
             PullResult result = pullCommand.call();
             MergeResult mergeResult = result.getMergeResult();
-            if(mergeResult != null && mergeResult.getConflicts() != null && !mergeResult.getConflicts().isEmpty()) {
+            if(mergeResult != null && mergeResult.getConflicts() != null && mergeResult.getConflicts().size() > 0) {
                 this.status = Status.MERGE_CONFLICTS;
                 this.conflicts = mergeResult.getConflicts();
 
