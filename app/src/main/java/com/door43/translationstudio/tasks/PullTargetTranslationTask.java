@@ -102,6 +102,8 @@ public class PullTargetTranslationTask extends ManagedTask {
     private String pull(Repo repo, String remote) {
         Git git;
         try {
+            repo.deleteRemote("origin");
+            repo.setRemote("origin", remote);
             git = repo.getGit();
         } catch (IOException e) {
             return null;
@@ -112,13 +114,13 @@ public class PullTargetTranslationTask extends ManagedTask {
         // TODO: we might want to get some progress feedback for the user
         PullCommand pullCommand = git.pull()
                 .setTransportConfigCallback(new TransportCallback())
-                .setRemote(remote)
+                .setRemote("origin")
                 .setStrategy(mergeStrategy)
                 .setRemoteBranchName("master");
         try {
             PullResult result = pullCommand.call();
             MergeResult mergeResult = result.getMergeResult();
-            if(mergeResult != null && mergeResult.getConflicts() != null && mergeResult.getConflicts().size() > 0) {
+            if(mergeResult != null && mergeResult.getConflicts() != null && !mergeResult.getConflicts().isEmpty()) {
                 this.status = Status.MERGE_CONFLICTS;
                 this.conflicts = mergeResult.getConflicts();
 

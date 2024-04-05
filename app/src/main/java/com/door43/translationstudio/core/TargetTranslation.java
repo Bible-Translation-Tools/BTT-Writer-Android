@@ -1213,7 +1213,7 @@ public class TargetTranslation {
         // perform merge
         MergeCommand merge = repo.getGit().merge();
         merge.setFastForward(MergeCommand.FastForwardMode.NO_FF);
-        merge.include(repo.getGit().getRepository().getRef("new"));
+        merge.include(repo.getGit().getRepository().findRef("new"));
         MergeResult result = merge.call();
 
         // merge manifests
