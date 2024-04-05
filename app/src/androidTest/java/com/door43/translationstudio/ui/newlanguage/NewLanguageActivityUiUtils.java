@@ -79,7 +79,7 @@ public class NewLanguageActivityUiUtils {
         // Specify a valid string.
         mStringToBetyped = "Espresso";
         Logger.flush();
-        mTestContext = InstrumentationRegistry.getContext();
+        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
         Door43Client library = App.getLibrary();
         if(!App.isLibraryDeployed()) {
             try {
@@ -109,7 +109,7 @@ public class NewLanguageActivityUiUtils {
      * force page orientation change
      */
     protected void rotateScreen() {
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         int orientation
                 = context.getResources().getConfiguration().orientation;
 
@@ -472,7 +472,7 @@ public class NewLanguageActivityUiUtils {
      * @param pageNum
      */
     private void thenTitlePageCountShouldMatch(int pageCount, int pageNum) {
-        mAppContext = InstrumentationRegistry.getTargetContext();
+        mAppContext = InstrumentationRegistry.getInstrumentation().getContext();
         String titleFormat = mAppContext.getResources().getString(R.string.questionnaire_title);
 
         String title = String.format(titleFormat, pageNum + 1, pageCount);
@@ -485,7 +485,7 @@ public class NewLanguageActivityUiUtils {
      * @param pageNum
      */
     protected void thenTitlePageCountShouldNotMatch(int pageCount, int pageNum) {
-        mAppContext = InstrumentationRegistry.getTargetContext();
+        mAppContext = InstrumentationRegistry.getInstrumentation().getContext();
         String titleFormat = mAppContext.getResources().getString(R.string.questionnaire_title);
 
         String title = String.format(titleFormat, pageNum + 1, pageCount);

@@ -16,13 +16,15 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.matcher.BoundedMatcher;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.appcompat.widget.Toolbar;
-import android.test.suitebuilder.annotation.LargeTest;
+import androidx.test.runner.AndroidJUnit4;
+
 import android.view.View;
 
 import com.door43.translationstudio.App;
@@ -41,9 +43,7 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -67,7 +67,7 @@ public class ImportUsfmActivityUiTest {
 
     @Before
     public void setUp() {
-        mTestContext = InstrumentationRegistry.getContext();
+        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
         Logger.flush();
         if(App.getProfile() == null) { // make sure this is initialized
             App.setProfile(new Profile("testing"));
@@ -367,7 +367,7 @@ public class ImportUsfmActivityUiTest {
      * force page orientation change
      */
     protected void rotateScreen() {
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         int orientation
                 = context.getResources().getConfiguration().orientation;
 

@@ -1,15 +1,24 @@
 package com.door43.translationstudio.core;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.net.Uri;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.door43.translationstudio.App;
 import com.door43.util.FileUtilities;
 import com.door43.util.Zip;
 
 import org.eclipse.jgit.util.StringUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.ChunkMarker;
 import org.unfoldingword.door43client.models.Translation;
@@ -32,7 +41,7 @@ import org.unfoldingword.door43client.models.TargetLanguage;
 /**
  * Created by blm on 7/25/16.
  */
-public class ExportUsfmTest extends InstrumentationTestCase {
+public class ExportUsfmTest {
 
     public static final String TAG = ExportUsfmTest.class.getSimpleName();
     File mTempFolder;
@@ -46,13 +55,12 @@ public class ExportUsfmTest extends InstrumentationTestCase {
     private String mErrorLog;
 
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         mErrorLog = null;
         mLibrary = App.getLibrary();
         Logger.flush();
-        mTestContext = getInstrumentation().getContext();
+        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
         mAppContext = App.context();
         if(!App.isLibraryDeployed()) {
             App.deployDefaultLibrary();
@@ -63,7 +71,7 @@ public class ExportUsfmTest extends InstrumentationTestCase {
         }
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         if (mUsfm != null) {
             mUsfm.cleanup();
@@ -71,6 +79,7 @@ public class ExportUsfmTest extends InstrumentationTestCase {
         FileUtilities.deleteQuietly(mTempFolder);
     }
 
+    @Test
     public void test01ValidExportMarkSingle() throws Exception {
         //given
         String zipFileName = null;
@@ -85,6 +94,7 @@ public class ExportUsfmTest extends InstrumentationTestCase {
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
     }
 
+    @Test
     public void test02ValidExportPsalmSingle() throws Exception {
         //given
         String zipFileName = null;
@@ -99,6 +109,7 @@ public class ExportUsfmTest extends InstrumentationTestCase {
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
     }
 
+    @Test
     public void test03ValidExportJudeSingle() throws Exception {
         //given
         String zipFileName = null;
@@ -113,6 +124,7 @@ public class ExportUsfmTest extends InstrumentationTestCase {
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
     }
 
+    @Test
     public void test04ValidExportJobSingle() throws Exception {
         //given
         String zipFileName = null;
@@ -183,7 +195,7 @@ public class ExportUsfmTest extends InstrumentationTestCase {
 //        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
 //    }
 
-
+    @Test
     public void test12VerifyBookChunkMarkersAgainstSourceTOC() throws Exception {
         //given
         String[] books = {
