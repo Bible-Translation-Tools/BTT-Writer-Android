@@ -28,7 +28,7 @@ android {
     defaultConfig {
         applicationId "org.bibletranslationtools.writer.android"
         minSdk 22
-        compileSdk 28
+        compileSdk 30
         targetSdk 28
         versionCode 18
         versionName "1.4.0"
