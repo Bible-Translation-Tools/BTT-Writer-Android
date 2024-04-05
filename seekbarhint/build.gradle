@@ -2,23 +2,23 @@ apply plugin: 'com.android.library'
 //apply plugin: 'com.github.dcendents.android-maven'
 
 android {
-    compileSdkVersion 28
+    compileSdk 28
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0.1"
+        minSdk 22
+        targetSdk 28
     }
 
+    namespace 'it.moondroid.seekbarhint.library'
+
     // Do not abort build if lint finds errors
-    lintOptions {
+    lint {
         abortOnError false
     }
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {

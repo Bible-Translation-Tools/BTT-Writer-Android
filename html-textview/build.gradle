@@ -1,14 +1,16 @@
 apply plugin: 'com.android.library'
 android {
-    compileSdkVersion 28
+    compileSdk 28
 
     defaultConfig {
-        minSdkVersion 7
-        targetSdkVersion 28
+        minSdk 22
+        targetSdk 28
     }
 
+    namespace 'org.sufficientlysecure.htmltextview'
+
     // Do not abort build if lint finds errors
-    lintOptions {
+    lint {
         abortOnError false
     }
 }
