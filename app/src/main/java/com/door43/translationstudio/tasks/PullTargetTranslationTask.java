@@ -68,7 +68,9 @@ public class PullTargetTranslationTask extends ManagedTask {
                     GetRepositoryTask repoTask = new GetRepositoryTask(profile.gogsUser, targetTranslation);
                     delegate(repoTask);
 
-                    sourceURL = repoTask.getRepository().getSshUrl();
+                    if (repoTask.getRepository() != null) {
+                        sourceURL = repoTask.getRepository().getSshUrl();
+                    }
                 }
 
                 try {
@@ -102,6 +104,8 @@ public class PullTargetTranslationTask extends ManagedTask {
     private String pull(Repo repo, String remote) {
         Git git;
         try {
+            repo.deleteRemote("origin");
+            repo.setRemote("origin", remote);
             git = repo.getGit();
         } catch (IOException e) {
             return null;
@@ -112,7 +116,7 @@ public class PullTargetTranslationTask extends ManagedTask {
         // TODO: we might want to get some progress feedback for the user
         PullCommand pullCommand = git.pull()
                 .setTransportConfigCallback(new TransportCallback())
-                .setRemote(remote)
+                .setRemote("origin")
                 .setStrategy(mergeStrategy)
                 .setRemoteBranchName("master");
         try {

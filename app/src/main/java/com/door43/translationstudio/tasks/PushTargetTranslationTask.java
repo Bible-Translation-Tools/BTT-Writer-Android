@@ -63,6 +63,8 @@ public class PushTargetTranslationTask extends ManagedTask {
     private String push(Repo repo, String remote) throws JGitInternalException {
         Git git;
         try {
+            repo.deleteRemote("origin");
+            repo.setRemote("origin", remote);
             git = repo.getGit();
         } catch (IOException e1) {
             return null;
@@ -73,7 +75,7 @@ public class PushTargetTranslationTask extends ManagedTask {
         // TODO: we might want to get some progress feedback for the user
         PushCommand pushCommand = git.push()
                 .setTransportConfigCallback(new TransportCallback())
-                .setRemote(remote)
+                .setRemote("origin")
                 .setPushTags()
                 .setForce(false)
                 .setRefSpecs(spec);
