@@ -3,11 +3,11 @@ package com.door43.translationstudio.tasks;
 import android.os.Process;
 
 import org.eclipse.jgit.transport.RefSpec;
+import org.unfoldingword.gogsclient.Repository;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.SettingsActivity;
 import com.door43.translationstudio.core.Profile;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.git.Repo;
@@ -19,7 +19,6 @@ import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
-import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 
@@ -47,12 +46,14 @@ public class PushTargetTranslationTask extends ManagedTask {
         Profile profile = App.getProfile();
         if(App.isNetworkAvailable() && profile != null && profile.gogsUser != null) {
             publishProgress(-1, "Uploading translation");
-            String server = App.context().getUserPreferences().getString(SettingsActivity.KEY_PREF_GIT_SERVER, App.context().getResources().getString(R.string.pref_default_git_server));
-            String remote = server + ":" + profile.gogsUser.getUsername() + "/" + this.targetTranslation.getId() + ".git";
+            GetRepositoryTask repoTask = new GetRepositoryTask(profile.gogsUser, targetTranslation);
+            delegate(repoTask);
+
+            Repository repository = repoTask.getRepository();
             try {
                 this.targetTranslation.commitSync();
                 Repo repo = this.targetTranslation.getRepo();
-                this.message = push(repo, remote);
+                this.message = push(repo, repository.getSshUrl());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -62,6 +63,8 @@ public class PushTargetTranslationTask extends ManagedTask {
     private String push(Repo repo, String remote) throws JGitInternalException {
         Git git;
         try {
+            repo.deleteRemote("origin");
+            repo.setRemote("origin", remote);
             git = repo.getGit();
         } catch (IOException e1) {
             return null;
@@ -72,40 +75,14 @@ public class PushTargetTranslationTask extends ManagedTask {
         // TODO: we might want to get some progress feedback for the user
         PushCommand pushCommand = git.push()
                 .setTransportConfigCallback(new TransportCallback())
-                .setRemote(remote)
-                .setProgressMonitor(new ProgressMonitor() {
-                    @Override
-                    public void start(int totalTasks) {
-
-                    }
-
-                    @Override
-                    public void beginTask(String title, int totalWork) {
-
-                    }
-
-                    @Override
-                    public void update(int completed) {
-
-                    }
-
-                    @Override
-                    public void endTask() {
-
-                    }
-
-                    @Override
-                    public boolean isCancelled() {
-                        return false;
-                    }
-                })
+                .setRemote("origin")
                 .setPushTags()
                 .setForce(false)
                 .setRefSpecs(spec);
 
         try {
             Iterable<PushResult> result = pushCommand.call();
-            StringBuffer response = new StringBuffer();
+            StringBuilder response = new StringBuilder();
             this.status = Status.OK; // will be OK if no errors are found
             for (PushResult r : result) {
                 Collection<RemoteRefUpdate> updates = r.getRemoteUpdates();

@@ -5,8 +5,6 @@ import android.os.Process;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.SettingsActivity;
 import com.door43.translationstudio.core.Profile;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.git.Repo;
@@ -24,7 +22,6 @@ import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
-import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.merge.MergeStrategy;
 
 import java.io.IOException;
@@ -68,8 +65,12 @@ public class PullTargetTranslationTask extends ManagedTask {
                 publishProgress(-1, "Downloading updates");
 
                 if(sourceURL == null) {
-                    String server = App.context().getUserPreferences().getString(SettingsActivity.KEY_PREF_GIT_SERVER, App.context().getResources().getString(R.string.pref_default_git_server));
-                    sourceURL = server + ":" + profile.gogsUser.getUsername() + "/" + this.targetTranslation.getId() + ".git";
+                    GetRepositoryTask repoTask = new GetRepositoryTask(profile.gogsUser, targetTranslation);
+                    delegate(repoTask);
+
+                    if (repoTask.getRepository() != null) {
+                        sourceURL = repoTask.getRepository().getSshUrl();
+                    }
                 }
 
                 try {
@@ -117,33 +118,7 @@ public class PullTargetTranslationTask extends ManagedTask {
                 .setTransportConfigCallback(new TransportCallback())
                 .setRemote("origin")
                 .setStrategy(mergeStrategy)
-                .setRemoteBranchName("master")
-                .setProgressMonitor(new ProgressMonitor() {
-                    @Override
-                    public void start(int totalTasks) {
-
-                    }
-
-                    @Override
-                    public void beginTask(String title, int totalWork) {
-
-                    }
-
-                    @Override
-                    public void update(int completed) {
-
-                    }
-
-                    @Override
-                    public void endTask() {
-
-                    }
-
-                    @Override
-                    public boolean isCancelled() {
-                        return false;
-                    }
-                });
+                .setRemoteBranchName("master");
         try {
             PullResult result = pullCommand.call();
             MergeResult mergeResult = result.getMergeResult();
