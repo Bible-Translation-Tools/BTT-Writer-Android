@@ -1,8 +1,12 @@
 package com.door43.translationstudio.core;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
@@ -11,6 +15,10 @@ import com.door43.util.FileUtilities;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.ChunkMarker;
 import org.unfoldingword.tools.logger.Logger;
@@ -31,7 +39,7 @@ import org.unfoldingword.door43client.models.TargetLanguage;
 /**
  * Created by blm on 4/19/16.
  */
-public class ImportUsfmTest extends InstrumentationTestCase {
+public class ImportUsfmTest {
 
     private JSONArray mExpectedBooks;
     private TargetLanguage mTargetLanguage;
@@ -42,9 +50,8 @@ public class ImportUsfmTest extends InstrumentationTestCase {
     private HashMap<String, List<String>> mChunks;
     private String[] mChapters;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         mExpectedBooks = new JSONArray();
         mLibrary = App.getLibrary();
         Logger.flush();
@@ -52,20 +59,21 @@ public class ImportUsfmTest extends InstrumentationTestCase {
             App.deployDefaultLibrary();
         }
         mTargetLanguage = mLibrary.index().getTargetLanguage("es");
-        mTestContext = getInstrumentation().getContext();
+        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
         mAppContext = App.context();
         if(App.getProfile() == null) { // make sure this is initialized
             App.setProfile(new Profile("testing"));
         }
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         if(mUsfm != null) {
             mUsfm.cleanup();
         }
     }
 
+    @Test
     public void test01ValidImportMark() throws Exception {
         //given
         String source = "mrk.usfm";
@@ -83,6 +91,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test02ImportMarkMissingName() throws Exception {
         //given
         String source = "mrk_no_id.usfm";
@@ -100,6 +109,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test03ImportMarkMissingNameForce() throws Exception {
         //given
         String source = "mrk_no_id.usfm";
@@ -120,6 +130,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test04ValidImportPsalms() throws Exception {
         //given
         String source = "19-PSA.usfm"; // psalms has a verse range
@@ -137,6 +148,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test05ImportMarkNoChapters() throws Exception {
         //given
         String source = "mrk_no_chapter.usfm";
@@ -153,6 +165,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses);
     }
 
+    @Test
     public void test06ImportMarkMissingChapters() throws Exception {
         //given
         String source = "mrk_one_chapter.usfm";
@@ -170,6 +183,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test07ImportMarkNoVerses() throws Exception {
         //given
         String source = "mrk_no_verses.usfm";
@@ -187,6 +201,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test08ImportMarkMissingVerse() throws Exception {
         //given
         String source = "mrk_missing_verse.usfm";
@@ -204,6 +219,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test09ImportMarkEmptyChapter() throws Exception {
         //given
         String source = "mrk_empty_chapter.usfm";
@@ -221,7 +237,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
-
+    @Test
     public void test10ImportJudeNoVerses() throws Exception {
         //given
         String source = "jude.no_verses.usfm";
@@ -239,6 +255,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test11ImportJudeNoChapter() throws Exception {
         //given
         String source = "jude.no_chapter_or_verses.usfm";
@@ -256,7 +273,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
-
+    @Test
     public void test12ImportPhpNoChapter1() throws Exception {
         //given
         String source = "php_usfm_NoC1.usfm";
@@ -274,6 +291,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test13ImportPhpNoChapter2() throws Exception {
         //given
         String source = "php_usfm_NoC2.usfm";
@@ -291,6 +309,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test14ImportPhpChapter3OutOfOrder() throws Exception {
         //given
         String source = "php_usfm_C3_out_of_order.usfm";
@@ -307,6 +326,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses);
     }
 
+    @Test
     public void test15ImportPhpMissingLastChapter() throws Exception {
         //given
         String source = "php_usfm_missing_last_chapter.usfm";
@@ -324,6 +344,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test16ImportPhpNoChapter1Marker() throws Exception {
         //given
         String source = "php_usfm_NoC1_marker.usfm";
@@ -341,6 +362,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test17ImportPhpNoChapter2Marker() throws Exception {
         //given
         String source = "php_usfm_NoC2_marker.usfm";
@@ -358,6 +380,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test18ImportPhpMissingLastChapterMarker() throws Exception {
         //given
         String source = "php_usfm_missing_last_chapter_marker.usfm";
@@ -375,6 +398,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
+    @Test
     public void test19ImportJudeOutOfOrderVerses() throws Exception {
         //given
         String source = "jude.out_order_verses.usfm";
@@ -392,7 +416,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
 
-
+    @Test
     public void test20ImportPhpMissingInitialAndFinalVerses() throws Exception {
         //given
         String source = "php_usfm_missing_initial_and_final_vs.usfm";
@@ -409,7 +433,6 @@ public class ImportUsfmTest extends InstrumentationTestCase {
         //then
         verifyResults( success, expectSucccess, mExpectedBooks, expectNoEmptyChunks, expectAllVerses, expectedVerseCount);
     }
-
 
     public void addExpectedBook(String filename, String book, boolean success, boolean missingName) throws JSONException {
         JSONObject expectedBook = new JSONObject();
@@ -604,7 +627,7 @@ public class ImportUsfmTest extends InstrumentationTestCase {
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
-                            fail("Could not read chunk " + chunkPath.toString());
+                            Assert.fail("Could not read chunk " + chunkPath.toString());
                         }
                     }
                 }

@@ -1,12 +1,13 @@
 package com.door43.translationstudio;
 
-import android.test.InstrumentationTestCase;
 
-public class TranslationImportTest extends InstrumentationTestCase {
+import org.junit.Before;
+import org.junit.Test;
 
-    @Override
+public class TranslationImportTest {
+
+    @Before
     protected void setUp() throws Exception {
-        super.setUp();
 
 //        if(!App.isLoaded()) {
 //             load everything
@@ -26,6 +27,7 @@ public class TranslationImportTest extends InstrumentationTestCase {
     /**
      * import legacy dokuwiki with a single language translation
      */
+    @Test
     public void testLegacyDokuwikiImport() throws Exception {
 //        File asset = App.context().getAssetAsFile("tests/exports/1.0_deutsch.txt");
 //        assertTrue(Sharing.importDokuWiki(asset));
@@ -36,6 +38,7 @@ public class TranslationImportTest extends InstrumentationTestCase {
     /**
      * import legacy dokuwiki with multiple language translations
      */
+    @Test
     public void testLegacyDokuwikiMultipleImport() throws Exception {
 //        File asset = App.context().getAssetAsFile("tests/exports/1.0_afaraf_deutsch.txt");
 //        assertTrue(Sharing.importDokuWiki(asset));
@@ -46,6 +49,7 @@ public class TranslationImportTest extends InstrumentationTestCase {
     /**
      * import dokuwiki
      */
+    @Test
     public void testDokuwikiImport() throws Exception {
 //        File asset = App.context().getAssetAsFile("tests/exports/2.0.0_uw-obs-de_dokuwiki.zip");
 //        assertTrue(Sharing.importDokuWikiArchive(asset));
@@ -58,6 +62,7 @@ public class TranslationImportTest extends InstrumentationTestCase {
      * The archive should be redirected to the proper prepareLegacyArchiveImport method
      * @throws Exception
      */
+    @Test
     public void testLegacyProjectRedirectsFromDokuwikiArchiveImport() throws Exception {
 //        File asset = App.context().getAssetAsFile("tests/exports/2.0.0_uw-obs-de.zip");
 //        assertTrue(Sharing.importDokuWikiArchive(asset));
@@ -69,6 +74,7 @@ public class TranslationImportTest extends InstrumentationTestCase {
      * import legacy translation studio project archive
      * @throws Exception
      */
+    @Test
     public void testLegacyProjectImport() throws Exception {
 //        File asset = App.context().getAssetAsFile("tests/exports/2.0.0_uw-obs-de.zip");
 //        assertTrue(Sharing.prepareLegacyArchiveImport(asset));
@@ -80,6 +86,7 @@ public class TranslationImportTest extends InstrumentationTestCase {
      * import translation studio project archive
      * @throws Exception
      */
+    @Test
     public void testProjectImport() throws Exception {
 //        File dokuwiki = App.context().getAssetAsFile("tests/exports/2.0.3_uw-obs-de.tstudio");
 //        ProjectImport[] projects = Sharing.prepareArchiveImport(dokuwiki);

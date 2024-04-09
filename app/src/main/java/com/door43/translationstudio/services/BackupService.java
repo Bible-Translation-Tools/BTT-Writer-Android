@@ -17,7 +17,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import android.util.Log;
 
-import org.eclipse.jgit.api.errors.RejectCommitException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.unfoldingword.tools.foreground.Foreground;
 import org.unfoldingword.tools.logger.Logger;
 import com.door43.translationstudio.R;
@@ -153,7 +153,7 @@ public class BackupService extends Service implements Foreground.Listener {
                 try {
                     t.commitSync(".", false);
                 } catch (Exception e) {
-                    if(e instanceof RejectCommitException) {
+                    if(e instanceof JGitInternalException) {
                         Logger.w(TAG, "History corrupt in " + t.getId() + ". Repairing...", e);
                         App.recoverRepo(t);
                     } else {

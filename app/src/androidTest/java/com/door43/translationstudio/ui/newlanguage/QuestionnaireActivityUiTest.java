@@ -1,13 +1,10 @@
 package com.door43.translationstudio.ui.newlanguage;
 
 import android.content.Intent;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import android.test.suitebuilder.annotation.LargeTest;
 
 import com.door43.translationstudio.R;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 
 import static androidx.test.espresso.Espresso.onView;
@@ -19,7 +16,8 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
-@RunWith(AndroidJUnit4.class)
+import androidx.test.filters.LargeTest;
+
 @LargeTest
 public class QuestionnaireActivityUiTest extends NewLanguageActivityUiUtils {
 
