@@ -1,13 +1,15 @@
 package com.door43.translationstudio;
 
 import android.content.Context;
-import android.test.InstrumentationTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
 
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.ResourceType;
+import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.door43.translationstudio.core.Translator;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.unfoldingword.door43client.Door43Client;
 
 import java.io.File;
@@ -16,22 +18,22 @@ import java.io.File;
  * Created by joel on 10/27/2015.
  */
 @MediumTest
-public class ImportExportTest extends InstrumentationTestCase {
+public class ImportExportTest {
 
     private Context context;
     private Translator translator;
     private File testsDir;
     private Door43Client library;
 
-    @Override
+    @Before
     protected void setUp() throws Exception {
-        super.setUp();
-        this.context = getInstrumentation().getContext();
+        this.context = InstrumentationRegistry.getInstrumentation().getContext();
         this.testsDir = new File(App.context().getCacheDir(), "import_export_tests");
         this.translator = new Translator(this.context, null, new File(this.testsDir, "translator"));
         this.library = App.getLibrary();
     }
 
+    @Test
     public void test01ImportV2Archive() throws Exception {
 //        String targetTranslationId = TargetTranslation.generateTargetTranslationId("aa", "obs", ResourceType.TEXT, "obs");
 //        this.translator.deleteTargetTranslation(targetTranslationId);
@@ -46,9 +48,10 @@ public class ImportExportTest extends InstrumentationTestCase {
 //        assertNotNull(targetTranslation);
 //        assertTrue(targetTranslation.getChapterTranslations().length > 0);
 
-        assertTrue(true); // TODO: 10/26/16 need to update for resource containers
+        Assert.assertTrue(true); // TODO: 10/26/16 need to update for resource containers
     }
 
+    @Test
     public void test02ExportArchive() throws Exception {
 //        String targetTranslationId = TargetTranslation.generateTargetTranslationId("aa", "obs", ResourceType.TEXT, "obs");
 //        File outputPath = new File(testsDir, "exported_translation." + Translator.ARCHIVE_EXTENSION);
@@ -67,7 +70,7 @@ public class ImportExportTest extends InstrumentationTestCase {
 //        assertTrue(targetTranslation.getChapterTranslations().length > 0);
 //        this.translator.deleteTargetTranslation(targetTranslationId);
 
-        assertTrue(true); // TODO: 10/26/16 need to update for resource containers
+        Assert.assertTrue(true); // TODO: 10/26/16 need to update for resource containers
     }
 
     // TODO: 3/25/2016 test importing usfm file

@@ -1,12 +1,19 @@
 package com.door43.translationstudio.core;
 
+import static org.junit.Assert.assertEquals;
+
 import android.content.Context;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.door43.translationstudio.tasks.MergeConflictsParseTask;
 import com.door43.util.FileUtilities;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.unfoldingword.tools.logger.Logger;
 
 import java.io.IOException;
@@ -18,7 +25,7 @@ import java.util.List;
 /**
  * Created by blm on 7/25/16.
  */
-public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
+public class MergeConflictsParseTaskTest {
 
     public static final String TAG = MergeConflictsParseTaskTest.class.getSimpleName();
     private Context mTestContext;
@@ -30,17 +37,17 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
     private int mFoundConflictCount;
     private List<CharSequence> mLastMergeConflictCards;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         Logger.flush();
-        mTestContext = getInstrumentation().getContext();
+        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
     }
 
+    @Test
     public void test01ProcessFullConflict() throws Exception {
         //given
         String testId = "merge/full_conflict";
@@ -53,6 +60,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test01ProcessFullConflict");
     }
 
+    @Test
     public void test02ProcessTwoConflict() throws Exception {
         //given
         String testId = "merge/two_conflict";
@@ -65,6 +73,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test02ProcessTwoConflict");
     }
 
+    @Test
     public void test03ProcessPartialConflict() throws Exception {
         //given
         String testId = "merge/partial_conflict";
@@ -77,6 +86,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test03ProcessPartialConflict");
     }
 
+    @Test
     public void test04ProcessNestedHeadConflict() throws Exception {
         //given
         String testId = "merge/head_nested_conflict";
@@ -89,6 +99,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test04ProcessNestedHeadConflict");
     }
 
+    @Test
     public void test05ProcessNestedTailConflict() throws Exception {
         //given
         String testId = "merge/tail_nested_conflict";
@@ -101,6 +112,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test05ProcessNestedTailConflict");
     }
 
+    @Test
     public void test06ProcessNotFullNestedConflict() throws Exception {
         //given
         String testId = "merge/not_full_double_nested_conflict";
@@ -113,6 +125,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test06ProcessNotFullNestedConflict");
     }
 
+    @Test
     public void test07ProcessNotFullEndNestedConflict() throws Exception {
         //given
         String testId = "merge/not_full_double_nested_conflict_end";
@@ -125,6 +138,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test07ProcessNotFullEndNestedConflict");
     }
 
+    @Test
     public void test08ProcessNoConflict() throws Exception {
         //given
         String testTextFile = "merge/partial_conflict_part1.data";
@@ -138,6 +152,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test08ProcessNoConflict");
     }
 
+    @Test
     public void test09DetectTwoMergeConflict() throws Exception {
         //given
         String testFile = "merge/two_conflict_raw.data";
@@ -150,6 +165,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         assertEquals(expectedConflict, conflicted);
     }
 
+    @Test
     public void test10DetectFullMergeConflict() throws Exception {
         //given
         String testFile = "merge/full_conflict_raw.data";
@@ -162,6 +178,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         assertEquals(expectedConflict, conflicted);
     }
 
+    @Test
     public void test11DetectPartialMergeConflict() throws Exception {
         //given
         String testFile = "merge/partial_conflict_raw.data";
@@ -174,6 +191,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         assertEquals(expectedConflict, conflicted);
     }
 
+    @Test
     public void test12DetectNoMergeConflict() throws Exception {
         //given
         String testFile = "merge/two_conflict_part1.data";
@@ -186,6 +204,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         assertEquals(expectedConflict, conflicted);
     }
 
+    @Test
     public void test13ProcessFullFiveWayNestedConflict() throws Exception {
         //given
         String testId = "merge/full_five_way_nested";
@@ -198,7 +217,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test13ProcessFullFiveWayNestedConflict");
     }
 
-
+    @Test
     public void test14ProcessNotFullFiveWayNestedConflict() throws Exception {
         //given
         String testId = "merge/not_full_five_way_nested";
@@ -211,6 +230,7 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
         verifyRenderText("test14ProcessNotFullFiveWayNestedConflict");
     }
 
+    @Test
     public void test15ProcessNotFullFiveWayNestedConflictComplex() throws Exception {
         //given
         String testId = "merge/not_full_five_way_nested_complex";
@@ -269,8 +289,8 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
     private boolean doDetectMergeConflict(String testFile) throws IOException {
         InputStream testTextStream = mTestContext.getAssets().open(testFile);
         mTestText = FileUtilities.readStreamToString(testTextStream);
-        assertNotNull(mTestText);
-        assertFalse(mTestText.isEmpty());
+        Assert.assertNotNull(mTestText);
+        Assert.assertFalse(mTestText.isEmpty());
 
         boolean conflicted = MergeConflictsHandler.isMergeConflicted(mTestText);
         return conflicted;
@@ -285,12 +305,12 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
     private String doRenderMergeConflict(int sourceGroup, String testTextFile, String expectTextFile) throws IOException {
         InputStream testTextStream = mTestContext.getAssets().open(testTextFile);
         mTestText = FileUtilities.readStreamToString(testTextStream);
-        assertNotNull(mTestText);
-        assertFalse(mTestText.isEmpty());
+        Assert.assertNotNull(mTestText);
+        Assert.assertFalse(mTestText.isEmpty());
         InputStream testExpectedStream = mTestContext.getAssets().open(expectTextFile);
         mExpectedText = FileUtilities.readStreamToString(testExpectedStream);
-        assertNotNull(mExpectedText);
-        assertFalse(mExpectedText.isEmpty());
+        Assert.assertNotNull(mExpectedText);
+        Assert.assertFalse(mExpectedText.isEmpty());
 
         MergeConflictsParseTask parseTask = new MergeConflictsParseTask(mTestText);
         parseTask.start();
@@ -303,8 +323,8 @@ public class MergeConflictsParseTaskTest extends InstrumentationTestCase {
     }
 
     private void verifyProcessedText(String id, String expectedText, String out) {
-        assertNotNull(id, out);
-        assertFalse(id, out.isEmpty());
+        Assert.assertNotNull(id, out);
+        Assert.assertFalse(id, out.isEmpty());
         if(!out.equals(expectedText)) {
             Log.e(TAG, "error in: " + id);
             if(out.length() != expectedText.length()) {

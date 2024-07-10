@@ -1,14 +1,19 @@
 package com.door43.translationstudio.core;
 
 import android.content.Context;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
 import com.door43.translationstudio.rendering.Clickables;
 import com.door43.translationstudio.rendering.RenderingGroup;
 import com.door43.util.FileUtilities;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.unfoldingword.tools.logger.Logger;
 
 import java.io.File;
@@ -18,7 +23,7 @@ import java.io.InputStream;
 /**
  * Created by blm on 7/25/16.
  */
-public class UsxBrokenRenderTest extends InstrumentationTestCase {
+public class UsxBrokenRenderTest {
 
     public static final String TAG = UsxBrokenRenderTest.class.getSimpleName();
     File mTempFolder;
@@ -27,17 +32,17 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
     private String mExpectedText;
 
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         Logger.flush();
-        mTestContext = getInstrumentation().getContext();
+        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
     }
 
+    @Test
     public void test01ProcessMk_1_1() throws Exception {
         //given
         String search = null;
@@ -50,6 +55,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test02ProcessMk_7_6() throws Exception {
         //given
         String search = null;
@@ -62,6 +68,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test03ProcessMk_7_14() throws Exception {
         //given
         String search = null;
@@ -74,6 +81,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test04ProcessMk_11_24() throws Exception {
         //given
         String search = null;
@@ -86,6 +94,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test05ProcessMk_16_19() throws Exception {
         //given
         String search = null;
@@ -98,6 +107,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test06ProcessMk_1_1Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -110,6 +120,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test07ProcessMk_7_6Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -122,6 +133,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test08ProcessMk_7_14Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -134,6 +146,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test09ProcessMk_11_24Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -146,6 +159,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         verifyProcessedText(mExpectedText, out);
     }
 
+    @Test
     public void test10ProcessMk_16_19Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -163,12 +177,12 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String expectTextFile = testId+ "_processed.data";
         InputStream testTextStream = mTestContext.getAssets().open(testTextFile);
         mTestText = FileUtilities.readStreamToString(testTextStream);
-        assertNotNull(mTestText);
-        assertFalse(mTestText.isEmpty());
+        Assert.assertNotNull(mTestText);
+        Assert.assertFalse(mTestText.isEmpty());
         InputStream testExpectedStream = mTestContext.getAssets().open(expectTextFile);
         mExpectedText = FileUtilities.readStreamToString(testExpectedStream);
-        assertNotNull(mExpectedText);
-        assertFalse(mExpectedText.isEmpty());
+        Assert.assertNotNull(mExpectedText);
+        Assert.assertFalse(mExpectedText.isEmpty());
         mExpectedText = mExpectedText.substring(0,mExpectedText.length() - 1); // rendering does trim of whitespace
         RenderingGroup renderingGroup = new RenderingGroup();
         TranslationFormat format = TranslationFormat.USX;
@@ -182,8 +196,8 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
     }
 
     private void verifyProcessedText(String expectedText, String out) {
-        assertNotNull(out);
-        assertFalse(out.isEmpty());
+        Assert.assertNotNull(out);
+        Assert.assertFalse(out.isEmpty());
         if(!out.equals(expectedText)) {
             if(out.length() != expectedText.length()) {
                 Log.e(TAG, "expected length " + expectedText.length() + " but got length " + out.length());
@@ -215,7 +229,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
                 }
             }
         }
-        assertEquals(out, expectedText);
+        Assert.assertEquals(out, expectedText);
     }
 
 
