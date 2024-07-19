@@ -17,12 +17,12 @@
     </string-array>
 
     <string-array name="content_server_data_server_values_array">
-        <item>https://wacs.bibletranslationtools.org</item>
+        <item>https://content.bibletranslationtools.org</item>
         <item>https://git.door43.org</item>
     </string-array>
 
     <string-array name="content_server_git_server_api_values_array">
-        <item>https://wacs.bibletranslationtools.org/api/v1</item>
+        <item>https://content.bibletranslationtools.org/api/v1</item>
         <item>https://git.door43.org/api/v1</item>
     </string-array>
 
@@ -37,7 +37,7 @@
     </string-array>
 
     <string-array name="content_server_account_create_urls_array">
-        <item>https://wacs.bibletranslationtools.org/user/sign_up</item>
+        <item>https://content.bibletranslationtools.org/user/sign_up</item>
         <item>https://git.door43.org/user/sign_up</item>
     </string-array>
 
