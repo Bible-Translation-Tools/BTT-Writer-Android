@@ -74,6 +74,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     public static final String KEY_PREF_CONTENT_SERVER = "content_server";
     public static final String KEY_PREF_GIT_SERVER_PORT = "git_server_port";
     public static final String KEY_PREF_ALWAYS_SHARE = "always_share";
+    public static final String KEY_PREF_DATA_SERVER = "data_server";
     public static final String KEY_PREF_MEDIA_SERVER = "media_server";
     public static final String KEY_PREF_READER_SERVER = "reader_server";
     public static final String KEY_PREF_CREATE_ACCOUNT_URL = "create_account_url";
@@ -177,9 +178,9 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
         // NOTE: this is a copy paste from GeneralPreferenceFragment
         // identify all typefaces in the assets directory
         AssetManager am = getResources().getAssets();
-        String fileList[] = null;
-        ArrayList<String> entries = new ArrayList<String>();
-        ArrayList<String> entryValues = new ArrayList<String>();
+        String[] fileList = null;
+        ArrayList<String> entries = new ArrayList<>();
+        ArrayList<String> entryValues = new ArrayList<>();
         try {
             fileList = am.list("fonts");
         } catch (IOException e) {
@@ -254,6 +255,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
 //        bindPreferenceSummaryToValue(findPreference(KEY_PREF_AUTOSAVE));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_CONTENT_SERVER));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_GIT_SERVER_PORT));
+        bindPreferenceSummaryToValue(findPreference(KEY_PREF_DATA_SERVER));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_GOGS_API));
 //        bindPreferenceSummaryToValue(findPreference(KEY_PREF_EXPORT_FORMAT));
         bindPreferenceSummaryToValue(findPreference(KEY_PREF_MEDIA_SERVER));
@@ -288,6 +290,11 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                 EditTextPreference gitServerPort = (EditTextPreference) findPreference(KEY_PREF_GIT_SERVER_PORT);
                 gitServerPort.setText(gitServerPorts[index]);
                 gitServerPort.setSummary(gitServerPorts[index]);
+
+                String[] dataServers = getResources().getStringArray(R.array.content_server_data_server_values_array);
+                EditTextPreference dataServer = (EditTextPreference) findPreference(KEY_PREF_DATA_SERVER);
+                dataServer.setText(dataServers[index]);
+                dataServer.setSummary(dataServers[index]);
 
                 String[] gitServerApis = getResources().getStringArray(R.array.content_server_git_server_api_values_array);
                 EditTextPreference gitServerApi = (EditTextPreference) findPreference(KEY_PREF_GOGS_API);
@@ -633,6 +640,11 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
                         gitServerPort.setText(gitServerPorts[index]);
                         gitServerPort.setSummary(gitServerPorts[index]);
 
+                        String[] dataServers = resources.getStringArray(R.array.content_server_data_server_values_array);
+                        EditTextPreference dataServer = (EditTextPreference) findPreference(KEY_PREF_DATA_SERVER);
+                        dataServer.setText(dataServers[index]);
+                        dataServer.setSummary(dataServers[index]);
+
                         String[] gitServerApis = resources.getStringArray(R.array.content_server_git_server_api_values_array);
                         EditTextPreference gitServerApi = (EditTextPreference) findPreference(KEY_PREF_GOGS_API);
                         gitServerApi.setText(gitServerApis[index]);
@@ -673,6 +685,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
 //            bindPreferenceSummaryToValue(findPreference(KEY_PREF_AUTOSAVE));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_CONTENT_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_GOGS_API));
+            bindPreferenceSummaryToValue(findPreference(KEY_PREF_DATA_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_GIT_SERVER_PORT));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_MEDIA_SERVER));
             bindPreferenceSummaryToValue(findPreference(KEY_PREF_READER_SERVER));

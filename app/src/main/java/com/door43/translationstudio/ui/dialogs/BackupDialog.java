@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -14,16 +16,22 @@ import android.os.Looper;
 
 import com.door43.translationstudio.tasks.LogoutTask;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.app.AlertDialog;
+
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.unfoldingword.gogsclient.User;
 import org.unfoldingword.tools.logger.Logger;
@@ -794,44 +802,77 @@ public class BackupDialog extends DialogFragment implements SimpleTaskWatcher.On
     private void showPushSuccess(final String message) {
         mDialogShown = eDialogShown.SHOW_PUSH_SUCCESS;
         mDialogMessage = message;
-        String apiURL = App.getPref(SettingsActivity.KEY_PREF_READER_SERVER, App.getRes(R.string.pref_default_reader_server));
-        final Uri url = Uri.parse(apiURL + "/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
-        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.upload_complete)
-                .setMessage(String.format(getResources().getString(R.string.project_uploaded_to), url.toString()))
-                .setNegativeButton(R.string.dismiss, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDialogShown = eDialogShown.NONE;
-                    }
-                })
-                .setPositiveButton(R.string.view_online, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startActivity(new Intent(Intent.ACTION_VIEW, url));
-                    }
-                })
-                .setNeutralButton(R.string.label_details, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.project_uploaded)
-                            .setMessage(message)
-                            .setPositiveButton(R.string.view_online, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    startActivity(new Intent(Intent.ACTION_VIEW, url));
-                                }
-                            })
-                            .setNeutralButton(R.string.dismiss, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    mDialogShown = eDialogShown.NONE;
-                                }
-                            })
-                            .show();
-                    }
-                }).show();
+
+        String readServer = App.getPref(
+                SettingsActivity.KEY_PREF_READER_SERVER,
+                App.getRes(R.string.pref_default_reader_server)
+        );
+        String dataServer = App.getPref(
+                SettingsActivity.KEY_PREF_DATA_SERVER,
+                App.getRes(R.string.pref_default_data_server)
+        );
+
+        final Uri readUrl = Uri.parse(readServer + "/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
+        final Uri dataUrl = Uri.parse(dataServer + "/" + App.getProfile().gogsUser.getUsername() + "/" + targetTranslation.getId());
+
+        String urlMessage = String.format(
+                getResources().getString(R.string.project_uploaded_to),
+                "<a href=\"" + dataUrl + "\">" + dataUrl + "</a>"
+        );
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog);
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        View dialog = inflater.inflate(R.layout.dialog_push_success, null);
+
+        dialogBuilder.setView(dialog);
+
+        dialogBuilder.setTitle(R.string.upload_complete);
+
+        dialogBuilder
+                .setNegativeButton(
+                        R.string.dismiss,
+                        (dialog13, which) -> mDialogShown = eDialogShown.NONE
+                )
+                .setPositiveButton(
+                        R.string.read_on_web,
+                        (dialog14, which) ->
+                                startActivity(new Intent(Intent.ACTION_VIEW, readUrl))
+                )
+                .setNeutralButton(
+                        R.string.label_details,
+                        (dialog15, which) ->
+                                new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
+                                    .setTitle(R.string.project_uploaded)
+                                    .setMessage(message)
+                                    .setPositiveButton(
+                                            R.string.view_online,
+                                            (dialog151, which13) ->
+                                                    startActivity(new Intent(Intent.ACTION_VIEW, dataUrl))
+                                    )
+                                    .setNeutralButton(
+                                            R.string.dismiss,
+                                            (dialog1512, which14) -> mDialogShown = eDialogShown.NONE
+                                    )
+                        .show()
+                );
+
+        AlertDialog alertDialog = dialogBuilder.create();
+        alertDialog.show();
+
+        TextView messageText = dialog.findViewById(R.id.message);
+        ImageView copyImage = dialog.findViewById(R.id.copy_button);
+
+        messageText.setText(Html.fromHtml(urlMessage));
+
+        copyImage.setOnClickListener(v -> {
+            ClipboardManager clipboard = ContextCompat.getSystemService(
+                    getActivity(),
+                    ClipboardManager.class
+            );
+            ClipData clip = ClipData.newPlainText("url", dataUrl.toString());
+            assert clipboard != null;
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(getActivity(), R.string.copied_to_clipboard, Toast.LENGTH_LONG).show();
+        });
     }
 
     /**
