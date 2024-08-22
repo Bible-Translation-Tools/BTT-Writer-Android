@@ -255,7 +255,7 @@ public class App extends Application {
      * @return
      */
     public static File getKeysFolder() {
-        File folder = new File(sInstance.getFilesDir() + "/" + sInstance.getResources().getString(R.string.keys_dir) + "/");
+        File folder = new File(publicDir(),sInstance.getResources().getString(R.string.keys_dir));
         if(!folder.exists()) {
             folder.mkdir();
         }
@@ -343,7 +343,12 @@ public class App extends Application {
      * @return
      */
     public static File databaseDir() {
-        return new File(publicDir(), "databases");
+        File root = sInstance.getExternalFilesDir(null).getParentFile();
+        File databaseDir = new File(root, "databases");
+        if(!databaseDir.exists()) {
+            databaseDir.mkdirs();
+        }
+        return databaseDir;
     }
 
     /**
@@ -382,7 +387,7 @@ public class App extends Application {
      * The index (database) file
      * @return
      */
-    private static File dbFile() {
+    public static File dbFile() {
         return new File(databaseDir(), "index.sqlite");
     }
 
@@ -481,16 +486,7 @@ public class App extends Application {
     public static File getPublicDownloadsDirectory() {
         File dir;
         // TRICKY: KITKAT introduced changes to the external media that made sd cards read only
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) { // || Root.isDeviceRooted()
-            StorageUtils.StorageInfo removeableMediaInfo = StorageUtils.getRemoveableMediaDevice();
-            if(removeableMediaInfo != null) {
-                dir = new File("/storage/" + removeableMediaInfo.getMountName() + SdUtils.DOWNLOAD_TRANSLATION_STUDIO_FOLDER);
-            } else {
-                dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), PUBLIC_DATA_DIR);
-            }
-        } else {
-            dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), PUBLIC_DATA_DIR);
-        }
+        dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), PUBLIC_DATA_DIR);
         dir.mkdirs();
         return dir;
     }
@@ -636,28 +632,13 @@ public class App extends Application {
     }
 
     /**
-     * Returns the path to the public files directory.
-     * Files saved in this directory will not be removed when the application is uninstalled
+     * Returns the path to the files directory accessible by the app only.
+     * Files saved in this directory will be removed when the application is uninstalled
      *
-     * If the external storage is not write-able it will use the data directory instead
      * @return
      */
     public static File publicDir() {
-        String state = Environment.getExternalStorageState();
-        File sd = Environment.getExternalStorageDirectory();
-        File dir;
-
-        if(Environment.MEDIA_MOUNTED.equals(state) && sd.canWrite()) {
-            dir = new File(sd, PUBLIC_DATA_DIR);
-        } else {
-            Log.w(TAG, "External storage was missing. Falling back to data dir.");
-            dir = new File(Environment.getDataDirectory(), PUBLIC_DATA_DIR);
-        }
-
-        if(!dir.exists()) {
-            dir.mkdirs();
-        }
-        return dir;
+        return sInstance.getExternalFilesDir(null);
     }
 
     /**
@@ -1059,7 +1040,7 @@ public class App extends Application {
      * @return
      */
     public static String getUserString(String preferenceKey, String defaultValue) {
-        return sInstance.getUserPreferences().getString(preferenceKey, defaultValue);
+        return getUserPreferences().getString(preferenceKey, defaultValue);
     }
 
     /**
@@ -1068,7 +1049,7 @@ public class App extends Application {
      * @param value if null the string will be removed
      */
     public static void setUserString(String preferenceKey, String value) {
-        SharedPreferences.Editor editor = sInstance.getUserPreferences().edit();
+        SharedPreferences.Editor editor = getUserPreferences().edit();
         if(value == null) {
             editor.remove(preferenceKey);
         } else {

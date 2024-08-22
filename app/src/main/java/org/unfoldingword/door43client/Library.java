@@ -51,7 +51,7 @@ class Library implements Index {
         this.sqliteHelper = sqliteHelper;
         this.db = sqliteHelper.getWritableDatabase();
         if(this.db.getVersion() == 0) throw new IOException("Invalid database version." +
-                "You probably manually generted the database and forgot to set the " +
+                "You probably manually generated the database and forgot to set the " +
                 "\"User Version\" to " + SQLiteHelper.DATABASE_VERSION);
     }
 

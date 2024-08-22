@@ -2,9 +2,9 @@ apply plugin: 'com.android.library'
 android {
 
     defaultConfig {
-        compileSdk 30
+        compileSdk 34
         minSdk 22
-        targetSdk 28
+        targetSdk 34
     }
 
     namespace 'org.sufficientlysecure.htmltextview'
@@ -12,5 +12,9 @@ android {
     // Do not abort build if lint finds errors
     lint {
         abortOnError false
+    }
+    buildTypes {
+        applicationVariants {
+        }
     }
 }

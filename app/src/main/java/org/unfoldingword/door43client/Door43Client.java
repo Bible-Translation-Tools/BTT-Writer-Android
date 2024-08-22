@@ -3,13 +3,10 @@ package org.unfoldingword.door43client;
 import android.content.Context;
 
 import org.unfoldingword.resourcecontainer.ContainerTools;
-import org.unfoldingword.resourcecontainer.Resource;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.http.Request;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,7 +33,7 @@ public class Door43Client {
      */
     public Door43Client(Context context, File databasePath, File resourceDir) throws IOException {
         // load schema
-        if(this.schema == null) {
+        if(schema == null) {
             InputStream is = context.getAssets().open("schema.sqlite");
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             StringBuilder sb = new StringBuilder();
@@ -44,10 +41,10 @@ public class Door43Client {
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
             }
-            this.schema = sb.toString();
+            schema = sb.toString();
         }
 
-        this.api = new API(context, this.schema, databasePath, resourceDir);
+        this.api = new API(context, schema, databasePath, resourceDir);
         this.index = api.index();
     }
 

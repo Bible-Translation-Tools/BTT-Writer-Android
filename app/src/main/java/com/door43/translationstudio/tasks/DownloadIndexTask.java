@@ -19,7 +19,7 @@ public class DownloadIndexTask extends ManagedTask {
     public static final String TASK_ID = "download-index-task";
     public static final String TAG = DownloadIndexTask.class.getName();
 
-    private final File index = new File(App.databaseDir(), "index.sqlite");
+    private final File index = App.dbFile();
 
     private int maxProgress = 0;
     private boolean success = false;
