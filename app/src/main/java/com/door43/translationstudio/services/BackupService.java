@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -82,7 +81,7 @@ public class BackupService extends Service implements Foreground.Listener {
             int backupInterval = backupIntervalMinutes * 1000 * 60;
             Logger.i(this.getClass().getName(), "Backups running every " + backupIntervalMinutes + " minute/s");
             sRunning = true;
-            sTimer.scheduleAtFixedRate(new TimerTask() {
+            sTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     try {
@@ -114,9 +113,7 @@ public class BackupService extends Service implements Foreground.Listener {
      * Stops the service
      */
     private void stopService() {
-        if(sTimer != null) {
-            sTimer.cancel();
-        }
+        sTimer.cancel();
         sRunning = false;
         Logger.i(TAG, "stopping backup service");
     }
@@ -195,7 +192,7 @@ public class BackupService extends Service implements Foreground.Listener {
         // TODO: instead of the home activity we need a backup activity where the user can view their backups.
         Intent notificationIntent = new Intent(getApplicationContext(), HomeActivity.class);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+        PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
         // build notification
         NotificationCompat.Builder mBuilder =
@@ -213,11 +210,7 @@ public class BackupService extends Service implements Foreground.Listener {
 
         // issue notification
         NotificationManager mNotifyMgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mNotifyMgr.notify(0, mBuilder.build());
-        } else {
-            mNotifyMgr.notify(0, mBuilder.getNotification());
-        }
+        mNotifyMgr.notify(0, mBuilder.build());
     }
 
     @Override

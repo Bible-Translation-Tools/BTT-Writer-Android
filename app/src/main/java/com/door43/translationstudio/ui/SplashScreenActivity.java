@@ -92,26 +92,24 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
      */
     private void start() {
         started = true;
-        if(!waitingForPermissions()) {
-            // check if we crashed
-            File[] files = Logger.listStacktraces();
-            if (files.length > 0) {
-                Intent intent = new Intent(this, CrashReporterActivity.class);
-                startActivity(intent);
-                finish();
-                return;
-            }
+        // check if we crashed
+        File[] files = Logger.listStacktraces();
+        if (files.length > 0) {
+            Intent intent = new Intent(this, CrashReporterActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
 
-            // connect to tasks
-            boolean isWorking = connectToTask(UpdateAppTask.TASK_ID);
+        // connect to tasks
+        boolean isWorking = connectToTask(UpdateAppTask.TASK_ID);
 
-            // start new task
-            if (!isWorking) {
-                UpdateAppTask updateTask = new UpdateAppTask(App.context());
-                updateTask.addOnFinishedListener(this);
-                updateTask.addOnStartListener(this);
-                TaskManager.addTask(updateTask, UpdateAppTask.TASK_ID);
-            }
+        // start new task
+        if (!isWorking) {
+            UpdateAppTask updateTask = new UpdateAppTask(App.context());
+            updateTask.addOnFinishedListener(this);
+            updateTask.addOnStartListener(this);
+            TaskManager.addTask(updateTask, UpdateAppTask.TASK_ID);
         }
     }
 

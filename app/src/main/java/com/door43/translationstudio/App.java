@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -16,7 +15,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -38,9 +36,7 @@ import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.Util;
 import com.door43.translationstudio.services.BackupService;
 import com.door43.translationstudio.ui.SettingsActivity;
-import com.door43.util.SdUtils;
 import com.door43.util.FileUtilities;
-import com.door43.util.StorageUtils;
 import com.door43.util.StringUtilities;
 import com.door43.util.Zip;
 import com.jcraft.jsch.JSch;
@@ -108,7 +104,7 @@ public class App extends Application {
         int minLogLevel = Integer.parseInt(getUserPreferences().getString(SettingsActivity.KEY_PREF_LOGGING_LEVEL, getResources().getString(R.string.pref_default_logging_level)));
         configureLogger(minLogLevel);
 
-        File dir = new File(publicDir(), "crashes");
+        File dir = new File(externalAppDir(), "crashes");
         if(!dir.exists()) {
             try {
                 FileUtilities.forceMkdir(dir);
@@ -142,7 +138,7 @@ public class App extends Application {
     }
 
     public static void configureLogger(int minLogLevel) {
-        Logger.configure(new File(publicDir(), "log.txt"), LogLevel.getLevel(minLogLevel));
+        Logger.configure(new File(externalAppDir(), "log.txt"), LogLevel.getLevel(minLogLevel));
     }
 
     /**
@@ -255,7 +251,10 @@ public class App extends Application {
      * @return
      */
     public static File getKeysFolder() {
-        File folder = new File(publicDir(),sInstance.getResources().getString(R.string.keys_dir));
+        File folder = new File(
+                internalAppDir(),
+                sInstance.getResources().getString(R.string.keys_dir)
+        );
         if(!folder.exists()) {
             folder.mkdir();
         }
@@ -396,7 +395,7 @@ public class App extends Application {
      * @return
      */
     private static File containersDir() {
-        return new File(publicDir(), "resource_containers");
+        return new File(externalAppDir(), "resource_containers");
     }
 
     /**
@@ -446,7 +445,7 @@ public class App extends Application {
      * @return
      */
     public static Translator getTranslator() {
-        return new Translator(sInstance, getProfile(), new File(publicDir(), "translations"));
+        return new Translator(sInstance, getProfile(), new File(externalAppDir(), "translations"));
     }
 
     /**
@@ -547,7 +546,7 @@ public class App extends Application {
 
             // backup locations
             File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + archiveExtension);
-            File publicBackup = new File(publicDir(), "backups/" + name + "." + archiveExtension);
+            File publicBackup = new File(externalAppDir(), "backups/" + name + "." + archiveExtension);
 
             // check if we need to backup
             if(!orphaned) {
@@ -593,7 +592,7 @@ public class App extends Application {
 
         // backup locations
         File downloadsBackup = new File(getPublicDownloadsDirectory(), name + "." + Translator.ZIP_EXTENSION);
-        File publicBackup = new File(publicDir(), "backups/" + name + "." + Translator.ZIP_EXTENSION);
+        File publicBackup = new File(externalAppDir(), "backups/" + name + "." + Translator.ZIP_EXTENSION);
 
         // run backup
         File temp = null;
@@ -632,13 +631,27 @@ public class App extends Application {
     }
 
     /**
-     * Returns the path to the files directory accessible by the app only.
+     * Returns the path to the external files directory accessible by the app only.
+     * This directory can be accessed by file managers.
+     * It's good for storing user-created data, such as translations and backups.
      * Files saved in this directory will be removed when the application is uninstalled
      *
      * @return
      */
-    public static File publicDir() {
+    public static File externalAppDir() {
         return sInstance.getExternalFilesDir(null);
+    }
+
+    /**
+     * Returns the path to the internal files directory accessible by the app only.
+     * This directory is not accessible by other applications and file managers.
+     * It's good to store private data, such as ssh keys.
+     * Files saved in this directory will be removed when the application is uninstalled
+     *
+     * @return
+     */
+    public static File internalAppDir() {
+        return sInstance.getFilesDir();
     }
 
     /**
@@ -1065,7 +1078,7 @@ public class App extends Application {
      */
     @Nullable
     public static NewLanguageRequest getNewLanguageRequest(String language_code) {
-        File requestFile = new File(publicDir(), "new_languages/" + language_code + ".json");
+        File requestFile = new File(externalAppDir(), "new_languages/" + language_code + ".json");
         if(requestFile.exists() && requestFile.isFile()) {
             String data = null;
             try {
@@ -1083,7 +1096,7 @@ public class App extends Application {
      * @return
      */
     public static NewLanguageRequest[] getNewLanguageRequests() {
-        File newLanguagesDir = new File(publicDir(), "new_languages/");
+        File newLanguagesDir = new File(externalAppDir(), "new_languages/");
         File[] requestFiles = newLanguagesDir.listFiles();
         List<NewLanguageRequest> requests = new ArrayList<>();
         if(requestFiles != null && requestFiles.length > 0) {
@@ -1110,7 +1123,7 @@ public class App extends Application {
      */
     public static boolean addNewLanguageRequest(NewLanguageRequest request) {
         if(request != null) {
-            File requestFile = new File(publicDir(), "new_languages/" + request.tempLanguageCode + ".json");
+            File requestFile = new File(externalAppDir(), "new_languages/" + request.tempLanguageCode + ".json");
             requestFile.getParentFile().mkdirs();
             try {
                 FileUtilities.writeStringToFile(requestFile, request.toJson());
@@ -1128,7 +1141,7 @@ public class App extends Application {
      */
     public static void removeNewLanguageRequest(NewLanguageRequest request) {
         if(request != null) {
-            File requestFile = new File(publicDir(), "new_languages/" + request.tempLanguageCode + ".json");
+            File requestFile = new File(externalAppDir(), "new_languages/" + request.tempLanguageCode + ".json");
             if(requestFile.exists()) {
                 FileUtilities.safeDelete(requestFile);
             }

@@ -91,7 +91,7 @@ public class DownloadImages {
 
         String url = IMAGES_URL;
         String filename = url.replaceAll(".*/", "");
-        File basePath = App.publicDir();
+        File basePath = App.externalAppDir();
         mImagesDir = new File(basePath, "assets/images");
         File fullPath = new File(String.format("%s/%s", mImagesDir, filename));
         if (mImagesDir == null) {
