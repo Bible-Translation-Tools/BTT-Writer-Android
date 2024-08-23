@@ -104,7 +104,7 @@ public class FileChooserActivity extends BaseActivity {
             setTitle(R.string.title_activity_file_explorer);
         }
 
-        boolean haveSDCard = SdUtils.isSdCardAccessableInMode(mWriteAccess);
+        boolean haveSDCard = SdUtils.isSdCardAccessibleInMode(mWriteAccess);
         showSdCardOption(haveSDCard);
 
         mUpButton.setOnClickListener(new View.OnClickListener() {
@@ -264,7 +264,7 @@ public class FileChooserActivity extends BaseActivity {
         } else { // SD card not present or Android version is lower than Lollipop
 
             File sdCardFolder = SdUtils.getSdCardDirectory();
-            if( (sdCardFolder != null) && SdUtils.isSdCardAccessableInMode(mWriteAccess) ) {
+            if( (sdCardFolder != null) && SdUtils.isSdCardAccessibleInMode(mWriteAccess) ) {
                 if (sdCardFolder.isDirectory() && sdCardFolder.exists() && sdCardFolder.canRead()) {
                     File storagePath = Environment.getExternalStorageDirectory();
                     if(!sdCardFolder.equals(storagePath)) { // make sure it doesn't reflect back to internal memory

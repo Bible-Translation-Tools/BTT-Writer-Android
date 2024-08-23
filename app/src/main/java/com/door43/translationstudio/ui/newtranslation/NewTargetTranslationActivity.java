@@ -99,7 +99,7 @@ public class NewTargetTranslationActivity extends BaseActivity implements Target
             } else {
                 mFragment = new TargetLanguageListFragment();
                 ((TargetLanguageListFragment) mFragment).setArguments(getIntent().getExtras());
-                getFragmentManager().beginTransaction().add(R.id.fragment_container, (TargetLanguageListFragment) mFragment).commit();
+                getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, (TargetLanguageListFragment) mFragment).commit();
                 // TODO: animate
             }
         }
@@ -248,7 +248,7 @@ public class NewTargetTranslationActivity extends BaseActivity implements Target
             // display project list
             mFragment = new ProjectListFragment();
             ((ProjectListFragment) mFragment).setArguments(getIntent().getExtras());
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container, (ProjectListFragment) mFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, (ProjectListFragment) mFragment).commit();
             // TODO: animate
             invalidateOptionsMenu();
         } else { // just change the target language
@@ -437,20 +437,21 @@ public class NewTargetTranslationActivity extends BaseActivity implements Target
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (NEW_LANGUAGE_REQUEST == requestCode) {
-            if(RESULT_OK == resultCode) {
+            if (RESULT_OK == resultCode) {
                 String rawResponse = data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_REQUEST);
                 registerTempLanguage(NewLanguageRequest.generate(rawResponse));
-            } else if(RESULT_FIRST_USER == resultCode) {
+            } else if (RESULT_FIRST_USER == resultCode) {
                 int secondResultCode = data.getIntExtra(NewTempLanguageActivity.EXTRA_RESULT_CODE, -1);
-                if(secondResultCode == NewTempLanguageActivity.RESULT_MISSING_QUESTIONNAIRE) {
+                if (secondResultCode == NewTempLanguageActivity.RESULT_MISSING_QUESTIONNAIRE) {
                     Snackbar snack = Snackbar.make(findViewById(android.R.id.content), R.string.missing_questionnaire, Snackbar.LENGTH_LONG);
                     ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
                     snack.show();
-                } else if(secondResultCode == NewTempLanguageActivity.RESULT_USE_EXISTING_LANGUAGE) {
+                } else if (secondResultCode == NewTempLanguageActivity.RESULT_USE_EXISTING_LANGUAGE) {
                     String targetLanguageId = data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_ID);
                     TargetLanguage targetLanguage = App.getLibrary().index().getTargetLanguage(targetLanguageId);
-                    if(targetLanguage != null) {
+                    if (targetLanguage != null) {
                         onItemClick(targetLanguage);
                     }
                 } else {

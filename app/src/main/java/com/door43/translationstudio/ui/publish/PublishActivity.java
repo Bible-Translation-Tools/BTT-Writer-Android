@@ -1,11 +1,14 @@
 package com.door43.translationstudio.ui.publish;
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -79,7 +82,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
         // inject fragments
         if(findViewById(R.id.fragment_container) != null) {
             if(savedInstanceState != null) {
-                mFragment = (PublishStepFragment)getFragmentManager().findFragmentById(R.id.fragment_container);
+                mFragment = (PublishStepFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             } else {
                 mFragment = new ValidationFragment();
                 String sourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
@@ -106,7 +109,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
                 if(sourceTranslationId != null) {
                     args.putSerializable(PublishStepFragment.ARG_SOURCE_TRANSLATION_ID, sourceTranslationId);
                     mFragment.setArguments(args);
-                    getFragmentManager().beginTransaction().add(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, mFragment).commit();
                     // TODO: animate
                 } else {
                     // the user must choose a source translation before they can publish
@@ -145,14 +148,21 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
                 showBackupDialog();
             }
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                onBackPressedHandler();
+            }
+        });
     }
 
     /**
      * display Backup dialog
      */
     private void showBackupDialog() {
-        FragmentTransaction backupFt = getFragmentManager().beginTransaction();
-        Fragment backupPrev = getFragmentManager().findFragmentByTag(BackupDialog.TAG);
+        FragmentTransaction backupFt = getSupportFragmentManager().beginTransaction();
+        Fragment backupPrev = getSupportFragmentManager().findFragmentByTag(BackupDialog.TAG);
         if (backupPrev != null) {
             backupFt.remove(backupPrev);
         }
@@ -182,8 +192,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
         return true;
     }
 
-    @Override
-    public void onBackPressed() {
+    public void onBackPressedHandler() {
         // TRICKY: the translation activity is finished after opening the publish activity
         // because we may have to go back and forth and don't want to fill up the stack
         if(mCallingActivity == ACTIVITY_TRANSLATION) {
@@ -257,7 +266,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
         args.putSerializable(PublishStepFragment.ARG_SOURCE_TRANSLATION_ID, sourceTranslationId);
         args.putBoolean(PublishStepFragment.ARG_PUBLISH_FINISHED, mPublishFinished);
         mFragment.setArguments(args);
-        getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
         // TODO: animate
     }
 

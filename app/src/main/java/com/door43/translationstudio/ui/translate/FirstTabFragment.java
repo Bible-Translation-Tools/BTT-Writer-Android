@@ -1,8 +1,5 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,16 +9,16 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
 import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.ui.BaseFragment;
@@ -67,8 +64,8 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
         View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                Fragment prev = getFragmentManager().findFragmentByTag("tabsDialog");
+                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+                Fragment prev = getParentFragmentManager().findFragmentByTag("tabsDialog");
                 if (prev != null) {
                     ft.remove(prev);
                 }
@@ -88,7 +85,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
 
         // attach to tabs dialog
         if(savedInstanceState != null) {
-            ChooseSourceTranslationDialog dialog = (ChooseSourceTranslationDialog) getFragmentManager().findFragmentByTag("tabsDialog");
+            ChooseSourceTranslationDialog dialog = (ChooseSourceTranslationDialog) getParentFragmentManager().findFragmentByTag("tabsDialog");
             if(dialog != null) {
                 dialog.setOnClickListener(this);
             }
@@ -98,12 +95,12 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
         try {
-            this.mListener = (OnEventListener) activity;
+            this.mListener = (OnEventListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement FirstTabFragment.OnEventListener");
+            throw new ClassCastException(context + " must implement FirstTabFragment.OnEventListener");
         }
     }
 
@@ -126,7 +123,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
             App.removeOpenSourceTranslation(targetTranslationId, id);
         }
 
-        if(sourceTranslationIds.size() > 0) {
+        if(!sourceTranslationIds.isEmpty()) {
             // save open source language tabs
             for(String slug:sourceTranslationIds) {
                 Translation t = mLibrary.index().getTranslation(slug);

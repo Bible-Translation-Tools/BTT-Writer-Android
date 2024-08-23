@@ -2,9 +2,6 @@ package com.door43.translationstudio.ui.home;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.app.DialogFragment;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -12,7 +9,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,6 +71,7 @@ public class ImportDialog extends DialogFragment implements SimpleTaskWatcher.On
     private MergeOptions mMergeSelection = MergeOptions.NONE;
     private boolean mMergeConflicted = false;
 
+    @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
@@ -269,13 +273,13 @@ public class ImportDialog extends DialogFragment implements SimpleTaskWatcher.On
      * @param dialog
      * @param tag
      */
-    private void showDialogFragment(android.app.DialogFragment dialog, String tag) {
-        FragmentTransaction backupFt = getFragmentManager().beginTransaction();
-        Fragment backupPrev = getFragmentManager().findFragmentByTag(tag);
+    private void showDialogFragment(DialogFragment dialog, String tag) {
+        FragmentTransaction backupFt = getParentFragmentManager().beginTransaction();
+        Fragment backupPrev = getParentFragmentManager().findFragmentByTag(tag);
         if (backupPrev != null) {
             backupFt.remove(backupPrev);
             backupFt.commit(); // apply the remove
-            backupFt = getFragmentManager().beginTransaction(); // start a new transaction
+            backupFt = getParentFragmentManager().beginTransaction(); // start a new transaction
         }
         backupFt.addToBackStack(null);
 

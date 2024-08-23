@@ -1,9 +1,6 @@
 package com.door43.translationstudio.ui.home;
 
 import android.app.Activity;
-import android.app.DialogFragment;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
@@ -11,6 +8,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -98,8 +98,8 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         // set typeface for language
         TargetLanguage targetLanguage = mTargetTranslation.getTargetLanguage();
         Typeface typeface = Typography.getBestFontForLanguage(getActivity(), TranslationType.SOURCE, targetLanguage.slug, targetLanguage.direction);
-        titleView.setTypeface(typeface, 0);
-        languageTitleView.setTypeface(typeface, 0);
+        titleView.setTypeface(typeface, Typeface.NORMAL);
+        languageTitleView.setTypeface(typeface, Typeface.NORMAL);
 
         titleView.setText(project.name + " - " + mTargetTranslation.getTargetLanguageName());
         projectTitleView.setText(project.name + " (" + project.slug + ")");
@@ -172,8 +172,8 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         backupButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransaction backupFt = getFragmentManager().beginTransaction();
-                Fragment backupPrev = getFragmentManager().findFragmentByTag(BackupDialog.TAG);
+                FragmentTransaction backupFt = getParentFragmentManager().beginTransaction();
+                Fragment backupPrev = getParentFragmentManager().findFragmentByTag(BackupDialog.TAG);
                 if (backupPrev != null) {
                     backupFt.remove(backupPrev);
                 }
@@ -203,8 +203,8 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         printButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransaction printFt = getFragmentManager().beginTransaction();
-                Fragment printPrev = getFragmentManager().findFragmentByTag("printDialog");
+                FragmentTransaction printFt = getParentFragmentManager().beginTransaction();
+                Fragment printPrev = getParentFragmentManager().findFragmentByTag("printDialog");
                 if (printPrev != null) {
                     printFt.remove(printPrev);
                 }
@@ -219,22 +219,19 @@ public class TargetTranslationInfoDialog extends DialogFragment implements Manag
         });
 
         View contributorsGroup = v.findViewById(R.id.contributors_group);
-        contributorsGroup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getActivity().getFragmentManager().beginTransaction();
-                Fragment prev = getActivity().getFragmentManager().findFragmentByTag("manage-contributors");
-                if (prev != null) {
-                    ft.remove(prev);
-                }
-                ft.addToBackStack(null);
-
-                ManageContributorsDialog dialog = new ManageContributorsDialog();
-                Bundle args = new Bundle();
-                args.putString(ManageContributorsDialog.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
-                dialog.setArguments(args);
-                dialog.show(ft, "manage-contributors");
+        contributorsGroup.setOnClickListener(v1 -> {
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+            Fragment prev = getParentFragmentManager().findFragmentByTag("manage-contributors");
+            if (prev != null) {
+                ft.remove(prev);
             }
+            ft.addToBackStack(null);
+
+            ManageContributorsDialog dialog = new ManageContributorsDialog();
+            Bundle args1 = new Bundle();
+            args1.putString(ManageContributorsDialog.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+            dialog.setArguments(args1);
+            dialog.show(ft, "manage-contributors");
         });
 
         // TODO: re-connect to dialogs

@@ -1,8 +1,5 @@
 package com.door43.translationstudio.ui.home;
 
-import android.app.DialogFragment;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -11,6 +8,8 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 
 import com.door43.translationstudio.tasks.DownloadIndexTask;
@@ -20,6 +19,10 @@ import com.google.android.material.snackbar.Snackbar;
 import android.os.Bundle;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -114,7 +117,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
         if(findViewById(R.id.fragment_container) != null) {
             if(savedInstanceState != null) {
                 // use current fragment
-                mFragment = getFragmentManager().findFragmentById(R.id.fragment_container);
+                mFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             } else {
                 if (mTranslator.getTargetTranslationIDs().length > 0) {
                     mFragment = new TargetTranslationListFragment();
@@ -124,7 +127,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                     mFragment.setArguments(getIntent().getExtras());
                 }
 
-                getFragmentManager().beginTransaction().add(R.id.fragment_container, mFragment).commit();
+                getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, mFragment).commit();
             }
         }
 
@@ -146,44 +149,45 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                 moreMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.action_update:
-                                mUpdateDialog = new UpdateLibraryDialog();
-                                showDialogFragment(mUpdateDialog, UpdateLibraryDialog.TAG);
-                                return true;
-                            case R.id.action_import:
-                                ImportDialog importDialog = new ImportDialog();
-                                showDialogFragment(importDialog, ImportDialog.TAG);
-                                return true;
-                            case R.id.action_feedback:
-                                FeedbackDialog dialog = new FeedbackDialog();
-                                showDialogFragment(dialog, "feedback-dialog");
-                                return true;
-                            case R.id.action_share_apk:
-                                try {
-                                    PackageInfo pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-                                    File apkFile = new File(pinfo.applicationInfo.publicSourceDir);
-                                    File exportFile = new File(App.getSharingDir(), pinfo.applicationInfo.loadLabel(getPackageManager()) + "_" + pinfo.versionName + ".apk");
-                                    FileUtilities.copyFile(apkFile, exportFile);
-                                    if (exportFile.exists()) {
-                                        Uri u = FileProvider.getUriForFile(HomeActivity.this, "com.door43.translationstudio.fileprovider", exportFile);
-                                        Intent i = new Intent(Intent.ACTION_SEND);
-                                        i.setType("application/zip");
-                                        i.putExtra(Intent.EXTRA_STREAM, u);
-                                        startActivity(Intent.createChooser(i, getResources().getString(R.string.send_to)));
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                    // todo notify user app could not be shared
+                        int id = item.getItemId();
+
+                        if (id == R.id.action_update) {
+                            mUpdateDialog = new UpdateLibraryDialog();
+                            showDialogFragment(mUpdateDialog, UpdateLibraryDialog.TAG);
+                            return true;
+                        } else if (id == R.id.action_import) {
+                            ImportDialog importDialog = new ImportDialog();
+                            showDialogFragment(importDialog, ImportDialog.TAG);
+                            return true;
+                        } else if (id == R.id.action_feedback) {
+                            FeedbackDialog dialog = new FeedbackDialog();
+                            showDialogFragment(dialog, "feedback-dialog");
+                            return true;
+                        } else if (id == R.id.action_share_apk) {
+                            try {
+                                PackageInfo pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                                File apkFile = new File(pinfo.applicationInfo.publicSourceDir);
+                                File exportFile = new File(App.getSharingDir(), pinfo.applicationInfo.loadLabel(getPackageManager()) + "_" + pinfo.versionName + ".apk");
+                                FileUtilities.copyFile(apkFile, exportFile);
+                                if (exportFile.exists()) {
+                                    Uri u = FileProvider.getUriForFile(HomeActivity.this, "com.door43.translationstudio.fileprovider", exportFile);
+                                    Intent i = new Intent(Intent.ACTION_SEND);
+                                    i.setType("application/zip");
+                                    i.putExtra(Intent.EXTRA_STREAM, u);
+                                    startActivity(Intent.createChooser(i, getResources().getString(R.string.send_to)));
                                 }
-                                return true;
-                            case R.id.action_log_out:
-                                doLogout();
-                                return true;
-                            case R.id.action_settings:
-                                Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
-                                startActivity(intent);
-                                return true;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                // todo notify user app could not be shared
+                            }
+                            return true;
+                        } else if (id == R.id.action_log_out) {
+                            doLogout();
+                            return true;
+                        } else if (id == R.id.action_settings) {
+                            Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
+                            startActivity(intent);
+                            return true;
                         }
                         return false;
                     }
@@ -223,6 +227,13 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
             mAlertShown = DialogShown.fromInt(savedInstanceState.getInt(STATE_DIALOG_SHOWN, INVALID), DialogShown.NONE);
             mTargetTranslationID = savedInstanceState.getString(STATE_DIALOG_TRANSLATION_ID, null);
         }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                onBackPressedHandler();
+            }
+        });
     }
 
     /**
@@ -254,7 +265,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
             // display target translations list
             mFragment = new TargetTranslationListFragment();
             mFragment.setArguments(getIntent().getExtras());
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
 
             Handler hand = new Handler(Looper.getMainLooper());
             hand.post(new Runnable() {
@@ -269,7 +280,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
             // display welcome screen
             mFragment = new WelcomeFragment();
             mFragment.setArguments(getIntent().getExtras());
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
         } else if(numTranslations > 0 && mFragment instanceof TargetTranslationListFragment) {
             // reload list
             ((TargetTranslationListFragment)mFragment).reloadList();
@@ -345,8 +356,8 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                 break;
         }
         // re-connect to dialog fragments
-        Fragment dialog = getFragmentManager().findFragmentByTag(UpdateLibraryDialog.TAG);
-        if(dialog != null && dialog instanceof EventBuffer.OnEventTalker) {
+        Fragment dialog = getSupportFragmentManager().findFragmentByTag(UpdateLibraryDialog.TAG);
+        if(dialog instanceof EventBuffer.OnEventTalker) {
             ((EventBuffer.OnEventTalker)dialog).getEventBuffer().addOnEventListener(this);
         }
     }
@@ -358,17 +369,17 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
      * @param tag
      */
     private void showDialogFragment(DialogFragment dialog, String tag) {
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag(tag);
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        Fragment prev = getSupportFragmentManager().findFragmentByTag(tag);
         if (prev != null) {
             ft.remove(prev);
             // TODO: 10/7/16 I don't think we need this
             ft.commit();
-            ft = getFragmentManager().beginTransaction();
+            ft = getSupportFragmentManager().beginTransaction();
         }
         ft.addToBackStack(null);
         // attach to any available event buffers
-        if(dialog != null && dialog instanceof EventBuffer.OnEventTalker) {
+        if(dialog instanceof EventBuffer.OnEventTalker) {
             ((EventBuffer.OnEventTalker)dialog).getEventBuffer().addOnEventListener(this);
         }
         dialog.show(ft, tag);
@@ -626,16 +637,12 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
     private TargetTranslation getLastOpened() {
         String lastTarget = App.getLastFocusTargetTranslation();
         if (lastTarget != null) {
-            TargetTranslation targetTranslation = mTranslator.getTargetTranslation(lastTarget);
-            if (targetTranslation != null) {
-                return targetTranslation;
-            }
+            return mTranslator.getTargetTranslation(lastTarget);
         }
         return null;
     }
 
-    @Override
-    public void onBackPressed() {
+    public void onBackPressedHandler() {
         // display confirmation before closing the app
         new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                 .setMessage(R.string.exit_confirmation)
@@ -651,13 +658,14 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(NEW_TARGET_TRANSLATION_REQUEST == requestCode ) {
-            if(RESULT_OK == resultCode ) {
-                if(mFragment instanceof WelcomeFragment) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (NEW_TARGET_TRANSLATION_REQUEST == requestCode) {
+            if (RESULT_OK == resultCode) {
+                if (mFragment instanceof WelcomeFragment) {
                     // display target translations list
                     mFragment = new TargetTranslationListFragment();
                     mFragment.setArguments(getIntent().getExtras());
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
                 } else {
                     ((TargetTranslationListFragment) mFragment).reloadList();
                 }
@@ -665,25 +673,25 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
                 Intent intent = new Intent(HomeActivity.this, TargetTranslationActivity.class);
                 intent.putExtra(App.EXTRA_TARGET_TRANSLATION_ID, data.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID));
                 startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST);
-            } else if( NewTargetTranslationActivity.RESULT_DUPLICATE == resultCode ) {
+            } else if (NewTargetTranslationActivity.RESULT_DUPLICATE == resultCode) {
                 // display duplicate notice to user
                 String targetTranslationId = data.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID);
                 TargetTranslation existingTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-                if(existingTranslation != null) {
+                if (existingTranslation != null) {
                     Project project = mLibrary.index().getProject(App.getDeviceLanguageCode(), existingTranslation.getProjectId(), true);
                     Snackbar snack = Snackbar.make(findViewById(android.R.id.content), String.format(getResources().getString(R.string.duplicate_target_translation), project.name, existingTranslation.getTargetLanguageName()), Snackbar.LENGTH_LONG);
                     ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
                     snack.show();
                 }
-            } else if( NewTargetTranslationActivity.RESULT_ERROR == resultCode) {
+            } else if (NewTargetTranslationActivity.RESULT_ERROR == resultCode) {
                 Snackbar snack = Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.error), Snackbar.LENGTH_LONG);
                 ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
                 snack.show();
             }
-        } else if(TARGET_TRANSLATION_VIEW_REQUEST == requestCode ) {
-            if(TargetTranslationActivity.RESULT_DO_UPDATE == resultCode ) {
-                ManagedTask task = new UpdateSourceTask();
-                ((UpdateSourceTask)task).setPrefix(this.getResources().getString(R.string.updating_languages));
+        } else if (TARGET_TRANSLATION_VIEW_REQUEST == requestCode) {
+            if (TargetTranslationActivity.RESULT_DO_UPDATE == resultCode) {
+                UpdateSourceTask task = new UpdateSourceTask();
+                task.setPrefix(this.getResources().getString(R.string.updating_languages));
                 String taskId = UpdateSourceTask.TASK_ID;
                 task.addOnProgressListener(this);
                 task.addOnFinishedListener(this);
@@ -772,7 +780,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
             // display welcome screen
             mFragment = new WelcomeFragment();
             mFragment.setArguments(getIntent().getExtras());
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
         }
     }
 
@@ -846,7 +854,7 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
     @Override
     public void onDestroy() {
         if(progressDialog != null) progressDialog.dismiss();
-        Fragment dialog = getFragmentManager().findFragmentByTag(UpdateLibraryDialog.TAG);
+        Fragment dialog = getSupportFragmentManager().findFragmentByTag(UpdateLibraryDialog.TAG);
         if(dialog instanceof EventBuffer.OnEventTalker) {
             ((EventBuffer.OnEventTalker)dialog).getEventBuffer().removeOnEventListener(this);
         }
@@ -909,8 +917,8 @@ public class HomeActivity extends BaseActivity implements SimpleTaskWatcher.OnFi
      * bring up UI to select and download sources
      */
     private void selectDownloadSources() {
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag(DownloadSourcesDialog.TAG);
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        Fragment prev = getSupportFragmentManager().findFragmentByTag(DownloadSourcesDialog.TAG);
         if (prev != null) {
             ft.remove(prev);
         }

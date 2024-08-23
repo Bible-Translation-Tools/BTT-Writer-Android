@@ -1,11 +1,11 @@
 package com.door43.translationstudio.ui.publish;
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -64,11 +64,11 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
         };
 
         // re-attach to dialogs
-        Fragment prevEditDialog = getFragmentManager().findFragmentByTag("edit-native-speaker");
+        Fragment prevEditDialog = getParentFragmentManager().findFragmentByTag("edit-native-speaker");
         if(prevEditDialog != null) {
             ((ContributorDialog)prevEditDialog).setOnClickListener(mOnNativeSpeakerDialogClick);
         }
-        Fragment prevAddDialog = getFragmentManager().findFragmentByTag("add-native-speaker");
+        Fragment prevAddDialog = getParentFragmentManager().findFragmentByTag("add-native-speaker");
         if(prevAddDialog != null) {
             ((ContributorDialog)prevAddDialog).setOnClickListener(mOnNativeSpeakerDialogClick);
         }
@@ -77,8 +77,8 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
 
     @Override
     public void onEditNativeSpeaker(NativeSpeaker speaker) {
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag("edit-native-speaker");
+        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+        Fragment prev = getParentFragmentManager().findFragmentByTag("edit-native-speaker");
         if(prev != null) {
             ft.remove(prev);
         }
@@ -100,7 +100,7 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
 
     @Override
     public void onClickNext() {
-        if(mTargetTranslation.getContributors().size() > 0) {
+        if(!mTargetTranslation.getContributors().isEmpty()) {
             getListener().nextStep();
         } else {
             Snackbar snack = Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.need_translator_notice, Snackbar.LENGTH_LONG);
@@ -121,8 +121,8 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
     }
 
     public void showAddNativeSpeakerDialog() {
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag("add-native-speaker");
+        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+        Fragment prev = getParentFragmentManager().findFragmentByTag("add-native-speaker");
         if(prev != null) {
             ft.remove(prev);
         }

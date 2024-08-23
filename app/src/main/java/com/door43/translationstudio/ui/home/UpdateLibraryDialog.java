@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.home;
 
-import android.app.DialogFragment;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.net.Uri;
@@ -10,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.TextView;
+
+import androidx.fragment.app.DialogFragment;
 
 import com.door43.translationstudio.R;
 

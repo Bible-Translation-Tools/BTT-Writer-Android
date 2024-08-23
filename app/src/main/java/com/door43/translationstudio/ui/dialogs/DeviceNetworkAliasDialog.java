@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.dialogs;
 
-import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +8,8 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+
+import androidx.fragment.app.DialogFragment;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;

@@ -1,7 +1,5 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -29,6 +27,9 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.tools.logger.Logger;
@@ -189,7 +190,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         // inject fragments
         if (findViewById(R.id.fragment_container) != null) {
             if (savedInstanceState != null) {
-                mFragment = getFragmentManager().findFragmentById(R.id.fragment_container);
+                mFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             } else {
                 TranslationViewMode viewMode = App.getLastViewMode(mTargetTranslation.getId());
                 switch (viewMode) {
@@ -204,7 +205,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                         break;
                 }
                 mFragment.setArguments(getIntent().getExtras());
-                getFragmentManager().beginTransaction().add(R.id.fragment_container, mFragment).commit();
+                getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, mFragment).commit();
                 // TODO: animate
                 // TODO: udpate menu
             }
@@ -457,73 +458,74 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                     moreMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            switch (item.getItemId()) {
-                                case R.id.action_translations:
-                                    finish();
-                                    return true;
-                                case R.id.action_publish:
-                                    Intent publishIntent = new Intent(TargetTranslationActivity.this, PublishActivity.class);
-                                    publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
-                                    publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION);
-                                    startActivity(publishIntent);
-                                    // TRICKY: we may move back and forth between the publisher and translation activites
-                                    // so we finish to avoid filling the stack.
-                                    finish();
-                                    return true;
-                                case R.id.action_drafts_available:
-                                    Intent intent = new Intent(TargetTranslationActivity.this, DraftActivity.class);
-                                    intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
-                                    startActivity(intent);
-                                    return true;
-                                case R.id.action_backup:
-                                    FragmentTransaction backupFt = getFragmentManager().beginTransaction();
-                                    Fragment backupPrev = getFragmentManager().findFragmentByTag(BackupDialog.TAG);
-                                    if (backupPrev != null) {
-                                        backupFt.remove(backupPrev);
-                                    }
-                                    backupFt.addToBackStack(null);
+                            int id = item.getItemId();
 
-                                    BackupDialog backupDialog = new BackupDialog();
-                                    Bundle args = new Bundle();
-                                    args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
-                                    backupDialog.setArguments(args);
-                                    backupDialog.show(backupFt, BackupDialog.TAG);
-                                    return true;
-                                case R.id.action_print:
-                                    FragmentTransaction printFt = getFragmentManager().beginTransaction();
-                                    Fragment printPrev = getFragmentManager().findFragmentByTag("printDialog");
-                                    if (printPrev != null) {
-                                        printFt.remove(printPrev);
-                                    }
-                                    printFt.addToBackStack(null);
+                            if (id == R.id.action_translations) {
+                                finish();
+                                return true;
+                            } else if (id == R.id.action_publish) {
+                                Intent publishIntent = new Intent(TargetTranslationActivity.this, PublishActivity.class);
+                                publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+                                publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION);
+                                startActivity(publishIntent);
+                                // TRICKY: we may move back and forth between the publisher and translation activites
+                                // so we finish to avoid filling the stack.
+                                finish();
+                                return true;
+                            } else if (id == R.id.action_drafts_available) {
+                                Intent intent = new Intent(TargetTranslationActivity.this, DraftActivity.class);
+                                intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+                                startActivity(intent);
+                                return true;
+                            } else if (id == R.id.action_backup) {
+                                FragmentTransaction backupFt = getSupportFragmentManager().beginTransaction();
+                                Fragment backupPrev = getSupportFragmentManager().findFragmentByTag(BackupDialog.TAG);
+                                if (backupPrev != null) {
+                                    backupFt.remove(backupPrev);
+                                }
+                                backupFt.addToBackStack(null);
 
-                                    PrintDialog printDialog = new PrintDialog();
-                                    Bundle printArgs = new Bundle();
-                                    printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
-                                    printDialog.setArguments(printArgs);
-                                    printDialog.show(printFt, "printDialog");
-                                    return true;
-                                case R.id.action_feedback:
-                                    FragmentTransaction ft = getFragmentManager().beginTransaction();
-                                    Fragment prev = getFragmentManager().findFragmentByTag("bugDialog");
-                                    if (prev != null) {
-                                        ft.remove(prev);
-                                    }
-                                    ft.addToBackStack(null);
+                                BackupDialog backupDialog = new BackupDialog();
+                                Bundle args = new Bundle();
+                                args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+                                backupDialog.setArguments(args);
+                                backupDialog.show(backupFt, BackupDialog.TAG);
+                                return true;
+                            } else if (id == R.id.action_print) {
+                                FragmentTransaction printFt = getSupportFragmentManager().beginTransaction();
+                                Fragment printPrev = getSupportFragmentManager().findFragmentByTag("printDialog");
+                                if (printPrev != null) {
+                                    printFt.remove(printPrev);
+                                }
+                                printFt.addToBackStack(null);
 
-                                    FeedbackDialog dialog = new FeedbackDialog();
-                                    dialog.show(ft, "bugDialog");
-                                    return true;
-                                case R.id.action_settings:
-                                    Intent settingsIntent = new Intent(TargetTranslationActivity.this, SettingsActivity.class);
-                                    startActivity(settingsIntent);
-                                    return true;
-                                case R.id.action_search:
-                                    setSearchBarVisibility(true);
-                                    return true;
-                                case R.id.mark_chunks_done:
-                                    ((ViewModeFragment)mFragment).markAllChunksDone();
-                                    return true;
+                                PrintDialog printDialog = new PrintDialog();
+                                Bundle printArgs = new Bundle();
+                                printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+                                printDialog.setArguments(printArgs);
+                                printDialog.show(printFt, "printDialog");
+                                return true;
+                            } else if (id == R.id.action_feedback) {
+                                FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                                Fragment prev = getSupportFragmentManager().findFragmentByTag("bugDialog");
+                                if (prev != null) {
+                                    ft.remove(prev);
+                                }
+                                ft.addToBackStack(null);
+
+                                FeedbackDialog dialog = new FeedbackDialog();
+                                dialog.show(ft, "bugDialog");
+                                return true;
+                            } else if (id == R.id.action_settings) {
+                                Intent settingsIntent = new Intent(TargetTranslationActivity.this, SettingsActivity.class);
+                                startActivity(settingsIntent);
+                                return true;
+                            } else if (id == R.id.action_search) {
+                                setSearchBarVisibility(true);
+                                return true;
+                            } else if (id == R.id.mark_chunks_done) {
+                                ((ViewModeFragment)mFragment).markAllChunksDone();
+                                return true;
                             }
                             return false;
                         }
@@ -557,10 +559,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * Check to see if marking all chunks done is supported
      */
     public boolean isMarkAllChunksSupported() {
-        if(mFragment instanceof ReviewModeFragment) {
-            return true;
-        }
-        return false;
+        return mFragment instanceof ReviewModeFragment;
     }
 
     /**
@@ -840,7 +839,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      */
     private boolean draftIsAvailable() {
         List<Translation> draftTranslations = App.getLibrary().index().findTranslations(mTargetTranslation.getTargetLanguage().slug, mTargetTranslation.getProjectId(), null, "book", null, 0, -1);
-        return draftTranslations.size() > 0;
+        return !draftTranslations.isEmpty();
     }
 
     @Override
@@ -877,7 +876,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             View scrollView = findViewById(R.id.fragment_container);
             if (scrollView != null) {
 
-                Boolean visible = true;
+                boolean visible = true;
 
                 Rect scrollBounds = new Rect();
                 scrollView.getHitRect(scrollBounds);
@@ -1071,15 +1070,13 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     private int computeProgressFromPosition(int position) {
         int correctedProgress = correctProgress(position * mSeekbarMultiplier);
-        int progress = limitRange(correctedProgress, 0, mSeekBar.getMax());
-        return progress;
+        return limitRange(correctedProgress, 0, mSeekBar.getMax());
     }
 
     private int computePositionFromProgress(int progress) {
         int correctedProgress = correctProgress(progress);
         correctedProgress = limitRange(correctedProgress, 0, mSeekBar.getMax() - 1);
-        int position = correctedProgress / mSeekbarMultiplier;
-        return position;
+        return correctedProgress / mSeekbarMultiplier;
     }
 
     /**
@@ -1093,10 +1090,10 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     @Override
     public void onNoSourceTranslations(String targetTranslationId) {
-        if (mFragment instanceof FirstTabFragment == false) {
+        if (!(mFragment instanceof FirstTabFragment)) {
             mFragment = new FirstTabFragment();
             mFragment.setArguments(getIntent().getExtras());
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
             buildMenu();
         }
     }
@@ -1122,31 +1119,31 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
         switch (mode) {
             case READ:
-                if (mFragment instanceof ReadModeFragment == false) {
+                if (!(mFragment instanceof ReadModeFragment)) {
                     mFragment = new ReadModeFragment();
                     mFragment.setArguments(fragmentExtras);
 
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
                     // TODO: animate
                     // TODO: update menu
                 }
                 break;
             case CHUNK:
-                if (mFragment instanceof ChunkModeFragment == false) {
+                if (!(mFragment instanceof ChunkModeFragment)) {
                     mFragment = new ChunkModeFragment();
                     mFragment.setArguments(fragmentExtras);
 
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
                     // TODO: animate
                     // TODO: update menu
                 }
                 break;
             case REVIEW:
-                if (mFragment instanceof ReviewModeFragment == false) {
+                if (!(mFragment instanceof ReviewModeFragment)) {
                     mFragment = new ReviewModeFragment();
                     mFragment.setArguments(fragmentExtras);
 
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
                     // TODO: animate
                     // TODO: update menu
                 }
@@ -1160,7 +1157,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     public void restartAutoCommitTimer() {
         mCommitTimer.cancel();
         mCommitTimer = new Timer();
-        mCommitTimer.scheduleAtFixedRate(new TimerTask() {
+        mCommitTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 if(mTargetTranslation != null) {
@@ -1200,7 +1197,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             mFragment = new ReviewModeFragment();
         }
         mFragment.setArguments(getIntent().getExtras());
-        getFragmentManager().beginTransaction().replace(R.id.fragment_container, (Fragment) mFragment).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, (Fragment) mFragment).commit();
         // TODO: animate
         // TODO: update menu
     }
@@ -1266,9 +1263,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         // This is more properly done with setBackground(), but that requires a higher API
         // level than this application's minimum. Equivalently use setBackgroundDrawable(),
         // which is deprecated, instead.
-        mReviewButton.setBackgroundDrawable(null);
-        mChunkButton.setBackgroundDrawable(null);
-        mReadButton.setBackgroundDrawable(null);
+        mReviewButton.setBackground(null);
+        mChunkButton.setBackground(null);
+        mReadButton.setBackground(null);
 
         // For the active view, set the correct icon, and highlight the background.
         final int highlightedColor = getResources().getColor(R.color.primary_dark);

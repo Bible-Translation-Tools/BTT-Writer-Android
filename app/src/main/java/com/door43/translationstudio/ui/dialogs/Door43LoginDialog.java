@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.dialogs;
 
-import android.app.DialogFragment;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -9,10 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import androidx.fragment.app.DialogFragment;
+
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.ui.LoginDoor43Activity;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.RegisterDoor43Activity;
 import com.door43.translationstudio.ui.SettingsActivity;
 
 /**
@@ -28,34 +28,23 @@ public class Door43LoginDialog extends DialogFragment {
         getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
         View v = inflater.inflate(R.layout.dialog_door43_login, container, false);
 
-        v.findViewById(R.id.register_door43).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String defaultAccountCreateUrl = App.context().getResources().getString(
-                        R.string.pref_default_create_account_url);
-                String accountCreateUrl = App.context().getUserPreferences().getString(
-                        SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
-                        defaultAccountCreateUrl);
-                Uri uri = Uri.parse(accountCreateUrl);
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(intent);
-                dismiss();
-            }
+        v.findViewById(R.id.register_door43).setOnClickListener(v13 -> {
+            String defaultAccountCreateUrl = App.context().getResources().getString(
+                    R.string.pref_default_create_account_url);
+            String accountCreateUrl = App.getUserPreferences().getString(
+                    SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
+                    defaultAccountCreateUrl);
+            Uri uri = Uri.parse(accountCreateUrl);
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+            dismiss();
         });
-        v.findViewById(R.id.login_door43).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), LoginDoor43Activity.class);
-                startActivity(intent);
-                dismiss();
-            }
+        v.findViewById(R.id.login_door43).setOnClickListener(v1 -> {
+            Intent intent = new Intent(getActivity(), LoginDoor43Activity.class);
+            startActivity(intent);
+            dismiss();
         });
-        v.findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
+        v.findViewById(R.id.cancel_button).setOnClickListener(v12 -> dismiss());
 
         return v;
     }

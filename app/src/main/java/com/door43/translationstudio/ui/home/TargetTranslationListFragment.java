@@ -1,8 +1,6 @@
 package com.door43.translationstudio.ui.home;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,12 +10,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.ui.BaseFragment;
-
-import org.unfoldingword.tools.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,27 +43,24 @@ public class TargetTranslationListFragment extends BaseFragment implements Targe
 
         ListView list = (ListView) rootView.findViewById(R.id.translationsList);
         mAdapter = new TargetTranslationAdapter(getActivity());
-        mAdapter.setOnInfoClickListener(new TargetTranslationAdapter.OnInfoClickListener() {
-            @Override
-            public void onClick(String targetTranslationId) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                Fragment prev = getFragmentManager().findFragmentByTag("infoDialog");
-                if (prev != null) {
-                    ft.remove(prev);
-                }
-                ft.addToBackStack(null);
+        mAdapter.setOnInfoClickListener(targetTranslationId -> {
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+            Fragment prev = getParentFragmentManager().findFragmentByTag("infoDialog");
+            if (prev != null) {
+                ft.remove(prev);
+            }
+            ft.addToBackStack(null);
 
-                final TargetTranslation translation = App.getTranslator().getTargetTranslation(targetTranslationId);
-                if(translation != null) {
-                    TargetTranslationInfoDialog dialog = new TargetTranslationInfoDialog();
-                    Bundle args = new Bundle();
-                    args.putString(TargetTranslationInfoDialog.ARG_TARGET_TRANSLATION_ID, targetTranslationId);
-                    dialog.setOnDeleteListener(TargetTranslationListFragment.this);
-                    dialog.setArguments(args);
-                    dialog.show(ft, "infoDialog");
-                } else {
-                    reloadList();
-                }
+            final TargetTranslation translation = App.getTranslator().getTargetTranslation(targetTranslationId);
+            if(translation != null) {
+                TargetTranslationInfoDialog dialog = new TargetTranslationInfoDialog();
+                Bundle args = new Bundle();
+                args.putString(TargetTranslationInfoDialog.ARG_TARGET_TRANSLATION_ID, targetTranslationId);
+                dialog.setOnDeleteListener(TargetTranslationListFragment.this);
+                dialog.setArguments(args);
+                dialog.show(ft, "infoDialog");
+            } else {
+                reloadList();
             }
         });
         list.setAdapter(mAdapter);
@@ -150,12 +147,12 @@ public class TargetTranslationListFragment extends BaseFragment implements Targe
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
         try {
-            this.mListener = (OnItemClickListener) activity;
+            this.mListener = (OnItemClickListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement OnItemClickListener");
+            throw new ClassCastException(context + " must implement OnItemClickListener");
         }
     }
 

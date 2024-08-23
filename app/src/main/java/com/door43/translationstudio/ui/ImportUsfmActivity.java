@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.view.MenuItemCompat;
 import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
@@ -84,6 +86,13 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
                 setActivityStateTo(eImportState.needLanguage);
             }
         }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                onBackPressedHandler();
+            }
+        });
     }
 
     /**
@@ -240,7 +249,7 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
 
                             mFragment = new ProjectListFragment();
                             ((ProjectListFragment) mFragment).setArguments(getIntent().getExtras());
-                            getFragmentManager().beginTransaction().replace(R.id.fragment_container, (ProjectListFragment) mFragment).commit();
+                            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, (ProjectListFragment) mFragment).commit();
                             String title = getResources().getString(R.string.title_activity_import_usfm_book);
                             title += " " + description;
                             setTitle(title);
@@ -760,7 +769,7 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
                 if (null == mFragment) {
                     mFragment = new TargetLanguageListFragment();
                     ((TargetLanguageListFragment) mFragment).setArguments(getIntent().getExtras());
-                    getFragmentManager().beginTransaction().add(R.id.fragment_container, (TargetLanguageListFragment) mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, (TargetLanguageListFragment) mFragment).commit();
                     // TODO: animate
                 }
                 break;
@@ -800,8 +809,7 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
         }
     }
 
-    @Override
-    public void onBackPressed() {
+    public void onBackPressedHandler() {
         switch (mCurrentState) {
             case needLanguage:
                 cancelled();
@@ -881,7 +889,7 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
         mTargetLanguage = targetLanguage;
 
         if (null != targetLanguage) {
-            getFragmentManager().beginTransaction().remove((TargetLanguageListFragment) mFragment).commit();
+            getSupportFragmentManager().beginTransaction().remove((TargetLanguageListFragment) mFragment).commit();
             mFragment = null;
             processUsfmFile();
         } else {
@@ -901,7 +909,7 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
      */
     private void setBook(String projectId) {
         if (projectId != null) {
-            getFragmentManager().beginTransaction().remove((ProjectListFragment) mFragment).commit();
+            getSupportFragmentManager().beginTransaction().remove((ProjectListFragment) mFragment).commit();
             mFragment = null;
             mProgressDialog.show();
             final MissingNameItem item = mMissingNameItems[mCount.counter];

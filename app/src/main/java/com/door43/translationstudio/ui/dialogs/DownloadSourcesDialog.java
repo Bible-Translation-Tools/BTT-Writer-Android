@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.dialogs;
 
-import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
@@ -8,6 +7,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -50,6 +51,7 @@ import org.unfoldingword.tools.taskmanager.TaskManager;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by blm on 12/1/16.
@@ -91,8 +93,8 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
         mLibrary = App.getLibrary();
         mSteps = new ArrayList<>();
 
-        ManagedTask task = new GetAvailableSourcesTask();
-        ((GetAvailableSourcesTask)task).setPrefix(this.getResources().getString(R.string.loading_sources));
+        GetAvailableSourcesTask task = new GetAvailableSourcesTask();
+        task.setPrefix(this.getResources().getString(R.string.loading_sources));
         createProgressDialog(task, false);
         task.addOnProgressListener(this);
         task.addOnFinishedListener(this);
@@ -143,7 +145,7 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
             public void onClick(View v) {
                 if(mAdapter != null) {
                     List<String> selected = mAdapter.getSelected();
-                    if((selected != null) && (selected.size() > 0)) {
+                    if((selected != null) && (!selected.isEmpty())) {
                         if(App.isNetworkAvailable()) {
                             DownloadResourceContainersTask task = new DownloadResourceContainersTask(selected);
                             task.addOnFinishedListener(DownloadSourcesDialog.this);
@@ -174,7 +176,7 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                if((mAdapter != null) && (mSteps != null) && (mSteps.size() > 0)) {
+                if((mAdapter != null) && (mSteps != null) && (!mSteps.isEmpty())) {
                     mSearchString = null;
                     DownloadSourcesAdapter.FilterStep currentStep = mSteps.get(mSteps.size() - 1);
                     DownloadSourcesAdapter.ViewItem item = mAdapter.getItem(position);
@@ -218,13 +220,10 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
                         }
                     } else if(mSteps.size() < 3) { // set up last step
                         DownloadSourcesAdapter.FilterStep firstStep = mSteps.get(0);
-                        switch (firstStep.selection) {
-                            case language:
-                                addStep(DownloadSourcesAdapter.SelectionType.source_filtered_by_language, R.string.choose_sources);
-                                break;
-                            default:
-                                addStep(DownloadSourcesAdapter.SelectionType.source_filtered_by_book, R.string.choose_sources);
-                                break;
+                        if (Objects.requireNonNull(firstStep.selection) == DownloadSourcesAdapter.SelectionType.language) {
+                            addStep(DownloadSourcesAdapter.SelectionType.source_filtered_by_language, R.string.choose_sources);
+                        } else {
+                            addStep(DownloadSourcesAdapter.SelectionType.source_filtered_by_book, R.string.choose_sources);
                         }
                     } else { // at last step, do toggling
                         mAdapter.toggleSelection(position);
@@ -551,7 +550,7 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
         if(view != null) {
             if(text != null) {
                 view.setText(text);
-                view.setTypeface(typeface, 0);
+                view.setTypeface(typeface, Typeface.NORMAL);
                 view.setVisibility(View.VISIBLE);
                 view.setMovementMethod(LinkMovementMethod.getInstance()); // enable clicking on TextView
             } else {
@@ -717,12 +716,12 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
 
                 String downloads = getActivity().getResources().getString(R.string.downloads_success,downloadedTranslations.size());
                 String errors = "";
-                if((failedSourceDownloads.size() > 0) && !canceled) {
+                if((!failedSourceDownloads.isEmpty()) && !canceled) {
                     errors = "\n" + getActivity().getResources().getString(R.string.downloads_fail, failedSourceDownloads.size());
                 }
 
                 List<String> failedHelpsDownloads = downloadSourcesTask.getFailedHelpsDownloads();
-                if(failedHelpsDownloads.size() > 0) {
+                if(!failedHelpsDownloads.isEmpty()) {
                     errors += "\n" + getActivity().getResources().getString(R.string.helps_download_errors, failedHelpsDownloads.toString());
                 }
 

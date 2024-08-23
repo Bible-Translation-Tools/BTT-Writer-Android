@@ -1,6 +1,9 @@
 package com.door43.util;
 
-import androidx.annotation.Nullable;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.OpenableColumns;
 
 import org.unfoldingword.tools.logger.Logger;
 
@@ -364,7 +367,7 @@ public class FileUtilities {
     public static void closeQuietly(Closeable closable) {
         try {
             closable.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -381,5 +384,14 @@ public class FileUtilities {
             throw new IOException(message);
         }
 
+    }
+
+    public static String getUriDisplayName(Context context, Uri uri) {
+        try (Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null)) {
+            assert returnCursor != null;
+            int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            returnCursor.moveToFirst();
+            return returnCursor.getString(nameIndex);
+        }
     }
 }

@@ -50,7 +50,7 @@ public class ExportUsfmTest {
     private TargetLanguage mTargetLanguage;
     private Door43Client mLibrary;
     private ImportUsfm mUsfm;
-    private File mOutputFolder;
+    private File mOutputFile;
     private TargetTranslation mTargetTranslation;
     private String mErrorLog;
 
@@ -88,7 +88,7 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFile));
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
@@ -103,7 +103,7 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFile));
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
@@ -118,7 +118,7 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFile));
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
@@ -133,7 +133,7 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFile));
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
@@ -583,8 +583,7 @@ public class ExportUsfmTest {
         //open import as targetTranslation
         File projectFolder = imports[0];
         mTempFolder = projectFolder.getParentFile();
-        mOutputFolder = new File(mTempFolder,"scratch_test");
-        FileUtilities.forceMkdir(mOutputFolder);
+        mOutputFile = new File(mTempFolder,"scratch_test");
         mTargetTranslation = TargetTranslation.open(projectFolder);
     }
 

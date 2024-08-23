@@ -1,6 +1,6 @@
 package com.door43.translationstudio.ui.publish;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -17,12 +17,12 @@ public abstract class PublishStepFragment extends BaseFragment {
     public static final String ARG_PUBLISH_FINISHED = "arg_publish_finished";
     private OnEventListener mListener;
 
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
         try {
-            this.mListener = (OnEventListener) activity;
+            this.mListener = (OnEventListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement OnEventListener");
+            throw new ClassCastException(context.toString() + " must implement OnEventListener");
         }
     }
 

@@ -2,6 +2,7 @@ package com.door43.translationstudio.core;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.net.Uri;
 import android.text.Editable;
 import android.text.SpannedString;
 
@@ -39,6 +40,7 @@ public class Translator {
     private static final String GENERATOR_NAME = "ts-android";
     public static final String TSTUDIO_EXTENSION = "tstudio";
     public static final String ZIP_EXTENSION = "zip";
+    public static final String USFM_EXTENSION = "usfm";
     public static final String TAG = Translator.class.getName();
 
     private final File mRootDir;
@@ -309,28 +311,15 @@ public class Translator {
      * @param outputFile
      */
     public void exportArchive(TargetTranslation targetTranslation, File outputFile) throws Exception {
-
-        BufferedOutputStream out = null;
-        try {
-            FileOutputStream fout = new FileOutputStream(outputFile);
-            out = new BufferedOutputStream(fout);
-            exportArchive(targetTranslation, out, outputFile.toString());
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            FileUtilities.closeQuietly(out);
-        }
+        exportArchive(targetTranslation, Uri.fromFile(outputFile));
     }
 
     /**
      * Exports a single target translation in .tstudio format to OutputStream
      * @param targetTranslation
-     * @param out
+     * @param fileUri
      */
-    public void exportArchive(TargetTranslation targetTranslation, OutputStream out, String fileName) throws Exception {
-        if (!isValidArchiveExtension(fileName)) {
-            throw new Exception("Output file must have '" + TSTUDIO_EXTENSION + "' or '" + ZIP_EXTENSION + "' extension");
-        }
+    public void exportArchive(TargetTranslation targetTranslation, Uri fileUri) throws Exception {
         if(targetTranslation == null) {
             throw new Exception("Not a valid target translation");
         }
@@ -343,18 +332,18 @@ public class Translator {
         }
 
         JSONObject manifestJson = buildArchiveManifest(targetTranslation);
-        File tempCache = new File(getLocalCacheDir(), System.currentTimeMillis()+"");
+        File tempDir = new File(getLocalCacheDir(), System.currentTimeMillis()+"");
         try {
-            tempCache.mkdirs();
-            File manifestFile = new File(tempCache, "manifest.json");
+            tempDir.mkdirs();
+            File manifestFile = new File(tempDir, "manifest.json");
             manifestFile.createNewFile();
             FileUtilities.writeStringToFile(manifestFile, manifestJson.toString());
-            Zip.zipToStream(new File[]{manifestFile, targetTranslation.getPath()}, out);
-        } catch (Exception e) {
-            throw e;
+
+            try (OutputStream out = mContext.getContentResolver().openOutputStream(fileUri)) {
+                Zip.zipToStream(new File[]{manifestFile, targetTranslation.getPath()}, out);
+            }
         } finally {
-            FileUtilities.closeQuietly(out);
-            FileUtilities.deleteQuietly(tempCache);
+            FileUtilities.deleteQuietly(tempDir);
         }
     }
 

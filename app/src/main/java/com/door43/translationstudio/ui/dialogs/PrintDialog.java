@@ -1,7 +1,6 @@
 package com.door43.translationstudio.ui.dialogs;
 
 import android.app.Activity;
-import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Typeface;
@@ -11,6 +10,8 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -132,7 +133,7 @@ public class PrintDialog extends DialogFragment implements SimpleTaskWatcher.OnF
         // set typeface for language
         TargetLanguage targetLanguage = mTargetTranslation.getTargetLanguage();
         Typeface typeface = Typography.getBestFontForLanguage(getActivity(), TranslationType.SOURCE, targetLanguage.slug, targetLanguage.direction);
-        projectTitleView.setTypeface(typeface, 0);
+        projectTitleView.setTypeface(typeface, Typeface.NORMAL);
 
         String title = mTargetTranslation.getProjectTranslation().getTitle().replaceAll("\n+$", "");
         if(title.isEmpty()) {

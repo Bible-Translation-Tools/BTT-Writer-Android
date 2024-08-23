@@ -1,11 +1,11 @@
 package com.door43.translationstudio.ui.home;
 
-import android.app.DialogFragment;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,8 +36,7 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        int style = DialogFragment.STYLE_NO_TITLE, theme = 0;
-        setStyle(style, theme);
+        setStyle(DialogFragment.STYLE_NO_TITLE, 0);
     }
 
     @Override
@@ -74,11 +73,11 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
         };
 
         // re-attach to dialogs
-        Fragment prevEditDialog = getFragmentManager().findFragmentByTag("edit-native-speaker");
+        Fragment prevEditDialog = getParentFragmentManager().findFragmentByTag("edit-native-speaker");
         if(prevEditDialog != null) {
             ((ContributorDialog)prevEditDialog).setOnClickListener(mOnNativeSpeakerDialogClick);
         }
-        Fragment prevAddDialog = getFragmentManager().findFragmentByTag("add-native-speaker");
+        Fragment prevAddDialog = getParentFragmentManager().findFragmentByTag("add-native-speaker");
         if(prevAddDialog != null) {
             ((ContributorDialog)prevAddDialog).setOnClickListener(mOnNativeSpeakerDialogClick);
         }
@@ -88,8 +87,8 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
 
     @Override
     public void onEditNativeSpeaker(NativeSpeaker speaker) {
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag("edit-native-speaker");
+        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+        Fragment prev = getParentFragmentManager().findFragmentByTag("edit-native-speaker");
         if(prev != null) {
             ft.remove(prev);
         }
@@ -120,8 +119,8 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
     }
 
     public void showAddNativeSpeakerDialog() {
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag("add-native-speaker");
+        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+        Fragment prev = getParentFragmentManager().findFragmentByTag("add-native-speaker");
         if(prev != null) {
             ft.remove(prev);
         }

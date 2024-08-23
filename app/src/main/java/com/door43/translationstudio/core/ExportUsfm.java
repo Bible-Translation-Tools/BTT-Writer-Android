@@ -1,18 +1,15 @@
 package com.door43.translationstudio.core;
 
 import android.net.Uri;
-import androidx.documentfile.provider.DocumentFile;
-
 import com.door43.translationstudio.App;
 import com.door43.util.FileUtilities;
-import com.door43.util.SdUtils;
 
 import org.unfoldingword.tools.logger.Logger;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -35,44 +32,30 @@ public class ExportUsfm {
     /**
      * output target translation to USFM file, returns file name to check for success
      * @param targetTranslation
-     * @param destinationFolder
-     * @param fileName
-     * @param outputToDocumentFile
+     * @param fileUri
      * * @return target zipFileName or null if error
      */
-    static public Uri saveToUSFM(TargetTranslation targetTranslation, Uri destinationFolder, String fileName, boolean outputToDocumentFile) {
-        if(destinationFolder == null) {
-            outputToDocumentFile = false;
-            destinationFolder = Uri.fromFile(App.getPublicDownloadsDirectory());
-        }
-
-        Uri exportFile = null;
+    static public Uri saveToUSFM(TargetTranslation targetTranslation, Uri fileUri) {
         try {
-            exportFile = exportAsUSFM(targetTranslation, destinationFolder, fileName, outputToDocumentFile);
+            exportAsUSFM(targetTranslation, fileUri);
         } catch (Exception e) {
             Logger.e(TAG, "Failed to export the target translation " + targetTranslation.getId(), e);
         }
-        if(exportFile == null) {
-            return null;
-        }
 
-        return exportFile;
+        return fileUri;
     }
 
     /**
      * Exports a target translation as a USFM file
      * @param targetTranslation
-     * @param destinationFolder
-     * @param fileName
-     * @param outputToDocumentFile
+     * @param fileUri
      * @return output file
      */
-    static private Uri exportAsUSFM(TargetTranslation targetTranslation, Uri destinationFolder, String fileName, boolean outputToDocumentFile) throws IOException {
+    static private void exportAsUSFM(TargetTranslation targetTranslation, Uri fileUri) throws IOException {
         File tempDir = new File(App.context().getCacheDir(), System.currentTimeMillis() + "");
         tempDir.mkdirs();
         ChapterTranslation[] chapters = targetTranslation.getChapterTranslations();
-        String outputFileName = null;
-        File tempFile = null;
+        File tempFile;
 
         BookData bookData = BookData.generate(targetTranslation);
         String bookCode = bookData.getBookCode();
@@ -81,107 +64,82 @@ public class ExportUsfm {
         String languageId = bookData.getLanguageId();
         String languageName = bookData.getLanguageName();
 
-        if((fileName != null) && (!fileName.isEmpty())) {
-            outputFileName = fileName;
-        } else {
-            outputFileName = bookData.getDefaultUsfmFileName();
-        }
-
-        tempFile = new File(tempDir, outputFileName);
+        tempFile = new File(tempDir, "output");
         tempFile.createNewFile();
 
-        PrintStream ps = new PrintStream(tempFile);
+        try (PrintStream ps = new PrintStream(tempFile)) {
+            String id = "\\id " + bookCode + " " + bookTitle + ", " + bookName + ", " + (languageId + ", " + languageName);
+            ps.println(id);
+            String ide = "\\ide usfm";
+            ps.println(ide);
+            String h = "\\h " + bookTitle;
+            ps.println(h);
+            String bookID = "\\toc1 " + bookTitle;
+            ps.println(bookID);
+            String bookNameID = "\\toc2 " + bookName;
+            ps.println(bookNameID);
+            String shortBookID = "\\toc3 " + bookCode;
+            ps.println(shortBookID);
+            String mt = "\\mt " + bookTitle;
+            ps.println(mt);
 
-        String id = "\\id " + bookCode + " " + bookTitle + ", " + bookName + ", " + (languageId + ", " + languageName);
-        ps.println(id);
-        String ide = "\\ide usfm";
-        ps.println(ide);
-        String h = "\\h " + bookTitle;
-        ps.println(h);
-        String bookID = "\\toc1 " + bookTitle;
-        ps.println(bookID);
-        String bookNameID = "\\toc2 " + bookName;
-        ps.println(bookNameID);
-        String shortBookID = "\\toc3 " + bookCode;
-        ps.println(shortBookID);
-        String mt = "\\mt " + bookTitle;
-        ps.println(mt);
+            for(ChapterTranslation chapter:chapters) {
+                // TRICKY: the translation format doesn't matter for exporting
+                FrameTranslation[] frames = targetTranslation.getFrameTranslations(chapter.getId(), TranslationFormat.DEFAULT);
+                if(frames.length == 0) continue;
 
-        for(ChapterTranslation chapter:chapters) {
-            // TRICKY: the translation format doesn't matter for exporting
-            FrameTranslation[] frames = targetTranslation.getFrameTranslations(chapter.getId(), TranslationFormat.DEFAULT);
-            if(frames.length == 0) continue;
-
-            int chapterInt = Util.strToInt(chapter.getId(),0);
-            if(chapterInt != 0) {
-                ps.println("\\s5"); // section marker
-                String chapterNumber = "\\c " + chapter.getId();
-                ps.println(chapterNumber);
-            }
-
-            if((chapter.title != null) && (!chapter.title.isEmpty())) {
-                String chapterTitle = "\\cl " + chapter.title;
-                ps.println(chapterTitle);
-            }
-
-            if( (chapter.reference != null) && (!chapter.reference.isEmpty())) {
-                String chapterRef = "\\cd " + chapter.reference;
-                ps.println(chapterRef);
-            }
-
-            ps.println("\\p"); // paragraph marker
-
-            ArrayList<FrameTranslation> frameList = sortFrameTranslations(frames);
-            int startChunk = 0;
-            if(frameList.size() > 0) {
-                FrameTranslation frame = frameList.get(0);
-                int verseID = Util.strToInt(frame.getId(),0);
-                if((verseID == 0)) {
-                    startChunk++;
-                }
-            }
-
-            for (int i = startChunk; i < frameList.size(); i++) {
-                FrameTranslation frame = frameList.get(i);
-                String text = frame.body;
-
-                if(i > startChunk) {
+                int chapterInt = Util.strToInt(chapter.getId(),0);
+                if(chapterInt != 0) {
                     ps.println("\\s5"); // section marker
+                    String chapterNumber = "\\c " + chapter.getId();
+                    ps.println(chapterNumber);
                 }
-                ps.print(text);
+
+                if((chapter.title != null) && (!chapter.title.isEmpty())) {
+                    String chapterTitle = "\\cl " + chapter.title;
+                    ps.println(chapterTitle);
+                }
+
+                if( (chapter.reference != null) && (!chapter.reference.isEmpty())) {
+                    String chapterRef = "\\cd " + chapter.reference;
+                    ps.println(chapterRef);
+                }
+
+                ps.println("\\p"); // paragraph marker
+
+                ArrayList<FrameTranslation> frameList = sortFrameTranslations(frames);
+                int startChunk = 0;
+                if(!frameList.isEmpty()) {
+                    FrameTranslation frame = frameList.get(0);
+                    int verseID = Util.strToInt(frame.getId(),0);
+                    if((verseID == 0)) {
+                        startChunk++;
+                    }
+                }
+
+                for (int i = startChunk; i < frameList.size(); i++) {
+                    FrameTranslation frame = frameList.get(i);
+                    String text = frame.body;
+
+                    if(i > startChunk) {
+                        ps.println("\\s5"); // section marker
+                    }
+                    ps.print(text);
+                }
+            }
+
+            try (OutputStream out = App.context().getContentResolver().openOutputStream(fileUri)) {
+                try (InputStream input = new FileInputStream(tempFile)) {
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = input.read(buffer)) > 0) {
+                        out.write(buffer, 0, length);
+                    }
+                }
             }
         }
 
-        ps.close();
-
-        Uri pdfOutputUri = null;
-        if( (tempFile != null) && (outputFileName != null) ) {
-            if(outputToDocumentFile) {
-                try {
-                    SdUtils.documentFileDelete( destinationFolder, outputFileName); // make sure file does not exist, otherwise api will create a duplicate file in next line
-                    DocumentFile sdCardFile = SdUtils.documentFileCreate(destinationFolder, outputFileName);
-                    OutputStream outputStream = SdUtils.createOutputStream(sdCardFile);
-                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
-
-                    FileInputStream fis = new FileInputStream(tempFile);
-                    int bytes = FileUtilities.copy(fis, bufferedOutputStream);
-                    bufferedOutputStream.close();
-                    fis.close();
-                    pdfOutputUri = sdCardFile.getUri();
-                } catch (Exception e) {
-                    Logger.e(TAG, "Failed to copy the USFM file to: " + pdfOutputUri, e);
-                    pdfOutputUri = null;
-                }
-            } else {
-                File pdfOutputPath = new File(destinationFolder.getPath(), outputFileName);
-                boolean success = FileUtilities.moveOrCopyQuietly(tempFile, pdfOutputPath);
-                if (success) {
-                    pdfOutputUri = Uri.fromFile(pdfOutputPath);
-                }
-            }
-        }
         FileUtilities.deleteQuietly(tempDir);
-        return pdfOutputUri;
     }
 
     /**
