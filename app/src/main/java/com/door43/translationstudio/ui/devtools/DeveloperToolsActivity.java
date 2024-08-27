@@ -180,10 +180,10 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
                 String message = "System Resources:\n";
                 if(am != null) {
                     int numProcessors = Runtime.getRuntime().availableProcessors();
-                    message += "Number of processors: " + numProcessors + " (" + App.minimumNumberOfProcessors + " required)\n";
+                    message += "Number of processors: " + numProcessors + " (" + App.MINIMUM_NUMBER_OF_PROCESSORS + " required)\n";
                     long maxMem = Runtime.getRuntime().maxMemory();
                     String maxMemStr = getFormattedSize(maxMem);
-                    String minReqRamStr = getFormattedSize(App.minimumRequiredRAM);
+                    String minReqRamStr = getFormattedSize(App.MINIMUM_REQUIRED_RAM);
                     message += "JVM max memory: " + maxMemStr + " (" + minReqRamStr + " required)\n";
                     ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
                     am.getMemoryInfo(info);

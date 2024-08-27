@@ -446,9 +446,11 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
                 final int numSteps = 4;
                 final float subStepSize = 100f / (float) numSteps  / (float) size;
 
-                if(mProgressDialog != null) {
-                    mProgressDialog.setTitle(R.string.importing_usfm);
-                }
+                runOnUiThread(() -> {
+                    if(mProgressDialog != null) {
+                        mProgressDialog.setTitle(R.string.importing_usfm);
+                    }
+                });
 
                 boolean success = true;
                 try {

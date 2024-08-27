@@ -1,118 +1,92 @@
-package com.door43.translationstudio.tasks;
+package com.door43.translationstudio.tasks
 
-import android.net.Uri;
-
-import org.unfoldingword.tools.logger.Logger;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import android.os.Process;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.core.MergeConflictsHandler;
-import com.door43.translationstudio.core.Translator;
-import com.door43.util.FileUtilities;
-import com.door43.util.SdUtils;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import android.net.Uri
+import android.os.Process
+import com.door43.translationstudio.App.Companion.context
+import com.door43.translationstudio.App.Companion.translator
+import com.door43.translationstudio.core.MergeConflictsHandler
+import com.door43.translationstudio.core.Translator
+import com.door43.util.FileUtilities
+import org.unfoldingword.tools.logger.Logger
+import org.unfoldingword.tools.taskmanager.ManagedTask
+import java.util.Locale
 
 /**
  * Created by blm on 2/23/17.
  */
+class ImportProjectFromUriTask(
+    private val path: Uri,
+    private val mergeOverwrite: Boolean
+) : ManagedTask() {
+    private var alreadyExists = false
 
-public class ImportProjectFromUriTask extends ManagedTask {
-
-    public static final String TASK_ID = "import_project_from_uri_task";
-    public static final String TAG = ImportProjectFromUriTask.class.getSimpleName();
-    final private Uri path;
-    final private boolean mergeOverwrite;
-    private boolean alreadyExists;
-
-    public ImportProjectFromUriTask(Uri path, boolean mergeOverwrite) {
-        setThreadPriority(Process.THREAD_PRIORITY_DEFAULT);
-        this.path = path;
-        this.mergeOverwrite = mergeOverwrite;
-        alreadyExists = false;
+    init {
+        setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)
     }
 
-    @Override
-    public void start() {
-        boolean success = false;
-        boolean mergeConflict = false;
-        alreadyExists = false;
-        BufferedInputStream in = null;
-        String readablePath = path.toString(); // default
-        String importedSlug = "";
-        boolean validExtension = FileUtilities.getExtension(path.getPath()).toLowerCase().equals(Translator.TSTUDIO_EXTENSION);
-        boolean isDocumentFile = !SdUtils.isRegularFile(path);
+    override fun start() {
+        var success = false
+        var mergeConflict = false
+        alreadyExists = false
+        val filename = FileUtilities.getUriDisplayName(context()!!, path)
+        var importedSlug: String? = null
+        val validExtension = FileUtilities.getExtension(filename)
+            .lowercase(Locale.getDefault()) == Translator.TSTUDIO_EXTENSION
 
-        if(validExtension) {
+        if (validExtension) {
             try {
-                Translator translator = App.getTranslator();
-                if (isDocumentFile) {
-                    readablePath = SdUtils.getPathString(path.toString());
-                    Logger.i(TAG, "Importing SD card: " + readablePath);
-                    InputStream inputStream = App.context().getContentResolver().openInputStream(path);
-                    in = new BufferedInputStream(inputStream);
-                    Translator.ImportResults importResults = translator.importArchive(in, mergeOverwrite);
-                    importedSlug = importResults.importedSlug;
-                    alreadyExists = importResults.alreadyExists;
-                    success = importResults.isSuccess();
-                    if (success && importResults.mergeConflict) {
-                        mergeConflict = MergeConflictsHandler.isTranslationMergeConflicted(importResults.importedSlug); // make sure we have actual merge conflicts
-                    }
-                } else {
-                    File file = new File(path.getPath());
-                    Logger.i(TAG, "Importing internal file: " + file.toString());
-                    FileInputStream inputStream = new FileInputStream(file);
-                    in = new BufferedInputStream(inputStream);
-                    Translator.ImportResults importResults = translator.importArchive(in, mergeOverwrite);
-                    importedSlug = importResults.importedSlug;
-                    alreadyExists = importResults.alreadyExists;
-                    success = importResults.isSuccess();
-                    if(success && importResults.mergeConflict) {
-                        mergeConflict = MergeConflictsHandler.isTranslationMergeConflicted(importResults.importedSlug); // make sure we have actual merge conflicts
-                    }
-                }
+                context()?.contentResolver?.openInputStream(path).use {
+                    it?.let { input ->
+                        val translator = translator
+                        Logger.i(TAG, "Importing from uri: $filename")
 
-            } catch(Exception e) {
-                Logger.e(TAG, "Exception Importing from SD card", e);
-            }
-            finally {
-                if(in != null) {
-                    FileUtilities.closeQuietly(in);
+                        val importResults = translator.importArchive(
+                            input, mergeOverwrite
+                        )
+                        importedSlug = importResults.importedSlug
+                        alreadyExists = importResults.alreadyExists
+                        success = importResults.isSuccess
+                        if (success && importResults.mergeConflict) {
+                            // make sure we have actual merge conflicts
+                            mergeConflict =
+                                MergeConflictsHandler.isTranslationMergeConflicted(
+                                    importResults.importedSlug
+                                )
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                Logger.e(TAG, "Exception Importing from uri", e)
             }
         }
-        setResult(new ImportResults(path, readablePath, importedSlug, success, mergeConflict, !validExtension, isDocumentFile, alreadyExists));
+        result = ImportResults(
+            path,
+            filename,
+            importedSlug,
+            success,
+            mergeConflict,
+            !validExtension,
+            alreadyExists
+        )
     }
 
     /**
      * returns the import results which includes:
-     *   the human readable filePath
-     *   the success flag
+     * the human readable filePath
+     * the success flag
      */
-    public class ImportResults {
-        public final Uri filePath;
-        public final String readablePath;
-        public final String importedSlug;
-        public final boolean mergeConflict;
-        public final boolean invalidFileName;
-        public final boolean isDocumentFile;
-        public final boolean success;
-        public final boolean alreadyExists;
+    inner class ImportResults internal constructor(
+        val filePath: Uri,
+        val readablePath: String,
+        val importedSlug: String?,
+        val success: Boolean,
+        val mergeConflict: Boolean,
+        val invalidFileName: Boolean,
+        val alreadyExists: Boolean
+    )
 
-        ImportResults(Uri filePath, String readablePath, String importedSlug, boolean success, boolean mergeConflict,
-                      boolean invalidFileName, boolean isDocumentFile, boolean alreadyExists) {
-            this.filePath = filePath;
-            this.success = success;
-            this.mergeConflict = mergeConflict;
-            this.invalidFileName = invalidFileName;
-            this.isDocumentFile = isDocumentFile;
-            this.readablePath = readablePath;
-            this.importedSlug = importedSlug;
-            this.alreadyExists = alreadyExists;
-        }
+    companion object {
+        const val TASK_ID: String = "import_project_from_uri_task"
+        val TAG: String = ImportProjectFromUriTask::class.java.simpleName
     }
 }

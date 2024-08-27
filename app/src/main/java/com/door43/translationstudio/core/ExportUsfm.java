@@ -128,12 +128,12 @@ public class ExportUsfm {
                 }
             }
 
-            try (OutputStream out = App.context().getContentResolver().openOutputStream(fileUri)) {
+            try (OutputStream output = App.context().getContentResolver().openOutputStream(fileUri)) {
                 try (InputStream input = new FileInputStream(tempFile)) {
                     byte[] buffer = new byte[1024];
                     int length;
                     while ((length = input.read(buffer)) > 0) {
-                        out.write(buffer, 0, length);
+                        output.write(buffer, 0, length);
                     }
                 }
             }

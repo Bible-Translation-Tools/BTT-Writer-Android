@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,7 +52,7 @@ public class SplashScreenActivity extends BaseActivity implements ManagedTask.On
             int numProcessors = Runtime.getRuntime().availableProcessors();
             long maxMem = Runtime.getRuntime().maxMemory();
 
-            if (numProcessors < App.minimumNumberOfProcessors || maxMem < App.minimumRequiredRAM) {
+            if (numProcessors < App.MINIMUM_NUMBER_OF_PROCESSORS || maxMem < App.MINIMUM_REQUIRED_RAM) {
                 silentStart = false;
                 new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                         .setTitle(R.string.slow_device)

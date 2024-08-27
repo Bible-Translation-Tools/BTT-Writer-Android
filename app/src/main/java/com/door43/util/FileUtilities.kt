@@ -1,46 +1,42 @@
-package com.door43.util;
+package com.door43.util
 
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.provider.OpenableColumns;
-
-import org.unfoldingword.tools.logger.Logger;
-
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.documentfile.provider.DocumentFile
+import org.unfoldingword.tools.logger.Logger
+import java.io.BufferedReader
+import java.io.Closeable
+import java.io.File
+import java.io.FileFilter
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
 
 /**
  * This class provides some utility methods for handling files
  */
-public class FileUtilities {
-
+object FileUtilities {
     /**
      * Converts an input stream into a string
-     * @param is
+     * @param `is`
      * @return
      * @throws Exception
      */
-    public static String readStreamToString(InputStream is) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
+    @JvmStatic
+    @Throws(IOException::class)
+    fun readStreamToString(stream: InputStream): String {
+        val reader = BufferedReader(InputStreamReader(stream))
+        val sb = StringBuilder()
+        var line: String?
+        while ((reader.readLine().also { line = it }) != null) {
+            sb.append(line).append("\n")
         }
-        return sb.toString();
+        return sb.toString()
     }
 
     /**
@@ -49,17 +45,11 @@ public class FileUtilities {
      * @return
      * @throws Exception
      */
-    public static String readFileToString(File file) throws IOException {
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(file);
-            String contents = readStreamToString(fis);
-            fis.close();
-            return contents;
-        } finally {
-            if(fis != null) {
-                fis.close();
-            }
+    @JvmStatic
+    @Throws(IOException::class)
+    fun readFileToString(file: File): String {
+        FileInputStream(file).use { fis ->
+            return readStreamToString(fis)
         }
     }
 
@@ -69,60 +59,49 @@ public class FileUtilities {
      * @param contents
      * @throws IOException
      */
-    public static void writeStringToFile(File file, String contents) throws IOException {
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(file.getAbsolutePath());
-            fos.write(contents.getBytes());
-        } finally {
-            if(fos != null) {
-                fos.close();
+    @JvmStatic
+    @Throws(IOException::class)
+    fun writeStringToFile(file: File, contents: String) {
+        FileOutputStream(file).use { fos ->
+            fos.write(contents.toByteArray())
+        }
+    }
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun copyInputStreamToFile(source: InputStream, destination: File) {
+        source.use { input ->
+            openOutputStream(destination).use { output ->
+                copy(input, output)
             }
         }
     }
 
-    public static void copyInputStreamToFile(InputStream source, File destination) throws IOException {
-        try {
-            FileOutputStream output = openOutputStream(destination);
-
-            try {
-                copy(source, output);
-                output.close();
-            } finally {
-                closeQuietly(output);
+    @JvmOverloads
+    @JvmStatic
+    @Throws(IOException::class)
+    fun openOutputStream(file: File, append: Boolean = false): FileOutputStream {
+        if (file.exists()) {
+            if (file.isDirectory) {
+                throw IOException("File \'$file\' exists but is a directory")
             }
-        } finally {
-            closeQuietly(source);
-        }
-
-    }
-
-    public static FileOutputStream openOutputStream(File file) throws IOException {
-        return openOutputStream(file, false);
-    }
-
-    public static FileOutputStream openOutputStream(File file, boolean append) throws IOException {
-        if(file.exists()) {
-            if(file.isDirectory()) {
-                throw new IOException("File \'" + file + "\' exists but is a directory");
-            }
-
-            if(!file.canWrite()) {
-                throw new IOException("File \'" + file + "\' cannot be written to");
+            if (!file.canWrite()) {
+                throw IOException("File \'$file\' cannot be written to")
             }
         } else {
-            File parent = file.getParentFile();
-            if(parent != null && !parent.mkdirs() && !parent.isDirectory()) {
-                throw new IOException("Directory \'" + parent + "\' could not be created");
+            val parent = file.parentFile
+            if (parent != null && !parent.mkdirs() && !parent.isDirectory) {
+                throw IOException("Directory \'$parent\' could not be created")
             }
         }
 
-        return new FileOutputStream(file, append);
+        return FileOutputStream(file, append)
     }
 
-    public static int copy(InputStream input, OutputStream output) throws IOException {
-        long count = copyLarge(input, output);
-        return count > 2147483647L?-1:(int)count;
+    @Throws(IOException::class)
+    fun copy(input: InputStream, output: OutputStream): Int {
+        val count = copyLarge(input, output)
+        return if (count > 2147483647L) -1 else count.toInt()
     }
 
     /**
@@ -131,52 +110,57 @@ public class FileUtilities {
      * @param path
      * @return
      */
-    public static String getExtension(String path) {
-        int index = path.lastIndexOf(".");
-        if(index == -1 || index == path.length() - 1) {
-            return "";
+    @JvmStatic
+    fun getExtension(path: String): String {
+        val index = path.lastIndexOf(".")
+        if (index == -1 || index == path.length - 1) {
+            return ""
         }
-        return path.substring(index + 1);
+        return path.substring(index + 1)
     }
 
-    public static long copyLarge(InputStream input, OutputStream output) throws IOException {
-        return copyLarge(input, output, new byte[4096]);
-    }
+    @JvmOverloads
+    @Throws(IOException::class)
+    fun copyLarge(
+        input: InputStream,
+        output: OutputStream,
+        buffer: ByteArray? = ByteArray(4096)
+    ): Long {
+        var count = 0L
+        var n1: Int
 
-    public static long copyLarge(InputStream input, OutputStream output, byte[] buffer) throws IOException {
-        long count = 0L;
-
-        int n1;
-        for(boolean n = false; -1 != (n1 = input.read(buffer)); count += (long)n1) {
-            output.write(buffer, 0, n1);
+        while (-1 != (input.read(buffer).also { n1 = it })) {
+            output.write(buffer, 0, n1)
+            count += n1.toLong()
         }
 
-        return count;
+        return count
     }
 
     /**
      * Recursively deletes a directory or just deletes the file
      * @param fileOrDirectory
      */
-    public static boolean deleteQuietly(File fileOrDirectory) {
-        if(fileOrDirectory != null) {
-            if (fileOrDirectory.isDirectory()) {
-                for (File child : fileOrDirectory.listFiles()) {
-                    if(!deleteQuietly(child)) {
-                        return false;
+    @JvmStatic
+    fun deleteQuietly(fileOrDirectory: File?): Boolean {
+        if (fileOrDirectory != null) {
+            if (fileOrDirectory.isDirectory) {
+                for (child in fileOrDirectory.listFiles()) {
+                    if (!deleteQuietly(child)) {
+                        return false
                     }
                 }
             }
             if (fileOrDirectory.exists()) {
                 try {
-                    fileOrDirectory.delete();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return false;
+                    fileOrDirectory.delete()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return false
                 }
             }
         }
-        return true;
+        return true
     }
 
     /**
@@ -185,26 +169,27 @@ public class FileUtilities {
      * @param destFile
      * @return
      */
-    public static boolean moveOrCopyQuietly(File sourceFile, File destFile) {
-        if(sourceFile.exists()) {
+    @JvmStatic
+    fun moveOrCopyQuietly(sourceFile: File, destFile: File): Boolean {
+        if (sourceFile.exists()) {
             // first try to move
             if (!sourceFile.renameTo(destFile)) {
                 // try to copy
                 try {
-                    if (sourceFile.isDirectory()) {
-                        copyDirectory(sourceFile, destFile, null);
+                    if (sourceFile.isDirectory) {
+                        copyDirectory(sourceFile, destFile, null)
                     } else {
-                        copyFile(sourceFile, destFile);
+                        copyFile(sourceFile, destFile)
                     }
-                    return true;
-                } catch (IOException e) {
-                    Logger.e(FileUtilities.class.getName(), "Failed to copy the file", e);
+                    return true
+                } catch (e: IOException) {
+                    Logger.e(FileUtilities::class.java.name, "Failed to copy the file", e)
                 }
             } else {
-                return true; // successful move
+                return true // successful move
             }
         }
-        return false;
+        return false
     }
 
     /**
@@ -213,85 +198,125 @@ public class FileUtilities {
      * with the same name right after deleting it
      * @param file
      */
-    public static void safeDelete(File file) {
-        if(file != null && file.exists()) {
-            File temp = new File(file.getParentFile(), System.currentTimeMillis() + ".trash");
-            file.renameTo(temp);
-            if (file.isDirectory()) {
-                FileUtilities.moveOrCopyQuietly(file, new File(temp, file.getName()));
+    @JvmStatic
+    fun safeDelete(file: File?) {
+        if (file != null && file.exists()) {
+            val temp = File(file.parentFile, System.currentTimeMillis().toString() + ".trash")
+            file.renameTo(temp)
+            if (file.isDirectory) {
+                moveOrCopyQuietly(file, File(temp, file.name))
             } else {
-                FileUtilities.moveOrCopyQuietly(file, temp);
+                moveOrCopyQuietly(file, temp)
             }
-            FileUtilities.deleteQuietly(file); // just in case the move failed
-            FileUtilities.deleteQuietly(temp);
+            deleteQuietly(file) // just in case the move failed
+            deleteQuietly(temp)
         }
     }
 
-    public static void copyDirectory(File srcDir, File destDir, FileFilter filter) throws IOException {
-        if(srcDir == null) {
-            throw new NullPointerException("Source must not be null");
-        } else if(destDir == null) {
-            throw new NullPointerException("Destination must not be null");
-        } else if(!srcDir.exists()) {
-            throw new FileNotFoundException("Source \'" + srcDir + "\' does not exist");
-        } else if(!srcDir.isDirectory()) {
-            throw new IOException("Source \'" + srcDir + "\' exists but is not a directory");
-        } else if(srcDir.getCanonicalPath().equals(destDir.getCanonicalPath())) {
-            throw new IOException("Source \'" + srcDir + "\' and destination \'" + destDir + "\' are the same");
+    @JvmStatic
+    @Throws(IOException::class)
+    fun copyDirectory(srcDir: File, destDir: File, filter: FileFilter?) {
+        if (!srcDir.exists()) {
+            throw FileNotFoundException("Source \'$srcDir\' does not exist")
+        } else if (!srcDir.isDirectory) {
+            throw IOException("Source \'$srcDir\' exists but is not a directory")
+        } else if (srcDir.canonicalPath == destDir.canonicalPath) {
+            throw IOException("Source \'$srcDir\' and destination \'$destDir\' are the same")
         } else {
-            ArrayList exclusionList = null;
-            if(destDir.getCanonicalPath().startsWith(srcDir.getCanonicalPath())) {
-                File[] srcFiles = filter == null?srcDir.listFiles():srcDir.listFiles(filter);
-                if(srcFiles != null && srcFiles.length > 0) {
-                    exclusionList = new ArrayList(srcFiles.length);
-                    File[] arr$ = srcFiles;
-                    int len$ = srcFiles.length;
-
-                    for(int i$ = 0; i$ < len$; ++i$) {
-                        File srcFile = arr$[i$];
-                        File copiedFile = new File(destDir, srcFile.getName());
-                        exclusionList.add(copiedFile.getCanonicalPath());
+            val exclusionList = arrayListOf<String>()
+            if (destDir.canonicalPath.startsWith(srcDir.canonicalPath)) {
+                val srcFiles = if (filter == null) srcDir.listFiles() else srcDir.listFiles(filter)
+                if (srcFiles != null && srcFiles.isNotEmpty()) {
+                    val len = srcFiles.size
+                    for (i in 0 until len) {
+                        val srcFile = srcFiles[i]
+                        val copiedFile = File(destDir, srcFile.name)
+                        exclusionList.add(copiedFile.canonicalPath)
                     }
                 }
             }
 
-            doCopyDirectory(srcDir, destDir, filter, exclusionList);
+            doCopyDirectory(srcDir, destDir, filter, exclusionList)
         }
     }
 
-    private static void doCopyDirectory(File srcDir, File destDir, FileFilter filter, List<String> exclusionList) throws IOException {
-        File[] srcFiles = filter == null?srcDir.listFiles():srcDir.listFiles(filter);
-        if(srcFiles == null) {
-            throw new IOException("Failed to list contents of " + srcDir);
+    @Throws(IOException::class)
+    private fun doCopyDirectory(
+        srcDir: File,
+        destDir: File,
+        filter: FileFilter?,
+        exclusionList: List<String>?
+    ) {
+        val srcFiles = if (filter == null) srcDir.listFiles() else srcDir.listFiles(filter)
+        if (srcFiles == null) {
+            throw IOException("Failed to list contents of $srcDir")
         } else {
-            if(destDir.exists()) {
-                if(!destDir.isDirectory()) {
-                    throw new IOException("Destination \'" + destDir + "\' exists but is not a directory");
+            if (destDir.exists()) {
+                if (!destDir.isDirectory) {
+                    throw IOException("Destination \'$destDir\' exists but is not a directory")
                 }
-            } else if(!destDir.mkdirs() && !destDir.isDirectory()) {
-                throw new IOException("Destination \'" + destDir + "\' directory cannot be created");
+            } else if (!destDir.mkdirs() && !destDir.isDirectory) {
+                throw IOException("Destination \'$destDir\' directory cannot be created")
             }
 
-            if(!destDir.canWrite()) {
-                throw new IOException("Destination \'" + destDir + "\' cannot be written to");
+            if (!destDir.canWrite()) {
+                throw IOException("Destination \'$destDir\' cannot be written to")
             } else {
-                File[] arr$ = srcFiles;
-                int len$ = srcFiles.length;
-
-                for(int i$ = 0; i$ < len$; ++i$) {
-                    File srcFile = arr$[i$];
-                    File dstFile = new File(destDir, srcFile.getName());
-                    if(exclusionList == null || !exclusionList.contains(srcFile.getCanonicalPath())) {
-                        if(srcFile.isDirectory()) {
-                            doCopyDirectory(srcFile, dstFile, filter, exclusionList);
+                val len = srcFiles.size
+                for (i in 0 until len) {
+                    val srcFile = srcFiles[i]
+                    val dstFile = File(destDir, srcFile.name)
+                    if (exclusionList == null || !exclusionList.contains(srcFile.canonicalPath)) {
+                        if (srcFile.isDirectory) {
+                            doCopyDirectory(srcFile, dstFile, filter, exclusionList)
                         } else {
-                            doCopyFile(srcFile, dstFile);
+                            doCopyFile(srcFile, dstFile)
                         }
                     }
                 }
 
                 // reserve date
-                destDir.setLastModified(srcDir.lastModified());
+                destDir.setLastModified(srcDir.lastModified())
+            }
+        }
+    }
+
+    /**
+     * Copies directory uri to a new directory
+     */
+    fun copyDirectory(context: Context, sourceDir: Uri, destDir: File): File? {
+        val rootDocumentFile = DocumentFile.fromTreeUri(context, sourceDir) ?: return null
+
+        if (!destDir.exists()) {
+            destDir.mkdirs()
+        }
+
+        rootDocumentFile.listFiles().forEach { file ->
+            copyFile(context, file, destDir)
+        }
+
+        return destDir
+    }
+
+    fun copyFile(context: Context, file: DocumentFile, targetDir: File) {
+        if (file.isDirectory) {
+            // Create a corresponding directory in the cache
+            val newDir = File(targetDir, file.name ?: "unnamed")
+            if (!newDir.exists()) {
+                newDir.mkdirs()
+            }
+
+            // Recursively copy contents
+            file.listFiles().forEach { subFile ->
+                copyFile(context, subFile, newDir)
+            }
+        } else if (file.isFile) {
+            // Copy the file to the target directory
+            val targetFile = File(targetDir, file.name ?: "unnamed_file")
+            context.contentResolver.openInputStream(file.uri)?.use { inputStream ->
+                FileOutputStream(targetFile).use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
             }
         }
     }
@@ -301,61 +326,52 @@ public class FileUtilities {
      * @param srcFile
      * @param destFile
      */
-    public static void copyFile(File srcFile, File destFile) throws IOException {
-        if(srcFile == null) {
-            throw new NullPointerException("Source must not be null");
-        } else if(destFile == null) {
-            throw new NullPointerException("Destination must not be null");
-        } else if(!srcFile.exists()) {
-            throw new FileNotFoundException("Source \'" + srcFile + "\' does not exist");
-        } else if(srcFile.isDirectory()) {
-            throw new IOException("Source \'" + srcFile + "\' exists but is a directory");
-        } else if(srcFile.getCanonicalPath().equals(destFile.getCanonicalPath())) {
-            throw new IOException("Source \'" + srcFile + "\' and destination \'" + destFile + "\' are the same");
+    @JvmStatic
+    @Throws(IOException::class)
+    fun copyFile(srcFile: File, destFile: File) {
+        if (!srcFile.exists()) {
+            throw FileNotFoundException("Source \'$srcFile\' does not exist")
+        } else if (srcFile.isDirectory) {
+            throw IOException("Source \'$srcFile\' exists but is a directory")
+        } else if (srcFile.canonicalPath == destFile.canonicalPath) {
+            throw IOException("Source \'$srcFile\' and destination \'$destFile\' are the same")
         } else {
-            File parentFile = destFile.getParentFile();
-            if(parentFile != null && !parentFile.mkdirs() && !parentFile.isDirectory()) {
-                throw new IOException("Destination \'" + parentFile + "\' directory cannot be created");
-            } else if(destFile.exists() && !destFile.canWrite()) {
-                throw new IOException("Destination \'" + destFile + "\' exists but is read-only");
+            val parentFile = destFile.parentFile
+            if (parentFile != null && !parentFile.mkdirs() && !parentFile.isDirectory) {
+                throw IOException("Destination \'$parentFile\' directory cannot be created")
+            } else if (destFile.exists() && !destFile.canWrite()) {
+                throw IOException("Destination \'$destFile\' exists but is read-only")
             } else {
-                doCopyFile(srcFile, destFile);
+                doCopyFile(srcFile, destFile)
             }
         }
     }
 
-    private static void doCopyFile(File srcFile, File destFile) throws IOException {
-        if(destFile.exists() && destFile.isDirectory()) {
-            throw new IOException("Destination \'" + destFile + "\' exists but is a directory");
+    @Throws(IOException::class)
+    private fun doCopyFile(srcFile: File, destFile: File) {
+        if (destFile.exists() && destFile.isDirectory) {
+            throw IOException("Destination \'$destFile\' exists but is a directory")
         } else {
-            FileInputStream fis = null;
-            FileOutputStream fos = null;
-            FileChannel input = null;
-            FileChannel output = null;
+            FileInputStream(srcFile).use { fis ->
+                FileOutputStream(destFile).use { fos ->
+                    val input = fis.channel
+                    val output = fos.channel
+                    val size = input.size()
+                    var pos = 0L
+                    var count = 0L
 
-            try {
-                fis = new FileInputStream(srcFile);
-                fos = new FileOutputStream(destFile);
-                input = fis.getChannel();
-                output = fos.getChannel();
-                long size = input.size();
-                long pos = 0L;
-
-                for(long count = 0L; pos < size; pos += output.transferFrom(input, pos, count)) {
-                    count = size - pos > 31457280L?31457280L:size - pos;
+                    while (pos < size) {
+                        count = if (size - pos > 31457280L) 31457280L else size - pos
+                        pos += output.transferFrom(input, pos, count)
+                    }
                 }
-            } finally {
-                closeQuietly(output);
-                closeQuietly(fos);
-                closeQuietly(input);
-                closeQuietly(fis);
             }
 
-            if(srcFile.length() != destFile.length()) {
-                throw new IOException("Failed to copy full contents from \'" + srcFile + "\' to \'" + destFile + "\'");
+            if (srcFile.length() != destFile.length()) {
+                throw IOException("Failed to copy full contents from \'$srcFile\' to \'$destFile\'")
             } else {
                 // preserve date
-                destFile.setLastModified(srcFile.lastModified());
+                destFile.setLastModified(srcFile.lastModified())
             }
         }
     }
@@ -364,34 +380,37 @@ public class FileUtilities {
      * closes the closable without throwing an exception
      * @param closable
      */
-    public static void closeQuietly(Closeable closable) {
+    fun closeQuietly(closable: Closeable) {
         try {
-            closable.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            closable.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-    public static void forceMkdir(File directory) throws IOException {
-        String message;
-        if(directory.exists()) {
-            if(!directory.isDirectory()) {
-                message = "File " + directory + " exists and is " + "not a directory. Unable to create directory.";
-                throw new IOException(message);
+    @JvmStatic
+    @Throws(IOException::class)
+    fun forceMkdir(directory: File) {
+        val message: String
+        if (directory.exists()) {
+            if (!directory.isDirectory) {
+                message =
+                    "File $directory exists and is not a directory. Unable to create directory."
+                throw IOException(message)
             }
-        } else if(!directory.mkdirs() && !directory.isDirectory()) {
-            message = "Unable to create directory " + directory;
-            throw new IOException(message);
+        } else if (!directory.mkdirs() && !directory.isDirectory) {
+            message = "Unable to create directory $directory"
+            throw IOException(message)
         }
-
     }
 
-    public static String getUriDisplayName(Context context, Uri uri) {
-        try (Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null)) {
-            assert returnCursor != null;
-            int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-            returnCursor.moveToFirst();
-            return returnCursor.getString(nameIndex);
+    @JvmStatic
+    fun getUriDisplayName(context: Context, uri: Uri?): String {
+        context.contentResolver.query(uri!!, null, null, null, null).use { returnCursor ->
+            checkNotNull(returnCursor)
+            val nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            returnCursor.moveToFirst()
+            return returnCursor.getString(nameIndex)
         }
     }
 }

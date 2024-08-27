@@ -1,267 +1,261 @@
-package com.door43.translationstudio.ui.home;
+package com.door43.translationstudio.ui.home
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.Button;
-import android.widget.Toast;
-
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.logger.Logger;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.tasks.ImportProjectFromUriTask;
-import com.door43.translationstudio.ui.filechooser.FileChooserActivity;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.TranslationViewMode;
-import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog;
-import com.door43.translationstudio.ui.ImportUsfmActivity;
-import com.door43.translationstudio.ui.dialogs.Door43LoginDialog;
-import com.door43.translationstudio.ui.dialogs.ShareWithPeerDialog;
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity;
-import com.door43.util.SdUtils;
-import com.door43.widget.ViewUtil;
-
-import java.io.File;
+import android.app.Dialog
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import com.door43.translationstudio.App
+import com.door43.translationstudio.App.Companion.deviceNetworkAlias
+import com.door43.translationstudio.App.Companion.isNetworkAvailable
+import com.door43.translationstudio.App.Companion.library
+import com.door43.translationstudio.App.Companion.profile
+import com.door43.translationstudio.App.Companion.translator
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.databinding.DialogImportBinding
+import com.door43.translationstudio.tasks.ImportProjectFromUriTask
+import com.door43.translationstudio.ui.ImportUsfmActivity
+import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog
+import com.door43.translationstudio.ui.dialogs.Door43LoginDialog
+import com.door43.translationstudio.ui.dialogs.ShareWithPeerDialog
+import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.util.FileUtilities
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.tools.logger.Logger
+import org.unfoldingword.tools.taskmanager.ManagedTask
+import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher
+import org.unfoldingword.tools.taskmanager.TaskManager
+import java.io.File
+import java.util.UUID
 
 /**
  * Created by joel on 10/5/2015.
  */
-public class ImportDialog extends DialogFragment implements SimpleTaskWatcher.OnFinishedListener {
+class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
+    private var settingDeviceAlias = false
+    private var mDialogShown: DialogShown = DialogShown.NONE
+    private var mDialogMessage: String? = null
+    private var mTargetTranslationID: String? = null
+    private var mImportUri: Uri? = null
+    private var taskWatcher: SimpleTaskWatcher? = null
+    private var mMergeSelection: MergeOptions? = MergeOptions.NONE
+    private var mMergeConflicted = false
 
-    private static final int IMPORT_TRANSLATION_REQUEST = 142;
-    private static final int IMPORT_USFM_REQUEST = 143;
-    private static final int IMPORT_RCONTAINER_REQUEST = 144;
-    public static final String TAG = "importDialog";
-    private static final String STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias";
-    public static final String STATE_DIALOG_SHOWN = "state_dialog_shown";
-    public static final String STATE_DIALOG_MESSAGE = "state_dialog_message";
-    public static final String STATE_DIALOG_TRANSLATION_ID = "state_dialog_translationID";
-    public static final String STATE_MERGE_SELECTION = "state_merge_selection";
-    public static final String STATE_MERGE_CONFLICT = "state_merge_conflict";
-    public static final String STATE_IMPORT_URL = "state_import_url";
-    private boolean settingDeviceAlias = false;
-    private boolean isDocumentFile = false;
-    private DialogShown mDialogShown = DialogShown.NONE;
-    private String mDialogMessage;
-    private String mTargetTranslationID;
-    private Uri mImportUri;
-    private SimpleTaskWatcher taskWatcher;
-    private MergeOptions mMergeSelection = MergeOptions.NONE;
-    private boolean mMergeConflicted = false;
+    private lateinit var binding: DialogImportBinding
+    private lateinit var openFileContent: ActivityResultLauncher<String>
+    private lateinit var openDirectory: ActivityResultLauncher<Uri?>
 
-    @NonNull
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.setCanceledOnTouchOutside(true);
-        return dialog;
-    }
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState)
+        dialog.setCanceledOnTouchOutside(true)
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_import, container, false);
-
-        Button importLocalProjectButton = (Button)v.findViewById(R.id.import_target_translation);
-        Button importLocalUsfmButton = (Button)v.findViewById(R.id.import_usfm);
-        Button importFromFriend = (Button)v.findViewById(R.id.import_from_device);
-        Button importDoor43Button = (Button)v.findViewById(R.id.import_from_door43);
-        Button importResourceContainerButton = (Button)v.findViewById(R.id.import_resource_container);
-
-        taskWatcher = new SimpleTaskWatcher(getActivity(), R.string.label_import);
-        taskWatcher.setOnFinishedListener(this);
-
-        v.findViewById(R.id.infoButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://help.door43.org/en/knowledgebase/9-translationstudio/docs/3-import-options"));
-                startActivity(browserIntent);
+        openFileContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                requireContext().contentResolver.getType(it)?.let { mimeType ->
+                    importLocal(it, mimeType)
+                }
             }
-        });
-
-        if(savedInstanceState != null) {
-            // check if returning from device alias dialog
-            settingDeviceAlias = savedInstanceState.getBoolean(STATE_SETTING_DEVICE_ALIAS, false);
-            mDialogShown = DialogShown.fromInt(savedInstanceState.getInt(STATE_DIALOG_SHOWN, DialogShown.NONE.getValue()));
-            mDialogMessage = savedInstanceState.getString(STATE_DIALOG_MESSAGE, null);
-            mTargetTranslationID = savedInstanceState.getString(STATE_DIALOG_TRANSLATION_ID, null);
-            mMergeConflicted = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT, false);
-            mMergeSelection = MergeOptions.fromInt(savedInstanceState.getInt(STATE_MERGE_SELECTION, MergeOptions.NONE.getValue()));
-            String path = savedInstanceState.getString(STATE_IMPORT_URL, null);
-            mImportUri = (path != null) ? Uri.parse(path) : null;
         }
 
-        importResourceContainerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), FileChooserActivity.class);
-                Bundle args = new Bundle();
-                args.putString(FileChooserActivity.EXTRA_MODE, FileChooserActivity.SelectionMode.DIRECTORY.name());
-                intent.putExtra(FileChooserActivity.EXTRA_READ_ACCESS, true);
-                intent.putExtras(args);
-                startActivityForResult(intent, IMPORT_RCONTAINER_REQUEST);
-            }
-        });
+        openDirectory = registerForActivityResult(
+            ActivityResultContracts.OpenDocumentTree()
+        ) {
+            it?.let(::doImportSourceText)
+        }
 
-        importDoor43Button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        return dialog
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog!!.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        binding = DialogImportBinding.inflate(inflater, container, false)
+
+        taskWatcher = SimpleTaskWatcher(activity, R.string.label_import)
+        taskWatcher?.setOnFinishedListener(this)
+
+        if (savedInstanceState != null) {
+            // check if returning from device alias dialog
+            settingDeviceAlias = savedInstanceState.getBoolean(
+                STATE_SETTING_DEVICE_ALIAS,
+                false
+            )
+            mDialogShown = DialogShown.fromInt(
+                savedInstanceState.getInt(
+                    STATE_DIALOG_SHOWN,
+                    DialogShown.NONE.value
+                )
+            )
+            mDialogMessage = savedInstanceState.getString(
+                STATE_DIALOG_MESSAGE,
+                null
+            )
+            mTargetTranslationID = savedInstanceState.getString(
+                STATE_DIALOG_TRANSLATION_ID,
+                null
+            )
+            mMergeConflicted = savedInstanceState.getBoolean(
+                STATE_MERGE_CONFLICT,
+                false
+            )
+            mMergeSelection = MergeOptions.fromInt(
+                savedInstanceState.getInt(
+                    STATE_MERGE_SELECTION,
+                    MergeOptions.NONE.value
+                )
+            )
+            val path = savedInstanceState.getString(STATE_IMPORT_URL, null)
+            mImportUri = if ((path != null)) Uri.parse(path) else null
+        }
+
+        with(binding) {
+            infoButton.setOnClickListener {
+                val browserIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("http://help.door43.org/en/knowledgebase/9-translationstudio/docs/3-import-options")
+                )
+                startActivity(browserIntent)
+            }
+
+            importResourceContainer.setOnClickListener {
+                onImportSourceText()
+            }
+
+            importFromDoor43.setOnClickListener {
                 // make sure we have a gogs user
-                if(App.getProfile() == null || App.getProfile().gogsUser == null) {
-                    Door43LoginDialog dialog = new Door43LoginDialog();
-                    showDialogFragment(dialog, Door43LoginDialog.TAG);
-                    return;
+                if (profile == null || profile!!.gogsUser == null) {
+                    val dialog = Door43LoginDialog()
+                    showDialogFragment(dialog, Door43LoginDialog.TAG)
+                    return@setOnClickListener
                 }
 
                 // open dialog for browsing repositories
-                ImportFromDoor43Dialog dialog = new ImportFromDoor43Dialog();
-                showDialogFragment(dialog, ImportFromDoor43Dialog.TAG);
+                val dialog = ImportFromDoor43Dialog()
+                showDialogFragment(dialog, ImportFromDoor43Dialog.TAG)
             }
-        });
-        importLocalProjectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMergeSelection = MergeOptions.NONE;
-                doImportLocal(false);
+
+            importTargetTranslation.setOnClickListener {
+                mMergeSelection = MergeOptions.NONE
+                onImportProject()
             }
-        });
-        importLocalUsfmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMergeSelection = MergeOptions.NONE;
-                doImportLocal(true);
+
+            importUsfm.setOnClickListener {
+                mMergeSelection = MergeOptions.NONE
+                onImportUSFM()
             }
-        });
-        importFromFriend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMergeSelection = MergeOptions.NONE;
+
+            importFromDevice.setOnClickListener {
+                mMergeSelection = MergeOptions.NONE
                 // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
-                if (App.isNetworkAvailable()) {
-                    if (App.getDeviceNetworkAlias() == null) {
+                if (isNetworkAvailable) {
+                    if (deviceNetworkAlias == null) {
                         // get device alias
-                        settingDeviceAlias = true;
-                        DeviceNetworkAliasDialog dialog = new DeviceNetworkAliasDialog();
-                        showDialogFragment(dialog, "device-name-dialog");
+                        settingDeviceAlias = true
+                        val dialog = DeviceNetworkAliasDialog()
+                        showDialogFragment(dialog, "device-name-dialog")
                     } else {
-                        showP2PDialog();
+                        showP2PDialog()
                     }
                 } else {
-                    Snackbar snack = Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.internet_not_available, Snackbar.LENGTH_LONG);
-                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                    snack.show();
+                    val snack = Snackbar.make(
+                        requireActivity().findViewById(android.R.id.content),
+                        R.string.internet_not_available,
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
+                    snack.show()
                 }
             }
-        });
 
-        Button dismissButton = (Button)v.findViewById(R.id.dismiss_button);
-        dismissButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-
-        // connect to existing tasks
-        ImportProjectFromUriTask importProjectFromUriTask = (ImportProjectFromUriTask)TaskManager.getTask(ImportProjectFromUriTask.TASK_ID);
-        if(importProjectFromUriTask != null) {
-            taskWatcher.watch(importProjectFromUriTask);
+            dismissButton.setOnClickListener { dismiss() }
         }
 
-        restoreDialogs();
-        return v;
+        // connect to existing tasks
+        val importProjectFromUriTask =
+            TaskManager.getTask(ImportProjectFromUriTask.TASK_ID) as? ImportProjectFromUriTask
+        taskWatcher?.watch(importProjectFromUriTask)
+
+        restoreDialogs()
+        return binding.root
     }
 
     /**
      * restore the dialogs that were displayed before rotation
      */
-    private void restoreDialogs() {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                switch(mDialogShown) {
-                    case SHOW_IMPORT_RESULTS:
-                        showImportResults(mDialogMessage);
-                        break;
-
-                    case MERGE_CONFLICT:
-                        showMergeOverwritePrompt(mTargetTranslationID);
-                        break;
-
-                    case NONE:
-                        break;
-
-                    default:
-                        Logger.e(TAG,"Unsupported restore dialog: " + mDialogShown.toString());
-                        break;
-                }
+    private fun restoreDialogs() {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            when (mDialogShown) {
+                DialogShown.SHOW_IMPORT_RESULTS -> showImportResults(mDialogMessage)
+                DialogShown.MERGE_CONFLICT -> showMergeOverwritePrompt(mTargetTranslationID)
+                DialogShown.NONE -> {}
             }
-        });
+        }
     }
 
-    /**
-     * do an import from local file system
-     * @param doingUsfmImport
-     */
-    private void doImportLocal(boolean doingUsfmImport) {
-        String typeStr = null;
-        Intent intent = new Intent(getActivity(), FileChooserActivity.class);
-        isDocumentFile = SdUtils.isSdCardPresentLollipop();
-        if(isDocumentFile) {
-            typeStr = FileChooserActivity.SD_CARD_TYPE;
-        } else {
-            typeStr = FileChooserActivity.INTERNAL_TYPE;
-        }
-
-        intent.setType(typeStr);
-        if(doingUsfmImport) {
-            intent.putExtra(FileChooserActivity.EXTRAS_ACCEPTED_EXTENSIONS, "usfm");
-        }
-        intent.putExtra(FileChooserActivity.EXTRA_READ_ACCESS, true);
-        startActivityForResult(intent, doingUsfmImport ? IMPORT_USFM_REQUEST : IMPORT_TRANSLATION_REQUEST);
+    private fun onImportProject() {
+        onImportLocal(IMPORT_TRANSLATION_MIME)
     }
 
-    @Override
-    public void onResume() {
-        if(settingDeviceAlias && App.getDeviceNetworkAlias() != null) {
-            settingDeviceAlias = false;
-            showP2PDialog();
+    private fun onImportUSFM() {
+        onImportLocal(IMPORT_USFM_MIME)
+    }
+
+    private fun onImportLocal(mimeType: String) {
+        openFileContent.launch(mimeType)
+    }
+
+    private fun importLocal(fileUri: Uri, mimeType: String) {
+        when (mimeType) {
+            IMPORT_TRANSLATION_MIME -> {
+                mImportUri = fileUri
+                doProjectImport(fileUri)
+            }
+            IMPORT_USFM_MIME -> {
+                mImportUri = fileUri
+                doUsfmImportUri(fileUri)
+            }
+            else -> Logger.e(TAG, "Unsupported import mime type: $mimeType")
         }
-        super.onResume();
+    }
+
+    private fun onImportSourceText() {
+        openDirectory.launch(null)
+    }
+
+    override fun onResume() {
+        if (settingDeviceAlias && deviceNetworkAlias != null) {
+            settingDeviceAlias = false
+            showP2PDialog()
+        }
+        super.onResume()
     }
 
     /**
      * Displays the p2p dialog
      */
-    private void showP2PDialog() {
-        ShareWithPeerDialog dialog = new ShareWithPeerDialog();
-        Bundle args = new Bundle();
-        args.putInt(ShareWithPeerDialog.ARG_OPERATION_MODE, ShareWithPeerDialog.MODE_CLIENT);
-        args.putString(ShareWithPeerDialog.ARG_DEVICE_ALIAS, App.getDeviceNetworkAlias());
-        dialog.setArguments(args);
-        showDialogFragment(dialog, "share-dialog");
+    private fun showP2PDialog() {
+        val dialog = ShareWithPeerDialog()
+        val args = Bundle()
+        args.putInt(ShareWithPeerDialog.ARG_OPERATION_MODE, ShareWithPeerDialog.MODE_CLIENT)
+        args.putString(ShareWithPeerDialog.ARG_DEVICE_ALIAS, deviceNetworkAlias)
+        dialog.arguments = args
+        showDialogFragment(dialog, "share-dialog")
     }
 
     /**
@@ -273,93 +267,31 @@ public class ImportDialog extends DialogFragment implements SimpleTaskWatcher.On
      * @param dialog
      * @param tag
      */
-    private void showDialogFragment(DialogFragment dialog, String tag) {
-        FragmentTransaction backupFt = getParentFragmentManager().beginTransaction();
-        Fragment backupPrev = getParentFragmentManager().findFragmentByTag(tag);
+    private fun showDialogFragment(dialog: DialogFragment, tag: String) {
+        var backupFt = parentFragmentManager.beginTransaction()
+        val backupPrev = parentFragmentManager.findFragmentByTag(tag)
         if (backupPrev != null) {
-            backupFt.remove(backupPrev);
-            backupFt.commit(); // apply the remove
-            backupFt = getParentFragmentManager().beginTransaction(); // start a new transaction
+            backupFt.remove(backupPrev)
+            backupFt.commit() // apply the remove
+            backupFt = parentFragmentManager.beginTransaction() // start a new transaction
         }
-        backupFt.addToBackStack(null);
+        backupFt.addToBackStack(null)
 
-        dialog.show(backupFt, tag);
-    }
-
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == IMPORT_TRANSLATION_REQUEST) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                doProjectImport(data.getData());
-            }
-        } else if (requestCode == IMPORT_USFM_REQUEST) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                if (isDocumentFile) {
-                    Uri uri = data.getData();
-                    doUsfmImportUri(uri);
-                } else {
-                    String path = data.getData().getPath();
-                    doUsfmImportFile(path);
-                }
-            }
-        } else if (requestCode == IMPORT_RCONTAINER_REQUEST) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                Uri uri = data.getData();
-                final File dir = new File(uri.getPath());
-                if(!dir.isDirectory()) {
-                    Toast.makeText(getActivity(), R.string.not_a_source_text, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // check that it's a valid container
-                // TODO: 11/8/16 this should be done in a task for better performance
-                ResourceContainer externalContainer;
-                try {
-                    externalContainer = ResourceContainer.load(dir);
-                } catch (Exception e) {
-                    Logger.e(TAG, "Could not import RC", e);
-                    new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.not_a_source_text)
-                            .setMessage(e.getMessage())
-                            .setPositiveButton(R.string.dismiss, null)
-                            .show();
-                    return;
-                }
-
-                // check if we already have it
-                // TODO: 11/8/16 support screen rotation
-                try {
-                    App.getLibrary().open(externalContainer.slug);
-                    new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.confirm)
-                            .setMessage(String.format(getResources().getString(R.string.overwrite_content), externalContainer.language.name + " - " + externalContainer.project.name + " - " + externalContainer.resource.name))
-                            .setNegativeButton(R.string.menu_cancel, null)
-                            .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    importResourceContainer(dir);
-                                }
-                            })
-                            .show();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    // no conflicts. import
-                    importResourceContainer(dir);
-                }
-            }
-        }
+        dialog.show(backupFt, tag)
     }
 
     /**
      * start task to import a project
      * @param importUri
      */
-    private void doProjectImport(Uri importUri) {
-        mImportUri = importUri;
-        ImportProjectFromUriTask importProjectFromUriTask = new ImportProjectFromUriTask(mImportUri, mMergeSelection == MergeOptions.OVERWRITE);
-        taskWatcher.watch(importProjectFromUriTask);
-        TaskManager.addTask(importProjectFromUriTask, ImportProjectFromUriTask.TASK_ID);
+    private fun doProjectImport(importUri: Uri) {
+        mImportUri = importUri
+        val importProjectFromUriTask = ImportProjectFromUriTask(
+            importUri,
+            mMergeSelection == MergeOptions.OVERWRITE
+        )
+        taskWatcher?.watch(importProjectFromUriTask)
+        TaskManager.addTask(importProjectFromUriTask, ImportProjectFromUriTask.TASK_ID)
     }
 
     /**
@@ -367,21 +299,21 @@ public class ImportDialog extends DialogFragment implements SimpleTaskWatcher.On
      * TODO: this should be performed in a task for better performance
      * @param dir
      */
-    private void importResourceContainer(File dir) {
+    private fun importResourceContainer(dir: File) {
         try {
-            ResourceContainer container = App.getLibrary().importResourceContainer(dir);
-            new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                    .setTitle(R.string.success)
-                    .setMessage(R.string.title_import_success)
-                    .setPositiveButton(R.string.dismiss, null)
-                    .show();
-        } catch (Exception e) {
-            Logger.e(TAG, "Could not import RC", e);
-            new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                    .setTitle(R.string.could_not_import)
-                    .setMessage(e.getMessage())
-                    .setPositiveButton(R.string.dismiss, null)
-                    .show();
+            library!!.importResourceContainer(dir)
+            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                .setTitle(R.string.success)
+                .setMessage(R.string.title_import_success)
+                .setPositiveButton(R.string.dismiss, null)
+                .show()
+        } catch (e: Exception) {
+            Logger.e(TAG, "Could not import RC", e)
+            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                .setTitle(R.string.could_not_import)
+                .setMessage(e.message)
+                .setPositiveButton(R.string.dismiss, null)
+                .show()
         }
     }
 
@@ -389,110 +321,136 @@ public class ImportDialog extends DialogFragment implements SimpleTaskWatcher.On
      * import USFM uri
      * @param uri
      */
-    private void doUsfmImportUri(Uri uri) {
-       ImportUsfmActivity.startActivityForUriImport(getActivity(), uri);
+    private fun doUsfmImportUri(uri: Uri?) {
+        ImportUsfmActivity.startActivityForUriImport(activity, uri)
     }
 
-    /**
-     * import USFM file
-     * @param path
-     */
-    private void doUsfmImportFile(String path) {
-        File file = new File(path);
-        ImportUsfmActivity.startActivityForFileImport(getActivity(), file);
+    private fun doImportSourceText(uri: Uri) {
+        val uuid = UUID.randomUUID().toString()
+        val tempDir = File(requireContext().cacheDir, uuid)
+        context?.let {
+            FileUtilities.copyDirectory(it, uri, tempDir)?.let { dir ->
+                val externalContainer: ResourceContainer
+                try {
+                    externalContainer = ResourceContainer.load(dir)
+                } catch (e: Exception) {
+                    Logger.e(TAG, "Could not import RC", e)
+                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                        .setTitle(R.string.not_a_source_text)
+                        .setMessage(e.message)
+                        .setPositiveButton(R.string.dismiss, null)
+                        .show()
+                    return
+                }
+
+                try {
+                    library!!.open(externalContainer.slug)
+                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                        .setTitle(R.string.confirm)
+                        .setMessage(
+                            String.format(
+                                resources.getString(R.string.overwrite_content),
+                                externalContainer.language.name + " - " + externalContainer.project.name + " - " + externalContainer.resource.name
+                            )
+                        )
+                        .setNegativeButton(R.string.menu_cancel, null)
+                        .setPositiveButton(R.string.confirm) { _, _ -> importResourceContainer(dir) }
+                        .show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    // no conflicts. import
+                    importResourceContainer(dir)
+                }
+
+                FileUtilities.deleteQuietly(dir)
+            }
+        }
     }
 
     /**
      * let user know there was a merge conflict
      * @param targetTranslationID
      */
-    public void showMergeOverwritePrompt(String targetTranslationID) {
-        mDialogShown = DialogShown.MERGE_CONFLICT;
-        mTargetTranslationID = targetTranslationID;
-        int messageID = mMergeConflicted ? R.string.import_merge_conflict_project_name : R.string.import_project_already_exists;
-        String message = getActivity().getString(messageID, targetTranslationID);
-        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.merge_conflict_title)
-                .setMessage(message)
-                .setPositiveButton(R.string.merge_projects_label, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDialogShown = DialogShown.NONE;
-                        mMergeSelection = MergeOptions.OVERWRITE;
-                        if(mMergeConflicted) {
-                            doManualMerge();
-                        } else {
-                            showImportResults(R.string.title_import_success, null);
-                        }
-                    }
-                })
-                .setNeutralButton(R.string.title_cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDialogShown = DialogShown.NONE;
-                        resetToMasterBackup();
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton(R.string.overwrite_projects_label, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDialogShown = DialogShown.NONE;
-                        resetToMasterBackup();
+    fun showMergeOverwritePrompt(targetTranslationID: String?) {
+        mDialogShown = DialogShown.MERGE_CONFLICT
+        mTargetTranslationID = targetTranslationID
+        val messageID =
+            if (mMergeConflicted) {
+                R.string.import_merge_conflict_project_name
+            } else {
+                R.string.import_project_already_exists
+            }
+        val message = requireActivity().getString(messageID, targetTranslationID)
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.merge_conflict_title)
+            .setMessage(message)
+            .setPositiveButton(R.string.merge_projects_label) { _, _ ->
+                mDialogShown = DialogShown.NONE
+                mMergeSelection = MergeOptions.OVERWRITE
+                if (mMergeConflicted) {
+                    doManualMerge()
+                } else {
+                    showImportResults(R.string.title_import_success, null)
+                }
+            }
+            .setNeutralButton(R.string.title_cancel) { dialog, _ ->
+                mDialogShown = DialogShown.NONE
+                resetToMasterBackup()
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
+                mDialogShown = DialogShown.NONE
+                resetToMasterBackup()
 
-                        // re-import with overwrite
-                        mMergeSelection = MergeOptions.OVERWRITE;
-                        doProjectImport(mImportUri);
-                    }
-                }).show();
+                // re-import with overwrite
+                mMergeSelection = MergeOptions.OVERWRITE
+                doProjectImport(mImportUri!!)
+            }.show()
     }
 
     /**
      * restore original version
      */
-    private void resetToMasterBackup() {
-        TargetTranslation mTargetTranslation = App.getTranslator().getTargetTranslation(mTargetTranslationID);
-        if(mTargetTranslation != null) {
-            mTargetTranslation.resetToMasterBackup();
-        }
+    private fun resetToMasterBackup() {
+        val mTargetTranslation = translator.getTargetTranslation(mTargetTranslationID)
+        mTargetTranslation?.resetToMasterBackup()
     }
 
     /**
      * open review mode to let user resolve conflict
      */
-    private void doManualMerge() {
+    private fun doManualMerge() {
         // ask parent activity to navigate to target translation review mode with merge filter on
-        Intent intent = new Intent(getActivity(), TargetTranslationActivity.class);
-        Bundle args = new Bundle();
-        args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID);
-        args.putBoolean(App.EXTRA_START_WITH_MERGE_FILTER, true);
-        args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal());
-        intent.putExtras(args);
-        startActivity(intent);
-        dismiss();
+        val intent = Intent(activity, TargetTranslationActivity::class.java)
+        val args = Bundle()
+        args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID)
+        args.putBoolean(App.EXTRA_START_WITH_MERGE_FILTER, true)
+        args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
+        intent.putExtras(args)
+        startActivity(intent)
+        dismiss()
     }
 
-    @Override
-    public void onFinished(ManagedTask task) {
-        taskWatcher.stop();
-        if (task instanceof ImportProjectFromUriTask) {
-            ImportProjectFromUriTask.ImportResults results = (ImportProjectFromUriTask.ImportResults) task.getResult();
-            boolean success = results.success;
-            mImportUri = results.filePath;
-            mMergeConflicted = results.mergeConflict;
-            if(success && results.alreadyExists && (mMergeSelection == MergeOptions.NONE)) {
-                showMergeOverwritePrompt(results.importedSlug);
-            } else if(success) {
-                showImportResults(R.string.import_success, results.readablePath);
-            } else if(results.invalidFileName) {
-                showImportResults(R.string.invalid_file, results.readablePath);
+    override fun onFinished(task: ManagedTask) {
+        taskWatcher?.stop()
+        if (task is ImportProjectFromUriTask) {
+            val results = task.getResult() as ImportProjectFromUriTask.ImportResults
+            val success = results.success
+            mImportUri = results.filePath
+            mMergeConflicted = results.mergeConflict
+            if (success && results.alreadyExists && (mMergeSelection == MergeOptions.NONE)) {
+                showMergeOverwritePrompt(results.importedSlug)
+            } else if (success) {
+                showImportResults(R.string.import_success, results.readablePath)
+            } else if (results.invalidFileName) {
+                showImportResults(R.string.invalid_file, results.readablePath)
             } else {
-                showImportResults(R.string.import_failed, results.readablePath);
+                showImportResults(R.string.import_failed, results.readablePath)
             }
         }
 
         // todo: terrible hack.
-        ((HomeActivity)getActivity()).notifyDatasetChanged();
+        (activity as HomeActivity?)!!.notifyDatasetChanged()
     }
 
     /**
@@ -500,110 +458,102 @@ public class ImportDialog extends DialogFragment implements SimpleTaskWatcher.On
      * @param textResId
      * @param filePath
      */
-    private void showImportResults(final int textResId, final String filePath) {
-        String message = getResources().getString(textResId);
-        if(filePath != null) {
-            message += "\n" + filePath;
+    private fun showImportResults(textResId: Int, filePath: String?) {
+        var message = resources.getString(textResId)
+        if (filePath != null) {
+            message += "\n$filePath"
         }
-        showImportResults(message);
+        showImportResults(message)
     }
 
     /**
      * show the import results message to user
      * @param message
      */
-    private void showImportResults(String message) {
-        mDialogShown = DialogShown.SHOW_IMPORT_RESULTS;
-        mDialogMessage = message;
-        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.import_from_sd)
-                .setMessage(message)
-                .setPositiveButton(R.string.dismiss, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDialogShown = DialogShown.NONE;
-                    }
-                })
-                .show();
+    private fun showImportResults(message: String?) {
+        mDialogShown = DialogShown.SHOW_IMPORT_RESULTS
+        mDialogMessage = message
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.import_from_sd)
+            .setMessage(message)
+            .setPositiveButton(R.string.dismiss) { _, _ ->
+                mDialogShown = DialogShown.NONE
+            }
+            .show()
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle out) {
-        out.putBoolean(STATE_SETTING_DEVICE_ALIAS, settingDeviceAlias);
-        out.putInt(STATE_DIALOG_SHOWN, mDialogShown.getValue());
-        out.putString(STATE_DIALOG_MESSAGE, mDialogMessage);
-        out.putString(STATE_DIALOG_TRANSLATION_ID, mTargetTranslationID);
-        out.putInt(STATE_MERGE_SELECTION, mMergeSelection.getValue());
-        out.putBoolean(STATE_MERGE_CONFLICT, mMergeConflicted);
-        if(mImportUri != null) {
-            out.putString(STATE_IMPORT_URL, mImportUri.toString());
+    override fun onSaveInstanceState(out: Bundle) {
+        out.putBoolean(STATE_SETTING_DEVICE_ALIAS, settingDeviceAlias)
+        out.putInt(STATE_DIALOG_SHOWN, mDialogShown.value)
+        out.putString(STATE_DIALOG_MESSAGE, mDialogMessage)
+        out.putString(STATE_DIALOG_TRANSLATION_ID, mTargetTranslationID)
+        out.putInt(STATE_MERGE_SELECTION, mMergeSelection!!.value)
+        out.putBoolean(STATE_MERGE_CONFLICT, mMergeConflicted)
+        if (mImportUri != null) {
+            out.putString(STATE_IMPORT_URL, mImportUri.toString())
         }
 
-        super.onSaveInstanceState(out);
+        super.onSaveInstanceState(out)
     }
 
-    @Override
-    public void onDestroy() {
-        if(taskWatcher != null) {
-            taskWatcher.stop();
-        }
-
-        super.onDestroy();
+    override fun onDestroy() {
+        taskWatcher?.stop()
+        super.onDestroy()
     }
 
     /**
      * for keeping track which dialog is being shown for orientation changes (not for DialogFragments)
      */
-    public enum DialogShown {
+    enum class DialogShown(val value: Int) {
         NONE(0),
         SHOW_IMPORT_RESULTS(1),
         MERGE_CONFLICT(2);
 
-        private int value;
-
-        DialogShown(int Value) {
-            this.value = Value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public static DialogShown fromInt(int i) {
-            for (DialogShown b : DialogShown.values()) {
-                if (b.getValue() == i) {
-                    return b;
+        companion object {
+            fun fromInt(i: Int): DialogShown {
+                for (b in entries) {
+                    if (b.value == i) {
+                        return b
+                    }
                 }
+                return NONE
             }
-            return null;
         }
     }
 
     /**
      * for keeping track of user's merge selection
      */
-    public enum MergeOptions {
+    enum class MergeOptions(@JvmField val value: Int) {
         NONE(0),
         OVERWRITE(1),
         MERGE(2);
 
-        private int value;
-
-        MergeOptions(int Value) {
-            this.value = Value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public static MergeOptions fromInt(int i) {
-            for (MergeOptions b : MergeOptions.values()) {
-                if (b.getValue() == i) {
-                    return b;
+        companion object {
+            @JvmStatic
+            fun fromInt(i: Int): MergeOptions {
+                for (b in entries) {
+                    if (b.value == i) {
+                        return b
+                    }
                 }
+                return NONE
             }
-            return null;
         }
+    }
+
+    companion object {
+        const val TAG: String = "importDialog"
+
+        private const val IMPORT_TRANSLATION_MIME = "application/tstudio"
+        private const val IMPORT_USFM_MIME = "text/usfm"
+        private const val IMPORT_RCONTAINER_ACTION = "import_rcontainer"
+        private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
+        const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
+        const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
+        const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
+        const val STATE_MERGE_SELECTION: String = "state_merge_selection"
+        const val STATE_MERGE_CONFLICT: String = "state_merge_conflict"
+        const val STATE_IMPORT_URL: String = "state_import_url"
     }
 }

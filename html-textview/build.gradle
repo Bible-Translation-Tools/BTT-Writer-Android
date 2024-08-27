@@ -1,4 +1,6 @@
 apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
+
 android {
 
     defaultConfig {
@@ -17,4 +19,11 @@ android {
         applicationVariants {
         }
     }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
 }
