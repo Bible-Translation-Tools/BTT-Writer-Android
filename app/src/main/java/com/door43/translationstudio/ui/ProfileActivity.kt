@@ -1,138 +1,125 @@
-package com.door43.translationstudio.ui;
+package com.door43.translationstudio.ui
 
-import android.app.Activity;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import androidx.appcompat.app.AlertDialog;
+import android.app.Activity
+import android.content.DialogInterface
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.view.MenuItem
+import android.view.View
+import android.widget.ImageButton
+import android.widget.PopupMenu
+import androidx.appcompat.app.AlertDialog
+import com.door43.translationstudio.App.Companion.context
+import com.door43.translationstudio.App.Companion.getProfile
+import com.door43.translationstudio.App.Companion.userPreferences
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.databinding.ActivityProfileBinding
+import com.door43.widget.ViewUtil
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
-import android.view.MenuItem;
-import android.view.View;
+@AndroidEntryPoint
+class ProfileActivity : BaseActivity() {
+    @Inject lateinit var profile: Profile
+    private lateinit var binding: ActivityProfileBinding
 
-import android.widget.ImageButton;
-import android.widget.PopupMenu;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityProfileBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.Profile;
-import com.door43.widget.ViewUtil;
-
-public class ProfileActivity extends BaseActivity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_profile);
-
-        View loginDoor43 = findViewById(R.id.login_door43);
-        View registerDoor43 = findViewById(R.id.register_door43);
-        View registerOffline = findViewById(R.id.register_offline);
-
-        loginDoor43.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ProfileActivity.this, LoginDoor43Activity.class);
-                startActivity(intent);
+        with(binding) {
+            account.loginDoor43.setOnClickListener {
+                val intent = Intent(this@ProfileActivity, LoginDoor43Activity::class.java)
+                startActivity(intent)
             }
-        });
-        registerDoor43.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String defaultAccountCreateUrl = App.context().getResources().getString(
-                        R.string.pref_default_create_account_url);
-                String accountCreateUrl = App.context().getUserPreferences().getString(
-                        SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
-                        defaultAccountCreateUrl);
-                Uri uri = Uri.parse(accountCreateUrl);
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(intent);
+            account.registerDoor43.setOnClickListener {
+                val defaultAccountCreateUrl = context()!!.resources.getString(
+                    R.string.pref_default_create_account_url
+                )
+                val accountCreateUrl = userPreferences.getString(
+                    SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
+                    defaultAccountCreateUrl
+                )
+                val uri = Uri.parse(accountCreateUrl)
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                startActivity(intent)
             }
-        });
-        registerOffline.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ProfileActivity.this, RegisterOfflineActivity.class);
-                startActivity(intent);
+            account.registerOffline.setOnClickListener {
+                val intent = Intent(this@ProfileActivity, RegisterOfflineActivity::class.java)
+                startActivity(intent)
             }
-        });
-        findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
+            account.cancelButton.setOnClickListener { finish() }
+        }
+
+        val moreButton = findViewById<ImageButton>(R.id.action_more)
+        moreButton?.setOnClickListener { v: View? ->
+            val moreMenu = PopupMenu(this@ProfileActivity, v)
+            ViewUtil.forcePopupMenuIcons(moreMenu)
+            moreMenu.menuInflater.inflate(R.menu.menu_profile, moreMenu.menu)
+            moreMenu.setOnMenuItemClickListener { item: MenuItem ->
+                val id = item.itemId
+                if (id == R.id.action_settings) {
+                    val intent = Intent(this@ProfileActivity, SettingsActivity::class.java)
+                    startActivity(intent)
+                    return@setOnMenuItemClickListener true
+                } else {
+                    return@setOnMenuItemClickListener false
+                }
             }
-        });
-
-        ImageButton moreButton = (ImageButton)findViewById(R.id.action_more);
-        moreButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                PopupMenu moreMenu = new PopupMenu(ProfileActivity.this, v);
-                ViewUtil.forcePopupMenuIcons(moreMenu);
-                moreMenu.getMenuInflater().inflate(R.menu.menu_profile, moreMenu.getMenu());
-                moreMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.action_settings:
-                                Intent intent = new Intent(ProfileActivity.this, SettingsActivity.class);
-                                startActivity(intent);
-                                return true;
-                        }
-                        return false;
-                    }
-                });
-                moreMenu.show();
-            }
-        });
-
-
-
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        if (App.getProfile() != null) {
-            Intent intent = new Intent(this, TermsOfUseActivity.class);
-            startActivity(intent);
-            finish();
+            moreMenu.show()
         }
     }
 
-    /**
-     * Displays the privacy notice
-     * @param listener if set the dialog will become a confirmation dialog
-     */
-    public static void showPrivacyNotice(Activity context, DialogInterface.OnClickListener listener) {
-        AlertDialog.Builder privacy = new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+    override fun onResume() {
+        super.onResume()
+
+        if (profile.loggedIn) {
+            val intent = Intent(this, TermsOfUseActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+    }
+
+    companion object {
+        val currentUser: String
+            get() {
+                val currentUserProfile = getProfile()
+                var userName: String? = null
+                if (currentUserProfile.gogsUser != null) {
+                    userName = currentUserProfile.gogsUser!!.username
+                }
+                if (userName == null) {
+                    userName = currentUserProfile.fullName
+                }
+
+                if (userName == null) {
+                    userName = ""
+                }
+                return userName
+            }
+
+        /**
+         * Displays the privacy notice
+         * @param listener if set the dialog will become a confirmation dialog
+         */
+        fun showPrivacyNotice(context: Activity, listener: DialogInterface.OnClickListener?) {
+            val privacy = AlertDialog.Builder(
+                context, R.style.AppTheme_Dialog
+            )
                 .setTitle(R.string.privacy_notice)
                 .setIcon(R.drawable.ic_info_secondary_24dp)
-                .setMessage(R.string.publishing_privacy_notice);
+                .setMessage(R.string.publishing_privacy_notice)
 
-        if(listener != null) {
-            privacy.setPositiveButton(R.string.label_continue, listener);
-            privacy.setNegativeButton(R.string.title_cancel, null);
-        } else {
-            privacy.setPositiveButton(R.string.dismiss, null);
+            if (listener != null) {
+                privacy.setPositiveButton(R.string.label_continue, listener)
+                privacy.setNegativeButton(R.string.title_cancel, null)
+            } else {
+                privacy.setPositiveButton(R.string.dismiss, null)
+            }
+            privacy.show()
         }
-        privacy.show();
-    }
-
-    public static String getCurrentUser() {
-        Profile currentUserProfile = App.getProfile();
-        String userName = null;
-        if(currentUserProfile.gogsUser != null) {
-            userName = currentUserProfile.gogsUser.getUsername();
-        }
-        if(userName == null) {
-            userName = currentUserProfile.getFullName();
-        }
-
-        if(userName == null) {
-            userName = "";
-        }
-        return userName;
     }
 }

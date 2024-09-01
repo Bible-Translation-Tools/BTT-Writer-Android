@@ -83,7 +83,7 @@ public class PushTask extends RepoOpTask {
         }
         PushCommand pushCommand = git.push().setPushTags()
                 .setProgressMonitor(new BasicProgressMonitor())
-                .setTransportConfigCallback(new TransportCallback())
+                //.setTransportConfigCallback(new TransportCallback())
                 .setRemote(mRemote)
                 .setForce(mForcePush);
         if (mPushAll) {

@@ -1,114 +1,97 @@
-package com.door43.translationstudio.ui;
+package com.door43.translationstudio.ui
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.Profile;
-import com.door43.translationstudio.tasks.LogoutTask;
-import com.door43.translationstudio.ui.home.HomeActivity;
-import com.door43.translationstudio.ui.legal.LegalDocumentActivity;
-
-import org.unfoldingword.gogsclient.User;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
+import android.content.Intent
+import android.os.Bundle
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.databinding.ActivityTermsBinding
+import com.door43.translationstudio.tasks.LogoutTask
+import com.door43.translationstudio.ui.home.HomeActivity
+import com.door43.translationstudio.ui.legal.LegalDocumentActivity
+import dagger.hilt.android.AndroidEntryPoint
+import org.unfoldingword.tools.taskmanager.ManagedTask
+import org.unfoldingword.tools.taskmanager.TaskManager
+import javax.inject.Inject
 
 /**
  * This activity checks if the user has accepted the terms of use before continuing to load the app
  */
-public class TermsOfUseActivity extends BaseActivity implements ManagedTask.OnFinishedListener {
+@AndroidEntryPoint
+class TermsOfUseActivity : BaseActivity(), ManagedTask.OnFinishedListener {
+    @Inject lateinit var profile: Profile
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private lateinit var binding: ActivityTermsBinding
 
-        final Profile profile = App.getProfile();
-        final int termsVersion = App.getTermsOfUseVersion();
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        if(profile == null) {
-            finish();
-            return;
+        val termsVersion = resources.getInteger(R.integer.terms_of_use_version)
+
+        if (!profile.loggedIn) {
+            finish()
+            return
         }
 
-        if (termsVersion == profile.getTermsOfUseLastAccepted()) {
+        if (termsVersion == profile.termsOfUseLastAccepted) {
             // skip terms if already accepted
-            startMainActivity();
+            startMainActivity()
         } else {
-            setContentView(R.layout.activity_terms);
-            Button rejectBtn = (Button)findViewById(R.id.reject_terms_btn);
-            rejectBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    // log out
-                    User user = App.getProfile().gogsUser;
-                    LogoutTask task = new LogoutTask(user);
-                    TaskManager.addTask(task, LogoutTask.TASK_ID);
-                    task.addOnFinishedListener(TermsOfUseActivity.this);
-                    App.setProfile(null);
+            binding = ActivityTermsBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+
+            with(binding) {
+                rejectTermsBtn.setOnClickListener { // log out
+                    val user = profile.gogsUser
+                    val task = LogoutTask(user)
+                    TaskManager.addTask(task, LogoutTask.TASK_ID)
+                    task.addOnFinishedListener(this@TermsOfUseActivity)
+                    profile.logout()
 
                     // return to login
-                    Intent intent = new Intent(TermsOfUseActivity.this, ProfileActivity.class);
-                    startActivity(intent);
-                    finish();
+                    val intent = Intent(
+                        this@TermsOfUseActivity,
+                        ProfileActivity::class.java
+                    )
+                    startActivity(intent)
+                    finish()
                 }
-            });
-            Button acceptBtn = (Button)findViewById(R.id.accept_terms_btn);
-            acceptBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    profile.setTermsOfUseLastAccepted(termsVersion);
-                    App.setProfile(profile);
-                    startMainActivity();
+                acceptTermsBtn.setOnClickListener {
+                    profile.termsOfUseLastAccepted = termsVersion
+                    startMainActivity()
                 }
-            });
-            Button licenseBtn = (Button)findViewById(R.id.license_btn);
-            licenseBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    showLicenseDialog(R.string.license_pdf);
+                licenseBtn.setOnClickListener {
+                    showLicenseDialog(R.string.license_pdf)
                 }
-            });
-            Button guidelinesBtn = (Button)findViewById(R.id.translation_guidelines_btn);
-            guidelinesBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    showLicenseDialog(R.string.translation_guidlines);
+                translationGuidelinesBtn.setOnClickListener {
+                    showLicenseDialog(R.string.translation_guidlines)
                 }
-            });
-            Button faithBtn = (Button)findViewById(R.id.statement_of_faith_btn);
-            faithBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    showLicenseDialog(R.string.statement_of_faith);
+                statementOfFaithBtn.setOnClickListener {
+                    showLicenseDialog(R.string.statement_of_faith)
                 }
-            });
+            }
         }
     }
 
     /**
      * Continues to the splash screen where local resources will be loaded
      */
-    private void startMainActivity() {
-        Intent intent = new Intent(this, HomeActivity.class);
-        startActivity(intent);
-        finish();
+    private fun startMainActivity() {
+        val intent = Intent(this, HomeActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     /**
      * Displays a license dialog with the given resource as the text
      * @param stringResource the string resource to display in the dialog.
      */
-    private void showLicenseDialog(int stringResource) {
-        Intent intent = new Intent(this, LegalDocumentActivity.class);
-        intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, stringResource);
-        startActivity(intent);
+    private fun showLicenseDialog(stringResource: Int) {
+        val intent = Intent(this, LegalDocumentActivity::class.java)
+        intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, stringResource)
+        startActivity(intent)
     }
 
-    @Override
-    public void onTaskFinished(ManagedTask task) {
-        TaskManager.clearTask(task);
+    override fun onTaskFinished(task: ManagedTask) {
+        TaskManager.clearTask(task)
     }
 }

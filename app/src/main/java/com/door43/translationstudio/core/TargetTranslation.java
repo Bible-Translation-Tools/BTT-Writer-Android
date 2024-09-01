@@ -566,7 +566,7 @@ public class TargetTranslation {
         if(speaker != null) {
             removeContributor(speaker);
             JSONArray translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS);
-            translatorsJson.put(speaker.name);
+            translatorsJson.put(speaker.getName());
             manifest.put(FIELD_TRANSLATORS, translatorsJson);
         }
     }
@@ -579,7 +579,7 @@ public class TargetTranslation {
     public void removeContributor(NativeSpeaker speaker) {
         if(speaker != null) {
             JSONArray translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS);
-            manifest.put(FIELD_TRANSLATORS, Manifest.removeValue(translatorsJson, speaker.name));
+            manifest.put(FIELD_TRANSLATORS, Manifest.removeValue(translatorsJson, speaker.getName()));
         }
     }
 
@@ -592,7 +592,7 @@ public class TargetTranslation {
         manifest.load();
         ArrayList<NativeSpeaker> translators = getContributors();
         for (NativeSpeaker speaker:translators) {
-            if (speaker.name.equals(name)) {
+            if (speaker.getName().equals(name)) {
                 return speaker;
             }
         }

@@ -44,10 +44,8 @@ import com.door43.translationstudio.ui.dialogs.BackupDialog;
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog;
 import com.door43.translationstudio.ui.dialogs.PrintDialog;
 import com.door43.translationstudio.ui.draft.DraftActivity;
-import com.door43.translationstudio.ui.filechooser.FileChooserActivity;
 import com.door43.translationstudio.ui.publish.PublishActivity;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
-import com.door43.util.SdUtils;
 import com.door43.widget.VerticalSeekBar;
 import com.door43.widget.VerticalSeekBarHint;
 import com.door43.widget.ViewUtil;
@@ -1287,14 +1285,6 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                     mReviewButton.setImageResource(R.drawable.ic_view_week_white_24dp);
                 }
                 break;
-        }
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SdUtils.REQUEST_CODE_STORAGE_ACCESS) {
-            FileChooserActivity.showSdCardAccessResults(this, resultCode, data);
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 

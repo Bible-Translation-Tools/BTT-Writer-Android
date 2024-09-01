@@ -1,113 +1,95 @@
-package com.door43.translationstudio.ui;
+package com.door43.translationstudio.ui
 
-import android.app.ProgressDialog;
-import android.os.Handler;
-import android.os.Looper;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.app.ProgressDialog
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import com.door43.translationstudio.App.Companion.closeKeyboard
+import com.door43.translationstudio.App.Companion.isNetworkAvailable
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.databinding.ActivityLoginDoor43Binding
+import com.door43.translationstudio.tasks.LoginDoor43Task
+import dagger.hilt.android.AndroidEntryPoint
+import org.unfoldingword.tools.taskmanager.ManagedTask
+import org.unfoldingword.tools.taskmanager.TaskManager
+import javax.inject.Inject
 
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.Profile;
-import com.door43.translationstudio.tasks.LoginDoor43Task;
+@AndroidEntryPoint
+class LoginDoor43Activity : AppCompatActivity(), ManagedTask.OnFinishedListener {
+    @Inject
+    lateinit var profile: Profile
+    private lateinit var binding: ActivityLoginDoor43Binding
+    private var progressDialog: ProgressDialog? = null
 
-import org.unfoldingword.gogsclient.User;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityLoginDoor43Binding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-public class LoginDoor43Activity extends AppCompatActivity implements ManagedTask.OnFinishedListener {
-
-    private ProgressDialog progressDialog = null;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login_door43);
-
-        final EditText usernameText = (EditText)findViewById(R.id.username);
-        final EditText passwordText = (EditText)findViewById(R.id.password);
-
-        Button cancelButton = (Button)findViewById(R.id.cancel_button);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
+        with(binding) {
+            account.cancelButton.setOnClickListener { finish() }
+            account.okButton.setOnClickListener {
+                closeKeyboard(this@LoginDoor43Activity)
+                val username = account.username.text.toString()
+                val password = account.password.text.toString()
+                val fullName = profile.fullName
+                val task = LoginDoor43Task(username, password, fullName)
+                showProgressDialog()
+                task.addOnFinishedListener(this@LoginDoor43Activity)
+                TaskManager.addTask(task, LoginDoor43Task.TASK_ID)
             }
-        });
-        Button continueButton = (Button)findViewById(R.id.ok_button);
-        continueButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                App.closeKeyboard(LoginDoor43Activity.this);
-                String username = usernameText.getText().toString();
-                String password = passwordText.getText().toString();
-                Profile profile = App.getProfile();
-                String fullName = profile == null ? null : profile.getFullName();
-                LoginDoor43Task task = new LoginDoor43Task(username, password, fullName);
-                showProgressDialog();
-                task.addOnFinishedListener(LoginDoor43Activity.this);
-                TaskManager.addTask(task, LoginDoor43Task.TASK_ID);
-            }
-        });
+        }
 
-        LoginDoor43Task task = (LoginDoor43Task) TaskManager.getTask(LoginDoor43Task.TASK_ID);
-        if(task != null) {
-            showProgressDialog();
-            task.addOnFinishedListener(this);
+        val task = TaskManager.getTask(LoginDoor43Task.TASK_ID) as? LoginDoor43Task
+        if (task != null) {
+            showProgressDialog()
+            task.addOnFinishedListener(this)
         }
     }
 
-    @Override
-    public void onTaskFinished(ManagedTask task) {
-        TaskManager.clearTask(task);
+    override fun onTaskFinished(task: ManagedTask) {
+        TaskManager.clearTask(task)
 
-        if(progressDialog != null) {
-            progressDialog.dismiss();
-        }
+        progressDialog?.dismiss()
 
-        User user = ((LoginDoor43Task)task).getUser();
-        if(user != null) {
+        val user = (task as? LoginDoor43Task)?.user
+        if (user != null) {
             // save gogs user to profile
-            if(user.fullName == null || user.fullName.isEmpty()) {
+            if (user.fullName.isNullOrEmpty()) {
                 // TODO: 4/15/16 if the fullname has not been set we need to ask for it
                 // this is our quick fix to get the full name for now
-                user.fullName = user.getUsername();
+                user.fullName = user.username
             }
-            Profile profile = new Profile(user.fullName);
-            profile.gogsUser = user;
-            App.setProfile(profile);
-            finish();
+            profile.login(user.fullName, user)
+            finish()
         } else {
-            final boolean networkAvailable = App.isNetworkAvailable();
+            val networkAvailable = isNetworkAvailable
 
             // login failed
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    int messageId = networkAvailable ? R.string.double_check_credentials : R.string.internet_not_available;
-                    new AlertDialog.Builder(LoginDoor43Activity.this, R.style.AppTheme_Dialog)
-                            .setTitle(R.string.error)
-                            .setMessage(messageId)
-                            .setPositiveButton(R.string.label_ok, null)
-                            .show();
-                }
-            });
+            val hand = Handler(Looper.getMainLooper())
+            hand.post {
+                val messageId =
+                    if (networkAvailable) R.string.double_check_credentials else R.string.internet_not_available
+                AlertDialog.Builder(this@LoginDoor43Activity, R.style.AppTheme_Dialog)
+                    .setTitle(R.string.error)
+                    .setMessage(messageId)
+                    .setPositiveButton(R.string.label_ok, null)
+                    .show()
+            }
         }
     }
 
-    public void showProgressDialog() {
-        if(progressDialog == null) {
-            progressDialog = new ProgressDialog(this);
+    private fun showProgressDialog() {
+        if (progressDialog == null) {
+            progressDialog = ProgressDialog(this).apply {
+                setTitle(resources.getString(R.string.logging_in))
+                setMessage(resources.getString(R.string.please_wait))
+                isIndeterminate = true
+                show()
+            }
         }
-
-        progressDialog.setTitle(getResources().getString(R.string.logging_in));
-        progressDialog.setMessage(getResources().getString(R.string.please_wait));
-        progressDialog.setIndeterminate(true);
-        progressDialog.show();
     }
 }

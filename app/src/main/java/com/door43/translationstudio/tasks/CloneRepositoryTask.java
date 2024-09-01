@@ -50,7 +50,7 @@ public class CloneRepositoryTask extends ManagedTask {
 
                 CloneCommand cloneCommand = Git.cloneRepository()
                         .setURI(cloneUrl)
-                        .setTransportConfigCallback(new TransportCallback())
+                        //.setTransportConfigCallback(new TransportCallback())
                         .setDirectory(destDir);
                 try {
                     Git result = cloneCommand.call();

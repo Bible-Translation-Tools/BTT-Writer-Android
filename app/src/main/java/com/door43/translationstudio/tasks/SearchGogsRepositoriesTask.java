@@ -37,7 +37,7 @@ public class SearchGogsRepositoriesTask extends ManagedTask {
             GogsAPI api = new GogsAPI(App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api));
             Profile profile = App.getProfile();
 
-            if(profile != null && profile.gogsUser != null) {
+            if(profile.getGogsUser() != null) {
                 List<Repository> repos = api.searchRepos(this.query, this.uid, this.limit);
                 // fetch additional information about the repos (clone urls)
                 for(Repository repo:repos) {

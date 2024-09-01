@@ -11,61 +11,61 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
-import android.widget.LinearLayout
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.ExportUsfm.BookData
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictListener
+import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.DialogBackupBinding
-import com.door43.translationstudio.tasks.CreateRepositoryTask
-import com.door43.translationstudio.tasks.ExportProjectTask
-import com.door43.translationstudio.tasks.ExportProjectTask.ExportResults
-import com.door43.translationstudio.tasks.ExportToUsfmTask
-import com.door43.translationstudio.tasks.LogoutTask
-import com.door43.translationstudio.tasks.PullTargetTranslationTask
-import com.door43.translationstudio.tasks.PushTargetTranslationTask
-import com.door43.translationstudio.tasks.RegisterSSHKeysTask
 import com.door43.translationstudio.ui.ProfileActivity
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.translationstudio.ui.viewmodels.ExportViewModel
+import com.door43.usecases.Export
+import com.door43.usecases.PullTargetTranslation
+import com.door43.usecases.PushTargetTranslation
 import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.tools.logger.Logger
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher
-import org.unfoldingword.tools.taskmanager.TaskManager
-import java.io.File
 import java.security.InvalidParameterException
+import javax.inject.Inject
 
 /**
  * Created by joel on 10/5/2015.
  */
-class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
-    private lateinit var targetTranslation: TargetTranslation
-    private var taskWatcher: SimpleTaskWatcher? = null
+@AndroidEntryPoint
+class BackupDialog : DialogFragment() {
     private var settingDeviceAlias = false
-    private var mBackupToCloudButton: LinearLayout? = null
     private var mDialogShown = DialogShown.NONE
     private var mAccessFile: String? = null
     private var mDialogMessage: String? = null
-    private var isOutputToDocumentFile = false
-    private var mDestinationFolderUri: Uri? = null
 
-    private lateinit var binding: DialogBackupBinding
+    private var progressDialog: ProgressDialogFactory.ProgressDialog? = null
+
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var directoryProvider: IDirectoryProvider
+
+    private val viewModel: ExportViewModel by viewModels()
+
+    private lateinit var targetTranslation: TargetTranslation
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+
+    private var _binding: DialogBackupBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
@@ -75,10 +75,15 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                val data = result.data
-                saveFile(data!!.data)
+                result.data?.data?.let { uri ->
+                    requireContext().contentResolver.getType(uri)?.let { mimeType ->
+                        saveFile(uri, mimeType)
+                    }
+                }
             }
         }
+
+        progressDialog = ProgressDialogFactory.newInstance(parentFragmentManager)
 
         return dialog
     }
@@ -87,26 +92,20 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        dialog!!.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        binding = DialogBackupBinding.inflate(inflater, container, false)
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogBackupBinding.inflate(inflater, container, false)
 
         // get target translation to backup
         val args = arguments
         if (args != null && args.containsKey(ARG_TARGET_TRANSLATION_ID)) {
             val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION_ID, null)
-            App.translator.getTargetTranslation(targetTranslationId)?.let {
-                targetTranslation = it
-            } ?: throw InvalidParameterException(
-                "The target translation '$targetTranslationId' is invalid"
-            )
+            viewModel.loadTargetTranslation(targetTranslationId)
         } else {
             throw InvalidParameterException("The target translation id was not specified")
         }
 
-        targetTranslation.setDefaultContributor(App.profile?.nativeSpeaker)
-        val filename = targetTranslation.id + "." + Translator.TSTUDIO_EXTENSION
-        initProgressWatcher(R.string.backup)
+        setupObservers()
 
         if (savedInstanceState != null) {
             // check if returning from device alias dialog
@@ -119,41 +118,26 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             )
             mAccessFile = savedInstanceState.getString(STATE_ACCESS_FILE, null)
             mDialogMessage = savedInstanceState.getString(STATE_DIALOG_MESSAGE, null)
-            isOutputToDocumentFile =
-                savedInstanceState.getBoolean(STATE_OUTPUT_TO_DOCUMENT_FILE, false)
-            mDestinationFolderUri =
-                Uri.parse(savedInstanceState.getString(STATE_OUTPUT_FOLDER_URI, ""))
             restoreDialogs()
         }
 
         with(binding) {
             logoutButton.setOnClickListener {
                 // log out
-                val user = App.profile?.gogsUser
-                val task = LogoutTask(user)
-                taskWatcher?.watch(task)
-                TaskManager.addTask(task, LogoutTask.TASK_ID)
-
-                App.profile = null
-                val logoutIntent = Intent(activity, ProfileActivity::class.java)
+                viewModel.logout()
+                profile.logout()
+                val logoutIntent = Intent(requireContext(), ProfileActivity::class.java)
                 startActivity(logoutIntent)
-            }
-
-            dismissButton.setOnClickListener { dismiss() }
-
-            backupToDevice.setOnClickListener {
-                // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
-                showDeviceNetworkAliasDialog()
             }
 
             backupToCloud.setOnClickListener {
                 if (App.isNetworkAvailable) {
                     // make sure we have a gogs user
-                    if (App.profile?.gogsUser == null) {
+                    if (profile.gogsUser == null) {
                         showDoor43LoginDialog()
                         return@setOnClickListener
                     }
-                    doPullTargetTranslationTask(targetTranslation, MergeStrategy.RECURSIVE)
+                    pullTargetTranslation(MergeStrategy.RECURSIVE)
                 } else {
                     // replaced snack popup which could be hidden behind dialog
                     showNoInternetDialog()
@@ -163,75 +147,30 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             exportToPdf.setOnClickListener {
                 val printDialog = PrintDialog()
                 val printArgs = Bundle()
-                printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, targetTranslation!!.id)
+                printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, targetTranslation.id)
                 printDialog.arguments = printArgs
                 showDialogFragment(printDialog, PrintDialog.TAG)
             }
 
-            backupToSd.setOnClickListener { showExportProjectPrompt() }
+            exportToProject.setOnClickListener { showExportProjectPrompt() }
 
             exportToUsfm.setOnClickListener { showExportToUsfmPrompt() }
 
-            if (targetTranslation.isObsProject) {
+            if (viewModel.translation.value?.isObsProject == true) {
                 exportToUsfmSeparator.visibility = View.GONE
                 exportToUsfm.visibility = View.GONE
             }
 
-            backupToApp.setOnClickListener {
-                val exportFile = File(App.sharingDir, filename)
-                try {
-                    App.translator.exportArchive(targetTranslation, exportFile)
-                } catch (e: Exception) {
-                    Logger.e(
-                        TAG,
-                        "Failed to export the target translation " + targetTranslation!!.id,
-                        e
-                    )
-                }
-                if (exportFile.exists()) {
-                    val u = FileProvider.getUriForFile(
-                        requireActivity(),
-                        "com.door43.translationstudio.fileprovider",
-                        exportFile
-                    )
-                    val i = Intent(Intent.ACTION_SEND)
-                    i.setType("application/zip")
-                    i.putExtra(Intent.EXTRA_STREAM, u)
-                    startActivity(Intent.createChooser(i, "Email:"))
-                } else {
-                    val snack = Snackbar.make(
-                        requireActivity().findViewById(android.R.id.content),
-                        R.string.translation_export_failed,
-                        Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-                    snack.show()
-                }
+            backupToDevice.setOnClickListener {
+                // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
+                showDeviceNetworkAliasDialog()
             }
-        }
 
-        // connect to existing tasks
-        val pullTask =
-            TaskManager.getTask(PullTargetTranslationTask.TASK_ID) as? PullTargetTranslationTask
-        val keysTask = TaskManager.getTask(RegisterSSHKeysTask.TASK_ID) as? RegisterSSHKeysTask
-        val repoTask = TaskManager.getTask(CreateRepositoryTask.TASK_ID) as? CreateRepositoryTask
-        val pushTask =
-            TaskManager.getTask(PushTargetTranslationTask.TASK_ID) as? PushTargetTranslationTask
-        val projectExportTask = TaskManager.getTask(ExportProjectTask.TASK_ID) as? ExportProjectTask
-        val usfmExportTask = TaskManager.getTask(ExportToUsfmTask.TASK_ID) as? ExportToUsfmTask
+            backupToApp.setOnClickListener {
+                viewModel.exportToApp()
+            }
 
-        if (pullTask != null) {
-            taskWatcher!!.watch(pullTask)
-        } else if (keysTask != null) {
-            taskWatcher!!.watch(keysTask)
-        } else if (repoTask != null) {
-            taskWatcher!!.watch(repoTask)
-        } else if (pushTask != null) {
-            taskWatcher!!.watch(pushTask)
-        } else if (projectExportTask != null) {
-            taskWatcher!!.watch(projectExportTask)
-        } else if (usfmExportTask != null) {
-            taskWatcher!!.watch(usfmExportTask)
+            dismissButton.setOnClickListener { dismiss() }
         }
 
         return binding.root
@@ -252,11 +191,158 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
                 DialogShown.SHOW_BACKUP_RESULTS -> showBackupResults(mDialogMessage)
                 DialogShown.SHOW_PUSH_SUCCESS -> showPushSuccess(mDialogMessage)
                 DialogShown.MERGE_CONFLICT -> showMergeConflict(targetTranslation)
-                DialogShown.EXPORT_TO_USFM_PROMPT -> showExportToUsfmPrompt()
-                DialogShown.EXPORT_PROJECT_PROMPT -> showExportProjectPrompt()
                 DialogShown.EXPORT_TO_USFM_RESULTS -> showUsfmExportResults(mDialogMessage)
                 DialogShown.NONE -> {}
-                else -> Logger.e(TAG, "Unsupported restore dialog: $mDialogShown")
+            }
+        }
+    }
+
+    private fun setupObservers() {
+        viewModel.translation.observe(this) {
+            targetTranslation = it
+                ?: throw NullPointerException("Target translation not found.")
+        }
+        viewModel.progress.observe(this) {
+            if (it != null) {
+                progressDialog?.show(it)
+                progressDialog?.updateProgress(it.progress)
+            } else {
+                progressDialog?.dismiss()
+            }
+        }
+        viewModel.exportResult.observe(this) {
+            it?.let { result ->
+                when (result.taskName) {
+                    Export.TaskName.EXPORT_USFM -> {
+                        val message = if (result.success) {
+                            val format = resources.getString(R.string.export_success)
+                            String.format(
+                                format,
+                                FileUtilities.getUriDisplayName(requireContext(), result.uri)
+                            )
+                        } else {
+                            resources.getString(R.string.export_failed)
+                        }
+                        Logger.i(TAG, "USFM export success = " + result.success)
+                        showUsfmExportResults(message)
+                    }
+                    Export.TaskName.EXPORT_PROJECT -> {
+                        if (result.success) {
+                            showBackupResults(R.string.backup_success, result.uri)
+                        } else {
+                            showBackupResults(R.string.backup_failed, result.uri)
+                        }
+                        Logger.i(TAG, "Project export success = " + result.success)
+                    }
+                    else -> {}
+                }
+                viewModel.clearResults()
+            }
+        }
+        viewModel.pullTranslationResult.observe(this) {
+            it?.let { result ->
+                val status = result.status
+                // TRICKY: we continue to push for unknown status in case
+                // the repo was just created (the missing branch is an error)
+                // the pull task will catch any errors
+                when (status) {
+                    PullTargetTranslation.Status.UP_TO_DATE,
+                    PullTargetTranslation.Status.UNKNOWN -> {
+                        Logger.i(
+                            this.javaClass.name,
+                            "Changes on the server were synced with " + targetTranslation.id
+                        )
+                        viewModel.pushTargetTranslation()
+                    }
+                    PullTargetTranslation.Status.AUTH_FAILURE -> {
+                        Logger.i(this.javaClass.name, "Authentication failed")
+                        // if we have already tried ask the user if they would like to try again
+                        if (directoryProvider.hasSSHKeys()) {
+                            showAuthFailure()
+                        } else {
+                            viewModel.registerSSHKeys(false)
+                        }
+                    }
+                    PullTargetTranslation.Status.NO_REMOTE_REPO -> {
+                        Logger.i(
+                            this.javaClass.name,
+                            "The repository " + targetTranslation.id + " could not be found"
+                        )
+                        // create missing repo
+                        viewModel.createRepository()
+                    }
+                    PullTargetTranslation.Status.MERGE_CONFLICTS -> {
+                        Logger.i(
+                            this.javaClass.name,
+                            "The server contains conflicting changes for " + targetTranslation.id
+                        )
+                        MergeConflictsHandler.backgroundTestForConflictedChunks(
+                            targetTranslation.id,
+                            object : OnMergeConflictListener {
+                                override fun onNoMergeConflict(targetTranslationId: String) {
+                                    // probably the manifest or license gave a false positive
+                                    Logger.i(
+                                        this.javaClass.name,
+                                        "Changes on the server were synced with " + targetTranslation.id
+                                    )
+                                    viewModel.pushTargetTranslation()
+                                }
+
+                                override fun onMergeConflict(targetTranslationId: String) {
+                                    showMergeConflict(targetTranslation)
+                                }
+                            })
+                    }
+                    else -> {
+                        notifyBackupFailed(targetTranslation)
+                    }
+                }
+            }
+        }
+        viewModel.pushTranslationResult.observe(this) {
+            it?.let { result ->
+                when {
+                    result.status == PushTargetTranslation.Status.OK -> {
+                        Logger.i(
+                            this.javaClass.name,
+                            "The target translation " + targetTranslation.id + " was pushed to the server"
+                        )
+                        showPushSuccess(result.message)
+                    }
+                    result.status == PushTargetTranslation.Status.AUTH_FAILURE -> {
+                        Logger.i(this.javaClass.name, "Authentication failed")
+                        showAuthFailure()
+                    }
+                    result.status.isRejected -> {
+                        Logger.i(this.javaClass.name, "Push Rejected")
+                        showPushRejection(targetTranslation)
+                    }
+                    else -> notifyBackupFailed(targetTranslation)
+                }
+            }
+        }
+        viewModel.registeredSSHKeys.observe(this) {
+            it?.let { registered ->
+                if (registered) {
+                    Logger.i(this.javaClass.name, "SSH keys were registered with the server")
+                    // try to push again
+                    pullTargetTranslation(MergeStrategy.RECURSIVE)
+                } else {
+                    notifyBackupFailed(targetTranslation)
+                }
+            }
+        }
+        viewModel.repoCreated.observe(this) {
+            it?.let { created ->
+                if (created) {
+                    Logger.i(
+                        this.javaClass.name,
+                        "A new repository " + targetTranslation.id + " was created on the server"
+                    )
+                    pullTargetTranslation(MergeStrategy.RECURSIVE)
+                } else {
+                    notifyBackupFailed(targetTranslation)
+                }
             }
         }
     }
@@ -265,19 +351,17 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
      * display confirmation prompt before USFM export (also allow entry of filename
      */
     private fun showExportToUsfmPrompt() {
-        mDialogShown = DialogShown.EXPORT_TO_USFM_PROMPT
-        val bookData = BookData.generate(targetTranslation)
-        val defaultFileName = bookData.defaultUsfmFileName
-        showExportPathPrompt(defaultFileName, "text/" + Translator.USFM_EXTENSION)
+        val bookData = Export.BookData.generate(targetTranslation)
+        val defaultFileName = bookData.defaultUSFMFileName
+        showExportPathPrompt(defaultFileName, EXPORT_USFM_MIME_TYPE)
     }
 
     /**
      * display confirmation prompt before USFM export (also allow entry of filename
      */
     private fun showExportProjectPrompt() {
-        mDialogShown = DialogShown.EXPORT_PROJECT_PROMPT
-        val filename = targetTranslation!!.id + "." + Translator.TSTUDIO_EXTENSION
-        showExportPathPrompt(filename, "application/" + Translator.TSTUDIO_EXTENSION)
+        val filename = targetTranslation.id + "." + Translator.TSTUDIO_EXTENSION
+        showExportPathPrompt(filename, EXPORT_TSTUDIO_MIME_TYPE)
     }
 
     /**
@@ -292,25 +376,11 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         activityResultLauncher.launch(intent)
     }
 
-    private fun saveFile(targetUri: Uri?) {
-        val isUsfmExport = (mDialogShown == DialogShown.EXPORT_TO_USFM_PROMPT)
-        if (isUsfmExport) {
-            saveToUsfm(targetTranslation, targetUri)
-        } else {
-            saveProjectFile(targetTranslation, targetUri)
+    private fun saveFile(targetUri: Uri, mimeType: String) {
+        when (mimeType) {
+            EXPORT_TSTUDIO_MIME_TYPE -> viewModel.exportProject(targetUri)
+            EXPORT_USFM_MIME_TYPE -> viewModel.exportUSFM(targetUri)
         }
-    }
-
-    /**
-     * save to usfm file and give success notification
-     * @param targetTranslation
-     * @return false if not forced and file already is present
-     */
-    private fun saveToUsfm(targetTranslation: TargetTranslation?, fileUri: Uri?) {
-        initProgressWatcher(R.string.exporting)
-        val usfmExportTask = ExportToUsfmTask(activity, targetTranslation, fileUri)
-        taskWatcher!!.watch(usfmExportTask)
-        TaskManager.addTask(usfmExportTask, ExportToUsfmTask.TASK_ID)
     }
 
     /**
@@ -325,6 +395,9 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             .setTitle(R.string.title_export_usfm)
             .setMessage(message)
             .setPositiveButton(R.string.dismiss) { _, _ ->
+                mDialogShown = DialogShown.NONE
+            }
+            .setOnDismissListener {
                 mDialogShown = DialogShown.NONE
             }
             .show()
@@ -359,29 +432,6 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         showDialogFragment(dialog, "device-name-dialog")
     }
 
-    /**
-     * back up project - will try to write to user selected destination
-     * @param fileUri
-     * @return false if not forced and file already is present
-     */
-    private fun saveProjectFile(targetTranslation: TargetTranslation?, fileUri: Uri?) {
-        initProgressWatcher(R.string.exporting)
-        val sdExportTask = ExportProjectTask(activity, fileUri, targetTranslation)
-        taskWatcher!!.watch(sdExportTask)
-        TaskManager.addTask(sdExportTask, ExportProjectTask.TASK_ID)
-    }
-
-    /**
-     * creates a new progress watcher with desired title
-     * @param titleID
-     */
-    private fun initProgressWatcher(titleID: Int) {
-        taskWatcher?.stop()
-        taskWatcher = SimpleTaskWatcher(activity, titleID).apply {
-            setOnFinishedListener(this@BackupDialog)
-        }
-    }
-
     private fun showBackupResults(textResId: Int, fileUri: Uri?) {
         var message = resources.getString(textResId)
         if (fileUri != null) {
@@ -408,7 +458,7 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             showP2PDialog()
         }
 
-        val userText = resources.getString(R.string.current_user, ProfileActivity.getCurrentUser())
+        val userText = resources.getString(R.string.current_user, ProfileActivity.currentUser)
         binding.currentUser.text = userText
 
         super.onResume()
@@ -449,141 +499,6 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         dialog.show(backupFt, tag)
     }
 
-    override fun onFinished(task: ManagedTask) {
-        taskWatcher?.stop()
-        if (task is PullTargetTranslationTask) {
-            //            mRemoteURL = pullTask.getSourceURL();
-            val status = task.status
-            //  TRICKY: we continue to push for unknown status in case the repo was just created (the missing branch is an error)
-            // the pull task will catch any errors
-            if (status == PullTargetTranslationTask.Status.UP_TO_DATE
-                || status == PullTargetTranslationTask.Status.UNKNOWN
-            ) {
-                Logger.i(
-                    this.javaClass.name,
-                    "Changes on the server were synced with " + targetTranslation.id
-                )
-
-                initProgressWatcher(R.string.backup)
-                val pushtask = PushTargetTranslationTask(targetTranslation)
-                taskWatcher?.watch(pushtask)
-                TaskManager.addTask(pushtask, PushTargetTranslationTask.TASK_ID)
-            } else if (status == PullTargetTranslationTask.Status.AUTH_FAILURE) {
-                Logger.i(this.javaClass.name, "Authentication failed")
-                // if we have already tried ask the user if they would like to try again
-                if (App.hasSSHKeys()) {
-                    showAuthFailure()
-                    return
-                }
-
-                initProgressWatcher(R.string.backup)
-                val keyTask = RegisterSSHKeysTask(false)
-                taskWatcher?.watch(keyTask)
-                TaskManager.addTask(keyTask, RegisterSSHKeysTask.TASK_ID)
-            } else if (status == PullTargetTranslationTask.Status.NO_REMOTE_REPO) {
-                Logger.i(
-                    this.javaClass.name,
-                    "The repository " + targetTranslation.id + " could not be found"
-                )
-                // create missing repo
-                initProgressWatcher(R.string.backup)
-                val repoTask = CreateRepositoryTask(targetTranslation)
-                taskWatcher?.watch(repoTask)
-                TaskManager.addTask(repoTask, CreateRepositoryTask.TASK_ID)
-            } else if (status == PullTargetTranslationTask.Status.MERGE_CONFLICTS) {
-                Logger.i(
-                    this.javaClass.name,
-                    "The server contains conflicting changes for " + targetTranslation.id
-                )
-                MergeConflictsHandler.backgroundTestForConflictedChunks(
-                    targetTranslation.id,
-                    object : OnMergeConflictListener {
-                        override fun onNoMergeConflict(targetTranslationId: String) {
-                            // probably the manifest or license gave a false positive
-                            Logger.i(
-                                this.javaClass.name,
-                                "Changes on the server were synced with " + targetTranslation.id
-                            )
-
-                            initProgressWatcher(R.string.backup)
-                            val pushTask = PushTargetTranslationTask(targetTranslation)
-                            taskWatcher?.watch(pushTask)
-                            TaskManager.addTask(pushTask, PushTargetTranslationTask.TASK_ID)
-                        }
-
-                        override fun onMergeConflict(targetTranslationId: String) {
-                            showMergeConflict(targetTranslation)
-                        }
-                    })
-            } else {
-                notifyBackupFailed(targetTranslation)
-            }
-        } else if (task is RegisterSSHKeysTask) {
-            if (task.isSuccess) {
-                Logger.i(this.javaClass.name, "SSH keys were registered with the server")
-                // try to push again
-                doPullTargetTranslationTask(targetTranslation, MergeStrategy.RECURSIVE)
-            } else {
-                notifyBackupFailed(targetTranslation)
-            }
-        } else if (task is CreateRepositoryTask) {
-            if (task.isSuccess) {
-                Logger.i(
-                    this.javaClass.name,
-                    "A new repository " + targetTranslation.id + " was created on the server"
-                )
-                doPullTargetTranslationTask(targetTranslation, MergeStrategy.RECURSIVE)
-            } else {
-                notifyBackupFailed(targetTranslation)
-            }
-        } else if (task is PushTargetTranslationTask) {
-            val status = task.status
-            val message = task.message
-
-            if (status == PushTargetTranslationTask.Status.OK) {
-                Logger.i(
-                    this.javaClass.name,
-                    "The target translation " + targetTranslation.id + " was pushed to the server"
-                )
-                showPushSuccess(message)
-            } else if (status.isRejected) {
-                Logger.i(this.javaClass.name, "Push Rejected")
-                showPushRejection(targetTranslation)
-            } else if (status == PushTargetTranslationTask.Status.AUTH_FAILURE) {
-                Logger.i(this.javaClass.name, "Authentication failed")
-                showAuthFailure()
-            } else {
-                notifyBackupFailed(targetTranslation)
-            }
-        } else if (task is ExportProjectTask) {
-            val results = task.result as ExportResults
-
-            Logger.i(TAG, "Project export success = " + results.success)
-            if (results.success) {
-                showBackupResults(R.string.backup_success, results.fileUri)
-            } else {
-                showBackupResults(R.string.backup_failed, results.fileUri)
-            }
-        } else if (task is ExportToUsfmTask) {
-            val exportFile = task.result as? Uri
-            val success = (exportFile != null)
-
-            val message: String
-            if (success) {
-                val format = resources.getString(R.string.export_success)
-                message =
-                    String.format(
-                        format,
-                        FileUtilities.getUriDisplayName(requireContext(), exportFile)
-                    )
-            } else {
-                message = resources.getString(R.string.export_failed)
-            }
-
-            showUsfmExportResults(message)
-        }
-    }
-
     private fun showPushSuccess(message: String?) {
         mDialogShown = DialogShown.SHOW_PUSH_SUCCESS
         mDialogMessage = message
@@ -592,7 +507,7 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             App.getRes(R.string.pref_default_reader_server)
         )
         val url =
-            Uri.parse(apiURL + "/" + App.profile?.gogsUser?.username + "/" + targetTranslation.id)
+            Uri.parse(apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id)
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_complete)
             .setMessage(
@@ -663,7 +578,7 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
      */
     private fun doManualMerge() {
         if (activity is TargetTranslationActivity) {
-            (activity as TargetTranslationActivity?)!!.redrawTarget()
+            (activity as? TargetTranslationActivity)?.redrawTarget()
             this@BackupDialog.dismiss()
             // TODO: 4/20/16 it would be nice to navigate directly to the first conflict
         } else {
@@ -681,14 +596,8 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         }
     }
 
-    private fun doPullTargetTranslationTask(
-        targetTranslation: TargetTranslation?,
-        theirs: MergeStrategy
-    ) {
-        initProgressWatcher(R.string.backup)
-        val pullTask = PullTargetTranslationTask(targetTranslation, theirs, null)
-        taskWatcher?.watch(pullTask)
-        TaskManager.addTask(pullTask, PullTargetTranslationTask.TASK_ID)
+    private fun pullTargetTranslation(strategy: MergeStrategy) {
+        viewModel.pullTargetTranslation(strategy)
     }
 
     /**
@@ -748,18 +657,16 @@ class BackupDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         // open bug report dialog
         val feedbackDialog = FeedbackDialog()
         val args = Bundle()
-        val message =
-            """Failed to upload the translation of ${project?.name} into ${targetTranslation.targetLanguageName}.
-targetTranslation: ${targetTranslation.id}
---------
-
-"""
+        val message = "Failed to upload the translation of ${project?.name}" +
+                "into ${targetTranslation.targetLanguageName}.\n" +
+                "targetTranslation: ${targetTranslation.id}" +
+                "\n--------\n\n"
         args.putString(FeedbackDialog.ARG_MESSAGE, message)
         feedbackDialog.arguments = args
         showDialogFragment(feedbackDialog, "feedback-dialog")
     }
 
-    fun showPushRejection(targetTranslation: TargetTranslation) {
+    private fun showPushRejection(targetTranslation: TargetTranslation) {
         mDialogShown = DialogShown.PUSH_REJECTED
 
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
@@ -790,17 +697,14 @@ targetTranslation: ${targetTranslation.id}
         return true
     }
 
-    fun showAuthFailure() {
+    private fun showAuthFailure() {
         mDialogShown = DialogShown.AUTH_FAILURE
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_failed)
             .setMessage(R.string.auth_failure_retry)
             .setPositiveButton(R.string.yes) { _, _ ->
                 mDialogShown = DialogShown.NONE
-                initProgressWatcher(R.string.backup)
-                val keyTask = RegisterSSHKeysTask(true)
-                taskWatcher!!.watch(keyTask)
-                TaskManager.addTask(keyTask, RegisterSSHKeysTask.TASK_ID)
+                viewModel.registerSSHKeys(true)
             }
             .setNegativeButton(R.string.no) { _, _ ->
                 mDialogShown = DialogShown.NONE
@@ -819,17 +723,13 @@ targetTranslation: ${targetTranslation.id}
         if (mDialogMessage != null) {
             out.putString(STATE_DIALOG_MESSAGE, mDialogMessage)
         }
-        out.putBoolean(STATE_OUTPUT_TO_DOCUMENT_FILE, isOutputToDocumentFile)
-        if (mDestinationFolderUri != null) {
-            out.putString(STATE_OUTPUT_FOLDER_URI, mDestinationFolderUri.toString())
-        }
 
         super.onSaveInstanceState(out)
     }
 
-    override fun onDestroy() {
-        taskWatcher?.stop()
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     /**
@@ -840,11 +740,9 @@ targetTranslation: ${targetTranslation.id}
         PUSH_REJECTED(1),
         AUTH_FAILURE(2),
         BACKUP_FAILED(3),
-        EXPORT_PROJECT_PROMPT(4),
         SHOW_BACKUP_RESULTS(5),
         SHOW_PUSH_SUCCESS(6),
         MERGE_CONFLICT(7),
-        EXPORT_TO_USFM_PROMPT(8),
         EXPORT_TO_USFM_RESULTS(9),
         NO_INTERNET(10);
 
@@ -869,8 +767,7 @@ targetTranslation: ${targetTranslation.id}
         const val STATE_DO_MERGE: String = "state_do_merge"
         const val STATE_ACCESS_FILE: String = "state_access_file"
         const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
-        const val STATE_OUTPUT_TO_DOCUMENT_FILE: String = "state_output_to_document_file"
-        const val STATE_OUTPUT_FOLDER_URI: String = "state_output_folder_uri"
-        const val EXTRA_OUTPUT_TO_USFM: String = "extra_output_to_usfm"
+        const val EXPORT_TSTUDIO_MIME_TYPE: String = "application/tstudio"
+        const val EXPORT_USFM_MIME_TYPE: String = "text/usfm"
     }
 }

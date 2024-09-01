@@ -97,7 +97,7 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
         ContributorDialog dialog = new ContributorDialog();
         Bundle args = new Bundle();
         args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, mTargetTranslation.getId());
-        args.putString(ContributorDialog.ARG_NATIVE_SPEAKER, speaker.name);
+        args.putString(ContributorDialog.ARG_NATIVE_SPEAKER, speaker.getName());
         dialog.setArguments(args);
         dialog.setOnClickListener(mOnNativeSpeakerDialogClick);
         dialog.show(ft, "edit-native-speaker");

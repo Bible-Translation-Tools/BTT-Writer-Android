@@ -25,8 +25,6 @@ public class LogoutTask extends ManagedTask {
         this.user = user;
         this.tokenName = (user != null && user.token != null) ? user.token.getName() : null;
         this.tokenSha1 = (user != null && user.token != null) ? user.token.toString() : null;
-
-
     }
 
     @Override

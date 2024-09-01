@@ -5,7 +5,6 @@ import android.net.Uri
 import android.text.Editable
 import android.text.SpannedString
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
-import com.door43.translationstudio.tasks.PrintPDFTask
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import org.json.JSONArray
@@ -21,12 +20,14 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import javax.inject.Inject
 
 /**
  * Created by joel on 8/29/2015.
  */
-class Translator(
-    private val mContext: Context, private val profile: Profile?,
+class Translator @Inject constructor(
+    private val context: Context,
+    private val profile: Profile,
     /**
      * Returns the root directory to the target translations
      * @return
@@ -129,11 +130,11 @@ class Translator(
         translationFormat: TranslationFormat
     ): TargetTranslation? {
         // TRICKY: force deprecated formats to use new formats
-        var translationFormat = translationFormat
-        if (translationFormat == TranslationFormat.USX) {
-            translationFormat = TranslationFormat.USFM
-        } else if (translationFormat == TranslationFormat.DEFAULT) {
-            translationFormat = TranslationFormat.MARKDOWN
+        var format = translationFormat
+        if (format == TranslationFormat.USX) {
+            format = TranslationFormat.USFM
+        } else if (format == TranslationFormat.DEFAULT) {
+            format = TranslationFormat.MARKDOWN
         }
 
         val targetTranslationId = TargetTranslation.generateTargetTranslationId(
@@ -146,11 +147,11 @@ class Translator(
         if (targetTranslation == null) {
             val targetTranslationDir = File(this.path, targetTranslationId)
             try {
-                val pInfo = mContext.packageManager.getPackageInfo(mContext.packageName, 0)
+                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
                 return TargetTranslation.create(
-                    this.mContext,
+                    this.context,
                     nativeSpeaker,
-                    translationFormat,
+                    format,
                     targetLanguage,
                     projectSlug,
                     resourceType,
@@ -166,12 +167,12 @@ class Translator(
     }
 
     private fun setTargetTranslationAuthor(targetTranslation: TargetTranslation?) {
-        if (profile != null && targetTranslation != null) {
+        if (profile.loggedIn && targetTranslation != null) {
             var name = profile.fullName
             var email: String? = ""
-            if (profile.gogsUser != null) {
-                name = profile.gogsUser.fullName
-                email = profile.gogsUser.email
+            profile.gogsUser?.let {
+                name = it.fullName
+                email = it.email
             }
             targetTranslation.setAuthor(name, email)
         }
@@ -226,7 +227,7 @@ class Translator(
         val manifestJson = JSONObject()
         val generatorJson = JSONObject()
         generatorJson.put("name", GENERATOR_NAME)
-        val pInfo = mContext.packageManager.getPackageInfo(mContext.packageName, 0)
+        val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
         generatorJson.put("build", pInfo.versionCode)
         manifestJson.put("generator", generatorJson)
         manifestJson.put("package_version", TSTUDIO_PACKAGE_VERSION)
@@ -279,7 +280,7 @@ class Translator(
             manifestFile.createNewFile()
             FileUtilities.writeStringToFile(manifestFile, manifestJson.toString())
 
-            mContext.contentResolver.openOutputStream(fileUri!!).use { out ->
+            context.contentResolver.openOutputStream(fileUri!!).use { out ->
                 Zip.zipToStream(
                     arrayOf(manifestFile, targetTranslation.path), out
                 )
@@ -451,7 +452,7 @@ class Translator(
                         FileUtilities.moveOrCopyQuietly(newDir, localDir)
                     }
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
-                    TargetTranslation.updateGenerator(mContext, TargetTranslation.open(localDir))
+                    TargetTranslation.updateGenerator(context, TargetTranslation.open(localDir))
 
                     importedSlug = targetTranslationId
                 }
@@ -480,35 +481,6 @@ class Translator(
                 val success = !importedSlug.isNullOrEmpty()
                 return success
             }
-    }
-
-    /**
-     * Exports a target translation as a pdf file
-     * @param targetTranslation
-     * @param outputFile
-     */
-    @Throws(Exception::class)
-    fun exportPdf(
-        library: Door43Client?, targetTranslation: TargetTranslation, format: TranslationFormat?,
-        targetLanguageFontPath: String?, targetLanguageFontSize: Float, licenseFontPath: String?,
-        imagesDir: File?, includeImages: Boolean, includeIncompleteFrames: Boolean,
-        outputFile: File, task: PrintPDFTask?
-    ) {
-        val targetLanguageRtl = "rtl" == targetTranslation.targetLanguageDirection
-        val printer = PdfPrinter(
-            mContext, library, targetTranslation, format, targetLanguageFontPath,
-            targetLanguageFontSize, targetLanguageRtl, licenseFontPath, imagesDir, task
-        )
-        printer.includeMedia(includeImages)
-        printer.includeIncomplete(includeIncompleteFrames)
-        val pdf = printer.print()
-        if (pdf.exists()) {
-            outputFile.delete()
-            FileUtilities.moveOrCopyQuietly(pdf, outputFile)
-            if (!outputFile.exists()) {
-                Logger.e(TAG, "Could not move '$pdf' to '$outputFile'")
-            }
-        }
     }
 
     /**

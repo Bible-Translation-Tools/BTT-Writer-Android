@@ -45,7 +45,7 @@ public class RegisterSSHKeysTask extends ManagedTask {
             publishProgress(-1, "Authenticating");
             GogsAPI api = new GogsAPI(App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api));
             Profile profile = App.getProfile();
-            if (profile != null && profile.gogsUser != null) {
+            if (profile != null && profile.getGogsUser() != null) {
                 if (!App.hasSSHKeys() || this.force) {
                     App.generateSSHKeys();
                 }
@@ -60,15 +60,15 @@ public class RegisterSSHKeysTask extends ManagedTask {
 
                 PublicKey keyTemplate = new PublicKey(keyName, keyString);
                 // delete old key
-                List<PublicKey> keys = api.listPublicKeys(profile.gogsUser);
+                List<PublicKey> keys = api.listPublicKeys(profile.getGogsUser());
                 for(PublicKey k:keys) {
                     if(k.getTitle().equals(keyTemplate.getTitle())) {
-                        api.deletePublicKey(k, profile.gogsUser);
+                        api.deletePublicKey(k, profile.getGogsUser());
                         break;
                     }
                 }
                 // create new key
-                PublicKey key = api.createPublicKey(keyTemplate, profile.gogsUser);
+                PublicKey key = api.createPublicKey(keyTemplate, profile.getGogsUser());
                 if (key != null) {
                     success = true;
                 } else {

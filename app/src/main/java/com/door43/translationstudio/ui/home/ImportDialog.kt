@@ -18,10 +18,10 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.deviceNetworkAlias
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.library
-import com.door43.translationstudio.App.Companion.profile
-import com.door43.translationstudio.App.Companion.translator
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.tasks.ImportProjectFromUriTask
 import com.door43.translationstudio.ui.ImportUsfmActivity
@@ -32,6 +32,7 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import org.unfoldingword.tools.taskmanager.ManagedTask
@@ -39,11 +40,16 @@ import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher
 import org.unfoldingword.tools.taskmanager.TaskManager
 import java.io.File
 import java.util.UUID
+import javax.inject.Inject
 
 /**
  * Created by joel on 10/5/2015.
  */
+@AndroidEntryPoint
 class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var translator: Translator
+
     private var settingDeviceAlias = false
     private var mDialogShown: DialogShown = DialogShown.NONE
     private var mDialogMessage: String? = null
@@ -53,9 +59,11 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
     private var mMergeSelection: MergeOptions? = MergeOptions.NONE
     private var mMergeConflicted = false
 
-    private lateinit var binding: DialogImportBinding
     private lateinit var openFileContent: ActivityResultLauncher<String>
     private lateinit var openDirectory: ActivityResultLauncher<Uri?>
+
+    private var _binding: DialogImportBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
@@ -84,7 +92,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         savedInstanceState: Bundle?
     ): View {
         dialog!!.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        binding = DialogImportBinding.inflate(inflater, container, false)
+        _binding = DialogImportBinding.inflate(inflater, container, false)
 
         taskWatcher = SimpleTaskWatcher(activity, R.string.label_import)
         taskWatcher?.setOnFinishedListener(this)
@@ -499,6 +507,11 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
     override fun onDestroy() {
         taskWatcher?.stop()
         super.onDestroy()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     /**

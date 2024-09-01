@@ -8,7 +8,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.MenuItem
 import android.view.View
 import android.widget.ImageButton
 import android.widget.PopupMenu
@@ -25,15 +24,13 @@ import com.door43.translationstudio.App.Companion.hasSSHKeys
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.languageFromTargetTranslation
 import com.door43.translationstudio.App.Companion.lastFocusTargetTranslation
-import com.door43.translationstudio.App.Companion.library
-import com.door43.translationstudio.App.Companion.profile
 import com.door43.translationstudio.App.Companion.restart
 import com.door43.translationstudio.App.Companion.sharingDir
 import com.door43.translationstudio.App.Companion.startBackupService
-import com.door43.translationstudio.App.Companion.translator
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictListener
+import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
@@ -61,6 +58,7 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.eventbuffer.EventBuffer
@@ -71,13 +69,18 @@ import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher
 import org.unfoldingword.tools.taskmanager.TaskManager
 import java.io.File
 import java.text.NumberFormat
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
     OnCreateNewTargetTranslation, TargetTranslationListFragment.OnItemClickListener,
     EventBuffer.OnEventListener, ManagedTask.OnProgressListener, ManagedTask.OnFinishedListener,
     DialogInterface.OnCancelListener {
-    private lateinit var mLibrary: Door43Client
-    private lateinit var mTranslator: Translator
+
+    @Inject lateinit var library: Door43Client
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var profile: Profile
+
     private var mFragment: Fragment? = null
     private var taskWatcher: SimpleTaskWatcher? = null
     private var mExamineTask: ExamineImportsForCollisionsTask? = null
@@ -100,9 +103,6 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             setOnFinishedListener(this@HomeActivity)
         }
 
-        mLibrary = library!!
-        mTranslator = translator
-
         with(binding) {
             addTargetTranslationButton.setOnClickListener { onCreateNewTargetTranslation() }
 
@@ -110,7 +110,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                 // use current fragment
                 mFragment = supportFragmentManager.findFragmentById(fragmentContainer.id)
             } else {
-                if (mTranslator.targetTranslationIDs.isNotEmpty()) {
+                if (translator.targetTranslationIDs.isNotEmpty()) {
                     mFragment = TargetTranslationListFragment()
                     mFragment?.setArguments(intent.extras)
                 } else {
@@ -123,8 +123,6 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             }
 
             logoutButton.setOnClickListener { doLogout() }
-
-
         }
 
         val moreButton = findViewById<View>(R.id.action_more) as ImageButton
@@ -132,29 +130,31 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             val moreMenu = PopupMenu(this@HomeActivity, v)
             ViewUtil.forcePopupMenuIcons(moreMenu)
             moreMenu.menuInflater.inflate(R.menu.menu_home, moreMenu.menu)
-            moreMenu.setOnMenuItemClickListener(object : PopupMenu.OnMenuItemClickListener {
-                override fun onMenuItemClick(item: MenuItem): Boolean {
-                    val id = item.itemId
-                    if (id == R.id.action_update) {
+            moreMenu.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.action_update -> {
                         mUpdateDialog = UpdateLibraryDialog()
                         showDialogFragment(mUpdateDialog!!, UpdateLibraryDialog.TAG)
-                        return true
-                    } else if (id == R.id.action_import) {
+                        true
+                    }
+                    R.id.action_import -> {
                         val importDialog = ImportDialog()
                         showDialogFragment(importDialog, ImportDialog.TAG)
-                        return true
-                    } else if (id == R.id.action_feedback) {
+                        true
+                    }
+                    R.id.action_feedback -> {
                         val dialog = FeedbackDialog()
                         showDialogFragment(dialog, "feedback-dialog")
-                        return true
-                    } else if (id == R.id.action_share_apk) {
+                        true
+                    }
+                    R.id.action_share_apk -> {
                         try {
-                            val pinfo = packageManager.getPackageInfo(packageName, 0)
-                            val apkFile = File(pinfo.applicationInfo.publicSourceDir)
+                            val pInfo = packageManager.getPackageInfo(packageName, 0)
+                            val apkFile = File(pInfo.applicationInfo.publicSourceDir)
                             val exportFile = File(
-                                sharingDir, pinfo.applicationInfo.loadLabel(
+                                sharingDir, pInfo.applicationInfo.loadLabel(
                                     packageManager
-                                ).toString() + "_" + pinfo.versionName + ".apk"
+                                ).toString() + "_" + pInfo.versionName + ".apk"
                             )
                             FileUtilities.copyFile(apkFile, exportFile)
                             if (exportFile.exists()) {
@@ -177,22 +177,24 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                             e.printStackTrace()
                             // todo notify user app could not be shared
                         }
-                        return true
-                    } else if (id == R.id.action_log_out) {
+                        true
+                    }
+                    R.id.action_log_out -> {
                         doLogout()
-                        return true
-                    } else if (id == R.id.action_settings) {
+                        true
+                    }
+                    R.id.action_settings -> {
                         val intent = Intent(this@HomeActivity, SettingsActivity::class.java)
                         startActivity(intent)
-                        return true
+                        true
                     }
-                    return false
+                    else -> false
                 }
-            })
+            }
             moreMenu.show()
         }
 
-        val intent = intent // check if user is trying to open a tstudio file
+        // check if user is trying to open a tstudio file
         if (intent != null) {
             val action = intent.action
             if (action != null) {
@@ -224,7 +226,10 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                 savedInstanceState.getInt(STATE_DIALOG_SHOWN, INVALID),
                 DialogShown.NONE
             )
-            mTargetTranslationID = savedInstanceState.getString(STATE_DIALOG_TRANSLATION_ID, null)
+            mTargetTranslationID = savedInstanceState.getString(
+                STATE_DIALOG_TRANSLATION_ID,
+                null
+            )
         }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -238,12 +243,12 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
      * do logout activity
      */
     private fun doLogout() {
-        profile?.gogsUser?.let { user ->
+        profile.gogsUser?.let { user ->
             val task = LogoutTask(user)
             TaskManager.addTask(task, LogoutTask.TASK_ID)
             task.addOnFinishedListener(this)
         }
-        profile = null
+        profile.logout()
         val logoutIntent = Intent(this@HomeActivity, ProfileActivity::class.java)
         startActivity(logoutIntent)
         finish()
@@ -254,10 +259,10 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         lastFocusTargetTranslation = null
 
         val currentUser = findViewById<View>(R.id.current_user) as TextView
-        val userText = resources.getString(R.string.current_user, ProfileActivity.getCurrentUser())
+        val userText = resources.getString(R.string.current_user, ProfileActivity.currentUser)
         currentUser.text = userText
 
-        val numTranslations = mTranslator!!.targetTranslationIDs.size
+        val numTranslations = translator!!.targetTranslationIDs.size
         if (numTranslations > 0 && mFragment is WelcomeFragment) {
             // display target translations list
             mFragment = TargetTranslationListFragment().apply {
@@ -428,7 +433,8 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                 AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                     .setTitle(R.string.success)
                     .setMessage(R.string.success_translation_update_with_conflicts)
-                    .setNeutralButton(R.string.review
+                    .setNeutralButton(
+                        R.string.review
                     ) { _, _ ->
                         val intent =
                             Intent(this@HomeActivity, TargetTranslationActivity::class.java)
@@ -463,7 +469,8 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         mTargetTranslationID = targetTranslationID
         AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             .setTitle(R.string.merge_conflict_title).setMessage(R.string.import_merge_conflict)
-            .setPositiveButton(R.string.label_ok
+            .setPositiveButton(
+                R.string.label_ok
             ) { _, _ ->
                 mAlertShown = DialogShown.NONE
                 doManualMerge(mTargetTranslationID)
@@ -487,14 +494,16 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
     fun showAuthFailure() {
         AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             .setTitle(R.string.error).setMessage(R.string.auth_failure_retry)
-            .setPositiveButton(R.string.yes
+            .setPositiveButton(
+                R.string.yes
             ) { _, _ ->
                 mAlertShown = DialogShown.NONE
                 val keyTask = RegisterSSHKeysTask(true)
                 taskWatcher!!.watch(keyTask)
                 TaskManager.addTask(keyTask, RegisterSSHKeysTask.TASK_ID)
             }
-            .setNegativeButton(R.string.no
+            .setNegativeButton(
+                R.string.no
             ) { _, _ ->
                 mAlertShown = DialogShown.NONE
                 notifyTranslationUpdateFailed()
@@ -526,7 +535,8 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             .setTitle(if (success) R.string.title_import_success else R.string.title_import_failed)
             .setMessage(message)
-            .setPositiveButton(R.string.label_ok
+            .setPositiveButton(
+                R.string.label_ok
             ) { _, _ ->
                 mAlertShown = DialogShown.NONE
                 mExamineTask!!.cleanup()
@@ -561,20 +571,23 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                     mExamineTask!!.mProjectsFound
                 )
             )
-            .setNegativeButton(R.string.title_cancel
+            .setNegativeButton(
+                R.string.title_cancel
             ) { _, _ ->
                 mAlertShown = DialogShown.NONE
                 mExamineTask!!.cleanup()
                 this@HomeActivity.finish()
             }
-            .setPositiveButton(R.string.label_restore
+            .setPositiveButton(
+                R.string.label_restore
             ) { _, _ ->
                 mAlertShown = DialogShown.NONE
                 doArchiveImport(true)
             }
 
         if (mExamineTask!!.mAlreadyPresent) { // add merge option
-            dlg.setNeutralButton(R.string.label_import
+            dlg.setNeutralButton(
+                R.string.label_import
             ) { dialog, _ ->
                 mAlertShown = DialogShown.NONE
                 doArchiveImport(false)
@@ -602,7 +615,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         get() {
             val lastTarget = lastFocusTargetTranslation
             if (lastTarget != null) {
-                return mTranslator.getTargetTranslation(lastTarget)
+                return translator.getTargetTranslation(lastTarget)
             }
             return null
         }
@@ -611,7 +624,8 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         // display confirmation before closing the app
         AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             .setMessage(R.string.exit_confirmation)
-            .setPositiveButton(R.string.yes
+            .setPositiveButton(
+                R.string.yes
             ) { _, _ -> onBackPressedDispatcher.onBackPressed() }
             .setNegativeButton(R.string.no, null)
             .show()
@@ -643,9 +657,9 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                 val targetTranslationId = data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
                 )
-                val existingTranslation = mTranslator.getTargetTranslation(targetTranslationId)
+                val existingTranslation = translator.getTargetTranslation(targetTranslationId)
                 if (existingTranslation != null) {
-                    val project = mLibrary.index()
+                    val project = library.index()
                         .getProject(deviceLanguageCode, existingTranslation.projectId, true)
                     val snack = Snackbar.make(
                         findViewById(android.R.id.content), String.format(
@@ -686,7 +700,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
      * @param targetTranslationId
      */
     fun showTranslationUpdatePrompt(targetTranslationId: String) {
-        val targetTranslation = mTranslator.getTargetTranslation(targetTranslationId)
+        val targetTranslation = translator.getTargetTranslation(targetTranslationId)
         if (targetTranslation == null) {
             Logger.e(TAG, "invalid target translation id:$targetTranslationId")
             return
@@ -694,7 +708,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
 
         val projectID = targetTranslation.projectId
         val project =
-            library!!.index().getProject(targetTranslation.targetLanguageName, projectID, true)
+            App.library!!.index().getProject(targetTranslation.targetLanguageName, projectID, true)
         if (project == null) {
             Logger.e(TAG, "invalid project id:$projectID")
             return
@@ -708,12 +722,14 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             .setTitle(R.string.change_detected)
             .setMessage(message)
-            .setPositiveButton(R.string.yes
+            .setPositiveButton(
+                R.string.yes
             ) { _, _ ->
                 mAlertShown = DialogShown.NONE
                 downloadTargetTranslationUpdates(targetTranslationId)
             }
-            .setNegativeButton(R.string.no
+            .setNegativeButton(
+                R.string.no
             ) { _, _ ->
                 App.notifyTargetTranslationWithUpdates = null
                 mAlertShown = DialogShown.NONE
@@ -734,7 +750,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             }
 
             val task = PullTargetTranslationTask(
-                mTranslator.getTargetTranslation(targetTranslationId),
+                translator.getTargetTranslation(targetTranslationId),
                 MergeStrategy.RECURSIVE,
                 null
             )
@@ -757,7 +773,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
     }
 
     override fun onItemDeleted(targetTranslationId: String) {
-        if (mTranslator.targetTranslationIDs.isNotEmpty()) {
+        if (translator.targetTranslationIDs.isNotEmpty()) {
             (mFragment as TargetTranslationListFragment?)!!.reloadList()
         } else {
             // display welcome screen
@@ -773,7 +789,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
     override fun onItemClick(targetTranslation: TargetTranslation) {
         // validate project and target language
 
-        val project = library!!.index().getProject("en", targetTranslation.projectId, true)
+        val project = App.library!!.index().getProject("en", targetTranslation.projectId, true)
         val language = languageFromTargetTranslation(targetTranslation)
         if (project == null || language == null) {
             val snack = Snackbar.make(
@@ -840,7 +856,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         super.onDestroy()
     }
 
-    override fun onEventBufferEvent(talker: OnEventTalker, tag: Int, args: Bundle) {
+    override fun onEventBufferEvent(talker: OnEventTalker?, tag: Int, args: Bundle?) {
         if (talker is UpdateLibraryDialog) {
             mUpdateDialog?.dismiss()
 

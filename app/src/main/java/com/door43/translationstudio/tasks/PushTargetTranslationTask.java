@@ -44,9 +44,9 @@ public class PushTargetTranslationTask extends ManagedTask {
     @Override
     public void start() {
         Profile profile = App.getProfile();
-        if(App.isNetworkAvailable() && profile != null && profile.gogsUser != null) {
+        if(App.isNetworkAvailable() && profile != null && profile.getGogsUser() != null) {
             publishProgress(-1, "Uploading translation");
-            GetRepositoryTask repoTask = new GetRepositoryTask(profile.gogsUser, targetTranslation);
+            GetRepositoryTask repoTask = new GetRepositoryTask(profile.getGogsUser(), targetTranslation);
             delegate(repoTask);
 
             Repository repository = repoTask.getRepository();
@@ -74,7 +74,7 @@ public class PushTargetTranslationTask extends ManagedTask {
 
         // TODO: we might want to get some progress feedback for the user
         PushCommand pushCommand = git.push()
-                .setTransportConfigCallback(new TransportCallback())
+                //.setTransportConfigCallback(new TransportCallback())
                 .setRemote("origin")
                 .setPushTags()
                 .setForce(false)

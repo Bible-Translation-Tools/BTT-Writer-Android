@@ -1,225 +1,263 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.tasks.PrintPDFTask;
-import com.door43.translationstudio.ui.spannables.Span;
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfPageEventHelper;
-import com.itextpdf.text.pdf.PdfTemplate;
-import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.pdf.draw.VerticalPositionMark;
-
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.App
+import com.door43.translationstudio.App.Companion.context
+import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.usecases.Export.Companion.sortFrameTranslations
+import com.itextpdf.text.Anchor
+import com.itextpdf.text.Chapter
+import com.itextpdf.text.Chunk
+import com.itextpdf.text.Document
+import com.itextpdf.text.DocumentException
+import com.itextpdf.text.Element
+import com.itextpdf.text.Font
+import com.itextpdf.text.Image
+import com.itextpdf.text.PageSize
+import com.itextpdf.text.Paragraph
+import com.itextpdf.text.Rectangle
+import com.itextpdf.text.pdf.BaseFont
+import com.itextpdf.text.pdf.PdfContentByte
+import com.itextpdf.text.pdf.PdfPCell
+import com.itextpdf.text.pdf.PdfPTable
+import com.itextpdf.text.pdf.PdfPageEventHelper
+import com.itextpdf.text.pdf.PdfTemplate
+import com.itextpdf.text.pdf.PdfWriter
+import com.itextpdf.text.pdf.draw.VerticalPositionMark
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.resourcecontainer.ResourceContainer
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.util.regex.Pattern
 
 /**
  * Created by joel on 11/12/2015.
  */
-public class PdfPrinter extends PdfPageEventHelper {
-    private static final float VERTICAL_PADDING = 72.0f; // 1 inch
-    private static final float HORIZONTAL_PADDING = 72.0f; // 1 inch
-    public static final float RATIO_OF_SP_TO_PT = 2.5f;
-    private final TargetTranslation targetTranslation;
-    private final Context context;
-    private final Font titleFont;
-    private final Font chapterFont;
-    private final Font bodyFont;
-    private final Font boldBodyFont;
-    private final Font underlineBodyFont;
-    private final Font subFont;
-    private final Font headingFont;
-    private final Font licenseFont;
-    private final TranslationFormat format;
-    private final Door43Client library;
-    private final ResourceContainer sourceContainer;
-    private final Font superScriptFont;
-    private final BaseFont baseFont;
-    private final BaseFont licenseBaseFont;
-    private final boolean targetlanguageRtl;
-    private final File imagesDir;
-    private boolean includeMedia = true;
-    private boolean includeIncomplete = true;
-    private final Map<String, PdfTemplate> tocPlaceholder = new HashMap<>();
-    private final Map<String, Integer> pageByTitle = new HashMap<>();
-    private final float PAGE_NUMBER_FONT_SIZE = 10;
-    private PdfWriter writer;
-    private Paragraph mCurrentParagraph;
-    private final PrintPDFTask task;
-    private final float targetLanguageFontSize;
+class PdfPrinter(
+    private val context: Context,
+    library: Door43Client,
+    private val translation: TargetTranslation,
+    private val format: TranslationFormat,
+    fontPath: String?,
+    fontSize: Float,
+    private val rtl: Boolean,
+    licenseFontPath: String?,
+    private val imagesDir: File?,
+    private val directoryProvider: IDirectoryProvider,
+) : PdfPageEventHelper() {
+    private val titleFont: Font
+    private val chapterFont: Font
+    private val bodyFont: Font
+    private val boldBodyFont: Font
+    private val underlineBodyFont: Font
+    private val subFont: Font
+    private val headingFont: Font
+    private val licenseFont: Font
+    private val sourceContainer: ResourceContainer?
+    private val superScriptFont: Font
+    private val baseFont: BaseFont
+    private val licenseBaseFont: BaseFont
+    private var includeMedia = true
+    private var includeIncomplete = true
+    private val tocPlaceholder: MutableMap<String, PdfTemplate> = HashMap()
+    private val pageByTitle: MutableMap<String, Int> = HashMap()
+    private var writer: PdfWriter? = null
+    private var mCurrentParagraph: Paragraph? = null
+    private val targetLanguageFontSize: Float
 
-    public PdfPrinter(Context context, Door43Client library, TargetTranslation targetTranslation, TranslationFormat format,
-                      String targetLanguageFontPath, float targetLanguageFontSize, boolean targetlanguageRtl,
-                      String licenseFontPath, File imagesDir, PrintPDFTask task) throws IOException, DocumentException {
-        this.targetTranslation = targetTranslation;
-        this.context = context;
-        this.format = format;
-        this.library = library;
-        this.imagesDir = imagesDir;
-        Project p = library.index.getProject("en", targetTranslation.getProjectId(), true);
-        java.util.List<Resource> resources = library.index.getResources(p.languageSlug, p.slug);
-        ResourceContainer rc = null;
+    init {
+        val p = library.index.getProject(
+            "en",
+            translation.projectId,
+            true
+        )
+        val resources = library.index.getResources(p.languageSlug, p.slug)
+        var rc: ResourceContainer? = null
         try {
-            rc = library.open("en", targetTranslation.getProjectId(), resources.get(0).slug);
-        } catch (Exception e) {
-            e.printStackTrace();
+            rc = library.open("en", translation.projectId, resources[0].slug)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        this.sourceContainer = rc;
+        this.sourceContainer = rc
 
-        targetLanguageFontSize = targetLanguageFontSize / RATIO_OF_SP_TO_PT;
-        this.targetLanguageFontSize = targetLanguageFontSize;
+        targetLanguageFontSize = fontSize / RATIO_OF_SP_TO_PT
 
-        baseFont = BaseFont.createFont(targetLanguageFontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-        titleFont = new Font(baseFont, targetLanguageFontSize * 2.5f, Font.BOLD);
-        chapterFont = new Font(baseFont, targetLanguageFontSize * 2);
-        bodyFont = new Font(baseFont, targetLanguageFontSize);
-        boldBodyFont = new Font(baseFont, targetLanguageFontSize, Font.BOLD);
-        headingFont = new Font(baseFont, targetLanguageFontSize * 1.4f, Font.BOLD);
-        underlineBodyFont = new Font(baseFont, targetLanguageFontSize, Font.UNDERLINE);
-        subFont = new Font(baseFont, targetLanguageFontSize, Font.ITALIC);
-        superScriptFont = new Font(baseFont, targetLanguageFontSize * 0.9f);
-        superScriptFont.setColor(94, 94, 94);
+        baseFont =
+            BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+        titleFont = Font(baseFont, targetLanguageFontSize * 2.5f, Font.BOLD)
+        chapterFont = Font(baseFont, targetLanguageFontSize * 2)
+        bodyFont = Font(baseFont, targetLanguageFontSize)
+        boldBodyFont = Font(baseFont, targetLanguageFontSize, Font.BOLD)
+        headingFont = Font(baseFont, targetLanguageFontSize * 1.4f, Font.BOLD)
+        underlineBodyFont = Font(baseFont, targetLanguageFontSize, Font.UNDERLINE)
+        subFont = Font(baseFont, targetLanguageFontSize, Font.ITALIC)
+        superScriptFont = Font(baseFont, targetLanguageFontSize * 0.9f)
+        superScriptFont.setColor(94, 94, 94)
 
-        licenseBaseFont = BaseFont.createFont(licenseFontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-        licenseFont = new Font(licenseBaseFont, 20);
-        this.targetlanguageRtl = targetlanguageRtl;
-        this.task = task;
-   }
+        licenseBaseFont =
+            BaseFont.createFont(licenseFontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+        licenseFont = Font(licenseBaseFont, 20f)
+    }
 
     /**
      * Include media (images) in the pdf
      * @param include
      */
-    public void includeMedia(boolean include) {
-        this.includeMedia = include;
+    fun includeMedia(include: Boolean) {
+        this.includeMedia = include
     }
 
     /**
      * Include incomplete translations
      * @param include
      */
-    public void includeIncomplete(boolean include) {
-        this.includeIncomplete = include;
+    fun includeIncomplete(include: Boolean) {
+        this.includeIncomplete = include
     }
 
-    public File print() throws Exception {
-        File tempFile = File.createTempFile(targetTranslation.getId(), ".pdf");
+    @Throws(Exception::class)
+    fun print(): File {
+        val tempFile = directoryProvider.createTempFile(translation.id, ".pdf")
 
-        Document document = new Document(PageSize.LETTER, HORIZONTAL_PADDING, HORIZONTAL_PADDING, VERTICAL_PADDING, VERTICAL_PADDING);
-        writer = PdfWriter.getInstance(document, new FileOutputStream(tempFile));
-        writer.setPageEvent(this);
-        document.open();
-        addMetaData(document);
-        addTitlePage(document);
-        addLicensePage(document);
-        addTOC(document);
-        addContent(document);
-        document.close();
+        val document = Document(
+            PageSize.LETTER,
+            HORIZONTAL_PADDING,
+            HORIZONTAL_PADDING,
+            VERTICAL_PADDING,
+            VERTICAL_PADDING
+        )
 
-        return tempFile;
+        FileOutputStream(tempFile).use { output ->
+            writer = PdfWriter.getInstance(document, output).apply {
+                pageEvent = this@PdfPrinter
+            }
+            document.open()
+            addMetaData(document)
+            addTitlePage(document)
+            addLicensePage(document)
+            addTOC(document)
+            addContent(document)
+            document.close()
+        }
+
+        return tempFile
     }
 
-    private void addTOC(Document document) throws DocumentException {
-        document.newPage();
-        document.resetPageCount(); // disable page numbering for this page (TOC)
+    @Throws(DocumentException::class)
+    private fun addTOC(document: Document) {
+        document.newPage()
+        document.resetPageCount() // disable page numbering for this page (TOC)
 
-        String toc = App.context().getResources().getString(R.string.table_of_contents);
-        com.itextpdf.text.Chapter intro = new com.itextpdf.text.Chapter(new Paragraph(toc, chapterFont), 0);
-        intro.setNumberDepth(0);
-        document.add(intro);
-        document.add(new Paragraph(" "));
+        val toc = context()!!.resources.getString(R.string.table_of_contents)
+        val intro = Chapter(Paragraph(toc, chapterFont), 0)
+        intro.numberDepth = 0
+        document.add(intro)
+        document.add(Paragraph(" "))
 
-        PdfPTable table = new PdfPTable(2);
-        table.setWidthPercentage(100);
-        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        val table = PdfPTable(2)
+        table.widthPercentage = 100f
+        table.horizontalAlignment = Element.ALIGN_CENTER
 
-        for(ChapterTranslation c:targetTranslation.getChapterTranslations()) {
-            if(!includeIncomplete && !c.isTitleFinished() && !sourceContainer.readChunk(c.getId(), "title").isEmpty()) {
-                continue;
+        for (c in translation.chapterTranslations) {
+            if (!includeIncomplete && !c.isTitleFinished && !sourceContainer?.readChunk(
+                    c.id,
+                    "title"
+                ).isNullOrEmpty()
+            ) {
+                continue
             }
 
-            if(! "front".equalsIgnoreCase(c.getId())) { // ignore front text as not human readable
+            if (!"front".equals(
+                    c.id,
+                    ignoreCase = true
+                )
+            ) { // ignore front text as not human readable
                 // write chapter title
-                final String title = chapterTitle(c);
-                Chunk chunk = new Chunk(title, headingFont).setLocalGoto(title);
+                val title = chapterTitle(c)
+                val chunk = Chunk(title, headingFont).setLocalGoto(title)
 
                 // put in chapter title in cell
-                PdfPCell titleCell = new PdfPCell();
-                Paragraph element = new Paragraph(targetLanguageFontSize * 1.6f); // set leading
-                element.setAlignment(Element.ALIGN_LEFT);
-                element.add(chunk);
-                titleCell.addElement(element);
-                titleCell.setRunDirection(targetlanguageRtl ? PdfWriter.RUN_DIRECTION_RTL : PdfWriter.RUN_DIRECTION_LTR);  // need to set predominant language direction in case first character runs other direction
-                titleCell.setBorder(Rectangle.NO_BORDER);
-                titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                val titleCell = PdfPCell()
+                val element = Paragraph(targetLanguageFontSize * 1.6f) // set leading
+                element.alignment = Element.ALIGN_LEFT
+                element.add(chunk)
+                titleCell.addElement(element)
+                titleCell.runDirection =
+                    if (rtl) PdfWriter.RUN_DIRECTION_RTL else PdfWriter.RUN_DIRECTION_LTR // need to set predominant language direction in case first character runs other direction
+                titleCell.border = Rectangle.NO_BORDER
+                titleCell.verticalAlignment = Element.ALIGN_MIDDLE
 
                 // put in page number in cell
-                PdfPCell pageNumberCell = new PdfPCell();
-                pageNumberCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                pageNumberCell.setBorder(Rectangle.NO_BORDER);
+                val pageNumberCell = PdfPCell()
+                pageNumberCell.horizontalAlignment = Element.ALIGN_RIGHT
+                pageNumberCell.border = Rectangle.NO_BORDER
 
                 // add placeholder for page reference
-                pageNumberCell.addElement(new VerticalPositionMark() {
-                    @Override
-                    public void draw(final PdfContentByte canvas, final float llx, final float lly, final float urx, final float ury, final float y) {
-                        final PdfTemplate createTemplate = canvas.createTemplate(50, 50);
-                        tocPlaceholder.put(title, createTemplate);
-                        float shift = targetLanguageFontSize * 1.25f;
-                        canvas.addTemplate(createTemplate, urx - 50, y - shift);
+                pageNumberCell.addElement(object : VerticalPositionMark() {
+                    override fun draw(
+                        canvas: PdfContentByte,
+                        llx: Float,
+                        lly: Float,
+                        urx: Float,
+                        ury: Float,
+                        y: Float
+                    ) {
+                        val createTemplate = canvas.createTemplate(50f, 50f)
+                        tocPlaceholder[title] = createTemplate
+                        val shift = targetLanguageFontSize * 1.25f
+                        canvas.addTemplate(createTemplate, urx - 50, y - shift)
                     }
-                });
+                })
 
-                if(!targetlanguageRtl) { // on LTR put page numbers on right
-                    table.addCell(titleCell);
-                    table.addCell(pageNumberCell);
-                    table.setWidths(new int[]{20, 1}); // title column is 20 times as wide as the page number column
+                if (!rtl) { // on LTR put page numbers on right
+                    table.addCell(titleCell)
+                    table.addCell(pageNumberCell)
+                    table.setWidths(
+                        intArrayOf(
+                            20,
+                            1
+                        )
+                    ) // title column is 20 times as wide as the page number column
                 } else { // on RTL put page numbers on left
-                    pageNumberCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-                    pageNumberCell.setRunDirection(PdfWriter.RUN_DIRECTION_LTR);
-                    table.addCell(pageNumberCell);
-                    table.addCell(titleCell);
-                    table.setWidths(new int[]{1, 20}); // title column is 20 times as wide as the page number column
+                    pageNumberCell.horizontalAlignment = Element.ALIGN_LEFT
+                    pageNumberCell.runDirection = PdfWriter.RUN_DIRECTION_LTR
+                    table.addCell(pageNumberCell)
+                    table.addCell(titleCell)
+                    table.setWidths(
+                        intArrayOf(
+                            1,
+                            20
+                        )
+                    ) // title column is 20 times as wide as the page number column
                 }
             }
         }
-        document.add(table);
+        document.add(table)
     }
 
     /**
      * Adds file meta data
      * @param document
      */
-    private void addMetaData(Document document) {
-        ProjectTranslation projectTranslation = targetTranslation.getProjectTranslation();
-        document.addTitle(projectTranslation.getTitle());
-        document.addSubject(projectTranslation.getDescription());
-        for(NativeSpeaker ns:targetTranslation.getContributors()) {
-            document.addAuthor(ns.name);
-            document.addCreator(ns.name);
+    private fun addMetaData(document: Document) {
+        val projectTranslation = translation.projectTranslation
+        document.addTitle(projectTranslation.title)
+        document.addSubject(projectTranslation.description)
+        for (ns in translation.contributors) {
+            document.addAuthor(ns.name)
+            document.addCreator(ns.name)
         }
-        document.addCreationDate();
-        document.addLanguage(targetTranslation.getTargetLanguageName());
-        document.addKeywords("format=" + format.getName());
+        document.addCreationDate()
+        document.addLanguage(translation.targetLanguageName)
+        document.addKeywords("format=" + format.getName())
     }
 
     /**
@@ -227,179 +265,209 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param document
      * @throws DocumentException
      */
-    private void addTitlePage(Document document) throws DocumentException {
-        document.resetPageCount(); // disable page numbering for this page (title)
+    @Throws(DocumentException::class)
+    private fun addTitlePage(document: Document) {
+        document.resetPageCount() // disable page numbering for this page (title)
 
         // table for vertical alignment
-        PdfPTable table = new PdfPTable(1);
-        table.setWidthPercentage(100);
-        PdfPCell spacerCell = new PdfPCell();
-        spacerCell.setBorder(Rectangle.NO_BORDER);
-        spacerCell.setFixedHeight(document.getPageSize().getHeight()/2 - VERTICAL_PADDING * 2);
-        table.addCell(spacerCell);
+        val table = PdfPTable(1)
+        table.widthPercentage = 100f
+        val spacerCell = PdfPCell()
+        spacerCell.border = Rectangle.NO_BORDER
+        spacerCell.fixedHeight = document.pageSize.height / 2 - VERTICAL_PADDING * 2
+        table.addCell(spacerCell)
 
         // book title
-        ProjectTranslation projectTranslation = targetTranslation.getProjectTranslation();
-        String title = projectTranslation.getTitle();
-        if(title.isEmpty()) {
-            Project project = App.getLibrary().index.getProject(targetTranslation.getTargetLanguageId(), targetTranslation.getProjectId(), true);
-            if( (project != null) && (project.name != null)) {
-                title = project.name;
+        val projectTranslation = translation.projectTranslation
+        var title = projectTranslation.title
+        if (title.isEmpty()) {
+            val project = App.library!!.index.getProject(
+                translation.targetLanguageId,
+                translation.projectId,
+                true
+            )
+            if ((project != null) && (project.name != null)) {
+                title = project.name
             }
         }
-        Paragraph titleParagraph = (new Paragraph(title, titleFont));
-        titleParagraph.setAlignment(Element.ALIGN_CENTER);
-        addBidiParagraphToTable(table, titleParagraph);
+        val titleParagraph = (Paragraph(title, titleFont))
+        titleParagraph.alignment = Element.ALIGN_CENTER
+        addBidiParagraphToTable(table, titleParagraph)
 
         // book description
-        Paragraph description = new Paragraph(projectTranslation.getDescription(), subFont);
-        description.setAlignment(Element.ALIGN_CENTER);
-        addBidiParagraphToTable(table, description);
+        val description = Paragraph(projectTranslation.description, subFont)
+        description.alignment = Element.ALIGN_CENTER
+        addBidiParagraphToTable(table, description)
 
-        document.add(table);
+        document.add(table)
     }
 
-    private String chapterTitle(ChapterTranslation c) {
-        String title;
-        if(c.title.isEmpty()) {
-            int chapterNumber = Util.strToInt(c.getId(), 0);
-            if (chapterNumber > 0) {
-                title = String.format(context.getResources().getString(R.string.label_chapter_title_detailed), "" + chapterNumber);
+    private fun chapterTitle(c: ChapterTranslation): String {
+        val title: String
+        if (c.title.isEmpty()) {
+            val chapterNumber = Util.strToInt(c.id, 0)
+            title = if (chapterNumber > 0) {
+                String.format(
+                    context.resources.getString(R.string.label_chapter_title_detailed),
+                    "" + chapterNumber
+                )
             } else {
-                title = ""; // not regular chapter, may be chapter 0 with id of "front"
+                "" // not regular chapter, may be chapter 0 with id of "front"
             }
         } else {
-            title = c.title;
+            title = c.title
         }
-        return title;
+        return title
     }
 
-    private void addChapterPage(Document document, ChapterTranslation c) throws DocumentException {
+    @Throws(DocumentException::class)
+    private fun addChapterPage(document: Document, c: ChapterTranslation) {
         // title
-        String title = chapterTitle(c);
-        Anchor anchor = new Anchor(title, chapterFont);
-        anchor.setName(c.title);
+        val title = chapterTitle(c)
+        val anchor = Anchor(title, chapterFont)
+        anchor.name = c.title
 
-        PdfPCell cell = new PdfPCell();
-        Paragraph element = new Paragraph();
-        element.setAlignment(Element.ALIGN_CENTER);
-        element.add(anchor);
-        cell.addElement(element);
-        cell.setRunDirection(targetlanguageRtl ? PdfWriter.RUN_DIRECTION_RTL : PdfWriter.RUN_DIRECTION_LTR);  // need to set predominant language direction in case first character runs other direction
-        cell.setBorder(Rectangle.NO_BORDER);
-        PdfPTable table = new PdfPTable(1);
-        table.addCell(cell);
+        val cell = PdfPCell()
+        val element = Paragraph()
+        element.alignment = Element.ALIGN_CENTER
+        element.add(anchor)
+        cell.addElement(element)
+        // need to set predominant language direction in case first character runs other direction
+        cell.runDirection =
+            if (rtl) PdfWriter.RUN_DIRECTION_RTL else PdfWriter.RUN_DIRECTION_LTR
+        cell.border = Rectangle.NO_BORDER
+        val table = PdfPTable(1)
+        table.addCell(cell)
 
-        Paragraph chapterParagraph = new Paragraph();
-        chapterParagraph.add(table);
-        chapterParagraph.setAlignment(Element.ALIGN_CENTER);
-        com.itextpdf.text.Chapter chapter = new com.itextpdf.text.Chapter(chapterParagraph, Util.strToInt(c.getId(), 0));
-        chapter.setNumberDepth(0);
+        val chapterParagraph = Paragraph()
+        chapterParagraph.add(table)
+        chapterParagraph.alignment = Element.ALIGN_CENTER
+        val chapter = Chapter(chapterParagraph, Util.strToInt(c.id, 0))
+        chapter.numberDepth = 0
 
-        document.add(chapter);
-        document.add(new Paragraph(" ")); // put whitespace between chapter title and text
+        document.add(chapter)
+        document.add(Paragraph(" ")) // put whitespace between chapter title and text
 
         // update TOC
-        PdfTemplate template = tocPlaceholder.get(title);
-        template.beginText();
-        template.setFontAndSize(baseFont, PAGE_NUMBER_FONT_SIZE);
-        template.setTextMatrix(50 - baseFont.getWidthPoint(String.valueOf(writer.getPageNumber()), PAGE_NUMBER_FONT_SIZE), 0);
-        template.showText(String.valueOf(writer.getPageNumber()));
-        template.endText();
+        val template = tocPlaceholder[title]
+        template!!.beginText()
+        template.setFontAndSize(baseFont, PAGE_NUMBER_FONT_SIZE)
+        template.setTextMatrix(
+            50 - baseFont.getWidthPoint(
+                writer!!.pageNumber.toString(),
+                PAGE_NUMBER_FONT_SIZE
+            ), 0f
+        )
+        template.showText(writer!!.pageNumber.toString())
+        template.endText()
     }
 
     /**
      * Adds the content of the book
      * @param document
      */
-    private void addContent(Document document) throws DocumentException, IOException {
-        ChapterTranslation[] chapterTranslations = targetTranslation.getChapterTranslations();
-        int chapterCount = chapterTranslations.length + 1;
-        double increments = 1.0/ chapterCount;
-        double progress = 0;
-        for(ChapterTranslation c: chapterTranslations) {
+    @Throws(DocumentException::class, IOException::class)
+    private fun addContent(document: Document) {
+        val chapterTranslations = translation.chapterTranslations
+        val chapterCount = chapterTranslations.size + 1
+        val increments = 1.0 / chapterCount
+        var progress = 0.0
+        for (c in chapterTranslations) {
+            val table = PdfPTable(1)
+            table.widthPercentage = 100f
 
-            PdfPTable table = new PdfPTable(1);
-            table.setWidthPercentage(100);
+            // TODO send progress via listener or callback
+            // task?.updateProgress(increments.let { progress += it; progress })
 
-            if(task != null) {
-                task.updateProgress(progress+=increments);
-            }
-
-            boolean chapter0 = (Util.strToInt(c.getId(), 0) == 0);
-            if(!chapter0) { // if chapter 00, then skip title since that was already printed as first page.
-                if (includeIncomplete || c.isTitleFinished() || sourceContainer.readChunk(c.getId(), "title").isEmpty()) {
-                    addChapterPage(document, c);
+            val chapter0 = (Util.strToInt(c.id, 0) == 0)
+            if (!chapter0) { // if chapter 00, then skip title since that was already printed as first page.
+                if (includeIncomplete || c.isTitleFinished || sourceContainer!!.readChunk(
+                        c.id,
+                        "title"
+                    ).isEmpty()
+                ) {
+                    addChapterPage(document, c)
                 }
             }
 
             // get chapter body
-            FrameTranslation[] frames = targetTranslation.getFrameTranslations(c.getId(), this.format);
-            ArrayList<FrameTranslation> frameList = ExportUsfm.sortFrameTranslations(frames);
-            for(int i=0; i < frameList.size(); i ++) {
-                FrameTranslation f = frameList.get(i);
-                if(includeIncomplete || f.isFinished()) {
-                    if(includeMedia && this.format == TranslationFormat.MARKDOWN) {
+            val frames = translation.getFrameTranslations(c.id, this.format)
+            val frameList = sortFrameTranslations(frames)
+            for (i in frameList.indices) {
+                val f = frameList[i]
+                if (includeIncomplete || f.isFinished) {
+                    if (includeMedia &&
+                        this.format == TranslationFormat.MARKDOWN &&
+                        imagesDir != null) {
                         // TODO: 11/13/2015 insert frame images if we have them.
-                        // TODO: 11/13/2015 eventually we need to provide the directory where to find these images which will be downloaded not in assets
+                        // TODO: 11/13/2015 eventually we need to provide the directory
+                        //  where to find these images which will be downloaded not in assets
                         try {
-                            File imageFile = new File(imagesDir, targetTranslation.getProjectId() + "-" + f.getComplexId() + ".jpg");
-                            if(imageFile.exists()) {
-                                if( i != 0) {
-                                    addBidiTextToTable(10, " ", subFont, table); // add space between text above and image below
+                            val imageFile = File(
+                                imagesDir,
+                                translation.projectId + "-" + f.complexId + ".jpg"
+                            )
+                            if (imageFile.exists()) {
+                                if (i != 0) {
+                                    addBidiTextToTable(
+                                        10,
+                                        " ",
+                                        subFont,
+                                        table
+                                    ) // add space between text above and image below
                                 }
-                                addImage(document, table, imageFile.getAbsolutePath());
+                                addImage(document, table, imageFile.absolutePath)
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
                     // TODO: 11/13/2015 render body according to the format
-                    String body = f.body;
-                    if(format == TranslationFormat.USFM) {
-                        addUSFM(f.body, table);
+                    val body = f.body
+                    if (format == TranslationFormat.USFM) {
+                        addUSFM(f.body, table)
                     } else {
-                        addBidiTextToTable(16, body, this.bodyFont, table);
+                        addBidiTextToTable(16, body, this.bodyFont, table)
                     }
                 }
             }
 
             // chapter reference
-            if((includeIncomplete || c.isReferenceFinished()) && !c.reference.isEmpty()) {
-                addBidiTextToTable(16, " ", this.bodyFont, table);
-                addBidiTextToTable(16, c.reference, subFont, table);
+            if ((includeIncomplete || c.isReferenceFinished) && c.reference.isNotEmpty()) {
+                addBidiTextToTable(16, " ", this.bodyFont, table)
+                addBidiTextToTable(16, c.reference, subFont, table)
             }
 
-            document.add(table);
+            document.add(table)
         }
     }
 
-    private void addUSFM(String usfm, PdfPTable table) {
-        Pattern pattern = Pattern.compile(USFMVerseSpan.PATTERN);
-        Matcher matcher = pattern.matcher(usfm);
-        int lastIndex = 0;
-        Paragraph paragraph = new Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont);
-        while(matcher.find()) {
+    private fun addUSFM(usfm: String, table: PdfPTable) {
+        val pattern = Pattern.compile(USFMVerseSpan.PATTERN)
+        val matcher = pattern.matcher(usfm)
+        var lastIndex = 0
+        val paragraph = Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont)
+        while (matcher.find()) {
             // add preceding text
-            paragraph.add(usfm.substring(lastIndex, matcher.start()));
+            paragraph.add(usfm.substring(lastIndex, matcher.start()))
 
             // add verse
-            Span verse = new USFMVerseSpan(matcher.group(1));
-            Chunk chunk = new Chunk();
-            chunk.setFont(superScriptFont);
-            chunk.setTextRise(targetLanguageFontSize/2);
+            val verse: Span = USFMVerseSpan(matcher.group(1))
+            val chunk = Chunk()
+            chunk.font = superScriptFont
+            chunk.setTextRise(targetLanguageFontSize / 2)
             if (verse != null) {
-                chunk.append(verse.getHumanReadable().toString());
+                chunk.append(verse.humanReadable.toString())
             } else {
                 // failed to parse the verse
-                chunk.append(usfm.subSequence(lastIndex, matcher.end()).toString());
+                chunk.append(usfm.subSequence(lastIndex, matcher.end()).toString())
             }
-            chunk.append(" ");
-            paragraph.add(chunk);
-            lastIndex = matcher.end();
+            chunk.append(" ")
+            paragraph.add(chunk)
+            lastIndex = matcher.end()
         }
-        paragraph.add(usfm.subSequence(lastIndex, usfm.length()).toString());
-        addBidiParagraphToTable(table, paragraph);
+        paragraph.add(usfm.subSequence(lastIndex, usfm.length).toString())
+        addBidiParagraphToTable(table, paragraph)
     }
 
     /**
@@ -410,9 +478,14 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param table
      * @return
      */
-    private PdfPCell addBidiTextToTable(int leading, String text, Font font, PdfPTable table) {
-        Paragraph paragraph = new Paragraph(leading, text, font);
-        return addBidiParagraphToTable(table, paragraph);
+    private fun addBidiTextToTable(
+        leading: Int,
+        text: String,
+        font: Font,
+        table: PdfPTable
+    ): PdfPCell {
+        val paragraph = Paragraph(leading.toFloat(), text, font)
+        return addBidiParagraphToTable(table, paragraph)
     }
 
     /**
@@ -421,110 +494,55 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param paragraph
      * @return
      */
-    private PdfPCell addBidiParagraphToTable(PdfPTable table, Paragraph paragraph) {
-        PdfPCell cell = new PdfPCell();
-        cell.addElement(paragraph);
-        cell.setRunDirection(targetlanguageRtl ? PdfWriter.RUN_DIRECTION_RTL : PdfWriter.RUN_DIRECTION_LTR);  // need to set predominant language direction in case first character runs other direction
-        cell.setBorder(Rectangle.NO_BORDER);
-        table.addCell(cell);
-        return cell;
+    private fun addBidiParagraphToTable(table: PdfPTable, paragraph: Paragraph): PdfPCell {
+        val cell = PdfPCell()
+        cell.addElement(paragraph)
+        // need to set predominant language direction in case first character runs other direction
+        cell.runDirection =
+            if (rtl) PdfWriter.RUN_DIRECTION_RTL else PdfWriter.RUN_DIRECTION_LTR
+        cell.border = Rectangle.NO_BORDER
+        table.addCell(cell)
+        return cell
     }
 
-    private static void addEmptyLine(Paragraph paragraph, int number) {
-        for (int i = 0; i < number; i++) {
-            paragraph.add(new Paragraph(" "));
-        }
+    override fun onChapter(
+        writer: PdfWriter,
+        document: Document,
+        paragraphPosition: Float,
+        title: Paragraph
+    ) {
+        pageByTitle[title.content] = writer.pageNumber
     }
 
-    /**
-     * Add image from a file path
-     *
-     * @param document
-     * @param path
-     * @throws DocumentException
-     * @throws IOException
-     */
-    public static void addImage(Document document, PdfPTable table, String path) throws DocumentException, IOException {
-        Image image = Image.getInstance(path);
-        image.setAlignment(Element.ALIGN_CENTER);
-        if(image.getScaledWidth() > pageWidth(document) || image.getScaledHeight() > pageHeight(document)) {
-            image.scaleToFit(pageWidth(document), pageHeight(document));
-        }
-
-        Paragraph paragraph = new Paragraph(new Chunk(image, 0, 0, true));
-        PdfPCell cell = new PdfPCell();
-        cell.addElement(paragraph);
-        cell.setBorder(Rectangle.NO_BORDER);
-        table.addCell(cell);
+    override fun onSection(
+        writer: PdfWriter,
+        document: Document,
+        paragraphPosition: Float,
+        depth: Int,
+        title: Paragraph
+    ) {
+        pageByTitle[title.content] = writer.pageNumber
     }
 
-    /**
-     * Add Image from an input stream
-     * @param document
-     * @param is
-     * @throws DocumentException
-     * @throws IOException
-     */
-    public static void addImage(Document document, InputStream is) throws DocumentException, IOException {
-        Bitmap bmp = BitmapFactory.decodeStream(is);
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        Image image = Image.getInstance(stream.toByteArray());
-        image.setAlignment(Element.ALIGN_CENTER);
-        if(image.getScaledWidth() > pageWidth(document) || image.getScaledHeight() > pageHeight(document)) {
-            image.scaleToFit(pageWidth(document), pageHeight(document));
-        }
-        document.add(new Chunk(image, 0, 0, true));
-    }
+    override fun onEndPage(writer: PdfWriter, document: Document) {
+        val cb = writer.directContent
+        cb.saveState()
 
-    /**
-     * Returns the height of the printable area of the page
-     * @param document
-     * @return
-     */
-    private static float pageHeight(Document document) {
-        return document.getPageSize().getHeight() - VERTICAL_PADDING * 2;
-    }
-
-    /**
-     * Returns the width of the printable area of the page
-     * @param document
-     * @return
-     */
-    private static float pageWidth(Document document) {
-        return document.getPageSize().getWidth() - HORIZONTAL_PADDING * 2;
-    }
-
-    @Override
-    public void onChapter(final PdfWriter writer, final Document document, final float paragraphPosition, final Paragraph title) {
-        this.pageByTitle.put(title.getContent(), writer.getPageNumber());
-    }
-
-    @Override
-    public void onSection(final PdfWriter writer, final Document document, final float paragraphPosition, final int depth, final Paragraph title) {
-        this.pageByTitle.put(title.getContent(), writer.getPageNumber());
-    }
-
-    @Override
-    public void onEndPage(PdfWriter writer, Document document) {
-        PdfContentByte cb = writer.getDirectContent();
-        cb.saveState();
-
-        String pageNumberShown = "";
-        int pageNumber = writer.getPageNumber();
-        if(pageNumber > 0) { // only add page number if above zero
-            pageNumberShown += pageNumber;
+        var pageNumberShown: String? = ""
+        val pageNumber = writer.pageNumber
+        if (pageNumber > 0) { // only add page number if above zero
+            pageNumberShown += pageNumber
         }
 
         // place page number just within the margin
-        float textBase = document.bottom() - PAGE_NUMBER_FONT_SIZE;
+        val textBase = document.bottom() - PAGE_NUMBER_FONT_SIZE
 
-        cb.beginText();
-        cb.setFontAndSize(baseFont, PAGE_NUMBER_FONT_SIZE);
-        cb.setTextMatrix((document.right() / 2) + HORIZONTAL_PADDING / 2, textBase);
-        cb.showText(pageNumberShown);
-        cb.endText();
-        cb.restoreState();
+        cb.beginText()
+        cb.setFontAndSize(baseFont, PAGE_NUMBER_FONT_SIZE)
+        cb.setTextMatrix((document.right() / 2) + HORIZONTAL_PADDING / 2, textBase)
+        cb.showText(pageNumberShown)
+        cb.endText()
+        cb.restoreState()
     }
 
     /**
@@ -532,44 +550,45 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param document
      * @throws DocumentException
      */
-    private void addLicensePage(Document document) throws DocumentException {
+    @Throws(DocumentException::class)
+    private fun addLicensePage(document: Document) {
         // title
-        String title = "";
-        Anchor anchor = new Anchor(title, licenseFont);
-        anchor.setName("name");
-        Paragraph chapterParagraph = new Paragraph(anchor);
-        chapterParagraph.setAlignment(Element.ALIGN_CENTER);
-        com.itextpdf.text.Chapter chapter = new com.itextpdf.text.Chapter(chapterParagraph, 0);
-        chapter.setNumberDepth(0);
+        val title = ""
+        val anchor = Anchor(title, licenseFont)
+        anchor.name = "name"
+        val chapterParagraph = Paragraph(anchor)
+        chapterParagraph.alignment = Element.ALIGN_CENTER
+        val chapter = Chapter(chapterParagraph, 0)
+        chapter.numberDepth = 0
 
         // table for vertical alignment
-        PdfPTable table = new PdfPTable(1);
-        table.setWidthPercentage(100);
-        PdfPCell cell = new PdfPCell();
-        cell.setBorder(Rectangle.NO_BORDER);
-        cell.setMinimumHeight(document.getPageSize().getHeight() - VERTICAL_PADDING * 2);
-        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-//        cell.addElement(chapter);
-        table.addCell(cell);
+        val table = PdfPTable(1)
+        table.widthPercentage = 100f
+        val cell = PdfPCell()
+        cell.border = Rectangle.NO_BORDER
+        cell.minimumHeight = document.pageSize.height - VERTICAL_PADDING * 2
+        cell.verticalAlignment = Element.ALIGN_MIDDLE
+        //        cell.addElement(chapter);
+        table.addCell(cell)
 
         // place license title on it's own page
-        document.newPage();
-        document.resetPageCount(); // disable page numbering for this page (license)
-        document.add(chapter);
+        document.newPage()
+        document.resetPageCount() // disable page numbering for this page (license)
+        document.add(chapter)
 
         // translate simple html to paragraphs
-        String license = App.context().getResources().getString(R.string.license_pdf);
+        var license = context()!!.resources.getString(R.string.license_pdf)
 
-        if(includeMedia) {
-            license += App.context().getResources().getString(R.string.artwork_attribution_pdf);
+        if (includeMedia) {
+            license += context()!!.resources.getString(R.string.artwork_attribution_pdf)
         }
 
-        license = license.replace("&#8226;", "\u2022");
+        license = license.replace("&#8226;", "\u2022")
 
-        mCurrentParagraph = null;
-        parseHtml( document, license, 0);
+        mCurrentParagraph = null
+        parseHtml(document, license, 0)
 
-        nextParagraph(document);
+        nextParagraph(document)
     }
 
     /**
@@ -579,48 +598,50 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param pos
      * @throws DocumentException
      */
-    private void parseHtml(Document document, String text, int pos) throws DocumentException {
-        if(text == null) {
-            return;
+    @Throws(DocumentException::class)
+    private fun parseHtml(document: Document, text: String?, pos: Int) {
+        var position = pos
+        if (text == null) {
+            return
         }
 
-        int length = text.length();
-        FoundHtml foundHtml;
-        while(pos < length) {
-            foundHtml = getNextHtml(text, pos);
-            if(null == foundHtml) {
-                break;
+        val length = text.length
+        var foundHtml: FoundHtml?
+        while (position < length) {
+            foundHtml = getNextHtml(text, position)
+            if (null == foundHtml) {
+                break
             }
 
-            if(foundHtml.startPos > pos) {
-                String beforeText = text.substring(pos, foundHtml.startPos);
-                addHtmlChunk(beforeText, bodyFont);
+            if (foundHtml.startPos > position) {
+                val beforeText = text.substring(position, foundHtml.startPos)
+                addHtmlChunk(beforeText, bodyFont)
             }
 
-            if("b".equals(foundHtml.html)) { // bold
-                addHtmlChunk(foundHtml.enclosed, boldBodyFont);
-            } else if((foundHtml.html.length() > 0) && (foundHtml.html.charAt(0) == 'h')) { // header
-                nextParagraph(document);
-                mCurrentParagraph = new Paragraph(foundHtml.enclosed, headingFont);
-                nextParagraph(document);
-            } else if((foundHtml.html.length() > 0) && (foundHtml.html.charAt(0) == 'a')) { // anchor
-                addHtmlChunk(foundHtml.enclosed, underlineBodyFont);
-            } else if("br".equals(foundHtml.html)) { // line break
-                nextParagraph(document);
-            } else if("p".equals(foundHtml.html)) { // line break
-                blankLine(document);
-                parseHtml( document, foundHtml.enclosed, 0);
-                nextParagraph(document);
+            if ("b" == foundHtml.html) { // bold
+                addHtmlChunk(foundHtml.enclosed, boldBodyFont)
+            } else if ((foundHtml.html.isNotEmpty()) && (foundHtml.html[0] == 'h')) { // header
+                nextParagraph(document)
+                mCurrentParagraph = Paragraph(foundHtml.enclosed, headingFont)
+                nextParagraph(document)
+            } else if ((foundHtml.html.isNotEmpty()) && (foundHtml.html[0] == 'a')) { // anchor
+                addHtmlChunk(foundHtml.enclosed, underlineBodyFont)
+            } else if ("br" == foundHtml.html) { // line break
+                nextParagraph(document)
+            } else if ("p" == foundHtml.html) { // line break
+                blankLine(document)
+                parseHtml(document, foundHtml.enclosed, 0)
+                nextParagraph(document)
             } else { // anything else just strip off the html tag
-                parseHtml( document, foundHtml.enclosed, 0);
+                parseHtml(document, foundHtml.enclosed, 0)
             }
 
-            pos = foundHtml.htmlFinishPos;
+            position = foundHtml.htmlFinishPos
         }
 
-        if(pos < length) {
-            String rest = text.substring(pos);
-            addHtmlChunk(rest, bodyFont);
+        if (position < length) {
+            val rest = text.substring(position)
+            addHtmlChunk(rest, bodyFont)
         }
     }
 
@@ -630,19 +651,27 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param font
      * @throws DocumentException
      */
-    private void addHtmlChunk(String text, Font font) throws DocumentException {
-        if((text != null) && !text.isEmpty()) {
-            Character c = text.charAt(0);
-            text = text.replace("\n","");
-            while((text.length() > 1) && ("  ".equals(text.substring(0,2)))) { // remove extra leading space
-                text = text.substring(1);
+    @Throws(DocumentException::class)
+    private fun addHtmlChunk(text: String, font: Font) {
+        var txt = text
+        if (txt.isNotEmpty()) {
+            txt = txt.replace("\n", "")
+            while ((txt.length > 1) && ("  " == txt.substring(
+                    0,
+                    2
+                ))
+            ) { // remove extra leading space
+                txt = txt.substring(1)
             }
-            while((text.length() > 1) && ("  ".equals(text.substring(text.length() - 2)))) { // remove extra leading space
-                text = text.substring(0, text.length() - 1);
+            while ((txt.length > 1) && ("  " == txt.substring(
+                    txt.length - 2
+                ))
+            ) { // remove extra leading space
+                txt = txt.substring(0, txt.length - 1)
             }
 
-            Chunk chunk = new Chunk(text, font);
-            addChunkToParagraph(chunk);
+            val chunk = Chunk(txt, font)
+            addChunkToParagraph(chunk)
         }
     }
 
@@ -651,11 +680,12 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param document
      * @throws DocumentException
      */
-    private void nextParagraph(Document document) throws DocumentException {
-        if(mCurrentParagraph != null) {
-            document.add(mCurrentParagraph);
+    @Throws(DocumentException::class)
+    private fun nextParagraph(document: Document) {
+        if (mCurrentParagraph != null) {
+            document.add(mCurrentParagraph)
         }
-        mCurrentParagraph = null;
+        mCurrentParagraph = null
     }
 
     /**
@@ -663,10 +693,11 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param document
      * @throws DocumentException
      */
-    private void blankLine(Document document) throws DocumentException {
-        nextParagraph(document);
-        mCurrentParagraph = new Paragraph(" ", bodyFont);
-        nextParagraph(document);
+    @Throws(DocumentException::class)
+    private fun blankLine(document: Document) {
+        nextParagraph(document)
+        mCurrentParagraph = Paragraph(" ", bodyFont)
+        nextParagraph(document)
     }
 
     /**
@@ -674,11 +705,12 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param chunk
      * @throws DocumentException
      */
-    private void addChunkToParagraph(Chunk chunk) throws DocumentException {
-        if(null == mCurrentParagraph) {
-            mCurrentParagraph = new Paragraph("", bodyFont);
+    @Throws(DocumentException::class)
+    private fun addChunkToParagraph(chunk: Chunk) {
+        if (null == mCurrentParagraph) {
+            mCurrentParagraph = Paragraph("", bodyFont)
         }
-        mCurrentParagraph.add(chunk);
+        mCurrentParagraph!!.add(chunk)
     }
 
     /**
@@ -687,53 +719,120 @@ public class PdfPrinter extends PdfPageEventHelper {
      * @param startPos
      * @return
      */
-    private FoundHtml getNextHtml(String text, int startPos) {
-        int pos = text.indexOf("<", startPos);
-        if(pos < 0) {
-            return null;
+    private fun getNextHtml(text: String, startPos: Int): FoundHtml? {
+        val pos = text.indexOf("<", startPos)
+        if (pos < 0) {
+            return null
         }
 
-        int end = text.indexOf(">", pos + 1);
-        int length = text.length();
-        if(end < 0) {
-            return new FoundHtml(text.substring(pos + 1), pos, length, "");
+        val end = text.indexOf(">", pos + 1)
+        val length = text.length
+        if (end < 0) {
+            return FoundHtml(text.substring(pos + 1), pos, length, "")
         }
 
-        String token = text.substring(pos + 1, end);
-        if(!token.isEmpty() && (token.charAt(token.length() - 1) == '/')) {
-            return new FoundHtml(token.substring(0, token.length() - 1), pos, end + 1, "");
+        val token = text.substring(pos + 1, end)
+        if (token.isNotEmpty() && (token[token.length - 1] == '/')) {
+            return FoundHtml(token.substring(0, token.length - 1), pos, end + 1, "")
         }
 
-        String[] parts = token.split(" "); // ignore attibutes
-        String endToken = "</" + parts[0] + ">";
-        int finish = text.indexOf(endToken, end + 1);
-        if(finish < 0) { // if end token not found, then stop at next
-            int next = text.indexOf("<", end + 1);
-            if(next < 0) {
-                return new FoundHtml(token, pos, length, text.substring(end + 1, length));
+        val parts = token.split(" ".toRegex()).dropLastWhile { it.isEmpty() }
+            .toTypedArray() // ignore attributes
+        val endToken = "</" + parts[0] + ">"
+        val finish = text.indexOf(endToken, end + 1)
+        if (finish < 0) { // if end token not found, then stop at next
+            val next = text.indexOf("<", end + 1)
+            return if (next < 0) {
+                FoundHtml(token, pos, length, text.substring(end + 1, length))
             } else {
-                return new FoundHtml(token, pos, next, text.substring(end + 1, next));
+                FoundHtml(token, pos, next, text.substring(end + 1, next))
             }
         }
 
-        int htmlFinishPos = finish + endToken.length();
-        return new FoundHtml(token, pos, htmlFinishPos, text.substring(end + 1, finish));
+        val htmlFinishPos = finish + endToken.length
+        return FoundHtml(token, pos, htmlFinishPos, text.substring(end + 1, finish))
     }
 
     /**
      * class for keeping track of an html tag that was found, it's name, it's contents, and position
      */
-    private class FoundHtml {
-        public String html;
-        public String enclosed;
-        public int startPos;
-        public int htmlFinishPos;
+    private inner class FoundHtml(
+        var html: String,
+        var startPos: Int,
+        var htmlFinishPos: Int,
+        var enclosed: String
+    )
 
-        public FoundHtml(String html, int startPos, int htmlFinishPos, String enclosed) {
-            this.html = html;
-            this.startPos = startPos;
-            this.htmlFinishPos = htmlFinishPos;
-            this.enclosed = enclosed;
+    companion object {
+        private const val PAGE_NUMBER_FONT_SIZE = 10f
+        private const val VERTICAL_PADDING = 72.0f // 1 inch
+        private const val HORIZONTAL_PADDING = 72.0f // 1 inch
+        const val RATIO_OF_SP_TO_PT: Float = 2.5f
+        private fun addEmptyLine(paragraph: Paragraph, number: Int) {
+            for (i in 0 until number) {
+                paragraph.add(Paragraph(" "))
+            }
+        }
+
+        /**
+         * Add image from a file path
+         *
+         * @param document
+         * @param path
+         * @throws DocumentException
+         * @throws IOException
+         */
+        @Throws(DocumentException::class, IOException::class)
+        fun addImage(document: Document, table: PdfPTable, path: String?) {
+            val image = Image.getInstance(path)
+            image.alignment = Element.ALIGN_CENTER
+            if (image.scaledWidth > pageWidth(document) || image.scaledHeight > pageHeight(document)) {
+                image.scaleToFit(pageWidth(document), pageHeight(document))
+            }
+
+            val paragraph = Paragraph(Chunk(image, 0f, 0f, true))
+            val cell = PdfPCell()
+            cell.addElement(paragraph)
+            cell.border = Rectangle.NO_BORDER
+            table.addCell(cell)
+        }
+
+        /**
+         * Add Image from an input stream
+         * @param document
+         * @param is
+         * @throws DocumentException
+         * @throws IOException
+         */
+        @Throws(DocumentException::class, IOException::class)
+        fun addImage(document: Document, `is`: InputStream?) {
+            val bmp = BitmapFactory.decodeStream(`is`)
+            val stream = ByteArrayOutputStream()
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            val image = Image.getInstance(stream.toByteArray())
+            image.alignment = Element.ALIGN_CENTER
+            if (image.scaledWidth > pageWidth(document) || image.scaledHeight > pageHeight(document)) {
+                image.scaleToFit(pageWidth(document), pageHeight(document))
+            }
+            document.add(Chunk(image, 0f, 0f, true))
+        }
+
+        /**
+         * Returns the height of the printable area of the page
+         * @param document
+         * @return
+         */
+        private fun pageHeight(document: Document): Float {
+            return document.pageSize.height - VERTICAL_PADDING * 2
+        }
+
+        /**
+         * Returns the width of the printable area of the page
+         * @param document
+         * @return
+         */
+        private fun pageWidth(document: Document): Float {
+            return document.pageSize.width - HORIZONTAL_PADDING * 2
         }
     }
 }

@@ -1,59 +1,51 @@
-package com.door43.translationstudio.ui;
+package com.door43.translationstudio.ui
 
-import android.content.DialogInterface;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.databinding.ActivityRegisterOfflineBinding
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.Profile;
-import com.door43.widget.ViewUtil;
+@AndroidEntryPoint
+class RegisterOfflineActivity : AppCompatActivity() {
+    @Inject lateinit var profile: Profile
 
-public class RegisterOfflineActivity extends AppCompatActivity {
+    private lateinit var binding: ActivityRegisterOfflineBinding
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register_offline);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityRegisterOfflineBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        final EditText fullNameText = (EditText) findViewById(R.id.full_name);
-        Button cancelButton = (Button)findViewById(R.id.cancel_button);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-        Button continueButton = (Button)findViewById(R.id.ok_button);
-        continueButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String fullName = fullNameText.getText().toString().trim();
-                if(!fullName.equals("")) {
-                    ProfileActivity.showPrivacyNotice(RegisterOfflineActivity.this, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            App.setProfile(new Profile(fullName));
-                            finish();
-                        }
-                    });
+        with(binding) {
+            account.cancelButton.setOnClickListener { finish() }
+            account.okButton.setOnClickListener {
+                val fullName = account.fullName.text.toString().trim()
+                if (fullName.isNotEmpty()) {
+                    ProfileActivity.showPrivacyNotice(this@RegisterOfflineActivity) { _, _ ->
+                        profile.login(fullName)
+                        finish()
+                    }
                 } else {
                     // missing fields
-                    Snackbar snack = Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.complete_required_fields), Snackbar.LENGTH_LONG);
-                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                    snack.show();
+                    val snack = Snackbar.make(
+                        findViewById(android.R.id.content),
+                        resources.getString(R.string.complete_required_fields),
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
+                    snack.show()
                 }
             }
-        });
-        findViewById(R.id.privacy_notice).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ProfileActivity.showPrivacyNotice(RegisterOfflineActivity.this, null);
+            account.privacyNotice.setOnClickListener {
+                ProfileActivity.showPrivacyNotice(
+                    this@RegisterOfflineActivity, null
+                )
             }
-        });
+        }
     }
 }

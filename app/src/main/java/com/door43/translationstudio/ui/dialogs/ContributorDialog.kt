@@ -1,185 +1,156 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
-
-import android.text.Html;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.TextView;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.NativeSpeaker;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.ui.legal.LegalDocumentActivity;
-import com.door43.widget.ViewUtil;
-
-import java.security.InvalidParameterException;
+import android.content.Intent
+import android.os.Bundle
+import android.text.Html
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import com.door43.translationstudio.App.Companion.getTranslator
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.NativeSpeaker
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.databinding.DialogNativeSpeakerBinding
+import com.door43.translationstudio.ui.legal.LegalDocumentActivity
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import java.security.InvalidParameterException
 
 /**
  * Created by joel on 2/19/2016.
  */
-public class ContributorDialog extends DialogFragment {
-    public static final java.lang.String ARG_NATIVE_SPEAKER = "native_speaker_name";
-    public static final java.lang.String ARG_TARGET_TRANSLATION = "target_translation_id";
-    private EditText mNameView;
-    private Button mCancelButton;
-    private Button mSaveButton;
-    private TargetTranslation mTargetTranslation = null;
-    private NativeSpeaker mNativeSpeaker = null;
-    private TextView mTitleView;
-    private View.OnClickListener mListener;
-    private Button mDeleteButton;
-    private CheckBox mAgreementCheck;
-    private View mLicenseGroup;
-    private Button mLicenseAgreementButton;
-    private Button mStatementOfFaithButton;
-    private Button mTranslationGuidelinesButton;
+class ContributorDialog : DialogFragment() {
+    private var mTargetTranslation: TargetTranslation? = null
+    private var mNativeSpeaker: NativeSpeaker? = null
+    private var mListener: View.OnClickListener? = null
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_native_speaker, container, false);
+    private var _binding: DialogNativeSpeakerBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogNativeSpeakerBinding.inflate(inflater, container, false)
 
         // load target
-        Bundle args = getArguments();
-        if(args != null) {
-            String nativeSpeakerName = args.getString(ARG_NATIVE_SPEAKER, null);
-            String targetTranslationId = args.getString(ARG_TARGET_TRANSLATION, null);
-            mTargetTranslation = App.getTranslator().getTargetTranslation(targetTranslationId);
-            if(nativeSpeakerName != null && mTargetTranslation != null) {
-                mNativeSpeaker = mTargetTranslation.getContributor(nativeSpeakerName);
+        val args = arguments
+        if (args != null) {
+            val nativeSpeakerName = args.getString(ARG_NATIVE_SPEAKER, null)
+            val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION, null)
+            mTargetTranslation = getTranslator().getTargetTranslation(targetTranslationId)
+            if (nativeSpeakerName != null && mTargetTranslation != null) {
+                mNativeSpeaker = mTargetTranslation!!.getContributor(nativeSpeakerName)
             }
         }
-        if(mTargetTranslation == null) {
-            throw new InvalidParameterException("Missing the target translation parameter");
+        if (mTargetTranslation == null) {
+            throw InvalidParameterException("Missing the target translation parameter")
         }
 
-        mTitleView = (TextView)v.findViewById(R.id.title);
-        mNameView = (EditText)v.findViewById(R.id.name);
-        mCancelButton = (Button)v.findViewById(R.id.cancel_button);
-        mSaveButton = (Button)v.findViewById(R.id.save_button);
-        mDeleteButton = (Button)v.findViewById(R.id.delete_button);
-        mAgreementCheck = (CheckBox)v.findViewById(R.id.agreement_check);
-        mLicenseGroup = v.findViewById(R.id.license_group);
-        mLicenseAgreementButton = (Button)v.findViewById(R.id.license_agreement_btn);
-        mStatementOfFaithButton = (Button)v.findViewById(R.id.statement_of_faith_btn);
-        mTranslationGuidelinesButton = (Button)v.findViewById(R.id.translation_guidelines_btn);
+        with(binding) {
+            if (mNativeSpeaker != null) {
+                name.setText(mNativeSpeaker!!.name)
+                title.setText(R.string.edit_contributor)
+                deleteButton.visibility = View.VISIBLE
+                agreementCheck.isEnabled = false
+                agreementCheck.isChecked = true
+                licenseGroup.visibility = View.GONE
+            } else {
+                title.setText(R.string.add_contributor)
+                deleteButton.visibility = View.GONE
+                agreementCheck.isEnabled = true
+                agreementCheck.isChecked = false
+                licenseGroup.visibility = View.VISIBLE
+            }
 
-        if(mNativeSpeaker != null) {
-            mNameView.setText(mNativeSpeaker.name);
-            mTitleView.setText(R.string.edit_contributor);
-            mDeleteButton.setVisibility(View.VISIBLE);
-            mAgreementCheck.setEnabled(false);
-            mAgreementCheck.setChecked(true);
-            mLicenseGroup.setVisibility(View.GONE);
-        } else {
-            mTitleView.setText(R.string.add_contributor);
-            mDeleteButton.setVisibility(View.GONE);
-            mAgreementCheck.setEnabled(true);
-            mAgreementCheck.setChecked(false);
-            mLicenseGroup.setVisibility(View.VISIBLE);
-        }
+            licenseAgreementBtn.setOnClickListener {
+                val intent = Intent(activity, LegalDocumentActivity::class.java)
+                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.license_pdf)
+                startActivity(intent)
+            }
 
-        mLicenseAgreementButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), LegalDocumentActivity.class);
-                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.license_pdf);
-                startActivity(intent);
+            statementOfFaithBtn.setOnClickListener {
+                val intent = Intent(activity, LegalDocumentActivity::class.java)
+                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.statement_of_faith)
+                startActivity(intent)
             }
-        });
-        mStatementOfFaithButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), LegalDocumentActivity.class);
-                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.statement_of_faith);
-                startActivity(intent);
+
+            translationGuidelinesBtn.setOnClickListener {
+                val intent = Intent(activity, LegalDocumentActivity::class.java)
+                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.translation_guidlines)
+                startActivity(intent)
             }
-        });
-        mTranslationGuidelinesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), LegalDocumentActivity.class);
-                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.translation_guidlines);
-                startActivity(intent);
-            }
-        });
-        mDeleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
+
+            deleteButton.setOnClickListener {
+                AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                     .setTitle(R.string.delete_translator_title)
                     .setMessage(Html.fromHtml(getString(R.string.confirm_delete_translator)))
-                    .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            mTargetTranslation.removeContributor(mNativeSpeaker);
-                            if(mListener != null) {
-                                mListener.onClick(v);
-                            }
-                            dismiss();
+                    .setPositiveButton(
+                        R.string.confirm
+                    ) { _, _ ->
+                        mTargetTranslation!!.removeContributor(mNativeSpeaker)
+                        if (mListener != null) {
+                            mListener!!.onClick(deleteButton)
                         }
+                        dismiss()
                     }
-                    )
                     .setNegativeButton(R.string.title_cancel, null)
-                    .show();
+                    .show()
             }
-        });
-        mCancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-        mSaveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String name = mNameView.getText().toString();
-                if(mAgreementCheck.isChecked() && !name.isEmpty()) {
-                    NativeSpeaker duplicate = mTargetTranslation.getContributor(name);
+
+            saveButton.setOnClickListener {
+                val name = name.text.toString()
+                if (agreementCheck.isChecked && name.isNotEmpty()) {
+                    val duplicate = mTargetTranslation!!.getContributor(name)
                     if (duplicate != null) {
-                        if (mNativeSpeaker != null && mNativeSpeaker.equals(duplicate)) {
+                        if (mNativeSpeaker != null && mNativeSpeaker == duplicate) {
                             // no change
-                            dismiss();
+                            dismiss()
                         } else {
-                            Snackbar snack = Snackbar.make(v, R.string.duplicate_native_speaker, Snackbar.LENGTH_SHORT);
-                            ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                            snack.show();
+                            val snack = Snackbar.make(
+                                saveButton,
+                                R.string.duplicate_native_speaker,
+                                Snackbar.LENGTH_SHORT
+                            )
+                            ViewUtil.setSnackBarTextColor(
+                                snack,
+                                resources.getColor(R.color.light_primary_text)
+                            )
+                            snack.show()
                         }
                     } else {
-                        mTargetTranslation.removeContributor(mNativeSpeaker); // remove old name
-                        mTargetTranslation.addContributor(new NativeSpeaker(name));
-                        if (mListener != null) {
-                            mListener.onClick(v);
-                        }
-                        dismiss();
+                        mTargetTranslation!!.removeContributor(mNativeSpeaker) // remove old name
+                        mTargetTranslation!!.addContributor(NativeSpeaker(name))
+                        mListener?.onClick(saveButton)
+                        dismiss()
                     }
                 } else {
-                    Snackbar snack = Snackbar.make(v, R.string.complete_required_fields, Snackbar.LENGTH_SHORT);
-                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                    snack.show();
+                    val snack =
+                        Snackbar.make(saveButton, R.string.complete_required_fields, Snackbar.LENGTH_SHORT)
+                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
+                    snack.show()
                 }
             }
-        });
+        }
 
-        return v;
+        return binding.root
     }
 
     /**
      * Sets the listener to be called when the dialog is submitted
      * @param listener
      */
-    public void setOnClickListener(View.OnClickListener listener) {
-        mListener = listener;
+    fun setOnClickListener(listener: View.OnClickListener?) {
+        mListener = listener
+    }
+
+    companion object {
+        const val ARG_NATIVE_SPEAKER: String = "native_speaker_name"
+        const val ARG_TARGET_TRANSLATION: String = "target_translation_id"
     }
 }

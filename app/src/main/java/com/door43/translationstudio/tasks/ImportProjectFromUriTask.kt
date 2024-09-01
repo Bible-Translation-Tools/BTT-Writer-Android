@@ -3,7 +3,7 @@ package com.door43.translationstudio.tasks
 import android.net.Uri
 import android.os.Process
 import com.door43.translationstudio.App.Companion.context
-import com.door43.translationstudio.App.Companion.translator
+import com.door43.translationstudio.App.Companion.getTranslator
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
@@ -37,7 +37,7 @@ class ImportProjectFromUriTask(
             try {
                 context()?.contentResolver?.openInputStream(path).use {
                     it?.let { input ->
-                        val translator = translator
+                        val translator = getTranslator()
                         Logger.i(TAG, "Importing from uri: $filename")
 
                         val importResults = translator.importArchive(

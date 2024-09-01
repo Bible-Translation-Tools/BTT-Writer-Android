@@ -1,51 +1,68 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-
-import androidx.fragment.app.DialogFragment;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.ui.LoginDoor43Activity;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.SettingsActivity;
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import androidx.fragment.app.DialogFragment
+import com.door43.translationstudio.App.Companion.context
+import com.door43.translationstudio.App.Companion.userPreferences
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.DialogDoor43LoginBinding
+import com.door43.translationstudio.ui.LoginDoor43Activity
+import com.door43.translationstudio.ui.SettingsActivity
 
 /**
  * This dialog provides options for the user to login into or create a Door43 account
  * and connect it to their profile.
  * This should be used anywhere a Door43 account is required but does not exist.
  */
-public class Door43LoginDialog extends DialogFragment {
-    public static final String TAG = "door43_login_options_dialog";
+class Door43LoginDialog : DialogFragment() {
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_door43_login, container, false);
+    private var _binding: DialogDoor43LoginBinding? = null
+    val binding get() = _binding!!
 
-        v.findViewById(R.id.register_door43).setOnClickListener(v13 -> {
-            String defaultAccountCreateUrl = App.context().getResources().getString(
-                    R.string.pref_default_create_account_url);
-            String accountCreateUrl = App.getUserPreferences().getString(
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogDoor43LoginBinding.inflate(inflater, container, false)
+
+        with(binding) {
+            registerDoor43.setOnClickListener {
+                val defaultAccountCreateUrl = context()!!.resources.getString(
+                    R.string.pref_default_create_account_url
+                )
+                val accountCreateUrl = userPreferences.getString(
                     SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
-                    defaultAccountCreateUrl);
-            Uri uri = Uri.parse(accountCreateUrl);
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-            startActivity(intent);
-            dismiss();
-        });
-        v.findViewById(R.id.login_door43).setOnClickListener(v1 -> {
-            Intent intent = new Intent(getActivity(), LoginDoor43Activity.class);
-            startActivity(intent);
-            dismiss();
-        });
-        v.findViewById(R.id.cancel_button).setOnClickListener(v12 -> dismiss());
+                    defaultAccountCreateUrl
+                )
+                val uri = Uri.parse(accountCreateUrl)
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                startActivity(intent)
+                dismiss()
+            }
+            loginDoor43.setOnClickListener {
+                val intent = Intent(activity, LoginDoor43Activity::class.java)
+                startActivity(intent)
+                dismiss()
+            }
+            cancelButton.setOnClickListener { dismiss() }
+        }
+        return binding.root
+    }
 
-        return v;
+    companion object {
+        const val TAG: String = "door43_login_options_dialog"
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

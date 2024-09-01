@@ -1,170 +1,141 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import android.util.Log;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.util.FileUtilities;
-import com.door43.util.Zip;
-
-
-import org.unfoldingword.tools.http.GetRequest;
-import org.unfoldingword.tools.http.Request;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import android.annotation.SuppressLint
+import android.util.Log
+import com.door43.OnProgressListener
+import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.App.Companion.context
+import com.door43.translationstudio.R
+import com.door43.util.FileUtilities
+import com.door43.util.FileUtilities.moveOrCopyQuietly
+import com.door43.util.Zip
+import org.unfoldingword.tools.http.GetRequest
+import org.unfoldingword.tools.http.Request
+import java.io.File
+import java.io.IOException
+import java.net.MalformedURLException
+import java.net.URL
+import javax.inject.Inject
 
 /**
  * Created by blm on 12/28/16.  Revived from pre-resource container code.
  * This is a temporary solution to downloading images until a resource container solution
  * is ready.
  */
-public class DownloadImages {
-    public static final String TAG = DownloadImages.class.getName();
-    private static final String IMAGES_URL = "https://cdn.unfoldingword.org/obs/jpg/obs-images-360px.zip";
-    public static final int IMAGES_CATALOG_SIZE = 37620940; // this value doesn't seem to matter since GetRequest knows the size of the download
-    public static final int TOTAL_FILE_COUNT = 598;
-    private File mImagesDir;
-
-
-    private boolean requestToFile(String apiUrl, File outputFile, final long expectedSize, final OnProgressListener listener) {
-        if(apiUrl.trim().isEmpty()) {
-            return false;
-        }
-        URL url;
-        try {
-            url = new URL(apiUrl);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        final String outOf = App.context().getResources().getString(R.string.out_of);
-        final String mbDownloaded = App.context().getResources().getString(R.string.mb_downloaded);
-
-        GetRequest r = new GetRequest(url);
-        r.setTimeout(5000);
-        r.setProgressListener(new Request.OnProgressListener() {
-            @Override
-            public void onProgress(long max, long progress) {
-                if(listener != null) {
-                    if(max == 0) {
-                        max = expectedSize;
-                    }
-                    String message = String.format("%2.2f %s %2.2f %s",
-                            progress / (1024f * 1024f),
-                            outOf,
-                            max / (1024f * 1024f),
-                            mbDownloaded);
-                    listener.onProgress((int)progress, (int)max, message);
-//                    Log.i(TAG,  "Download progress - " + progress + "out of " + max);
-                }
-            }
-
-            @Override
-            public void onIndeterminate() {
-                if(listener != null) {
-                    listener.onIndeterminate();
-                }
-            }
-        });
-
-        try {
-            r.download(outputFile);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+class DownloadImages @Inject constructor(
+    private val directoryProvider: IDirectoryProvider
+) {
+    data class Result(val success: Boolean, val imagesDir: File?)
 
     /**
      *
      * @param listener
      * @return
      */
-    public boolean download(OnProgressListener listener) {
-        // TODO: 1/21/2016 we need to be sure to download images for the correct project. right now only obs has images
+    @SuppressLint("DefaultLocale")
+    fun download(listener: OnProgressListener): File? {
+        // TODO: 1/21/2016 we need to be sure to download images for the correct project.
+        // Right now only obs has images
         // eventually the api will be updated so we can easily download the correct images.
 
-        String url = IMAGES_URL;
-        String filename = url.replaceAll(".*/", "");
-        File basePath = App.externalAppDir();
-        mImagesDir = new File(basePath, "assets/images");
-        File fullPath = new File(String.format("%s/%s", mImagesDir, filename));
-        if (mImagesDir == null) {
-            return false;
-        }
+        val imagesDir = File(directoryProvider.externalAppDir, "assets/images")
+        val fullPath = File(String.format("%s/%s", imagesDir, "images.zip"))
 
-        if(!mImagesDir.isDirectory()) { // make sure folder exists
-            mImagesDir.mkdirs();
-        }
+        imagesDir.mkdirs()
 
-        if (!mImagesDir.isDirectory()) {
-            return false;
-        }
-
-        boolean success = requestToFile(url, fullPath, IMAGES_CATALOG_SIZE, listener);
-        if (success) {
-            int fileCount = 0;
+        val success = requestToFile(fullPath, listener)
+        return if (success) {
+            var fileCount = 0
             try {
-                File tempDir = new File(mImagesDir, "temp");
-                tempDir.mkdirs();
+                val tempDir = File(imagesDir, "temp")
+                tempDir.mkdirs()
 
-                String outOf = App.context().getResources().getString(R.string.out_of);
-                String unpacking = App.context().getResources().getString(R.string.unpacking);
-                listener.onProgress((int)0, (int)100, unpacking);
-                Log.i(TAG,  "unpacking: ");
+                val outOf = context()!!.resources.getString(R.string.out_of)
+                val unpacking = context()!!.resources.getString(R.string.unpacking)
+                listener.onProgress(0f, unpacking)
+                Log.i(TAG, "unpacking: ")
 
-                Zip.unzip(fullPath, tempDir);
-                success = true;
-                fullPath.delete();
+                Zip.unzip(fullPath, tempDir)
+                FileUtilities.deleteQuietly(fullPath)
+
                 // move files out of dir
-                File[] extractedFiles = tempDir.listFiles();
-                if(extractedFiles != null) {
-                    for (File dir:extractedFiles) {
-                        if(dir.isDirectory()) {
-                            for(File f:dir.listFiles()) {
-                                FileUtilities.moveOrCopyQuietly(f, new File(mImagesDir, f.getName()));
+                for (dir in tempDir.listFiles()!!) {
+                    if (dir.isDirectory) {
+                        for (f in dir.listFiles()!!) {
+                            moveOrCopyQuietly(f, File(imagesDir, f.name))
 
-                                String message = String.format("%s: %d %s %d",
-                                        unpacking,
-                                        ++fileCount,
-                                        outOf,
-                                        TOTAL_FILE_COUNT);
-                                listener.onProgress(fileCount, TOTAL_FILE_COUNT, message);
-//                                Log.i(TAG,  "Download progress - " + fileCount + " out of " + TOTAL_FILE_COUNT);
-                            }
+                            val message = String.format(
+                                "%s: %d %s %d",
+                                unpacking,
+                                ++fileCount,
+                                outOf,
+                                TOTAL_FILE_COUNT
+                            )
+                            val totalProgress = ((fileCount / TOTAL_FILE_COUNT.toFloat()) * 100)
+                            listener.onProgress(totalProgress, message)
+                            // Log.i(TAG,  "Download progress - " + fileCount + " out of " + TOTAL_FILE_COUNT);
                         }
                     }
                 }
-                FileUtilities.deleteQuietly(tempDir);
-            } catch (IOException e) {
-                success = false;
+                FileUtilities.deleteQuietly(tempDir)
+                imagesDir
+            } catch (e: Exception) {
+                null
             }
+        } else null
+    }
+
+    private fun requestToFile(
+        outputFile: File,
+        listener: OnProgressListener?
+    ): Boolean {
+        val url: URL
+        try {
+            url = URL(IMAGES_URL)
+        } catch (e: MalformedURLException) {
+            e.printStackTrace()
+            return false
         }
-        return success;
+
+        val outOf = context()!!.resources.getString(R.string.out_of)
+        val mbDownloaded = context()!!.resources.getString(R.string.mb_downloaded)
+
+        val r = GetRequest(url)
+        r.setTimeout(5000)
+        r.setProgressListener(object : Request.OnProgressListener {
+            @SuppressLint("DefaultLocale")
+            override fun onProgress(max: Long, progress: Long) {
+                listener?.let {
+                    val message = String.format(
+                        "%2.2f %s %2.2f %s",
+                        progress / (1024f * 1024f),
+                        outOf,
+                        max / (1024f * 1024f),
+                        mbDownloaded
+                    )
+                    val totalProgress = ((progress / max.toFloat()) * 100)
+                    listener.onProgress(totalProgress, message)
+                    // Log.i(TAG,  "Download progress - " + progress + "out of " + max);
+                }
+            }
+
+            override fun onIndeterminate() {
+                listener?.onIndeterminate()
+            }
+        })
+
+        try {
+            r.download(outputFile)
+            return true
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return false
+        }
     }
 
-    public interface OnProgressListener {
-        /**
-         * Progress the progress on an operation between 0 and max
-         * @param progress
-         * @param max
-         * @return the process should stop if returns false
-         */
-        boolean onProgress(int progress, int max, String message);
-
-        /**
-         * Identifes the current task as not quantifiable
-         * @return the process should stop if returns false
-         */
-        boolean onIndeterminate();
-    }
-
-    public File getImagesDir() {
-        return mImagesDir;
+    companion object {
+        val TAG: String = DownloadImages::class.java.name
+        private const val IMAGES_URL = "https://cdn.unfoldingword.org/obs/jpg/obs-images-360px.zip"
+        const val TOTAL_FILE_COUNT: Int = 598
     }
 }

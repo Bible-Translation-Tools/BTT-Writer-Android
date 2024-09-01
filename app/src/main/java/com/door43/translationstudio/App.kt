@@ -51,14 +51,29 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.net.NetworkCapabilities
+import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
 /**
  * This class provides global access to the application context as well as other important tools
  */
+@HiltAndroidApp
 class App : Application() {
+
+    @Inject lateinit var profile2: Profile
+    /**
+     * Returns an instance of the translator.
+     * Target translations are stored in the public directory so that they persist if the app is uninstalled.
+     * @return
+     */
+    @Inject lateinit var translator2: Translator
+
     override fun onCreate() {
         super.onCreate()
+
         sInstance = this
+
+        initialize(translator2, profile2)
 
         Foreground.init(this)
 
@@ -129,6 +144,24 @@ class App : Application() {
         // Minimum number of processors needed for reliable operationB
         const val MINIMUM_NUMBER_OF_PROCESSORS: Long = 2
         private var mBackupsRunning = false
+
+        private lateinit var translator3: Translator
+        private lateinit var profile3: Profile
+
+        fun initialize(translator: Translator, profile: Profile) {
+            translator3 = translator
+            profile3 = profile
+        }
+
+        @JvmStatic
+        fun getTranslator(): Translator {
+            return translator3
+        }
+
+        @JvmStatic
+        fun getProfile(): Profile {
+            return profile3
+        }
 
         /**
          * Starts the backup service if it is not already running.
@@ -405,14 +438,6 @@ class App : Application() {
             }
 
         @JvmStatic
-        val termsOfUseVersion: Int
-            /**
-             * Returns the version of the terms of use
-             * @return
-             */
-            get() = sInstance!!.resources.getInteger(R.integer.terms_of_use_version)
-
-        @JvmStatic
         val isTablet: Boolean
             /**
              * Checks if the device is a tablet
@@ -487,15 +512,6 @@ class App : Application() {
             FileUtilities.deleteQuietly(containersDir())
         }
 
-        @JvmStatic
-        val translator: Translator
-            /**
-             * Returns an instance of the translator.
-             * Target translations are stored in the public directory so that they persist if the app is uninstalled.
-             * @return
-             */
-            get() = Translator(sInstance!!, profile, File(externalAppDir(), "translations"))
-
         /**
          * Returns the main application context
          * @return
@@ -517,21 +533,6 @@ class App : Application() {
                 Settings.Secure.ANDROID_ID
             )
         }
-
-        val publicDownloadsDirectory: File
-            /**
-             * Returns the file to the external public downloads directory
-             * @return
-             */
-            get() {
-                // TRICKY: KITKAT introduced changes to the external media that made sd cards read only
-                val dir = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    PUBLIC_DATA_DIR
-                )
-                dir.mkdirs()
-                return dir
-            }
 
         /**
          * Attempts to recover from a corrupt git history.
@@ -558,6 +559,10 @@ class App : Application() {
             return false
         }
 
+        fun backupsDir(): File {
+            return File(externalAppDir(), "backups")
+        }
+
         /**
          * Backups up the resource container to the download directory
          * @param translation  the translation representing the rc that will be backed up
@@ -568,7 +573,7 @@ class App : Application() {
         @Throws(Exception::class)
         fun backupResourceContainer(translation: Translation): File {
             val dest = File(
-                publicDownloadsDirectory,
+                backupsDir(),
                 translation.resourceContainerSlug + "." + ResourceContainer.fileExtension
             )
             library!!.exportResourceContainer(
@@ -592,7 +597,7 @@ class App : Application() {
             targetTranslation: TargetTranslation?,
             orphaned: Boolean
         ): Boolean {
-            if (targetTranslation != null && profile != null) {
+            if (targetTranslation != null) {
                 var name = targetTranslation.id
                 val sdf = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US)
                 if (orphaned) {
@@ -605,7 +610,7 @@ class App : Application() {
                 }
 
                 // backup locations
-                val downloadsBackup = File(publicDownloadsDirectory, "$name.$archiveExtension")
+                val downloadsBackup = File(backupsDir(), "$name.$archiveExtension")
                 val publicBackup = File(externalAppDir(), "backups/$name.$archiveExtension")
 
                 // check if we need to backup
@@ -626,8 +631,8 @@ class App : Application() {
                 var temp: File? = null
                 try {
                     temp = File.createTempFile(name, ".$archiveExtension")
-                    targetTranslation.setDefaultContributor(profile!!.nativeSpeaker)
-                    translator.exportArchive(targetTranslation, temp)
+                    targetTranslation.setDefaultContributor(getProfile().nativeSpeaker)
+                    getTranslator().exportArchive(targetTranslation, temp)
                     if (temp.exists() && temp.isFile) {
                         // copy into backup locations
                         downloadsBackup.parentFile.mkdirs()
@@ -658,7 +663,7 @@ class App : Application() {
 
             // backup locations
             val downloadsBackup =
-                File(publicDownloadsDirectory, name + "." + Translator.ZIP_EXTENSION)
+                File(backupsDir(), name + "." + Translator.ZIP_EXTENSION)
             val publicBackup =
                 File(externalAppDir(), "backups/" + name + "." + Translator.ZIP_EXTENSION)
 
@@ -666,7 +671,7 @@ class App : Application() {
             var temp: File? = null
             try {
                 temp = File.createTempFile(name, "." + Translator.ZIP_EXTENSION)
-                translator.exportArchive(projectDir, temp)
+                getTranslator().exportArchive(projectDir, temp)
                 if (temp.exists() && temp.isFile) {
                     // copy into backup locations
                     downloadsBackup.parentFile.mkdirs()
@@ -691,7 +696,7 @@ class App : Application() {
         private fun getCommitHash(details: ArchiveDetails?): String? {
             var commitHash: String? = null
             commitHash =
-                if ((details == null) || (details.targetTranslationDetails.size == 0)) {
+                if ((details == null) || (details.targetTranslationDetails.isEmpty())) {
                     "" // will not match existing commit hash
                 } else {
                     details.targetTranslationDetails[0].commitHash
@@ -1028,43 +1033,6 @@ class App : Application() {
                 setUserString(SettingsActivity.KEY_PREF_DEVICE_ALIAS, a)
             }
 
-        @JvmStatic
-        var profile: Profile?
-            /**
-             * Returns the current user profile
-             * @return
-             */
-            get() {
-                val profileString = getUserString("profile", null)
-
-                try {
-                    if (profileString != null) {
-                        return Profile.fromJSON(JSONObject(profileString))
-                    }
-                } catch (e: Exception) {
-                    Logger.e(TAG, "Failed to parse the profile", e)
-                }
-                return null
-            }
-            /**
-             * Stores the user profile
-             *
-             * @param profile
-             */
-            set(profile) {
-                try {
-                    if (profile != null) {
-                        val profileString = profile.toJSON().toString()
-                        setUserString("profile", profileString)
-                    } else {
-                        setUserString("profile", null)
-                        FileUtilities.deleteQuietly(keysFolder)
-                    }
-                } catch (e: JSONException) {
-                    Logger.e(TAG, "setProfile: Failed to encode profile data", e)
-                }
-            }
-
         /**
          * Returns the string value of a user preference or the default value
          * @param preferenceKey
@@ -1254,11 +1222,6 @@ class App : Application() {
                     FileUtilities.safeDelete(requestFile)
                 }
             }
-        }
-
-        @JvmStatic
-        fun hasImages(): Boolean {
-            return false
         }
 
         /**

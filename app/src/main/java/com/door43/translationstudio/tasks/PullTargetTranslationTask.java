@@ -61,11 +61,11 @@ public class PullTargetTranslationTask extends ManagedTask {
             delegate(new SubmitNewLanguageRequestsTask());
 
             Profile profile = App.getProfile();
-            if (targetTranslation != null && App.isNetworkAvailable() && profile != null && profile.gogsUser != null) {
+            if (targetTranslation != null && profile.getGogsUser() != null) {
                 publishProgress(-1, "Downloading updates");
 
                 if(sourceURL == null) {
-                    GetRepositoryTask repoTask = new GetRepositoryTask(profile.gogsUser, targetTranslation);
+                    GetRepositoryTask repoTask = new GetRepositoryTask(profile.getGogsUser(), targetTranslation);
                     delegate(repoTask);
 
                     if (repoTask.getRepository() != null) {
@@ -115,7 +115,7 @@ public class PullTargetTranslationTask extends ManagedTask {
 
         // TODO: we might want to get some progress feedback for the user
         PullCommand pullCommand = git.pull()
-                .setTransportConfigCallback(new TransportCallback())
+                //.setTransportConfigCallback(new TransportCallback())
                 .setRemote("origin")
                 .setStrategy(mergeStrategy)
                 .setRemoteBranchName("master");

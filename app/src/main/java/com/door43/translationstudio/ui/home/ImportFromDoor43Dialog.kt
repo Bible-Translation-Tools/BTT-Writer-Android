@@ -17,9 +17,9 @@ import androidx.fragment.app.DialogFragment
 import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.closeKeyboard
 import com.door43.translationstudio.App.Companion.hasSSHKeys
-import com.door43.translationstudio.App.Companion.profile
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
+import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.TranslationViewMode
@@ -35,6 +35,7 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.util.FileUtilities.deleteQuietly
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.json.JSONObject
 import org.unfoldingword.gogsclient.Repository
@@ -44,15 +45,19 @@ import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher
 import org.unfoldingword.tools.taskmanager.TaskManager
 import java.io.File
 import java.io.IOException
+import javax.inject.Inject
 import kotlin.math.min
 
 /**
  * Created by joel on 5/10/16.
  */
+@AndroidEntryPoint
 open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var profile: Profile
+
     private var taskWatcher: SimpleTaskWatcher? = null
     private var adapter: TranslationRepositoryAdapter? = null
-    private var translator: Translator? = null
     private var repositories: MutableList<Repository> = ArrayList()
     private var mCloneHtmlUrl: String? = null
     private var cloneDestDir: File? = null
@@ -62,20 +67,19 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
     private var mMergeSelection = MergeOptions.NONE
     private var mMergeConflicted = false
 
-    private lateinit var binding: DialogImportFromDoor43Binding
+    private var _binding: DialogImportFromDoor43Binding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        dialog!!.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        binding = DialogImportFromDoor43Binding.inflate(inflater, container, false)
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogImportFromDoor43Binding.inflate(inflater, container, false)
 
         this.taskWatcher = SimpleTaskWatcher(activity, R.string.loading)
         taskWatcher?.setOnFinishedListener(this)
-
-        this.translator = App.translator
 
         with(binding) {
             dismissButton.setOnClickListener {
@@ -103,8 +107,7 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
                     closeKeyboard(activity, translationId)
                 }
 
-                val profile = profile
-                if (profile?.gogsUser != null) {
+                if (profile.gogsUser != null) {
                     val task = AdvancedGogsRepoSearchTask(profile.gogsUser, userQuery, repoQuery, 50)
                     TaskManager.addTask(task, AdvancedGogsRepoSearchTask.TASK_ID)
                     taskWatcher?.watch(task)
@@ -158,7 +161,7 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
                 fromInt(savedInstanceState.getInt(STATE_MERGE_SELECTION, MergeOptions.NONE.value))
             val targetTranslationId = savedInstanceState.getString(STATE_TARGET_TRANSLATION, null)
             if (targetTranslationId != null) {
-                mTargetTranslation = App.translator.getTargetTranslation(targetTranslationId)
+                mTargetTranslation = translator.getTargetTranslation(targetTranslationId)
             }
 
             adapter?.let { listAdapter ->
@@ -494,6 +497,11 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
         dismissProgressDialog()
         taskWatcher!!.stop()
         super.onDestroy()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     /**

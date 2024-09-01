@@ -47,7 +47,7 @@ import org.unfoldingword.tools.taskmanager.TaskManager;
  * Created by joel on 9/15/2015.
  */
 public class ChooseSourceTranslationDialog extends DialogFragment implements ManagedTask.OnFinishedListener, ManagedTask.OnProgressListener {
-    public static final String ARG_TARGET_TRANSLATION_ID = "arg_target_translation_id";
+    public static final String ARG_TARGET_TRANSLATION_ID = "target_translation_id";
     public static final String TAG = ChooseSourceTranslationDialog.class.getSimpleName();
     private static final String TASK_DOWNLOAD_CONTAINER = "download-container";
     private static final String TASK_PREPARE_CONTAINER = "prepare-container";

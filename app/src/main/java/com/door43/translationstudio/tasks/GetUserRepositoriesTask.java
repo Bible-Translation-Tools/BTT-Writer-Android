@@ -25,8 +25,8 @@ public class GetUserRepositoriesTask extends ManagedTask {
             GogsAPI api = new GogsAPI(App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api));
             Profile profile = App.getProfile();
 
-            if(profile != null && profile.gogsUser != null) {
-                this.repositories = api.listRepos(profile.gogsUser);
+            if(profile != null && profile.getGogsUser() != null) {
+                this.repositories = api.listRepos(profile.getGogsUser());
             }
         }
     }

@@ -1,9 +1,5 @@
 package com.door43.translationstudio.git.tasks.repo;
 
-import android.widget.Toast;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
 import com.door43.translationstudio.git.Repo;
 import com.door43.translationstudio.git.tasks.GitSyncAsyncTask;
 
@@ -88,7 +84,7 @@ public abstract class RepoOpTask extends GitSyncAsyncTask<Void, String, Boolean>
         @Override
         public void update(int i) {
             mWorkDone += i;
-            if (mTotalWork != ProgressMonitor.UNKNOWN && mTotalWork != 0) {
+            if (mTotalWork != ProgressMonitor.UNKNOWN) {
                 setProgress();
             }
         }

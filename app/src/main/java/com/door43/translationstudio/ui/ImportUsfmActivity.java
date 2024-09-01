@@ -161,12 +161,9 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
             mProgressDialog.setMax(100);
             mProgressDialog.show();
 
-            mUsfm.setUpdateStatusListener(new ImportUsfm.UpdateStatusListener() {
-                @Override
-                public void statusUpdate(final String textStatus, final int percent) {
-                    Logger.i(TAG, "Update " + textStatus + ", " + percent);
-                    updateProcessUsfmProgress(textStatus, percent);
-                }
+            mUsfm.setUpdateStatusListener((textStatus, percent) -> {
+                Logger.i(TAG, "Update " + textStatus + ", " + percent);
+                updateProcessUsfmProgress(textStatus, percent);
             });
         }
     }

@@ -1,99 +1,96 @@
-package com.door43.translationstudio.ui.home;
+package com.door43.translationstudio.ui.home
 
-import android.content.Intent;
-import android.graphics.Paint;
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.TextView;
-
-import androidx.fragment.app.DialogFragment;
-
-import com.door43.translationstudio.R;
-
-import org.unfoldingword.tools.eventbuffer.EventBuffer;
+import android.content.Intent
+import android.graphics.Paint
+import android.net.Uri
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import androidx.fragment.app.DialogFragment
+import com.door43.translationstudio.databinding.DialogUpdateLibraryBinding
+import org.unfoldingword.tools.eventbuffer.EventBuffer
+import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 
 /**
  * Displays options for updating the app content
  */
-public class UpdateLibraryDialog extends DialogFragment implements EventBuffer.OnEventTalker {
-    public static final int EVENT_UPDATE_LANGUAGES = 1;
-    public static final int EVENT_UPDATE_SOURCE = 2;
-    public static final int EVENT_UPDATE_ALL = 3;
-    public static final int EVENT_SELECT_DOWNLOAD_SOURCES = 4;
-    public static final int EVENT_UPDATE_APP = 5;
-    public static final int EVENT_DOWNLOAD_INDEX = 6;
-    public static final String TAG = "update-library-dialog";
-    private EventBuffer eventBuffer = new EventBuffer();
+class UpdateLibraryDialog : DialogFragment(), OnEventTalker {
+    private val eventBuffer = EventBuffer()
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_update_library, container, false);
+    private var _binding: DialogUpdateLibraryBinding? = null
+    private val binding get() = _binding!!
 
-        v.findViewById(R.id.infoButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://help.door43.org/en/knowledgebase/9-translationstudio/docs/5-update-options"));
-                startActivity(browserIntent);
-            }
-        });
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogUpdateLibraryBinding.inflate(inflater, container, false)
 
-        v.findViewById(R.id.update_languages).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                eventBuffer.write(UpdateLibraryDialog.this, EVENT_UPDATE_LANGUAGES, null);
+        with(binding) {
+            infoButton.setOnClickListener {
+                val browserIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("http://help.door43.org/en/knowledgebase/9-translationstudio/docs/5-update-options")
+                )
+                startActivity(browserIntent)
             }
-        });
-        v.findViewById(R.id.download_sources).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                eventBuffer.write(UpdateLibraryDialog.this, EVENT_SELECT_DOWNLOAD_SOURCES, null);
+            updateLanguages.setOnClickListener {
+                eventBuffer.write(
+                    this@UpdateLibraryDialog, EVENT_UPDATE_LANGUAGES, null
+                )
             }
-        });
-        v.findViewById(R.id.update_source).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                eventBuffer.write(UpdateLibraryDialog.this, EVENT_UPDATE_SOURCE, null);
+            downloadSources.setOnClickListener {
+                eventBuffer.write(
+                    this@UpdateLibraryDialog, EVENT_SELECT_DOWNLOAD_SOURCES, null
+                )
             }
-        });
-        v.findViewById(R.id.download_index).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                eventBuffer.write(UpdateLibraryDialog.this, EVENT_DOWNLOAD_INDEX, null);
+            updateSource.setOnClickListener {
+                eventBuffer.write(
+                    this@UpdateLibraryDialog, EVENT_UPDATE_SOURCE, null
+                )
             }
-        });
+            downloadIndex.setOnClickListener {
+                eventBuffer.write(
+                    this@UpdateLibraryDialog, EVENT_DOWNLOAD_INDEX, null
+                )
+            }
+            updateAppText.paintFlags = updateAppText.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+            updateApp.setOnClickListener {
+                eventBuffer.write(
+                    this@UpdateLibraryDialog, EVENT_UPDATE_APP, null
+                )
+            }
+            dismissButton.setOnClickListener { dismiss() }
+        }
 
-        TextView updateAppLabel = (TextView) v.findViewById(R.id.update_app_text);
-        updateAppLabel.setPaintFlags(updateAppLabel.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
-
-        v.findViewById(R.id.update_app).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                eventBuffer.write(UpdateLibraryDialog.this, EVENT_UPDATE_APP, null);
-            }
-        });
-        v.findViewById(R.id.dismiss_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-
-        return v;
+        return binding.root
     }
 
-    @Override
-    public void onDestroy() {
-        eventBuffer.removeAllListeners();
-        super.onDestroy();
+    override fun onDestroy() {
+        eventBuffer.removeAllListeners()
+        super.onDestroy()
     }
 
-    @Override
-    public EventBuffer getEventBuffer() {
-        return eventBuffer;
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    override fun getEventBuffer(): EventBuffer {
+        return eventBuffer
+    }
+
+    companion object {
+        const val EVENT_UPDATE_LANGUAGES: Int = 1
+        const val EVENT_UPDATE_SOURCE: Int = 2
+        const val EVENT_UPDATE_ALL: Int = 3
+        const val EVENT_SELECT_DOWNLOAD_SOURCES: Int = 4
+        const val EVENT_UPDATE_APP: Int = 5
+        const val EVENT_DOWNLOAD_INDEX: Int = 6
+        const val TAG: String = "update-library-dialog"
     }
 }

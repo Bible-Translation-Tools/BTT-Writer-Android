@@ -32,9 +32,9 @@ public class CreateRepositoryTask extends ManagedTask {
             publishProgress(-1, "Preparing location on server");
             GogsAPI api = new GogsAPI(App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api));
             Profile profile = App.getProfile();
-            if(profile != null && profile.gogsUser != null) {
+            if(profile.getGogsUser() != null) {
                 Repository templateRepo = new Repository(targetTranslation.getId(), "", false);
-                Repository repo = api.createRepo(templateRepo, profile.gogsUser);
+                Repository repo = api.createRepo(templateRepo, profile.getGogsUser());
                 if(repo != null) {
                     success = true;
                 } else {

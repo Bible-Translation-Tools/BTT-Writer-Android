@@ -1,8 +1,4 @@
-package com.door43.translationstudio.core;
-
-import org.eclipse.jgit.lib.ObjectLoader;
-import org.json.JSONException;
-import org.json.JSONObject;
+package com.door43.translationstudio.core
 
 /**
  * Represents a single native speaker.
@@ -10,23 +6,19 @@ import org.json.JSONObject;
  *
  * note: this is parse for now, but keeping it in a class for potential future addition of properties
  */
-public class NativeSpeaker {
-    public final String name;
-
-    public NativeSpeaker(String name) {
-        this.name = name;
+class NativeSpeaker(val name: String?) {
+    override fun toString(): String {
+        return name ?: "Unknown Native Speaker"
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if(o != null && o instanceof NativeSpeaker) {
-            return ((NativeSpeaker)o).name.equals(this.name);
+    override fun equals(other: Any?): Boolean {
+        if (other != null && other is NativeSpeaker) {
+            return other.name == this.name
         }
-        return false;
+        return false
+    }
+
+    override fun hashCode(): Int {
+        return name.hashCode()
     }
 }
