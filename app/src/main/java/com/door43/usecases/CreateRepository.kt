@@ -15,11 +15,13 @@ class CreateRepository @Inject constructor(
     private val prefRepo: IPreferenceRepository,
     private val profile: Profile
 ) {
+    private val max = 100
+
     fun execute(
         targetTranslation: TargetTranslation,
         progressListener: OnProgressListener? = null
     ): Boolean {
-        progressListener?.onProgress(-1F, "Preparing location on server")
+        progressListener?.onProgress(-1, max,"Preparing location on server")
 
         val api = GogsAPI(
             prefRepo.getDefaultPref(

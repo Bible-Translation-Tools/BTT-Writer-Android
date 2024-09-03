@@ -21,11 +21,13 @@ class CloneRepository @Inject constructor(
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider
 ) {
+    private val max = 100
+
     fun execute(
         cloneUrl: String,
         progressListener: OnProgressListener? = null
     ): Result {
-        progressListener?.onProgress(-1f, context.resources.getString(R.string.downloading))
+        progressListener?.onProgress(-1, max, context.resources.getString(R.string.downloading))
 
         val tempDir = directoryProvider.createTempDir(System.currentTimeMillis().toString())
         var status = Status.UNKNOWN

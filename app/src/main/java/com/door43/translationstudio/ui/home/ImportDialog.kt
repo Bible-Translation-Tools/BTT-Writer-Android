@@ -24,7 +24,7 @@ import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog
 import com.door43.translationstudio.ui.dialogs.Door43LoginDialog
-import com.door43.translationstudio.ui.dialogs.ProgressDialogFactory
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.dialogs.ShareWithPeerDialog
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
@@ -50,15 +50,15 @@ class ImportDialog : DialogFragment() {
 
     private val viewModel: ImportViewModel by viewModels()
 
-    private var progressDialog: ProgressDialogFactory.ProgressDialog? = null
+    private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     private var settingDeviceAlias = false
-    private var mDialogShown: DialogShown = DialogShown.NONE
-    private var mDialogMessage: String? = null
-    private var mTargetTranslationID: String? = null
-    private var mImportUri: Uri? = null
+    private var dialogShown: DialogShown = DialogShown.NONE
+    private var dialogMessage: String? = null
+    private var targetTranslationID: String? = null
+    private var importUri: Uri? = null
     private var mergeSelection: MergeOptions? = MergeOptions.NONE
-    private var mMergeConflicted = false
+    private var mergeConflicted = false
 
     private lateinit var openFileContent: ActivityResultLauncher<String>
     private lateinit var openDirectory: ActivityResultLauncher<Uri?>
@@ -69,8 +69,6 @@ class ImportDialog : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.setCanceledOnTouchOutside(true)
-
-        Logger.e("ImportDialog", viewModel.toString())
 
         openFileContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
@@ -97,7 +95,11 @@ class ImportDialog : DialogFragment() {
         dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
         _binding = DialogImportBinding.inflate(inflater, container, false)
 
-        progressDialog = ProgressDialogFactory.newInstance(parentFragmentManager)
+        progressDialog = ProgressHelper.newInstance(
+            requireContext(),
+            R.string.label_import,
+            false
+        )
 
         if (savedInstanceState != null) {
             // check if returning from device alias dialog
@@ -105,21 +107,21 @@ class ImportDialog : DialogFragment() {
                 STATE_SETTING_DEVICE_ALIAS,
                 false
             )
-            mDialogShown = DialogShown.fromInt(
+            dialogShown = DialogShown.fromInt(
                 savedInstanceState.getInt(
                     STATE_DIALOG_SHOWN,
                     DialogShown.NONE.value
                 )
             )
-            mDialogMessage = savedInstanceState.getString(
+            dialogMessage = savedInstanceState.getString(
                 STATE_DIALOG_MESSAGE,
                 null
             )
-            mTargetTranslationID = savedInstanceState.getString(
+            targetTranslationID = savedInstanceState.getString(
                 STATE_DIALOG_TRANSLATION_ID,
                 null
             )
-            mMergeConflicted = savedInstanceState.getBoolean(
+            mergeConflicted = savedInstanceState.getBoolean(
                 STATE_MERGE_CONFLICT,
                 false
             )
@@ -130,7 +132,7 @@ class ImportDialog : DialogFragment() {
                 )
             )
             val path = savedInstanceState.getString(STATE_IMPORT_URL, null)
-            mImportUri = if ((path != null)) Uri.parse(path) else null
+            importUri = if ((path != null)) Uri.parse(path) else null
         }
 
         with(binding) {
@@ -203,16 +205,18 @@ class ImportDialog : DialogFragment() {
     private fun setupObservers() {
         viewModel.progress.observe(this) {
             if (it != null) {
-                progressDialog?.show(it)
-                progressDialog?.updateProgress(it.progress)
+                progressDialog?.show()
+                progressDialog?.setProgress(it.progress)
+                progressDialog?.setMessage(it.message)
+                progressDialog?.setMax(it.max)
             } else {
                 progressDialog?.dismiss()
             }
         }
         viewModel.importFromUriResult.observe(this) {
             it?.let { result ->
-                mImportUri = result.filePath
-                mMergeConflicted = result.mergeConflict
+                importUri = result.filePath
+                mergeConflicted = result.mergeConflict
                 if (result.success && result.alreadyExists && mergeSelection == MergeOptions.NONE) {
                     showMergeOverwritePrompt(result.importedSlug)
                 } else if (result.success) {
@@ -223,7 +227,7 @@ class ImportDialog : DialogFragment() {
                     showImportResults(R.string.import_failed, result.readablePath)
                 }
 
-                // todo: terrible hack.
+                // TODO: terrible hack.
                 (activity as? HomeActivity)?.notifyDatasetChanged()
             }
         }
@@ -235,9 +239,9 @@ class ImportDialog : DialogFragment() {
     private fun restoreDialogs() {
         val hand = Handler(Looper.getMainLooper())
         hand.post {
-            when (mDialogShown) {
-                DialogShown.SHOW_IMPORT_RESULTS -> showImportResults(mDialogMessage)
-                DialogShown.MERGE_CONFLICT -> showMergeOverwritePrompt(mTargetTranslationID)
+            when (dialogShown) {
+                DialogShown.SHOW_IMPORT_RESULTS -> showImportResults(dialogMessage)
+                DialogShown.MERGE_CONFLICT -> showMergeOverwritePrompt(targetTranslationID)
                 DialogShown.NONE -> {}
             }
         }
@@ -258,11 +262,11 @@ class ImportDialog : DialogFragment() {
     private fun importLocal(fileUri: Uri, mimeType: String) {
         when (mimeType) {
             IMPORT_TRANSLATION_MIME -> {
-                mImportUri = fileUri
+                importUri = fileUri
                 doProjectImport(fileUri)
             }
             IMPORT_USFM_MIME -> {
-                mImportUri = fileUri
+                importUri = fileUri
                 doUsfmImportUri(fileUri)
             }
             else -> Logger.e(TAG, "Unsupported import mime type: $mimeType")
@@ -320,7 +324,7 @@ class ImportDialog : DialogFragment() {
      * @param importUri
      */
     private fun doProjectImport(importUri: Uri) {
-        mImportUri = importUri
+        this.importUri = importUri
         viewModel.importProjectFromUri(
             importUri,
             mergeSelection == MergeOptions.OVERWRITE
@@ -405,10 +409,10 @@ class ImportDialog : DialogFragment() {
      * @param targetTranslationID
      */
     private fun showMergeOverwritePrompt(targetTranslationID: String?) {
-        mDialogShown = DialogShown.MERGE_CONFLICT
-        mTargetTranslationID = targetTranslationID
+        dialogShown = DialogShown.MERGE_CONFLICT
+        this.targetTranslationID = targetTranslationID
         val messageID =
-            if (mMergeConflicted) {
+            if (mergeConflicted) {
                 R.string.import_merge_conflict_project_name
             } else {
                 R.string.import_project_already_exists
@@ -418,26 +422,26 @@ class ImportDialog : DialogFragment() {
             .setTitle(R.string.merge_conflict_title)
             .setMessage(message)
             .setPositiveButton(R.string.merge_projects_label) { _, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
                 mergeSelection = MergeOptions.OVERWRITE
-                if (mMergeConflicted) {
+                if (mergeConflicted) {
                     doManualMerge()
                 } else {
                     showImportResults(R.string.title_import_success, null)
                 }
             }
             .setNeutralButton(R.string.title_cancel) { dialog, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
                 resetToMasterBackup()
                 dialog.dismiss()
             }
             .setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
                 resetToMasterBackup()
 
                 // re-import with overwrite
                 mergeSelection = MergeOptions.OVERWRITE
-                doProjectImport(mImportUri!!)
+                doProjectImport(importUri!!)
             }.show()
     }
 
@@ -445,7 +449,7 @@ class ImportDialog : DialogFragment() {
      * restore original version
      */
     private fun resetToMasterBackup() {
-        val mTargetTranslation = translator.getTargetTranslation(mTargetTranslationID)
+        val mTargetTranslation = translator.getTargetTranslation(targetTranslationID)
         mTargetTranslation?.resetToMasterBackup()
     }
 
@@ -456,7 +460,7 @@ class ImportDialog : DialogFragment() {
         // ask parent activity to navigate to target translation review mode with merge filter on
         val intent = Intent(activity, TargetTranslationActivity::class.java)
         val args = Bundle()
-        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID)
+        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslationID)
         args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
         args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtras(args)
@@ -482,26 +486,26 @@ class ImportDialog : DialogFragment() {
      * @param message
      */
     private fun showImportResults(message: String?) {
-        mDialogShown = DialogShown.SHOW_IMPORT_RESULTS
-        mDialogMessage = message
+        dialogShown = DialogShown.SHOW_IMPORT_RESULTS
+        dialogMessage = message
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.import_from_sd)
             .setMessage(message)
             .setPositiveButton(R.string.dismiss) { _, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
             }
             .show()
     }
 
     override fun onSaveInstanceState(out: Bundle) {
         out.putBoolean(STATE_SETTING_DEVICE_ALIAS, settingDeviceAlias)
-        out.putInt(STATE_DIALOG_SHOWN, mDialogShown.value)
-        out.putString(STATE_DIALOG_MESSAGE, mDialogMessage)
-        out.putString(STATE_DIALOG_TRANSLATION_ID, mTargetTranslationID)
+        out.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
+        out.putString(STATE_DIALOG_MESSAGE, dialogMessage)
+        out.putString(STATE_DIALOG_TRANSLATION_ID, targetTranslationID)
         out.putInt(STATE_MERGE_SELECTION, mergeSelection!!.value)
-        out.putBoolean(STATE_MERGE_CONFLICT, mMergeConflicted)
-        if (mImportUri != null) {
-            out.putString(STATE_IMPORT_URL, mImportUri.toString())
+        out.putBoolean(STATE_MERGE_CONFLICT, mergeConflicted)
+        if (importUri != null) {
+            out.putString(STATE_IMPORT_URL, importUri.toString())
         }
 
         super.onSaveInstanceState(out)
@@ -535,7 +539,7 @@ class ImportDialog : DialogFragment() {
     /**
      * for keeping track of user's merge selection
      */
-    enum class MergeOptions(@JvmField val value: Int) {
+    enum class MergeOptions(val value: Int) {
         NONE(0),
         OVERWRITE(1),
         MERGE(2);
@@ -564,6 +568,6 @@ class ImportDialog : DialogFragment() {
         private const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
         private const val STATE_MERGE_SELECTION: String = "state_merge_selection"
         private const val STATE_MERGE_CONFLICT: String = "state_merge_conflict"
-        private  val STATE_IMPORT_URL: String = "state_import_url"
+        private const val STATE_IMPORT_URL: String = "state_import_url"
     }
 }

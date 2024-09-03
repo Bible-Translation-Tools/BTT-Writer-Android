@@ -10,6 +10,8 @@ class AdvancedGogsRepoSearch @Inject constructor(
     private val searchGogsUsers: SearchGogsUsers,
     private val searchGogsRepositories: SearchGogsRepositories
 ) {
+    private val max = 100
+
     fun execute(
         authUser: User,
         userQuery: String,
@@ -22,19 +24,25 @@ class AdvancedGogsRepoSearch @Inject constructor(
         // submit new language requests
         submitNewLanguageRequests.execute(progressListener)
 
+        progressListener?.onProgress(-1, max, "Searching for repositories")
+
         val repoNameQuery = repoQuery.ifEmpty { "_" }
 
         // user search or user and repo search
         if (userQuery.isNotEmpty()) {
             // start by searching user
-            val users = searchGogsUsers.execute(authUser, userQuery, limit)
+            val users = searchGogsUsers.execute(authUser, userQuery, limit, progressListener)
             for (user in users) {
                 // search by repo
-                repositories.addAll(searchGogsRepositories.execute(authUser, user.id, repoNameQuery, limit))
+                repositories.addAll(
+                    searchGogsRepositories.execute(authUser, user.id, repoNameQuery, limit)
+                )
             }
         } else {
             // just search repos
-            searchGogsRepositories.execute(authUser, 0, repoNameQuery, limit)
+            repositories.addAll(
+                searchGogsRepositories.execute(authUser, 0, repoNameQuery, limit, progressListener)
+            )
         }
 
         return repositories

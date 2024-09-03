@@ -55,7 +55,7 @@ class BackupDialog : DialogFragment() {
     private var mAccessFile: String? = null
     private var mDialogMessage: String? = null
 
-    private var progressDialog: ProgressDialogFactory.ProgressDialog? = null
+    private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     @Inject lateinit var profile: Profile
     @Inject lateinit var directoryProvider: IDirectoryProvider
@@ -84,7 +84,11 @@ class BackupDialog : DialogFragment() {
             }
         }
 
-        progressDialog = ProgressDialogFactory.newInstance(parentFragmentManager)
+        progressDialog = ProgressHelper.newInstance(
+            requireContext(),
+            R.string.backup_to_sd,
+            false
+        )
 
         return dialog
     }
@@ -205,8 +209,10 @@ class BackupDialog : DialogFragment() {
         }
         viewModel.progress.observe(this@BackupDialog) {
             if (it != null) {
-                progressDialog?.show(it)
-                progressDialog?.updateProgress(it.progress)
+                progressDialog?.show()
+                progressDialog?.setProgress(it.progress)
+                progressDialog?.setMessage(it.message)
+                progressDialog?.setMax(it.max)
             } else {
                 progressDialog?.dismiss()
             }

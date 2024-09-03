@@ -14,7 +14,7 @@ import com.door43.translationstudio.core.DownloadImages
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.dialogs.ProgressDialogFactory
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.CreateRepository
 import com.door43.usecases.Export
 import com.door43.usecases.GogsLogout
@@ -34,7 +34,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExportViewModel @Inject constructor(
-    application: Application,
+    private val application: Application,
 ) : AndroidViewModel(application) {
 
     @Inject lateinit var export: Export
@@ -51,8 +51,8 @@ class ExportViewModel @Inject constructor(
     private val _translation = MutableLiveData<TargetTranslation?>(null)
     val translation: LiveData<TargetTranslation?> = _translation
 
-    private val _progress = MutableLiveData<ProgressDialogFactory.Progress?>(null)
-    val progress: LiveData<ProgressDialogFactory.Progress?> = _progress
+    private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
+    val progress: LiveData<ProgressHelper.Progress?> = _progress
 
     private val _exportResult = MutableLiveData<Export.Result?>(null)
     val exportResult: LiveData<Export.Result?> = _exportResult
@@ -91,11 +91,8 @@ class ExportViewModel @Inject constructor(
     fun exportProject(uri: Uri) {
         translation.value?.let { targetTranslation ->
             viewModelScope.launch {
-                _progress.value = ProgressDialogFactory.Progress(
-                    R.string.exporting
-                )
+                _progress.value = ProgressHelper.Progress()
                 var success: Boolean
-
                 try {
                     export.exportProject(targetTranslation, uri)
                     success = true
@@ -119,9 +116,7 @@ class ExportViewModel @Inject constructor(
      */
     fun exportUSFM(uri: Uri) {
         viewModelScope.launch {
-            _progress.value = ProgressDialogFactory.Progress(
-                R.string.exporting
-            )
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.exporting))
             var success = false
 
             translation.value?.let { targetTranslation ->
@@ -131,7 +126,6 @@ class ExportViewModel @Inject constructor(
                 } catch (e: Exception) {
                 }
             }
-
             _progress.value = null
             _exportResult.value = Export.Result(uri, success, Export.TaskName.EXPORT_USFM)
         }
@@ -144,9 +138,7 @@ class ExportViewModel @Inject constructor(
         imagesDir: File?
     ) {
         viewModelScope.launch {
-            _progress.value = ProgressDialogFactory.Progress(
-                R.string.printing
-            )
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.printing))
             var success = false
             translation.value?.let { targetTranslation ->
                 try {
@@ -161,7 +153,6 @@ class ExportViewModel @Inject constructor(
                 } catch (e: Exception) {
                 }
             }
-
             _progress.value = null
             _exportResult.value = Export.Result(uri, success, Export.TaskName.EXPORT_PDF)
         }
@@ -169,25 +160,21 @@ class ExportViewModel @Inject constructor(
 
     fun downloadImages() {
         viewModelScope.launch {
-            _progress.value = ProgressDialogFactory.Progress(
-                R.string.downloading_images
-            )
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.downloading_images))
             _downloadResult.value = withContext(Dispatchers.IO) {
                 val imagesDir = downloadImages.download(object : OnProgressListener {
-                    override fun onProgress(progress: Float, message: String?) {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
                         launch(Dispatchers.Main) {
-                            _progress.value = ProgressDialogFactory.Progress(
-                                R.string.downloading_images,
+                            _progress.value = ProgressHelper.Progress(
                                 message,
-                                progress.toInt()
+                                progress,
+                                max
                             )
                         }
                     }
                     override fun onIndeterminate() {
                         launch(Dispatchers.Main) {
-                            _progress.value = ProgressDialogFactory.Progress(
-                                R.string.downloading_images
-                            )
+                            _progress.value = ProgressHelper.Progress()
                         }
                     }
                 })
@@ -200,28 +187,26 @@ class ExportViewModel @Inject constructor(
     fun pullTargetTranslation(strategy: MergeStrategy) {
         viewModelScope.launch {
             translation.value?.let { targetTranslation ->
-                _progress.value = ProgressDialogFactory.Progress(
-                    R.string.backup
+                _progress.value = ProgressHelper.Progress(
+                    application.getString(R.string.uploading)
                 )
                 val result = withContext(Dispatchers.IO) {
                     pullTargetTranslation.execute(
                         targetTranslation,
                         strategy,
                         progressListener = object : OnProgressListener {
-                            override fun onProgress(progress: Float, message: String?) {
+                            override fun onProgress(progress: Int, max: Int, message: String?) {
                                 launch(Dispatchers.Main) {
-                                    _progress.value = ProgressDialogFactory.Progress(
-                                        R.string.backup,
+                                    _progress.value = ProgressHelper.Progress(
                                         message,
-                                        progress.toInt()
+                                        progress,
+                                        max
                                     )
                                 }
                             }
                             override fun onIndeterminate() {
                                 launch(Dispatchers.Main) {
-                                    _progress.value = ProgressDialogFactory.Progress(
-                                        R.string.backup
-                                    )
+                                    _progress.value = ProgressHelper.Progress()
                                 }
                             }
                         }
@@ -236,28 +221,25 @@ class ExportViewModel @Inject constructor(
     fun pushTargetTranslation() {
         viewModelScope.launch {
             translation.value?.let { targetTranslation ->
-                _progress.value = ProgressDialogFactory.Progress(
-                    R.string.backup
+                _progress.value = ProgressHelper.Progress(
+                    application.getString(R.string.uploading)
                 )
                 val result = withContext(Dispatchers.IO) {
                     pushTargetTranslation.execute(targetTranslation, object : OnProgressListener {
-                        override fun onProgress(progress: Float, message: String?) {
+                        override fun onProgress(progress: Int, max: Int, message: String?) {
                             launch(Dispatchers.Main) {
-                                _progress.value = ProgressDialogFactory.Progress(
-                                    R.string.backup,
+                                _progress.value = ProgressHelper.Progress(
                                     message,
-                                    progress.toInt()
+                                    progress,
+                                    max
                                 )
                             }
                         }
                         override fun onIndeterminate() {
                             launch(Dispatchers.Main) {
-                                _progress.value = ProgressDialogFactory.Progress(
-                                    R.string.backup
-                                )
+                                _progress.value = ProgressHelper.Progress()
                             }
                         }
-
                     })
                 }
                 _pushTranslationResult.value = result
@@ -268,25 +250,23 @@ class ExportViewModel @Inject constructor(
 
     fun registerSSHKeys(force: Boolean) {
         viewModelScope.launch {
-            _progress.value = ProgressDialogFactory.Progress(
-                R.string.registering_keys
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.registering_keys)
             )
             val result = withContext(Dispatchers.IO) {
                 registerSSHKeys.execute(force, object : OnProgressListener {
-                    override fun onProgress(progress: Float, message: String?) {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
                         launch(Dispatchers.Main) {
-                            _progress.value = ProgressDialogFactory.Progress(
-                                R.string.registering_keys,
+                            _progress.value = ProgressHelper.Progress(
                                 message,
-                                progress.toInt()
+                                progress,
+                                max
                             )
                         }
                     }
                     override fun onIndeterminate() {
                         launch(Dispatchers.Main) {
-                            _progress.value = ProgressDialogFactory.Progress(
-                                R.string.registering_keys
-                            )
+                            _progress.value = ProgressHelper.Progress()
                         }
                     }
                 })
@@ -299,24 +279,22 @@ class ExportViewModel @Inject constructor(
     fun createRepository() {
         viewModelScope.launch {
             translation.value?.let { targetTranslation ->
-                _progress.value = ProgressDialogFactory.Progress(
-                    R.string.backup
+                _progress.value = ProgressHelper.Progress(
+                    application.getString(R.string.creating_repository)
                 )
                 _repoCreated.value = createRepository.execute(targetTranslation, object : OnProgressListener {
-                    override fun onProgress(progress: Float, message: String?) {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
                         launch(Dispatchers.Main) {
-                            _progress.value = ProgressDialogFactory.Progress(
-                                R.string.backup,
+                            _progress.value = ProgressHelper.Progress(
                                 message,
-                                progress.toInt()
+                                progress,
+                                max
                             )
                         }
                     }
                     override fun onIndeterminate() {
                         launch(Dispatchers.Main) {
-                            _progress.value = ProgressDialogFactory.Progress(
-                                R.string.backup
-                            )
+                            _progress.value = ProgressHelper.Progress()
                         }
                     }
                 })
@@ -330,8 +308,8 @@ class ExportViewModel @Inject constructor(
      */
     fun logout() {
         viewModelScope.launch {
-            _progress.value = ProgressDialogFactory.Progress(
-                R.string.log_out
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.log_out)
             )
             withContext(Dispatchers.IO) {
                 gogsLogout.execute()
@@ -343,7 +321,7 @@ class ExportViewModel @Inject constructor(
     fun exportToApp() {
         viewModelScope.launch {
             translation.value?.let { translation ->
-                _progress.value = ProgressDialogFactory.Progress(R.string.exporting)
+                _progress.value = ProgressHelper.Progress(application.getString(R.string.exporting))
                 val filename = translation.id + "." + Translator.TSTUDIO_EXTENSION
                 val exportFile = File(directoryProvider.sharingDir, filename)
                 try {

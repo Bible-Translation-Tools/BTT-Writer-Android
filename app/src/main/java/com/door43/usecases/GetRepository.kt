@@ -10,12 +10,14 @@ class GetRepository @Inject constructor(
     private val createRepository: CreateRepository,
     private val searchRepository: SearchGogsRepositories
 ) {
+    private val max = 100
+
     fun execute(
         user: User,
         translation: TargetTranslation,
         progressListener: OnProgressListener? = null
     ): Repository? {
-        progressListener?.onProgress(-1f, "Getting repository")
+        progressListener?.onProgress(-1, max, "Getting repository")
 
         // Create repository
         // If it exists, will do nothing

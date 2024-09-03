@@ -33,12 +33,14 @@ class PushTargetTranslation @Inject constructor(
         val message: String?
     )
 
+    private val max = 100
+
     fun execute(
         targetTranslation: TargetTranslation,
         progressListener: OnProgressListener? = null
     ): Result {
         if (profile.gogsUser != null) {
-            progressListener?.onProgress(-1f, "Uploading translation")
+            progressListener?.onProgress(-1, max, "Uploading translation")
 
             val repository = getRepository.execute(profile.gogsUser!!, targetTranslation)
             try {

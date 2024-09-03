@@ -44,7 +44,7 @@ class PrintDialog : DialogFragment() {
 
     @Inject lateinit var library: Door43Client
 
-    private var progressDialog: ProgressDialogFactory.ProgressDialog? = null
+    private var progressDialog: ProgressHelper.ProgressDialog? = null
     private lateinit var targetTranslation: TargetTranslation
     private var includeImages = false
     private var includeIncompleteFrames = true
@@ -69,7 +69,11 @@ class PrintDialog : DialogFragment() {
                 startPdfPrinting()
             }
         }
-        progressDialog = ProgressDialogFactory.newInstance(parentFragmentManager)
+        progressDialog = ProgressHelper.newInstance(
+            requireContext(),
+            R.string.printing,
+            false
+        )
         return super.onCreateDialog(savedInstanceState)
     }
 
@@ -133,8 +137,10 @@ class PrintDialog : DialogFragment() {
         }
         viewModel.progress.observe(this) {
             if (it != null) {
-                progressDialog?.show(it)
-                progressDialog?.updateProgress(it.progress)
+                progressDialog?.show()
+                progressDialog?.setMessage(it.message)
+                progressDialog?.setMax(it.max)
+                progressDialog?.setProgress(it.progress)
             } else {
                 progressDialog?.dismiss()
             }
@@ -307,7 +313,7 @@ class PrintDialog : DialogFragment() {
             projectTitle.text = title + " - " + targetTranslation.targetLanguageName
 
             val isObsProject = targetTranslation.isObsProject
-            if (isObsProject) {
+            if (!isObsProject) {
                 printImages.isEnabled = true
                 printImages.isChecked = includeImages
             } else {

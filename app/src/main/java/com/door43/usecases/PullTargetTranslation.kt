@@ -35,6 +35,8 @@ class PullTargetTranslation @Inject constructor(
         val message: String?
     )
 
+    private val max = 100
+
     fun execute(
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy,
@@ -44,7 +46,7 @@ class PullTargetTranslation @Inject constructor(
         submitNewLanguageRequests.execute(progressListener)
 
         if (profile.gogsUser != null) {
-            progressListener?.onProgress(-1f, "Downloading updates")
+            progressListener?.onProgress(-1, max,"Downloading updates")
 
             try {
                 targetTranslation.commitSync()

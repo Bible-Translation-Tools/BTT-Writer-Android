@@ -11,15 +11,16 @@
     <!-- Close or reject an action -->
     <string name="title_cancel">Cancel</string>
     <!-- The application is already executing a different task -->
-    <string name="error_task_running" translatable="false">A task is already running</string>
-    <!-- Theapplication is out of memory -->
-    <string name="error_out_of_memory" translatable="false">Out of memory</string>
+    <string name="error_task_running">A task is already running</string>
+    <!-- The application is out of memory -->
+    <string name="error_out_of_memory">Out of memory</string>
     <!-- The remote git repository could not be found -->
-    <string name="error_repository_not_found" translatable="false">Repository Not Found</string>
+    <string name="error_repository_not_found">Repository Not Found</string>
     <!-- Local changes are being uploaded to the server -->
     <string name="uploading">Uploading</string>
+    <string name="creating_repository">Creating repository</string>
     <!-- The repository could not be created-->
-    <string name="error_could_not_create_repository" translatable="false">Could not create repository</string>
+    <string name="error_could_not_create_repository">Could not create repository</string>
     <!-- The terms that users must agree with in order to use the app -->
     <string name="terms_title">Terms of Use</string>
     <string name="terms">By using this app you agree with the statement of faith and translation guidelines and to release your work under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
@@ -40,10 +41,10 @@
     <string name="missing_external_storage">External storage not available</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
     <string name="project_exported_to">Project saved to <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
-    <string name="project_share_exception" translatable="false">The project cannot be shared</string>
+    <string name="project_share_exception">The project cannot be shared</string>
     <!-- The file browser -->
     <string name="title_activity_file_explorer">File Explorer</string>
-    <string name="missing_file" translatable="false">The file does not exist</string>
+    <string name="missing_file">The file does not exist</string>
     <!-- Export a project to another app on the device -->
     <string name="backup_to_app">Send to another app</string>
     <!-- Export a project to the sd card -->

@@ -33,7 +33,7 @@ class DownloadImages @Inject constructor(
      * @return
      */
     @SuppressLint("DefaultLocale")
-    fun download(listener: OnProgressListener): File? {
+    fun download(listener: OnProgressListener? = null): File? {
         // TODO: 1/21/2016 we need to be sure to download images for the correct project.
         // Right now only obs has images
         // eventually the api will be updated so we can easily download the correct images.
@@ -52,7 +52,7 @@ class DownloadImages @Inject constructor(
 
                 val outOf = context()!!.resources.getString(R.string.out_of)
                 val unpacking = context()!!.resources.getString(R.string.unpacking)
-                listener.onProgress(0f, unpacking)
+                listener?.onProgress(0, TOTAL_FILE_COUNT, unpacking)
                 Log.i(TAG, "unpacking: ")
 
                 Zip.unzip(fullPath, tempDir)
@@ -71,8 +71,7 @@ class DownloadImages @Inject constructor(
                                 outOf,
                                 TOTAL_FILE_COUNT
                             )
-                            val totalProgress = ((fileCount / TOTAL_FILE_COUNT.toFloat()) * 100)
-                            listener.onProgress(totalProgress, message)
+                            listener?.onProgress(fileCount, TOTAL_FILE_COUNT, message)
                             // Log.i(TAG,  "Download progress - " + fileCount + " out of " + TOTAL_FILE_COUNT);
                         }
                     }
@@ -113,8 +112,7 @@ class DownloadImages @Inject constructor(
                         max / (1024f * 1024f),
                         mbDownloaded
                     )
-                    val totalProgress = ((progress / max.toFloat()) * 100)
-                    listener.onProgress(totalProgress, message)
+                    listener.onProgress(progress.toInt(), max.toInt(), message)
                     // Log.i(TAG,  "Download progress - " + progress + "out of " + max);
                 }
             }

@@ -16,12 +16,14 @@ import javax.inject.Inject
 class ImportProjectFromUri @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val max = 100
+
     fun execute(
         path: Uri,
         mergeOverwrite: Boolean,
         progressListener: OnProgressListener? = null
     ) : Result {
-        progressListener?.onProgress(-1f, "Importing...")
+        progressListener?.onProgress(-1, max, "Importing...")
 
         var alreadyExists = false
         var success = false

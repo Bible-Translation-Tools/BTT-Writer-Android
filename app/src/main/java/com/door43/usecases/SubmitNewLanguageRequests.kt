@@ -25,6 +25,7 @@ class SubmitNewLanguageRequests @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val requests: ArrayList<NewLanguageRequest> = arrayListOf()
+    private val max = 100
 
     init {
         // load requests that have not been submitted
@@ -40,7 +41,7 @@ class SubmitNewLanguageRequests @Inject constructor(
         val progressMessage = context.resources.getString(
             R.string.submitting_new_language_requests
         )
-        progressListener?.onProgress(-1f, progressMessage)
+        progressListener?.onProgress(-1, max, progressMessage)
 
         for (i in requests.indices) {
             val request = requests[i]
@@ -103,9 +104,9 @@ class SubmitNewLanguageRequests @Inject constructor(
             } catch (e: Exception) {
                 Logger.e(this.javaClass.name, "Failed to submit the new language request", e)
             }
-            val totalProgress = (i + 1) / requests.size.toFloat()
             progressListener?.onProgress(
-                totalProgress,
+                i+1,
+                requests.size,
                 progressMessage
             )
         }

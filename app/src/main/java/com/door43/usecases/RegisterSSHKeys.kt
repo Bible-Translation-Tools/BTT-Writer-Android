@@ -20,8 +20,10 @@ class RegisterSSHKeys @Inject constructor(
     private val profile: Profile,
     private val directoryProvider: IDirectoryProvider
 ) {
+    private val max = 100
+
     fun execute(force: Boolean, progressListener: OnProgressListener? = null): Boolean {
-        progressListener?.onProgress(-1f, "Authenticating")
+        progressListener?.onProgress(-1, max, "Authenticating")
 
         val keyName = context.resources.getString(R.string.gogs_public_key_name) + " " + App.udid();
 

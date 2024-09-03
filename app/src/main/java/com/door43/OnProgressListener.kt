@@ -6,7 +6,7 @@ interface OnProgressListener {
      * @param progress
      * @return
      */
-    fun onProgress(progress: Float, message: String?)
+    fun onProgress(progress: Int, max: Int, message: String?)
 
     /**
      * Identifies the current task as not quantifiable
