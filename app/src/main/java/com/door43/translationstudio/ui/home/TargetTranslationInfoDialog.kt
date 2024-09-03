@@ -15,7 +15,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.door43.translationstudio.App.Companion.backupTargetTranslation
-import com.door43.translationstudio.App.Companion.clearTargetTranslationSettings
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
@@ -330,7 +329,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
         backupTargetTranslation(mTargetTranslation, orphaned)
 
         translator.deleteTargetTranslation(mTargetTranslation!!.id)
-        clearTargetTranslationSettings(mTargetTranslation!!.id)
+        translator.clearTargetTranslationSettings(mTargetTranslation!!.id)
 
         if (mListener != null) {
             mListener!!.onDeleteTargetTranslation(mTargetTranslation!!.id)

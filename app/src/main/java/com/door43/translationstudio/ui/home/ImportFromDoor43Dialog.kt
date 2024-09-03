@@ -1,10 +1,7 @@
 package com.door43.translationstudio.ui.home
 
-import android.app.ProgressDialog
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,9 +11,9 @@ import android.widget.AdapterView
 import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import com.door43.translationstudio.App
+import androidx.fragment.app.viewModels
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.closeKeyboard
-import com.door43.translationstudio.App.Companion.hasSSHKeys
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
@@ -25,13 +22,12 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.DialogImportFromDoor43Binding
-import com.door43.translationstudio.tasks.AdvancedGogsRepoSearchTask
-import com.door43.translationstudio.tasks.CloneRepositoryTask
-import com.door43.translationstudio.tasks.RegisterSSHKeysTask
-import com.door43.translationstudio.tasks.SearchGogsRepositoriesTask
+import com.door43.translationstudio.ui.dialogs.ProgressDialogFactory
 import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions
 import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions.Companion.fromInt
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.translationstudio.ui.viewmodels.ImportViewModel
+import com.door43.usecases.CloneRepository
 import com.door43.util.FileUtilities.deleteQuietly
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
@@ -40,10 +36,6 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.tools.logger.Logger
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher
-import org.unfoldingword.tools.taskmanager.TaskManager
-import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 import kotlin.math.min
@@ -52,20 +44,26 @@ import kotlin.math.min
  * Created by joel on 5/10/16.
  */
 @AndroidEntryPoint
-open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
+open class ImportFromDoor43Dialog : DialogFragment() {
+    @Inject
+    lateinit var translator: Translator
+    @Inject
+    lateinit var profile: Profile
+    @Inject
+    lateinit var directoryProvider: IDirectoryProvider
 
-    private var taskWatcher: SimpleTaskWatcher? = null
-    private var adapter: TranslationRepositoryAdapter? = null
+    private val viewModel: ImportViewModel by viewModels()
+
+    private lateinit var targetTranslation: TargetTranslation
     private var repositories: MutableList<Repository> = ArrayList()
+    private var dialogShown: DialogShown = DialogShown.NONE
+
+    private var adapter: TranslationRepositoryAdapter? = null
     private var mCloneHtmlUrl: String? = null
-    private var cloneDestDir: File? = null
-    private var mDialogShown: DialogShown = DialogShown.NONE
-    private var mTargetTranslation: TargetTranslation? = null
-    private var mProgressDialog: ProgressDialog? = null
-    private var mMergeSelection = MergeOptions.NONE
-    private var mMergeConflicted = false
+    private var mergeSelection = MergeOptions.NONE
+    private var mergeConflicted = false
+
+    private var progressDialog: ProgressDialogFactory.ProgressDialog? = null
 
     private var _binding: DialogImportFromDoor43Binding? = null
     private val binding get() = _binding!!
@@ -78,21 +76,13 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
         dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
         _binding = DialogImportFromDoor43Binding.inflate(inflater, container, false)
 
-        this.taskWatcher = SimpleTaskWatcher(activity, R.string.loading)
-        taskWatcher?.setOnFinishedListener(this)
+        progressDialog = ProgressDialogFactory.newInstance(parentFragmentManager)
+
+        Logger.e("ImportFromDoor43Dialog", viewModel.toString())
 
         with(binding) {
             dismissButton.setOnClickListener {
-                taskWatcher?.stop()
-                val task = TaskManager.getTask(
-                    SearchGogsRepositoriesTask.TASK_ID
-                ) as? SearchGogsRepositoriesTask
-
-                if (task != null) {
-                    task.stop()
-                    TaskManager.cancelTask(task)
-                    TaskManager.clearTask(task)
-                }
+                // TODO stop search repo task
                 dismiss()
             }
 
@@ -108,16 +98,17 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
                 }
 
                 if (profile.gogsUser != null) {
-                    val task = AdvancedGogsRepoSearchTask(profile.gogsUser, userQuery, repoQuery, 50)
-                    TaskManager.addTask(task, AdvancedGogsRepoSearchTask.TASK_ID)
-                    taskWatcher?.watch(task)
+                    viewModel.searchRepositories(profile.gogsUser!!, userQuery, repoQuery, 50)
                 } else {
                     val snack = Snackbar.make(
                         requireActivity().findViewById(android.R.id.content),
                         resources.getString(R.string.login_doo43),
                         Snackbar.LENGTH_LONG
                     )
-                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
                     snack.show()
                     dismiss()
                 }
@@ -133,7 +124,8 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
                         doImportProject(position)
                     } else {
                         val projectName = getProjectName(position)
-                        val message = requireActivity().getString(R.string.import_warning, projectName)
+                        val message =
+                            requireActivity().getString(R.string.import_warning, projectName)
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                             .setTitle(R.string.import_from_door43)
                             .setMessage(message)
@@ -149,20 +141,18 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
 
         // restore state
         if (savedInstanceState != null) {
-            mDialogShown = DialogShown.fromInt(
+            dialogShown = DialogShown.fromInt(
                 savedInstanceState.getInt(
                     STATE_DIALOG_SHOWN,
                     DialogShown.NONE.value
                 )
             )
             mCloneHtmlUrl = savedInstanceState.getString(STATE_CLONE_URL, null)
-            mMergeConflicted = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT, false)
-            mMergeSelection =
+            mergeConflicted = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT, false)
+            mergeSelection =
                 fromInt(savedInstanceState.getInt(STATE_MERGE_SELECTION, MergeOptions.NONE.value))
             val targetTranslationId = savedInstanceState.getString(STATE_TARGET_TRANSLATION, null)
-            if (targetTranslationId != null) {
-                mTargetTranslation = translator.getTargetTranslation(targetTranslationId)
-            }
+            targetTranslationId?.let { viewModel.loadTargetTranslation(it) }
 
             adapter?.let { listAdapter ->
                 val repoJsonArray = savedInstanceState.getStringArray(STATE_REPOSITORIES)
@@ -182,18 +172,119 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
             }
         }
 
-        // connect to existing task
-        val searchTask =
-            TaskManager.getTask(AdvancedGogsRepoSearchTask.TASK_ID) as? AdvancedGogsRepoSearchTask
-        val cloneTask = TaskManager.getTask(CloneRepositoryTask.TASK_ID) as? CloneRepositoryTask
-        if (searchTask != null) {
-            taskWatcher?.watch(searchTask)
-        } else if (cloneTask != null) {
-            taskWatcher?.watch(cloneTask)
-        }
+        setupObservers()
 
         restoreDialogs()
         return binding.root
+    }
+
+    private fun setupObservers() {
+        viewModel.translation.observe(this@ImportFromDoor43Dialog) {
+            it?.let { targetTranslation = it }
+        }
+        viewModel.progress.observe(this@ImportFromDoor43Dialog) {
+            if (it != null) {
+                progressDialog?.show(it)
+                progressDialog?.updateProgress(it.progress)
+            } else {
+                progressDialog?.dismiss()
+            }
+        }
+        viewModel.repositories.observe(this@ImportFromDoor43Dialog) {
+            it?.let {
+                adapter?.setRepositories(it)
+            }
+        }
+        viewModel.cloneRepoResult.observe(this@ImportFromDoor43Dialog) {
+            it?.let { result ->
+                var alreadyExisted = false
+
+                if (result.status == CloneRepository.Status.SUCCESS) {
+                    Logger.i(this.javaClass.name, "Repository cloned from ${result.cloneUrl}")
+                    val cloneDir = TargetTranslationMigrator.migrate(result.cloneDir)
+                    var importFailed = false
+                    mergeConflicted = false
+
+                    TargetTranslation.open(cloneDir)?.let { tempTargetTranslation ->
+                        val existingTargetTranslation = translator.getTargetTranslation(
+                            tempTargetTranslation.id
+                        )
+
+                        alreadyExisted = existingTargetTranslation != null
+
+                        if (alreadyExisted && mergeSelection != MergeOptions.OVERWRITE) {
+                            // merge target translation
+                            try {
+                                val success = existingTargetTranslation!!.merge(cloneDir)
+                                if (!success) {
+                                    if (MergeConflictsHandler.isTranslationMergeConflicted(
+                                            existingTargetTranslation.id
+                                        )
+                                    ) {
+                                        mergeConflicted = true
+                                    }
+                                }
+                                showMergeOverwritePrompt(existingTargetTranslation)
+                            } catch (e: Exception) {
+                                Logger.e(
+                                    this.javaClass.name,
+                                    "Failed to merge the target translation",
+                                    e
+                                )
+                                notifyImportFailed()
+                                importFailed = true
+                            }
+                        } else {
+                            alreadyExisted = false
+                            // restore the new target translation
+                            try {
+                                translator.restoreTargetTranslation(tempTargetTranslation)
+                            } catch (e: IOException) {
+                                Logger.e(
+                                    this.javaClass.name,
+                                    "Failed to import the target translation " + tempTargetTranslation.id,
+                                    e
+                                )
+                                notifyImportFailed()
+                                importFailed = true
+                            }
+                        }
+                    } ?: run {
+                        Logger.e(this.javaClass.name, "Failed to open the online backup")
+                        notifyImportFailed()
+                        importFailed = true
+                    }
+
+                    deleteQuietly(cloneDir)
+
+                    if (!importFailed && !alreadyExisted) {
+                        // todo: terrible hack. We should instead register a listener with the dialog
+                        (activity as? HomeActivity)?.notifyDatasetChanged()
+                        showImportSuccess()
+                    }
+                } else if (result.status == CloneRepository.Status.AUTH_FAILURE) {
+                    Logger.i(this.javaClass.name, "Authentication failed")
+                    // if we have already tried ask the user if they would like to try again
+                    if (directoryProvider.hasSSHKeys()) {
+                        showAuthFailure()
+                    } else {
+                        viewModel.registerSSHKeys(false)
+                    }
+                } else {
+                    notifyImportFailed()
+                }
+            }
+        }
+        viewModel.registeredSSHKeys.observe(this@ImportFromDoor43Dialog) {
+            it?.let { registered ->
+                if (registered) {
+                    Logger.i(this.javaClass.name, "SSH keys were registered with the server")
+                    cloneRepository(mergeSelection)
+                } else {
+                    notifyImportFailed()
+                }
+            }
+        }
     }
 
     /**
@@ -201,11 +292,9 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
      * @param position
      */
     private fun doImportProject(position: Int) {
-        showProgressDialog()
         val repo = adapter?.getItem(position)
         val repoName = repo?.fullName?.replace("/", "-")
         if (repo != null && repoName != null) {
-            cloneDestDir = File(requireContext().cacheDir, repoName + System.currentTimeMillis() + "/")
             mCloneHtmlUrl = repo.htmlUrl
             cloneRepository(MergeOptions.NONE)
         }
@@ -215,11 +304,8 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
      * start a clone task
      */
     private fun cloneRepository(mergeSelection: MergeOptions) {
-        showProgressDialog()
-        mMergeSelection = mergeSelection
-        val task = CloneRepositoryTask(mCloneHtmlUrl, cloneDestDir)
-        taskWatcher?.watch(task)
-        TaskManager.addTask(task, CloneRepositoryTask.TASK_ID)
+        this.mergeSelection = mergeSelection
+        mCloneHtmlUrl?.let { viewModel.cloneRepository(it) }
     }
 
     /**
@@ -227,40 +313,11 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
      */
     private fun restoreDialogs() {
         //recreate dialog last shown
-
-        when (mDialogShown) {
+        when (dialogShown) {
             DialogShown.IMPORT_FAILED -> notifyImportFailed()
             DialogShown.AUTH_FAILURE -> showAuthFailure()
-            DialogShown.MERGE_CONFLICT -> showMergeOverwritePrompt(mTargetTranslation)
+            DialogShown.MERGE_CONFLICT -> showMergeOverwritePrompt(targetTranslation)
             DialogShown.NONE -> {}
-            else -> Logger.e(TAG, "Unsupported restore dialog: " + mDialogShown.toString())
-        }
-    }
-
-    /**
-     * creates and displays progress dialog
-     */
-    private fun showProgressDialog() {
-        val hand = Handler(Looper.getMainLooper())
-        hand.post {
-            dismissProgressDialog()
-            mProgressDialog = ProgressDialog(activity).apply {
-                setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-                setCancelable(false)
-                setCanceledOnTouchOutside(true)
-                isIndeterminate = true
-                setTitle(R.string.import_project_file)
-                show()
-            }
-        }
-    }
-
-    /**
-     * removes the progress dialog
-     */
-    protected fun dismissProgressDialog() {
-        if (null != mProgressDialog) {
-            mProgressDialog!!.dismiss()
         }
     }
 
@@ -275,114 +332,16 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
         val correctedWidth = width / density
         var screenWidthFactor = desiredWidth / correctedWidth
         screenWidthFactor = min(screenWidthFactor.toDouble(), 1.0).toFloat() // sanity check
-        dialog!!.window!!
-            .setLayout((width * screenWidthFactor).toInt(), WindowManager.LayoutParams.MATCH_PARENT)
-    }
-
-    override fun onFinished(task: ManagedTask) {
-        taskWatcher?.stop()
-        TaskManager.clearTask(task)
-
-        if (task is AdvancedGogsRepoSearchTask) {
-            this.repositories = task.repositories
-            adapter?.setRepositories(repositories)
-        } else if (task is CloneRepositoryTask) {
-            if (!task.isCanceled()) {
-                val status = task.status
-                var tempPath = task.destDir
-                val cloneUrl = task.cloneUrl
-                var alreadyExisted = false
-
-                if (status == CloneRepositoryTask.Status.SUCCESS) {
-                    Logger.i(this.javaClass.name, "Repository cloned from $cloneUrl")
-                    tempPath = TargetTranslationMigrator.migrate(tempPath)
-                    val tempTargetTranslation = TargetTranslation.open(tempPath)
-                    var importFailed = false
-                    mMergeConflicted = false
-                    if (tempTargetTranslation != null) {
-                        val existingTargetTranslation =
-                            translator!!.getTargetTranslation(tempTargetTranslation.id)
-                        alreadyExisted = (existingTargetTranslation != null)
-                        if (alreadyExisted && (mMergeSelection != MergeOptions.OVERWRITE)) {
-                            // merge target translation
-                            try {
-                                val success = existingTargetTranslation!!.merge(tempPath)
-                                if (!success) {
-                                    if (MergeConflictsHandler.isTranslationMergeConflicted(
-                                            existingTargetTranslation.id
-                                        )
-                                    ) {
-                                        mMergeConflicted = true
-                                    }
-                                }
-                                showMergeOverwritePrompt(existingTargetTranslation)
-                            } catch (e: Exception) {
-                                Logger.e(
-                                    this.javaClass.name,
-                                    "Failed to merge the target translation",
-                                    e
-                                )
-                                notifyImportFailed()
-                                importFailed = true
-                            }
-                        } else {
-                            // restore the new target translation
-                            try {
-                                translator!!.restoreTargetTranslation(tempTargetTranslation)
-                            } catch (e: IOException) {
-                                Logger.e(
-                                    this.javaClass.name,
-                                    "Failed to import the target translation " + tempTargetTranslation.id,
-                                    e
-                                )
-                                notifyImportFailed()
-                                importFailed = true
-                            }
-                            alreadyExisted = false
-                        }
-                    } else {
-                        Logger.e(this.javaClass.name, "Failed to open the online backup")
-                        notifyImportFailed()
-                        importFailed = true
-                    }
-                    deleteQuietly(tempPath)
-
-                    if (!importFailed && !alreadyExisted) {
-                        // todo: terrible hack. We should instead register a listener with the dialog
-                        (activity as? HomeActivity)?.notifyDatasetChanged()
-                        showImportSuccess()
-                    }
-                } else if (status == CloneRepositoryTask.Status.AUTH_FAILURE) {
-                    Logger.i(this.javaClass.name, "Authentication failed")
-                    // if we have already tried ask the user if they would like to try again
-                    if (hasSSHKeys()) {
-                        dismissProgressDialog()
-                        showAuthFailure()
-                        return
-                    }
-
-                    val keyTask = RegisterSSHKeysTask(false)
-                    taskWatcher?.watch(keyTask)
-                    TaskManager.addTask(keyTask, RegisterSSHKeysTask.TASK_ID)
-                } else {
-                    notifyImportFailed()
-                }
-            }
-        } else if (task is RegisterSSHKeysTask) {
-            if (task.isSuccess) {
-                Logger.i(this.javaClass.name, "SSH keys were registered with the server")
-                cloneRepository(mMergeSelection)
-            } else {
-                notifyImportFailed()
-            }
-        }
-        dismissProgressDialog()
+        dialog?.window?.setLayout(
+            (width * screenWidthFactor).toInt(),
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
     }
 
     /**
      * tell user that import was successful
      */
-    fun showImportSuccess() {
+    private fun showImportSuccess() {
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.import_from_door43)
             .setMessage(R.string.title_import_success)
@@ -394,30 +353,33 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
      * let user know there was a merge conflict
      * @param targetTranslation
      */
-    fun showMergeOverwritePrompt(targetTranslation: TargetTranslation?) {
-        mDialogShown = DialogShown.MERGE_CONFLICT
-        mTargetTranslation = targetTranslation
-        val messageID =
-            if (mMergeConflicted) R.string.import_merge_conflict_project_name else R.string.import_project_already_exists
-        val message = requireActivity().getString(messageID, targetTranslation!!.id)
+    private fun showMergeOverwritePrompt(targetTranslation: TargetTranslation) {
+        dialogShown = DialogShown.MERGE_CONFLICT
+        this.targetTranslation = targetTranslation
+        val messageID = if (mergeConflicted) {
+            R.string.import_merge_conflict_project_name
+        } else {
+            R.string.import_project_already_exists
+        }
+        val message = requireActivity().getString(messageID, targetTranslation.id)
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.merge_conflict_title)
             .setMessage(message)
             .setPositiveButton(R.string.merge_projects_label) { _, _ ->
-                mDialogShown = DialogShown.NONE
-                if (mMergeConflicted) {
+                dialogShown = DialogShown.NONE
+                if (mergeConflicted) {
                     doManualMerge()
                 } else {
                     showImportSuccess()
                 }
             }
             .setNeutralButton(R.string.title_cancel) { dialog, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
                 resetToMasterBackup()
                 dialog.dismiss()
             }
             .setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
                 resetToMasterBackup() // restore and now overwrite
                 cloneRepository(MergeOptions.OVERWRITE)
             }.show()
@@ -427,7 +389,7 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
      * restore original version
      */
     private fun resetToMasterBackup() {
-        mTargetTranslation?.resetToMasterBackup()
+        targetTranslation.resetToMasterBackup()
     }
 
     /**
@@ -437,37 +399,35 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
         // ask parent activity to navigate to target translation review mode with merge filter on
         val intent = Intent(activity, TargetTranslationActivity::class.java)
         val args = Bundle()
-        args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation!!.id)
-        args.putBoolean(App.EXTRA_START_WITH_MERGE_FILTER, true)
-        args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
+        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
+        args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtras(args)
         startActivity(intent)
         dismiss()
     }
 
-    fun showAuthFailure() {
-        mDialogShown = DialogShown.AUTH_FAILURE
+    private fun showAuthFailure() {
+        dialogShown = DialogShown.AUTH_FAILURE
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.error).setMessage(R.string.auth_failure_retry)
             .setPositiveButton(R.string.yes) { _, _ ->
-                mDialogShown = DialogShown.NONE
-                val keyTask = RegisterSSHKeysTask(true)
-                taskWatcher!!.watch(keyTask)
-                TaskManager.addTask(keyTask, RegisterSSHKeysTask.TASK_ID)
+                dialogShown = DialogShown.NONE
+                viewModel.registerSSHKeys(true)
             }
             .setNegativeButton(R.string.no) { _, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
                 notifyImportFailed()
             }.show()
     }
 
-    fun notifyImportFailed() {
-        mDialogShown = DialogShown.IMPORT_FAILED
+    private fun notifyImportFailed() {
+        dialogShown = DialogShown.IMPORT_FAILED
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.error)
             .setMessage(R.string.restore_failed)
             .setPositiveButton(R.string.dismiss) { _, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
             }
             .show()
     }
@@ -478,25 +438,15 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
             repoJsonList.add(r.toJSON().toString())
         }
         out.putStringArray(STATE_REPOSITORIES, repoJsonList.toTypedArray<String>())
-        out.putInt(STATE_DIALOG_SHOWN, mDialogShown!!.value)
-        out.putInt(STATE_MERGE_SELECTION, mMergeSelection.value)
-        out.putBoolean(STATE_MERGE_CONFLICT, mMergeConflicted)
-        if (mCloneHtmlUrl != null) {
-            out.putString(STATE_CLONE_URL, mCloneHtmlUrl)
-        }
+        out.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
+        out.putInt(STATE_MERGE_SELECTION, mergeSelection.value)
+        out.putBoolean(STATE_MERGE_CONFLICT, mergeConflicted)
+        out.putString(STATE_CLONE_URL, mCloneHtmlUrl)
 
-        if (mTargetTranslation != null) {
-            val targetTranslationId = mTargetTranslation!!.id
-            out.putString(STATE_TARGET_TRANSLATION, targetTranslationId)
-        }
+        val targetTranslationId = targetTranslation.id
+        out.putString(STATE_TARGET_TRANSLATION, targetTranslationId)
 
         super.onSaveInstanceState(out)
-    }
-
-    override fun onDestroy() {
-        dismissProgressDialog()
-        taskWatcher!!.stop()
-        super.onDestroy()
     }
 
     override fun onDestroyView() {
@@ -526,13 +476,13 @@ open class ImportFromDoor43Dialog : DialogFragment(), SimpleTaskWatcher.OnFinish
     }
 
     companion object {
-        val TAG: String = ImportFromDoor43Dialog::class.java.simpleName
+        const val TAG = "ImportFromDoor43Dialog"
 
         private const val STATE_REPOSITORIES = "state_repositories"
         private const val STATE_DIALOG_SHOWN = "state_dialog_shown"
-        const val STATE_CLONE_URL: String = "state_clone_url"
-        const val STATE_TARGET_TRANSLATION: String = "state_target_translation"
-        const val STATE_MERGE_SELECTION: String = "state_merge_selection"
-        const val STATE_MERGE_CONFLICT: String = "state_merge_conflict"
+        private const val STATE_CLONE_URL: String = "state_clone_url"
+        private const val STATE_TARGET_TRANSLATION: String = "state_target_translation"
+        private const val STATE_MERGE_SELECTION: String = "state_merge_selection"
+        private const val STATE_MERGE_CONFLICT: String = "state_merge_conflict"
     }
 }

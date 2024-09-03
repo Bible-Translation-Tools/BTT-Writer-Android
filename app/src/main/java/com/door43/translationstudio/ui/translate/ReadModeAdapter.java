@@ -89,7 +89,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         mTranslator = App.getTranslator();
         mContext = context;
         mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        mTargetLanguage = App.languageFromTargetTranslation(mTargetTranslation);
+        mTargetLanguage = mTranslator.languageFromTargetTranslation(mTargetTranslation);
     }
 
     /**
@@ -226,15 +226,16 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      */
     private void loadTabInfo() {
         List<ContentValues> tabContents = new ArrayList<>();
-        String[] sourceTranslationSlugs = App.getOpenSourceTranslations(mTargetTranslation.getId());
+        String[] sourceTranslationSlugs = mTranslator.getOpenSourceTranslations(mTargetTranslation.getId());
         for(String slug:sourceTranslationSlugs) {
             Translation st = mLibrary.index().getTranslation(slug);
             if(st != null) {
                 ContentValues values = new ContentValues();
-                values.put("title", st.language.name + " " + st.resource.slug.toUpperCase());
+                String title = st.language.name + " " + st.resource.slug.toUpperCase();
+                values.put("title", title);
                 // include the resource id if there are more than one
                 if(mLibrary.index().getResources(st.language.slug, st.project.slug).size() > 1) {
-                    values.put("title", st.language.name + " " + st.resource.slug.toUpperCase());
+                    values.put("title", title);
                 } else {
                     values.put("title", st.language.name);
                 }
@@ -414,7 +415,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 public boolean onSingleTapUp(MotionEvent e) {
                     Bundle args = new Bundle();
                     args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true);
-                    args.putString(App.EXTRA_CHAPTER_ID, chapterSlug);
+                    args.putString(Translator.EXTRA_CHAPTER_ID, chapterSlug);
                     getListener().openTranslationMode(TranslationViewMode.CHUNK, args);
                     return true;
                 }

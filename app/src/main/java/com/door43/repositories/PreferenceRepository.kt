@@ -26,17 +26,17 @@ class PreferenceRepository @Inject constructor(
     }
 
     override var lastFocusTargetTranslation: String?
-        get() = generalPrefs.getString(LAST_TRANSLATION, null)
+        get() = privatePrefs.getString(LAST_TRANSLATION, null)
         set(targetTranslationId) {
-            val editor = generalPrefs.edit()
+            val editor = privatePrefs.edit()
             editor.putString(LAST_TRANSLATION, targetTranslationId)
             editor.apply()
         }
 
     override var lastCheckedForUpdates: Long
-        get() = generalPrefs.getLong(LAST_CHECKED_SERVER_FOR_UPDATES, 0L)
+        get() = privatePrefs.getLong(LAST_CHECKED_SERVER_FOR_UPDATES, 0L)
         set(timeMillis) {
-            val editor = generalPrefs.edit()
+            val editor = privatePrefs.edit()
             editor.putLong(LAST_CHECKED_SERVER_FOR_UPDATES, timeMillis)
             editor.apply()
         }
@@ -48,7 +48,7 @@ class PreferenceRepository @Inject constructor(
     private val defaultPrefs: SharedPreferences
         get() = PreferenceManager.getDefaultSharedPreferences(context)
 
-    private val generalPrefs
+    private val privatePrefs
         get() = context.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
 
     override fun getDefaultPref(key: String, defaultValue: String?): String? {
@@ -69,8 +69,22 @@ class PreferenceRepository @Inject constructor(
         editor.apply()
     }
 
+    override fun getPrivatePref(key: String, defaultValue: String?): String? {
+        return privatePrefs.getString(key, defaultValue)
+    }
+
+    override fun setPrivatePref(key: String, value: String?) {
+        val editor = privatePrefs.edit()
+        if (value == null) {
+            editor.remove(key)
+        } else {
+            editor.putString(key, value)
+        }
+        editor.apply()
+    }
+
     override fun clearTargetTranslationSettings(targetTranslationId: String) {
-        val editor = generalPrefs.edit()
+        val editor = privatePrefs.edit()
         editor.remove(SELECTED_SOURCE_TRANSLATION + targetTranslationId)
         editor.remove(OPEN_SOURCE_TRANSLATIONS + targetTranslationId)
         editor.remove(LAST_FOCUS_FRAME + targetTranslationId)
@@ -81,7 +95,7 @@ class PreferenceRepository @Inject constructor(
 
     override fun getLastViewMode(targetTranslationId: String): TranslationViewMode {
         try {
-            val modeName = generalPrefs.getString(
+            val modeName = privatePrefs.getString(
                 LAST_VIEW_MODE + targetTranslationId,
                 TranslationViewMode.READ.name
             )
@@ -92,7 +106,7 @@ class PreferenceRepository @Inject constructor(
     }
 
     override fun setLastViewMode(targetTranslationId: String, viewMode: TranslationViewMode) {
-        val editor = generalPrefs.edit()
+        val editor = privatePrefs.edit()
         editor.putString(
             LAST_VIEW_MODE + targetTranslationId,
             viewMode.name.uppercase(Locale.getDefault())
@@ -101,7 +115,7 @@ class PreferenceRepository @Inject constructor(
     }
 
     override fun setLastFocus(targetTranslationId: String, chapterId: String?, frameId: String?) {
-        val editor = generalPrefs.edit()
+        val editor = privatePrefs.edit()
         editor.putString(LAST_FOCUS_CHAPTER + targetTranslationId, chapterId)
         editor.putString(LAST_FOCUS_FRAME + targetTranslationId, frameId)
         editor.apply()
@@ -109,15 +123,15 @@ class PreferenceRepository @Inject constructor(
     }
 
     override fun getLastFocusChapterId(targetTranslationId: String): String? {
-        return generalPrefs.getString(LAST_FOCUS_CHAPTER + targetTranslationId, null)
+        return privatePrefs.getString(LAST_FOCUS_CHAPTER + targetTranslationId, null)
     }
 
     override fun getLastFocusFrameId(targetTranslationId: String): String? {
-        return generalPrefs.getString(LAST_FOCUS_FRAME + targetTranslationId, null)
+        return privatePrefs.getString(LAST_FOCUS_FRAME + targetTranslationId, null)
     }
 
     override fun getOpenSourceTranslations(targetTranslationId: String): Array<String> {
-        val idSet = generalPrefs.getString(
+        val idSet = privatePrefs.getString(
             OPEN_SOURCE_TRANSLATIONS + targetTranslationId,
             ""
         )?.trim()
@@ -137,7 +151,7 @@ class PreferenceRepository @Inject constructor(
         targetTranslationId: String,
         sourceTranslationId: String
     ) {
-        val editor = generalPrefs.edit()
+        val editor = privatePrefs.edit()
         val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
         var newIdSet: String? = ""
         for (id in sourceTranslationIds) {
@@ -151,7 +165,7 @@ class PreferenceRepository @Inject constructor(
     }
 
     override fun getSelectedSourceTranslationId(targetTranslationId: String): String {
-        var selectedSourceTranslationId = generalPrefs.getString(
+        var selectedSourceTranslationId = privatePrefs.getString(
             SELECTED_SOURCE_TRANSLATION + targetTranslationId,
             null
         )
@@ -171,7 +185,7 @@ class PreferenceRepository @Inject constructor(
         targetTranslationId: String,
         sourceTranslationId: String?
     ) {
-        val editor = generalPrefs.edit()
+        val editor = privatePrefs.edit()
         if (!sourceTranslationId.isNullOrEmpty()) {
             editor.putString(
                 SELECTED_SOURCE_TRANSLATION + targetTranslationId,

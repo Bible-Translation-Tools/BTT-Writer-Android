@@ -85,7 +85,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
                 mFragment = (PublishStepFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             } else {
                 mFragment = new ValidationFragment();
-                String sourceTranslationId = App.getSelectedSourceTranslationId(targetTranslationId);
+                String sourceTranslationId = mTranslator.getSelectedSourceTranslationId(targetTranslationId);
 
                 if(sourceTranslationId == null) {
                     // use the default target translation if they have not chosen one.
@@ -183,7 +183,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
                 // because we may have to go back and forth and don't want to fill up the stack
                 Intent intent = new Intent(this, TargetTranslationActivity.class);
                 Bundle args = new Bundle();
-                args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+                args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
                 intent.putExtras(args);
                 startActivity(intent);
             }
@@ -198,7 +198,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
         if(mCallingActivity == ACTIVITY_TRANSLATION) {
             Intent intent = new Intent(this, TargetTranslationActivity.class);
             Bundle args = new Bundle();
-            args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+            args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
             intent.putExtras(args);
             startActivity(intent);
         }
@@ -248,7 +248,7 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
         selectButtonForCurrentStep();
 
         Bundle args = getIntent().getExtras();
-        String sourceTranslationId = App.getSelectedSourceTranslationId(mTargetTranslation.getId());
+        String sourceTranslationId = mTranslator.getSelectedSourceTranslationId(mTargetTranslation.getId());
         // TRICKY: if the user has not chosen a source translation (this is an empty translation) the id will be null
         if(sourceTranslationId == null) {
             Project p = App.getLibrary().index().getProject(App.getDeviceLanguageCode(), mTargetTranslation.getProjectId(), true);

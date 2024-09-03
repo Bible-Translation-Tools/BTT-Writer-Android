@@ -1,71 +1,64 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.content.DialogInterface;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.Button;
-import android.widget.EditText;
-
-import androidx.fragment.app.DialogFragment;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
+import android.content.DialogInterface
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import androidx.fragment.app.DialogFragment
+import com.door43.translationstudio.App
+import com.door43.translationstudio.databinding.DialogDeviceNetworkAliasBinding
 
 /**
  * Created by joel on 11/25/2015.
  */
-public class DeviceNetworkAliasDialog extends DialogFragment {
+class DeviceNetworkAliasDialog : DialogFragment() {
+    private var listener: OnDismissListener? = null
 
-    private OnDismissListener listener = null;
+    private var _binding: DialogDeviceNetworkAliasBinding? = null
+    private val binding get() = _binding!!
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_device_network_alias, container, false);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogDeviceNetworkAliasBinding.inflate(inflater, container, false)
 
-        final EditText deviceName = (EditText)v.findViewById(R.id.device_name);
-        deviceName.setText(App.getDeviceNetworkAlias());
-
-        Button cancelButton = (Button)v.findViewById(R.id.cancel_button);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
+        with(binding) {
+            deviceName.setText(App.deviceNetworkAlias)
+            cancelButton.setOnClickListener { dismiss() }
+            confirmButton.setOnClickListener {
+                App.deviceNetworkAlias = deviceName.text.toString()
+                dismiss()
             }
-        });
-        Button confirmButton = (Button)v.findViewById(R.id.confirm_button);
-        confirmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                App.setDeviceNetworkAlias(deviceName.getText().toString());
-                dismiss();
-            }
-        });
-
-        return v;
-    }
-
-    @Override
-    public void onDismiss(DialogInterface dialogInterface) {
-        if(listener != null) {
-            listener.onDismiss();
         }
-        super.onDismiss(dialogInterface);
+
+        return binding.root
     }
 
-    public void setOnDismissListener(OnDismissListener listener) {
-        this.listener = listener;
+    override fun onDismiss(dialogInterface: DialogInterface) {
+        listener?.onDismiss()
+        super.onDismiss(dialogInterface)
     }
 
-    public interface OnDismissListener {
-        void onDismiss();
+    fun setOnDismissListener(listener: OnDismissListener?) {
+        this.listener = listener
     }
 
-    public void onDestroy() {
-        listener = null;
-        super.onDestroy();
+    interface OnDismissListener {
+        fun onDismiss()
+    }
+
+    override fun onDestroy() {
+        listener = null
+        super.onDestroy()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

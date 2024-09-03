@@ -39,18 +39,6 @@ object ProgressDialogFactory {
             getDialog()?.updateProgress(progress)
         }
 
-        fun updateTitle(title: Int) {
-            getDialog()?.updateTitle(title)
-        }
-
-        fun updateTitle(title: String) {
-            getDialog()?.updateTitle(title)
-        }
-
-        fun updateMessage(message: String) {
-            getDialog()?.updateMessage(message)
-        }
-
         fun isShowing(): Boolean {
             return getDialog()?.isShowing == true
         }
@@ -113,18 +101,6 @@ object ProgressDialogFactory {
                     progressNumber.visibility = View.VISIBLE
                 }
             }
-        }
-
-        fun updateTitle(title: Int) {
-            dialog?.setTitle(title)
-        }
-
-        fun updateTitle(title: String) {
-            dialog?.setTitle(title)
-        }
-
-        fun updateMessage(message: String?) {
-            (dialog as? AlertDialog)?.setMessage(message)
         }
 
         override fun setCancelable(cancelable: Boolean) {

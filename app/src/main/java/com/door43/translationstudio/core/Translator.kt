@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.text.Editable
 import android.text.SpannedString
+import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
@@ -20,6 +21,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -28,6 +30,8 @@ import javax.inject.Inject
 class Translator @Inject constructor(
     private val context: Context,
     private val profile: Profile,
+    private val prefRepository: IPreferenceRepository,
+    private val library: Door43Client,
     /**
      * Returns the root directory to the target translations
      * @return
@@ -103,6 +107,20 @@ class Translator @Inject constructor(
             return translations.toTypedArray<String>()
         }
 
+    var lastFocusTargetTranslation: String?
+        /**
+         * Returns the last focused target translation
+         * @return
+         */
+        get() = prefRepository.getPrivatePref("last_translation", null)
+        /**
+         * Sets the last focused target translation
+         * @param targetTranslationId
+         */
+        set(targetTranslationId) {
+            prefRepository.setPrivatePref("last_translation", targetTranslationId)
+        }
+
     private val localCacheDir: File
         /**
          * Returns the local translations cache directory.
@@ -110,6 +128,12 @@ class Translator @Inject constructor(
          * @return
          */
         get() = File(path, "cache")
+
+    /**
+     * for keeping track of project that has changed
+     * @param targetTranslationId
+     */
+    var notifyTargetTranslationWithUpdates: String? = null
 
     /**
      * Creates a new Target Translation. If one already exists it will return it without changing anything.
@@ -514,19 +538,234 @@ class Translator @Inject constructor(
     }
 
     /**
-     * Check if file extension is supported archive extension
-     * @param fileName
-     * @return boolean
+     * Returns an array of open source translation tabs on a target translation
+     * @param targetTranslationId
+     * @return
      */
-    private fun isValidArchiveExtension(fileName: String): Boolean {
-        val isTstudio =
-            FileUtilities.getExtension(fileName).equals(TSTUDIO_EXTENSION, ignoreCase = true)
-        val isZip = FileUtilities.getExtension(fileName).equals(ZIP_EXTENSION, ignoreCase = true)
+    fun getOpenSourceTranslations(targetTranslationId: String): Array<String?> {
+        val idSet = prefRepository.getPrivatePref(
+            OPEN_SOURCE_TRANSLATIONS + targetTranslationId,
+            ""
+        )?.trim()
 
-        return isTstudio || isZip
+        if (idSet.isNullOrEmpty()) {
+            return arrayOfNulls(0)
+        } else {
+            val ids: Array<String?> =
+                idSet.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
+                    .toTypedArray()
+            for (i in ids.indices) {
+                ids[i] = Migration.migrateSourceTranslationSlug(ids[i])
+            }
+            return ids
+        }
+    }
+
+    /**
+     * Adds a source translation to the list of open tabs on a target translation
+     * @param targetTranslationId
+     * @param sourceTranslationId
+     */
+    fun addOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String?) {
+        if (!sourceTranslationId.isNullOrEmpty()) {
+            val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
+            var newIdSet: String? = ""
+            for (id in sourceTranslationIds) {
+                if (id != sourceTranslationId) {
+                    newIdSet += "$id|"
+                }
+            }
+            newIdSet += sourceTranslationId
+
+            prefRepository.setPrivatePref(
+                OPEN_SOURCE_TRANSLATIONS + targetTranslationId,
+                newIdSet
+            )
+        }
+    }
+
+    /**
+     * Returns the last view mode of the target translation.
+     * The default view mode will be returned if there is no recorded last view mode
+     *
+     * @param targetTranslationId
+     * @return
+     */
+    fun getLastViewMode(targetTranslationId: String): TranslationViewMode {
+        try {
+            val modeName = prefRepository.getDefaultPref(
+                LAST_VIEW_MODE + targetTranslationId,
+                TranslationViewMode.READ.name
+            )
+            return TranslationViewMode.valueOf(modeName!!.uppercase(Locale.getDefault()))
+        } catch (e: Exception) {
+        }
+        return TranslationViewMode.READ
+    }
+
+    /**
+     * Sets the last opened view mode for a target translation
+     * @param targetTranslationId
+     * @param viewMode
+     */
+    fun setLastViewMode(targetTranslationId: String, viewMode: TranslationViewMode) {
+        prefRepository.setPrivatePref(
+            LAST_VIEW_MODE + targetTranslationId,
+            viewMode.name.uppercase(Locale.getDefault())
+        )
+    }
+
+    /**
+     * Sets the last focused chapter and frame for a target translation
+     * @param targetTranslationId
+     * @param chapterId
+     * @param frameId
+     */
+    fun setLastFocus(targetTranslationId: String, chapterId: String?, frameId: String?) {
+        prefRepository.setPrivatePref(LAST_FOCUS_CHAPTER + targetTranslationId, chapterId)
+        prefRepository.setPrivatePref(LAST_FOCUS_FRAME + targetTranslationId, frameId)
+        lastFocusTargetTranslation = targetTranslationId
+    }
+
+    /**
+     * Returns the id of the chapter that was last in focus for this target translation
+     * @param targetTranslationId
+     * @return
+     */
+    fun getLastFocusChapterId(targetTranslationId: String): String? {
+        return prefRepository.getPrivatePref(LAST_FOCUS_CHAPTER + targetTranslationId, null)
+    }
+
+    /**
+     * Returns the id of the frame that was last in focus for this target translation
+     * @param targetTranslationId
+     * @return
+     */
+    fun getLastFocusFrameId(targetTranslationId: String): String? {
+        return prefRepository.getPrivatePref(LAST_FOCUS_FRAME + targetTranslationId, null)
+    }
+
+    /**
+     * Removes a source translation from the list of open tabs on a target translation
+     * @param targetTranslationId
+     * @param sourceTranslationId
+     */
+    fun removeOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String?) {
+        if (!sourceTranslationId.isNullOrEmpty()) {
+            val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
+            var newIdSet: String? = ""
+            for (id in sourceTranslationIds) {
+                if (id != sourceTranslationId) {
+                    if (newIdSet!!.isEmpty()) {
+                        newIdSet = id
+                    } else {
+                        newIdSet += "|$id"
+                    }
+                } else if (id == getSelectedSourceTranslationId(targetTranslationId)) {
+                    // unset the selected tab if it is removed
+                    setSelectedSourceTranslation(targetTranslationId, null)
+                }
+            }
+            prefRepository.setPrivatePref(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, newIdSet)
+        }
+    }
+
+    /**
+     * Sets or removes the selected open source translation tab on a target translation
+     * @param targetTranslationId
+     * @param sourceTranslationId if null the selection will be unset
+     */
+    fun setSelectedSourceTranslation(
+        targetTranslationId: String,
+        sourceTranslationId: String?
+    ) {
+        if (!sourceTranslationId.isNullOrEmpty()) {
+            prefRepository.setPrivatePref(
+                SELECTED_SOURCE_TRANSLATION + targetTranslationId,
+                Migration.migrateSourceTranslationSlug(sourceTranslationId)
+            )
+        } else {
+            prefRepository.setPrivatePref(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
+        }
+    }
+
+    /**
+     * Returns the selected open source translation tab on the target translation
+     * If there is no selection the first open tab will be set as the selected tab
+     * @param targetTranslationId
+     * @return
+     */
+    fun getSelectedSourceTranslationId(targetTranslationId: String): String {
+        var selectedSourceTranslationId =
+            prefRepository.getPrivatePref(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
+        if (selectedSourceTranslationId.isNullOrEmpty()) {
+            // default to first tab
+            val openSourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
+            if (openSourceTranslationIds.isNotEmpty()) {
+                selectedSourceTranslationId = openSourceTranslationIds[0]
+                setSelectedSourceTranslation(targetTranslationId, selectedSourceTranslationId)
+            }
+        }
+        return Migration.migrateSourceTranslationSlug(selectedSourceTranslationId)
+    }
+
+    /**
+     * Removes all settings for a target translation
+     * @param targetTranslationId
+     */
+    fun clearTargetTranslationSettings(targetTranslationId: String) {
+        prefRepository.setPrivatePref(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
+        prefRepository.setPrivatePref(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, null)
+        prefRepository.setPrivatePref(LAST_FOCUS_FRAME + targetTranslationId, null)
+        prefRepository.setPrivatePref(LAST_FOCUS_CHAPTER + targetTranslationId, null)
+        prefRepository.setPrivatePref(LAST_VIEW_MODE + targetTranslationId, null)
+    }
+
+    /**
+     * A temporary utility to retrieve the target language used in a target translation.
+     * if the language does not exist it will be added as a temporary language if possible
+     * @param t
+     * @return
+     */
+    @Deprecated("")
+    fun languageFromTargetTranslation(t: TargetTranslation): TargetLanguage? {
+        var language = library.index.getTargetLanguage(t.targetLanguageId)
+        if (language == null && t.targetLanguageId.isEmpty()) {
+            val name = t.targetLanguageName.ifEmpty { t.targetLanguageId }
+            val direction =
+                if (t.targetLanguageDirection == null) "ltr" else t.targetLanguageDirection
+            language = TargetLanguage(
+                t.targetLanguageId,
+                name,
+                "",
+                direction,
+                "unknown",
+                false
+            )
+            try {
+                library.index.addTempTargetLanguage(language)
+            } catch (e: Exception) {
+                language = null
+                e.printStackTrace()
+            }
+        }
+        return language
     }
 
     companion object {
+        private const val OPEN_SOURCE_TRANSLATIONS = "open_source_translations_"
+        private const val LAST_VIEW_MODE = "last_view_mode_"
+        private const val LAST_FOCUS_CHAPTER = "last_focus_chapter_"
+        private const val LAST_FOCUS_FRAME = "last_focus_frame_"
+        private const val SELECTED_SOURCE_TRANSLATION = "selected_source_translation_"
+
+        const val EXTRA_SOURCE_DRAFT_TRANSLATION_ID: String = "extra_source_translation_id"
+        const val EXTRA_TARGET_TRANSLATION_ID: String = "extra_target_translation_id"
+        const val EXTRA_START_WITH_MERGE_FILTER: String = "start_with_merge_filter"
+        const val EXTRA_CHAPTER_ID: String = "extra_chapter_id"
+        const val EXTRA_FRAME_ID: String = "extra_frame_id"
+        const val EXTRA_VIEW_MODE: String = "extra_view_mode_id"
+
         private const val TSTUDIO_PACKAGE_VERSION = 2
         private const val GENERATOR_NAME = "ts-android"
         const val TSTUDIO_EXTENSION: String = "tstudio"
@@ -600,6 +839,19 @@ class Translator @Inject constructor(
             // grab the last bit of text
             compiledString.append(text.toString().substring(lastIndex, text.length))
             return compiledString.toString().trim { it <= ' ' }
+        }
+
+        /**
+         * Check if file extension is supported archive extension
+         * @param fileName
+         * @return boolean
+         */
+        fun isValidArchiveExtension(fileName: String): Boolean {
+            val isTstudio =
+                FileUtilities.getExtension(fileName).equals(TSTUDIO_EXTENSION, ignoreCase = true)
+            val isZip = FileUtilities.getExtension(fileName).equals(ZIP_EXTENSION, ignoreCase = true)
+
+            return isTstudio || isZip
         }
     }
 }

@@ -67,8 +67,10 @@ object AppModule {
     fun provideTranslator(
         @ApplicationContext context: Context,
         profile: Profile,
-        directoryProvider: IDirectoryProvider
+        directoryProvider: IDirectoryProvider,
+        prefRepository: IPreferenceRepository,
+        library: Door43Client
     ): Translator {
-        return Translator(context, profile, directoryProvider.translationsDir)
+        return Translator(context, profile, prefRepository, library, directoryProvider.translationsDir)
     }
 }

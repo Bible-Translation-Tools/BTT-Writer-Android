@@ -219,7 +219,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         mTranslator = App.getTranslator();
         mContext = context;
         mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationSlug);
-        mTargetLanguage = App.languageFromTargetTranslation(mTargetTranslation);
+        mTargetLanguage = mTranslator.languageFromTargetTranslation(mTargetTranslation);
         mResourcesOpened = openResources;
     }
 
@@ -271,7 +271,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      */
     private void loadTabInfo() {
         List<ContentValues> tabContents = new ArrayList<>();
-        String[] sourceTranslationIds = App.getOpenSourceTranslations(mTargetTranslation.getId());
+        String[] sourceTranslationIds = mTranslator.getOpenSourceTranslations(mTargetTranslation.getId());
         for(String slug:sourceTranslationIds) {
             Translation st = mLibrary.index().getTranslation(slug);
             if(st != null) {

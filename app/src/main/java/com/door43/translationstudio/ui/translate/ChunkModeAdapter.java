@@ -94,7 +94,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         mTranslator = App.getTranslator();
         mContext = context;
         mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        mTargetLanguage = App.languageFromTargetTranslation(mTargetTranslation);
+        mTargetLanguage = mTranslator.languageFromTargetTranslation(mTargetTranslation);
     }
 
     @Override
@@ -155,7 +155,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      */
     private void loadTabInfo() {
         List<ContentValues> tabContents = new ArrayList<>();
-        String[] sourceTranslationIds = App.getOpenSourceTranslations(mTargetTranslation.getId());
+        String[] sourceTranslationIds = mTranslator.getOpenSourceTranslations(mTargetTranslation.getId());
         for(String slug:sourceTranslationIds) {
             Translation st = mLibrary.index().getTranslation(slug);
             if(st != null) {
@@ -398,8 +398,8 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                                                       public void onClick(View v) {
                                                           Bundle args = new Bundle();
                                                           args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true);
-                                                          args.putString(App.EXTRA_CHAPTER_ID, item.chapterSlug);
-                                                          args.putString(App.EXTRA_FRAME_ID, item.chunkSlug);
+                                                          args.putString(Translator.EXTRA_CHAPTER_ID, item.chapterSlug);
+                                                          args.putString(Translator.EXTRA_FRAME_ID, item.chunkSlug);
                                                           getListener().openTranslationMode(TranslationViewMode.REVIEW, args);
                                                       }
                                                   }

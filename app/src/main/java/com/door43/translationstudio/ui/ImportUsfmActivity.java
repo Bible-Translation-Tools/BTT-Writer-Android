@@ -556,9 +556,9 @@ public class ImportUsfmActivity extends BaseActivity implements TargetLanguageLi
         // navigate to target translation review mode with merge filter on
         Intent intent = new Intent(this, TargetTranslationActivity.class);
         Bundle args = new Bundle();
-        args.putString(App.EXTRA_TARGET_TRANSLATION_ID, targetTranslationID);
-        args.putBoolean(App.EXTRA_START_WITH_MERGE_FILTER, true);
-        args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal());
+        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslationID);
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true);
+        args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal());
         intent.putExtras(args);
         startActivity(intent);
     }

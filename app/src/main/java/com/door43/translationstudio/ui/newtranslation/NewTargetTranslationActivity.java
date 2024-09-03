@@ -42,6 +42,11 @@ import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class NewTargetTranslationActivity extends BaseActivity implements TargetLanguageListFragment.OnItemClickListener, ProjectListFragment.OnItemClickListener, SimpleTaskWatcher.OnFinishedListener {
 
     public static final String EXTRA_TARGET_TRANSLATION_ID = "extra_target_translation_id";
@@ -66,6 +71,8 @@ public class NewTargetTranslationActivity extends BaseActivity implements Target
     private String mTargetTranslationId = null;
     private SimpleTaskWatcher taskWatcher;
     private DialogShown mDialogShown = DialogShown.NONE;
+
+    @Inject Translator translator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -285,24 +292,24 @@ public class NewTargetTranslationActivity extends BaseActivity implements Target
      * moves all settings for a target translation to new target translation (such as when target language changed)
      * @param targetTranslationId
      */
-    public static void moveTargetTranslationAppSettings(String targetTranslationId, String newTargetTranslationId) {
-        String[] sources = App.getOpenSourceTranslations(targetTranslationId);
+    public void moveTargetTranslationAppSettings(String targetTranslationId, String newTargetTranslationId) {
+        String[] sources = translator.getOpenSourceTranslations(targetTranslationId);
         for (String source : sources) {
-            App.addOpenSourceTranslation(newTargetTranslationId, source);
+            translator.addOpenSourceTranslation(newTargetTranslationId, source);
         }
 
-        String source = App.getSelectedSourceTranslationId(targetTranslationId);
-        App.setSelectedSourceTranslation(newTargetTranslationId, source);
+        String source = translator.getSelectedSourceTranslationId(targetTranslationId);
+        translator.setSelectedSourceTranslation(newTargetTranslationId, source);
 
-        String lastFocusChapterId = App.getLastFocusChapterId(targetTranslationId);
-        String lastFocusFrameId = App.getLastFocusFrameId(targetTranslationId);
-        App.setLastFocus(newTargetTranslationId, lastFocusChapterId, lastFocusFrameId);
+        String lastFocusChapterId = translator.getLastFocusChapterId(targetTranslationId);
+        String lastFocusFrameId = translator.getLastFocusFrameId(targetTranslationId);
+        translator.setLastFocus(newTargetTranslationId, lastFocusChapterId, lastFocusFrameId);
 
-        TranslationViewMode lastViewMode = App.getLastViewMode(targetTranslationId);
-        App.setLastViewMode(newTargetTranslationId, lastViewMode);
+        TranslationViewMode lastViewMode = translator.getLastViewMode(targetTranslationId);
+        translator.setLastViewMode(newTargetTranslationId, lastViewMode);
 
         //remove old settings
-        App.clearTargetTranslationSettings(targetTranslationId);
+        translator.clearTargetTranslationSettings(targetTranslationId);
     }
 
     @Override
@@ -478,10 +485,10 @@ public class NewTargetTranslationActivity extends BaseActivity implements Target
                 } else {
                     results = RESULT_OK;
                 }
-                App.clearTargetTranslationSettings(mergeTask.getSourceTranslation().getId()); // clean up original settings
+                translator.clearTargetTranslationSettings(mergeTask.getSourceTranslation().getId()); // clean up original settings
             } else if(MergeTargetTranslationTask.Status.SUCCESS == status) {
                 results = RESULT_OK;
-                App.clearTargetTranslationSettings(mergeTask.getSourceTranslation().getId()); // clean up original settings
+                translator.clearTargetTranslationSettings(mergeTask.getSourceTranslation().getId()); // clean up original settings
             }
 
             Intent data = new Intent();

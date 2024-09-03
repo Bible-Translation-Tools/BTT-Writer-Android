@@ -92,10 +92,28 @@ class DirectoryProvider @Inject constructor(
         }
 
     override val publicKey: File
-        get() = File(sshKeysDir.absolutePath + "/id_rsa.pub")
+        get() = File(sshKeysDir, "id_rsa.pub")
 
     override val privateKey: File
-        get() = File(sshKeysDir.absolutePath + "/id_rsa")
+        get() = File(sshKeysDir, "id_rsa")
+
+    override val p2pKeysDir: File
+        get() = run {
+            val dir = File(
+                internalAppDir,
+                context.resources.getString(R.string.p2p_keys_dir)
+            )
+            if (!dir.exists()) {
+                dir.mkdir()
+            }
+            dir
+        }
+
+    override val p2pPublicKey: File
+        get() = File(p2pKeysDir, "id_rsa.pub")
+
+    override val p2pPrivateKey: File
+        get() = File(p2pKeysDir, "id_rsa")
 
     override fun hasSSHKeys(): Boolean {
         return privateKey.exists() && publicKey.exists()

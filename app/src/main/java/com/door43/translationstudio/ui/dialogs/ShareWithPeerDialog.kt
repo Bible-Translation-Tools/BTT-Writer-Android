@@ -1,304 +1,294 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
+import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.Bundle
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.widget.AdapterView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.App.Companion.deviceNetworkAlias
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.MergeConflictsHandler
+import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictListener
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.databinding.DialogShareWithPeerBinding
+import com.door43.translationstudio.network.Peer
+import com.door43.translationstudio.services.BroadcastListenerService
+import com.door43.translationstudio.services.BroadcastService
+import com.door43.translationstudio.services.ClientService
+import com.door43.translationstudio.services.ClientService.OnClientEventListener
+import com.door43.translationstudio.services.Request
+import com.door43.translationstudio.services.ServerService
+import com.door43.translationstudio.services.ServerService.OnServerEventListener
+import com.door43.translationstudio.ui.home.HomeActivity
+import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.translationstudio.ui.viewmodels.ExportViewModel
+import com.door43.util.RSAEncryption
+import dagger.hilt.android.AndroidEntryPoint
+import org.json.JSONException
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.tools.logger.Logger
+import java.io.File
+import java.security.InvalidParameterException
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.util.Locale
+import javax.inject.Inject
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
+@AndroidEntryPoint
+class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
+    BroadcastListenerService.Callbacks, OnClientEventListener {
 
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.tools.logger.Logger;
+    @Inject
+    lateinit var directoryProvider: IDirectoryProvider
+    @Inject
+    lateinit var translator: Translator
+    @Inject
+    lateinit var library: Door43Client
 
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.MergeConflictsHandler;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.TranslationViewMode;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.network.Peer;
-import com.door43.translationstudio.ui.home.HomeActivity;
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity;
-import com.door43.translationstudio.services.BroadcastListenerService;
-import com.door43.translationstudio.services.BroadcastService;
-import com.door43.translationstudio.services.ClientService;
-import com.door43.translationstudio.services.Request;
-import com.door43.translationstudio.services.ServerService;
-import com.door43.util.RSAEncryption;
+    private var publicKeyFile: File? = null
+    private var privateKeyFile: File? = null
+    private var operationMode = 0
+    private var targetTranslationId: String? = null
+    private var shutDownServices = true
+    private var deviceAlias: String? = null
+    private var mDialogShown: DialogShown? = DialogShown.NONE
+    private lateinit var targetTranslation: TargetTranslation
+    private lateinit var adapter: PeerAdapter
 
-import org.json.JSONException;
+    private val viewModel: ExportViewModel by viewModels()
 
-import java.io.File;
-import java.security.InvalidParameterException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.Locale;
+    private var _binding: DialogShareWithPeerBinding? = null
+    private val binding get() = _binding!!
 
-
-public class ShareWithPeerDialog extends DialogFragment implements ServerService.OnServerEventListener, BroadcastListenerService.Callbacks, ClientService.OnClientEventListener {
-    public static final String STATE_DIALOG_SHOWN = "state_dialog_shown";
-    public static final String STATE_DIALOG_TRANSLATION_ID = "state_dialog_translationID";
-    // TODO: 11/30/2015 get port from settings
-    private static final int PORT_CLIENT_UDP = 9939;
-    private static final int REFRESH_FREQUENCY = 2000;
-    private static final int SERVER_TTL = 2000;
-    public static final int MODE_CLIENT = 0;
-    public static final int MODE_SERVER = 1;
-    public static final String ARG_DEVICE_ALIAS = "arg_device_alias";
-    public static final String TAG = ShareWithPeerDialog.class.getSimpleName();
-    private PeerAdapter adapter;
-    public static final String ARG_OPERATION_MODE = "arg_operation_mode";
-    public static final String ARG_TARGET_TRANSLATION = "arg_target_translation";
-    private eDialogShown mDialogShown = eDialogShown.NONE;
-    private String mTargetTranslationID;
-
-    private ClientService clientService;
-    private ServiceConnection clientConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            ClientService.LocalBinder binder = (ClientService.LocalBinder) service;
-            clientService = binder.getServiceInstance();
-            clientService.setOnClientEventListener(ShareWithPeerDialog.this);
-            Logger.i(ShareWithPeerDialog.class.getName(), "Connected to import service");
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    updatePeerList(clientService.getPeers());
-                }
-            });
+    private var clientService: ClientService? = null
+    private val clientConnection: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as ClientService.LocalBinder
+            clientService = binder.serviceInstance
+            clientService!!.setOnClientEventListener(this@ShareWithPeerDialog)
+            Logger.i(ShareWithPeerDialog::class.java.name, "Connected to import service")
+            val hand = Handler(Looper.getMainLooper())
+            hand.post { updatePeerList(clientService!!.peers) }
         }
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            clientService.setOnClientEventListener(null);
-            Logger.i(ShareWithPeerDialog.class.getName(), "Disconnected from import service");
+        override fun onServiceDisconnected(name: ComponentName) {
+            clientService!!.setOnClientEventListener(null)
+            Logger.i(ShareWithPeerDialog::class.java.name, "Disconnected from import service")
             // TODO: notify fragment that service was dropped.
         }
-    };
+    }
 
-    private ServerService serverService;
-    private ServiceConnection serverConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            ServerService.LocalBinder binder = (ServerService.LocalBinder) service;
-            serverService = binder.getServiceInstance();
-            serverService.setOnServerEventListener(ShareWithPeerDialog.this);
-            Logger.i(ShareWithPeerDialog.class.getName(), "Connected to export service");
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    updatePeerList(serverService.getPeers());
-                }
-            });
+    private var serverService: ServerService? = null
+    private val serverConnection: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as ServerService.LocalBinder
+            serverService = binder.serviceInstance
+            serverService!!.setOnServerEventListener(this@ShareWithPeerDialog)
+            Logger.i(ShareWithPeerDialog::class.java.name, "Connected to export service")
+            val hand = Handler(Looper.getMainLooper())
+            hand.post { updatePeerList(serverService!!.peers) }
         }
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            serverService.setOnServerEventListener(null);
-            Logger.i(ShareWithPeerDialog.class.getName(), "Disconnected from export service");
+        override fun onServiceDisconnected(name: ComponentName) {
+            serverService!!.setOnServerEventListener(null)
+            Logger.i(ShareWithPeerDialog::class.java.name, "Disconnected from export service")
             // TODO: notify fragment that service was dropped.
         }
-    };
+    }
 
     // TODO: 11/20/2015 we don't actually need to bind to the broadcast service
-    private BroadcastService broadcastService;
-    private ServiceConnection broadcastConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            BroadcastService.LocalBinder binder = (BroadcastService.LocalBinder) service;
-            broadcastService = binder.getServiceInstance();
-            Logger.i(ShareWithPeerDialog.class.getName(), "Connected to broadcast service");
+    private var broadcastService: BroadcastService? = null
+    private val broadcastConnection: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as BroadcastService.LocalBinder
+            broadcastService = binder.serviceInstance
+            Logger.i(ShareWithPeerDialog::class.java.name, "Connected to broadcast service")
         }
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Logger.i(ShareWithPeerDialog.class.getName(), "Disconnected from broadcast service");
+        override fun onServiceDisconnected(name: ComponentName) {
+            Logger.i(ShareWithPeerDialog::class.java.name, "Disconnected from broadcast service")
             // TODO: notify fragment that service was dropped.
         }
-    };
+    }
 
-    private BroadcastListenerService listenerService;
-    private ServiceConnection listenerConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            BroadcastListenerService.LocalBinder binder = (BroadcastListenerService.LocalBinder) service;
-            listenerService = binder.getServiceInstance();
-            listenerService.registerCallback(ShareWithPeerDialog.this);
-            Logger.i(ShareWithPeerDialog.class.getName(), "Connected to broadcast listener service");
+    private var listenerService: BroadcastListenerService? = null
+    private val listenerConnection: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as BroadcastListenerService.LocalBinder
+            listenerService = binder.serviceInstance
+            listenerService!!.registerCallback(this@ShareWithPeerDialog)
+            Logger.i(
+                ShareWithPeerDialog::class.java.name,
+                "Connected to broadcast listener service"
+            )
         }
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            listenerService.registerCallback(null);
-            Logger.i(ShareWithPeerDialog.class.getName(), "Disconnected from broadcast listener service");
+        override fun onServiceDisconnected(name: ComponentName) {
+            listenerService!!.registerCallback(null)
+            Logger.i(
+                ShareWithPeerDialog::class.java.name,
+                "Disconnected from broadcast listener service"
+            )
             // TODO: notify fragment that service was dropped.
         }
-    };
-    private File publicKeyFile;
-    private File privateKeyFile;
-    private static Intent serverIntent;
-    private static Intent clientIntent;
-    private static Intent broadcastIntent;
-    private static Intent listenerIntent;
-    private int operationMode;
-    private String targetTranslationSlug;
-    private boolean shutDownServices = true;
-    private String deviceAlias;
-    private TargetTranslation targetTranslation = null;
-    private ListView peerListView = null;
-    private View noticeView;
+    }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_share_with_peer, container, false);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogShareWithPeerBinding.inflate(inflater, container, false)
 
-        Bundle args = getArguments();
-        if(args != null && args.containsKey(ARG_OPERATION_MODE) && args.containsKey(ARG_DEVICE_ALIAS)) {
-            operationMode = args.getInt(ARG_OPERATION_MODE, MODE_CLIENT);
-            targetTranslationSlug = args.getString(ARG_TARGET_TRANSLATION, null);
-            deviceAlias = args.getString(ARG_DEVICE_ALIAS, null);
-            targetTranslation = App.getTranslator().getTargetTranslation(targetTranslationSlug);
-            if (operationMode == MODE_SERVER && targetTranslation == null) {
-                throw new InvalidParameterException("Server mode requires a valid target translation");
-            }
-            if(deviceAlias == null) {
-                throw new InvalidParameterException("The device alias cannot be null");
+        val args = arguments
+        if (args != null && args.containsKey(ARG_OPERATION_MODE) && args.containsKey(
+                ARG_DEVICE_ALIAS
+            )
+        ) {
+            operationMode = args.getInt(ARG_OPERATION_MODE, MODE_CLIENT)
+            targetTranslationId = args.getString(ARG_TARGET_TRANSLATION, null)
+            deviceAlias = args.getString(ARG_DEVICE_ALIAS, null)
+            targetTranslationId?.let { viewModel.loadTargetTranslation(it) }
+
+            if (deviceAlias == null) {
+                throw InvalidParameterException("The device alias cannot be null")
             }
         } else {
-            throw new InvalidParameterException("Missing intent arguments");
+            throw InvalidParameterException("Missing intent arguments")
         }
 
-        publicKeyFile = new File(getActivity().getFilesDir(), getResources().getString(R.string.p2p_keys_dir) + "/id_rsa.pub");
-        privateKeyFile = new File(getActivity().getFilesDir(), getResources().getString(R.string.p2p_keys_dir) + "/id_rsa");
-        publicKeyFile.getParentFile().mkdirs();
+        setupObservers()
 
-        TextView title = (TextView)v.findViewById(R.id.title);
-        TextView subTitle = (TextView)v.findViewById(R.id.target_translation_title);
+        publicKeyFile = directoryProvider.p2pPublicKey
+        privateKeyFile = directoryProvider.p2pPrivateKey
 
-        if(operationMode == MODE_SERVER) {
-            title.setText(getResources().getString(R.string.export_to_device));
+        adapter = PeerAdapter(activity)
 
-            // get project title
-            Project p = App.getLibrary().index.getProject(Locale.getDefault().getLanguage(), targetTranslation.getProjectId(), true);
-            if(p != null) {
-                subTitle.setText(p.name + " - " + targetTranslation.getTargetLanguageName());
-            } else {
-                subTitle.setText(targetTranslation.getProjectId() + " - " + targetTranslation.getTargetLanguageName());
+        with(binding) {
+            if (operationMode == MODE_CLIENT) {
+                title.text = resources.getString(R.string.import_from_device)
+                targetTranslationTitle.text = ""
             }
-        } else {
-            title.setText(getResources().getString(R.string.import_from_device));
-            subTitle.setText("");
-        }
 
-        this.noticeView = v.findViewById(R.id.no_peers_notice);
-        this.peerListView = (ListView)v.findViewById(R.id.list);
-        adapter = new PeerAdapter(getActivity());
-        peerListView.setAdapter(adapter);
-        peerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final Peer peer = adapter.getItem(position);
-                if(operationMode == MODE_SERVER) {
+            list.adapter = adapter
+            list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                val peer = adapter.getItem(position)
+                if (operationMode == MODE_SERVER) {
                     // offer target translation to the client
-                    String[] sourceTranslationSlugs = App.getOpenSourceTranslations(targetTranslationSlug);
-                    String sourceLanguageSlug = "en";
+                    val sourceTranslationSlugs =
+                        translator.getOpenSourceTranslations(targetTranslationId!!)
+                    var sourceLanguageSlug = "en"
                     // try using their selected source first
-                    if(sourceTranslationSlugs.length > 0) {
-                        Translation t = App.getLibrary().index.getTranslation(sourceTranslationSlugs[0]);
-                        if(t != null) {
-                            sourceLanguageSlug = t.language.slug;
+                    if (sourceTranslationSlugs.isNotEmpty()) {
+                        val t = library.index.getTranslation(sourceTranslationSlugs[0])
+                        if (t != null) {
+                            sourceLanguageSlug = t.language.slug
                         }
                     } else {
                         // try using the next available source
-                        Project p = App.getLibrary().index.getProject(Locale.getDefault().getLanguage(), targetTranslationSlug);
-                        if(p != null) {
-                            sourceLanguageSlug = p.languageSlug;
+                        val p = library.index.getProject(
+                            Locale.getDefault().language,
+                            targetTranslationId
+                        )
+                        if (p != null) {
+                            sourceLanguageSlug = p.languageSlug
                         }
                     }
-                    serverService.offerTargetTranslation(peer, sourceLanguageSlug, targetTranslationSlug);
-                } else if(operationMode == MODE_CLIENT) {
+                    serverService!!.offerTargetTranslation(
+                        peer,
+                        sourceLanguageSlug,
+                        targetTranslationId
+                    )
+                } else if (operationMode == MODE_CLIENT) {
                     // TODO: 12/1/2015 eventually provide a ui for viewing multiple different requests from this peer
                     // display request user
-                    Request[] requests = peer.getRequests();
-                    if(requests.length > 0) {
-                        final Request request = requests[0];
-                        if(request.type == Request.Type.AlertTargetTranslation) {
+                    val requests = peer.requests
+                    if (requests.isNotEmpty()) {
+                        val request = requests[0]
+                        if (request.type == Request.Type.AlertTargetTranslation) {
                             // TRICKY: for now we are just looking at one request at a time.
                             try {
-                                final String targetTranslationSlug = request.context.getString("target_translation_id");
-                                String projectName = request.context.getString("project_name");
-                                String targetLanguageName = request.context.getString("target_language_name");
-                                int packageVersion = request.context.getInt("package_version");
-                                if(packageVersion <= TargetTranslation.PACKAGE_VERSION) {
-                                    new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                                            .setTitle(peer.getName())
-                                            .setMessage(String.format(getResources().getString(R.string.confirm_import_target_translation), projectName + " - " + targetLanguageName))
-                                            .setPositiveButton(R.string.label_import, new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    peer.dismissRequest(request);
-                                                    if (adapter != null) {
-                                                        adapter.notifyDataSetChanged();
-                                                    }
-                                                    clientService.requestTargetTranslation(peer, targetTranslationSlug);
-                                                    dialog.dismiss();
-                                                }
-                                            })
-                                            .setNegativeButton(R.string.dismiss, new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    peer.dismissRequest(request);
-                                                    if (adapter != null) {
-                                                        adapter.notifyDataSetChanged();
-                                                    }
-                                                    dialog.dismiss();
-                                                }
-                                            })
-                                            .show();
+                                val targetTranslationSlug =
+                                    request.context.getString("target_translation_id")
+                                val projectName = request.context.getString("project_name")
+                                val targetLanguageName =
+                                    request.context.getString("target_language_name")
+                                val packageVersion = request.context.getInt("package_version")
+                                if (packageVersion <= TargetTranslation.PACKAGE_VERSION) {
+                                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                                        .setTitle(peer.name)
+                                        .setMessage(
+                                            String.format(
+                                                resources.getString(R.string.confirm_import_target_translation),
+                                                "$projectName - $targetLanguageName"
+                                            )
+                                        )
+                                        .setPositiveButton(R.string.label_import) { dialog, which ->
+                                            peer.dismissRequest(request)
+                                            adapter.notifyDataSetChanged()
+                                            clientService!!.requestTargetTranslation(
+                                                peer,
+                                                targetTranslationSlug
+                                            )
+                                            dialog.dismiss()
+                                        }
+                                        .setNegativeButton(R.string.dismiss) { dialog, _ ->
+                                            peer.dismissRequest(request)
+                                            adapter.notifyDataSetChanged()
+                                            dialog.dismiss()
+                                        }
+                                        .show()
                                 } else {
                                     // our app is to old to import this version of a target translation
-                                    Logger.w(ShareWithPeerDialog.class.getName(), "Could not import target translation with package version " + TargetTranslation.PACKAGE_VERSION + ". Supported version is " + TargetTranslation.PACKAGE_VERSION);
-                                    peer.dismissRequest(request);
-                                    if (adapter != null) {
-                                        adapter.notifyDataSetChanged();
-                                    }
-                                    new AlertDialog.Builder(getActivity(),R.style.AppTheme_Dialog)
-                                            .setTitle(peer.getName())
-                                            .setMessage(String.format(getResources().getString(R.string.error_importing_unsupported_target_translation), projectName, targetLanguageName, getResources().getString(R.string.app_name)))
-                                            .setNeutralButton(R.string.dismiss, null)
-                                            .show();
-                                }
-                            } catch (JSONException e) {
-                                peer.dismissRequest(request);
-                                if (adapter != null) {
-                                    adapter.notifyDataSetChanged();
-                                }
-                                new AlertDialog.Builder(getActivity(),R.style.AppTheme_Dialog)
-                                        .setTitle(peer.getName())
-                                        .setMessage(R.string.error)
+                                    Logger.w(
+                                        ShareWithPeerDialog::class.java.name,
+                                        "Could not import target translation with package version " + TargetTranslation.PACKAGE_VERSION + ". Supported version is " + TargetTranslation.PACKAGE_VERSION
+                                    )
+                                    peer.dismissRequest(request)
+                                    adapter.notifyDataSetChanged()
+                                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                                        .setTitle(peer.name)
+                                        .setMessage(
+                                            String.format(
+                                                resources.getString(R.string.error_importing_unsupported_target_translation),
+                                                projectName,
+                                                targetLanguageName,
+                                                resources.getString(R.string.app_name)
+                                            )
+                                        )
                                         .setNeutralButton(R.string.dismiss, null)
-                                        .show();
-                                Logger.e(ShareWithPeerDialog.class.getName(), "Invalid request context", e);
+                                        .show()
+                                }
+                            } catch (e: JSONException) {
+                                peer.dismissRequest(request)
+                                adapter.notifyDataSetChanged()
+                                AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                                    .setTitle(peer.name)
+                                    .setMessage(R.string.error)
+                                    .setNeutralButton(R.string.dismiss, null)
+                                    .show()
+                                Logger.e(
+                                    ShareWithPeerDialog::class.java.name,
+                                    "Invalid request context",
+                                    e
+                                )
                             }
                         } else {
                             // we do not currently support other requests
@@ -306,72 +296,102 @@ public class ShareWithPeerDialog extends DialogFragment implements ServerService
                     }
                 }
             }
-        });
 
-        Button dismissButton = (Button)v.findViewById(R.id.dismiss_button);
-        dismissButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-
-        if(savedInstanceState != null) {
-            mDialogShown = eDialogShown.fromInt(savedInstanceState.getInt(STATE_DIALOG_SHOWN, eDialogShown.NONE.getValue()));
-            mTargetTranslationID = savedInstanceState.getString(STATE_DIALOG_TRANSLATION_ID, null);
+            dismissButton.setOnClickListener { dismiss() }
         }
 
-        restoreDialogs();
-        return v;
+        if (savedInstanceState != null) {
+            mDialogShown = DialogShown.fromInt(
+                savedInstanceState.getInt(
+                    STATE_DIALOG_SHOWN,
+                    DialogShown.NONE.value
+                )
+            )
+            targetTranslationId = savedInstanceState.getString(STATE_DIALOG_TRANSLATION_ID, null)
+        }
+
+        restoreDialogs()
+        return binding.root
+    }
+
+    private fun setupObservers() {
+        with(viewModel) {
+            translation.observe(this@ShareWithPeerDialog) {
+                it?.let { translation ->
+                    targetTranslation = translation
+                    onTranslationLoaded()
+                }
+            }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun onTranslationLoaded() {
+        with(binding) {
+            title.text = resources.getString(R.string.export_to_device)
+
+            // get project title
+            val p = library.index.getProject(
+                Locale.getDefault().language,
+                targetTranslation.projectId,
+                true
+            )
+            if (p != null) {
+                targetTranslationTitle.text = p.name + " - " + targetTranslation.targetLanguageName
+            } else {
+                targetTranslationTitle.text =
+                    targetTranslation.projectId + " - " + targetTranslation.targetLanguageName
+            }
+        }
     }
 
     /**
      * restore the dialogs that were displayed before rotation
      */
-    private void restoreDialogs() {
-        switch(mDialogShown) {
-            case MERGE_CONFLICT:
-                showMergeConflict(mTargetTranslationID);
-                break;
-
-            case NONE:
-                break;
-
-            default:
-                Logger.e(TAG,"Unsupported restore dialog: " + mDialogShown.toString());
-                break;
+    private fun restoreDialogs() {
+        when (mDialogShown) {
+            DialogShown.MERGE_CONFLICT -> showMergeConflict(targetTranslationId)
+            DialogShown.NONE -> {}
+            else -> Logger.e(TAG, "Unsupported restore dialog: " + mDialogShown.toString())
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        shutDownServices = true;
+    override fun onStart() {
+        super.onStart()
+        shutDownServices = true
 
-        if(operationMode == MODE_SERVER) {
-            serverIntent = new Intent(getActivity(), ServerService.class);
-            broadcastIntent = new Intent(getActivity(), BroadcastService.class);
-            if(!ServerService.isRunning()) {
+        if (operationMode == MODE_SERVER) {
+            serverIntent = Intent(activity, ServerService::class.java)
+            broadcastIntent = Intent(activity, BroadcastService::class.java)
+            if (!ServerService.isRunning()) {
                 try {
-                    initializeService(serverIntent);
-                } catch (Exception e) {
-                    Logger.e(this.getClass().getName(), "Failed to initialize the server service", e);
-                    dismiss();
+                    initializeService(serverIntent)
+                } catch (e: Exception) {
+                    Logger.e(this.javaClass.name, "Failed to initialize the server service", e)
+                    dismiss()
                 }
             }
-            getActivity().bindService(serverIntent, serverConnection, Context.BIND_AUTO_CREATE);
-        } else if(operationMode == MODE_CLIENT) {
-            clientIntent = new Intent(getActivity(), ClientService.class);
-            listenerIntent = new Intent(getActivity(), BroadcastListenerService.class);
-            if(!ClientService.isRunning()) {
+            requireActivity().bindService(
+                serverIntent!!,
+                serverConnection,
+                Context.BIND_AUTO_CREATE
+            )
+        } else if (operationMode == MODE_CLIENT) {
+            clientIntent = Intent(activity, ClientService::class.java)
+            listenerIntent = Intent(activity, BroadcastListenerService::class.java)
+            if (!ClientService.isRunning()) {
                 try {
-                    initializeService(clientIntent);
-                } catch (Exception e) {
-                    Logger.e(this.getClass().getName(), "Failed to initialize the client service", e);
-                    dismiss();
+                    initializeService(clientIntent)
+                } catch (e: Exception) {
+                    Logger.e(this.javaClass.name, "Failed to initialize the client service", e)
+                    dismiss()
                 }
             }
-            getActivity().bindService(clientIntent, clientConnection, Context.BIND_AUTO_CREATE);
+            requireActivity().bindService(
+                clientIntent!!,
+                clientConnection,
+                Context.BIND_AUTO_CREATE
+            )
         }
     }
 
@@ -380,328 +400,327 @@ public class ShareWithPeerDialog extends DialogFragment implements ServerService
      * @param intent
      * @throws Exception
      */
-    private void initializeService(Intent intent) throws Exception {
-        if(!privateKeyFile.exists() || !publicKeyFile.exists()) {
-            RSAEncryption.generateKeys(privateKeyFile, publicKeyFile);
+    @Throws(Exception::class)
+    private fun initializeService(intent: Intent?) {
+        if (!privateKeyFile!!.exists() || !publicKeyFile!!.exists()) {
+            RSAEncryption.generateKeys(privateKeyFile, publicKeyFile)
         }
         // TODO: 11/30/2015 we should use a shared interface for setting parameters so we don't have to manage two sets
-        PrivateKey privateKey;
-        PublicKey publicKey;
+        var privateKey: PrivateKey?
+        var publicKey: PublicKey?
         try {
-            privateKey = RSAEncryption.readPrivateKeyFromFile(privateKeyFile);
-            publicKey = RSAEncryption.readPublicKeyFromFile(publicKeyFile);
-        } catch (Exception e) {
+            privateKey = RSAEncryption.readPrivateKeyFromFile(privateKeyFile)
+            publicKey = RSAEncryption.readPublicKeyFromFile(publicKeyFile)
+        } catch (e: Exception) {
             // try to regenerate the keys if loading fails
-            Logger.w(this.getClass().getName(), "Failed to load the p2p keys. Attempting to regenerate...", e);
-            RSAEncryption.generateKeys(privateKeyFile, publicKeyFile);
-            privateKey = RSAEncryption.readPrivateKeyFromFile(privateKeyFile);
-            publicKey = RSAEncryption.readPublicKeyFromFile(publicKeyFile);
+            Logger.w(
+                this.javaClass.name,
+                "Failed to load the p2p keys. Attempting to regenerate...",
+                e
+            )
+            RSAEncryption.generateKeys(privateKeyFile, publicKeyFile)
+            privateKey = RSAEncryption.readPrivateKeyFromFile(privateKeyFile)
+            publicKey = RSAEncryption.readPublicKeyFromFile(publicKeyFile)
         }
 
-        intent.putExtra(ServerService.PARAM_PRIVATE_KEY, privateKey);
-        intent.putExtra(ServerService.PARAM_PUBLIC_KEY, RSAEncryption.getPublicKeyAsString(publicKey));
-        intent.putExtra(ServerService.PARAM_DEVICE_ALIAS, App.getDeviceNetworkAlias());
-        Logger.i(this.getClass().getName(), "Starting service " + intent.getComponent().getClassName());
-        getActivity().startService(intent);
+        intent!!.putExtra(ServerService.PARAM_PRIVATE_KEY, privateKey)
+        intent.putExtra(
+            ServerService.PARAM_PUBLIC_KEY,
+            RSAEncryption.getPublicKeyAsString(publicKey)
+        )
+        intent.putExtra(ServerService.PARAM_DEVICE_ALIAS, deviceNetworkAlias)
+        Logger.i(
+            this.javaClass.name, "Starting service " + intent.component!!
+                .className
+        )
+        requireActivity().startService(intent)
     }
 
     /**
      * Updates the peer list on the screen
      * @param peers
      */
-    public void updatePeerList(ArrayList<Peer> peers) {
-        if(peers.size() == 0) {
-            // display no peer notice
-            if(peerListView != null) peerListView.setVisibility(View.GONE);
-            if(noticeView != null) noticeView.setVisibility(View.VISIBLE);
-        } else {
-            // display peer list
-            if(peerListView != null) peerListView.setVisibility(View.VISIBLE);
-            if(noticeView != null) noticeView.setVisibility(View.GONE);
-        }
-        if(adapter != null) {
-            adapter.setPeers(peers);
+    fun updatePeerList(peers: ArrayList<Peer?>) {
+        with(binding) {
+            if (peers.size == 0) {
+                // display no peer notice
+                list.visibility = View.GONE
+                noPeersNotice.visibility = View.VISIBLE
+            } else {
+                // display peer list
+                list.visibility = View.VISIBLE
+                noPeersNotice.visibility = View.GONE
+            }
+            adapter.setPeers(peers)
         }
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle out) {
-        shutDownServices = false;
-        out.putInt(STATE_DIALOG_SHOWN, mDialogShown.getValue());
-        out.putString(STATE_DIALOG_TRANSLATION_ID, mTargetTranslationID);
-        super.onSaveInstanceState(out);
+    override fun onSaveInstanceState(out: Bundle) {
+        shutDownServices = false
+        out.putInt(STATE_DIALOG_SHOWN, mDialogShown!!.value)
+        out.putString(STATE_DIALOG_TRANSLATION_ID, targetTranslationId)
+        super.onSaveInstanceState(out)
     }
 
-    @Override
-    public void onDestroy(){
+    override fun onDestroy() {
         // unbind services
         try {
-            getActivity().unbindService(broadcastConnection);
-        } catch (Exception e) {
-            e.printStackTrace();
+            requireActivity().unbindService(broadcastConnection)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         try {
-            getActivity().unbindService(listenerConnection);
-        } catch (Exception e) {
-            e.printStackTrace();
+            requireActivity().unbindService(listenerConnection)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         try {
-            getActivity().unbindService(serverConnection);
-        } catch (Exception e) {
-            e.printStackTrace();
+            requireActivity().unbindService(serverConnection)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         try {
-            getActivity().unbindService(clientConnection);
-        } catch (Exception e) {
-            e.printStackTrace();
+            requireActivity().unbindService(clientConnection)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
         // shut down services
-        if(shutDownServices) {
+        if (shutDownServices) {
             if (BroadcastService.isRunning() && broadcastIntent != null) {
-                if (!getActivity().stopService(broadcastIntent)) {
-                    Logger.w(this.getClass().getName(), "Failed to stop service " + BroadcastService.class.getName());
+                if (!requireActivity().stopService(broadcastIntent)) {
+                    Logger.w(
+                        this.javaClass.name,
+                        "Failed to stop service " + BroadcastService::class.java.name
+                    )
                 }
             }
             if (BroadcastListenerService.isRunning() && listenerIntent != null) {
-                if (!getActivity().stopService(listenerIntent)) {
-                    Logger.w(this.getClass().getName(), "Failed to stop service " + BroadcastListenerService.class.getName());
+                if (!requireActivity().stopService(listenerIntent)) {
+                    Logger.w(
+                        this.javaClass.name,
+                        "Failed to stop service " + BroadcastListenerService::class.java.name
+                    )
                 }
             }
             if (ServerService.isRunning() && serverIntent != null) {
-                if (!getActivity().stopService(serverIntent)) {
-                    Logger.w(this.getClass().getName(), "Failed to stop service " + ServerService.class.getName());
+                if (!requireActivity().stopService(serverIntent)) {
+                    Logger.w(
+                        this.javaClass.name,
+                        "Failed to stop service " + ServerService::class.java.name
+                    )
                 }
             }
             if (ClientService.isRunning() && clientIntent != null) {
-                if (!getActivity().stopService(clientIntent)) {
-                    Logger.w(this.getClass().getName(), "Failed to stop service " + ClientService.class.getName());
+                if (!requireActivity().stopService(clientIntent)) {
+                    Logger.w(
+                        this.javaClass.name,
+                        "Failed to stop service " + ClientService::class.java.name
+                    )
                 }
             }
         }
-        super.onDestroy();
+        super.onDestroy()
     }
 
-    @Override
-    public void onServerServiceReady(int port) {
+    override fun onServerServiceReady(port: Int) {
         // begin broadcasting
-        if(!BroadcastService.isRunning()) {
-            broadcastIntent.putExtra(BroadcastService.PARAM_BROADCAST_PORT, PORT_CLIENT_UDP);
-            broadcastIntent.putExtra(BroadcastService.PARAM_SERVICE_PORT, port);
-            broadcastIntent.putExtra(BroadcastService.PARAM_FREQUENCY, 2000);
-            getActivity().startService(broadcastIntent);
+        if (!BroadcastService.isRunning()) {
+            broadcastIntent!!.putExtra(BroadcastService.PARAM_BROADCAST_PORT, PORT_CLIENT_UDP)
+            broadcastIntent!!.putExtra(BroadcastService.PARAM_SERVICE_PORT, port)
+            broadcastIntent!!.putExtra(BroadcastService.PARAM_FREQUENCY, 2000)
+            requireActivity().startService(broadcastIntent)
         }
-        getActivity().bindService(broadcastIntent, broadcastConnection, Context.BIND_AUTO_CREATE);
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                updatePeerList(serverService.getPeers());
-            }
-        });
+        requireActivity().bindService(
+            broadcastIntent!!,
+            broadcastConnection,
+            Context.BIND_AUTO_CREATE
+        )
+        val hand = Handler(Looper.getMainLooper())
+        hand.post { updatePeerList(serverService!!.peers) }
     }
 
-    @Override
-    public void onClientConnected(Peer peer) {
-        serverService.acceptConnection(peer);
+    override fun onClientConnected(peer: Peer) {
+        serverService!!.acceptConnection(peer)
     }
 
-    @Override
-    public void onClientLost(Peer peer) {
-
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                updatePeerList(serverService.getPeers());
-            }
-        });
+    override fun onClientLost(peer: Peer) {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post { updatePeerList(serverService!!.peers) }
     }
 
-    @Override
-    public void onClientChanged(Peer peer) {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                updatePeerList(serverService.getPeers());
-            }
-        });
+    override fun onClientChanged(peer: Peer) {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post { updatePeerList(serverService!!.peers) }
     }
 
-    @Override
-    public void onServerServiceError(Throwable e) {
-        Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
-        Logger.e(this.getClass().getName(), "Server service encountered an exception: " + e.getMessage(), e);
+    override fun onServerServiceError(e: Throwable) {
+        Toast.makeText(activity, e.message, Toast.LENGTH_SHORT).show()
+        Logger.e(this.javaClass.name, "Server service encountered an exception: " + e.message, e)
     }
 
-    @Override
-    public void onFoundServer(Peer server) {
-        clientService.connectToServer(server);
+    override fun onFoundServer(server: Peer) {
+        clientService!!.connectToServer(server)
     }
 
-    @Override
-    public void onLostServer(Peer server) {
-
+    override fun onLostServer(server: Peer) {
     }
 
-    @Override
-    public void onClientServiceReady() {
+    override fun onClientServiceReady() {
         // begin listening for servers
-        if(!BroadcastListenerService.isRunning()) {
-            listenerIntent.putExtra(BroadcastListenerService.PARAM_BROADCAST_PORT, PORT_CLIENT_UDP);
-            listenerIntent.putExtra(BroadcastListenerService.PARAM_REFRESH_FREQUENCY, REFRESH_FREQUENCY);
-            listenerIntent.putExtra(BroadcastListenerService.PARAM_SERVER_TTL, SERVER_TTL);
-            getActivity().startService(listenerIntent);
+        if (!BroadcastListenerService.isRunning()) {
+            listenerIntent!!.putExtra(
+                BroadcastListenerService.PARAM_BROADCAST_PORT,
+                PORT_CLIENT_UDP
+            )
+            listenerIntent!!.putExtra(
+                BroadcastListenerService.PARAM_REFRESH_FREQUENCY,
+                REFRESH_FREQUENCY
+            )
+            listenerIntent!!.putExtra(BroadcastListenerService.PARAM_SERVER_TTL, SERVER_TTL)
+            requireActivity().startService(listenerIntent)
         }
-        getActivity().bindService(listenerIntent, listenerConnection, Context.BIND_AUTO_CREATE);
+        requireActivity().bindService(
+            listenerIntent!!,
+            listenerConnection,
+            Context.BIND_AUTO_CREATE
+        )
     }
 
-    @Override
-    public void onServerConnectionLost(Peer peer) {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                updatePeerList(clientService.getPeers());
-            }
-        });
+    override fun onServerConnectionLost(peer: Peer) {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post { updatePeerList(clientService!!.peers) }
     }
 
-    @Override
-    public void onServerConnectionChanged(Peer peer) {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                updatePeerList(clientService.getPeers());
-            }
-        });
+    override fun onServerConnectionChanged(peer: Peer) {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post { updatePeerList(clientService!!.peers) }
     }
 
-    @Override
-    public void onClientServiceError(Throwable e) {
-        Logger.e(this.getClass().getName(), "Client service encountered an exception: " + e.getMessage(), e);
+    override fun onClientServiceError(e: Throwable) {
+        Logger.e(this.javaClass.name, "Client service encountered an exception: " + e.message, e)
     }
 
-    @Override
-    public void onReceivedTargetTranslations(Peer server, final Translator.ImportResults importResults) {
+    override fun onReceivedTargetTranslations(
+        server: Peer,
+        importResults: Translator.ImportResults
+    ) {
         // build name list
-        Translator translator = App.getTranslator();
-        TargetTranslation targetTranslation = translator.getTargetTranslation(importResults.importedSlug);
-        Translation st = App.getLibrary().index().getTranslation(targetTranslation.getId());
-
-        String tempName;
-        if(st != null) {
-            tempName = st.project.name + " - " + targetTranslation.getTargetLanguage().name;
+        val targetTranslation = translator.getTargetTranslation(importResults.importedSlug)
+        val st = library.index().getTranslation(targetTranslation!!.id)
+        val tempName = if (st != null) {
+            st.project.name + " - " + targetTranslation.targetLanguage.name
         } else {
-            tempName = targetTranslation.getProjectId() + " - " + targetTranslation.getTargetLanguage().name;
+            targetTranslation.projectId + " - " + targetTranslation.targetLanguage.name
         }
-        final String name = tempName;
+        val name = tempName
 
         // notify user
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if(importResults.isSuccess() && importResults.mergeConflict) {
-                    MergeConflictsHandler.backgroundTestForConflictedChunks(importResults.importedSlug, new MergeConflictsHandler.OnMergeConflictListener() {
-                        @Override
-                        public void onNoMergeConflict(String targetTranslationId) {
-                            showShareSuccess(name);
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            if (importResults.isSuccess && importResults.mergeConflict) {
+                MergeConflictsHandler.backgroundTestForConflictedChunks(
+                    importResults.importedSlug,
+                    object : OnMergeConflictListener {
+                        override fun onNoMergeConflict(targetTranslationId: String) {
+                            showShareSuccess(name)
                         }
 
-                        @Override
-                        public void onMergeConflict(String targetTranslationId) {
-                            showMergeConflict(targetTranslationId);
+                        override fun onMergeConflict(targetTranslationId: String) {
+                            showMergeConflict(targetTranslationId)
                         }
-                    });
-                } else {
-                    showShareSuccess(name);
-                }
+                    })
+            } else {
+                showShareSuccess(name)
             }
-        });
+        }
     }
 
     /**
      * show share success
      * @param name
      */
-    private void showShareSuccess(String name) {
-        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.success)
-                .setMessage(String.format(getResources().getString(R.string.success_import_target_translation), name))
-                .setPositiveButton(R.string.dismiss, null)
-                .show();
+    private fun showShareSuccess(name: String) {
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.success)
+            .setMessage(
+                String.format(
+                    resources.getString(R.string.success_import_target_translation),
+                    name
+                )
+            )
+            .setPositiveButton(R.string.dismiss, null)
+            .show()
         // TODO: 12/1/2015 this is a bad hack
-        ((HomeActivity) getActivity()).notifyDatasetChanged();
+        (activity as HomeActivity?)!!.notifyDatasetChanged()
     }
 
-    public void showMergeConflict(String targetTranslationID) {
-        mDialogShown = eDialogShown.MERGE_CONFLICT;
-        mTargetTranslationID = targetTranslationID;
-        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.merge_conflict_title).setMessage(R.string.import_merge_conflict)
-                .setPositiveButton(R.string.label_ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDialogShown = eDialogShown.NONE;
-                        doManualMerge();
-                    }
-                }).show();
+    fun showMergeConflict(targetTranslationID: String?) {
+        mDialogShown = DialogShown.MERGE_CONFLICT
+        this.targetTranslationId = targetTranslationID
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.merge_conflict_title).setMessage(R.string.import_merge_conflict)
+            .setPositiveButton(R.string.label_ok) { _, _ ->
+                mDialogShown = DialogShown.NONE
+                doManualMerge()
+            }.show()
     }
 
-    private void doManualMerge() {
+    private fun doManualMerge() {
         // ask parent activity to navigate to target translation review mode with merge filter on
-        Intent intent = new Intent(getActivity(), TargetTranslationActivity.class);
-        Bundle args = new Bundle();
-        args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID);
-        args.putBoolean(App.EXTRA_START_WITH_MERGE_FILTER, true);
-        args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal());
-        intent.putExtras(args);
-        startActivity(intent);
-        dismiss();
+        val intent = Intent(activity, TargetTranslationActivity::class.java)
+        val args = Bundle()
+        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslationId)
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
+        args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
+        intent.putExtras(args)
+        startActivity(intent)
+        dismiss()
     }
 
-    @Override
-    public void onReceivedRequest(final Peer peer, final Request request) {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if(adapter != null) {
-                    adapter.newRequestAlert(peer, request);
-                }
-            }
-        });
+    override fun onReceivedRequest(peer: Peer, request: Request) {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            adapter.newRequestAlert(peer, request)
+        }
     }
-
 
     /**
      * for keeping track which dialog is being shown for orientation changes (not for DialogFragments)
      */
-    public enum eDialogShown {
+    enum class DialogShown(val value: Int) {
         NONE(0),
         MERGE_CONFLICT(1);
 
-        private int value;
-
-        eDialogShown(int Value) {
-            this.value = Value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public static eDialogShown fromInt(int i) {
-            for (eDialogShown b : eDialogShown.values()) {
-                if (b.getValue() == i) {
-                    return b;
+        companion object {
+            fun fromInt(i: Int): DialogShown? {
+                for (b in entries) {
+                    if (b.value == i) {
+                        return b
+                    }
                 }
+                return null
             }
-            return null;
         }
     }
 
+    companion object {
+        const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
+        const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
+
+        // TODO: 11/30/2015 get port from settings
+        private const val PORT_CLIENT_UDP = 9939
+        private const val REFRESH_FREQUENCY = 2000
+        private const val SERVER_TTL = 2000
+        const val MODE_CLIENT: Int = 0
+        const val MODE_SERVER: Int = 1
+        const val ARG_DEVICE_ALIAS: String = "arg_device_alias"
+        val TAG: String = ShareWithPeerDialog::class.java.simpleName
+        const val ARG_OPERATION_MODE: String = "arg_operation_mode"
+        const val ARG_TARGET_TRANSLATION: String = "arg_target_translation"
+        private var serverIntent: Intent? = null
+        private var clientIntent: Intent? = null
+        private var broadcastIntent: Intent? = null
+        private var listenerIntent: Intent? = null
+    }
 }

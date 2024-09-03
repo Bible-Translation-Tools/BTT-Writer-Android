@@ -15,6 +15,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
@@ -198,11 +199,11 @@ class BackupDialog : DialogFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.translation.observe(this) {
+        viewModel.translation.observe(this@BackupDialog) {
             targetTranslation = it
                 ?: throw NullPointerException("Target translation not found.")
         }
-        viewModel.progress.observe(this) {
+        viewModel.progress.observe(this@BackupDialog) {
             if (it != null) {
                 progressDialog?.show(it)
                 progressDialog?.updateProgress(it.progress)
@@ -210,7 +211,7 @@ class BackupDialog : DialogFragment() {
                 progressDialog?.dismiss()
             }
         }
-        viewModel.exportResult.observe(this) {
+        viewModel.exportResult.observe(this@BackupDialog) {
             it?.let { result ->
                 when (result.taskName) {
                     Export.TaskName.EXPORT_USFM -> {
@@ -239,7 +240,7 @@ class BackupDialog : DialogFragment() {
                 viewModel.clearResults()
             }
         }
-        viewModel.pullTranslationResult.observe(this) {
+        viewModel.pullTranslationResult.observe(this@BackupDialog) {
             it?.let { result ->
                 val status = result.status
                 // TRICKY: we continue to push for unknown status in case
@@ -299,7 +300,7 @@ class BackupDialog : DialogFragment() {
                 }
             }
         }
-        viewModel.pushTranslationResult.observe(this) {
+        viewModel.pushTranslationResult.observe(this@BackupDialog) {
             it?.let { result ->
                 when {
                     result.status == PushTargetTranslation.Status.OK -> {
@@ -321,7 +322,7 @@ class BackupDialog : DialogFragment() {
                 }
             }
         }
-        viewModel.registeredSSHKeys.observe(this) {
+        viewModel.registeredSSHKeys.observe(this@BackupDialog) {
             it?.let { registered ->
                 if (registered) {
                     Logger.i(this.javaClass.name, "SSH keys were registered with the server")
@@ -332,7 +333,7 @@ class BackupDialog : DialogFragment() {
                 }
             }
         }
-        viewModel.repoCreated.observe(this) {
+        viewModel.repoCreated.observe(this@BackupDialog) {
             it?.let { created ->
                 if (created) {
                     Logger.i(
@@ -342,6 +343,33 @@ class BackupDialog : DialogFragment() {
                     pullTargetTranslation(MergeStrategy.RECURSIVE)
                 } else {
                     notifyBackupFailed(targetTranslation)
+                }
+            }
+        }
+        viewModel.exportedToApp.observe(this@BackupDialog) {
+            it?.let { exportFile ->
+                if (exportFile.exists()) {
+                    val uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        "${requireActivity().application.packageName}.fileprovider",
+                        exportFile
+                    )
+                    val i = Intent(Intent.ACTION_SEND)
+                    i.setType("application/zip")
+                    i.putExtra(Intent.EXTRA_STREAM, uri)
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(Intent.createChooser(i, "Send to:"))
+                } else {
+                    val snack = Snackbar.make(
+                        requireActivity().findViewById(android.R.id.content),
+                        R.string.translation_export_failed,
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        requireContext().resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
                 }
             }
         }
@@ -585,11 +613,11 @@ class BackupDialog : DialogFragment() {
             // ask parent activity to navigate to a new activity
             val intent = Intent(activity, TargetTranslationActivity::class.java)
             val args = Bundle()
-            args.putString(App.EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
+            args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
             // TODO: 4/20/16 it would be nice to navigate directly to the first conflict
 //                args.putString(App.EXTRA_CHAPTER_ID, chapterId);
 //                args.putString(App.EXTRA_FRAME_ID, frameId);
-            args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
+            args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
             intent.putExtras(args)
             startActivity(intent)
             this@BackupDialog.dismiss()
@@ -759,15 +787,15 @@ class BackupDialog : DialogFragment() {
     }
 
     companion object {
-        @JvmField
-        val TAG: String = BackupDialog::class.java.name
+        const val TAG: String = "BackupDialog"
         const val ARG_TARGET_TRANSLATION_ID: String = "target_translation_id"
+
         private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
-        const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
-        const val STATE_DO_MERGE: String = "state_do_merge"
-        const val STATE_ACCESS_FILE: String = "state_access_file"
-        const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
-        const val EXPORT_TSTUDIO_MIME_TYPE: String = "application/tstudio"
-        const val EXPORT_USFM_MIME_TYPE: String = "text/usfm"
+        private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
+        private const val STATE_DO_MERGE: String = "state_do_merge"
+        private const val STATE_ACCESS_FILE: String = "state_access_file"
+        private const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
+        private const val EXPORT_TSTUDIO_MIME_TYPE: String = "application/tstudio"
+        private const val EXPORT_USFM_MIME_TYPE: String = "text/usfm"
     }
 }

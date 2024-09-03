@@ -263,7 +263,7 @@ public class ChooseSourceTranslationDialog extends DialogFragment implements Man
                     this.publishProgress(-1,"");
 
                     // add selected source translations
-                    String[] sourceTranslationSlugs = App.getOpenSourceTranslations(mTargetTranslation.getId());
+                    String[] sourceTranslationSlugs = mTranslator.getOpenSourceTranslations(mTargetTranslation.getId());
                     for (String slug : sourceTranslationSlugs) {
                         Translation st = mLibrary.index.getTranslation(slug);
                         if (st != null) {

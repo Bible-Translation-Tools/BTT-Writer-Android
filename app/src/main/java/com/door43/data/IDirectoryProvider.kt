@@ -81,6 +81,21 @@ interface IDirectoryProvider {
     val privateKey: File
 
     /**
+     * Returns the directory in which the p2p keys are stored
+     */
+    val p2pKeysDir: File
+
+    /**
+     * Returns the P2P public key file
+     */
+    val p2pPublicKey: File
+
+    /**
+     * Returns the P2P private key file
+     */
+    val p2pPrivateKey: File
+
+    /**
      * Checks if the ssh keys have already been generated
      * @return Boolean
      */

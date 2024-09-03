@@ -38,6 +38,20 @@ interface IPreferenceRepository {
     fun setDefaultPref(key: String, value: String?)
 
     /**
+     * Looks up a string preference in private storage
+     * @param key
+     * @return String
+     */
+    fun getPrivatePref(key: String, defaultValue: String? = null): String?
+
+    /**
+     * Sets the value of a private preference.
+     * @param key
+     * @param value if null the string will be removed
+     */
+    fun setPrivatePref(key: String, value: String?)
+
+    /**
      * Removes all settings for a target translation
      * @param targetTranslationId
      */

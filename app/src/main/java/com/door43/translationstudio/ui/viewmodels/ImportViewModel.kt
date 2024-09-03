@@ -1,0 +1,184 @@
+package com.door43.translationstudio.ui.viewmodels
+
+import android.app.Application
+import android.net.Uri
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
+import com.door43.OnProgressListener
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.dialogs.ProgressDialogFactory
+import com.door43.usecases.AdvancedGogsRepoSearch
+import com.door43.usecases.CloneRepository
+import com.door43.usecases.ImportProjectFromUri
+import com.door43.usecases.RegisterSSHKeys
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.unfoldingword.gogsclient.Repository
+import org.unfoldingword.gogsclient.User
+import java.security.InvalidParameterException
+import javax.inject.Inject
+
+@HiltViewModel
+class ImportViewModel @Inject constructor(
+    application: Application
+) : AndroidViewModel(application) {
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var advancedGogsRepoSearch: AdvancedGogsRepoSearch
+    @Inject lateinit var cloneRepository: CloneRepository
+    @Inject lateinit var registerSSHKeys: RegisterSSHKeys
+    @Inject lateinit var importProjectFromUri: ImportProjectFromUri
+
+    private val _translation = MutableLiveData<TargetTranslation?>(null)
+    val translation: LiveData<TargetTranslation?> = _translation
+
+    private val _progress = MutableLiveData<ProgressDialogFactory.Progress?>(null)
+    val progress: LiveData<ProgressDialogFactory.Progress?> = _progress
+
+    private val _repositories = MutableLiveData<List<Repository>>(null)
+    val repositories: LiveData<List<Repository>> = _repositories
+
+    private val _cloneRepoResult = MutableLiveData<CloneRepository.Result?>(null)
+    val cloneRepoResult: LiveData<CloneRepository.Result?> = _cloneRepoResult
+
+    private val _importFromUriResult = MutableLiveData<ImportProjectFromUri.Result?>(null)
+    val importFromUriResult: LiveData<ImportProjectFromUri.Result?> = _importFromUriResult
+
+    private val _registeredSSHKeys = MutableLiveData<Boolean>()
+    val registeredSSHKeys: LiveData<Boolean> = _registeredSSHKeys
+
+    fun loadTargetTranslation(translationID: String) {
+        translator.getTargetTranslation(translationID)?.let {
+            it.setDefaultContributor(profile.nativeSpeaker)
+            _translation.value = it
+        } ?: throw InvalidParameterException(
+            "The target translation '$translationID' is invalid"
+        )
+    }
+
+    fun searchRepositories(authUser: User, userQuery: String, repoQuery: String, limit: Int) {
+        viewModelScope.launch {
+            _progress.value = ProgressDialogFactory.Progress(
+                R.string.loading
+            )
+            val result = withContext(Dispatchers.IO) {
+                advancedGogsRepoSearch.execute(authUser, userQuery, repoQuery, limit, object : OnProgressListener {
+                    override fun onProgress(progress: Float, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.loading,
+                                message,
+                                progress.toInt()
+                            )
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.loading
+                            )
+                        }
+                    }
+                })
+            }
+            _repositories.value = result
+            _progress.value = null
+        }
+    }
+
+    fun cloneRepository(cloneUrl: String) {
+        viewModelScope.launch {
+            _progress.value = ProgressDialogFactory.Progress(
+                R.string.loading
+            )
+            _cloneRepoResult.value = withContext(Dispatchers.IO) {
+                cloneRepository.execute(cloneUrl, object : OnProgressListener {
+                    override fun onProgress(progress: Float, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.loading,
+                                message,
+                                progress.toInt()
+                            )
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.loading
+                            )
+                        }
+                    }
+                })
+            }
+            _progress.value = null
+        }
+    }
+
+    fun importProjectFromUri(path: Uri, mergeOverwrite: Boolean) {
+        viewModelScope.launch {
+            _progress.value = ProgressDialogFactory.Progress(
+                R.string.label_import
+            )
+            val result = withContext(Dispatchers.IO) {
+                importProjectFromUri.execute(path, mergeOverwrite, object : OnProgressListener {
+                    override fun onProgress(progress: Float, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.label_import,
+                                message,
+                                progress.toInt()
+                            )
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.label_import
+                            )
+                        }
+                    }
+                })
+            }
+            _importFromUriResult.value = result
+            _progress.value = null
+        }
+    }
+
+    fun registerSSHKeys(force: Boolean) {
+        viewModelScope.launch {
+            _progress.value = ProgressDialogFactory.Progress(
+                R.string.registering_keys
+            )
+            val result = withContext(Dispatchers.IO) {
+                registerSSHKeys.execute(force, object : OnProgressListener {
+                    override fun onProgress(progress: Float, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.registering_keys,
+                                message,
+                                progress.toInt()
+                            )
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressDialogFactory.Progress(
+                                R.string.registering_keys
+                            )
+                        }
+                    }
+                })
+            }
+            _registeredSSHKeys.value = result
+            _progress.value = null
+        }
+    }
+}

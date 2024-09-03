@@ -17,15 +17,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import com.door43.translationstudio.App
-import com.door43.translationstudio.App.Companion.context
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
-import com.door43.translationstudio.App.Companion.hasSSHKeys
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
-import com.door43.translationstudio.App.Companion.languageFromTargetTranslation
-import com.door43.translationstudio.App.Companion.lastFocusTargetTranslation
 import com.door43.translationstudio.App.Companion.restart
-import com.door43.translationstudio.App.Companion.sharingDir
 import com.door43.translationstudio.App.Companion.startBackupService
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -80,6 +75,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
     @Inject lateinit var library: Door43Client
     @Inject lateinit var translator: Translator
     @Inject lateinit var profile: Profile
+    @Inject lateinit var directoryProvider: IDirectoryProvider
 
     private var mFragment: Fragment? = null
     private var taskWatcher: SimpleTaskWatcher? = null
@@ -152,7 +148,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                             val pInfo = packageManager.getPackageInfo(packageName, 0)
                             val apkFile = File(pInfo.applicationInfo.publicSourceDir)
                             val exportFile = File(
-                                sharingDir, pInfo.applicationInfo.loadLabel(
+                                directoryProvider.sharingDir, pInfo.applicationInfo.loadLabel(
                                     packageManager
                                 ).toString() + "_" + pInfo.versionName + ".apk"
                             )
@@ -256,7 +252,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
 
     override fun onResume() {
         super.onResume()
-        lastFocusTargetTranslation = null
+        translator.lastFocusTargetTranslation = null
 
         val currentUser = findViewById<View>(R.id.current_user) as TextView
         val userText = resources.getString(R.string.current_user, ProfileActivity.currentUser)
@@ -315,7 +311,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             task.addOnFinishedListener(this)
         }
 
-        mTargetTranslationWithUpdates = App.notifyTargetTranslationWithUpdates
+        mTargetTranslationWithUpdates = translator.notifyTargetTranslationWithUpdates
         if (mTargetTranslationWithUpdates != null && task == null) {
             showTranslationUpdatePrompt(mTargetTranslationWithUpdates!!)
         }
@@ -421,7 +417,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             } else if (status == PullTargetTranslationTask.Status.AUTH_FAILURE) {
                 // regenerate ssh keys
                 // if we have already tried ask the user if they would like to try again
-                if (hasSSHKeys()) {
+                if (directoryProvider.hasSSHKeys()) {
                     showAuthFailure()
                     return
                 }
@@ -439,7 +435,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
                         val intent =
                             Intent(this@HomeActivity, TargetTranslationActivity::class.java)
                         intent.putExtra(
-                            App.EXTRA_TARGET_TRANSLATION_ID,
+                            Translator.EXTRA_TARGET_TRANSLATION_ID,
                             task.targetTranslation.id
                         )
                         startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
@@ -448,7 +444,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             } else {
                 notifyTranslationUpdateFailed()
             }
-            App.notifyTargetTranslationWithUpdates = null
+            translator.notifyTargetTranslationWithUpdates = null
         } else if (task is RegisterSSHKeysTask) {
             if (task.isSuccess && mTargetTranslationWithUpdates != null) {
                 Logger.i(this.javaClass.name, "SSH keys were registered with the server")
@@ -484,9 +480,9 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         // ask parent activity to navigate to a new activity
         val intent = Intent(this, TargetTranslationActivity::class.java)
         val args = Bundle()
-        args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID)
-        args.putBoolean(App.EXTRA_START_WITH_MERGE_FILTER, true)
-        args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
+        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID)
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
+        args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtras(args)
         startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
     }
@@ -525,10 +521,10 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
         mAlertShown = DialogShown.IMPORT_RESULTS
         val message: String
         if (success) {
-            val format = context()!!.resources.getString(R.string.import_project_success)
+            val format = resources.getString(R.string.import_project_success)
             message = String.format(format, projectNames, projectPath)
         } else {
-            val format = context()!!.resources.getString(R.string.import_failed)
+            val format = resources.getString(R.string.import_failed)
             message = format + "\n" + projectPath
         }
 
@@ -613,7 +609,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
          * @return
          */
         get() {
-            val lastTarget = lastFocusTargetTranslation
+            val lastTarget = translator.lastFocusTargetTranslation
             if (lastTarget != null) {
                 return translator.getTargetTranslation(lastTarget)
             }
@@ -648,7 +644,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
 
                 val intent = Intent(this@HomeActivity, TargetTranslationActivity::class.java)
                 intent.putExtra(
-                    App.EXTRA_TARGET_TRANSLATION_ID,
+                    Translator.EXTRA_TARGET_TRANSLATION_ID,
                     data!!.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID)
                 )
                 startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
@@ -708,7 +704,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
 
         val projectID = targetTranslation.projectId
         val project =
-            App.library!!.index().getProject(targetTranslation.targetLanguageName, projectID, true)
+            library.index().getProject(targetTranslation.targetLanguageName, projectID, true)
         if (project == null) {
             Logger.e(TAG, "invalid project id:$projectID")
             return
@@ -731,7 +727,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             .setNegativeButton(
                 R.string.no
             ) { _, _ ->
-                App.notifyTargetTranslationWithUpdates = null
+                translator.notifyTargetTranslationWithUpdates = null
                 mAlertShown = DialogShown.NONE
             }
             .show()
@@ -743,7 +739,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
      */
     private fun downloadTargetTranslationUpdates(targetTranslationId: String) {
         if (isNetworkAvailable) {
-            if (profile?.gogsUser == null) {
+            if (profile.gogsUser == null) {
                 val dialog = Door43LoginDialog()
                 showDialogFragment(dialog, Door43LoginDialog.TAG)
                 return
@@ -789,8 +785,8 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
     override fun onItemClick(targetTranslation: TargetTranslation) {
         // validate project and target language
 
-        val project = App.library!!.index().getProject("en", targetTranslation.projectId, true)
-        val language = languageFromTargetTranslation(targetTranslation)
+        val project = library.index().getProject("en", targetTranslation.projectId, true)
+        val language = translator.languageFromTargetTranslation(targetTranslation)
         if (project == null || language == null) {
             val snack = Snackbar.make(
                 findViewById(android.R.id.content),
@@ -806,7 +802,7 @@ class HomeActivity : BaseActivity(), SimpleTaskWatcher.OnFinishedListener,
             snack.show()
         } else {
             val intent = Intent(this@HomeActivity, TargetTranslationActivity::class.java)
-            intent.putExtra(App.EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
+            intent.putExtra(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
             startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
         }
     }

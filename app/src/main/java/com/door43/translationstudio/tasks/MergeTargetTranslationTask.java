@@ -52,7 +52,7 @@ public class MergeTargetTranslationTask extends ManagedTask {
         if(this.deleteSource && success) {
             // delete original
             App.getTranslator().deleteTargetTranslation(sourceTranslation.getId());
-            App.clearTargetTranslationSettings(sourceTranslation.getId());
+            App.getTranslator().clearTargetTranslationSettings(sourceTranslation.getId());
         }
     }
 

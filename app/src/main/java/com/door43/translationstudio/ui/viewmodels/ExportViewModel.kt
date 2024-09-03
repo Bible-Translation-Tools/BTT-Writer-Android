@@ -1,15 +1,13 @@
 package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
-import android.content.Intent
 import android.net.Uri
-import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
-import com.door43.translationstudio.App
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.recoverRepo
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.DownloadImages
@@ -36,7 +34,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExportViewModel @Inject constructor(
-    private val application: Application,
+    application: Application,
 ) : AndroidViewModel(application) {
 
     @Inject lateinit var export: Export
@@ -48,6 +46,7 @@ class ExportViewModel @Inject constructor(
     @Inject lateinit var registerSSHKeys: RegisterSSHKeys
     @Inject lateinit var createRepository: CreateRepository
     @Inject lateinit var gogsLogout: GogsLogout
+    @Inject lateinit var directoryProvider: IDirectoryProvider
 
     private val _translation = MutableLiveData<TargetTranslation?>(null)
     val translation: LiveData<TargetTranslation?> = _translation
@@ -72,6 +71,9 @@ class ExportViewModel @Inject constructor(
 
     private val _repoCreated = MutableLiveData<Boolean>()
     val repoCreated: LiveData<Boolean> = _repoCreated
+
+    private val _exportedToApp = MutableLiveData<File?>()
+    val exportedToApp: LiveData<File?> = _exportedToApp
 
     fun loadTargetTranslation(translationID: String) {
         translator.getTargetTranslation(translationID)?.let {
@@ -339,38 +341,24 @@ class ExportViewModel @Inject constructor(
     }
 
     fun exportToApp() {
-        translation.value?.let { translation ->
-            val filename = translation.id + "." + Translator.TSTUDIO_EXTENSION
-            val exportFile = File(App.sharingDir, filename)
-            try {
-                translator.exportArchive(translation, exportFile)
-            } catch (e: Exception) {
-                Logger.e(
-                    TAG,
-                    "Failed to export the target translation " + translation.id,
-                    e
-                )
+        viewModelScope.launch {
+            translation.value?.let { translation ->
+                _progress.value = ProgressDialogFactory.Progress(R.string.exporting)
+                val filename = translation.id + "." + Translator.TSTUDIO_EXTENSION
+                val exportFile = File(directoryProvider.sharingDir, filename)
+                try {
+                    export.exportProject(translation, exportFile)
+                    _exportedToApp.value = exportFile
+                } catch (e: Exception) {
+                    Logger.e(
+                        TAG,
+                        "Failed to export the target translation " + translation.id,
+                        e
+                    )
+                }
+                _progress.value = null
             }
-            if (exportFile.exists()) {
-                val u = FileProvider.getUriForFile(
-                    this.application,
-                    "com.door43.translationstudio.fileprovider",
-                    exportFile
-                )
-                val i = Intent(Intent.ACTION_SEND)
-                i.setType("application/zip")
-                i.putExtra(Intent.EXTRA_STREAM, u)
-                application.startActivity(Intent.createChooser(i, "Email:"))
-            } else {
-                /*val snack = Snackbar.make(
-                    application.findViewById(android.R.id.content),
-                    R.string.translation_export_failed,
-                    Snackbar.LENGTH_LONG
-                )
-                ViewUtil.setSnackBarTextColor(snack, application.resources.getColor(R.color.light_primary_text))
-                snack.show()*/
-            }
-        } ?: throw NullPointerException("Translation is null")
+        }
     }
 
     fun clearResults() {

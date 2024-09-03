@@ -45,7 +45,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
         mLibrary = App.getLibrary();
 
         Bundle args = getArguments();
-        final String targetTranslationId = args.getString(App.EXTRA_TARGET_TRANSLATION_ID, null);
+        final String targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
         TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
         if(targetTranslation == null) {
             throw new InvalidParameterException("a valid target translation id is required");
@@ -118,9 +118,9 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
 
     @Override
     public void onConfirmTabsDialog(String targetTranslationId, List<String> sourceTranslationIds) {
-        String[] oldSourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
+        String[] oldSourceTranslationIds = mTranslator.getOpenSourceTranslations(targetTranslationId);
         for(String id:oldSourceTranslationIds) {
-            App.removeOpenSourceTranslation(targetTranslationId, id);
+            mTranslator.removeOpenSourceTranslation(targetTranslationId, id);
         }
 
         if(!sourceTranslationIds.isEmpty()) {
@@ -129,7 +129,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
                 Translation t = mLibrary.index().getTranslation(slug);
                 int modifiedAt = mLibrary.getResourceContainerLastModified(t.language.slug, t.project.slug, t.resource.slug);
                 try {
-                    App.addOpenSourceTranslation(targetTranslationId, slug);
+                    mTranslator.addOpenSourceTranslation(targetTranslationId, slug);
                     TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
                     if (targetTranslation != null) {
                         try {

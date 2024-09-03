@@ -92,21 +92,21 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         mTranslator = App.getTranslator();
 
         Bundle args = getArguments();
-        String targetTranslationSlug = args.getString(App.EXTRA_TARGET_TRANSLATION_ID, null);
+        String targetTranslationSlug = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
         mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationSlug);
         if(mTargetTranslation == null) {
             Logger.e(getClass().getName() ,"A valid target translation id is required. Received '" + targetTranslationSlug + "' but the translation could not be found");
             getActivity().finish();
         }
 
-        String chapterSlug = args.getString(App.EXTRA_CHAPTER_ID, App.getLastFocusChapterId(targetTranslationSlug));
-        String chunkSlug = args.getString(App.EXTRA_FRAME_ID, App.getLastFocusFrameId(targetTranslationSlug));
+        String chapterSlug = args.getString(Translator.EXTRA_CHAPTER_ID, mTranslator.getLastFocusChapterId(targetTranslationSlug));
+        String chunkSlug = args.getString(Translator.EXTRA_FRAME_ID, mTranslator.getLastFocusFrameId(targetTranslationSlug));
 
         try {
-            String sourceTranslationSlug = App.getSelectedSourceTranslationId(targetTranslationSlug);
+            String sourceTranslationSlug = mTranslator.getSelectedSourceTranslationId(targetTranslationSlug);
             if (sourceTranslationSlug != null) {
                 mSourceTranslation = mLibrary.index().getTranslation(sourceTranslationSlug);
-                if(mSourceTranslation == null) App.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
+                if(mSourceTranslation == null) mTranslator.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -606,7 +606,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public void onSourceTranslationTabClick(String sourceTranslationId) {
-        App.setSelectedSourceTranslation(mTargetTranslation.getId(), sourceTranslationId);
+        mTranslator.setSelectedSourceTranslation(mTargetTranslation.getId(), sourceTranslationId);
         openResourceContainer(sourceTranslationId);
     }
 
@@ -619,12 +619,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             return;
         }
 
-        App.removeOpenSourceTranslation(targetTranslationId, sourceTranslationId);
+        mTranslator.removeOpenSourceTranslation(targetTranslationId, sourceTranslationId);
 
-        String[] sourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
+        String[] sourceTranslationIds = mTranslator.getOpenSourceTranslations(targetTranslationId);
 
         if (sourceTranslationIds.length > 0) {
-            String selectedSourceId = App.getSelectedSourceTranslationId(targetTranslationId);
+            String selectedSourceId = mTranslator.getSelectedSourceTranslationId(targetTranslationId);
             openResourceContainer(selectedSourceId);
         } else {
             if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
@@ -660,14 +660,14 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             return;
         }
 
-        String[] oldSourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
+        String[] oldSourceTranslationIds = mTranslator.getOpenSourceTranslations(targetTranslationId);
         for (String id : oldSourceTranslationIds) {
-            App.removeOpenSourceTranslation(targetTranslationId, id);
+            mTranslator.removeOpenSourceTranslation(targetTranslationId, id);
         }
 
         if (sourceTranslationIds.size() > 0) {
             setSelectedSources(sourceTranslationIds, targetTranslation);
-            String selectedSourceId = App.getSelectedSourceTranslationId(targetTranslationId);
+            String selectedSourceId = mTranslator.getSelectedSourceTranslationId(targetTranslationId);
             openResourceContainer(selectedSourceId);
         } else {
             if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
@@ -678,7 +678,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         List<SourceTranslation> sources = new ArrayList<>();
         for (String slug : sourceSlugs) {
             try {
-                App.addOpenSourceTranslation(targetTranslation.getId(), slug);
+                mTranslator.addOpenSourceTranslation(targetTranslation.getId(), slug);
             } catch (Exception e) {
                 Logger.e(
                         this.getClass().getName(),
@@ -713,7 +713,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             int lastItemPosition = getCurrentPosition();
             String chapterId = mAdapter.getFocusedChapterSlug(lastItemPosition);
             String frameId = mAdapter.getFocusedChunkSlug(lastItemPosition);
-            App.setLastFocus(mTargetTranslation.getId(), chapterId, frameId);
+            mTranslator.setLastFocus(mTargetTranslation.getId(), chapterId, frameId);
         }
         if(mAdapter != null) mAdapter.setOnClickListener(null);
         super.onDestroy();
@@ -806,7 +806,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
                     if(task.getResult() == null) {
                         // failed to load the container
                         String slug = task.getArgs().getString("slug");
-                        App.removeOpenSourceTranslation(mTargetTranslation.getId(), slug);
+                        mTranslator.removeOpenSourceTranslation(mTargetTranslation.getId(), slug);
                         mAdapter.triggerNotifyDataSetChanged();
 
                         // TODO: 10/5/16 notify user we failed to select the source

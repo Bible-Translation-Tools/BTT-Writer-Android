@@ -14,30 +14,27 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
 import com.door43.translationstudio.App
-import com.door43.translationstudio.App.Companion.deviceNetworkAlias
-import com.door43.translationstudio.App.Companion.isNetworkAvailable
-import com.door43.translationstudio.App.Companion.library
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.DialogImportBinding
-import com.door43.translationstudio.tasks.ImportProjectFromUriTask
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog
 import com.door43.translationstudio.ui.dialogs.Door43LoginDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialogFactory
 import com.door43.translationstudio.ui.dialogs.ShareWithPeerDialog
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher
-import org.unfoldingword.tools.taskmanager.TaskManager
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
@@ -46,17 +43,21 @@ import javax.inject.Inject
  * Created by joel on 10/5/2015.
  */
 @AndroidEntryPoint
-class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
+class ImportDialog : DialogFragment() {
     @Inject lateinit var profile: Profile
     @Inject lateinit var translator: Translator
+    @Inject lateinit var library: Door43Client
+
+    private val viewModel: ImportViewModel by viewModels()
+
+    private var progressDialog: ProgressDialogFactory.ProgressDialog? = null
 
     private var settingDeviceAlias = false
     private var mDialogShown: DialogShown = DialogShown.NONE
     private var mDialogMessage: String? = null
     private var mTargetTranslationID: String? = null
     private var mImportUri: Uri? = null
-    private var taskWatcher: SimpleTaskWatcher? = null
-    private var mMergeSelection: MergeOptions? = MergeOptions.NONE
+    private var mergeSelection: MergeOptions? = MergeOptions.NONE
     private var mMergeConflicted = false
 
     private lateinit var openFileContent: ActivityResultLauncher<String>
@@ -68,6 +69,8 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.setCanceledOnTouchOutside(true)
+
+        Logger.e("ImportDialog", viewModel.toString())
 
         openFileContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
@@ -91,11 +94,10 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        dialog!!.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
         _binding = DialogImportBinding.inflate(inflater, container, false)
 
-        taskWatcher = SimpleTaskWatcher(activity, R.string.label_import)
-        taskWatcher?.setOnFinishedListener(this)
+        progressDialog = ProgressDialogFactory.newInstance(parentFragmentManager)
 
         if (savedInstanceState != null) {
             // check if returning from device alias dialog
@@ -121,7 +123,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
                 STATE_MERGE_CONFLICT,
                 false
             )
-            mMergeSelection = MergeOptions.fromInt(
+            mergeSelection = MergeOptions.fromInt(
                 savedInstanceState.getInt(
                     STATE_MERGE_SELECTION,
                     MergeOptions.NONE.value
@@ -146,7 +148,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
 
             importFromDoor43.setOnClickListener {
                 // make sure we have a gogs user
-                if (profile == null || profile!!.gogsUser == null) {
+                if (profile.gogsUser == null) {
                     val dialog = Door43LoginDialog()
                     showDialogFragment(dialog, Door43LoginDialog.TAG)
                     return@setOnClickListener
@@ -158,20 +160,20 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             }
 
             importTargetTranslation.setOnClickListener {
-                mMergeSelection = MergeOptions.NONE
+                mergeSelection = MergeOptions.NONE
                 onImportProject()
             }
 
             importUsfm.setOnClickListener {
-                mMergeSelection = MergeOptions.NONE
+                mergeSelection = MergeOptions.NONE
                 onImportUSFM()
             }
 
             importFromDevice.setOnClickListener {
-                mMergeSelection = MergeOptions.NONE
+                mergeSelection = MergeOptions.NONE
                 // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
-                if (isNetworkAvailable) {
-                    if (deviceNetworkAlias == null) {
+                if (App.isNetworkAvailable) {
+                    if (App.deviceNetworkAlias == null) {
                         // get device alias
                         settingDeviceAlias = true
                         val dialog = DeviceNetworkAliasDialog()
@@ -193,13 +195,38 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             dismissButton.setOnClickListener { dismiss() }
         }
 
-        // connect to existing tasks
-        val importProjectFromUriTask =
-            TaskManager.getTask(ImportProjectFromUriTask.TASK_ID) as? ImportProjectFromUriTask
-        taskWatcher?.watch(importProjectFromUriTask)
-
+        setupObservers()
         restoreDialogs()
         return binding.root
+    }
+
+    private fun setupObservers() {
+        viewModel.progress.observe(this) {
+            if (it != null) {
+                progressDialog?.show(it)
+                progressDialog?.updateProgress(it.progress)
+            } else {
+                progressDialog?.dismiss()
+            }
+        }
+        viewModel.importFromUriResult.observe(this) {
+            it?.let { result ->
+                mImportUri = result.filePath
+                mMergeConflicted = result.mergeConflict
+                if (result.success && result.alreadyExists && mergeSelection == MergeOptions.NONE) {
+                    showMergeOverwritePrompt(result.importedSlug)
+                } else if (result.success) {
+                    showImportResults(R.string.import_success, result.readablePath)
+                } else if (result.invalidFileName) {
+                    showImportResults(R.string.invalid_file, result.readablePath)
+                } else {
+                    showImportResults(R.string.import_failed, result.readablePath)
+                }
+
+                // todo: terrible hack.
+                (activity as? HomeActivity)?.notifyDatasetChanged()
+            }
+        }
     }
 
     /**
@@ -247,7 +274,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
     }
 
     override fun onResume() {
-        if (settingDeviceAlias && deviceNetworkAlias != null) {
+        if (settingDeviceAlias && App.deviceNetworkAlias != null) {
             settingDeviceAlias = false
             showP2PDialog()
         }
@@ -261,7 +288,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         val dialog = ShareWithPeerDialog()
         val args = Bundle()
         args.putInt(ShareWithPeerDialog.ARG_OPERATION_MODE, ShareWithPeerDialog.MODE_CLIENT)
-        args.putString(ShareWithPeerDialog.ARG_DEVICE_ALIAS, deviceNetworkAlias)
+        args.putString(ShareWithPeerDialog.ARG_DEVICE_ALIAS, App.deviceNetworkAlias)
         dialog.arguments = args
         showDialogFragment(dialog, "share-dialog")
     }
@@ -294,12 +321,10 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
      */
     private fun doProjectImport(importUri: Uri) {
         mImportUri = importUri
-        val importProjectFromUriTask = ImportProjectFromUriTask(
+        viewModel.importProjectFromUri(
             importUri,
-            mMergeSelection == MergeOptions.OVERWRITE
+            mergeSelection == MergeOptions.OVERWRITE
         )
-        taskWatcher?.watch(importProjectFromUriTask)
-        TaskManager.addTask(importProjectFromUriTask, ImportProjectFromUriTask.TASK_ID)
     }
 
     /**
@@ -309,7 +334,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
      */
     private fun importResourceContainer(dir: File) {
         try {
-            library!!.importResourceContainer(dir)
+            library.importResourceContainer(dir)
             AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                 .setTitle(R.string.success)
                 .setMessage(R.string.title_import_success)
@@ -352,7 +377,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
                 }
 
                 try {
-                    library!!.open(externalContainer.slug)
+                    library.open(externalContainer.slug)
                     AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                         .setTitle(R.string.confirm)
                         .setMessage(
@@ -379,7 +404,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
      * let user know there was a merge conflict
      * @param targetTranslationID
      */
-    fun showMergeOverwritePrompt(targetTranslationID: String?) {
+    private fun showMergeOverwritePrompt(targetTranslationID: String?) {
         mDialogShown = DialogShown.MERGE_CONFLICT
         mTargetTranslationID = targetTranslationID
         val messageID =
@@ -394,7 +419,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
             .setMessage(message)
             .setPositiveButton(R.string.merge_projects_label) { _, _ ->
                 mDialogShown = DialogShown.NONE
-                mMergeSelection = MergeOptions.OVERWRITE
+                mergeSelection = MergeOptions.OVERWRITE
                 if (mMergeConflicted) {
                     doManualMerge()
                 } else {
@@ -411,7 +436,7 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
                 resetToMasterBackup()
 
                 // re-import with overwrite
-                mMergeSelection = MergeOptions.OVERWRITE
+                mergeSelection = MergeOptions.OVERWRITE
                 doProjectImport(mImportUri!!)
             }.show()
     }
@@ -431,34 +456,12 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         // ask parent activity to navigate to target translation review mode with merge filter on
         val intent = Intent(activity, TargetTranslationActivity::class.java)
         val args = Bundle()
-        args.putString(App.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID)
-        args.putBoolean(App.EXTRA_START_WITH_MERGE_FILTER, true)
-        args.putInt(App.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
+        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID)
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
+        args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtras(args)
         startActivity(intent)
         dismiss()
-    }
-
-    override fun onFinished(task: ManagedTask) {
-        taskWatcher?.stop()
-        if (task is ImportProjectFromUriTask) {
-            val results = task.getResult() as ImportProjectFromUriTask.ImportResults
-            val success = results.success
-            mImportUri = results.filePath
-            mMergeConflicted = results.mergeConflict
-            if (success && results.alreadyExists && (mMergeSelection == MergeOptions.NONE)) {
-                showMergeOverwritePrompt(results.importedSlug)
-            } else if (success) {
-                showImportResults(R.string.import_success, results.readablePath)
-            } else if (results.invalidFileName) {
-                showImportResults(R.string.invalid_file, results.readablePath)
-            } else {
-                showImportResults(R.string.import_failed, results.readablePath)
-            }
-        }
-
-        // todo: terrible hack.
-        (activity as HomeActivity?)!!.notifyDatasetChanged()
     }
 
     /**
@@ -495,18 +498,13 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         out.putInt(STATE_DIALOG_SHOWN, mDialogShown.value)
         out.putString(STATE_DIALOG_MESSAGE, mDialogMessage)
         out.putString(STATE_DIALOG_TRANSLATION_ID, mTargetTranslationID)
-        out.putInt(STATE_MERGE_SELECTION, mMergeSelection!!.value)
+        out.putInt(STATE_MERGE_SELECTION, mergeSelection!!.value)
         out.putBoolean(STATE_MERGE_CONFLICT, mMergeConflicted)
         if (mImportUri != null) {
             out.putString(STATE_IMPORT_URL, mImportUri.toString())
         }
 
         super.onSaveInstanceState(out)
-    }
-
-    override fun onDestroy() {
-        taskWatcher?.stop()
-        super.onDestroy()
     }
 
     override fun onDestroyView() {
@@ -543,7 +541,6 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         MERGE(2);
 
         companion object {
-            @JvmStatic
             fun fromInt(i: Int): MergeOptions {
                 for (b in entries) {
                     if (b.value == i) {
@@ -562,11 +559,11 @@ class ImportDialog : DialogFragment(), SimpleTaskWatcher.OnFinishedListener {
         private const val IMPORT_USFM_MIME = "text/usfm"
         private const val IMPORT_RCONTAINER_ACTION = "import_rcontainer"
         private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
-        const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
-        const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
-        const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
-        const val STATE_MERGE_SELECTION: String = "state_merge_selection"
-        const val STATE_MERGE_CONFLICT: String = "state_merge_conflict"
-        const val STATE_IMPORT_URL: String = "state_import_url"
+        private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
+        private const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
+        private const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
+        private const val STATE_MERGE_SELECTION: String = "state_merge_selection"
+        private const val STATE_MERGE_CONFLICT: String = "state_merge_conflict"
+        private  val STATE_IMPORT_URL: String = "state_import_url"
     }
 }

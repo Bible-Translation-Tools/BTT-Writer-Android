@@ -9,7 +9,6 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.net.ConnectivityManager
 import android.os.Build
-import android.os.Environment
 import android.os.Process
 import android.provider.Settings
 import android.text.TextUtils
@@ -19,11 +18,9 @@ import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
 import com.door43.translationstudio.core.ArchiveDetails
-import com.door43.translationstudio.core.Migration
 import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Util
 import com.door43.translationstudio.services.BackupService
@@ -35,10 +32,7 @@ import com.jcraft.jsch.JSch
 import com.jcraft.jsch.KeyPair
 import com.nostra13.universalimageloader.core.ImageLoader
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration
-import org.json.JSONException
-import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.foreground.Foreground
@@ -108,36 +102,19 @@ class App : Application() {
 
     companion object {
         const val PREFERENCES_TAG: String = "com.door43.translationstudio"
-        const val EXTRA_SOURCE_DRAFT_TRANSLATION_ID: String = "extra_source_translation_id"
-        const val EXTRA_TARGET_TRANSLATION_ID: String = "extra_target_translation_id"
-        const val EXTRA_START_WITH_MERGE_FILTER: String = "start_with_merge_filter"
-        const val EXTRA_CHAPTER_ID: String = "extra_chapter_id"
-        const val EXTRA_FRAME_ID: String = "extra_frame_id"
-        const val EXTRA_VIEW_MODE: String = "extra_view_mode_id"
         const val PUBLIC_DATA_DIR: String = "BTT-Writer"
         const val TAG: String = "App"
 
         private const val PREFERENCES_NAME = "com.door43.translationstudio.general"
 
         //    private static final String DEFAULT_LIBRARY_ZIP = "library.zip";
-        private const val LAST_VIEW_MODE = "last_view_mode_"
-        private const val LAST_FOCUS_CHAPTER = "last_focus_chapter_"
-        private const val LAST_FOCUS_FRAME = "last_focus_frame_"
-        private const val OPEN_SOURCE_TRANSLATIONS = "open_source_translations_"
-        private const val SELECTED_SOURCE_TRANSLATION = "selected_source_translation_"
+
         private const val LAST_CHECKED_SERVER_FOR_UPDATES = "last_checked_server_for_updates"
 
         //    private static final String ASSETS_DIR = "assets";
         const val MIN_CHECKING_LEVEL: Int = 3
         private var mImageLoader: ImageLoader? = null
         private var sInstance: App? = null
-        /**
-         * for keeping track of project that has changed
-         * @param targetTranslationId
-         */
-        //@JvmStatic
-        //@JvmField
-        var notifyTargetTranslationWithUpdates: String? = null
         val imagesDir: File? = null
         // 96 MB, Minimum RAM needed for reliable operation
         const val MINIMUM_REQUIRED_RAM: Long = (96 * 1024 * 1024).toLong()
@@ -222,39 +199,6 @@ class App : Application() {
                 val code = Locale.getDefault().language
                 return code.replace("[_-]$".toRegex(), "")
             }
-
-        /**
-         * A temporary utility to retrieve the target language used in a target translation.
-         * if the language does not exist it will be added as a temporary language if possible
-         * @param t
-         * @return
-         */
-        @JvmStatic
-        @Deprecated("")
-        fun languageFromTargetTranslation(t: TargetTranslation): TargetLanguage? {
-            val library = library
-            var language = library!!.index.getTargetLanguage(t.targetLanguageId)
-            if (language == null && t.targetLanguageId.isEmpty()) {
-                val name = t.targetLanguageName.ifEmpty { t.targetLanguageId }
-                val direction =
-                    if (t.targetLanguageDirection == null) "ltr" else t.targetLanguageDirection
-                language = TargetLanguage(
-                    t.targetLanguageId,
-                    name,
-                    "",
-                    direction,
-                    "unknown",
-                    false
-                )
-                try {
-                    library.index.addTempTargetLanguage(language)
-                } catch (e: Exception) {
-                    language = null
-                    e.printStackTrace()
-                }
-            }
-            return language
-        }
 
         /**
          * Generates a new RSA key pair for use with ssh
@@ -727,239 +671,6 @@ class App : Application() {
          */
         fun internalAppDir(): File {
             return sInstance!!.filesDir
-        }
-
-        /**
-         * Sets the last opened view mode for a target translation
-         * @param targetTranslationId
-         * @param viewMode
-         */
-        @JvmStatic
-        fun setLastViewMode(targetTranslationId: String, viewMode: TranslationViewMode) {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            val editor = prefs.edit()
-            editor.putString(
-                LAST_VIEW_MODE + targetTranslationId,
-                viewMode.name.uppercase(Locale.getDefault())
-            )
-            editor.apply()
-        }
-
-        /**
-         * Returns the last view mode of the target translation.
-         * The default view mode will be returned if there is no recorded last view mode
-         *
-         * @param targetTranslationId
-         * @return
-         */
-        @JvmStatic
-        fun getLastViewMode(targetTranslationId: String): TranslationViewMode {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            try {
-                val modeName = prefs.getString(
-                    LAST_VIEW_MODE + targetTranslationId,
-                    TranslationViewMode.READ.name
-                )
-                return TranslationViewMode.valueOf(modeName!!.uppercase(Locale.getDefault()))
-            } catch (e: Exception) {
-            }
-            return TranslationViewMode.READ
-        }
-
-        @JvmStatic
-        var lastFocusTargetTranslation: String?
-            /**
-             * Returns the last focused target translation
-             * @return
-             */
-            get() {
-                val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-                return prefs.getString("last_translation", null)
-            }
-            /**
-             * Sets the last focused target translation
-             * @param targetTranslationId
-             */
-            set(targetTranslationId) {
-                val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-                val editor = prefs.edit()
-                editor.putString("last_translation", targetTranslationId)
-                editor.apply()
-            }
-
-
-        /**
-         * Sets the last focused chapter and frame for a target translation
-         * @param targetTranslationId
-         * @param chapterId
-         * @param frameId
-         */
-        @JvmStatic
-        fun setLastFocus(targetTranslationId: String, chapterId: String?, frameId: String?) {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            val editor = prefs.edit()
-            editor.putString(LAST_FOCUS_CHAPTER + targetTranslationId, chapterId)
-            editor.putString(LAST_FOCUS_FRAME + targetTranslationId, frameId)
-            editor.apply()
-            lastFocusTargetTranslation = targetTranslationId
-        }
-
-        /**
-         * Returns the id of the chapter that was last in focus for this target translation
-         * @param targetTranslationId
-         * @return
-         */
-        @JvmStatic
-        fun getLastFocusChapterId(targetTranslationId: String): String? {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            return prefs.getString(LAST_FOCUS_CHAPTER + targetTranslationId, null)
-        }
-
-        /**
-         * Returns the id of the frame that was last in focus for this target translation
-         * @param targetTranslationId
-         * @return
-         */
-        @JvmStatic
-        fun getLastFocusFrameId(targetTranslationId: String): String? {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            return prefs.getString(LAST_FOCUS_FRAME + targetTranslationId, null)
-        }
-
-        /**
-         * Adds a source translation to the list of open tabs on a target translation
-         * @param targetTranslationId
-         * @param sourceTranslationId
-         */
-        @JvmStatic
-        fun addOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String?) {
-            if (!sourceTranslationId.isNullOrEmpty()) {
-                val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-                val editor = prefs.edit()
-                val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
-                var newIdSet: String? = ""
-                for (id in sourceTranslationIds) {
-                    if (id != sourceTranslationId) {
-                        newIdSet += "$id|"
-                    }
-                }
-                newIdSet += sourceTranslationId
-                editor.putString(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, newIdSet)
-                editor.apply()
-            }
-        }
-
-        /**
-         * Removes a source translation from the list of open tabs on a target translation
-         * @param targetTranslationId
-         * @param sourceTranslationId
-         */
-        @JvmStatic
-        fun removeOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String?) {
-            if (!sourceTranslationId.isNullOrEmpty()) {
-                val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-                val editor = prefs.edit()
-                val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
-                var newIdSet: String? = ""
-                for (id in sourceTranslationIds) {
-                    if (id != sourceTranslationId) {
-                        if (newIdSet!!.isEmpty()) {
-                            newIdSet = id
-                        } else {
-                            newIdSet += "|$id"
-                        }
-                    } else if (id == getSelectedSourceTranslationId(targetTranslationId)) {
-                        // unset the selected tab if it is removed
-                        setSelectedSourceTranslation(targetTranslationId, null)
-                    }
-                }
-                editor.putString(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, newIdSet)
-                editor.apply()
-            }
-        }
-
-        /**
-         * Returns an array of open source translation tabs on a target translation
-         * @param targetTranslationId
-         * @return
-         */
-        @JvmStatic
-        fun getOpenSourceTranslations(targetTranslationId: String): Array<String?> {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            val idSet = prefs.getString(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, "")!!
-                .trim { it <= ' ' }
-            if (idSet.isEmpty()) {
-                return arrayOfNulls(0)
-            } else {
-                val ids: Array<String?> =
-                    idSet.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
-                        .toTypedArray()
-                for (i in ids.indices) {
-                    ids[i] = Migration.migrateSourceTranslationSlug(ids[i])
-                }
-                return ids
-            }
-        }
-
-        /**
-         * Sets or removes the selected open source translation tab on a target translation
-         * @param targetTranslationId
-         * @param sourceTranslationId if null the selection will be unset
-         */
-        @JvmStatic
-        fun setSelectedSourceTranslation(
-            targetTranslationId: String,
-            sourceTranslationId: String?
-        ) {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            val editor = prefs.edit()
-            if (!sourceTranslationId.isNullOrEmpty()) {
-                editor.putString(
-                    SELECTED_SOURCE_TRANSLATION + targetTranslationId,
-                    Migration.migrateSourceTranslationSlug(sourceTranslationId)
-                )
-            } else {
-                editor.remove(SELECTED_SOURCE_TRANSLATION + targetTranslationId)
-            }
-            editor.apply()
-        }
-
-        /**
-         * Returns the selected open source translation tab on the target translation
-         * If there is no selection the first open tab will be set as the selected tab
-         * @param targetTranslationId
-         * @return
-         */
-        @JvmStatic
-        fun getSelectedSourceTranslationId(targetTranslationId: String): String {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            var selectedSourceTranslationId =
-                prefs.getString(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
-            if (selectedSourceTranslationId.isNullOrEmpty()) {
-                // default to first tab
-                val openSourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
-                if (openSourceTranslationIds.isNotEmpty()) {
-                    selectedSourceTranslationId = openSourceTranslationIds[0]
-                    setSelectedSourceTranslation(targetTranslationId, selectedSourceTranslationId)
-                }
-            }
-            return Migration.migrateSourceTranslationSlug(selectedSourceTranslationId)
-        }
-
-        /**
-         * Removes all settings for a target translation
-         * @param targetTranslationId
-         */
-        @JvmStatic
-        fun clearTargetTranslationSettings(targetTranslationId: String) {
-            val prefs = sInstance!!.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
-            val editor = prefs.edit()
-            editor.remove(SELECTED_SOURCE_TRANSLATION + targetTranslationId)
-            editor.remove(OPEN_SOURCE_TRANSLATIONS + targetTranslationId)
-            editor.remove(LAST_FOCUS_FRAME + targetTranslationId)
-            editor.remove(LAST_FOCUS_CHAPTER + targetTranslationId)
-            editor.remove(LAST_VIEW_MODE + targetTranslationId)
-            editor.apply()
         }
 
         val mediaServer: String
