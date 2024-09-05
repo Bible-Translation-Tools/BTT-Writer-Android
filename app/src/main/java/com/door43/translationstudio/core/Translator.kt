@@ -593,7 +593,7 @@ class Translator @Inject constructor(
      */
     fun getLastViewMode(targetTranslationId: String): TranslationViewMode {
         try {
-            val modeName = prefRepository.getDefaultPref(
+            val modeName = prefRepository.getPrivatePref(
                 LAST_VIEW_MODE + targetTranslationId,
                 TranslationViewMode.READ.name
             )

@@ -313,7 +313,7 @@ class PrintDialog : DialogFragment() {
             projectTitle.text = title + " - " + targetTranslation.targetLanguageName
 
             val isObsProject = targetTranslation.isObsProject
-            if (!isObsProject) {
+            if (isObsProject) {
                 printImages.isEnabled = true
                 printImages.isChecked = includeImages
             } else {

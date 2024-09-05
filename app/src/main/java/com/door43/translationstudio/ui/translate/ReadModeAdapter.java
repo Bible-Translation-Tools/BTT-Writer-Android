@@ -82,7 +82,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     private ContentValues[] mTabs = new ContentValues[0];
     private Map<String, List<String>> chunks = new HashMap<>();
 
-    public ReadModeAdapter(Activity context, String targetTranslationId, String startingChapterSlug, String startingChunkSlug) {
+    public ReadModeAdapter(Activity context, String targetTranslationId, String startingChapterSlug) {
         this.startingChapterSlug = startingChapterSlug;
 
         mLibrary = App.getLibrary();

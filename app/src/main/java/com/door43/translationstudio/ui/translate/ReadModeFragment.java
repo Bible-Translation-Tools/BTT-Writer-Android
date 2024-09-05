@@ -13,8 +13,14 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 public class ReadModeFragment extends ViewModeFragment {
 
     @Override
-    ViewModeAdapter generateAdapter(Activity activity, String targetTranslationId, String chapterId, String frameId, Bundle extras) {
-        return new ReadModeAdapter(activity, targetTranslationId, chapterId, frameId);
+    ViewModeAdapter generateAdapter(
+            Activity activity,
+            String targetTranslationId,
+            String chapterId,
+            String frameId,
+            Bundle extras
+    ) {
+        return new ReadModeAdapter(activity, targetTranslationId, chapterId);
     }
 
     /***

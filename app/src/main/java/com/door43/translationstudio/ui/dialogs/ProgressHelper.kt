@@ -62,6 +62,7 @@ object ProgressHelper {
         }
     }
 
+    @JvmStatic
     fun newInstance(context: Context, title: Int, cancelable: Boolean): ProgressDialog {
         val builder = AlertDialog.Builder(context)
         val binding = FragmentProgressDialogBinding.inflate(LayoutInflater.from(context))

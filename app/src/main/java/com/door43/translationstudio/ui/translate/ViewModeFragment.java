@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui.translate;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,6 +10,7 @@ import android.os.Looper;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,7 +21,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
@@ -29,12 +28,14 @@ import org.unfoldingword.tools.logger.Logger;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.ContainerCache;
-import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.entity.SourceTranslation;
+import com.door43.translationstudio.databinding.FragmentStackedCardListBinding;
 import com.door43.translationstudio.ui.BaseFragment;
+import com.door43.translationstudio.ui.dialogs.ProgressHelper;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
 
 import org.json.JSONException;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
@@ -43,27 +44,27 @@ import org.unfoldingword.tools.taskmanager.TaskManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * Created by joel on 9/18/2015.
  */
+@AndroidEntryPoint
 public abstract class ViewModeFragment extends BaseFragment implements ViewModeAdapter.OnEventListener, ChooseSourceTranslationDialog.OnClickListener, ManagedTask.OnFinishedListener {
 
     public static final String TAG = ViewModeFragment.class.getSimpleName();
     private static final String TASK_ID_OPEN_SELECTED_SOURCE = "open-selected-source";
     private static final String TASK_ID_OPEN_SOURCE = "open-source";
-    private static ResourceContainer mSourceContainer = null;
-    private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
     private ViewModeAdapter mAdapter;
     private boolean mFingerScroll = false;
     private OnEventListener mListener;
-    private TargetTranslation mTargetTranslation;
-    private Translator mTranslator;
-    private Door43Client mLibrary;
     private GestureDetector mGesture;
-    private Translation mSourceTranslation = null;
-    private ProgressDialog mProgressDialog = null;
+    private ProgressHelper.ProgressDialog progressDialog = null;
     private int mSavedPosition = 0;
+
+    protected FragmentStackedCardListBinding binding;
+    protected TargetTranslationViewModel viewModel;
 
     /**
      * Returns an instance of the adapter
@@ -74,56 +75,61 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param extras
      * @return
      */
-    abstract ViewModeAdapter generateAdapter(Activity activity, String targetTranslationSlug, String startingChapterSlug, String startingChunkSlug, Bundle extras);
+    abstract ViewModeAdapter generateAdapter(
+            Activity activity,
+            String targetTranslationSlug,
+            String startingChapterSlug,
+            String startingChunkSlug,
+            Bundle extras
+    );
 
     /**
      * Resets the static variables
      */
     public static void reset() {
         ContainerCache.empty();
-        mSourceContainer = null;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_stacked_card_list, container, false);
-
-        mLibrary = App.getLibrary();
-        mTranslator = App.getTranslator();
+        binding = FragmentStackedCardListBinding.inflate(inflater, container, false);
+        viewModel = new ViewModelProvider(requireActivity()).get(TargetTranslationViewModel.class);
 
         Bundle args = getArguments();
-        String targetTranslationSlug = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
-        mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationSlug);
-        if(mTargetTranslation == null) {
-            Logger.e(getClass().getName() ,"A valid target translation id is required. Received '" + targetTranslationSlug + "' but the translation could not be found");
-            getActivity().finish();
-        }
+        assert args != null;
 
-        String chapterSlug = args.getString(Translator.EXTRA_CHAPTER_ID, mTranslator.getLastFocusChapterId(targetTranslationSlug));
-        String chunkSlug = args.getString(Translator.EXTRA_FRAME_ID, mTranslator.getLastFocusFrameId(targetTranslationSlug));
+        String chapterSlug = args.getString(Translator.EXTRA_CHAPTER_ID, viewModel.getLastFocusChapterId());
+        String chunkSlug = args.getString(Translator.EXTRA_FRAME_ID, viewModel.getLastFocusFrameId());
 
         try {
-            String sourceTranslationSlug = mTranslator.getSelectedSourceTranslationId(targetTranslationSlug);
-            if (sourceTranslationSlug != null) {
-                mSourceTranslation = mLibrary.index().getTranslation(sourceTranslationSlug);
-                if(mSourceTranslation == null) mTranslator.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
+            String sourceTranslationSlug = viewModel.getSelectedSourceTranslationId();
+            viewModel.setSourceTranslation(sourceTranslationSlug);
+            if(viewModel.getSourceTranslation() == null) {
+                viewModel.removeOpenSourceTranslation(sourceTranslationSlug);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         // open selected tab
-        if(null == mSourceTranslation) {
-            if(mListener != null) mListener.onNoSourceTranslations(targetTranslationSlug);
+        if(viewModel.getSourceTranslation() == null) {
+            if(mListener != null) {
+                mListener.onNoSourceTranslations(viewModel.getTargetTranslation().getId());
+            }
         } else {
-            mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
             // TRICKY: there is a bug in Android's LinearLayoutManager
             mLayoutManager = new WrapContentLinearLayoutManager(getActivity());
-            mRecyclerView.setLayoutManager(mLayoutManager);
-            mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-            mAdapter = generateAdapter(this.getActivity(), targetTranslationSlug, chapterSlug, chunkSlug, args);
-            mRecyclerView.setAdapter(mAdapter);
-            mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            binding.recyclerView.setLayoutManager(mLayoutManager);
+            binding.recyclerView.setItemAnimator(new DefaultItemAnimator());
+            mAdapter = generateAdapter(
+                    getActivity(),
+                    viewModel.getTargetTranslation().getId(),
+                    chapterSlug,
+                    chunkSlug,
+                    args
+            );
+            binding.recyclerView.setAdapter(mAdapter);
+            binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                     mFingerScroll = true;
@@ -188,9 +194,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         });
 
         // let child classes modify the view
-        onPrepareView(rootView);
+        onPrepareView(binding.getRoot());
 
-        return rootView;
+        return binding.getRoot();
     }
 
     /**
@@ -248,7 +254,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected ResourceContainer getSelectedResourceContainer() {
-        return ContainerCache.cache(mLibrary, mSourceTranslation.resourceContainerSlug);
+        return viewModel.getResourceContainer();
     }
 
     /**
@@ -282,9 +288,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected int findViewHolderAdapterPosition(float x, float y) {
-        if(mRecyclerView != null) {
-            View view = mRecyclerView.findChildViewUnder(x, y);
-            return mRecyclerView.getChildAdapterPosition(view);
+        View view = binding.recyclerView.findChildViewUnder(x, y);
+        if (view != null) {
+            return binding.recyclerView.getChildAdapterPosition(view);
         } else {
             return 0;
         }
@@ -296,11 +302,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected RecyclerView.ViewHolder getViewHolderForAdapterPosition(int position) {
-        if(mRecyclerView != null) {
-            return mRecyclerView.findViewHolderForAdapterPosition(position);
-        } else {
-            return null;
-        }
+        return binding.recyclerView.findViewHolderForAdapterPosition(position);
     }
 
     /**
@@ -308,9 +310,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected RecyclerView.ViewHolder getViewHolderSample() {
-        if(mLayoutManager != null && mRecyclerView != null) {
+        if(mLayoutManager != null) {
             int position = getCurrentPosition();
-            return mRecyclerView.findViewHolderForLayoutPosition(position);
+            return binding.recyclerView.findViewHolderForLayoutPosition(position);
         } else {
             return null;
         }
@@ -336,8 +338,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public RecyclerView.ViewHolder getVisibleViewHolder(int position) {
-        if(mLayoutManager != null && mRecyclerView != null) {
-            return mRecyclerView.findViewHolderForAdapterPosition(position);//.findViewHolderForLayoutPosition(position);
+        if(mLayoutManager != null) {
+            return binding.recyclerView.findViewHolderForAdapterPosition(position);
         }
         return null;
     }
@@ -357,24 +359,23 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     public void onResume() {
         super.onResume();
         showProgressDialog();
-        if(mSourceContainer == null) {
+
+        if(viewModel.getResourceContainer() == null) {
             // load the container
             if(mAdapter != null) mAdapter.setSourceContainer(null);
             onSourceContainerLoaded(null);
             ManagedTask task = new ManagedTask() {
                 @Override
                 public void start() {
-                    if (mSourceTranslation != null) {
-                        mSourceContainer = ContainerCache.cache(mLibrary, mSourceTranslation.resourceContainerSlug);
-                    }
+                    viewModel.setResourceContainer(null);
                 }
             };
             task.addOnFinishedListener(this);
             TaskManager.addTask(task, TASK_ID_OPEN_SELECTED_SOURCE);
         } else if(mAdapter != null) {
-            mAdapter.setSourceContainer(mSourceContainer);
+            mAdapter.setSourceContainer(viewModel.getResourceContainer());
             doScrollToPosition(mAdapter.getListStartPosition(), 0);
-            onSourceContainerLoaded(mSourceContainer);
+            onSourceContainerLoaded(viewModel.getResourceContainer());
             stopProgressDialog();
         }
     }
@@ -392,7 +393,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         ManagedTask task = new ManagedTask() {
             @Override
             public void start() {
-                setResult(ContainerCache.cache(mLibrary, slug));
+                setResult(viewModel.getResourceContainer(slug));
             }
         };
         Bundle args = new Bundle();
@@ -406,10 +407,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * removes progress dialog if shown
      */
     private void stopProgressDialog() {
-        if(mProgressDialog != null) {
+        if(progressDialog != null) {
             try {
-                mProgressDialog.dismiss();
-                mProgressDialog = null;
+                progressDialog.dismiss();
+                progressDialog = null;
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -422,17 +423,15 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     private void showProgressDialog(int titleId) {
-        if(mProgressDialog != null) {
-            mProgressDialog.dismiss(); // remove previous
+        if(progressDialog != null) {
+            progressDialog.dismiss(); // remove previous
         }
-        mProgressDialog = new ProgressDialog(getActivity());
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.setCanceledOnTouchOutside(true);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mProgressDialog.setTitle(titleId);
-        mProgressDialog.setMessage("");
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.show();
+        progressDialog = ProgressHelper.newInstance(
+                requireContext(),
+                titleId,
+                false
+        );
+        progressDialog.show();
     }
 
     private void showProgressDialog() {
@@ -566,7 +565,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         mFingerScroll = false;
         Log.d(TAG, "onScrollProgressUpdate: scrollProgress=" + scrollProgress + ", percent=" + percent);
         if(percent == 0) {
-            mRecyclerView.scrollToPosition(scrollProgress);
+            binding.recyclerView.scrollToPosition(scrollProgress);
         } else {
             fineScrollToPosition(scrollProgress, percent);
         }
@@ -580,14 +579,14 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      */
     private void fineScrollToPosition(int position, int percent) {
 
-        mRecyclerView.scrollToPosition(position); // do coarse adjustment
+        binding.recyclerView.scrollToPosition(position); // do coarse adjustment
 
-        View visibleChild = mRecyclerView.getChildAt(0);
+        View visibleChild = binding.recyclerView.getChildAt(0);
         if (visibleChild == null) {
             return;
         }
 
-        RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(visibleChild);
+        RecyclerView.ViewHolder holder = binding.recyclerView.getChildViewHolder(visibleChild);
         if(holder == null) {
             return;
         }
@@ -595,9 +594,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         int itemHeight = holder.itemView.getHeight();
         int offset = (int) (percent * itemHeight / 100);
 
-        LinearLayoutManager layoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-        layoutManager.scrollToPositionWithOffset(position, -offset);
-        return;
+        LinearLayoutManager layoutManager = (LinearLayoutManager) binding.recyclerView.getLayoutManager();
+        if (layoutManager != null) {
+            layoutManager.scrollToPositionWithOffset(position, -offset);
+        }
     }
 
     public void setScrollProgress(int position) {
@@ -606,28 +606,23 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public void onSourceTranslationTabClick(String sourceTranslationId) {
-        mTranslator.setSelectedSourceTranslation(mTargetTranslation.getId(), sourceTranslationId);
+        viewModel.setSelectedSourceTranslation(sourceTranslationId);
         openResourceContainer(sourceTranslationId);
     }
 
     @Override
     public void onSourceRemoveButtonClicked(String sourceTranslationId) {
-        String targetTranslationId = mTargetTranslation.getId();
+        viewModel.removeOpenSourceTranslation(sourceTranslationId);
 
-        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        if (targetTranslation == null) {
-            return;
-        }
-
-        mTranslator.removeOpenSourceTranslation(targetTranslationId, sourceTranslationId);
-
-        String[] sourceTranslationIds = mTranslator.getOpenSourceTranslations(targetTranslationId);
+        String[] sourceTranslationIds = viewModel.getOpenSourceTranslations();
 
         if (sourceTranslationIds.length > 0) {
-            String selectedSourceId = mTranslator.getSelectedSourceTranslationId(targetTranslationId);
+            String selectedSourceId = viewModel.getSelectedSourceTranslationId();
             openResourceContainer(selectedSourceId);
         } else {
-            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+            if (mListener != null) {
+                mListener.onNoSourceTranslations(viewModel.getTargetTranslation().getId());
+            }
         }
     }
 
@@ -642,7 +637,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         ChooseSourceTranslationDialog dialog = new ChooseSourceTranslationDialog();
         Bundle args = new Bundle();
-        args.putString(ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+        args.putString(
+            ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID,
+            viewModel.getTargetTranslation().getId()
+        );
         dialog.setOnClickListener(this);
         dialog.setArguments(args);
         dialog.show(ft, "tabsDialog");
@@ -655,53 +653,46 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public void onConfirmTabsDialog(String targetTranslationId, List<String> sourceTranslationIds) {
-        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        if (targetTranslation == null) {
-            return;
-        }
-
-        String[] oldSourceTranslationIds = mTranslator.getOpenSourceTranslations(targetTranslationId);
+        String[] oldSourceTranslationIds = viewModel.getOpenSourceTranslations();
         for (String id : oldSourceTranslationIds) {
-            mTranslator.removeOpenSourceTranslation(targetTranslationId, id);
+            viewModel.removeOpenSourceTranslation(id);
         }
 
-        if (sourceTranslationIds.size() > 0) {
-            setSelectedSources(sourceTranslationIds, targetTranslation);
-            String selectedSourceId = mTranslator.getSelectedSourceTranslationId(targetTranslationId);
+        if (!sourceTranslationIds.isEmpty()) {
+            setSelectedSources(sourceTranslationIds);
+            String selectedSourceId = viewModel.getSelectedSourceTranslationId();
             openResourceContainer(selectedSourceId);
         } else {
             if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
         }
     }
 
-    private void setSelectedSources(List<String> sourceSlugs, TargetTranslation targetTranslation) {
+    private void setSelectedSources(List<String> sourceSlugs) {
         List<SourceTranslation> sources = new ArrayList<>();
         for (String slug : sourceSlugs) {
             try {
-                mTranslator.addOpenSourceTranslation(targetTranslation.getId(), slug);
+                viewModel.addOpenSourceTranslation(slug);
             } catch (Exception e) {
                 Logger.e(
                         this.getClass().getName(),
-                        "Error while adding source " + slug + " for " + targetTranslation.getId()
+                        "Error while adding source " + slug + " for " + viewModel.getTargetTranslation().getId()
                 );
                 e.printStackTrace();
             }
 
-            Translation translation = mLibrary.index.getTranslation(slug);
-            int modifiedAt = mLibrary.getResourceContainerLastModified(
-                    translation.language.slug,
-                    translation.project.slug,
-                    translation.resource.slug
-            );
-            sources.add(new SourceTranslation(translation, modifiedAt));
+            Translation translation = viewModel.getTranslation(slug);
+            if (translation != null) {
+                int modifiedAt = viewModel.getResourceContainerLastModified(translation);
+                sources.add(new SourceTranslation(translation, modifiedAt));
+            }
         }
 
         try {
-            targetTranslation.setSourceTranslations(sources);
+            viewModel.getTargetTranslation().setSourceTranslations(sources);
         } catch (JSONException e) {
             Logger.e(
                     this.getClass().getName(),
-                    "Failed to set source translations for the target translation " + targetTranslation.getId(), e
+                    "Failed to set source translations for the target translation " + viewModel.getTargetTranslation().getId(), e
             );
         }
     }
@@ -713,10 +704,16 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             int lastItemPosition = getCurrentPosition();
             String chapterId = mAdapter.getFocusedChapterSlug(lastItemPosition);
             String frameId = mAdapter.getFocusedChunkSlug(lastItemPosition);
-            mTranslator.setLastFocus(mTargetTranslation.getId(), chapterId, frameId);
+            viewModel.setLastFocus(chapterId, frameId);
         }
         if(mAdapter != null) mAdapter.setOnClickListener(null);
         super.onDestroy();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     /**
@@ -785,18 +782,17 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         TaskManager.clearTask(task);
         if(task.getTaskId().equals(TASK_ID_OPEN_SELECTED_SOURCE)) {
             Handler hand  = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(mSourceContainer == null) {
-                        if(mListener != null) mListener.onNoSourceTranslations(mTargetTranslation.getId());
-                    } else if(mAdapter != null) {
-                        mAdapter.setSourceContainer(mSourceContainer);
-                        doScrollToPosition(mAdapter.getListStartPosition(), 0);
-                        onSourceContainerLoaded(mSourceContainer);
+            hand.post(() -> {
+                if(viewModel.getResourceContainer() == null) {
+                    if(mListener != null) {
+                        mListener.onNoSourceTranslations(viewModel.getTargetTranslation().getId());
                     }
-                    stopProgressDialog();
+                } else if(mAdapter != null) {
+                    mAdapter.setSourceContainer(viewModel.getResourceContainer());
+                    doScrollToPosition(mAdapter.getListStartPosition(), 0);
+                    onSourceContainerLoaded(viewModel.getResourceContainer());
                 }
+                stopProgressDialog();
             });
         } else if(task.getTaskId().equals(TASK_ID_OPEN_SOURCE)) {
             Handler hand  = new Handler(Looper.getMainLooper());
@@ -806,15 +802,16 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
                     if(task.getResult() == null) {
                         // failed to load the container
                         String slug = task.getArgs().getString("slug");
-                        mTranslator.removeOpenSourceTranslation(mTargetTranslation.getId(), slug);
-                        mAdapter.triggerNotifyDataSetChanged();
-
+                        if (slug != null) {
+                            viewModel.removeOpenSourceTranslation(slug);
+                            mAdapter.triggerNotifyDataSetChanged();
+                        }
                         // TODO: 10/5/16 notify user we failed to select the source
                     } else if(mAdapter != null) {
-                        mSourceContainer = (ResourceContainer) task.getResult();
-                        mAdapter.setSourceContainer(mSourceContainer);
+                        viewModel.setResourceContainer((ResourceContainer) task.getResult());
+                        mAdapter.setSourceContainer(viewModel.getResourceContainer());
                         doScrollToPosition(mSavedPosition, 0);
-                        onSourceContainerLoaded(mSourceContainer);
+                        onSourceContainerLoaded(viewModel.getResourceContainer());
                     }
                     stopProgressDialog();
                 }
