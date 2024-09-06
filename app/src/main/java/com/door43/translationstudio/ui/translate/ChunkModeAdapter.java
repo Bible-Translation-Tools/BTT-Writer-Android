@@ -130,13 +130,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
             final boolean mergeConflictFound = mergeConflictsTask.hasMergeConflict();
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    OnEventListener listener = getListener();
-                    if (listener != null) {
-                        listener.onEnableMergeConflict(mergeConflictFound, false);
-                    }
+            hand.post(() -> {
+                OnEventListener listener = getListener();
+                if (listener != null) {
+                    listener.onEnableMergeConflict(mergeConflictFound, false);
                 }
             });
         }

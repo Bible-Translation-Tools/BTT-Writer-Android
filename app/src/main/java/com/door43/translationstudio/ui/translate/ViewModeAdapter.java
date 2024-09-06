@@ -253,7 +253,9 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
                 chapters.add(chapterSlug);
                 List<String> chunkSlugs = sorter.sort(sourceContainer.chunks(chapterSlug));
                 for (String chunkSlug : chunkSlugs) {
-                    if (!foundStartPosition && chapterSlug.equals(startingChapterSlug) && (chunkSlug.equals(startingChunkSlug) || startingChunkSlug == null)) {
+                    if (!foundStartPosition &&
+                            chapterSlug.equals(startingChapterSlug) &&
+                            (chunkSlug.equals(startingChunkSlug) || startingChunkSlug == null)) {
                         setListStartPosition(items.size());
                         foundStartPosition = true;
                     }
@@ -277,7 +279,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
      */
     protected void doCheckForMergeConflictTask(List<ListItem> items, ResourceContainer sourceContainer, TargetTranslation targetTranslation) {
-        if((items != null) && (items.size() > 0) ) {  // make sure initialized
+        if((items != null) && (!items.isEmpty()) ) {  // make sure initialized
             CheckForMergeConflictsTask task = new CheckForMergeConflictsTask(items, sourceContainer, targetTranslation);
             task.addOnFinishedListener(this);
             TaskManager.addTask(task, CheckForMergeConflictsTask.TASK_ID);

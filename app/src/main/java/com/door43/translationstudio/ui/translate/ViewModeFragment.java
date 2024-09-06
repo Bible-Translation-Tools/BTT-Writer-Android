@@ -782,25 +782,22 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             });
         } else if(task.getTaskId().equals(TASK_ID_OPEN_SOURCE)) {
             Handler hand  = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(task.getResult() == null) {
-                        // failed to load the container
-                        String slug = task.getArgs().getString("slug");
-                        if (slug != null) {
-                            viewModel.removeOpenSourceTranslation(slug);
-                            mAdapter.triggerNotifyDataSetChanged();
-                        }
-                        // TODO: 10/5/16 notify user we failed to select the source
-                    } else if(mAdapter != null) {
-                        viewModel.setResourceContainer((ResourceContainer) task.getResult());
-                        mAdapter.setSourceContainer(viewModel.getResourceContainer());
-                        doScrollToPosition(mSavedPosition, 0);
-                        onSourceContainerLoaded(viewModel.getResourceContainer());
+            hand.post(() -> {
+                if(task.getResult() == null) {
+                    // failed to load the container
+                    String slug = task.getArgs().getString("slug");
+                    if (slug != null) {
+                        viewModel.removeOpenSourceTranslation(slug);
+                        mAdapter.triggerNotifyDataSetChanged();
                     }
-                    stopProgressDialog();
+                    // TODO: 10/5/16 notify user we failed to select the source
+                } else if(mAdapter != null) {
+                    viewModel.setResourceContainer((ResourceContainer) task.getResult());
+                    mAdapter.setSourceContainer(viewModel.getResourceContainer());
+                    doScrollToPosition(mSavedPosition, 0);
+                    onSourceContainerLoaded(viewModel.getResourceContainer());
                 }
+                stopProgressDialog();
             });
         }
     }

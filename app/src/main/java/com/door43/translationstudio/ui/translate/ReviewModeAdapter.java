@@ -568,12 +568,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             TaskManager.clearTask(task);
 
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    holder.displayMergeConflictsOnTargetCard(mSourceContainer.language, (MergeConflictsParseTask) task, item);
-                }
-            });
+            hand.post(() -> holder.displayMergeConflictsOnTargetCard(mSourceContainer.language, (MergeConflictsParseTask) task, item));
         });
         TaskManager.addTask(parseTask);
 
@@ -841,6 +836,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private @NonNull ManagedTask getManagedTask(int position, ReviewListItem item, ReviewHolder holder) {
         ManagedTask task = new ManagedTask() {
             @Override
@@ -866,42 +862,38 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             if(!task1.isCanceled() && data != null && item == holder.currentItem) {
 
                 Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(new Runnable() {
-                    @SuppressLint("ClickableViewAccessibility")
-                    @Override
-                    public void run() {
+                hand.post(() -> {
 //                                Log.i(TAG, "renderTargetCard(): Position " + position + ": Render finished ID: " + item.currentTargetTaskId);
-                        if (!task1.isCanceled() && data != null && item == holder.currentItem) {
-                            item.renderedTargetText = data;
+                    if (!task1.isCanceled() && data != null && item == holder.currentItem) {
+                        item.renderedTargetText = data;
 
-                            int selectPosition = checkForSelectedSearchItem(item, position, true);
-                            if (item.isEditing) {
-                                // edit mode
-                                if (holder.binding.getTargetEditableBody() != null) {
-                                    holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
-                                    selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetEditableBody());
-                                    holder.binding.getTargetEditableBody().setVisibility(View.VISIBLE);
-                                    holder.binding.getTargetEditableBody().addTextChangedListener(holder.mEditableTextWatcher);
-                                }
-                            } else {
-                                // verse marker mode
-                                if (holder.binding.getTargetBody() != null) {
-                                    holder.binding.getTargetBody().setText(item.renderedTargetText);
-                                    selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetBody());
-                                    holder.binding.getTargetBody().setVisibility(View.VISIBLE);
-                                    holder.binding.getTargetBody().setOnTouchListener((v, event) -> {
-                                        v.onTouchEvent(event);
-                                        v.clearFocus();
-                                        return true;
-                                    });
-                                    setFinishedMode(item, holder);
-                                    ViewUtil.makeLinksClickable(holder.binding.getTargetBody());
-                                }
+                        int selectPosition = checkForSelectedSearchItem(item, position, true);
+                        if (item.isEditing) {
+                            // edit mode
+                            if (holder.binding.getTargetEditableBody() != null) {
+                                holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                                selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetEditableBody());
+                                holder.binding.getTargetEditableBody().setVisibility(View.VISIBLE);
+                                holder.binding.getTargetEditableBody().addTextChangedListener(holder.mEditableTextWatcher);
                             }
-                            addMissingVerses(item, holder);
                         } else {
-//                                    Log.i(TAG, "renderTargetCard(): Position " + position + ": ID: " + item.currentTargetTaskId + ": Render failed after delay: task.isCanceled()=" + task.isCanceled() + ", (data==null)=" + (data == null) + ", (item!=holder.currentItem)=" + (item != holder.currentItem));
+                            // verse marker mode
+                            if (holder.binding.getTargetBody() != null) {
+                                holder.binding.getTargetBody().setText(item.renderedTargetText);
+                                selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetBody());
+                                holder.binding.getTargetBody().setVisibility(View.VISIBLE);
+                                holder.binding.getTargetBody().setOnTouchListener((v, event) -> {
+                                    v.onTouchEvent(event);
+                                    v.clearFocus();
+                                    return true;
+                                });
+                                setFinishedMode(item, holder);
+                                ViewUtil.makeLinksClickable(holder.binding.getTargetBody());
+                            }
                         }
+                        addMissingVerses(item, holder);
+                    } else {
+//                                    Log.i(TAG, "renderTargetCard(): Position " + position + ": ID: " + item.currentTargetTaskId + ": Render failed after delay: task.isCanceled()=" + task.isCanceled() + ", (data==null)=" + (data == null) + ", (item!=holder.currentItem)=" + (item != holder.currentItem));
                     }
                 });
             }  else {
@@ -979,12 +971,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 Log.i(TAG, "set position for " + selectPosition + ", scroll to y=" + verticalOffset);
 
                 Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.i(TAG, "selectCurrentSearchItem position= " + position + ", offset=" +(-verticalOffset));
-                        onSetSelectedPosition(position, -verticalOffset);
-                    }
+                hand.post(() -> {
+                    Log.i(TAG, "selectCurrentSearchItem position= " + position + ", offset=" +(-verticalOffset));
+                    onSetSelectedPosition(position, -verticalOffset);
                 });
             } else {
                 Logger.e(TAG, "cannot get layout for position: " + position);
@@ -2322,17 +2311,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 Log.i(TAG, "filter(): Search finished: '" + matcher + "', count: " + mChunkSearchMatchesCounter);
 
                 Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSearchPosition = initialPosition;
-                        mLayoutBuildNumber++; // force redraw of displayed cards
-                        triggerNotifyDataSetChanged();
-                        boolean zeroItemsFound = ReviewModeAdapter.this.mChunkSearchMatchesCounter <= 0;
-                        onSearching(false, ReviewModeAdapter.this.mChunkSearchMatchesCounter, zeroItemsFound, zeroItemsFound);
-                        if(!zeroItemsFound) {
-                            checkIfAtSearchLimits();
-                        }
+                hand.post(() -> {
+                    mSearchPosition = initialPosition;
+                    mLayoutBuildNumber++; // force redraw of displayed cards
+                    triggerNotifyDataSetChanged();
+                    boolean zeroItemsFound = ReviewModeAdapter.this.mChunkSearchMatchesCounter <= 0;
+                    onSearching(false, ReviewModeAdapter.this.mChunkSearchMatchesCounter, zeroItemsFound, zeroItemsFound);
+                    if(!zeroItemsFound) {
+                        checkIfAtSearchLimits();
                     }
                 });
             } else {
@@ -2453,13 +2439,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 filter(mSearchText, searchSubject, mSearchPosition); // update search filter
             });
 
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    showMergeConflictIcon(mergeConflictFound, mMergeConflictFilterEnabled);
-                    if (needToUpdateFilter) {
-                        setMergeConflictFilter(mMergeConflictFilterEnabled, false);
-                    }
+            hand.post(() -> {
+                showMergeConflictIcon(mergeConflictFound, mMergeConflictFilterEnabled);
+                if (needToUpdateFilter) {
+                    setMergeConflictFilter(mMergeConflictFilterEnabled, false);
                 }
             });
         } else if(task instanceof RenderHelpsTask) {

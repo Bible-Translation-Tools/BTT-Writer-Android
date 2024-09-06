@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui
 
-import android.app.ProgressDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -12,6 +11,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.databinding.ActivityLoginDoor43Binding
 import com.door43.translationstudio.tasks.LoginDoor43Task
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.taskmanager.ManagedTask
 import org.unfoldingword.tools.taskmanager.TaskManager
@@ -22,12 +22,14 @@ class LoginDoor43Activity : AppCompatActivity(), ManagedTask.OnFinishedListener 
     @Inject
     lateinit var profile: Profile
     private lateinit var binding: ActivityLoginDoor43Binding
-    private var progressDialog: ProgressDialog? = null
+    private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginDoor43Binding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        progressDialog = ProgressHelper.newInstance(this, R.string.logging_in, false)
 
         with(binding) {
             account.cancelButton.setOnClickListener { finish() }
@@ -83,13 +85,12 @@ class LoginDoor43Activity : AppCompatActivity(), ManagedTask.OnFinishedListener 
     }
 
     private fun showProgressDialog() {
-        if (progressDialog == null) {
-            progressDialog = ProgressDialog(this).apply {
-                setTitle(resources.getString(R.string.logging_in))
-                setMessage(resources.getString(R.string.please_wait))
-                isIndeterminate = true
-                show()
-            }
-        }
+        progressDialog?.setMessage(resources.getString(R.string.please_wait))
+        progressDialog?.show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        progressDialog = null
     }
 }

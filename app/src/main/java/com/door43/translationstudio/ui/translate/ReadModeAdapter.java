@@ -168,13 +168,10 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
             final boolean mergeConflictFound = mergeConflictsTask.hasMergeConflict();
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    OnEventListener listener = getListener();
-                    if(listener != null) {
-                        listener.onEnableMergeConflict(mergeConflictFound, false);
-                    }
+            hand.post(() -> {
+                OnEventListener listener = getListener();
+                if(listener != null) {
+                    listener.onEnableMergeConflict(mergeConflictFound, false);
                 }
             });
         }
@@ -294,25 +291,16 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             holder.binding.newTabButton.setEnabled(true);
         }
 
-        holder.binding.targetTranslationCard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openTargetTranslationCard(holder, position);
-            }
-        });
-        holder.binding.sourceTranslationCard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                closeTargetTranslationCard(holder, position);
-            }
-        });
+        holder.binding.targetTranslationCard.setOnClickListener(v ->
+                openTargetTranslationCard(holder, position)
+        );
+        holder.binding.sourceTranslationCard.setOnClickListener(v ->
+                closeTargetTranslationCard(holder, position)
+        );
 
-        holder.binding.newTabButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (getListener() != null) {
-                    getListener().onNewSourceTranslationTabClick();
-                }
+        holder.binding.newTabButton.setOnClickListener(v -> {
+            if (getListener() != null) {
+                getListener().onNewSourceTranslationTabClick();
             }
         });
 
@@ -398,7 +386,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         // display begin translation button
         if(mRenderedTargetBody[position].toString().trim().isEmpty()) {
             holder.binding.beginTranslatingButton.setVisibility(View.VISIBLE);
-            final GestureDetector detector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+            final GestureDetector detector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
                 @Override
                 public boolean onSingleTapUp(MotionEvent e) {
                     Bundle args = new Bundle();
@@ -408,12 +396,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                     return true;
                 }
             });
-            holder.binding.beginTranslatingButton.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return detector.onTouchEvent(event);
-                }
-            });
+            holder.binding.beginTranslatingButton.setOnTouchListener((v, event) -> detector.onTouchEvent(event));
         } else {
             holder.binding.beginTranslatingButton.setVisibility(View.GONE);
         }
@@ -487,12 +470,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 final String sourceTranslationId = (String) tab.getTag();
                 if (getListener() != null) {
                     Handler hand = new Handler(Looper.getMainLooper());
-                    hand.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            getListener().onSourceTranslationTabClick(sourceTranslationId);
-                        }
-                    });
+                    hand.post(() -> getListener().onSourceTranslationTabClick(sourceTranslationId));
                 }
             }
 
@@ -541,9 +519,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             closeTargetTranslationCard( holder, position, !swipeLeft);
             return;
         }
-
         openTargetTranslationCard( holder, position, !swipeLeft);
-        return;
     }
 
     /**
