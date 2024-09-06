@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
@@ -521,27 +522,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Require correct interface
-     * @param activity
+     * @param context Activity context
      */
     @Override
-    @TargetApi(23)
-    public void onAttach(Context activity) {
-        super.onAttach(activity);
-        onAttachToContext(activity);
-    }
-
-    /**
-     * Deprecated on API 23
-     * Require correct interface
-     * @param activity
-     */
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if(Build.VERSION.SDK_INT < 23) {
-            onAttachToContext(activity);
-        }
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        onAttachToContext(context);
     }
 
     /**
@@ -552,7 +538,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         try {
             this.mListener = (OnEventListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString() + " must implement ViewModeFragment.OnEventListener");
+            throw new ClassCastException(context + " must implement ViewModeFragment.OnEventListener");
         }
     }
 

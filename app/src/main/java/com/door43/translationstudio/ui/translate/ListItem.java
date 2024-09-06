@@ -1,8 +1,6 @@
 package com.door43.translationstudio.ui.translate;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.core.ChapterTranslation;
-import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.Frame;
 import com.door43.translationstudio.core.FrameTranslation;
@@ -202,7 +200,6 @@ public abstract class ListItem {
             }
         } else if (chapterSlug.equals("back")) {
             // back matter
-
         } else {
             // chapter stuff
             this.ct = targetTranslation.getChapterTranslation(chapterSlug);

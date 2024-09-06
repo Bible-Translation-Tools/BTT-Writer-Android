@@ -209,11 +209,11 @@ public class ReviewModeFragment extends ViewModeFragment {
     private void renderTranslationWordsIndex() {
         binding.scrollingResourcesDrawerContent.setVisibility(View.GONE);
         binding.resourcesDrawerContent.setVisibility(View.VISIBLE);
-//            mCloseResourcesDrawerButton.setText(getActivity().getResources().getString(R.string.translation_words_index));
-        ListView list = (ListView) getActivity().getLayoutInflater().inflate(R.layout.fragment_words_index_list, null);
+//            mCloseResourcesDrawerButton.setText(requireActivity().getResources().getString(R.string.translation_words_index));
+        ListView list = (ListView) requireActivity().getLayoutInflater().inflate(R.layout.fragment_words_index_list, null);
         binding.resourcesDrawerContent.removeAllViews();
         binding.resourcesDrawerContent.addView(list);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_clickable_text);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireActivity(), R.layout.list_clickable_text);
         final ResourceContainer rc = viewModel.getResourceContainer(mResourceContainerSlug);
         if(rc != null) {
             String[] chapters = rc.chapters();
@@ -230,12 +230,9 @@ public class ReviewModeFragment extends ViewModeFragment {
                 }
             }
             list.setAdapter(adapter);
-            list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    String slug = words.get(position);
-                    renderTranslationWord(rc.slug, slug);
-                }
+            list.setOnItemClickListener((parent, view, position, id) -> {
+                String slug = words.get(position);
+                renderTranslationWord(rc.slug, slug);
             });
         }
     }
@@ -255,7 +252,7 @@ public class ReviewModeFragment extends ViewModeFragment {
             binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
             binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
 
-            FragmentResourcesArticleBinding articleBinding = FragmentResourcesArticleBinding.inflate(getLayoutInflater());
+            FragmentResourcesArticleBinding articleBinding = FragmentResourcesArticleBinding.inflate(requireActivity().getLayoutInflater());
 //            TextView title = (TextView)view.findViewById(R.id.title);
 //            TextView descriptionView = (TextView)view.findViewById(R.id.description);
 
@@ -306,10 +303,10 @@ public class ReviewModeFragment extends ViewModeFragment {
 
 //            title.setText(article.getTitle());
 //            SourceLanguage sourceLanguage = library.getSourceLanguage(sourceTranslation.projectSlug, sourceTranslation.sourceLanguageSlug);
-//            Typography.format(getActivity(), title, sourceLanguage.getId(), sourceLanguage.getDirection());
+//            Typography.format(requireActivity(), title, sourceLanguage.getId(), sourceLanguage.getDirection());
 
 //            descriptionView.setText(renderer.render(article.getBody()));
-//            Typography.formatSub(getActivity(), descriptionView, sourceLanguage.getId(), sourceLanguage.getDirection());
+//            Typography.formatSub(requireActivity(), descriptionView, sourceLanguage.getId(), sourceLanguage.getDirection());
 //            descriptionView.setMovementMethod(LocalLinkMovementMethod.getInstance());
 
             articleBinding.getRoot().setWebViewClient(new LinkToHtmlRenderer.CustomWebViewClient() {
@@ -341,7 +338,7 @@ public class ReviewModeFragment extends ViewModeFragment {
                             .show();
                 }
             });
-            articleBinding.getRoot().loadData(Typography.getStyle(getActivity(), TranslationType.SOURCE )
+            articleBinding.getRoot().loadData(Typography.getStyle(requireActivity(), TranslationType.SOURCE )
                     + renderer.render(article.getBody()).toString(), "text/html", "utf-8");
 
             binding.scrollingResourcesDrawerContent.removeAllViews();
@@ -360,173 +357,174 @@ public class ReviewModeFragment extends ViewModeFragment {
         mResourceContainerSlug = resourceContainerSlug;
 
         final ResourceContainer rc = viewModel.getResourceContainer(resourceContainerSlug);
-        binding.resourcesDrawerContent.setVisibility(View.GONE);
-        binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
-        binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
 
-        FragmentResourcesWordBinding wordBinding = FragmentResourcesWordBinding.inflate(getLayoutInflater());
+        if (rc != null) {
+            binding.resourcesDrawerContent.setVisibility(View.GONE);
+            binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
+            binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
 
-        wordBinding.wordsIndex.setOnClickListener(v -> renderTranslationWordsIndex());
-        String word = rc.readChunk(chapterSlug, "01");
-        Pattern pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)");
-        Matcher match = pattern.matcher(word);
-        String description = "";
-        if(match.find()) {
-            wordBinding.wordTitle.setText(match.group(1));
-            description = match.group(2);
-            // TODO: 10/12/16 load the description title. This should be read from the config maybe?
-            wordBinding.descriptionTitle.setText("Description");
-        }
-        Typography.formatTitle(getActivity(), TranslationType.SOURCE, wordBinding.descriptionTitle, rc.language.slug, rc.language.direction);
-        HtmlRenderer renderer = new HtmlRenderer(span -> {
-            Boolean result = false;
+            FragmentResourcesWordBinding wordBinding = FragmentResourcesWordBinding.inflate(requireActivity().getLayoutInflater());
 
-            if(span instanceof ArticleLinkSpan) {
-                ArticleLinkSpan link = ((ArticleLinkSpan)span);
-                TranslationArticle article = getPreferredTranslationArticle(rc, link.getVolume(), link.getManual(), link.getId());
-                if(article != null) {
-                    link.setTitle(article.getTitle());
-                    result = true;
-                }
-            } else if(span instanceof PassageLinkSpan) {
-                PassageLinkSpan link = (PassageLinkSpan)span;
-                String chunk = rc.readChunk(link.getChapterId(), link.getFrameId());
-                String verseTitle = Frame.parseVerseTitle(chunk, TranslationFormat.parse(rc.contentMimeType));
-                String title = rc.readChunk("front", "title") + " " + Integer.parseInt(link.getChapterId()) + ":" + verseTitle;
-                link.setTitle(title);
-                result = !chunk.isEmpty();
-            } else if(span instanceof TranslationWordLinkSpan) {
-                ResourceContainer currentRC = getSelectedResourceContainer();
-                if (currentRC != null) {
-                    Pattern titlePattern = Pattern.compile("#(.*)");
-                    ResourceContainer rc1 = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
-
-                    if (rc1 != null) {
-                        String word1 = rc1.readChunk(span.getMachineReadable().toString(), "01");
-                        if(!word1.isEmpty()) {
-                            Matcher linkMatch = titlePattern.matcher(word1.trim());
-                            String title = span.getMachineReadable().toString();
-                            if (linkMatch.find()) {
-                                title = linkMatch.group(1);
-                            }
-                            ((TranslationWordLinkSpan) span).setTitle(title);
-                            result = true;
-                        }
-                    }
-                }
+            wordBinding.wordsIndex.setOnClickListener(v -> renderTranslationWordsIndex());
+            String word = rc.readChunk(chapterSlug, "01");
+            Pattern pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)");
+            Matcher match = pattern.matcher(word);
+            String description = "";
+            if(match.find()) {
+                wordBinding.wordTitle.setText(match.group(1));
+                description = match.group(2);
+                // TODO: 10/12/16 load the description title. This should be read from the config maybe?
+                wordBinding.descriptionTitle.setText("Description");
             }
-            return result;
-        }, new Span.OnClickListener() {
-            @Override
-            public void onClick(View view, Span span, int start, int end) {
-                String type = ((LinkSpan)span).getType();
-                if(type.equals("ta")) {
-                    String url = span.getMachineReadable().toString();
-                    ArticleLinkSpan link = ArticleLinkSpan.parse(url);
-                    if(link != null) {
-                        onTranslationArticleClick(link.getVolume(), link.getManual(), link.getId(), binding.resourcesDrawerCard.getLayoutParams().width);
+            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, wordBinding.descriptionTitle, rc.language.slug, rc.language.direction);
+            HtmlRenderer renderer = new HtmlRenderer(span -> {
+                boolean result = false;
+
+                if(span instanceof ArticleLinkSpan link) {
+                    TranslationArticle article = getPreferredTranslationArticle(rc, link.getVolume(), link.getManual(), link.getId());
+                    if(article != null) {
+                        link.setTitle(article.getTitle());
+                        result = true;
                     }
-                } else if(type.equals("p")) {
-                    String url = span.getMachineReadable().toString();
-                    PassageLinkSpan link = new PassageLinkSpan("", url);
-                    scrollToChunk(link.getChapterId(), link.getFrameId());
-                } else if(type.equals("m")) {
-                    // markdown link
-                    final String url = span.getMachineReadable().toString();
-                    new AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.view_online)
-                            .setMessage(R.string.use_internet_confirmation)
-                            .setNegativeButton(R.string.title_cancel, null)
-                            .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                                    startActivity(intent);
-                                }
-                            })
-                            .show();
-                } else if(type.equals("tw")) {
-                    // translation word
+                } else if(span instanceof PassageLinkSpan link) {
+                    String chunk = rc.readChunk(link.getChapterId(), link.getFrameId());
+                    String verseTitle = Frame.parseVerseTitle(chunk, TranslationFormat.parse(rc.contentMimeType));
+                    String title = rc.readChunk("front", "title") + " " + Integer.parseInt(link.getChapterId()) + ":" + verseTitle;
+                    link.setTitle(title);
+                    result = !chunk.isEmpty();
+                } else if(span instanceof TranslationWordLinkSpan) {
                     ResourceContainer currentRC = getSelectedResourceContainer();
                     if (currentRC != null) {
-                        ResourceContainer rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
-                        if(rc != null) {
-                            onTranslationWordClick(rc.slug, span.getMachineReadable().toString(), binding.resourcesDrawerCard.getLayoutParams().width);
+                        Pattern titlePattern = Pattern.compile("#(.*)");
+                        ResourceContainer closestRc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
+
+                        if (closestRc != null) {
+                            String closestWord = closestRc.readChunk(span.getMachineReadable().toString(), "01");
+                            if(!closestWord.isEmpty()) {
+                                Matcher linkMatch = titlePattern.matcher(closestWord.trim());
+                                String title = span.getMachineReadable().toString();
+                                if (linkMatch.find()) {
+                                    title = linkMatch.group(1);
+                                }
+                                ((TranslationWordLinkSpan) span).setTitle(title);
+                                result = true;
+                            }
                         }
                     }
                 }
-            }
-
-            @Override
-            public void onLongClick(View view, Span span, int start, int end) {
-
-            }
-        });
-        wordBinding.description.setText(renderer.render(description));
-        wordBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
-        Typography.formatSub(getActivity(), TranslationType.SOURCE, wordBinding.description, rc.language.slug, rc.language.direction);
-
-        wordBinding.seeAlso.removeAllViews();
-        wordBinding.seeAlsoTitle.setVisibility(View.GONE);
-        wordBinding.examples.removeAllViews();
-        wordBinding.examplesTitle.setVisibility(View.GONE);
-        if(rc.config != null && rc.config.containsKey(chapterSlug)) {
-            Map chapterConfig = (Map<String, List<String>> )rc.config.get(chapterSlug);
-            if(chapterConfig.containsKey("see_also")) {
-                Pattern titlePattern = Pattern.compile("#(.*)");
-                List<String> relatedSlugs = (List<String>)chapterConfig.get("see_also");
-                for(final String relatedSlug:relatedSlugs) {
-                    // TODO: 10/12/16 the words need to have their title placed into a "title" file instead of being inline in the chunk
-                    String relatedWord = rc.readChunk(relatedSlug, "01");
-                    Matcher linkMatch = titlePattern.matcher(relatedWord.trim());
-                    String relatedTitle = relatedSlug;
-                    if(linkMatch.find()) {
-                        relatedTitle = linkMatch.group(1);
-                    }
-                    Button button = new Button(new ContextThemeWrapper(getActivity(), R.style.Widget_Button_Tag), null, R.style.Widget_Button_Tag);
-                    button.setText(relatedTitle);
-                    button.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            onTranslationWordClick(rc.slug, relatedSlug, binding.resourcesDrawerCard.getLayoutParams().width);
+                return result;
+            }, new Span.OnClickListener() {
+                @Override
+                public void onClick(View view, Span span, int start, int end) {
+                    String type = ((LinkSpan)span).getType();
+                    switch (type) {
+                        case "ta" -> {
+                            String url = span.getMachineReadable().toString();
+                            ArticleLinkSpan link = ArticleLinkSpan.parse(url);
+                            if (link != null) {
+                                onTranslationArticleClick(link.getVolume(), link.getManual(), link.getId(), binding.resourcesDrawerCard.getLayoutParams().width);
+                            }
                         }
-                    });
-                    Typography.formatSub(getActivity(), TranslationType.SOURCE, button, rc.language.slug, rc.language.direction);
-                    wordBinding.seeAlso.addView(button);
-                }
-                if(!relatedSlugs.isEmpty()) wordBinding.seeAlsoTitle.setVisibility(View.VISIBLE);
-            }
-            if(chapterConfig.containsKey("examples")) {
-                List<String> exampleSlugs = (List<String>)chapterConfig.get("examples");
-                for(String exampleSlug:exampleSlugs) {
-                    final String[] slugs = exampleSlug.split("-");
-                    if(slugs.length != 2) continue;
-                    if(mSourceContainer == null) continue;
-                    String projectTitle = mSourceContainer.readChunk("front", "title");
-
-                    // get verse title
-                    String verseTitle = StringUtilities.formatNumber(slugs[1]);
-                    if(mSourceContainer.contentMimeType.equals("text/usfm")) {
-                        verseTitle = Frame.parseVerseTitle(mSourceContainer.readChunk(slugs[0], slugs[1]), TranslationFormat.parse(mSourceContainer.contentMimeType));
+                        case "p" -> {
+                            String url = span.getMachineReadable().toString();
+                            PassageLinkSpan link = new PassageLinkSpan("", url);
+                            scrollToChunk(link.getChapterId(), link.getFrameId());
+                        }
+                        case "m" -> {
+                            // markdown link
+                            final String url = span.getMachineReadable().toString();
+                            new AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                                    .setTitle(R.string.view_online)
+                                    .setMessage(R.string.use_internet_confirmation)
+                                    .setNegativeButton(R.string.title_cancel, null)
+                                    .setPositiveButton(R.string.label_continue, (dialogInterface, i) -> {
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                        startActivity(intent);
+                                    })
+                                    .show();
+                        }
+                        case "tw" -> {
+                            // translation word
+                            ResourceContainer currentRC = getSelectedResourceContainer();
+                            if (currentRC != null) {
+                                ResourceContainer rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
+                                if (rc != null) {
+                                    onTranslationWordClick(rc.slug, span.getMachineReadable().toString(), binding.resourcesDrawerCard.getLayoutParams().width);
+                                }
+                            }
+                        }
                     }
-
-                    FragmentResourcesExampleItemBinding examplesBinding = FragmentResourcesExampleItemBinding.inflate(getLayoutInflater());
-
-                    examplesBinding.reference.setText(projectTitle.trim() + " " + StringUtilities.formatNumber(slugs[0]) + ":" + verseTitle);
-                    examplesBinding.passage.setHtmlFromString(mSourceContainer.readChunk(slugs[0], slugs[1]), true);
-                    examplesBinding.getRoot().setOnClickListener(v -> scrollToChunk(slugs[0], slugs[1]));
-                    Typography.formatSub(getActivity(), TranslationType.SOURCE, examplesBinding.reference, rc.language.slug, rc.language.direction);
-                    Typography.formatSub(getActivity(), TranslationType.SOURCE, examplesBinding.passage, rc.language.slug, rc.language.direction);
-                    wordBinding.examples.addView(examplesBinding.getRoot());
                 }
-                if(!exampleSlugs.isEmpty()) wordBinding.examplesTitle.setVisibility(View.VISIBLE);
+
+                @Override
+                public void onLongClick(View view, Span span, int start, int end) {
+
+                }
+            });
+            wordBinding.description.setText(renderer.render(description));
+            wordBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
+            Typography.formatSub(requireActivity(), TranslationType.SOURCE, wordBinding.description, rc.language.slug, rc.language.direction);
+
+            wordBinding.seeAlso.removeAllViews();
+            wordBinding.seeAlsoTitle.setVisibility(View.GONE);
+            wordBinding.examples.removeAllViews();
+            wordBinding.examplesTitle.setVisibility(View.GONE);
+
+            if(rc.config != null && rc.config.containsKey(chapterSlug)) {
+                Map chapterConfig = (Map<String, List<String>> )rc.config.get(chapterSlug);
+                if(chapterConfig.containsKey("see_also")) {
+                    Pattern titlePattern = Pattern.compile("#(.*)");
+                    List<String> relatedSlugs = (List<String>)chapterConfig.get("see_also");
+                    for(final String relatedSlug:relatedSlugs) {
+                        // TODO: 10/12/16 the words need to have their title placed into a "title" file instead of being inline in the chunk
+                        String relatedWord = rc.readChunk(relatedSlug, "01");
+                        Matcher linkMatch = titlePattern.matcher(relatedWord.trim());
+                        String relatedTitle = relatedSlug;
+                        if(linkMatch.find()) {
+                            relatedTitle = linkMatch.group(1);
+                        }
+                        Button button = new Button(new ContextThemeWrapper(requireActivity(), R.style.Widget_Button_Tag), null, R.style.Widget_Button_Tag);
+                        button.setText(relatedTitle);
+                        button.setOnClickListener(v ->
+                                onTranslationWordClick(rc.slug, relatedSlug, binding.resourcesDrawerCard.getLayoutParams().width)
+                        );
+                        Typography.formatSub(requireActivity(), TranslationType.SOURCE, button, rc.language.slug, rc.language.direction);
+                        wordBinding.seeAlso.addView(button);
+                    }
+                    if(!relatedSlugs.isEmpty()) wordBinding.seeAlsoTitle.setVisibility(View.VISIBLE);
+                }
+                if(chapterConfig.containsKey("examples")) {
+                    List<String> exampleSlugs = (List<String>)chapterConfig.get("examples");
+                    for(String exampleSlug:exampleSlugs) {
+                        final String[] slugs = exampleSlug.split("-");
+                        if(slugs.length != 2) continue;
+                        if(mSourceContainer == null) continue;
+                        String projectTitle = mSourceContainer.readChunk("front", "title");
+
+                        // get verse title
+                        String verseTitle = StringUtilities.formatNumber(slugs[1]);
+                        if(mSourceContainer.contentMimeType.equals("text/usfm")) {
+                            verseTitle = Frame.parseVerseTitle(mSourceContainer.readChunk(slugs[0], slugs[1]), TranslationFormat.parse(mSourceContainer.contentMimeType));
+                        }
+
+                        FragmentResourcesExampleItemBinding examplesBinding = FragmentResourcesExampleItemBinding.inflate(requireActivity().getLayoutInflater());
+
+                        examplesBinding.reference.setText(projectTitle.trim() + " " + StringUtilities.formatNumber(slugs[0]) + ":" + verseTitle);
+                        examplesBinding.passage.setHtmlFromString(mSourceContainer.readChunk(slugs[0], slugs[1]), true);
+                        examplesBinding.getRoot().setOnClickListener(v -> scrollToChunk(slugs[0], slugs[1]));
+                        Typography.formatSub(requireActivity(), TranslationType.SOURCE, examplesBinding.reference, rc.language.slug, rc.language.direction);
+                        Typography.formatSub(requireActivity(), TranslationType.SOURCE, examplesBinding.passage, rc.language.slug, rc.language.direction);
+                        wordBinding.examples.addView(examplesBinding.getRoot());
+                    }
+                    if(!exampleSlugs.isEmpty()) wordBinding.examplesTitle.setVisibility(View.VISIBLE);
+                }
             }
+            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, wordBinding.seeAlsoTitle, rc.language.slug, rc.language.direction);
+            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, wordBinding.examplesTitle, rc.language.slug, rc.language.direction);
+
+            binding.scrollingResourcesDrawerContent.removeAllViews();
+            binding.scrollingResourcesDrawerContent.addView(wordBinding.getRoot());
         }
-        Typography.formatTitle(getActivity(), TranslationType.SOURCE, wordBinding.seeAlsoTitle, rc.language.slug, rc.language.direction);
-        Typography.formatTitle(getActivity(), TranslationType.SOURCE, wordBinding.examplesTitle, rc.language.slug, rc.language.direction);
-
-        binding.scrollingResourcesDrawerContent.removeAllViews();
-        binding.scrollingResourcesDrawerContent.addView(wordBinding.getRoot());
     }
 
     /**
@@ -543,7 +541,7 @@ public class ReviewModeFragment extends ViewModeFragment {
         binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
         binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
 
-        FragmentResourcesNoteBinding noteBinding = FragmentResourcesNoteBinding.inflate(getLayoutInflater());
+        FragmentResourcesNoteBinding noteBinding = FragmentResourcesNoteBinding.inflate(requireActivity().getLayoutInflater());
 //            mCloseResourcesDrawerButton.setText(note.getTitle());
 
         HtmlRenderer renderer = new HtmlRenderer(span -> {
@@ -598,44 +596,50 @@ public class ReviewModeFragment extends ViewModeFragment {
             @Override
             public void onClick(View view, Span span, int start, int end) {
                 String type = ((LinkSpan)span).getType();
-                if(type.equals("ta")) {
-                    String url = span.getMachineReadable().toString();
-                    ArticleLinkSpan link = ArticleLinkSpan.parse(url);
-                    if(link != null) {
-                        onTranslationArticleClick(link.getVolume(), link.getManual(), link.getId(), binding.resourcesDrawerCard.getLayoutParams().width);
-                    }
-                } else if(type.equals("p")) {
-                    String url = span.getMachineReadable().toString();
-                    PassageLinkSpan link = new PassageLinkSpan("", url);
-                    scrollToChunk(link.getChapterId(), link.getFrameId());
-                } else if(type.equals("m")) {
-                    // markdown link
-                    final String url = span.getMachineReadable().toString();
-                    new AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.view_online)
-                            .setMessage(R.string.use_internet_confirmation)
-                            .setNegativeButton(R.string.title_cancel, null)
-                            .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                                    startActivity(intent);
-                                }
-                            })
-                            .show();
-                } else if(type.equals("tw")) {
-                    // translation word
-                    ResourceContainer currentRC = getSelectedResourceContainer();
-                    if (currentRC != null) {
-                        ResourceContainer rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
-                        if(rc != null) {
-                            onTranslationWordClick(rc.slug, span.getMachineReadable().toString(), binding.resourcesDrawerCard.getLayoutParams().width);
+                switch (type) {
+                    case "ta" -> {
+                        String url = span.getMachineReadable().toString();
+                        ArticleLinkSpan link = ArticleLinkSpan.parse(url);
+                        if (link != null) {
+                            onTranslationArticleClick(link.getVolume(), link.getManual(), link.getId(), binding.resourcesDrawerCard.getLayoutParams().width);
                         }
                     }
-                } else if(type.equals("sr")) {
-                    // reference
-                    ShortReferenceSpan link = new ShortReferenceSpan(span.getMachineReadable().toString());
-                    scrollToVerse(link.getChapter(), link.getVerse());
+                    case "p" -> {
+                        String url = span.getMachineReadable().toString();
+                        PassageLinkSpan link = new PassageLinkSpan("", url);
+                        scrollToChunk(link.getChapterId(), link.getFrameId());
+                    }
+                    case "m" -> {
+                        // markdown link
+                        final String url = span.getMachineReadable().toString();
+                        new AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                                .setTitle(R.string.view_online)
+                                .setMessage(R.string.use_internet_confirmation)
+                                .setNegativeButton(R.string.title_cancel, null)
+                                .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                        startActivity(intent);
+                                    }
+                                })
+                                .show();
+                    }
+                    case "tw" -> {
+                        // translation word
+                        ResourceContainer currentRC = getSelectedResourceContainer();
+                        if (currentRC != null) {
+                            ResourceContainer rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
+                            if (rc != null) {
+                                onTranslationWordClick(rc.slug, span.getMachineReadable().toString(), binding.resourcesDrawerCard.getLayoutParams().width);
+                            }
+                        }
+                    }
+                    case "sr" -> {
+                        // reference
+                        ShortReferenceSpan link = new ShortReferenceSpan(span.getMachineReadable().toString());
+                        scrollToVerse(link.getChapter(), link.getVerse());
+                    }
                 }
             }
 
@@ -648,9 +652,9 @@ public class ReviewModeFragment extends ViewModeFragment {
         noteBinding.title.setText(note.title);
         SourceLanguage sourceLanguage = viewModel.getSourceLanguage();
         if (sourceLanguage != null) {
-            Typography.format(getActivity(), TranslationType.SOURCE, noteBinding.title, sourceLanguage.slug, sourceLanguage.direction);
+            Typography.format(requireActivity(), TranslationType.SOURCE, noteBinding.title, sourceLanguage.slug, sourceLanguage.direction);
             noteBinding.description.setText(renderer.render(note.body));
-            Typography.formatSub(getActivity(), TranslationType.SOURCE, noteBinding.description, sourceLanguage.slug, sourceLanguage.direction);
+            Typography.formatSub(requireActivity(), TranslationType.SOURCE, noteBinding.description, sourceLanguage.slug, sourceLanguage.direction);
             noteBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
         }
 
@@ -671,16 +675,16 @@ public class ReviewModeFragment extends ViewModeFragment {
         binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
         binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
 
-        FragmentResourcesQuestionBinding questionBinding = FragmentResourcesQuestionBinding.inflate(getLayoutInflater());
+        FragmentResourcesQuestionBinding questionBinding = FragmentResourcesQuestionBinding.inflate(requireActivity().getLayoutInflater());
 //            mCloseResourcesDrawerButton.setText(question.getQuestion());
 
-        Typography.formatTitle(getActivity(), TranslationType.SOURCE, questionBinding.questionTitle, sourceLanguage.slug, sourceLanguage.direction);
-        Typography.formatTitle(getActivity(), TranslationType.SOURCE, questionBinding.answerTitle, sourceLanguage.slug, sourceLanguage.direction);
+        Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.questionTitle, sourceLanguage.slug, sourceLanguage.direction);
+        Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.answerTitle, sourceLanguage.slug, sourceLanguage.direction);
 
         questionBinding.question.setText(question.title);
-        Typography.formatSub(getActivity(), TranslationType.SOURCE, questionBinding.question, sourceLanguage.slug, sourceLanguage.direction);
+        Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.question, sourceLanguage.slug, sourceLanguage.direction);
         questionBinding.answer.setText(question.body);
-        Typography.formatSub(getActivity(), TranslationType.SOURCE, questionBinding.answer, sourceLanguage.slug, sourceLanguage.direction);
+        Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.answer, sourceLanguage.slug, sourceLanguage.direction);
 
         binding.scrollingResourcesDrawerContent.removeAllViews();
         binding.scrollingResourcesDrawerContent.addView(questionBinding.getRoot());

@@ -1,13 +1,16 @@
 package com.door43.translationstudio.ui.translate.review;
 
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 
+import com.door43.translationstudio.databinding.FragmentMergeCardBinding;
+import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding;
+import com.door43.translationstudio.ui.translate.IReviewListItemBinding;
 import com.google.android.material.tabs.TabLayout;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
@@ -19,13 +22,9 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import com.door43.translationstudio.App;
@@ -38,7 +37,6 @@ import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.tasks.MergeConflictsParseTask;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
 import com.door43.translationstudio.ui.translate.ViewModeAdapter;
-import com.door43.widget.LinedEditText;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.unfoldingword.resourcecontainer.Language;
@@ -61,35 +59,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     private final Context mContext;
     private final LayoutInflater mInflater;
     private final TabLayout.OnTabSelectedListener mResourceTabClickListener;
-    private final LinearLayout mSourceLoader;
     public ReviewListItem currentItem = null;
-    public final ImageButton mAddNoteButton;
-    public final ImageButton mUndoButton;
-    public final ImageButton mRedoButton;
-    public final ImageButton mEditButton;
-    private final CardView mResourceCard;
-    private final LinearLayout mMainContent;
-    private final LinearLayout mResourceLayout;
-    public final Switch mDoneSwitch;
-    public final LinearLayout mTargetInnerCard;
-    private final TabLayout mResourceTabs;
-    private final LinearLayout mResourceList;
-    public final LinedEditText mTargetEditableBody;
     public int mLayoutBuildNumber = -1;
     public TextWatcher mEditableTextWatcher;
-    public final TextView mTargetTitle;
-    public final EditText mTargetBody;
-    private final CardView mTargetCard;
-    private final CardView mSourceCard;
-    private final TabLayout mTranslationTabs;
-    public final ImageButton mNewTabButton;
-    public TextView mSourceBody;
     private List<TextView> mMergeText;
-    public final LinearLayout mMergeConflictLayout;
-    public final TextView mConflictText;
-    public final LinearLayout mButtonBar;
-    public final Button mCancelButton;
-    public final Button mConfirmButton;
     private OnResourceClickListener mListener;
     private List<TranslationHelp> mNotes = new ArrayList<>();
     private List<TranslationHelp> mQuestions = new ArrayList<>();
@@ -97,43 +70,23 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     private float mInitialTextSize = 0;
     private int mMarginInitialLeft = 0;
 
+    public IReviewListItemBinding binding;
+
     private enum MergeConflictDisplayState {
         NORMAL,
         SELECTED,
         DESELECTED
     }
 
-    public ReviewHolder(Context context, View v) {
-        super(v);
-        mContext = context;
-        mInflater = LayoutInflater.from(context);
-        mMainContent = (LinearLayout)v.findViewById(R.id.main_content);
-        mSourceLoader = (LinearLayout)v.findViewById(R.id.source_loader);
-        mSourceCard = (CardView)v.findViewById(R.id.source_translation_card);
-        mSourceBody = (TextView)v.findViewById(R.id.source_translation_body);
-        mResourceCard = (CardView)v.findViewById(R.id.resources_card);
-        mResourceLayout = (LinearLayout)v.findViewById(R.id.resources_layout);
-        mResourceTabs = (TabLayout)v.findViewById(R.id.resource_tabs);
-        mResourceList = (LinearLayout)v.findViewById(R.id.resources_list);
-        mTargetCard = (CardView)v.findViewById(R.id.target_translation_card);
-        mTargetInnerCard = (LinearLayout)v.findViewById(R.id.target_translation_inner_card);
-        mTargetTitle = (TextView)v.findViewById(R.id.target_translation_title);
-        mTargetBody = (EditText)v.findViewById(R.id.target_translation_body);
-        mTargetEditableBody = (LinedEditText)v.findViewById(R.id.target_translation_editable_body);
-        mTranslationTabs = (TabLayout)v.findViewById(R.id.source_translation_tabs);
-        mEditButton = (ImageButton)v.findViewById(R.id.edit_translation_button);
-        mAddNoteButton = (ImageButton)v.findViewById(R.id.add_note_button);
-        mUndoButton = (ImageButton)v.findViewById(R.id.undo_button);
-        mRedoButton = (ImageButton)v.findViewById(R.id.redo_button);
-        mDoneSwitch = (Switch)v.findViewById(R.id.done_button);
-        mNewTabButton = (ImageButton) v.findViewById(R.id.new_tab_button);
-        mMergeConflictLayout = (LinearLayout)v.findViewById(R.id.merge_cards);
-        mConflictText = (TextView)v.findViewById(R.id.conflict_label);
-        mButtonBar = (LinearLayout)v.findViewById(R.id.button_bar);
-        mCancelButton = (Button) v.findViewById(R.id.cancel_button);
-        mConfirmButton = (Button)v.findViewById(R.id.confirm_button);
-        mResourceTabClickListener = new TabLayout.OnTabSelectedListener() {
+    @SuppressLint("ClickableViewAccessibility")
+    public ReviewHolder(IReviewListItemBinding binding) {
+        super(binding.getRoot());
+        this.binding = binding;
 
+        mContext = binding.getRoot().getContext();
+        mInflater = LayoutInflater.from(mContext);
+        
+        mResourceTabClickListener = new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int tag = (int) tab.getTag();
@@ -165,12 +118,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 return true;
             }
         });
-        mResourceCard.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return resourceCardDetector.onTouchEvent(event);
-            }
-        });
+        binding.getResourceCard().setOnTouchListener((v, event) -> resourceCardDetector.onTouchEvent(event));
     }
 
     /**
@@ -178,17 +126,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
      * @return
      */
     public int getResourceCardWidth() {
-        if(mResourceCard != null) {
-            int rightMargin = ((ViewGroup.MarginLayoutParams)mResourceCard.getLayoutParams()).rightMargin;
-            return mResourceCard.getWidth() + rightMargin;
-        } else {
-            return 0;
-        }
+        int rightMargin = ((ViewGroup.MarginLayoutParams)binding.getResourceCard().getLayoutParams()).rightMargin;
+        return binding.getResourceCard().getWidth() + rightMargin;
     }
 
     public void showLoadingResources() {
         clearHelps();
-        mResourceTabs.removeAllTabs();
+        binding.getResourceTabs().removeAllTabs();
 
         RelativeLayout layout = new RelativeLayout(mContext);
         ProgressBar progressBar = new ProgressBar(mContext ,null,android.R.attr.progressBarStyleLarge);
@@ -197,19 +141,19 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100,100);
         params.addRule(RelativeLayout.CENTER_IN_PARENT);
         layout.addView(progressBar, params);
-        mResourceList.addView(layout);
+        binding.getResourceList().addView(layout);
     }
 
     public void showLoadingSource() {
-        mSourceBody.setText("");
-        mSourceBody.setVisibility(View.GONE);
-        mSourceLoader.setVisibility(View.VISIBLE);
+        binding.getSourceBody().setText("");
+        binding.getSourceBody().setVisibility(View.GONE);
+        binding.getSourceLoader().setVisibility(View.VISIBLE);
     }
 
     public void setSource(CharSequence sourceText) {
-        mSourceBody.setText(sourceText);
-        mSourceBody.setVisibility(View.VISIBLE);
-        mSourceLoader.setVisibility(View.GONE);
+        binding.getSourceBody().setText(sourceText);
+        binding.getSourceBody().setVisibility(View.VISIBLE);
+        binding.getSourceLoader().setVisibility(View.GONE);
     }
 
     public void setResources(Language language, List<TranslationHelp> notes, List<TranslationHelp> questions, List<Link> words) {
@@ -217,32 +161,32 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         mQuestions = questions;
         mWords = words;
         clearHelps();
-        mResourceTabs.removeOnTabSelectedListener(mResourceTabClickListener);
+        binding.getResourceTabs().removeOnTabSelectedListener(mResourceTabClickListener);
 
         // rebuild tabs
-        mResourceTabs.removeAllTabs();
-        if(notes.size() > 0) {
-            TabLayout.Tab tab = mResourceTabs.newTab();
+        binding.getResourceTabs().removeAllTabs();
+        if(!notes.isEmpty()) {
+            TabLayout.Tab tab = binding.getResourceTabs().newTab();
             tab.setText(R.string.label_translation_notes);
             tab.setTag(TAB_NOTES);
-            mResourceTabs.addTab(tab);
+            binding.getResourceTabs().addTab(tab);
         }
-        if(words.size() > 0) {
-            TabLayout.Tab tab = mResourceTabs.newTab();
+        if(!words.isEmpty()) {
+            TabLayout.Tab tab = binding.getResourceTabs().newTab();
             tab.setText(R.string.translation_words);
             tab.setTag(TAB_WORDS);
-            mResourceTabs.addTab(tab);
+            binding.getResourceTabs().addTab(tab);
         }
-        if(questions.size()> 0) {
-            TabLayout.Tab tab = mResourceTabs.newTab();
+        if(!questions.isEmpty()) {
+            TabLayout.Tab tab = binding.getResourceTabs().newTab();
             tab.setText(R.string.questions);
             tab.setTag(TAB_QUESTIONS);
-            mResourceTabs.addTab(tab);
+            binding.getResourceTabs().addTab(tab);
         }
 
         // select default tab
-        if(mResourceTabs.getTabCount() > 0 ) {
-            TabLayout.Tab tab = mResourceTabs.getTabAt(0);
+        if(binding.getResourceTabs().getTabCount() > 0 ) {
+            TabLayout.Tab tab = binding.getResourceTabs().getTabAt(0);
             if(tab != null) {
                 tab.select();
                 // show the contents
@@ -259,7 +203,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 }
             }
         }
-        mResourceTabs.addOnTabSelectedListener(mResourceTabClickListener);
+        binding.getResourceTabs().addOnTabSelectedListener(mResourceTabClickListener);
     }
 
     /**
@@ -267,15 +211,15 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
      */
     public void clearResourceCard() {
         clearHelps();
-        mResourceTabs.removeOnTabSelectedListener(mResourceTabClickListener);
-        mResourceTabs.removeAllTabs();
+        binding.getResourceTabs().removeOnTabSelectedListener(mResourceTabClickListener);
+        binding.getResourceTabs().removeAllTabs();
         mNotes = new ArrayList<>();
         mQuestions = new ArrayList<>();
         mWords = new ArrayList<>();
     }
 
     private void clearHelps() {
-        if(mResourceList.getChildCount() > 0) mResourceList.removeAllViews();
+        if(binding.getResourceList().getChildCount() > 0) binding.getResourceList().removeAllViews();
     }
 
     /**
@@ -286,18 +230,21 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         clearHelps();
         for(final TranslationHelp note:mNotes) {
             // TODO: 2/28/17 it would be better if we could build this in code
-            TextView v = (TextView) mInflater.inflate(R.layout.fragment_resources_list_item, null);
-            v.setText(note.title);
-            v.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mListener!= null) {
-                        mListener.onNoteClick(note, getResourceCardWidth());
-                    }
+            FragmentResourcesListItemBinding notesBinding = FragmentResourcesListItemBinding.inflate(mInflater);
+            notesBinding.getRoot().setText(note.title);
+            notesBinding.getRoot().setOnClickListener(v -> {
+                if (mListener!= null) {
+                    mListener.onNoteClick(note, getResourceCardWidth());
                 }
             });
-            Typography.formatSub(mContext, TranslationType.SOURCE, v, language.slug, language.direction);
-            mResourceList.addView(v);
+            Typography.formatSub(
+                    mContext,
+                    TranslationType.SOURCE,
+                    notesBinding.getRoot(),
+                    language.slug,
+                    language.direction
+            );
+            binding.getResourceList().addView(notesBinding.getRoot());
         }
     }
 
@@ -308,19 +255,16 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public void showWords(final Language language) {
         clearHelps();
         for(final Link word:mWords) {
-            TextView wordView = (TextView) mInflater.inflate(R.layout.fragment_resources_list_item, null);
-            wordView.setText(word.title);
-            wordView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mListener != null) {
-                        ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), language.slug, word.project, word.resource);
-                        mListener.onWordClick(rc.slug, word, getResourceCardWidth());
-                    }
+            ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), language.slug, word.project, word.resource);
+            FragmentResourcesListItemBinding wordsBinding = FragmentResourcesListItemBinding.inflate(mInflater);
+            wordsBinding.getRoot().setText(word.title);
+            wordsBinding.getRoot().setOnClickListener(v -> {
+                if (mListener != null && rc != null) {
+                    mListener.onWordClick(rc.slug, word, getResourceCardWidth());
                 }
             });
-            Typography.formatSub(mContext, TranslationType.SOURCE, wordView, language.slug, language.direction);
-            mResourceList.addView(wordView);
+            Typography.formatSub(mContext, TranslationType.SOURCE, wordsBinding.getRoot(), language.slug, language.direction);
+            binding.getResourceList().addView(wordsBinding.getRoot());
         }
     }
 
@@ -331,18 +275,15 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public void showQuestions(Language language) {
         clearHelps();
         for(final TranslationHelp question:mQuestions) {
-            TextView questionView = (TextView) mInflater.inflate(R.layout.fragment_resources_list_item, null);
-            questionView.setText(question.title);
-            questionView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mListener != null) {
-                        mListener.onQuestionClick(question, getResourceCardWidth());
-                    }
+            FragmentResourcesListItemBinding questionsBinding = FragmentResourcesListItemBinding.inflate(mInflater);
+            questionsBinding.getRoot().setText(question.title);
+            questionsBinding.getRoot().setOnClickListener(v -> {
+                if (mListener != null) {
+                    mListener.onQuestionClick(question, getResourceCardWidth());
                 }
             });
-            Typography.formatSub(mContext, TranslationType.SOURCE, questionView, language.slug, language.direction);
-            mResourceList.addView(questionView);
+            Typography.formatSub(mContext, TranslationType.SOURCE, questionsBinding.getRoot(), language.slug, language.direction);
+            binding.getResourceList().addView(questionsBinding.getRoot());
         }
     }
 
@@ -358,7 +299,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             while (mMergeText.size() > item.mergeItems.size()) { // if too many items, remove extras
                 int lastPosition = mMergeText.size() - 1;
                 TextView v = mMergeText.get(lastPosition);
-                mMergeConflictLayout.removeView(v);
+                binding.getMergeConflictLayout().removeView(v);
                 mMergeText.remove(lastPosition);
             }
         } else {
@@ -368,25 +309,27 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         int tailColor = mContext.getResources().getColor(R.color.accent_light);
 
         for(int i = 0; i < item.mergeItems.size(); i++) {
-            CharSequence mergeConflictCard = item.mergeItems.get(i);
-
             boolean createNewCard = (i >= mMergeText.size());
-
             TextView textView = null;
+
             if(createNewCard) {
                 // create new card
-                textView = (TextView) LayoutInflater.from(mContext).inflate(R.layout.fragment_merge_card, mMergeConflictLayout, false);
-                mMergeConflictLayout.addView(textView);
-                mMergeText.add(textView);
+                if (binding.getMergeConflictLayout() != null) {
+                    FragmentMergeCardBinding mergeBinding = FragmentMergeCardBinding.inflate(mInflater);
+                    textView = mergeBinding.getRoot();
 
-                if (i % 2 == 1) { //every other card is different color
-                    textView.setBackgroundColor(tailColor);
+                    binding.getMergeConflictLayout().addView(textView);
+                    mMergeText.add(textView);
+
+                    if (i % 2 == 1) { //every other card is different color
+                        textView.setBackgroundColor(tailColor);
+                    }
                 }
             } else {
                 textView = mMergeText.get(i); // get previously created card
             }
 
-            if(mInitialTextSize == 0) { // see if we need to initialize values
+            if(mInitialTextSize == 0 && textView != null) { // see if we need to initialize values
                 mInitialTextSize = Typography.getFontSize(mContext, TranslationType.SOURCE);
                 mMarginInitialLeft = getLeftMargin(textView);
             }
@@ -394,14 +337,12 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             Typography.format(mContext, TranslationType.SOURCE, textView, language.slug, language.direction);
 
             final int pos = i;
-
-            textView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+            if (textView != null) {
+                textView.setOnClickListener(v -> {
                     item.mergeItemSelected = pos;
                     displayMergeConflictSelectionState(item);
-                }
-            });
+                });
+            }
         }
 
         displayMergeConflictSelectionState(item);
@@ -419,18 +360,18 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             if (item.mergeItemSelected >= 0) {
                 if (item.mergeItemSelected == i) {
                     displayMergeSelectionState(MergeConflictDisplayState.SELECTED, textView, mergeConflictCard);
-                    mConflictText.setVisibility(View.GONE);
-                    mButtonBar.setVisibility(View.VISIBLE);
+                    if (binding.getConflictText() != null) binding.getConflictText().setVisibility(View.GONE);
+                    if (binding.getButtonBar() != null) binding.getButtonBar().setVisibility(View.VISIBLE);
                 } else {
                     displayMergeSelectionState(MergeConflictDisplayState.DESELECTED, textView, mergeConflictCard);
-                    mConflictText.setVisibility(View.GONE);
-                    mButtonBar.setVisibility(View.VISIBLE);
+                    if (binding.getConflictText() != null) binding.getConflictText().setVisibility(View.GONE);
+                    if (binding.getButtonBar() != null) binding.getButtonBar().setVisibility(View.VISIBLE);
                 }
 
             } else {
                 displayMergeSelectionState(MergeConflictDisplayState.NORMAL, textView, mergeConflictCard);
-                mConflictText.setVisibility(View.VISIBLE);
-                mButtonBar.setVisibility(View.GONE);
+                if (binding.getConflictText() != null) binding.getConflictText().setVisibility(View.VISIBLE);
+                if (binding.getButtonBar() != null) binding.getButtonBar().setVisibility(View.GONE);
             }
         }
     }
@@ -448,7 +389,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 setHorizontalMargin( view, mMarginInitialLeft); // shrink margins to emphasize
                 span = new SpannableStringBuilder(text);
                 // bold text to emphasize
-                view.setTextSize(TypedValue.COMPLEX_UNIT_SP, mInitialTextSize * 1.0f); // grow text to emphasize
+                view.setTextSize(TypedValue.COMPLEX_UNIT_SP, mInitialTextSize); // grow text to emphasize
                 span.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, span.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 view.setText(span);
                 break;
@@ -465,7 +406,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             case NORMAL:
             default:
                 setHorizontalMargin( view, mMarginInitialLeft); // restore original margins
-                view.setTextSize(TypedValue.COMPLEX_UNIT_SP, mInitialTextSize * 1.0f); // restore initial test size
+                view.setTextSize(TypedValue.COMPLEX_UNIT_SP, mInitialTextSize); // restore initial test size
                 view.setText(text); // remove text emphasis
                 break;
         }
@@ -512,54 +453,49 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         float closedWeight = 0.765f;
         if(animate) {
             int duration = 400;
-            if(mMainContent.getAnimation() != null) mMainContent.getAnimation().cancel();
-            mMainContent.clearAnimation();
+            if(binding.getMainContent().getAnimation() != null) binding.getMainContent().getAnimation().cancel();
+            binding.getMainContent().clearAnimation();
             ObjectAnimator anim;
             if(show) {
-                mResourceLayout.setVisibility(View.VISIBLE);
-                anim = ObjectAnimator.ofFloat(mMainContent, "weightSum", openWeight, closedWeight);
+                binding.getResourceLayout().setVisibility(View.VISIBLE);
+                anim = ObjectAnimator.ofFloat(binding.getMainContent(), "weightSum", openWeight, closedWeight);
             } else {
-                mResourceLayout.setVisibility(View.INVISIBLE);
-                anim = ObjectAnimator.ofFloat(mMainContent, "weightSum", closedWeight, openWeight);
+                binding.getResourceLayout().setVisibility(View.INVISIBLE);
+                anim = ObjectAnimator.ofFloat(binding.getMainContent(), "weightSum", closedWeight, openWeight);
             }
             anim.setDuration(duration);
-            anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    mMainContent.requestLayout();
-                }
-            });
+            anim.addUpdateListener(animation -> binding.getMainContent().requestLayout());
             anim.start();
         } else {
             if(show) {
-                mResourceLayout.setVisibility(View.VISIBLE);
-                mMainContent.setWeightSum(closedWeight);
+                binding.getResourceLayout().setVisibility(View.VISIBLE);
+                binding.getMainContent().setWeightSum(closedWeight);
             } else {
-                mResourceLayout.setVisibility(View.INVISIBLE);
-                mMainContent.setWeightSum(openWeight);
+                binding.getResourceLayout().setVisibility(View.INVISIBLE);
+                binding.getMainContent().setWeightSum(openWeight);
             }
         }
     }
 
     public void renderSourceTabs(ContentValues[] tabs) {
-        mTranslationTabs.setOnTabSelectedListener(null);
-        mTranslationTabs.removeAllTabs();
+        binding.getTranslationTabs().setOnTabSelectedListener(null);
+        binding.getTranslationTabs().removeAllTabs();
         for(ContentValues values:tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
             View tabLayout = ViewModeAdapter.createRemovableTabLayout(mContext, mListener, tag, title);
 
-            TabLayout.Tab tab = mTranslationTabs.newTab();
+            TabLayout.Tab tab = binding.getTranslationTabs().newTab();
             tab.setTag(tag);
             tab.setCustomView(tabLayout);
-            mTranslationTabs.addTab(tab);
+            binding.getTranslationTabs().addTab(tab);
 
-            ViewModeAdapter.applyLanguageTypefaceToTab(mContext, mTranslationTabs, values, title);
+            ViewModeAdapter.applyLanguageTypefaceToTab(mContext, binding.getTranslationTabs(), values, title);
         }
 
         // open selected tab
-        for(int i = 0; i < mTranslationTabs.getTabCount(); i ++) {
-            TabLayout.Tab tab = mTranslationTabs.getTabAt(i);
+        for(int i = 0; i < binding.getTranslationTabs().getTabCount(); i ++) {
+            TabLayout.Tab tab = binding.getTranslationTabs().getTabAt(i);
             if(tab.getTag().equals(currentItem.getSource().slug)) {
                 tab.select();
                 break;
@@ -567,7 +503,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         }
 
         // tabs listener
-        mTranslationTabs.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        binding.getTranslationTabs().setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 final String sourceTranslationId = (String) tab.getTag();
@@ -588,12 +524,9 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         });
 
         // change tabs listener
-        mNewTabButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mListener != null) {
-                    mListener.onNewSourceTranslationTabClick();
-                }
+        binding.getNewTabButton().setOnClickListener(v -> {
+            if (mListener != null) {
+                mListener.onNewSourceTranslationTabClick();
             }
         });
     }
@@ -604,9 +537,9 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
      */
     public EditText getEditText() {
         if (!currentItem.isEditing) {
-            return mTargetBody;
+            return binding.getTargetBody();
         } else {
-            return mTargetEditableBody;
+            return binding.getTargetEditableBody();
         }
     }
 
@@ -619,24 +552,24 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             boolean allowFootnote = currentItem.targetTranslationFormat == TranslationFormat.USFM
                     && currentItem.isChunk();
-            if(mEditButton != null) mEditButton.setImageResource(R.drawable.ic_done_secondary_24dp);
-            if(mAddNoteButton != null) mAddNoteButton.setVisibility(allowFootnote ? View.VISIBLE : View.GONE);
-            if(mUndoButton != null) mUndoButton.setVisibility(View.GONE);
-            if(mRedoButton != null) mRedoButton.setVisibility(View.GONE);
-            if(mTargetBody != null) mTargetBody.setVisibility(View.GONE);
-            if(mTargetEditableBody != null) {
-                mTargetEditableBody.setVisibility(View.VISIBLE);
-                mTargetEditableBody.setEnableLines(true);
+            if(binding.getEditButton() != null) binding.getEditButton().setImageResource(R.drawable.ic_done_secondary_24dp);
+            if(binding.getAddNoteButton() != null) binding.getAddNoteButton().setVisibility(allowFootnote ? View.VISIBLE : View.GONE);
+            if(binding.getUndoButton() != null) binding.getUndoButton().setVisibility(View.GONE);
+            if(binding.getRedoButton() != null) binding.getRedoButton().setVisibility(View.GONE);
+            if(binding.getTargetBody() != null) binding.getTargetBody().setVisibility(View.GONE);
+            if(binding.getTargetEditableBody() != null) {
+                binding.getTargetEditableBody().setVisibility(View.VISIBLE);
+                binding.getTargetEditableBody().setEnableLines(true);
             }
         } else {
-            if(mEditButton != null) mEditButton.setImageResource(R.drawable.ic_mode_edit_secondary_24dp);
-            if(mUndoButton != null) mUndoButton.setVisibility(View.GONE);
-            if(mRedoButton != null) mRedoButton.setVisibility(View.GONE);
-            if(mAddNoteButton != null) mAddNoteButton.setVisibility(View.GONE);
-            if(mTargetBody != null) mTargetBody.setVisibility(View.VISIBLE);
-            if(mTargetEditableBody != null) {
-                mTargetEditableBody.setVisibility(View.GONE);
-                mTargetEditableBody.setEnableLines(false);
+            if(binding.getEditButton() != null) binding.getEditButton().setImageResource(R.drawable.ic_mode_edit_secondary_24dp);
+            if(binding.getUndoButton() != null) binding.getUndoButton().setVisibility(View.GONE);
+            if(binding.getRedoButton() != null) binding.getRedoButton().setVisibility(View.GONE);
+            if(binding.getAddNoteButton() != null) binding.getAddNoteButton().setVisibility(View.GONE);
+            if(binding.getTargetBody() != null) binding.getTargetBody().setVisibility(View.VISIBLE);
+            if(binding.getTargetEditableBody() != null) {
+                binding.getTargetEditableBody().setVisibility(View.GONE);
+                binding.getTargetEditableBody().setEnableLines(false);
             }
         }
     }
@@ -665,15 +598,20 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             @Override
             public void onPostExecute() {
-                if(history.hasNext()) {
-                    mRedoButton.setVisibility(View.VISIBLE);
-                } else {
-                    mRedoButton.setVisibility(View.GONE);
+                if (binding.getRedoButton() != null) {
+                    if(history.hasNext()) {
+                        binding.getRedoButton().setVisibility(View.VISIBLE);
+                    } else {
+                        binding.getRedoButton().setVisibility(View.GONE);
+                    }
                 }
-                if(history.hasPrevious()) {
-                    mUndoButton.setVisibility(View.VISIBLE);
-                } else {
-                    mUndoButton.setVisibility(View.GONE);
+
+                if (binding.getUndoButton() != null) {
+                    if(history.hasPrevious()) {
+                        binding.getUndoButton().setVisibility(View.VISIBLE);
+                    } else {
+                        binding.getUndoButton().setVisibility(View.GONE);
+                    }
                 }
             }
         };

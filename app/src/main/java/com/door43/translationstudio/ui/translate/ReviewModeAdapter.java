@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.translate;
 
 import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ContentValues;
@@ -12,9 +13,16 @@ import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.door43.translationstudio.databinding.FragmentFootnotePromptBinding;
+import com.door43.translationstudio.databinding.FragmentReviewListItemBinding;
+import com.door43.translationstudio.databinding.FragmentReviewListItemMergeConflictBinding;
+import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding;
 import com.door43.util.ColorUtil;
 import com.google.android.material.snackbar.Snackbar;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+
 import android.text.Editable;
 import android.text.Html;
 import android.text.Layout;
@@ -33,9 +41,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import org.unfoldingword.door43client.Door43Client;
@@ -86,7 +92,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -150,7 +155,11 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onWordClick(String resourceContainerSlug, Link word, int resourceCardWidth) {
         if(getListener() != null) {
-            getListener().onTranslationWordClick(resourceContainerSlug, word.chapter, resourceCardWidth);
+            getListener().onTranslationWordClick(
+                    resourceContainerSlug,
+                    word.chapter,
+                    resourceCardWidth
+            );
         }
     }
 
@@ -209,7 +218,13 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
 
-    public ReviewModeAdapter(Activity context, String targetTranslationSlug, String startingChapterSlug, String startingChunkSlug, boolean openResources) {
+    public ReviewModeAdapter(
+            Activity context,
+            String targetTranslationSlug,
+            String startingChapterSlug,
+            String startingChunkSlug,
+            boolean openResources
+    ) {
         this.startingChapterSlug = startingChapterSlug;
         this.startingChunkSlug = startingChunkSlug;
 
@@ -347,16 +362,18 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     @Override
     public ReviewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
-        View v;
+        IReviewListItemBinding binding;
         switch (viewType) {
             case VIEW_TYPE_CONFLICT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_review_list_item_merge_conflict, parent, false);
+                var mcb = FragmentReviewListItemMergeConflictBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+                binding = new ReviewListItemMergeConflictBinding(mcb);
                 break;
             default:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_review_list_item, parent, false);
+                var lb = FragmentReviewListItemBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+                binding = new ReviewListItemBinding(lb);
                 break;
         }
-        ReviewHolder vh = new ReviewHolder(parent.getContext(), v);
+        ReviewHolder vh = new ReviewHolder(binding);
         vh.setOnClickListener(this);
         return vh;
     }
@@ -469,7 +486,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         // fetch translation from disk
         item.load(mSourceContainer, mTargetTranslation);
 
-        ViewUtil.makeLinksClickable(holder.mSourceBody);
+        ViewUtil.makeLinksClickable(holder.binding.getSourceBody());
 
         // render the cards
         renderSourceCard(item, holder);
@@ -483,14 +500,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         // set up fonts
         if(holder.mLayoutBuildNumber != mLayoutBuildNumber) {
             holder.mLayoutBuildNumber = mLayoutBuildNumber;
-            Typography.format(mContext, TranslationType.SOURCE, holder.mSourceBody, mSourceContainer.language.slug, mSourceContainer.language.direction);
+            Typography.format(mContext, TranslationType.SOURCE, holder.binding.getSourceBody(), mSourceContainer.language.slug, mSourceContainer.language.direction);
             if(!item.hasMergeConflicts) {
-                Typography.format(mContext, TranslationType.TARGET, holder.mTargetBody, mTargetLanguage.slug, mTargetLanguage.direction);
-                Typography.format(mContext, TranslationType.TARGET, holder.mTargetEditableBody, mTargetLanguage.slug, mTargetLanguage.direction);
+                Typography.format(mContext, TranslationType.TARGET, holder.binding.getTargetBody(), mTargetLanguage.slug, mTargetLanguage.direction);
+                Typography.format(mContext, TranslationType.TARGET, holder.binding.getTargetEditableBody(), mTargetLanguage.slug, mTargetLanguage.direction);
             } else {
-                Typography.formatSub(mContext, TranslationType.TARGET, holder.mConflictText, mTargetLanguage.slug, mTargetLanguage.direction);
+                Typography.formatSub(mContext, TranslationType.TARGET, holder.binding.getConflictText(), mTargetLanguage.slug, mTargetLanguage.direction);
             }
-            Typography.formatSub(mContext, TranslationType.TARGET, holder.mTargetTitle, mTargetLanguage.slug, mTargetLanguage.direction);
+            Typography.formatSub(mContext, TranslationType.TARGET, holder.binding.getTargetTitle(), mTargetLanguage.slug, mTargetLanguage.direction);
         }
     }
 
@@ -524,9 +541,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         holder.renderSourceTabs(mTabs);
 
         if (mTabs.length >= MAX_SOURCE_ITEMS) {
-            holder.mNewTabButton.setVisibility(View.GONE);
+            holder.binding.getNewTabButton().setVisibility(View.GONE);
         } else {
-            holder.mNewTabButton.setVisibility(View.VISIBLE);
+            holder.binding.getNewTabButton().setVisibility(View.VISIBLE);
         }
     }
 
@@ -538,45 +555,42 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      */
     private void renderConflictingTargetCard(int position, final ReviewListItem item, final ReviewHolder holder) {
         // render title
-        holder.mTargetTitle.setText(item.getTargetTitle());
+        holder.binding.getTargetTitle().setText(item.getTargetTitle());
 
-        if(holder.mMergeConflictLayout == null) { // sanity check
+        if(holder.binding.getMergeConflictLayout() == null) { // sanity check
             return;
         }
 
         item.mergeItemSelected = -1;
 
         MergeConflictsParseTask parseTask = new MergeConflictsParseTask(item.targetText);
-        parseTask.addOnFinishedListener(new ManagedTask.OnFinishedListener() {
-            @Override
-            public void onTaskFinished(final ManagedTask task) {
-                TaskManager.clearTask(task);
+        parseTask.addOnFinishedListener(task -> {
+            TaskManager.clearTask(task);
 
-                Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        holder.displayMergeConflictsOnTargetCard(mSourceContainer.language, (MergeConflictsParseTask) task, item);
-                    }
-                });
-            }
+            Handler hand = new Handler(Looper.getMainLooper());
+            hand.post(new Runnable() {
+                @Override
+                public void run() {
+                    holder.displayMergeConflictsOnTargetCard(mSourceContainer.language, (MergeConflictsParseTask) task, item);
+                }
+            });
         });
         TaskManager.addTask(parseTask);
 
-        holder.mConflictText.setVisibility(View.VISIBLE);
-        holder.mButtonBar.setVisibility(View.GONE);
-
-        holder.mCancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        if (holder.binding.getConflictText() != null) {
+            holder.binding.getConflictText().setVisibility(View.VISIBLE);
+        }
+        if (holder.binding.getButtonBar() != null) {
+            holder.binding.getButtonBar().setVisibility(View.GONE);
+        }
+        if (holder.binding.getCancelButton() != null) {
+            holder.binding.getCancelButton().setOnClickListener(v -> {
                 item.mergeItemSelected = -1;
                 holder.displayMergeConflictSelectionState(item);
-            }
-        });
-
-        holder.mConfirmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            });
+        }
+        if (holder.binding.getConfirmButton() != null) {
+            holder.binding.getConfirmButton().setOnClickListener(v -> {
                 if((item.mergeItemSelected >= 0) && (item.mergeItemSelected < item.mergeItems.size()) ) {
                     CharSequence selectedText = item.mergeItems.get(item.mergeItemSelected);
                     applyNewCompiledText(selectedText.toString(), holder, item);
@@ -590,25 +604,17 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     triggerNotifyDataSetChanged();
                     updateMergeConflict();
                 }
-            }
-        });
-
-        holder.mUndoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                undoTextInTarget(holder, item);
-            }
-        });
-        holder.mRedoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                redoTextInTarget(holder, item);
-            }
-        });
-
+            });
+        }
         holder.rebuildControls();
-        holder.mUndoButton.setVisibility(View.GONE);
-        holder.mRedoButton.setVisibility(View.GONE);
+        if (holder.binding.getUndoButton() != null) {
+            holder.binding.getUndoButton().setOnClickListener(v -> undoTextInTarget(holder, item));
+            holder.binding.getUndoButton().setVisibility(View.GONE);
+        }
+        if (holder.binding.getRedoButton() != null) {
+            holder.binding.getRedoButton().setOnClickListener(v -> redoTextInTarget(holder, item));
+            holder.binding.getRedoButton().setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -617,32 +623,34 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item
      * @param holder
      */
+    @SuppressLint("ClickableViewAccessibility")
     private void renderTargetCard(final int position, final ReviewListItem item, final ReviewHolder holder) {
         // remove old text watcher
-        if(holder.mEditableTextWatcher != null) {
-            holder.mTargetEditableBody.removeTextChangedListener(holder.mEditableTextWatcher);
+        if(holder.mEditableTextWatcher != null && holder.binding.getTargetEditableBody() != null) {
+            holder.binding.getTargetEditableBody().removeTextChangedListener(holder.mEditableTextWatcher);
         }
 
         // insert rendered text
         if(item.isEditing) {
             // editing mode
-            holder.mTargetEditableBody.setText(item.renderedTargetText);
+            if (holder.binding.getTargetEditableBody() != null) {
+                holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+            }
         } else {
             // verse marker mode
-            holder.mTargetBody.setText(item.renderedTargetText);
-            holder.mTargetBody.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
+            if (holder.binding.getTargetBody() != null) {
+                holder.binding.getTargetBody().setText(item.renderedTargetText);
+                holder.binding.getTargetBody().setOnTouchListener((v, event) -> {
                     v.onTouchEvent(event);
                     v.clearFocus();
                     return true;
-                }
-            });
-            ViewUtil.makeLinksClickable(holder.mTargetBody);
+                });
+                ViewUtil.makeLinksClickable(holder.binding.getTargetBody());
+            }
         }
 
         // title
-        holder.mTargetTitle.setText(item.getTargetTitle());
+        holder.binding.getTargetTitle().setText(item.getTargetTitle());
 
         // set up text watcher
         holder.mEditableTextWatcher = new TextWatcher() {
@@ -675,77 +683,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         TaskManager.cancelTask(oldtask);
         TaskManager.clearTask(oldtask);
         if(item.renderedTargetText == null) {
-            holder.mTargetEditableBody.setText(item.targetText);
-            holder.mTargetEditableBody.setVisibility(View.INVISIBLE);
-            holder.mTargetBody.setText(item.targetText);
-            holder.mTargetBody.setVisibility(View.INVISIBLE);
-            ManagedTask task = new ManagedTask() {
-                @Override
-                public void start() {
-                    setThreadPriority(Thread.MIN_PRIORITY);
-                    if(isCanceled()) {
-//                        Log.i(TAG, "renderTargetCard(): Position " + position + ": Render cancelled ID: " + item.currentTargetTaskId);
-                        return;
-                    }
-//                    Log.i(TAG, "renderTargetCard(): Position " + position + ": Render started ID: " + item.currentTargetTaskId);
-                    CharSequence text;
-                    if(item.isComplete || item.isEditing) {
-                        text = renderSourceText(item.targetText, item.targetTranslationFormat, holder, item, true);
-                    } else {
-                        text = renderTargetText(item.targetText, item.targetTranslationFormat, item.ft, holder, item);
-                    }
-                    setResult(text);
-                }
-            };
-            task.addOnFinishedListener(new ManagedTask.OnFinishedListener() {
-                @Override
-                public void onTaskFinished(final ManagedTask task) {
-                    TaskManager.clearTask(task);
-                    final CharSequence data = (CharSequence)task.getResult();
-                    if(!task.isCanceled() && data != null && item == holder.currentItem) {
-
-                        Handler hand = new Handler(Looper.getMainLooper());
-                        hand.post(new Runnable() {
-                            @Override
-                            public void run() {
-//                                Log.i(TAG, "renderTargetCard(): Position " + position + ": Render finished ID: " + item.currentTargetTaskId);
-                                if (!task.isCanceled() && data != null && item == holder.currentItem) {
-                                    item.renderedTargetText = data;
-
-                                    int selectPosition = checkForSelectedSearchItem(item, position, true);
-                                    if (item.isEditing) {
-                                        // edit mode
-                                        holder.mTargetEditableBody.setText(item.renderedTargetText);
-                                        selectCurrentSearchItem(position, selectPosition, holder.mTargetEditableBody);
-                                        holder.mTargetEditableBody.setVisibility(View.VISIBLE);
-                                        holder.mTargetEditableBody.addTextChangedListener(holder.mEditableTextWatcher);
-                                    } else {
-                                        // verse marker mode
-                                        holder.mTargetBody.setText(item.renderedTargetText);
-                                        selectCurrentSearchItem(position, selectPosition, holder.mTargetBody);
-                                        holder.mTargetBody.setVisibility(View.VISIBLE);
-                                        holder.mTargetBody.setOnTouchListener(new View.OnTouchListener() {
-                                            @Override
-                                            public boolean onTouch(View v, MotionEvent event) {
-                                                v.onTouchEvent(event);
-                                                v.clearFocus();
-                                                return true;
-                                            }
-                                        });
-                                        setFinishedMode(item, holder);
-                                        ViewUtil.makeLinksClickable(holder.mTargetBody);
-                                    }
-                                    addMissingVerses(item, holder);
-                                } else {
-//                                    Log.i(TAG, "renderTargetCard(): Position " + position + ": ID: " + item.currentTargetTaskId + ": Render failed after delay: task.isCanceled()=" + task.isCanceled() + ", (data==null)=" + (data == null) + ", (item!=holder.currentItem)=" + (item != holder.currentItem));
-                                }
-                            }
-                        });
-                    }  else {
-//                        Log.i(TAG, "renderTargetCard(): Position " + position + ": ID: " + item.currentTargetTaskId + ": Render failed  no delay: task.isCanceled()=" + task.isCanceled() + ", (data==null)=" + (data == null) + ", (item!=holder.currentItem)=" + (item != holder.currentItem));
-                    }
-                }
-            });
+            if (holder.binding.getTargetEditableBody() != null) {
+                holder.binding.getTargetEditableBody().setText(item.targetText);
+                holder.binding.getTargetEditableBody().setVisibility(View.INVISIBLE);
+            }
+            if (holder.binding.getTargetBody() != null) {
+                holder.binding.getTargetBody().setText(item.targetText);
+                holder.binding.getTargetBody().setVisibility(View.INVISIBLE);
+            }
+            ManagedTask task = getManagedTask(position, item, holder);
             item.currentTargetTaskId = TaskManager.addTask(task);
 //            Log.i(TAG, "renderTargetCard(): Position " + position + ": Adding task ID: " + item.currentTargetTaskId);
 
@@ -759,51 +705,40 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             }
         } else if(item.isEditing) {
             // editing mode
-            holder.mTargetEditableBody.setText(item.renderedTargetText);
-            holder.mTargetEditableBody.setVisibility(View.VISIBLE);
-
+            if (holder.binding.getTargetEditableBody() != null) {
+                holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                holder.binding.getTargetEditableBody().setVisibility(View.VISIBLE);
+                holder.binding.getTargetEditableBody().addTextChangedListener(holder.mEditableTextWatcher);
+            }
             if(item.refreshSearchHighlightTarget) {
                 int selectPosition = checkForSelectedSearchItem(item, position, true);
-                selectCurrentSearchItem(position, selectPosition, holder.mTargetEditableBody);
+                selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetEditableBody());
                 item.refreshSearchHighlightTarget = false;
             }
-
-            holder.mTargetEditableBody.addTextChangedListener(holder.mEditableTextWatcher);
         } else {
             // verse marker mode
-            holder.mTargetBody.setText(item.renderedTargetText);
-            holder.mTargetBody.setVisibility(View.VISIBLE);
-
-            if(item.refreshSearchHighlightTarget) {
-                int selectPosition = checkForSelectedSearchItem(item, position, true);
-                selectCurrentSearchItem(position, selectPosition, holder.mTargetBody);
-                item.refreshSearchHighlightTarget = false;
-            }
-
-            holder.mTargetBody.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
+            if (holder.binding.getTargetBody() != null) {
+                holder.binding.getTargetBody().setText(item.renderedTargetText);
+                holder.binding.getTargetBody().setVisibility(View.VISIBLE);
+                holder.binding.getTargetBody().setOnTouchListener((v, event) -> {
                     v.onTouchEvent(event);
                     v.clearFocus();
                     return true;
-                }
-            });
-            ViewUtil.makeLinksClickable(holder.mTargetBody);
+                });
+                ViewUtil.makeLinksClickable(holder.binding.getTargetBody());
+            }
+            if(item.refreshSearchHighlightTarget) {
+                int selectPosition = checkForSelectedSearchItem(item, position, true);
+                selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetBody());
+                item.refreshSearchHighlightTarget = false;
+            }
         }
-
-        holder.mUndoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                undoTextInTarget(holder, item);
-            }
-        });
-        holder.mRedoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                redoTextInTarget(holder, item);
-            }
-        });
-
+        if (holder.binding.getUndoButton() != null) {
+            holder.binding.getUndoButton().setOnClickListener(v -> undoTextInTarget(holder, item));
+        }
+        if (holder.binding.getRedoButton() != null) {
+            holder.binding.getRedoButton().setOnClickListener(v -> redoTextInTarget(holder, item));
+        }
         // editing button
         final GestureDetector detector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
             @Override
@@ -812,107 +747,168 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 holder.rebuildControls();
 
                 if(item.isEditing) {
-                    holder.mTargetEditableBody.requestFocus();
-                    InputMethodManager mgr = (InputMethodManager)mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
-                    mgr.showSoftInput(holder.mTargetEditableBody, InputMethodManager.SHOW_IMPLICIT);
-
+                    if (holder.binding.getTargetEditableBody() != null) {
+                        holder.binding.getTargetEditableBody().requestFocus();
+                        InputMethodManager mgr = (InputMethodManager)mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+                        mgr.showSoftInput(holder.binding.getTargetEditableBody(), InputMethodManager.SHOW_IMPLICIT);
+                    }
                     // TRICKY: there may be changes to translation
-                    item.loadTarget(mTargetTranslation);
+                    if (mTargetTranslation != null) item.loadTarget(mTargetTranslation);
 
                     // re-render for editing mode
                     item.renderedTargetText = renderSourceText(item.targetText, item.targetTranslationFormat, holder, item, true);
-                    holder.mTargetEditableBody.setText(item.renderedTargetText);
-                    holder.mTargetEditableBody.addTextChangedListener(holder.mEditableTextWatcher);
+                    holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                    holder.binding.getTargetEditableBody().addTextChangedListener(holder.mEditableTextWatcher);
                     addMissingVerses(item, holder);
                 } else {
-                    if(holder.mEditableTextWatcher != null) {
-                        holder.mTargetEditableBody.removeTextChangedListener(holder.mEditableTextWatcher);
+                    if(holder.mEditableTextWatcher != null && holder.binding.getTargetEditableBody() != null) {
+                        holder.binding.getTargetEditableBody().removeTextChangedListener(holder.mEditableTextWatcher);
                     }
-                    holder.mTargetBody.requestFocus();
+                    if (holder.binding.getTargetBody() != null) {
+                        holder.binding.getTargetBody().requestFocus();
+                    }
                     getListener().closeKeyboard();
 
                     // TODO: 2/16/17 save translation
 
                     // TRICKY: there may be changes to translation
-                    item.loadTarget(mTargetTranslation);
+                    if (mTargetTranslation != null) item.loadTarget(mTargetTranslation);
 
                     // re-render for verse mode
                     item.renderedTargetText = renderTargetText(item.targetText, item.targetTranslationFormat, item.ft, holder, item);
-                    holder.mTargetBody.setText(item.renderedTargetText);
+                    if (holder.binding.getTargetBody() != null) {
+                        holder.binding.getTargetBody().setText(item.renderedTargetText);
+                    }
                     addMissingVerses(item, holder);
                 }
                 return true;
             }
         });
-
-        holder.mEditButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return detector.onTouchEvent(event);
-            }
-        });
-
-        holder.mAddNoteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                createFootnoteAtSelection(holder, item);
-            }
-        });
-
+        if (holder.binding.getEditButton() != null) {
+            holder.binding.getEditButton().setOnTouchListener((v, event) -> detector.onTouchEvent(event));
+        }
+        if (holder.binding.getAddNoteButton() != null) {
+            holder.binding.getAddNoteButton().setOnClickListener(v -> createFootnoteAtSelection(holder, item));
+        }
         holder.rebuildControls();
 
         // disable listener
-        holder.mDoneSwitch.setOnCheckedChangeListener(null);
+        if (holder.binding.getDoneSwitch() != null) {
+            holder.binding.getDoneSwitch().setOnCheckedChangeListener(null);
+        }
 
         // display as finished
         setFinishedMode(item, holder);
 
-        // done buttons
-        holder.mDoneSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (holder.binding.getDoneSwitch() != null) {
+            holder.binding.getDoneSwitch().setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
-                    if(item.isEditing) {
+                    if(item.isEditing && holder.binding.getTargetEditableBody() != null) {
                         // make sure to capture verse marker changes before dialog is displayed
-                        Editable changes = holder.mTargetEditableBody.getText();
+                        Editable changes = holder.binding.getTargetEditableBody().getText();
                         item.renderedTargetText = changes;
-                        String newBody = Translator.compileTranslation(changes);
-                        item.targetText = newBody;
+                        if (changes != null) {
+                            item.targetText = Translator.compileTranslation(changes);
+                        }
                     }
 
                     new AlertDialog.Builder(mContext,R.style.AppTheme_Dialog)
                             .setTitle(R.string.chunk_checklist_title)
                             .setMessage(Html.fromHtml(mContext.getString(R.string.chunk_checklist_body)))
-                            .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    try {
-                                        markChunkCompleted(item, mTargetTranslation.getFormat());
-                                        mTargetTranslation.commit();
-                                    } catch (Exception e) {
-                                        Logger.e(TAG, "Failed to commit translation of " + mTargetTranslation.getId(), e);
+                            .setPositiveButton(R.string.confirm, (dialog, which) -> {
+                                try {
+                                    markChunkCompleted(item, mTargetTranslation.getFormat());
+                                    mTargetTranslation.commit();
+                                } catch (Exception e) {
+                                    Logger.e(TAG, "Failed to commit translation of " + mTargetTranslation.getId(), e);
 
-                                        Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), e.getMessage(), Snackbar.LENGTH_LONG);
-                                        ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
-                                        snack.show();
-                                    }
-
-                                    triggerNotifyDataSetChanged();
+                                    Snackbar snack = Snackbar.make(mContext.findViewById(android.R.id.content), e.getMessage(), Snackbar.LENGTH_LONG);
+                                    ViewUtil.setSnackBarTextColor(snack, mContext.getResources().getColor(R.color.light_primary_text));
+                                    snack.show();
                                 }
+
+                                triggerNotifyDataSetChanged();
                             })
-                            .setNegativeButton(R.string.title_cancel, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    holder.mDoneSwitch.setChecked(false); // force back off if not accepted
-                                }
+                            .setNegativeButton(R.string.title_cancel, (dialog, which) -> {
+                                holder.binding.getDoneSwitch().setChecked(false); // force back off if not accepted
                             })
                             .show();
 
                 } else { // done button checked off
                     reOpenItem(item);
                 }
+            });
+        }
+    }
+
+    private @NonNull ManagedTask getManagedTask(int position, ReviewListItem item, ReviewHolder holder) {
+        ManagedTask task = new ManagedTask() {
+            @Override
+            public void start() {
+                setThreadPriority(Thread.MIN_PRIORITY);
+                if(isCanceled()) {
+//                        Log.i(TAG, "renderTargetCard(): Position " + position + ": Render cancelled ID: " + item.currentTargetTaskId);
+                    return;
+                }
+//                    Log.i(TAG, "renderTargetCard(): Position " + position + ": Render started ID: " + item.currentTargetTaskId);
+                CharSequence text;
+                if(item.isComplete || item.isEditing) {
+                    text = renderSourceText(item.targetText, item.targetTranslationFormat, holder, item, true);
+                } else {
+                    text = renderTargetText(item.targetText, item.targetTranslationFormat, item.ft, holder, item);
+                }
+                setResult(text);
+            }
+        };
+        task.addOnFinishedListener(task1 -> {
+            TaskManager.clearTask(task1);
+            final CharSequence data = (CharSequence) task1.getResult();
+            if(!task1.isCanceled() && data != null && item == holder.currentItem) {
+
+                Handler hand = new Handler(Looper.getMainLooper());
+                hand.post(new Runnable() {
+                    @SuppressLint("ClickableViewAccessibility")
+                    @Override
+                    public void run() {
+//                                Log.i(TAG, "renderTargetCard(): Position " + position + ": Render finished ID: " + item.currentTargetTaskId);
+                        if (!task1.isCanceled() && data != null && item == holder.currentItem) {
+                            item.renderedTargetText = data;
+
+                            int selectPosition = checkForSelectedSearchItem(item, position, true);
+                            if (item.isEditing) {
+                                // edit mode
+                                if (holder.binding.getTargetEditableBody() != null) {
+                                    holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                                    selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetEditableBody());
+                                    holder.binding.getTargetEditableBody().setVisibility(View.VISIBLE);
+                                    holder.binding.getTargetEditableBody().addTextChangedListener(holder.mEditableTextWatcher);
+                                }
+                            } else {
+                                // verse marker mode
+                                if (holder.binding.getTargetBody() != null) {
+                                    holder.binding.getTargetBody().setText(item.renderedTargetText);
+                                    selectCurrentSearchItem(position, selectPosition, holder.binding.getTargetBody());
+                                    holder.binding.getTargetBody().setVisibility(View.VISIBLE);
+                                    holder.binding.getTargetBody().setOnTouchListener((v, event) -> {
+                                        v.onTouchEvent(event);
+                                        v.clearFocus();
+                                        return true;
+                                    });
+                                    setFinishedMode(item, holder);
+                                    ViewUtil.makeLinksClickable(holder.binding.getTargetBody());
+                                }
+                            }
+                            addMissingVerses(item, holder);
+                        } else {
+//                                    Log.i(TAG, "renderTargetCard(): Position " + position + ": ID: " + item.currentTargetTaskId + ": Render failed after delay: task.isCanceled()=" + task.isCanceled() + ", (data==null)=" + (data == null) + ", (item!=holder.currentItem)=" + (item != holder.currentItem));
+                        }
+                    }
+                });
+            }  else {
+//                        Log.i(TAG, "renderTargetCard(): Position " + position + ": ID: " + item.currentTargetTaskId + ": Render failed  no delay: task.isCanceled()=" + task.isCanceled() + ", (data==null)=" + (data == null) + ", (item!=holder.currentItem)=" + (item != holder.currentItem));
             }
         });
+        return task;
     }
 
     /**
@@ -928,7 +924,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 String translation = applyChangedText(item.renderedTargetText, holder, item);
                 Log.i(TAG, "Added Missing verses: " + translation);
                 item.hasMissingVerses = false;
-                item.renderedTargetText = null; // force rerendering of target text
+                item.renderedTargetText = null; // force re-rendering of target text
                 triggerNotifyDataSetChanged();
                 return true;
             }
@@ -952,7 +948,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             } else if (mSearchSubPositionItems > 0) { // if we have counted items then find the number selected
                 int searchSubPosition = 0;
                 MatchResults results = getMatchItemN( item, mSearchText, searchSubPosition, target);
-                if( (results != null) && (results.foundLocation >= 0)) {
+                if(results.foundLocation >= 0) {
                     Log.i(TAG, "Highlight at position: " + position + " : " + results.foundLocation);
                     selectPosition = results.foundLocation;
                 } else {
@@ -1003,15 +999,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      */
     private void setFinishedMode(ReviewListItem item, ReviewHolder holder) {
         if(item.isComplete) {
-            holder.mEditButton.setVisibility(View.GONE);
-            holder.mUndoButton.setVisibility(View.GONE);
-            holder.mRedoButton.setVisibility(View.GONE);
-            holder.mAddNoteButton.setVisibility(View.GONE);
-            holder.mDoneSwitch.setChecked(true);
-            holder.mTargetInnerCard.setBackgroundResource(R.color.card_background_color);
+            if (holder.binding.getEditButton() != null) holder.binding.getEditButton().setVisibility(View.GONE);
+            if (holder.binding.getUndoButton() != null) holder.binding.getUndoButton().setVisibility(View.GONE);
+            if (holder.binding.getRedoButton() != null) holder.binding.getRedoButton().setVisibility(View.GONE);
+            if (holder.binding.getAddNoteButton() != null) holder.binding.getAddNoteButton().setVisibility(View.GONE);
+            if (holder.binding.getDoneSwitch() != null) holder.binding.getDoneSwitch().setChecked(true);
+            holder.binding.getTargetInnerCard().setBackgroundResource(R.color.card_background_color);
         } else {
-            holder.mEditButton.setVisibility(View.VISIBLE);
-            holder.mDoneSwitch.setChecked(false);
+            if (holder.binding.getEditButton() != null) holder.binding.getEditButton().setVisibility(View.VISIBLE);
+            if (holder.binding.getDoneSwitch() != null) holder.binding.getDoneSwitch().setChecked(false);
         }
     }
 
@@ -1062,41 +1058,33 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param footnotePos
      * @param footnoteEndPos
      */
-    private void editFootnote(CharSequence initialNote, final ReviewHolder holder, final ReviewListItem item, final int footnotePos, final int footnoteEndPos ) {
+    private void editFootnote(
+            CharSequence initialNote,
+            final ReviewHolder holder,
+            final ReviewListItem item,
+            final int footnotePos,
+            final int footnoteEndPos
+    ) {
         final EditText editText = holder.getEditText();
         final CharSequence original = editText.getText();
 
         LayoutInflater inflater = LayoutInflater.from(mContext);
-        final View footnoteFragment = inflater.inflate(R.layout.fragment_footnote_prompt, null);
-        if(footnoteFragment != null) {
-            final EditText footnoteText = (EditText) footnoteFragment.findViewById(R.id.footnote_text);
-            if ((footnoteText != null)) {
-                footnoteText.setText(initialNote);
+        FragmentFootnotePromptBinding footnoteBinding = FragmentFootnotePromptBinding.inflate(inflater);
 
-                // pop up note prompt
-                new AlertDialog.Builder(mContext, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.title_add_footnote)
-                        .setPositiveButton(R.string.label_ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                CharSequence footnote = footnoteText.getText();
-                                boolean validated = verifyAndReplaceFootnote(footnote, original, footnotePos, footnoteEndPos, holder, item, editText);
-                                if(validated) {
-                                    dialog.dismiss();
-                                }
-                            }
-                        })
-                        .setNegativeButton(R.string.title_cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                               dialog.dismiss();
-                            }
-                        })
-                        .setView(footnoteFragment)
-                        .show();
-
-            }
-        }
+        footnoteBinding.footnoteText.setText(initialNote);
+        // pop up note prompt
+        new AlertDialog.Builder(mContext, R.style.AppTheme_Dialog)
+                .setTitle(R.string.title_add_footnote)
+                .setPositiveButton(R.string.label_ok, (dialog, which) -> {
+                    CharSequence footnote = footnoteBinding.footnoteText.getText();
+                    boolean validated = verifyAndReplaceFootnote(footnote, original, footnotePos, footnoteEndPos, holder, item, editText);
+                    if(validated) {
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(R.string.title_cancel, (dialog, which) -> dialog.dismiss())
+                .setView(footnoteBinding.getRoot())
+                .show();
     }
 
     /**
@@ -1109,7 +1097,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item
      * @param editText
      */
-    private boolean verifyAndReplaceFootnote(CharSequence footnote, CharSequence original, int insertPos, final int insertEndPos, final ReviewHolder holder, final ReviewListItem item, EditText editText) {
+    private boolean verifyAndReplaceFootnote(
+            CharSequence footnote,
+            CharSequence original,
+            int insertPos,
+            final int insertEndPos,
+            final ReviewHolder holder,
+            final ReviewListItem item,
+            EditText editText
+    ) {
         // sanity checks
         if ((null == footnote) || (footnote.length() <= 0)) {
             warnDialog(R.string.title_footnote_invalid, R.string.footnote_message_empty);
@@ -1143,11 +1139,19 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item
      * @param editText
      */
-    private void placeFootnote(CharSequence footnote, CharSequence original, int start, final int end, final ReviewHolder holder, final ReviewListItem item, EditText editText) {
+    private void placeFootnote(
+            CharSequence footnote,
+            CharSequence original,
+            int start,
+            final int end,
+            final ReviewHolder holder,
+            final ReviewListItem item,
+            EditText editText
+    ) {
         CharSequence footnotecode = "";
         if(footnote != null) {
             // sanity checks
-            if ((null == footnote) || (footnote.length() <= 0)) {
+            if (footnote.length() <= 0) {
                 footnote = mContext.getResources().getString(R.string.footnote_label);
             }
 
@@ -1169,9 +1173,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
         // generate spannable again adding
         if(item.isComplete || item.isEditing) {
-            item.renderedTargetText = renderSourceText(item.targetText, item.targetTranslationFormat, holder, (ReviewListItem) item, true);
+            item.renderedTargetText = renderSourceText(item.targetText, item.targetTranslationFormat, holder, item, true);
         } else {
-            item.renderedTargetText = renderTargetText(item.targetText, item.targetTranslationFormat, item.ft, holder, (ReviewListItem) item);
+            item.renderedTargetText = renderTargetText(item.targetText, item.targetTranslationFormat, item.ft, holder, item);
         }
         editText.setText(item.renderedTargetText);
         editText.setSelection(editText.length(), editText.length());
@@ -1232,8 +1236,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item
      */
     private void undoTextInTarget(final ReviewHolder holder, final ReviewListItem item) {
-        holder.mUndoButton.setVisibility(View.INVISIBLE);
-        holder.mRedoButton.setVisibility(View.INVISIBLE);
+        if (holder.binding.getUndoButton() != null) holder.binding.getUndoButton().setVisibility(View.INVISIBLE);
+        if (holder.binding.getRedoButton() != null) holder.binding.getRedoButton().setVisibility(View.INVISIBLE);
 
         final FileHistory history = item.getFileHistory();
         ThreadableUI thread = new ThreadableUI(mContext) {
@@ -1284,23 +1288,25 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         triggerNotifyDataSetChanged();
                         updateMergeConflict();
 
-                        if(holder.mTargetEditableBody != null) {
-                            holder.mTargetEditableBody.removeTextChangedListener(holder.mEditableTextWatcher);
-                            holder.mTargetEditableBody.setText(item.renderedTargetText);
-                            holder.mTargetEditableBody.addTextChangedListener(holder.mEditableTextWatcher);
+                        if(holder.binding.getTargetEditableBody() != null) {
+                            holder.binding.getTargetEditableBody().removeTextChangedListener(holder.mEditableTextWatcher);
+                            holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                            holder.binding.getTargetEditableBody().addTextChangedListener(holder.mEditableTextWatcher);
                         }
                     }
                 }
 
-                if(history.hasNext()) {
-                    holder.mRedoButton.setVisibility(View.VISIBLE);
-                } else {
-                    holder.mRedoButton.setVisibility(View.GONE);
-                }
-                if(history.hasPrevious()) {
-                    holder.mUndoButton.setVisibility(View.VISIBLE);
-                } else {
-                    holder.mUndoButton.setVisibility(View.GONE);
+                if (holder.binding.getRedoButton() != null && holder.binding.getUndoButton() != null) {
+                    if(history.hasNext()) {
+                        holder.binding.getRedoButton().setVisibility(View.VISIBLE);
+                    } else {
+                        holder.binding.getRedoButton().setVisibility(View.GONE);
+                    }
+                    if(history.hasPrevious()) {
+                        holder.binding.getUndoButton().setVisibility(View.VISIBLE);
+                    } else {
+                        holder.binding.getUndoButton().setVisibility(View.GONE);
+                    }
                 }
             }
         };
@@ -1313,8 +1319,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item
      */
     private void redoTextInTarget(final ReviewHolder holder, final ReviewListItem item) {
-        holder.mUndoButton.setVisibility(View.INVISIBLE);
-        holder.mRedoButton.setVisibility(View.INVISIBLE);
+        if (holder.binding.getUndoButton() != null) holder.binding.getUndoButton().setVisibility(View.INVISIBLE);
+        if (holder.binding.getRedoButton() != null) holder.binding.getRedoButton().setVisibility(View.INVISIBLE);
 
         final FileHistory history = item.getFileHistory();
         ThreadableUI thread = new ThreadableUI(mContext) {
@@ -1353,23 +1359,25 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         triggerNotifyDataSetChanged();
                         updateMergeConflict();
 
-                        if(holder.mTargetEditableBody != null) {
-                            holder.mTargetEditableBody.removeTextChangedListener(holder.mEditableTextWatcher);
-                            holder.mTargetEditableBody.setText(item.renderedTargetText);
-                            holder.mTargetEditableBody.addTextChangedListener(holder.mEditableTextWatcher);
+                        if(holder.binding.getTargetEditableBody() != null) {
+                            holder.binding.getTargetEditableBody().removeTextChangedListener(holder.mEditableTextWatcher);
+                            holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                            holder.binding.getTargetEditableBody().addTextChangedListener(holder.mEditableTextWatcher);
                         }
                     }
                 }
 
-                if(history.hasNext()) {
-                    holder.mRedoButton.setVisibility(View.VISIBLE);
-                } else {
-                    holder.mRedoButton.setVisibility(View.GONE);
-                }
-                if(history.hasPrevious()) {
-                    holder.mUndoButton.setVisibility(View.VISIBLE);
-                } else {
-                    holder.mUndoButton.setVisibility(View.GONE);
+                if (holder.binding.getRedoButton() != null && holder.binding.getUndoButton() != null) {
+                    if(history.hasNext()) {
+                        holder.binding.getRedoButton().setVisibility(View.VISIBLE);
+                    } else {
+                        holder.binding.getRedoButton().setVisibility(View.GONE);
+                    }
+                    if(history.hasPrevious()) {
+                        holder.binding.getUndoButton().setVisibility(View.VISIBLE);
+                    } else {
+                        holder.binding.getUndoButton().setVisibility(View.GONE);
+                    }
                 }
             }
         };
@@ -1541,7 +1549,13 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item
      * @return
      */
-    private CharSequence renderTargetText(String text, TranslationFormat format, final FrameTranslation frameTranslation, final ReviewHolder holder, final ReviewListItem item) {
+    private CharSequence renderTargetText(
+            String text,
+            TranslationFormat format,
+            final FrameTranslation frameTranslation,
+            final ReviewHolder holder,
+            final ReviewListItem item
+    ) {
         RenderingGroup renderingGroup = new RenderingGroup();
         boolean enableSearch = mSearchText != null && searchSubject != null && searchSubject == SearchSubject.TARGET;
 
@@ -1561,15 +1575,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     final VerseSpan pin = ((VerseSpan) span);
 
                     // create drag shadow
-                    LayoutInflater inflater = (LayoutInflater) App.context().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                    FrameLayout verseLayout = (FrameLayout)inflater.inflate(R.layout.fragment_verse_marker, null);
-                    TextView verseTitle = (TextView)verseLayout.findViewById(R.id.verse);
+                    LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    FragmentVerseMarkerBinding markerBinding = FragmentVerseMarkerBinding.inflate(inflater);
+
                     if(pin.getEndVerseNumber() > 0) {
-                        verseTitle.setText(pin.getStartVerseNumber() + "-" + pin.getEndVerseNumber());
+                        markerBinding.verse.setText(pin.getStartVerseNumber() + "-" + pin.getEndVerseNumber());
                     } else {
-                        verseTitle.setText(pin.getStartVerseNumber() + "");
+                        markerBinding.verse.setText(pin.getStartVerseNumber() + "");
                     }
-                    Bitmap shadow = ViewUtil.convertToBitmap(verseLayout);
+                    Bitmap shadow = ViewUtil.convertToBitmap(markerBinding.getRoot());
                     View.DragShadowBuilder myShadow = CustomDragShadowBuilder.fromBitmap(mContext, shadow);
 
                     int[] spanRange = {start, end};
@@ -1627,7 +1641,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     text = TextUtils.concat(pin.toCharSequence(), text);
                                     item.renderedTargetText = text;
                                     editText.setText(text);
-                                    String translation = Translator.compileTranslation((Editable)editText.getText());
+                                    String translation = Translator.compileTranslation(editText.getText());
                                     mTargetTranslation.applyFrameTranslation(frameTranslation, translation);
 
                                     // Reload, so that targetText is kept in sync.
@@ -1713,24 +1727,21 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         if(!sortedChunks.containsKey(chapter)) {
             try {
                 String[] chunks = source.chunks(chapter);
-                Arrays.sort(chunks, new Comparator<String>() {
-                    @Override
-                    public int compare(String o1, String o2) {
-                        Integer i1;
-                        Integer i2;
-                        // TRICKY: push strings to top
-                        try {
-                            i1 = Integer.valueOf(o1);
-                        } catch (NumberFormatException e) {
-                            return 1;
-                        }
-                        try {
-                            i2 = Integer.valueOf(o2);
-                        } catch (NumberFormatException e) {
-                            return 1;
-                        }
-                        return i1.compareTo(i2);
+                Arrays.sort(chunks, (o1, o2) -> {
+                    Integer i1;
+                    Integer i2;
+                    // TRICKY: push strings to top
+                    try {
+                        i1 = Integer.valueOf(o1);
+                    } catch (NumberFormatException e) {
+                        return 1;
                     }
+                    try {
+                        i2 = Integer.valueOf(o2);
+                    } catch (NumberFormatException e) {
+                        return 1;
+                    }
+                    return i1.compareTo(i2);
                 });
                 sortedChunks.put(chapter, chunks);
             } catch (Exception e) {
@@ -1814,7 +1825,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param span
      * @param editable
      */
-    private void showFootnote(final ReviewHolder holder, final ReviewListItem item, final NoteSpan span, final int start, final int end, boolean editable) {
+    private void showFootnote(
+            final ReviewHolder holder,
+            final ReviewListItem item,
+            final NoteSpan span,
+            final int start,
+            final int end,
+            boolean editable
+    ) {
         CharSequence marker = span.getPassage();
         CharSequence title = mContext.getResources().getText(R.string.title_footnote);
         if(!marker.toString().isEmpty()) {
@@ -1828,19 +1846,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     .setTitle(title)
                     .setMessage(message)
                     .setPositiveButton(R.string.dismiss, null)
-                    .setNeutralButton(R.string.edit, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            editFootnote(span.getNotes(), holder, item, start, end);
-                        }
-                    })
+                    .setNeutralButton(R.string.edit, (dialog, which) -> editFootnote(span.getNotes(), holder, item, start, end))
 
-                    .setNegativeButton(R.string.label_delete, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            deleteFootnote(span.getNotes(), holder, item, start, end);
-                        }
-                    })
+                    .setNegativeButton(R.string.label_delete, (dialog, which) -> deleteFootnote(span.getNotes(), holder, item, start, end))
                     .show();
 
         } else {
@@ -1861,19 +1869,20 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param start
      * @param end
      */
-    private void deleteFootnote(CharSequence note, final ReviewHolder holder, final ReviewListItem item, final int start, final int end ) {
+    private void deleteFootnote(
+            CharSequence note,
+            final ReviewHolder holder,
+            final ReviewListItem item,
+            final int start,
+            final int end
+    ) {
         final EditText editText = holder.getEditText();
         final CharSequence original = editText.getText();
 
         new AlertDialog.Builder(mContext, R.style.AppTheme_Dialog)
                 .setTitle(R.string.footnote_confirm_delete)
                 .setMessage(note)
-                .setPositiveButton(R.string.label_delete, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        placeFootnote(null, original, start, end, holder, item, editText);
-                    }
-                })
+                .setPositiveButton(R.string.label_delete, (dialog, which) -> placeFootnote(null, original, start, end, holder, item, editText))
                 .setNegativeButton(R.string.title_cancel, null)
                 .show();
     }
@@ -1953,13 +1962,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         final boolean mergeConflictFilterEnabled = showMergeConflict ? mergeConflictFilterMode : false;
         if( (showMergeConflict != mHaveMergeConflict) || (mergeConflictFilterEnabled != mMergeConflictFilterEnabled) ) {
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    OnEventListener listener = getListener();
-                    if(listener != null) {
-                        listener.onEnableMergeConflict(showMergeConflict, mergeConflictFilterEnabled);
-                    }
+            hand.post(() -> {
+                OnEventListener listener = getListener();
+                if(listener != null) {
+                    listener.onEnableMergeConflict(showMergeConflict, mergeConflictFilterEnabled);
                 }
             });
         }
@@ -2198,7 +2204,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         CharSequence text = mSearchingTarget ? item.renderedTargetText : item.renderedSourceText;
         boolean needRender = (text == null);
 
-        boolean matcherEmpty = (matcher.length() == 0);
+        boolean matcherEmpty = (matcher.isEmpty());
         if(matcherEmpty || needRender || (matchNumb < 0)
                 || (target != mSearchingTarget)) {
             return new MatchResults(-1, -1, needRender);
@@ -2311,30 +2317,27 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 }
             }
         };
-        task.addOnFinishedListener(new ManagedTask.OnFinishedListener() {
-            @Override
-            public void onTaskFinished(final ManagedTask task) {
-                if(!task.isCanceled()) {
-                    Log.i(TAG, "filter(): Search finished: '" + matcher + "', count: " + mChunkSearchMatchesCounter);
+        task.addOnFinishedListener(task1 -> {
+            if(!task1.isCanceled()) {
+                Log.i(TAG, "filter(): Search finished: '" + matcher + "', count: " + mChunkSearchMatchesCounter);
 
-                    Handler hand = new Handler(Looper.getMainLooper());
-                    hand.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mSearchPosition = initialPosition;
-                            mLayoutBuildNumber++; // force redraw of displayed cards
-                            triggerNotifyDataSetChanged();
-                            boolean zeroItemsFound = ReviewModeAdapter.this.mChunkSearchMatchesCounter <= 0;
-                            onSearching(false, ReviewModeAdapter.this.mChunkSearchMatchesCounter, zeroItemsFound, zeroItemsFound);
-                            if(!zeroItemsFound) {
-                                checkIfAtSearchLimits();
-                            }
+                Handler hand = new Handler(Looper.getMainLooper());
+                hand.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchPosition = initialPosition;
+                        mLayoutBuildNumber++; // force redraw of displayed cards
+                        triggerNotifyDataSetChanged();
+                        boolean zeroItemsFound = ReviewModeAdapter.this.mChunkSearchMatchesCounter <= 0;
+                        onSearching(false, ReviewModeAdapter.this.mChunkSearchMatchesCounter, zeroItemsFound, zeroItemsFound);
+                        if(!zeroItemsFound) {
+                            checkIfAtSearchLimits();
                         }
-                    });
-                } else {
-                    Log.i(TAG, "filter(): Search cancelled: '" + matcher + "'");
-                    onSearching(false, 0, true, true);
-                }
+                    }
+                });
+            } else {
+                Log.i(TAG, "filter(): Search cancelled: '" + matcher + "'");
+                onSearching(false, 0, true, true);
             }
         });
         if(matcher.isEmpty() && mChunkSearchMatchesCounter == 0) {
@@ -2446,11 +2449,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             checkForConflictSummary(conflictCount, mergeConflictsTask.getItems().size());
 
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    filter(mSearchText, searchSubject, mSearchPosition); // update search filter
-                }
+            hand.post(() -> {
+                filter(mSearchText, searchSubject, mSearchPosition); // update search filter
             });
 
             hand.post(new Runnable() {
@@ -2477,18 +2477,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
             final int position = mFilteredItems.indexOf(((RenderHelpsTask) task).getItem());
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(getListener() != null) {
-                        ReviewHolder holder = (ReviewHolder) getListener().getVisibleViewHolder(position);
-                        if (holder != null) {
-                            holder.setResources(mSourceContainer.language, notes, questions, words);
-                            // TODO: 2/28/17 select the correct tab
-                        } else {
-                            Logger.i(TAG, "UI Miss: " + task.getTaskId());
-                            notifyItemChanged(position);
-                        }
+            hand.post(() -> {
+                if(getListener() != null) {
+                    ReviewHolder holder = (ReviewHolder) getListener().getVisibleViewHolder(position);
+                    if (holder != null) {
+                        holder.setResources(mSourceContainer.language, notes, questions, words);
+                        // TODO: 2/28/17 select the correct tab
+                    } else {
+                        Logger.i(TAG, "UI Miss: " + task.getTaskId());
+                        notifyItemChanged(position);
                     }
                 }
             });
@@ -2502,22 +2499,19 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             item.renderedSourceText = data;
             final int position = mFilteredItems.indexOf(item);
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(getListener() != null) {
-                        ReviewHolder holder = (ReviewHolder) getListener().getVisibleViewHolder(position);
-                        if(holder != null) {
-                            holder.setSource(data);
+            hand.post(() -> {
+                if(getListener() != null) {
+                    ReviewHolder holder = (ReviewHolder) getListener().getVisibleViewHolder(position);
+                    if(holder != null) {
+                        holder.setSource(data);
 
-                            // update the search
-                            item.refreshSearchHighlightSource = false;
-                            int selectPosition = checkForSelectedSearchItem(item, position, false);
-                            selectCurrentSearchItem(position, selectPosition, holder.mSourceBody);
-                        } else {
+                        // update the search
+                        item.refreshSearchHighlightSource = false;
+                        int selectPosition = checkForSelectedSearchItem(item, position, false);
+                        selectCurrentSearchItem(position, selectPosition, holder.binding.getSourceBody());
+                    } else {
 //                            Logger.i(TAG, "UI Miss: " + task.getTaskId());
-                            notifyItemChanged(position);
-                        }
+                        notifyItemChanged(position);
                     }
                 }
             });
@@ -2534,26 +2528,17 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             mShowMergeSummary = false; // we just show the merge summary once
 
             Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    String message = mContext.getString(R.string.merge_summary, conflictCount);
-                    mMergeConflictSummaryDisplayed = true;
+            hand.post(() -> {
+                String message = mContext.getString(R.string.merge_summary, conflictCount);
+                mMergeConflictSummaryDisplayed = true;
 
-                    // pop up merge conflict summary
-                    new AlertDialog.Builder(mContext, R.style.AppTheme_Dialog)
-                            .setTitle(R.string.merge_complete_title)
-                            .setMessage(message)
-                            .setPositiveButton(R.string.label_close, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    mMergeConflictSummaryDisplayed = false;
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
-                }
-
+                // pop up merge conflict summary
+                new AlertDialog.Builder(mContext, R.style.AppTheme_Dialog)
+                        .setTitle(R.string.merge_complete_title)
+                        .setMessage(message)
+                        .setPositiveButton(R.string.label_close, (dialog, which) -> mMergeConflictSummaryDisplayed = false)
+                        .setCancelable(false)
+                        .show();
             });
         }
     }

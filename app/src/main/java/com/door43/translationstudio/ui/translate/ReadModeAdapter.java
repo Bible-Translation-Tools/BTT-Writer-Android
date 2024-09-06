@@ -2,13 +2,14 @@ package com.door43.translationstudio.ui.translate;
 
 import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentValues;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.door43.translationstudio.databinding.FragmentReadListItemBinding;
 import com.google.android.material.tabs.TabLayout;
 import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
@@ -19,9 +20,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.TextView;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
@@ -149,7 +147,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
      */
     private void updateMergeConflict() {
-        final List<String> mChapters = new ArrayList();
+        final List<String> mChapters = new ArrayList<>();
         final List<ListItem> mItems = new ArrayList<>();
         ManagedTask task = new ManagedTask() {
             @Override
@@ -157,12 +155,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             initializeListItems(mItems, mChapters, mSourceContainer);
             }
         };
-        task.addOnFinishedListener(new ManagedTask.OnFinishedListener() {
-            @Override
-            public void onTaskFinished(final ManagedTask task) {
-                doCheckForMergeConflictTask(mItems, mSourceContainer, mTargetTranslation);
-            }
-        });
+        task.addOnFinishedListener(task1 -> doCheckForMergeConflictTask(mItems, mSourceContainer, mTargetTranslation));
         TaskManager.addTask(task);
     }
 
@@ -213,9 +206,9 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
     @Override
     public ViewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_read_list_item, parent, false);
-        ViewHolder vh = new ViewHolder(v);
-        return vh;
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        FragmentReadListItemBinding binding = FragmentReadListItemBinding.inflate(inflater, parent, false);
+        return new ViewHolder(binding);
     }
 
     @Override
@@ -245,7 +238,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 tabContents.add(values);
             }
         }
-        mTabs = tabContents.toArray(new ContentValues[tabContents.size()]);
+        mTabs = tabContents.toArray(new ContentValues[0]);
     }
 
     /**
@@ -262,64 +255,59 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         return chapters.get(position);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindManagedViewHolder(final ViewHolder holder, final int position) {
         int cardMargin = mContext.getResources().getDimensionPixelSize(R.dimen.card_margin);
         int stackedCardMargin = mContext.getResources().getDimensionPixelSize(R.dimen.stacked_card_margin);
         if(mTargetStateOpen[position]) {
             // target on top
-            // elevation takes precedence for API 21+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                holder.mSourceCard.setElevation(BOTTOM_ELEVATION);
-                holder.mTargetCard.setElevation(TOP_ELEVATION);
-            }
-            holder.mTargetCard.bringToFront();
-            CardView.LayoutParams targetParams = (CardView.LayoutParams)holder.mTargetCard.getLayoutParams();
+            holder.binding.sourceTranslationCard.setElevation(BOTTOM_ELEVATION);
+            holder.binding.targetTranslationCard.setElevation(TOP_ELEVATION);
+            holder.binding.targetTranslationCard.bringToFront();
+            CardView.LayoutParams targetParams = (CardView.LayoutParams)holder.binding.targetTranslationCard.getLayoutParams();
             targetParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin);
-            holder.mTargetCard.setLayoutParams(targetParams);
-            CardView.LayoutParams sourceParams = (CardView.LayoutParams)holder.mSourceCard.getLayoutParams();
+            holder.binding.targetTranslationCard.setLayoutParams(targetParams);
+            CardView.LayoutParams sourceParams = (CardView.LayoutParams)holder.binding.sourceTranslationCard.getLayoutParams();
             sourceParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin);
-            holder.mSourceCard.setLayoutParams(sourceParams);
-            ((View) holder.mTargetCard.getParent()).requestLayout();
-            ((View) holder.mTargetCard.getParent()).invalidate();
+            holder.binding.sourceTranslationCard.setLayoutParams(sourceParams);
+            ((View) holder.binding.targetTranslationCard.getParent()).requestLayout();
+            ((View) holder.binding.targetTranslationCard.getParent()).invalidate();
 
-            // disable new tab button so we don't accidently open it
-            holder.mNewTabButton.setEnabled(false);
+            // disable new tab button so we don't accidentally open it
+            holder.binding.newTabButton.setEnabled(false);
         } else {
             // source on top
-            // elevation takes precedence for API 21+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                holder.mTargetCard.setElevation(BOTTOM_ELEVATION);
-                holder.mSourceCard.setElevation(TOP_ELEVATION);
-            }
-            holder.mSourceCard.bringToFront();
-            CardView.LayoutParams sourceParams = (CardView.LayoutParams)holder.mSourceCard.getLayoutParams();
+            holder.binding.targetTranslationCard.setElevation(BOTTOM_ELEVATION);
+            holder.binding.sourceTranslationCard.setElevation(TOP_ELEVATION);
+            holder.binding.sourceTranslationCard.bringToFront();
+            CardView.LayoutParams sourceParams = (CardView.LayoutParams)holder.binding.sourceTranslationCard.getLayoutParams();
             sourceParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin);
-            holder.mSourceCard.setLayoutParams(sourceParams);
-            CardView.LayoutParams targetParams = (CardView.LayoutParams)holder.mTargetCard.getLayoutParams();
+            holder.binding.sourceTranslationCard.setLayoutParams(sourceParams);
+            CardView.LayoutParams targetParams = (CardView.LayoutParams)holder.binding.targetTranslationCard.getLayoutParams();
             targetParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin);
-            holder.mTargetCard.setLayoutParams(targetParams);
-            ((View) holder.mSourceCard.getParent()).requestLayout();
-            ((View) holder.mSourceCard.getParent()).invalidate();
+            holder.binding.targetTranslationCard.setLayoutParams(targetParams);
+            ((View) holder.binding.sourceTranslationCard.getParent()).requestLayout();
+            ((View) holder.binding.sourceTranslationCard.getParent()).invalidate();
 
             // re-enable new tab button
-            holder.mNewTabButton.setEnabled(true);
+            holder.binding.newTabButton.setEnabled(true);
         }
 
-        holder.mTargetCard.setOnClickListener(new View.OnClickListener() {
+        holder.binding.targetTranslationCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openTargetTranslationCard(holder, position);
             }
         });
-        holder.mSourceCard.setOnClickListener(new View.OnClickListener() {
+        holder.binding.sourceTranslationCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 closeTargetTranslationCard(holder, position);
             }
         });
 
-        holder.mNewTabButton.setOnClickListener(new View.OnClickListener() {
+        holder.binding.newTabButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (getListener() != null) {
@@ -365,8 +353,8 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 // display above chapter headings.
                 renderer.setSuppressLeadingMajorSectionHeadings(true);
                 CharSequence heading = renderer.getLeadingMajorSectionHeading(chapterBody);
-                holder.mSourceHeading.setText(heading);
-                holder.mSourceHeading.setVisibility(
+                holder.binding.sourceTranslationHeading.setText(heading);
+                holder.binding.sourceTranslationHeading.setVisibility(
                         heading.length() > 0 ? View.VISIBLE : View.GONE);
             } else {
                 sourceRendering.addEngine(new DefaultRenderer());
@@ -375,15 +363,15 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             mRenderedSourceBody[position] = sourceRendering.start();
         }
 
-        holder.mSourceBody.setText(mRenderedSourceBody[position]);
-        ViewUtil.makeLinksClickable(holder.mSourceBody);
+        holder.binding.sourceTranslationBody.setText(mRenderedSourceBody[position]);
+        ViewUtil.makeLinksClickable(holder.binding.sourceTranslationBody);
 
         String chapterTitle = mSourceContainer.readChunk(chapterSlug, "title").trim();
         if(chapterTitle.isEmpty()) {
             chapterTitle = mSourceContainer.readChunk("front", "title").trim();
             if(!chapterSlug.equals("front")) chapterTitle += " " + Integer.parseInt(chapterSlug);
         }
-        holder.mSourceTitle.setText(chapterTitle);
+        holder.binding.sourceTranslationTitle.setText(chapterTitle);
 
         // render the target chapter body
         if(mRenderedTargetBody[position] == null) {
@@ -409,7 +397,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
         // display begin translation button
         if(mRenderedTargetBody[position].toString().trim().isEmpty()) {
-            holder.mBeginButton.setVisibility(View.VISIBLE);
+            holder.binding.beginTranslatingButton.setVisibility(View.VISIBLE);
             final GestureDetector detector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
                 @Override
                 public boolean onSingleTapUp(MotionEvent e) {
@@ -420,14 +408,14 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                     return true;
                 }
             });
-            holder.mBeginButton.setOnTouchListener(new View.OnTouchListener() {
+            holder.binding.beginTranslatingButton.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     return detector.onTouchEvent(event);
                 }
             });
         } else {
-            holder.mBeginButton.setVisibility(View.GONE);
+            holder.binding.beginTranslatingButton.setVisibility(View.GONE);
         }
 
         // TODO: indicate completed chapter translations
@@ -437,7 +425,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 //            holder.mTargetInnerCard.setBackgroundResource(R.drawable.paper_repeating);
 //        }
 
-        holder.mTargetBody.setText(mRenderedTargetBody[position]);
+        holder.binding.targetTranslationBody.setText(mRenderedTargetBody[position]);
 
 //        ChapterTranslation getChapterTranslation(String chapterSlug);
 
@@ -465,27 +453,27 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             if(!chapterSlug.equals("front")) targetCardTitle += " " + Integer.parseInt(chapterSlug);
         }
 
-        holder.mTargetTitle.setText(targetCardTitle + " - " + mTargetLanguage.name);
+        holder.binding.targetTranslationTitle.setText(targetCardTitle + " - " + mTargetLanguage.name);
 
         // load tabs
-        holder.mTabLayout.setOnTabSelectedListener(null);
-        holder.mTabLayout.removeAllTabs();
+        holder.binding.sourceTranslationTabs.setOnTabSelectedListener(null);
+        holder.binding.sourceTranslationTabs.removeAllTabs();
         for(ContentValues values:mTabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
             View tabLayout = createRemovableTabLayout(mContext, getListener(), tag, title);
 
-            TabLayout.Tab tab = holder.mTabLayout.newTab();
+            TabLayout.Tab tab = holder.binding.sourceTranslationTabs.newTab();
             tab.setTag(tag);
             tab.setCustomView(tabLayout);
-            holder.mTabLayout.addTab(tab);
+            holder.binding.sourceTranslationTabs.addTab(tab);
 
-            applyLanguageTypefaceToTab(mContext, holder.mTabLayout, values, title);
+            applyLanguageTypefaceToTab(mContext, holder.binding.sourceTranslationTabs, values, title);
         }
 
         // select correct tab
-        for(int i = 0; i < holder.mTabLayout.getTabCount(); i ++) {
-            TabLayout.Tab tab = holder.mTabLayout.getTabAt(i);
+        for(int i = 0; i < holder.binding.sourceTranslationTabs.getTabCount(); i ++) {
+            TabLayout.Tab tab = holder.binding.sourceTranslationTabs.getTabAt(i);
             if(tab.getTag().equals(mSourceContainer.slug)) {
                 tab.select();
                 break;
@@ -493,7 +481,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         }
 
         // hook up listener
-        holder.mTabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        holder.binding.sourceTranslationTabs.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 final String sourceTranslationId = (String) tab.getTag();
@@ -522,17 +510,17 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         // set up fonts
         if(holder.mLayoutBuildNumber != mLayoutBuildNumber) {
             holder.mLayoutBuildNumber = mLayoutBuildNumber;
-            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.mSourceHeading, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.mSourceTitle, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.format(mContext, TranslationType.SOURCE, holder.mSourceBody, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.formatTitle(mContext, TranslationType.TARGET, holder.mTargetTitle, mTargetLanguage.slug, mTargetLanguage.direction);
-            Typography.format(mContext, TranslationType.TARGET, holder.mTargetBody, mTargetLanguage.slug, mTargetLanguage.direction);
+            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.binding.sourceTranslationHeading, mSourceLanguage.slug, mSourceLanguage.direction);
+            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.binding.sourceTranslationTitle, mSourceLanguage.slug, mSourceLanguage.direction);
+            Typography.format(mContext, TranslationType.SOURCE, holder.binding.sourceTranslationBody, mSourceLanguage.slug, mSourceLanguage.direction);
+            Typography.formatTitle(mContext, TranslationType.TARGET, holder.binding.targetTranslationTitle, mTargetLanguage.slug, mTargetLanguage.direction);
+            Typography.format(mContext, TranslationType.TARGET, holder.binding.targetTranslationBody, mTargetLanguage.slug, mTargetLanguage.direction);
         }
 
         if (mTabs.length >= MAX_SOURCE_ITEMS) {
-            holder.mNewTabButton.setVisibility(View.GONE);
+            holder.binding.newTabButton.setVisibility(View.GONE);
         } else {
-            holder.mNewTabButton.setVisibility(View.VISIBLE);
+            holder.binding.newTabButton.setVisibility(View.VISIBLE);
         }
     }
 
@@ -566,7 +554,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      */
     public void closeTargetTranslationCard(final ViewHolder holder, final int position, final boolean leftToRight) {
         if (mTargetStateOpen[position]) {
-            ViewUtil.animateSwapCards(holder.mTargetCard, holder.mSourceCard, TOP_ELEVATION, BOTTOM_ELEVATION, leftToRight, new Animation.AnimationListener() {
+            ViewUtil.animateSwapCards(holder.binding.targetTranslationCard, holder.binding.sourceTranslationCard, TOP_ELEVATION, BOTTOM_ELEVATION, leftToRight, new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
 
@@ -584,7 +572,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             });
 
             // re-enable new tab button
-            holder.mNewTabButton.setEnabled(true);
+            holder.binding.newTabButton.setEnabled(true);
         }
     }
 
@@ -607,25 +595,32 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      */
     public void openTargetTranslationCard(final ViewHolder holder, final int position, final boolean leftToRight) {
         if (!mTargetStateOpen[position]) {
-            ViewUtil.animateSwapCards(holder.mSourceCard, holder.mTargetCard, TOP_ELEVATION, BOTTOM_ELEVATION, leftToRight, new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
+            ViewUtil.animateSwapCards(
+                    holder.binding.sourceTranslationCard,
+                    holder.binding.targetTranslationCard,
+                    TOP_ELEVATION,
+                    BOTTOM_ELEVATION,
+                    leftToRight,
+                    new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {
 
-                }
+                        }
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    mTargetStateOpen[position] = true;
-                }
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            mTargetStateOpen[position] = true;
+                        }
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
 
-                }
-            });
+                        }
+                    }
+            );
 
-            // disable new tab button so we don't accidently open it
-            holder.mNewTabButton.setEnabled(false);
+            // disable new tab button so we don't accidentally open it
+            holder.binding.newTabButton.setEnabled(false);
         }
     }
 
@@ -656,30 +651,12 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        private final Button mBeginButton;
-        private final TextView mTargetTitle;
-        private final TextView mTargetBody;
-        private final CardView mTargetCard;
-        private final CardView mSourceCard;
-        private final ImageButton mNewTabButton;
-        public TextView mSourceHeading;
-        public TextView mSourceTitle;
-        public TextView mSourceBody;
-        public TabLayout mTabLayout;
+        public final FragmentReadListItemBinding binding;
         public int mLayoutBuildNumber = -1;
 
-        public ViewHolder(View v) {
-            super(v);
-            mSourceCard = (CardView)v.findViewById(R.id.source_translation_card);
-            mSourceHeading = (TextView)v.findViewById(R.id.source_translation_heading);
-            mSourceTitle = (TextView)v.findViewById(R.id.source_translation_title);
-            mSourceBody = (TextView)v.findViewById(R.id.source_translation_body);
-            mTargetCard = (CardView)v.findViewById(R.id.target_translation_card);
-            mTargetTitle = (TextView)v.findViewById(R.id.target_translation_title);
-            mTargetBody = (TextView)v.findViewById(R.id.target_translation_body);
-            mTabLayout = (TabLayout)v.findViewById(R.id.source_translation_tabs);
-            mNewTabButton = (ImageButton) v.findViewById(R.id.new_tab_button);
-            mBeginButton = (Button) v.findViewById(R.id.begin_translating_button);
+        public ViewHolder(FragmentReadListItemBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
     }
 }
