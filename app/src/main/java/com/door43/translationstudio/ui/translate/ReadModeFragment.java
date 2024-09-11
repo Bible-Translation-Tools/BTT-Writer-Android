@@ -1,11 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.app.Activity;
-import android.os.Bundle;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.MotionEvent;
-
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 
 /**
  * Created by joel on 9/8/2015.
@@ -13,14 +9,8 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 public class ReadModeFragment extends ViewModeFragment {
 
     @Override
-    ViewModeAdapter generateAdapter(
-            Activity activity,
-            String targetTranslationId,
-            String chapterId,
-            String frameId,
-            Bundle extras
-    ) {
-        return new ReadModeAdapter(activity, targetTranslationId, chapterId);
+    ViewModeAdapter generateAdapter() {
+        return new ReadModeAdapter();
     }
 
     /***
@@ -50,11 +40,6 @@ public class ReadModeFragment extends ViewModeFragment {
     @Override
     protected void onLeftSwipe(MotionEvent e1, MotionEvent e2) {
         doTranslationCardToggle(e1, e2, true);
-    }
-
-    @Override
-    protected void onSourceContainerLoaded(ResourceContainer sourceContainer) {
-
     }
 
     @Override

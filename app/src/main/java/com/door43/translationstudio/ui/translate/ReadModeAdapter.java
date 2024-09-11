@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.translate;
 import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.ContentValues;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,14 +20,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.ChapterTranslation;
-import com.door43.translationstudio.core.FrameTranslation;
 import com.door43.translationstudio.core.ProjectTranslation;
-import com.door43.translationstudio.core.SlugSorter;
 import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
@@ -37,21 +32,12 @@ import com.door43.translationstudio.rendering.ClickableRenderingEngine;
 import com.door43.translationstudio.rendering.Clickables;
 import com.door43.translationstudio.rendering.DefaultRenderer;
 import com.door43.translationstudio.rendering.RenderingGroup;
-import com.door43.translationstudio.tasks.CheckForMergeConflictsTask;
 import com.door43.translationstudio.ui.spannables.NoteSpan;
 import com.door43.translationstudio.ui.spannables.Span;
 import com.door43.widget.ViewUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.SourceLanguage;
-import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
@@ -59,122 +45,64 @@ import org.unfoldingword.tools.taskmanager.TaskManager;
 /**
  * Created by joel on 9/9/2015.
  */
-public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>  implements ManagedTask.OnFinishedListener {
-
-    private CharSequence[] mRenderedTargetBody = new CharSequence[0];
-    private CharSequence[] mRenderedSourceBody = new CharSequence[0];
-
-    private final String startingChapterSlug;
-    private SourceLanguage mSourceLanguage;
-    private final TargetLanguage mTargetLanguage;
-    private boolean[] mTargetStateOpen = new boolean[0];
-    private final Activity mContext;
+public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder> {
     private static final int BOTTOM_ELEVATION = 2;
     private static final int TOP_ELEVATION = 3;
-    private final TargetTranslation mTargetTranslation;
-    private ResourceContainer mSourceContainer;
-    private final Door43Client mLibrary;
-    private final Translator mTranslator;
-    private List<String> chapters = new ArrayList<>();
-    private int mLayoutBuildNumber = 0;
-    private ContentValues[] mTabs = new ContentValues[0];
-    private Map<String, List<String>> chunks = new HashMap<>();
 
-    public ReadModeAdapter(Activity context, String targetTranslationId, String startingChapterSlug) {
-        this.startingChapterSlug = startingChapterSlug;
+    private CharSequence[] renderedTargetBody = new CharSequence[0];
+    private CharSequence[] renderedSourceBody = new CharSequence[0];
 
-        mLibrary = App.getLibrary();
-        mTranslator = App.getTranslator();
-        mContext = context;
-        mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        mTargetLanguage = mTranslator.languageFromTargetTranslation(mTargetTranslation);
+    private boolean[] targetStateOpen = new boolean[0];
+
+    public ReadModeAdapter() {
     }
 
-    /**
-     * Updates the source translation displayed
-     * @param sourceContainer
-     */
-    public void setSourceContainer(ResourceContainer sourceContainer) {
-        mSourceContainer = sourceContainer;
-        this.chapters = new ArrayList<>();
-        this.chunks = new HashMap<>();
-        mLayoutBuildNumber++; // force resetting of fonts
+    @Override
+    public void initializeListItems(
+            List<ListItem> items,
+            String startingChapter,
+            String startingChunk
+    ) {
+        chapters.clear();
+        this.items.clear();
 
         setListStartPosition(0);
+        boolean foundStartingChapter = false;
 
-        if(mSourceContainer != null) {
-            mSourceLanguage = mLibrary.index.getSourceLanguage(mSourceContainer.language.slug);
-            boolean foundStartingChapter = false;
-            SlugSorter sorter = new SlugSorter();
-            List<String> chapterSlugs = sorter.sort(mSourceContainer.chapters());
-
-            for (String chapterSlug : chapterSlugs) {
-                if(!foundStartingChapter && chapterSlug.equals(startingChapterSlug)) {
-                    setListStartPosition(this.chapters.size());
-                    foundStartingChapter = true;
-                }
-                this.chapters.add(chapterSlug);
-                List<String> chunkSlugs = sorter.sort(mSourceContainer.chunks(chapterSlug));
-                this.chunks.put(chapterSlug, chunkSlugs);
+        for (ListItem item: items) {
+            if (!foundStartingChapter && item.chapterSlug.equals(startingChapter)) {
+                setListStartPosition(this.items.size());
+                foundStartingChapter = true;
+            }
+            if (!chapters.contains(item.chapterSlug)) {
+                chapters.add(item.chapterSlug);
+                this.items.add(createListItem(item));
             }
         }
 
-        mTargetStateOpen = new boolean[chapters.size()];
-        mRenderedSourceBody = new CharSequence[chapters.size()];
-        mRenderedTargetBody = new CharSequence[chapters.size()];
-
-        loadTabInfo();
+        targetStateOpen = new boolean[chapters.size()];
+        renderedSourceBody = new CharSequence[chapters.size()];
+        renderedTargetBody = new CharSequence[chapters.size()];
 
         triggerNotifyDataSetChanged();
         updateMergeConflict();
     }
 
     @Override
-    public ListItem createListItem(String chapterSlug, String chunkSlug) {
-        return new ReadListItem(chapterSlug, chunkSlug);
-    }
-
-    /**
-     * A simple container for list items
-     */
-    private static class ReadListItem extends ListItem {
-        public ReadListItem(String chapterSlug, String chunkSlug) {
-            super(chapterSlug, chunkSlug);
-        }
+    public ReadListItem createListItem(ListItem item) {
+        return item.toType(ReadListItem::new);
     }
 
     /**
      * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
      */
     private void updateMergeConflict() {
-        final List<String> mChapters = new ArrayList<>();
-        final List<ListItem> mItems = new ArrayList<>();
-        ManagedTask task = new ManagedTask() {
-            @Override
-            public void start() {
-            initializeListItems(mItems, mChapters, mSourceContainer);
-            }
-        };
-        task.addOnFinishedListener(task1 -> doCheckForMergeConflictTask(mItems, mSourceContainer, mTargetTranslation));
-        TaskManager.addTask(task);
+        doCheckForMergeConflictTask();
     }
 
     @Override
     public void onTaskFinished(ManagedTask task) {
         TaskManager.clearTask(task);
-
-        if (task instanceof CheckForMergeConflictsTask) {
-            CheckForMergeConflictsTask mergeConflictsTask = (CheckForMergeConflictsTask) task;
-
-            final boolean mergeConflictFound = mergeConflictsTask.hasMergeConflict();
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(() -> {
-                OnEventListener listener = getListener();
-                if(listener != null) {
-                    listener.onEnableMergeConflict(mergeConflictFound, false);
-                }
-            });
-        }
     }
 
     @Override
@@ -202,6 +130,11 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     }
 
     @Override
+    public ListItem getItem(String chapterSlug, String chunkSlug) {
+        return items.get(getItemPosition(chapterSlug, chunkSlug));
+    }
+
+    @Override
     public ViewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         FragmentReadListItemBinding binding = FragmentReadListItemBinding.inflate(inflater, parent, false);
@@ -210,33 +143,6 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
     @Override
     public void markAllChunksDone() {}
-
-    /**
-     * Rebuilds the card tabs
-     */
-    private void loadTabInfo() {
-        List<ContentValues> tabContents = new ArrayList<>();
-        String[] sourceTranslationSlugs = mTranslator.getOpenSourceTranslations(mTargetTranslation.getId());
-        for(String slug:sourceTranslationSlugs) {
-            Translation st = mLibrary.index().getTranslation(slug);
-            if(st != null) {
-                ContentValues values = new ContentValues();
-                String title = st.language.name + " " + st.resource.slug.toUpperCase();
-                values.put("title", title);
-                // include the resource id if there are more than one
-                if(mLibrary.index().getResources(st.language.slug, st.project.slug).size() > 1) {
-                    values.put("title", title);
-                } else {
-                    values.put("title", st.language.name);
-                }
-                values.put("tag", st.resourceContainerSlug);
-
-                getFontForLanguageTab(mContext, st, values);
-                tabContents.add(values);
-            }
-        }
-        mTabs = tabContents.toArray(new ContentValues[0]);
-    }
 
     /**
      * get the chapter for the position, or null if not found
@@ -255,9 +161,9 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindManagedViewHolder(final ViewHolder holder, final int position) {
-        int cardMargin = mContext.getResources().getDimensionPixelSize(R.dimen.card_margin);
-        int stackedCardMargin = mContext.getResources().getDimensionPixelSize(R.dimen.stacked_card_margin);
-        if(mTargetStateOpen[position]) {
+        int cardMargin = context.getResources().getDimensionPixelSize(R.dimen.card_margin);
+        int stackedCardMargin = context.getResources().getDimensionPixelSize(R.dimen.stacked_card_margin);
+        if(targetStateOpen[position]) {
             // target on top
             holder.binding.sourceTranslationCard.setElevation(BOTTOM_ELEVATION);
             holder.binding.targetTranslationCard.setElevation(TOP_ELEVATION);
@@ -305,16 +211,12 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         });
 
         final String chapterSlug = chapters.get(position);
+        final ReadListItem item = (ReadListItem) items.get(position);
 
         // render the source chapter body
-        if(mRenderedSourceBody[position] == null) {
-            String chapterBody = "";
-            for(String chunk:chunks.get(chapterSlug)) {
-                if(!chunk.equals("title")) {
-                    chapterBody += mSourceContainer.readChunk(chapterSlug, chunk);
-                }
-            }
-            TranslationFormat bodyFormat = TranslationFormat.parse(mSourceContainer.contentMimeType);
+        if(renderedSourceBody[position] == null) {
+            String sourceChapterBody = item.getSourceChapterBody();
+            TranslationFormat bodyFormat = TranslationFormat.parse(item.source.contentMimeType);
             RenderingGroup sourceRendering = new RenderingGroup();
             if (Clickables.isClickableFormat(bodyFormat)) {
                 // TODO: add click listeners
@@ -322,17 +224,15 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                     @Override
                     public void onClick(View view, Span span, int start, int end) {
                         if(span instanceof NoteSpan) {
-                            new AlertDialog.Builder(mContext,R.style.AppTheme_Dialog)
+                            new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
                                     .setTitle(R.string.title_footnote)
                                     .setMessage(((NoteSpan)span).getNotes())
                                     .setPositiveButton(R.string.dismiss, null)
                                     .show();
                         }
                     }
-
                     @Override
                     public void onLongClick(View view, Span span, int start, int end) {
-
                     }
                 };
                 ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(bodyFormat, sourceRendering, null, noteClickListener, true);
@@ -340,53 +240,48 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 // In read mode (and only in read mode), pull leading major section headings out for
                 // display above chapter headings.
                 renderer.setSuppressLeadingMajorSectionHeadings(true);
-                CharSequence heading = renderer.getLeadingMajorSectionHeading(chapterBody);
+                CharSequence heading = renderer.getLeadingMajorSectionHeading(sourceChapterBody);
                 holder.binding.sourceTranslationHeading.setText(heading);
                 holder.binding.sourceTranslationHeading.setVisibility(
                         heading.length() > 0 ? View.VISIBLE : View.GONE);
             } else {
                 sourceRendering.addEngine(new DefaultRenderer());
             }
-            sourceRendering.init(chapterBody);
-            mRenderedSourceBody[position] = sourceRendering.start();
+            sourceRendering.init(sourceChapterBody);
+            renderedSourceBody[position] = sourceRendering.start();
         }
 
-        holder.binding.sourceTranslationBody.setText(mRenderedSourceBody[position]);
+        holder.binding.sourceTranslationBody.setText(renderedSourceBody[position]);
         ViewUtil.makeLinksClickable(holder.binding.sourceTranslationBody);
 
-        String chapterTitle = mSourceContainer.readChunk(chapterSlug, "title").trim();
-        if(chapterTitle.isEmpty()) {
-            chapterTitle = mSourceContainer.readChunk("front", "title").trim();
-            if(!chapterSlug.equals("front")) chapterTitle += " " + Integer.parseInt(chapterSlug);
-        }
-        holder.binding.sourceTranslationTitle.setText(chapterTitle);
+        holder.binding.sourceTranslationTitle.setText(item.getChapterTitle());
 
         // render the target chapter body
-        if(mRenderedTargetBody[position] == null) {
-            TranslationFormat bodyFormat = mTargetTranslation.getFormat();
-            String chapterBody = "";
-            SlugSorter sorter = new SlugSorter();
-            List<String> frameSlugs = sorter.sort(mSourceContainer.chunks(chapterSlug));
-            for (String frameSlug : frameSlugs) {
-                FrameTranslation frameTranslation = mTargetTranslation.getFrameTranslation(chapterSlug, frameSlug, bodyFormat);
-                chapterBody += " " + frameTranslation.body;
-            }
+        if(renderedTargetBody[position] == null) {
+            TranslationFormat bodyFormat = item.target.getFormat();
+            String chapterBody = item.getTargetChapterBody();
             RenderingGroup targetRendering = new RenderingGroup();
             if(Clickables.isClickableFormat(bodyFormat)) {
                 // TODO: add click listeners
-                ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(bodyFormat, targetRendering, null, null, true);
+                ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(
+                        bodyFormat,
+                        targetRendering,
+                        null,
+                        null,
+                        true
+                );
                 renderer.setVersesEnabled(true);
             } else {
                 targetRendering.addEngine(new DefaultRenderer());
             }
             targetRendering.init(chapterBody);
-            mRenderedTargetBody[position] = targetRendering.start();
+            renderedTargetBody[position] = targetRendering.start();
         }
 
         // display begin translation button
-        if(mRenderedTargetBody[position].toString().trim().isEmpty()) {
+        if(renderedTargetBody[position].toString().trim().isEmpty()) {
             holder.binding.beginTranslatingButton.setVisibility(View.VISIBLE);
-            final GestureDetector detector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
+            final GestureDetector detector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
                 @Override
                 public boolean onSingleTapUp(MotionEvent e) {
                     Bundle args = new Bundle();
@@ -401,63 +296,57 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             holder.binding.beginTranslatingButton.setVisibility(View.GONE);
         }
 
-        // TODO: indicate completed chapter translations
-//        if(frameTranslation.isTitleFinished()) {
-//            holder.mTargetInnerCard.setBackgroundResource(R.color.white);
-//        } else {
-//            holder.mTargetInnerCard.setBackgroundResource(R.drawable.paper_repeating);
-//        }
-
-        holder.binding.targetTranslationBody.setText(mRenderedTargetBody[position]);
-
-//        ChapterTranslation getChapterTranslation(String chapterSlug);
+        holder.binding.targetTranslationBody.setText(renderedTargetBody[position]);
 
         String targetCardTitle = "";
 
         // look for translated chapter title first
-        final ChapterTranslation chapterTranslation = mTargetTranslation.getChapterTranslation(chapterSlug);
+        final ChapterTranslation chapterTranslation = item.target.getChapterTranslation(chapterSlug);
         if(null != chapterTranslation) {
             targetCardTitle = chapterTranslation.title.trim();
         }
 
-        if (targetCardTitle.isEmpty() && !chapterTitle.trim().isEmpty()) { // if no target chapter title translation, fall back to source chapter title
-            targetCardTitle = chapterTitle.trim();
+        // if no target chapter title translation, fall back to source chapter title
+        if (targetCardTitle.isEmpty() && !item.getChapterTitle().trim().isEmpty()) {
+            targetCardTitle = item.getChapterTitle().trim();
         }
 
         if (targetCardTitle.isEmpty()) { // if no chapter titles, fall back to project title, try translated title first
-            ProjectTranslation projTrans = mTargetTranslation.getProjectTranslation();
+            ProjectTranslation projTrans = item.target.getProjectTranslation();
             if(!projTrans.getTitle().trim().isEmpty()) {
                 targetCardTitle = projTrans.getTitle().trim() + " " + Integer.parseInt(chapterSlug);
             }
         }
 
         if (targetCardTitle.isEmpty()) { // fall back to project source title
-            targetCardTitle = mSourceContainer.readChunk("front", "title").trim();
+            targetCardTitle = item.source.readChunk("front", "title").trim();
             if(!chapterSlug.equals("front")) targetCardTitle += " " + Integer.parseInt(chapterSlug);
         }
 
-        holder.binding.targetTranslationTitle.setText(targetCardTitle + " - " + mTargetLanguage.name);
+        holder.binding.targetTranslationTitle.setText(targetCardTitle + " - " + item.target.getTargetLanguage().name);
 
         // load tabs
         holder.binding.sourceTranslationTabs.setOnTabSelectedListener(null);
         holder.binding.sourceTranslationTabs.removeAllTabs();
-        for(ContentValues values:mTabs) {
+
+        var tabs = item.getTabs().invoke().toArray(new ContentValues[0]);
+        for(ContentValues values:tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            View tabLayout = createRemovableTabLayout(mContext, getListener(), tag, title);
+            View tabLayout = createRemovableTabLayout(context, getListener(), tag, title);
 
             TabLayout.Tab tab = holder.binding.sourceTranslationTabs.newTab();
             tab.setTag(tag);
             tab.setCustomView(tabLayout);
             holder.binding.sourceTranslationTabs.addTab(tab);
 
-            applyLanguageTypefaceToTab(mContext, holder.binding.sourceTranslationTabs, values, title);
+            applyLanguageTypefaceToTab(context, holder.binding.sourceTranslationTabs, values, title);
         }
 
         // select correct tab
         for(int i = 0; i < holder.binding.sourceTranslationTabs.getTabCount(); i ++) {
             TabLayout.Tab tab = holder.binding.sourceTranslationTabs.getTabAt(i);
-            if(tab.getTag().equals(mSourceContainer.slug)) {
+            if(tab.getTag().equals(item.source.slug)) {
                 tab.select();
                 break;
             }
@@ -473,29 +362,25 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                     hand.post(() -> getListener().onSourceTranslationTabClick(sourceTranslationId));
                 }
             }
-
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-
             }
-
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-
             }
         });
 
         // set up fonts
-        if(holder.mLayoutBuildNumber != mLayoutBuildNumber) {
-            holder.mLayoutBuildNumber = mLayoutBuildNumber;
-            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.binding.sourceTranslationHeading, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.binding.sourceTranslationTitle, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.format(mContext, TranslationType.SOURCE, holder.binding.sourceTranslationBody, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.formatTitle(mContext, TranslationType.TARGET, holder.binding.targetTranslationTitle, mTargetLanguage.slug, mTargetLanguage.direction);
-            Typography.format(mContext, TranslationType.TARGET, holder.binding.targetTranslationBody, mTargetLanguage.slug, mTargetLanguage.direction);
+        if(holder.layoutBuildNumber != layoutBuildNumber) {
+            holder.layoutBuildNumber = layoutBuildNumber;
+            Typography.formatTitle(context, TranslationType.SOURCE, holder.binding.sourceTranslationHeading, item.source.language.slug, item.source.language.direction);
+            Typography.formatTitle(context, TranslationType.SOURCE, holder.binding.sourceTranslationTitle, item.source.language.slug, item.source.language.direction);
+            Typography.format(context, TranslationType.SOURCE, holder.binding.sourceTranslationBody, item.source.language.slug, item.source.language.direction);
+            Typography.formatTitle(context, TranslationType.TARGET, holder.binding.targetTranslationTitle, item.target.getTargetLanguage().slug, item.target.getTargetLanguage().direction);
+            Typography.format(context, TranslationType.TARGET, holder.binding.targetTranslationBody, item.target.getTargetLanguage().slug, item.target.getTargetLanguage().direction);
         }
 
-        if (mTabs.length >= MAX_SOURCE_ITEMS) {
+        if (tabs.length >= MAX_SOURCE_ITEMS) {
             holder.binding.newTabButton.setVisibility(View.GONE);
         } else {
             holder.binding.newTabButton.setVisibility(View.VISIBLE);
@@ -515,7 +400,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      * @return true if action was taken, else false
      */
     public void toggleTargetTranslationCard(final ViewHolder holder, final int position, final boolean swipeLeft) {
-        if (mTargetStateOpen[position]) {
+        if (targetStateOpen[position]) {
             closeTargetTranslationCard( holder, position, !swipeLeft);
             return;
         }
@@ -529,7 +414,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      * @param leftToRight
      */
     public void closeTargetTranslationCard(final ViewHolder holder, final int position, final boolean leftToRight) {
-        if (mTargetStateOpen[position]) {
+        if (targetStateOpen[position]) {
             ViewUtil.animateSwapCards(holder.binding.targetTranslationCard, holder.binding.sourceTranslationCard, TOP_ELEVATION, BOTTOM_ELEVATION, leftToRight, new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
@@ -538,7 +423,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    mTargetStateOpen[position] = false;
+                    targetStateOpen[position] = false;
                 }
 
                 @Override
@@ -570,7 +455,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      * @param leftToRight
      */
     public void openTargetTranslationCard(final ViewHolder holder, final int position, final boolean leftToRight) {
-        if (!mTargetStateOpen[position]) {
+        if (!targetStateOpen[position]) {
             ViewUtil.animateSwapCards(
                     holder.binding.sourceTranslationCard,
                     holder.binding.targetTranslationCard,
@@ -585,7 +470,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
                         @Override
                         public void onAnimationEnd(Animation animation) {
-                            mTargetStateOpen[position] = true;
+                            targetStateOpen[position] = true;
                         }
 
                         @Override
@@ -628,7 +513,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public final FragmentReadListItemBinding binding;
-        public int mLayoutBuildNumber = -1;
+        public int layoutBuildNumber = -1;
 
         public ViewHolder(FragmentReadListItemBinding binding) {
             super(binding.getRoot());

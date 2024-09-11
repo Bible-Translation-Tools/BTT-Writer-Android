@@ -203,11 +203,11 @@ class BackupDialog : DialogFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.translation.observe(this@BackupDialog) {
+        viewModel.translation.observe(this) {
             targetTranslation = it
                 ?: throw NullPointerException("Target translation not found.")
         }
-        viewModel.progress.observe(this@BackupDialog) {
+        viewModel.progress.observe(this) {
             if (it != null) {
                 progressDialog?.show()
                 progressDialog?.setProgress(it.progress)
@@ -217,7 +217,7 @@ class BackupDialog : DialogFragment() {
                 progressDialog?.dismiss()
             }
         }
-        viewModel.exportResult.observe(this@BackupDialog) {
+        viewModel.exportResult.observe(this) {
             it?.let { result ->
                 when (result.taskName) {
                     Export.TaskName.EXPORT_USFM -> {
@@ -246,7 +246,7 @@ class BackupDialog : DialogFragment() {
                 viewModel.clearResults()
             }
         }
-        viewModel.pullTranslationResult.observe(this@BackupDialog) {
+        viewModel.pullTranslationResult.observe(this) {
             it?.let { result ->
                 val status = result.status
                 // TRICKY: we continue to push for unknown status in case
@@ -306,7 +306,7 @@ class BackupDialog : DialogFragment() {
                 }
             }
         }
-        viewModel.pushTranslationResult.observe(this@BackupDialog) {
+        viewModel.pushTranslationResult.observe(this) {
             it?.let { result ->
                 when {
                     result.status == PushTargetTranslation.Status.OK -> {
@@ -328,7 +328,7 @@ class BackupDialog : DialogFragment() {
                 }
             }
         }
-        viewModel.registeredSSHKeys.observe(this@BackupDialog) {
+        viewModel.registeredSSHKeys.observe(this) {
             it?.let { registered ->
                 if (registered) {
                     Logger.i(this.javaClass.name, "SSH keys were registered with the server")
@@ -339,7 +339,7 @@ class BackupDialog : DialogFragment() {
                 }
             }
         }
-        viewModel.repoCreated.observe(this@BackupDialog) {
+        viewModel.repoCreated.observe(this) {
             it?.let { created ->
                 if (created) {
                     Logger.i(
@@ -352,7 +352,7 @@ class BackupDialog : DialogFragment() {
                 }
             }
         }
-        viewModel.exportedToApp.observe(this@BackupDialog) {
+        viewModel.exportedToApp.observe(this) {
             it?.let { exportFile ->
                 if (exportFile.exists()) {
                     val uri = FileProvider.getUriForFile(

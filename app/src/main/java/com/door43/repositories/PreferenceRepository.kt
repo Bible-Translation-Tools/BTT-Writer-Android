@@ -141,7 +141,9 @@ class PreferenceRepository @Inject constructor(
         } else {
             val ids = idSet.split("\\|".toRegex()).toTypedArray()
             for (i in ids.indices) {
-                ids[i] = Migration.migrateSourceTranslationSlug(ids[i])
+                Migration.migrateSourceTranslationSlug(ids[i])?.let {
+                    ids[i] = it
+                }
             }
             return ids
         }
@@ -164,7 +166,7 @@ class PreferenceRepository @Inject constructor(
         editor.apply()
     }
 
-    override fun getSelectedSourceTranslationId(targetTranslationId: String): String {
+    override fun getSelectedSourceTranslationId(targetTranslationId: String): String? {
         var selectedSourceTranslationId = privatePrefs.getString(
             SELECTED_SOURCE_TRANSLATION + targetTranslationId,
             null

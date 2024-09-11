@@ -150,7 +150,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         // manual location settings
         int modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1);
         if (modeIndex > 0 && modeIndex < TranslationViewMode.values().length) {
-            viewModel.setLastViewMode(TranslationViewMode.values()[modeIndex]);
+            viewModel.setLastViewMode(modeIndex);
         }
 
         binding.searchPane.downSearch.setOnClickListener(v -> moveSearch(true));
@@ -250,7 +250,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                 if(mFragment instanceof ViewModeFragment) {
                     ViewModeFragment viewModeFragment = (ViewModeFragment) TargetTranslationActivity.this.mFragment;
                     viewModeFragment.setShowMergeSummary(mShowConflictSummary);
-                    viewModeFragment.setMergeConflictFilter(enableFilter, forceMergeConflict);
+                    //viewModeFragment.setMergeConflictFilter(enableFilter, forceMergeConflict);
                 }
                 onEnableMergeConflict(mHaveMergeConflict, mMergeConflictFilterEnabled);
             }
@@ -1032,7 +1032,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     }
 
     @Override
-    public void onNoSourceTranslations(String targetTranslationId) {
+    public void onNoSourceTranslations() {
         if (!(mFragment instanceof FirstTabFragment)) {
             mFragment = new FirstTabFragment();
             mFragment.setArguments(getIntent().getExtras());

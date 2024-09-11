@@ -1,11 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.app.Activity;
-import android.os.Bundle;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.MotionEvent;
-
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 
 /**
  * Displays translations in chunks
@@ -15,18 +11,8 @@ public class ChunkModeFragment extends ViewModeFragment {
     public static final String EXTRA_TARGET_OPEN = "extra_target_start_open";
 
     @Override
-    ViewModeAdapter generateAdapter(
-            Activity activity,
-            String targetTranslationId,
-            String chapterId,
-            String frameId,
-            Bundle extras
-    ) {
-        boolean openTarget = false;
-        if(extras != null && extras.containsKey(EXTRA_TARGET_OPEN)) {
-            openTarget = extras.getBoolean(EXTRA_TARGET_OPEN, false);
-        }
-        return new ChunkModeAdapter(activity, targetTranslationId, chapterId, frameId, openTarget);
+    ViewModeAdapter generateAdapter() {
+        return new ChunkModeAdapter();
     }
 
     /***
@@ -56,11 +42,6 @@ public class ChunkModeFragment extends ViewModeFragment {
     @Override
     protected void onLeftSwipe(MotionEvent e1, MotionEvent e2) {
         doTranslationCardToggle(e1, e2, true);
-    }
-
-    @Override
-    protected void onSourceContainerLoaded(ResourceContainer sourceContainer) {
-
     }
 
     @Override

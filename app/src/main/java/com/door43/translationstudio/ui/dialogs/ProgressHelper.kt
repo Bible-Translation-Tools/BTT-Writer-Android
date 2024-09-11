@@ -31,6 +31,10 @@ object ProgressHelper {
             }
         }
 
+        fun isShowing(): Boolean {
+            return dialog?.isShowing == true
+        }
+
         fun setMessage(message: String?) {
             binding.message.text = message
         }

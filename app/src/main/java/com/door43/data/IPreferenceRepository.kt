@@ -115,7 +115,7 @@ interface IPreferenceRepository {
      * @param targetTranslationId
      * @return
      */
-    fun getSelectedSourceTranslationId(targetTranslationId: String): String
+    fun getSelectedSourceTranslationId(targetTranslationId: String): String?
 
     /**
      * Sets or removes the selected open source translation tab on a target translation

@@ -1,165 +1,231 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import com.door43.translationstudio.core.ChapterTranslation;
-import com.door43.translationstudio.core.FileHistory;
-import com.door43.translationstudio.core.Frame;
-import com.door43.translationstudio.core.FrameTranslation;
-import com.door43.translationstudio.core.MergeConflictsHandler;
-import com.door43.translationstudio.core.ProjectTranslation;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.TranslationFormat;
+import android.content.ContentValues
+import com.door43.translationstudio.core.ChapterTranslation
+import com.door43.translationstudio.core.FileHistory
+import com.door43.translationstudio.core.Frame
+import com.door43.translationstudio.core.FrameTranslation
+import com.door43.translationstudio.core.MergeConflictsHandler
+import com.door43.translationstudio.core.ProjectTranslation
+import com.door43.translationstudio.core.SlugSorter
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TranslationFormat
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
-import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Represents a single row in the translation list
  */
+abstract class ListItem(
+    @JvmField val chapterSlug: String,
+    @JvmField val chunkSlug: String,
+    @JvmField val source: ResourceContainer,
+    @JvmField val target: TargetTranslation
+) {
+    @JvmField var renderedSourceText: CharSequence? = null
+    @JvmField var renderedTargetText: CharSequence? = null
+    @JvmField var isEditing: Boolean = false
 
-public abstract class ListItem {
-    public final String chapterSlug;
-    public final String chunkSlug;
+    val sourceText: String
+        get() = source.readChunk(chapterSlug, chunkSlug)
 
-    public String sourceText;
-    public CharSequence renderedSourceText = null;
-    public String targetText;
-    public CharSequence renderedTargetText = null;
-    public TranslationFormat sourceTranslationFormat;
-    public TranslationFormat targetTranslationFormat;
-    public boolean isComplete = false;
-    public boolean hasMergeConflicts = false;
-    public boolean isEditing = false;
-
-    protected TargetLanguage targetLanguage;
-    protected ResourceContainer sourceContainer;
-    protected ProjectTranslation pt;
-    protected ChapterTranslation ct;
-    protected FrameTranslation ft;
-    protected FileHistory fileHistory = null;
-    private TargetTranslation targetTranslation;
+    private var _targetText: String? = null
+    var targetText: String
+        get() = _targetText ?: when (chapterSlug) {
+            "front" -> {
+                // project stuff
+                if (chunkSlug == "title") {
+                    pt.title
+                } else ""
+            }
+            "back" -> ""
+            else -> {
+                // chapter stuff
+                when (chunkSlug) {
+                    "title" -> ct.title
+                    "reference" -> ct.reference
+                    else -> ft?.body ?: ""
+                }
+            }
+        }
+        set(value) { _targetText = value }
 
     /**
-     * Initializes a new list item
-     * @param chapterSlug
-     * @param chunkSlug
+     * Returns the title of the list item
+     * @return
      */
-    protected ListItem(String chapterSlug, String chunkSlug) {
-        this.chapterSlug = chapterSlug;
-        this.chunkSlug = chunkSlug;
-    }
+    val targetTitle: String
+        get() {
+            if (isProjectTitle) {
+                return removeConflicts(target.targetLanguage.name)
+            } else if (isChapter) {
+                val ptTitle = removeConflicts(pt.title).trim()
+                return if (ptTitle.isNotEmpty()) {
+                    ptTitle + " - " + target.targetLanguage.name
+                } else {
+                    removeConflicts(source.project.name).trim() + " - " + target.targetLanguage.name
+                }
+            } else {
+                // use project title
+                var title = removeConflicts(pt.title).trim()
+                if (title.isEmpty()) {
+                    title = removeConflicts(source.project.name).trim()
+                }
+                title += " " + chapterSlug.toInt()
 
-    public boolean isChunk() {
-        return !isChapter() && !isProjectTitle();
-    }
+                val verseSpan = Frame.parseVerseTitle(sourceText, sourceTranslationFormat)
+                title += if (verseSpan.isEmpty()) {
+                    ":" + chunkSlug?.toInt()
+                } else {
+                    ":$verseSpan"
+                }
+                return title + " - " + target.targetLanguage.name
+            }
+        }
 
-    public boolean isChapter() {
-        return isChapterReference() || isChapterTitle();
-    }
+    private var _hasMergeConflicts: Boolean? = null
+    var hasMergeConflicts: Boolean
+        get() = _hasMergeConflicts ?: run {
+            _hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(targetText)
+            _hasMergeConflicts!!
+        }
+        set(value) { _hasMergeConflicts = value }
 
-    public boolean isProjectTitle() {
-        return chapterSlug.equals("front") && chunkSlug.equals("title");
-    }
+    val sourceTranslationFormat: TranslationFormat
+        get() = TranslationFormat.parse(source.contentMimeType)
 
-    public boolean isChapterTitle() {
-        return !chapterSlug.equals("front") && !chapterSlug.equals("back") && chunkSlug.equals("title");
-    }
+    val targetTranslationFormat: TranslationFormat
+        get() = target.format
 
-    public boolean isChapterReference() {
-        return !chapterSlug.equals("front") && !chapterSlug.equals("back") && chunkSlug.equals("reference");
-    }
+    val pt: ProjectTranslation
+        get() = target.projectTranslation
+    val ct: ChapterTranslation
+        get() = target.getChapterTranslation(chapterSlug)
+    val ft: FrameTranslation?
+        get() = target.getFrameTranslation(
+            chapterSlug,
+            chunkSlug,
+            targetTranslationFormat
+        )
 
+    private var _isComplete: Boolean? = null
+    var isComplete: Boolean
+        get() = _isComplete ?: run {
+            _isComplete = when (chapterSlug) {
+                "front" -> {
+                    // project stuff
+                    if (chunkSlug == "title") {
+                        pt.isTitleFinished
+                    } else false
+                }
+                "back" -> false
+                else -> {
+                    // chapter stuff
+                    when (chunkSlug) {
+                        "title" -> ct.isTitleFinished
+                        "reference" -> ct.isReferenceFinished
+                        else -> ft?.isFinished == true
+                    }
+                }
+            }
+            _isComplete!!
+        }
+        set(value) { _isComplete = value }
+
+    private var _fileHistory: FileHistory? = null
     /**
      * Loads the file history or returns it from the cache
      * @return
      */
-    public FileHistory getFileHistory() {
-        if(this.fileHistory != null) {
-            return this.fileHistory;
+    val fileHistory: FileHistory?
+        get() = _fileHistory ?: run {
+            _fileHistory = when {
+                isChapterReference -> target.getChapterReferenceHistory(ct)
+                isChapterTitle -> target.getChapterTitleHistory(ct)
+                isProjectTitle -> target.projectTitleHistory
+                isChunk -> target.getFrameHistory(ft)
+                else -> null
+            }
+            _fileHistory
         }
 
-        FileHistory history = null;
-        if(this.isChapterReference()) {
-            history = targetTranslation.getChapterReferenceHistory(this.ct);
-        } else if(this.isChapterTitle()) {
-            history = targetTranslation.getChapterTitleHistory(this.ct);
-        } else if(this.isProjectTitle()) {
-            history = targetTranslation.getProjectTitleHistory();
-        } else if(this.isChunk()) {
-            history = targetTranslation.getFrameHistory(this.ft);
+    private var _chapterTitle: String? = null
+    val chapterTitle: String
+        get() = _chapterTitle ?: run {
+            _chapterTitle = source.readChunk(chapterSlug, "title").trim()
+            if (_chapterTitle.isNullOrEmpty()) {
+                _chapterTitle = source.readChunk("front", "title").trim()
+                if (chapterSlug != "front") _chapterTitle += " " + chapterSlug.toInt()
+            }
+            _chapterTitle ?: ""
         }
-        this.fileHistory = history;
-        return history;
-    }
+
+    val isChunk: Boolean
+        get() = !isChapter && !isProjectTitle
+
+    val isChapter: Boolean
+        get() = isChapterReference || isChapterTitle
+
+    val isProjectTitle: Boolean
+        get() = chapterSlug == "front" && chunkSlug == "title"
+
+    val isChapterTitle: Boolean
+        get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "title"
+
+    val isChapterReference: Boolean
+        get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "reference"
+
+    abstract val tabs: () -> List<ContentValues>
+
+    val chunkConfig: Map<String, List<String>>?
+        /**
+         * Returns the config options for a chunk
+         * @return
+         */
+        get() {
+            var config: Map<*, *>?
+            if (source.config == null || !source.config.containsKey("content") || source.config["content"] !is Map<*, *>) {
+                return HashMap()
+            } else {
+                config = source.config
+            }
+
+            // look up config for chunk
+            if (config != null && config.containsKey("content") && config["content"] is Map<*, *>) {
+                val contentConfig: Map<*, *>? = config["content"] as? Map<*, *>
+                if (contentConfig != null && contentConfig.containsKey(chapterSlug)) {
+                    val chapterConfig: Map<*, *>? = contentConfig[chapterSlug] as? Map<*, *>?
+                    if (chapterConfig != null && chapterConfig.containsKey(chunkSlug)) {
+                        return chapterConfig[chunkSlug] as? Map<String, List<String>>
+                    }
+                }
+            }
+            return HashMap()
+        }
 
     /**
      * Removes merge conflicts in text (uses first option)
      * @param text
      * @return
      */
-    private String removeConflicts(String text) {
-        if(MergeConflictsHandler.isMergeConflicted(text)) {
-            CharSequence unConflictedText = MergeConflictsHandler.getMergeConflictItemsHead(text);
-            if(unConflictedText == null) {
-                unConflictedText = "";
+    private fun removeConflicts(text: String): String {
+        if (MergeConflictsHandler.isMergeConflicted(text)) {
+            var unConflictedText = MergeConflictsHandler.getMergeConflictItemsHead(text)
+            if (unConflictedText == null) {
+                unConflictedText = ""
             }
-            return unConflictedText.toString();
+            return unConflictedText.toString()
         }
-        return text;
-    }
-
-    /**
-     * Returns the title of the list item
-     * @return
-     */
-    public String getTargetTitle() {
-        if(isProjectTitle()) {
-            return removeConflicts(targetLanguage.name);
-        } else if(isChapter()) {
-            String ptTitle = removeConflicts(pt.getTitle()).trim();
-            if(!ptTitle.isEmpty()) {
-                return ptTitle + " - " + targetLanguage.name;
-            } else {
-                return removeConflicts(sourceContainer.project.name).trim() + " - " + targetLanguage.name;
-            }
-        } else {
-            // use project title
-            String title = "";
-            if(pt != null) {
-                title = removeConflicts(pt.getTitle()).trim();
-            } else {
-                Logger.w("ListItem", "missing project translation for " + targetTranslation.getId());
-            }
-            if(title.isEmpty()) {
-                title = removeConflicts(sourceContainer.project.name).trim();
-            }
-            title += " " + Integer.parseInt(chapterSlug);
-
-            String verseSpan = Frame.parseVerseTitle(sourceText, sourceTranslationFormat);
-            if(verseSpan.isEmpty()) {
-                title += ":" + Integer.parseInt(chunkSlug);
-            } else {
-                title += ":" + verseSpan;
-            }
-            return title + " - " + targetLanguage.name;
-        }
+        return text
     }
 
     /**
      * Clears the loaded translation data
      */
-    public void reset() {
-        this.sourceText = null;
-        this.targetText = null;
-        this.renderedSourceText = null;
-        this.renderedTargetText = null;
-        this.hasMergeConflicts = false;
-        sourceContainer = null;
-        targetLanguage = null;
+    fun reset() {
+        this.renderedSourceText = null
+        this.renderedTargetText = null
+        this.hasMergeConflicts = false
     }
 
     /**
@@ -169,90 +235,140 @@ public abstract class ListItem {
      * @param sourceContainer
      * @param targetTranslation TODO: this will become a resource container eventually
      */
-    public void load(ResourceContainer sourceContainer, TargetTranslation targetTranslation) {
-        if(this.sourceText == null) {
-            this.sourceContainer = sourceContainer;
-            this.targetLanguage = targetTranslation.getTargetLanguage();
-            this.renderedTargetText = null;
-            this.renderedSourceText = null;
+    fun load(sourceContainer: ResourceContainer, targetTranslation: TargetTranslation) {
+        /*if (this.sourceText == null) {
+            this.renderedTargetText = null
+            this.renderedSourceText = null
             if (this.sourceText == null) {
-                this.sourceText = sourceContainer.readChunk(chapterSlug, chunkSlug);
+                this.sourceText = sourceContainer.readChunk(chapterSlug, chunkSlug)
             }
-            this.sourceTranslationFormat = TranslationFormat.parse(sourceContainer.contentMimeType);
-            this.targetTranslationFormat = targetTranslation.getFormat();
-            loadTarget(targetTranslation);
-        }
+            this.sourceTranslationFormat = TranslationFormat.parse(sourceContainer.contentMimeType)
+            this.targetTranslationFormat = targetTranslation.format
+            loadTarget(targetTranslation)
+        }*/
     }
 
     /**
      * used for reloading target translation to get any changes from file
      * @param targetTranslation
      */
-    public void loadTarget(TargetTranslation targetTranslation) {
+    fun loadTarget(targetTranslation: TargetTranslation) {
         // TODO: 10/1/16 this will be simplified once we migrate target translations to resource containers
-        this.targetTranslation = targetTranslation;
-        this.pt = targetTranslation.getProjectTranslation();
-        if (chapterSlug.equals("front")) {
+        //this.target = targetTranslation
+        /*if (chapterSlug == "front") {
             // project stuff
-            if (chunkSlug.equals("title")) {
-                this.targetText = pt.getTitle();
-                this.isComplete = pt.isTitleFinished();
+            if (chunkSlug == "title") {
+                this.isComplete = pt?.isTitleFinished == true
             }
-        } else if (chapterSlug.equals("back")) {
+        } else if (chapterSlug == "back") {
             // back matter
         } else {
             // chapter stuff
-            this.ct = targetTranslation.getChapterTranslation(chapterSlug);
-            if (chunkSlug.equals("title")) {
-                this.targetText = ct.title;
-                this.isComplete = ct.isTitleFinished();
-            } else if (chunkSlug.equals("reference")) {
-                this.targetText = ct.reference;
-                this.isComplete = ct.isReferenceFinished();
+            if (chunkSlug == "title") {
+                this.isComplete = ct?.isTitleFinished == true
+            } else if (chunkSlug == "reference") {
+                this.isComplete = ct?.isReferenceFinished == true
             } else {
-                this.ft = targetTranslation.getFrameTranslation(chapterSlug, chunkSlug, this.targetTranslationFormat);
-                this.targetText = ft.body;
-                this.isComplete = ft.isFinished();
+                this.isComplete = ft?.isFinished == true
             }
+        }*/
+        //this.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(this.targetText)
+    }
+
+    fun <T: ListItem>toType(
+        factory: (
+            String,
+            String,
+            ResourceContainer,
+            TargetTranslation,
+            () -> List<ContentValues>
+        ) -> T
+    ): T {
+        val base = this
+        return factory(
+            base.chapterSlug,
+            base.chunkSlug,
+            base.source,
+            base.target,
+            base.tabs
+        ).apply {
+            hasMergeConflicts = base.hasMergeConflicts
+            renderedSourceText = base.renderedSourceText
+            renderedTargetText = base.renderedTargetText
+            isEditing = base.isEditing
         }
-        this.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(this.targetText);
     }
+}
 
-    public ResourceContainer getSource() {
-        return sourceContainer;
-    }
+class ReadListItem(
+    chapterSlug: String,
+    chunkSlug: String,
+    source: ResourceContainer,
+    target: TargetTranslation,
+    override val tabs: () -> List<ContentValues>
+) : ListItem(chapterSlug, chunkSlug, source, target) {
 
-    /**
-     * Returns the config options for a chunk
-     * @return
-     */
-    public Map<String, List<String>> getChunkConfig() {
-        if(sourceContainer != null) {
-            Map config = null;
-            if(sourceContainer.config == null || !sourceContainer.config.containsKey("content") || !(sourceContainer.config.get("content") instanceof Map)) {
-                return new HashMap<>();
-                // default to english if no config is found
-//                ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), "en", sourceContainer.project.slug, sourceContainer.resource.slug);
-//                if(rc != null) config = rc.config;
-            } else {
-                config = sourceContainer.config;
-            }
-
-            // look up config for chunk
-            if (config != null && config.containsKey("content") && config.get("content") instanceof Map) {
-                Map contentConfig = (Map<String, Object>) config.get("content");
-                if (contentConfig.containsKey(chapterSlug)) {
-                    Map chapterConfig = (Map<String, Object>) contentConfig.get(chapterSlug);
-                    if (chapterConfig.containsKey(chunkSlug)) {
-                        return (Map<String, List<String>>) chapterConfig.get(chunkSlug);
-                    }
+    val sourceChapterBody: String
+        get() = run {
+            var chapterBody = ""
+            val sorter = SlugSorter()
+            val chunks = sorter.sort(source.chunks(chapterSlug))
+            for (chunk in chunks) {
+                if(!chunk.equals("title")) {
+                    chapterBody += source.readChunk(chapterSlug, chunk);
                 }
             }
+            chapterBody
         }
-        return new HashMap<>();
-    }
 
-    public TargetTranslation getTarget() {
-        return targetTranslation;
-    }
+    val targetChapterBody: String
+        get() = run {
+            var chapterBody = ""
+            val sorter = SlugSorter()
+            val chunks = sorter.sort(source.chunks(chapterSlug))
+            for (chunk in chunks) {
+                val translation = target.getFrameTranslation(chapterSlug, chunk, target.format)
+                chapterBody += " " + translation.body
+            }
+            chapterBody
+        }
+}
+
+class ChunkListItem(
+    chapterSlug: String,
+    chunkSlug: String,
+    source: ResourceContainer,
+    target: TargetTranslation,
+    override val tabs: () -> List<ContentValues>
+) : ListItem(chapterSlug, chunkSlug, source, target) {
+    @JvmField var isTargetCardOpen = false
+}
+
+/**
+ * Represents a single item in the review list
+ */
+class ReviewListItem(
+    chapterSlug: String,
+    chunkSlug: String,
+    source: ResourceContainer,
+    target: TargetTranslation,
+    override val tabs: () -> List<ContentValues>
+) : ListItem(chapterSlug, chunkSlug, source, target) {
+    @JvmField
+    var hasSearchText: Boolean = false
+    @JvmField
+    var mergeItems: List<CharSequence> = emptyList()
+    @JvmField
+    var mergeItemSelected: Int = -1
+    @JvmField
+    var selectItemNum: Int = -1
+    @JvmField
+    var refreshSearchHighlightSource: Boolean = false
+    @JvmField
+    var refreshSearchHighlightTarget: Boolean = false
+    @JvmField
+    var currentTargetTaskId: Int = -1
+    var currentSourceTaskId: Int = -1
+    @JvmField
+    var hasMissingVerses: Boolean = false
 }

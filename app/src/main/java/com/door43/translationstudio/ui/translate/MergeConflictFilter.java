@@ -48,7 +48,7 @@ public class MergeConflictFilter extends Filter {
             } else {
                 for(ListItem item:items) {
                    // match
-                    boolean match = item.hasMergeConflicts;
+                    boolean match = item.getHasMergeConflicts();
                     if(match) {
                         filteredItems.add(item);
                         if(listener != null) listener.onMatch(item);

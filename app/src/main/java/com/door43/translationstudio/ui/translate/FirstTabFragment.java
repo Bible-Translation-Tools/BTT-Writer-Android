@@ -11,21 +11,19 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
-import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.resourcecontainer.Project;
 import org.unfoldingword.tools.logger.Logger;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.ui.BaseFragment;
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
 
 import org.json.JSONException;
 
-import java.security.InvalidParameterException;
 import java.util.List;
 
 /**
@@ -33,51 +31,45 @@ import java.util.List;
  */
 public class FirstTabFragment extends BaseFragment implements ChooseSourceTranslationDialog.OnClickListener {
 
-    private Translator mTranslator;
-    private Door43Client mLibrary;
     private OnEventListener mListener;
+    protected TargetTranslationViewModel viewModel;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_first_tab, container, false);
-
-        mTranslator = App.getTranslator();
-        mLibrary = App.getLibrary();
+        viewModel = new ViewModelProvider(requireActivity()).get(TargetTranslationViewModel.class);
 
         Bundle args = getArguments();
-        final String targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
-        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        if(targetTranslation == null) {
-            throw new InvalidParameterException("a valid target translation id is required");
-        }
+        assert args != null;
 
-        ImageButton newTabButton = (ImageButton) rootView.findViewById(R.id.newTabButton);
-        LinearLayout secondaryNewTabButton = (LinearLayout) rootView.findViewById(R.id.secondaryNewTabButton);
-        TextView translationTitle = (TextView) rootView.findViewById(R.id.source_translation_title);
+        ImageButton newTabButton = rootView.findViewById(R.id.newTabButton);
+        LinearLayout secondaryNewTabButton = rootView.findViewById(R.id.secondaryNewTabButton);
+        TextView translationTitle = rootView.findViewById(R.id.source_translation_title);
         try {
-            Project p = mLibrary.index.getProject(App.getDeviceLanguageCode(), targetTranslation.getProjectId(), true);
-            translationTitle.setText(p.name + " - " + targetTranslation.getTargetLanguageName());
+            Project p = viewModel.getProject();
+            translationTitle.setText(p.name + " - " + viewModel.getTargetTranslation().getTargetLanguageName());
         } catch (Exception e) {
-            Logger.e(FirstTabFragment.class.getSimpleName(),"Error getting resource container for '" + targetTranslationId + "'", e);
+            Logger.e(
+                FirstTabFragment.class.getSimpleName(),
+                "Error getting resource container for '" + viewModel.getTargetTranslation().getId() + "'",
+                e
+            );
         }
 
-        View.OnClickListener clickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-                Fragment prev = getParentFragmentManager().findFragmentByTag("tabsDialog");
-                if (prev != null) {
-                    ft.remove(prev);
-                }
-                ft.addToBackStack(null);
-
-                ChooseSourceTranslationDialog dialog = new ChooseSourceTranslationDialog();
-                Bundle args = new Bundle();
-                args.putString(ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID, targetTranslationId);
-                dialog.setOnClickListener(FirstTabFragment.this);
-                dialog.setArguments(args);
-                dialog.show(ft, "tabsDialog");
+        View.OnClickListener clickListener = v -> {
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+            Fragment prev = getParentFragmentManager().findFragmentByTag("tabsDialog");
+            if (prev != null) {
+                ft.remove(prev);
             }
+            ft.addToBackStack(null);
+
+            ChooseSourceTranslationDialog dialog = new ChooseSourceTranslationDialog();
+            Bundle args1 = new Bundle();
+            args1.putString(ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
+            dialog.setOnClickListener(FirstTabFragment.this);
+            dialog.setArguments(args1);
+            dialog.show(ft, "tabsDialog");
         };
 
         newTabButton.setOnClickListener(clickListener);
@@ -117,26 +109,24 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
     }
 
     @Override
-    public void onConfirmTabsDialog(String targetTranslationId, List<String> sourceTranslationIds) {
-        String[] oldSourceTranslationIds = mTranslator.getOpenSourceTranslations(targetTranslationId);
+    public void onConfirmTabsDialog(List<String> sourceTranslationIds) {
+        String[] oldSourceTranslationIds = viewModel.getOpenSourceTranslations();
         for(String id:oldSourceTranslationIds) {
-            mTranslator.removeOpenSourceTranslation(targetTranslationId, id);
+            viewModel.removeOpenSourceTranslation(id);
         }
 
         if(!sourceTranslationIds.isEmpty()) {
             // save open source language tabs
             for(String slug:sourceTranslationIds) {
-                Translation t = mLibrary.index().getTranslation(slug);
-                int modifiedAt = mLibrary.getResourceContainerLastModified(t.language.slug, t.project.slug, t.resource.slug);
+                Translation t = viewModel.getTranslation(slug);
+                int modifiedAt = viewModel.getResourceContainerLastModified(t);
                 try {
-                    mTranslator.addOpenSourceTranslation(targetTranslationId, slug);
-                    TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-                    if (targetTranslation != null) {
-                        try {
-                            targetTranslation.addSourceTranslation(t, modifiedAt);
-                        } catch (JSONException e) {
-                            Logger.e(this.getClass().getName(), "Failed to record source translation (" + slug + ") usage in the target translation " + targetTranslation.getId(), e);
-                        }
+                    viewModel.addOpenSourceTranslation(slug);
+                    TargetTranslation targetTranslation = viewModel.getTargetTranslation();
+                    try {
+                        targetTranslation.addSourceTranslation(t, modifiedAt);
+                    } catch (JSONException e) {
+                        Logger.e(this.getClass().getName(), "Failed to record source translation (" + slug + ") usage in the target translation " + targetTranslation.getId(), e);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -9,8 +9,8 @@ import com.door43.translationstudio.rendering.DefaultRenderer;
 import com.door43.translationstudio.rendering.RenderingGroup;
 import com.door43.translationstudio.ui.spannables.NoteSpan;
 import com.door43.translationstudio.ui.spannables.Span;
+import com.door43.translationstudio.ui.translate.ReviewListItem;
 
-import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 
 /**
@@ -36,7 +36,7 @@ public class RenderSourceTask extends ManagedTask {
     public void start() {
         setThreadPriority(Thread.MAX_PRIORITY);
         if(isCanceled()) return;
-        CharSequence text = renderSourceText(item.sourceText, item.sourceTranslationFormat, item);
+        CharSequence text = renderSourceText(item.getSourceText(), item.getSourceTranslationFormat(), item);
         setResult(text);
     }
 

@@ -1,469 +1,278 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
-
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.DisplayMetrics;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ListView;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.ContainerCache;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.tasks.DownloadResourceContainerTask;
-import com.door43.widget.ViewUtil;
-
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.Translation;
-
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import com.door43.translationstudio.App.Companion.showKeyboard
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ContainerCache
+import com.door43.translationstudio.databinding.DialogChooseSourceTranslationBinding
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Callbacks
+import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.OnItemClickListener
+import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.RCItem
+import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import kotlin.math.min
 
 /**
  * Created by joel on 9/15/2015.
  */
-public class ChooseSourceTranslationDialog extends DialogFragment implements ManagedTask.OnFinishedListener, ManagedTask.OnProgressListener {
-    public static final String ARG_TARGET_TRANSLATION_ID = "target_translation_id";
-    public static final String TAG = ChooseSourceTranslationDialog.class.getSimpleName();
-    private static final String TASK_DOWNLOAD_CONTAINER = "download-container";
-    private static final String TASK_PREPARE_CONTAINER = "prepare-container";
-    private static final String TASK_INIT = "init-data";
-    private Translator mTranslator;
-    private TargetTranslation mTargetTranslation;
-    private OnClickListener mListener;
-    private ChooseSourceTranslationAdapter mAdapter;
-    private Door43Client mLibrary;
-    private ProgressDialog mProgressDialog;
-    private boolean mInitializing = true;
+@AndroidEntryPoint
+class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_choose_source_translation, container, false);
+    private val viewModel: DownloadSourcesViewModel by viewModels()
 
-        mTranslator = App.getTranslator();
-        mLibrary = App.getLibrary();
+    private var clickListener: OnClickListener? = null
+    private var progressDialog: ProgressHelper.ProgressDialog? = null
+    private var initializing = true
 
-        Bundle args = getArguments();
-        if(args == null) {
-            dismiss();
+    private lateinit var adapter: ChooseSourceTranslationAdapter
+    private var _binding: DialogChooseSourceTranslationBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogChooseSourceTranslationBinding.inflate(inflater, container, false)
+
+        val args = arguments
+        if (args == null) {
+            dismiss()
         } else {
-            String targetTranslationId = args.getString(ARG_TARGET_TRANSLATION_ID, null);
-            mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-            if(mTargetTranslation == null) {
+            val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION_ID, null)
+            viewModel.setTargetTranslation(targetTranslationId)
+
+            if (viewModel.noTargetTranslation()) {
                 // missing target translation
-                dismiss();
+                dismiss()
             }
         }
 
-        final EditText searchText = (EditText) v.findViewById(R.id.search_text);
-        searchText.setHint(R.string.choose_source_translations);
-        searchText.setEnabled(true);
-        searchText.setFocusable(true);
-        searchText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        progressDialog = ProgressHelper.newInstance(
+            requireContext(),
+            R.string.loading_sources,
+            false
+        )
 
-            }
+        adapter = ChooseSourceTranslationAdapter(requireContext())
+        adapter.setItemClickListener(this)
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (mAdapter != null) {
-                    mAdapter.applySearch(s.toString());
+        with(binding) {
+            searchBar.searchText.setHint(R.string.choose_source_translations)
+            searchBar.searchText.isEnabled = true
+            searchBar.searchText.isFocusable = true
+            searchBar.searchText.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
                 }
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                }
+                override fun afterTextChanged(s: Editable) {
+                    adapter.applySearch(s.toString())
+                }
+            })
+
+            searchBar.searchBackButton.visibility = View.GONE
+            searchBar.searchMagIcon.setOnClickListener {
+                searchBar.searchText.requestFocus()
+                showKeyboard(activity, searchBar.searchText, false)
             }
-        });
 
-        ImageButton searchBackButton = (ImageButton) v.findViewById(R.id.search_back_button);
-        searchBackButton.setVisibility(View.GONE);
-        ImageView searchIcon = (ImageView) v.findViewById(R.id.search_mag_icon);
-        searchIcon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                searchText.requestFocus();
-                App.showKeyboard(getActivity(),searchText, false);
-            }
-        });
+            list.adapter = adapter
 
-        mAdapter = new ChooseSourceTranslationAdapter(getActivity());
-
-        ListView listView = (ListView) v.findViewById(R.id.list);
-        listView.setAdapter(mAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                if(mAdapter.isSelectableItem(position)) {
-                    final ChooseSourceTranslationAdapter.ViewItem item = mAdapter.getItem(position);
-                    if(item.hasUpdates || !item.downloaded) {
-                        // download
-                        String format = getResources().getString(R.string.download_source_language);
-                        String message = String.format(format, item.title);
-                        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                                .setTitle(R.string.title_download_source_language)
-                                .setMessage(message)
-                                .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        DownloadResourceContainerTask task = new DownloadResourceContainerTask(item.sourceTranslation);
-                                        task.addOnFinishedListener(ChooseSourceTranslationDialog.this);
-                                        task.addOnProgressListener(ChooseSourceTranslationDialog.this);
-                                        task.TAG = position;
-                                        mProgressDialog = null;
-                                        TaskManager.addTask(task, TASK_DOWNLOAD_CONTAINER);
-                                    }
-                                })
-                                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        if(item.downloaded) {
-                                            // allow selecting if downloaded already
-                                            mAdapter.toggleSelection(position);
-                                        }
-                                    }
-                                })
-                                .show();
-                    } else {
-                        // toggle
-                        mAdapter.toggleSelection(position);
-                        checkForItemUpdates(item);
+            updateButton.setOnClickListener {
+                AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                    .setTitle(R.string.warning_title)
+                    .setMessage(R.string.update_warning)
+                    .setPositiveButton(R.string.confirm) { _, _ ->
+                        viewModel.cancelJobs()
+                        clickListener?.onUpdateSources()
+                        dismiss()
                     }
-                }
+                    .setNegativeButton(R.string.menu_cancel, null)
+                    .show()
             }
-        });
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-                final ChooseSourceTranslationAdapter.ViewItem item = mAdapter.getItem(position);
-                if(item.downloaded && mAdapter.isSelectableItem(position)) {
-                    new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.label_delete)
-                            .setMessage(R.string.confirm_delete_project)
-                            .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    mLibrary.delete(item.containerSlug);
-                                    mAdapter.markItemDeleted(position);
-                                }
-                            })
-                            .setNegativeButton(R.string.menu_cancel, null)
-                            .show();
-                    return true;
-                }
-                return false;
-            }
-        });
 
-        Button updateButton = (Button) v.findViewById(R.id.updateButton);
-        updateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                        .setTitle(R.string.warning_title)
-                        .setMessage(R.string.update_warning)
-                        .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if(mListener != null) {
-                                    mListener.onUpdateSources();
-                                }
-                                dismiss();
-                            }
-                        })
-                        .setNegativeButton(R.string.menu_cancel, null)
-                        .show();
+            cancelButton.setOnClickListener {
+                viewModel.cancelJobs()
+                clickListener?.onCancelTabsDialog(viewModel.targetTranslation.id)
+                dismiss()
             }
-        });
-        Button cancelButton = (Button) v.findViewById(R.id.cancelButton);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(mListener != null) {
-                    mListener.onCancelTabsDialog(mTargetTranslation.getId());
-                }
-                dismiss();
-            }
-        });
-        Button confirmButton = (Button) v.findViewById(R.id.confirmButton);
-        confirmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+
+            confirmButton.setOnClickListener {
+                viewModel.cancelJobs()
                 // collect selected source translations
-                int count = mAdapter.getCount();
-                List<String> resourceContainerSlugs = new ArrayList<>();
-                for(int i = 0; i < count; i ++) {
-                    if(mAdapter.isSelectableItem(i)) {
-                        ChooseSourceTranslationAdapter.ViewItem item = mAdapter.getItem(i);
-                        if(item.selected) {
-                            resourceContainerSlugs.add(item.containerSlug);
+                val count = adapter.count
+                val resourceContainerSlugs = arrayListOf<String>()
+                for (i in 0 until count) {
+                    if (adapter.isSelectableItem(i)) {
+                        val item = adapter.getItem(i)
+                        if (item.selected) {
+                            resourceContainerSlugs.add(item.containerSlug)
                         }
                     }
                 }
-                if(mListener != null) {
-                    mListener.onConfirmTabsDialog(mTargetTranslation.getId(), resourceContainerSlugs);
-                }
-                dismiss();
+                clickListener?.onConfirmTabsDialog(resourceContainerSlugs)
+                dismiss()
             }
-        });
+        }
 
-        loadData();
-        return v;
+        setupObservers()
+
+        viewModel.loadData()
+        return binding.root
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    override fun onResume() {
+        super.onResume()
 
         // widen dialog to accommodate more text
-        int desiredWidth = 750;
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        int width = displayMetrics.widthPixels;
-        float density = displayMetrics.density;
-        float correctedWidth = width / density;
-        float screenWidthFactor = desiredWidth /correctedWidth;
-        screenWidthFactor = Math.min(screenWidthFactor, 1f); // sanity check
-        getDialog().getWindow().setLayout((int) (width * screenWidthFactor), WindowManager.LayoutParams.MATCH_PARENT);
+        val desiredWidth = 750
+        val displayMetrics = resources.displayMetrics
+        val width = displayMetrics.widthPixels
+        val density = displayMetrics.density
+        val correctedWidth = width / density
+        var screenWidthFactor = desiredWidth / correctedWidth
+        screenWidthFactor = min(screenWidthFactor.toDouble(), 1.0).toFloat() // sanity check
+        dialog?.window?.setLayout(
+            (width * screenWidthFactor).toInt(),
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
     }
 
-    private void loadData() {
-        mProgressDialog = null;
-        ManagedTask initTask = TaskManager.getTask(TASK_INIT);
-        if(initTask == null) {
-            // begin init
-            initTask = new ManagedTask() {
-                @Override
-                public void start() {
-                    this.publishProgress(-1,"");
-
-                    // add selected source translations
-                    String[] sourceTranslationSlugs = mTranslator.getOpenSourceTranslations(mTargetTranslation.getId());
-                    for (String slug : sourceTranslationSlugs) {
-                        Translation st = mLibrary.index.getTranslation(slug);
-                        if (st != null) {
-                            this.publishProgress(-1,st.resourceContainerSlug);
-                            addSourceTranslation(st, true);
-                        }
-                    }
-
-                    List<Translation> availableTranslations = mLibrary.index.findTranslations(null, mTargetTranslation.getProjectId(), null, "book", null, App.MIN_CHECKING_LEVEL, -1);
-                    for (Translation sourceTranslation : availableTranslations) {
-                        this.publishProgress(-1,sourceTranslation.resourceContainerSlug);
-                        addSourceTranslation(sourceTranslation, false);
-                    }
+    private fun setupObservers() {
+        viewModel.progress.observe(this) {
+            if (it != null) {
+                progressDialog?.show()
+                progressDialog?.setProgress(it.progress)
+                progressDialog?.setMessage(it.message)
+                progressDialog?.setMax(it.max)
+            } else {
+                progressDialog?.dismiss()
+            }
+        }
+        viewModel.items.observe(this) {
+            adapter.setItems(it)
+            initializing = false
+        }
+        viewModel.downloadResult.observe(this) {
+            it?.let { result ->
+                for (rc in result.containers) {
+                    // reset cached containers that were downloaded
+                    ContainerCache.remove(rc.slug)
                 }
-            };
-
-            initTask.addOnFinishedListener(this);
-            initTask.addOnProgressListener(this);
-            TaskManager.addTask(initTask, TASK_INIT);
-        } else {
-            // connect to existing
-            initTask.addOnFinishedListener(this);
-            initTask.addOnProgressListener(this);
+                if (result.success) {
+                    val snack = Snackbar.make(
+                        this@ChooseSourceTranslationDialog.requireView(),
+                        resources.getString(R.string.download_complete),
+                        Snackbar.LENGTH_SHORT
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
+                    adapter.markItemDownloaded(result.position)
+                } else {
+                    val snack = Snackbar.make(
+                        this@ChooseSourceTranslationDialog.requireView(),
+                        resources.getString(R.string.download_failed),
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
+                }
+            }
         }
-
-        // connect to tasks
-        ManagedTask downloadTask = TaskManager.getTask(TASK_DOWNLOAD_CONTAINER);
-        if(downloadTask != null) {
-            downloadTask.addOnProgressListener(this);
-            downloadTask.addOnFinishedListener(this);
+        viewModel.itemResult.observe(this) {
+            it?.let { result ->
+                adapter.setItemHasUpdates(result.position, result.hasUpdates)
+            }
         }
-    }
-
-    private void checkForItemUpdates(final ChooseSourceTranslationAdapter.ViewItem item) {
-        if (mProgressDialog != null) {
-            mProgressDialog.setMessage("");
-        }
-
-        ManagedTask task = mAdapter.checkForItemUpdates(item);
-
-        if (task != null) {
-            task.addOnFinishedListener(this);
-            task.addOnProgressListener(this);
-            item.currentTaskId = TaskManager.addTask(task, TASK_PREPARE_CONTAINER);
-        }
-    }
-
-    /**
-     * adds this source translation to the adapter
-     * @param sourceTranslation
-     * @param selected
-     */
-    private void addSourceTranslation(final Translation sourceTranslation, final boolean selected) {
-        final String title = sourceTranslation.language.name + " (" + sourceTranslation.language.slug + ") - " + sourceTranslation.resource.name;
-        final boolean isDownloaded = mLibrary.exists(sourceTranslation.resourceContainerSlug);
-        mAdapter.addItem(new ChooseSourceTranslationAdapter.ViewItem(title, sourceTranslation, selected, isDownloaded), selected);
     }
 
     /**
      * Assigns a listener for this dialog
      * @param listener
      */
-    public void setOnClickListener(OnClickListener listener) {
-        mListener = listener;
+    fun setOnClickListener(listener: OnClickListener?) {
+        clickListener = listener
     }
 
-    @Override
-    public void onTaskFinished(ManagedTask task) {
-        TaskManager.clearTask(task);
-        if(task instanceof DownloadResourceContainerTask) {
-            final DownloadResourceContainerTask t = (DownloadResourceContainerTask)task;
-            for(ResourceContainer rc:t.getDownloadedContainers()) {
-                // reset cached containers that were downloaded
-                ContainerCache.remove(rc.slug);
+    override fun onCheckForItemUpdates(containerSlug: String, position: Int) {
+        viewModel.checkForContainerUpdates(containerSlug, position)
+    }
+
+    override fun onTriggerDownload(
+        item: RCItem,
+        position: Int,
+        callback: Callbacks.OnDownloadCancel
+    ) {
+        val format = resources.getString(R.string.download_source_language)
+        val message = String.format(format, item.title)
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.title_download_source_language)
+            .setMessage(message)
+            .setPositiveButton(R.string.confirm) { _, _ ->
+                viewModel.downloadResourceContainer(item.sourceTranslation, position)
             }
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(mProgressDialog != null && mProgressDialog.isShowing()) mProgressDialog.dismiss();
-                    if(t.success()) {
-                        Snackbar snack = Snackbar.make(ChooseSourceTranslationDialog.this.getView(), getResources().getString(R.string.download_complete), Snackbar.LENGTH_SHORT);
-                        ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                        snack.show();
-                        mAdapter.markItemDownloaded(t.TAG);
-                    } else {
-                        Snackbar snack = Snackbar.make(ChooseSourceTranslationDialog.this.getView(), getResources().getString(R.string.download_failed), Snackbar.LENGTH_LONG);
-                        ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                        snack.show();
-                    }
+            .setNegativeButton(R.string.no) { _, _ ->
+                if (item.downloaded) {
+                    // allow selecting if downloaded already
+                    callback.onCancel(position)
                 }
-            });
-        } else if(TASK_INIT.equals(task.getTaskId())) { // loading task
-            mInitializing = false;
-            if(mProgressDialog != null && mProgressDialog.isShowing()) mProgressDialog.dismiss();
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    mAdapter.sort();
-                }
-            });
-        } else if (TASK_PREPARE_CONTAINER.equals(task.getTaskId())) {
-            if(mProgressDialog != null && mProgressDialog.isShowing()) mProgressDialog.dismiss();
-        }
-    }
-
-    @Override
-    public void onTaskProgress(final ManagedTask task, final double progress, final String message, boolean secondary) {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if(getActivity() == null) return;
-                // init dialog
-                if(mProgressDialog == null) {
-                    mProgressDialog = new ProgressDialog(getActivity());
-                    mProgressDialog.setCancelable(true);
-                    mProgressDialog.setCanceledOnTouchOutside(false);
-                    mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                    mProgressDialog.setOnCancelListener(ChooseSourceTranslationDialog.this);
-                    int titleId = R.string.loading_sources;
-                    if(!mInitializing) { // doing download
-                        mProgressDialog.setIcon(R.drawable.ic_cloud_download_black_24dp);
-                        titleId = R.string.downloading;
-                    } else {
-                        mProgressDialog.setMessage(""); // make room for message
-                    }
-                    mProgressDialog.setTitle(titleId);
-                }
-
-                if(mProgressDialog == null) {
-                    return;
-                }
-
-                // dismiss if finished
-                if(task.isFinished()) {
-                    mProgressDialog.dismiss();
-                    return;
-                }
-
-                // progress
-                mProgressDialog.setMax(task.maxProgress());
-                if(progress > 0) {
-                    mProgressDialog.setIndeterminate(false);
-                    mProgressDialog.setProgressStyle((int)progress);
-                    mProgressDialog.setProgressNumberFormat("%1d/$2d");
-                    mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
-                } else {
-                    mProgressDialog.setIndeterminate(true);
-                    mProgressDialog.setProgress(mProgressDialog.getMax());
-                    mProgressDialog.setProgressNumberFormat(null);
-                    mProgressDialog.setProgressPercentFormat(null);
-                }
-
-                if((message != null) && (!message.isEmpty()) ) {
-                    mProgressDialog.setMessage(message);
-                }
-
-                // show
-                if(!mProgressDialog.isShowing()) mProgressDialog.show();
             }
-        });
+            .show()
     }
 
-    @Override
-    public void onCancel(DialogInterface dialog) {
-        ManagedTask task = TaskManager.getTask(TASK_DOWNLOAD_CONTAINER);
-        if(task != null) {
-            task.removeOnProgressListener(this);
-            task.removeOnFinishedListener(this);
-            TaskManager.cancelTask(task);
-        }
-        task = TaskManager.getTask(TASK_INIT);
-        if(task != null) {
-            task.removeOnProgressListener(this);
-            task.removeOnFinishedListener(this);
-            TaskManager.cancelTask(task);
-        }
+    override fun onTriggerDeleteContainer(
+        containerSlug: String,
+        position: Int,
+        callback: Callbacks.OnDeleteContainer
+    ) {
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.label_delete)
+            .setMessage(R.string.confirm_delete_project)
+            .setPositiveButton(R.string.confirm) { _, _ ->
+                viewModel.deleteResourceContainer(containerSlug)
+                callback.onDelete(position)
+            }
+            .setNegativeButton(R.string.menu_cancel, null)
+            .show()
     }
 
-    public interface OnClickListener {
-        void onCancelTabsDialog(String targetTranslationId);
-        void onConfirmTabsDialog(String targetTranslationId, List<String> sourceTranslationIds);
-        void onUpdateSources();
+    interface OnClickListener {
+        fun onCancelTabsDialog(targetTranslationId: String?)
+        fun onConfirmTabsDialog(sourceTranslationIds: List<String>?)
+        fun onUpdateSources()
     }
 
-    @Override
-    public void onDestroy() {
-        ManagedTask task = TaskManager.getTask(TASK_DOWNLOAD_CONTAINER);
-        if(task != null) {
-            task.removeOnProgressListener(this);
-            task.removeOnFinishedListener(this);
-        }
-        task = TaskManager.getTask(TASK_INIT);
-        if(task != null) {
-            task.removeOnProgressListener(this);
-            task.removeOnFinishedListener(this);
-        }
-        if(mProgressDialog != null) mProgressDialog.dismiss();
-        super.onDestroy();
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+        progressDialog?.dismiss()
+        progressDialog = null
+        viewModel.clearResults()
+    }
+
+    companion object {
+        const val ARG_TARGET_TRANSLATION_ID: String = "target_translation_id"
+        val TAG: String = ChooseSourceTranslationDialog::class.java.simpleName
     }
 }

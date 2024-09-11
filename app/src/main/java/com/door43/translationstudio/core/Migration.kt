@@ -1,13 +1,9 @@
-package com.door43.translationstudio.core;
-
-import android.content.SharedPreferences;
-import com.door43.translationstudio.App;
+package com.door43.translationstudio.core
 
 /**
  * Provides some tools for migrating stuff from older versions of the app
  */
-public class Migration {
-
+object Migration {
     /**
      * Converts an old slug to the new format.
      * The conversion will occur if the old slug does not contain any underscores (the delimiter for new slugs)
@@ -20,20 +16,22 @@ public class Migration {
      *
      * @return the migrated slug
      */
-    public static String migrateSourceTranslationSlug(String slug) {
-        if(slug == null) return null;
-        if(slug.contains("_")) return slug;
+    @JvmStatic
+    fun migrateSourceTranslationSlug(slug: String?): String? {
+        if (slug == null) return null
+        if (slug.contains("_")) return slug
 
-        String[] pieces = slug.split("-");
-        if(pieces.length < 3) return slug; // cannot process
-        String project = pieces[0];
-        String resource = pieces[pieces.length - 1];
-        String language = "";
-        for(int i=1; i<pieces.length - 1; i ++) {
-            if(!language.equals("")) language += "-";
-            language += pieces[i];
+        val pieces = slug.split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if (pieces.size < 3) return slug // cannot process
+
+        val project = pieces[0]
+        val resource = pieces[pieces.size - 1]
+        var language = ""
+        for (i in 1 until pieces.size - 1) {
+            if (language != "") language += "-"
+            language += pieces[i]
         }
 
-        return language + "_" + project + "_" + resource;
+        return language + "_" + project + "_" + resource
     }
 }

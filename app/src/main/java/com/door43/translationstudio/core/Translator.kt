@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.text.Editable
 import android.text.SpannedString
+import androidx.annotation.Nullable
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
 import com.door43.util.FileUtilities
@@ -695,7 +696,7 @@ class Translator @Inject constructor(
      * @param targetTranslationId
      * @return
      */
-    fun getSelectedSourceTranslationId(targetTranslationId: String): String {
+    fun getSelectedSourceTranslationId(targetTranslationId: String): String? {
         var selectedSourceTranslationId =
             prefRepository.getPrivatePref(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
         if (selectedSourceTranslationId.isNullOrEmpty()) {
