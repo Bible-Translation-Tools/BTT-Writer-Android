@@ -156,7 +156,7 @@ class TargetTranslationViewModel @Inject constructor(
     }
 
     fun getResourceContainer(slug: String): ResourceContainer? {
-        return ContainerCache.cache(library, slug)
+        return ContainerCache.get(slug)
     }
 
     /**

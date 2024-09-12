@@ -33,6 +33,7 @@ import com.door43.translationstudio.databinding.FragmentResourcesExampleItemBind
 import com.door43.translationstudio.databinding.FragmentResourcesNoteBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesQuestionBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesWordBinding;
+import com.door43.translationstudio.databinding.FragmentWordsIndexListBinding;
 import com.door43.translationstudio.rendering.HtmlRenderer;
 import com.door43.translationstudio.rendering.LinkToHtmlRenderer;
 import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
@@ -238,32 +239,40 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     /**
      * Prepares the resources drawer with the translation words index
      */
-    private void renderTranslationWordsIndex() {
+    private void renderTranslationWordsIndex(String resourceContainerSlug) {
         binding.scrollingResourcesDrawerContent.setVisibility(View.GONE);
         binding.resourcesDrawerContent.setVisibility(View.VISIBLE);
-        ListView list = (ListView) requireActivity().getLayoutInflater().inflate(R.layout.fragment_words_index_list, null);
+
+        FragmentWordsIndexListBinding wordsIndexListBinding =
+                FragmentWordsIndexListBinding.inflate(requireActivity().getLayoutInflater());
+
         binding.resourcesDrawerContent.removeAllViews();
-        binding.resourcesDrawerContent.addView(list);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireActivity(), R.layout.list_clickable_text);
-        final ResourceContainer rc = viewModel.getResourceContainer();
-        String[] chapters = rc.chapters();
-        final List<String> words = Arrays.asList(chapters);
-        Collections.sort(words);
-        Pattern titlePattern = Pattern.compile("#(.*)");
-        for(String slug:words) {
-            // get title and add to adapter
-            Matcher match = titlePattern.matcher(rc.readChunk(slug, "01"));
-            if(match.find()) {
-                adapter.add(match.group(1));
-            } else {
-                adapter.add(slug);
+        binding.resourcesDrawerContent.addView(wordsIndexListBinding.list);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireActivity(),
+                R.layout.list_clickable_text
+        );
+        final ResourceContainer rc = viewModel.getResourceContainer(resourceContainerSlug);
+        if (rc != null) {
+            String[] chapters = rc.chapters();
+            final List<String> words = Arrays.asList(chapters);
+            Collections.sort(words);
+            Pattern titlePattern = Pattern.compile("#(.*)");
+            for(String slug:words) {
+                // get title and add to adapter
+                Matcher match = titlePattern.matcher(rc.readChunk(slug, "01"));
+                if(match.find()) {
+                    adapter.add(match.group(1));
+                } else {
+                    adapter.add(slug);
+                }
             }
+            wordsIndexListBinding.list.setAdapter(adapter);
+            wordsIndexListBinding.list.setOnItemClickListener((parent, view, position, id) -> {
+                String slug = words.get(position);
+                renderTranslationWord(rc.slug, slug);
+            });
         }
-        list.setAdapter(adapter);
-        list.setOnItemClickListener((parent, view, position, id) -> {
-            String slug = words.get(position);
-            renderTranslationWord(rc.slug, slug);
-        });
     }
 
     /**
@@ -392,7 +401,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
             FragmentResourcesWordBinding wordBinding = FragmentResourcesWordBinding.inflate(requireActivity().getLayoutInflater());
 
-            wordBinding.wordsIndex.setOnClickListener(v -> renderTranslationWordsIndex());
+            wordBinding.wordsIndex.setOnClickListener(v -> renderTranslationWordsIndex(resourceContainerSlug));
             String word = rc.readChunk(chapterSlug, "01");
             Pattern pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)");
             Matcher match = pattern.matcher(word);
