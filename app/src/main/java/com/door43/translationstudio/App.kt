@@ -738,7 +738,7 @@ class App : Application() {
              */
             set(alias) {
                 var a = alias
-                if (a!!.trim { it <= ' ' }.isEmpty()) {
+                if (a!!.trim().isEmpty()) {
                     a = null
                 }
                 setUserString(SettingsActivity.KEY_PREF_DEVICE_ALIAS, a)

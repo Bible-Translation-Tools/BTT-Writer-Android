@@ -64,10 +64,6 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     ) {
         super.initializeListItems(items, startingChapter, startingChunk);
 
-        filteredItems.clear();
-        filteredItems.addAll(this.items);
-        filteredChapters = chapters;
-
         triggerNotifyDataSetChanged();
         updateMergeConflict();
     }
@@ -87,11 +83,6 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     @Override
     public void onTaskFinished(ManagedTask task) {
         TaskManager.clearTask(task);
-    }
-
-    @Override
-    void onCoordinate(ViewHolder holder) {
-
     }
 
     @Override
@@ -690,6 +681,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
     @Override
     public void markAllChunksDone() {
+    }
+
+    @Override
+    public void setResourcesOpened(boolean status) {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

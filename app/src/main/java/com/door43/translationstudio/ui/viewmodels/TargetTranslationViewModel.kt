@@ -44,7 +44,8 @@ class TargetTranslationViewModel @Inject constructor(
     @Inject lateinit var prefRepository: IPreferenceRepository
     @Inject lateinit var renderHelps: RenderHelps
 
-    private val jobs = arrayListOf<Job>()
+    private val generalJobs = arrayListOf<Job>()
+    private val renderHelpJobs = arrayListOf<Job>()
 
     private var _targetTranslation: TargetTranslation? = null
     val targetTranslation get() = _targetTranslation!!
@@ -61,8 +62,9 @@ class TargetTranslationViewModel @Inject constructor(
     private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
     val progress: LiveData<ProgressHelper.Progress?> = _progress
 
-    fun cancelJobs() {
-        jobs.forEach { it.cancel() }
+    fun cancelGeneralJobs() {
+        generalJobs.forEach { it.cancel() }
+        generalJobs.clear()
     }
 
     fun loadTargetTranslation(translationID: String?): TargetTranslation? {
@@ -185,7 +187,7 @@ class TargetTranslationViewModel @Inject constructor(
                 }
             }
             loadListItems()
-        }.also(jobs::add)
+        }.also(generalJobs::add)
     }
 
     fun getClosestResourceContainer(
@@ -268,7 +270,7 @@ class TargetTranslationViewModel @Inject constructor(
             }
             _listItems.value = items
             _progress.value = null
-        }.also(jobs::add)
+        }.also(generalJobs::add)
     }
 
     fun renderHelps(item: ListItem) {
@@ -276,7 +278,12 @@ class TargetTranslationViewModel @Inject constructor(
             _renderHelpsResult.value = withContext(Dispatchers.IO) {
                 renderHelps.execute(item)
             }
-        }
+        }.also(renderHelpJobs::add)
+    }
+
+    fun cancelRenderJobs() {
+        renderHelpJobs.forEach { it.cancel() }
+        renderHelpJobs.clear()
     }
 
     private fun getSourceTranslations(): List<ContentValues> {

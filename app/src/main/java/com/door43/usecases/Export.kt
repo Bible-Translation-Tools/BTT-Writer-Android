@@ -312,7 +312,7 @@ class Export @Inject constructor(
             if (projectTranslation != null) {
                 val title = projectTranslation.title
                 if (title != null) {
-                    bookTitle = title.trim { it <= ' ' }
+                    bookTitle = title.trim()
                 }
             }
             if (bookTitle.isEmpty()) {

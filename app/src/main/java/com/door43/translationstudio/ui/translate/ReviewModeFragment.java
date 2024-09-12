@@ -1,18 +1,22 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+
+import android.os.Handler;
+import android.os.Looper;
 import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.webkit.WebView;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -23,6 +27,7 @@ import com.door43.translationstudio.core.TranslationArticle;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Typography;
+import com.door43.translationstudio.core.Util;
 import com.door43.translationstudio.databinding.FragmentResourcesArticleBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesExampleItemBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesNoteBinding;
@@ -42,8 +47,9 @@ import com.door43.util.StringUtilities;
 import org.markdownj.MarkdownProcessor;
 import org.sufficientlysecure.htmltextview.LocalLinkMovementMethod;
 
-import org.unfoldingword.door43client.models.SourceLanguage;
 import org.unfoldingword.door43client.models.Translation;
+import org.unfoldingword.resourcecontainer.Language;
+import org.unfoldingword.resourcecontainer.Link;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 
@@ -57,53 +63,66 @@ import java.util.regex.Pattern;
 /**
  * Created by joel on 9/8/2015.
  */
-public class ReviewModeFragment extends ViewModeFragment {
+public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener {
 
     private static final String STATE_RESOURCES_OPEN = "state_resources_open";
     private static final String STATE_RESOURCES_DRAWER_OPEN = "state_resources_drawer_open";
     private static final String STATE_WORD_ID = "state_word_id";
-    private static final String STATE_NOTE_ID = "state_note_id";
-    private static final String STATE_CHAPTER_ID = "state_chapter_id";
-    private static final String STATE_FRAME_ID = "state_frame_id";
-    private static final String STATE_RESOURCE_CONTAINER_SLUG = "container-slug";
     private static final String STATE_HELP_TITLE = "state_help_title";
     private static final String STATE_HELP_BODY = "state_help_body";
     private static final String STATE_HELP_TYPE = "state_help_type";
 
-    private boolean mResourcesOpen = false;
-    private boolean mResourcesDrawerOpen = false;
-    private String mTranslationWordId;
+    private boolean resourcesOpen = false;
+    private boolean resourcesDrawerOpen = false;
+    private String translationWordId;
 
-    private String mResourceContainerSlug;
-    private ResourceContainer mSourceContainer = null;
-    private TranslationHelp mTranslationQuestion = null;
-    private TranslationHelp mTranslationNote = null;
+    private TranslationHelp translationQuestion = null;
+    private TranslationHelp translationNote = null;
+
+    private boolean resourcesOpened = false;
 
     @Override
-    ViewModeAdapter generateAdapter(
-            Activity activity,
-            String targetTranslationId,
-            String chapterId,
-            String frameId,
-            Bundle extras
-    ) {
-        return new ReviewModeAdapter(
-                activity,
-                targetTranslationId,
-                chapterId,
-                frameId,
-                mResourcesOpen
-        );
+    ViewModeAdapter generateAdapter() {
+        return new ReviewModeAdapter(resourcesOpen);
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if(savedInstanceState != null) {
+            resourcesOpen = savedInstanceState.getBoolean(STATE_RESOURCES_OPEN, false);
+            resourcesDrawerOpen = savedInstanceState.getBoolean(STATE_RESOURCES_DRAWER_OPEN, false);
+
+            if(savedInstanceState.containsKey(STATE_WORD_ID)) {
+                translationWordId = savedInstanceState.getString(STATE_WORD_ID);
+            } else if(savedInstanceState.containsKey(STATE_HELP_TYPE)) {
+                String type = savedInstanceState.getString(STATE_HELP_TYPE);
+                TranslationHelp help = new TranslationHelp(
+                        savedInstanceState.getString(STATE_HELP_TITLE),
+                        savedInstanceState.getString(STATE_HELP_BODY)
+                );
+                if(type != null && type.equals("tn")) {
+                    translationNote = help;
+                } else if(type != null && type.equals("tq")) {
+                    translationQuestion = help;
+                }
+            }
+        }
+        ((ReviewModeAdapter) getAdapter()).setOnRenderHelpsListener(this);
+        return super.onCreateView(inflater, container, savedInstanceState);
+    }
+
+    @Override
+    protected void setupObservers() {
+        super.setupObservers();
+
+        viewModel.getRenderHelpsResult().observe(getViewLifecycleOwner(), result -> {
+            if(result != null) renderHelpsResult(result.getItem(), result.getHelps());
+        });
     }
 
     @Override
     public void onTaskFinished(final ManagedTask task) {
         super.onTaskFinished(task);
-    }
-
-    @Override
-    protected void onSourceContainerLoaded(final ResourceContainer container) {
-        mSourceContainer = container;
     }
 
     @Override
@@ -116,7 +135,7 @@ public class ReviewModeFragment extends ViewModeFragment {
         binding.closeResourcesDrawerBtn.setOnClickListener(v -> closeResourcesDrawer());
 
         // open the drawer on rotate
-        if(mResourcesDrawerOpen && mResourcesOpen) {
+        if(resourcesDrawerOpen && resourcesOpen) {
             ViewTreeObserver viewTreeObserver = rootView.getViewTreeObserver();
             if(viewTreeObserver.isAlive()) {
                 viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -125,12 +144,16 @@ public class ReviewModeFragment extends ViewModeFragment {
                         rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                         ReviewHolder sample = (ReviewHolder) getViewHolderSample();
                         if (sample != null) {
-                            if (mTranslationNote != null) {
-                                onTranslationNoteClick(mTranslationNote, sample.getResourceCardWidth());
-                            } else if (mTranslationWordId != null) {
-                                onTranslationWordClick(mResourceContainerSlug, mTranslationWordId, sample.getResourceCardWidth());
-                            } else if (mTranslationQuestion != null) {
-                                onTranslationQuestionClick(mTranslationQuestion, sample.getResourceCardWidth());
+                            if (translationNote != null) {
+                                onTranslationNoteClick(translationNote, sample.getResourceCardWidth());
+                            } else if (translationWordId != null) {
+                                onTranslationWordClick(
+                                        viewModel.getResourceContainer().slug,
+                                        translationWordId,
+                                        sample.getResourceCardWidth()
+                                );
+                            } else if (translationQuestion != null) {
+                                onTranslationQuestionClick(translationQuestion, sample.getResourceCardWidth());
                             }
                         }
                     }
@@ -142,11 +165,11 @@ public class ReviewModeFragment extends ViewModeFragment {
 
     @Override
     protected void onRightSwipe(MotionEvent e1, MotionEvent e2) {
-        if(mResourcesDrawerOpen) {
+        if(resourcesDrawerOpen) {
             closeResourcesDrawer();
         } else {
             if (getAdapter() != null) {
-                ((ReviewModeAdapter) getAdapter()).closeResources();
+                closeResources();
             }
         }
     }
@@ -154,12 +177,21 @@ public class ReviewModeFragment extends ViewModeFragment {
     @Override
     protected void onLeftSwipe(MotionEvent e1, MotionEvent e2) {
         if(getAdapter() != null) {
-            ((ReviewModeAdapter)getAdapter()).openResources();
+            openResources();
         }
     }
 
+    /**
+     * Checks if the resources are open
+     *
+     * @return
+     */
+    public boolean isResourcesOpen() {
+        return resourcesOpened;
+    }
+
     private void openResourcesDrawer(int width) {
-        mResourcesDrawerOpen = true;
+        resourcesDrawerOpen = true;
         ViewGroup.LayoutParams params = binding.resourcesDrawerCard.getLayoutParams();
         params.width = width;
         binding.resourcesDrawerCard.setLayoutParams(params);
@@ -167,7 +199,7 @@ public class ReviewModeFragment extends ViewModeFragment {
     }
 
     private void closeResourcesDrawer() {
-        mResourcesDrawerOpen = false;
+        resourcesDrawerOpen = false;
         ViewGroup.LayoutParams params = binding.resourcesDrawerCard.getLayoutParams();
         params.width = 0;
         binding.resourcesDrawerCard.setLayoutParams(params);
@@ -209,32 +241,29 @@ public class ReviewModeFragment extends ViewModeFragment {
     private void renderTranslationWordsIndex() {
         binding.scrollingResourcesDrawerContent.setVisibility(View.GONE);
         binding.resourcesDrawerContent.setVisibility(View.VISIBLE);
-//            mCloseResourcesDrawerButton.setText(requireActivity().getResources().getString(R.string.translation_words_index));
         ListView list = (ListView) requireActivity().getLayoutInflater().inflate(R.layout.fragment_words_index_list, null);
         binding.resourcesDrawerContent.removeAllViews();
         binding.resourcesDrawerContent.addView(list);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireActivity(), R.layout.list_clickable_text);
-        final ResourceContainer rc = viewModel.getResourceContainer(mResourceContainerSlug);
-        if(rc != null) {
-            String[] chapters = rc.chapters();
-            final List<String> words = Arrays.asList(chapters);
-            Collections.sort(words);
-            Pattern titlePattern = Pattern.compile("#(.*)");
-            for(String slug:words) {
-                // get title and add to adapter
-                Matcher match = titlePattern.matcher(rc.readChunk(slug, "01"));
-                if(match.find()) {
-                    adapter.add(match.group(1));
-                } else {
-                    adapter.add(slug);
-                }
+        final ResourceContainer rc = viewModel.getResourceContainer();
+        String[] chapters = rc.chapters();
+        final List<String> words = Arrays.asList(chapters);
+        Collections.sort(words);
+        Pattern titlePattern = Pattern.compile("#(.*)");
+        for(String slug:words) {
+            // get title and add to adapter
+            Matcher match = titlePattern.matcher(rc.readChunk(slug, "01"));
+            if(match.find()) {
+                adapter.add(match.group(1));
+            } else {
+                adapter.add(slug);
             }
-            list.setAdapter(adapter);
-            list.setOnItemClickListener((parent, view, position, id) -> {
-                String slug = words.get(position);
-                renderTranslationWord(rc.slug, slug);
-            });
         }
+        list.setAdapter(adapter);
+        list.setOnItemClickListener((parent, view, position, id) -> {
+            String slug = words.get(position);
+            renderTranslationWord(rc.slug, slug);
+        });
     }
 
     /**
@@ -353,9 +382,7 @@ public class ReviewModeFragment extends ViewModeFragment {
      * @param chapterSlug
      */
     private void renderTranslationWord(String resourceContainerSlug, String chapterSlug) {
-        mTranslationWordId = chapterSlug;
-        mResourceContainerSlug = resourceContainerSlug;
-
+        translationWordId = chapterSlug;
         final ResourceContainer rc = viewModel.getResourceContainer(resourceContainerSlug);
 
         if (rc != null) {
@@ -498,19 +525,22 @@ public class ReviewModeFragment extends ViewModeFragment {
                     for(String exampleSlug:exampleSlugs) {
                         final String[] slugs = exampleSlug.split("-");
                         if(slugs.length != 2) continue;
-                        if(mSourceContainer == null) continue;
-                        String projectTitle = mSourceContainer.readChunk("front", "title");
+
+                        String projectTitle = viewModel.getResourceContainer().readChunk("front", "title");
 
                         // get verse title
                         String verseTitle = StringUtilities.formatNumber(slugs[1]);
-                        if(mSourceContainer.contentMimeType.equals("text/usfm")) {
-                            verseTitle = Frame.parseVerseTitle(mSourceContainer.readChunk(slugs[0], slugs[1]), TranslationFormat.parse(mSourceContainer.contentMimeType));
+                        if(viewModel.getResourceContainer().contentMimeType.equals("text/usfm")) {
+                            verseTitle = Frame.parseVerseTitle(
+                                    viewModel.getResourceContainer().readChunk(slugs[0], slugs[1]),
+                                    TranslationFormat.parse(viewModel.getResourceContainer().contentMimeType)
+                            );
                         }
 
                         FragmentResourcesExampleItemBinding examplesBinding = FragmentResourcesExampleItemBinding.inflate(requireActivity().getLayoutInflater());
 
                         examplesBinding.reference.setText(projectTitle.trim() + " " + StringUtilities.formatNumber(slugs[0]) + ":" + verseTitle);
-                        examplesBinding.passage.setHtmlFromString(mSourceContainer.readChunk(slugs[0], slugs[1]), true);
+                        examplesBinding.passage.setHtmlFromString(viewModel.getResourceContainer().readChunk(slugs[0], slugs[1]), true);
                         examplesBinding.getRoot().setOnClickListener(v -> scrollToChunk(slugs[0], slugs[1]));
                         Typography.formatSub(requireActivity(), TranslationType.SOURCE, examplesBinding.reference, rc.language.slug, rc.language.direction);
                         Typography.formatSub(requireActivity(), TranslationType.SOURCE, examplesBinding.passage, rc.language.slug, rc.language.direction);
@@ -532,8 +562,8 @@ public class ReviewModeFragment extends ViewModeFragment {
      * @param note
      */
     private void renderTranslationNote(TranslationHelp note) {
-        mTranslationNote = note;
-        mTranslationWordId = null;
+        translationNote = note;
+        translationWordId = null;
 
         final ResourceContainer sourceTranslation = getSelectedResourceContainer();
 //        TranslationNote note = null;//getPreferredNote(sourceTranslation, chapterId, frameId, noteId);
@@ -650,7 +680,7 @@ public class ReviewModeFragment extends ViewModeFragment {
         });
 
         noteBinding.title.setText(note.title);
-        SourceLanguage sourceLanguage = viewModel.getSourceLanguage();
+        Language sourceLanguage = viewModel.getSourceLanguage();
         if (sourceLanguage != null) {
             Typography.format(requireActivity(), TranslationType.SOURCE, noteBinding.title, sourceLanguage.slug, sourceLanguage.direction);
             noteBinding.description.setText(renderer.render(note.body));
@@ -667,10 +697,9 @@ public class ReviewModeFragment extends ViewModeFragment {
      * @param question the question to be displayed
      */
     private void renderTranslationQuestion(TranslationHelp question) {
-        mTranslationWordId = null;
-        mTranslationQuestion = question;
+        translationWordId = null;
+        translationQuestion = question;
 
-        SourceLanguage sourceLanguage = viewModel.getSourceLanguage();
         binding.resourcesDrawerContent.setVisibility(View.GONE);
         binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
         binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
@@ -678,64 +707,96 @@ public class ReviewModeFragment extends ViewModeFragment {
         FragmentResourcesQuestionBinding questionBinding = FragmentResourcesQuestionBinding.inflate(requireActivity().getLayoutInflater());
 //            mCloseResourcesDrawerButton.setText(question.getQuestion());
 
-        Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.questionTitle, sourceLanguage.slug, sourceLanguage.direction);
-        Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.answerTitle, sourceLanguage.slug, sourceLanguage.direction);
+        Language sourceLanguage = viewModel.getSourceLanguage();
+        if (sourceLanguage != null) {
+            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.questionTitle, sourceLanguage.slug, sourceLanguage.direction);
+            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.answerTitle, sourceLanguage.slug, sourceLanguage.direction);
 
-        questionBinding.question.setText(question.title);
-        Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.question, sourceLanguage.slug, sourceLanguage.direction);
-        questionBinding.answer.setText(question.body);
-        Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.answer, sourceLanguage.slug, sourceLanguage.direction);
+            questionBinding.question.setText(question.title);
+            Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.question, sourceLanguage.slug, sourceLanguage.direction);
+            questionBinding.answer.setText(question.body);
+            Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.answer, sourceLanguage.slug, sourceLanguage.direction);
+        }
 
         binding.scrollingResourcesDrawerContent.removeAllViews();
         binding.scrollingResourcesDrawerContent.addView(questionBinding.getRoot());
     }
 
+    private void renderHelpsResult(ListItem item, Map<String, Object> helps) {
+        // skip if resources are closed
+        if (!isResourcesOpen()) return;
+
+        final List<TranslationHelp> notes = (List<TranslationHelp>) helps.get("notes");
+        final List<Link> words = (List<Link>) helps.get("words");
+        final List<TranslationHelp> questions = (List<TranslationHelp>) helps.get("questions");
+
+        final int position = getAdapter().filteredItems.indexOf(item);
+
+        Handler hand = new Handler(Looper.getMainLooper());
+        hand.post(() -> {
+            ReviewHolder holder = (ReviewHolder) getVisibleViewHolder(position);
+            if (holder != null) {
+                holder.setResources(item.source.language, notes, questions, words);
+                // TODO: 2/28/17 select the correct tab
+            } else {
+                getAdapter().notifyItemChanged(position);
+            }
+        });
+    }
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if(savedInstanceState != null) {
-            mResourcesOpen = savedInstanceState.getBoolean(STATE_RESOURCES_OPEN, false);
-            mResourcesDrawerOpen = savedInstanceState.getBoolean(STATE_RESOURCES_DRAWER_OPEN, false);
-            if(savedInstanceState.containsKey(STATE_WORD_ID)) {
-                mTranslationWordId = savedInstanceState.getString(STATE_WORD_ID);
-            } else if(savedInstanceState.containsKey(STATE_HELP_TYPE)) {
-                String type = savedInstanceState.getString(STATE_HELP_TYPE);
-                TranslationHelp help = new TranslationHelp(savedInstanceState.getString(STATE_HELP_TITLE), savedInstanceState.getString(STATE_HELP_TITLE));
-                if(type != null && type.equals("tn")) {
-                    mTranslationNote = help;
-                } else if(type != null && type.equals("tq")) {
-                    mTranslationQuestion = help;
-                }
-            }
-            if(savedInstanceState.containsKey(STATE_RESOURCE_CONTAINER_SLUG)) {
-                mResourceContainerSlug = savedInstanceState.getString(STATE_RESOURCE_CONTAINER_SLUG);
-            }
+    public void onRenderHelps(ListItem item) {
+        viewModel.renderHelps(item);
+    }
+
+    @Override
+    public void onCancelRenderHelps() {
+        viewModel.cancelRenderJobs();
+    }
+
+    /**
+     * opens the resources view
+     */
+    public void openResources() {
+        if (!resourcesOpened) {
+            resourcesOpened = true;
+            getAdapter().setResourcesOpened(true);
+        }
+    }
+
+    /**
+     * closes the resources view
+     */
+    public void closeResources() {
+        if (resourcesOpened) {
+            resourcesOpened = false;
+            getAdapter().setResourcesOpened(false);
+            viewModel.cancelRenderJobs();
         }
     }
 
     @Override
     public void onSaveInstanceState(Bundle out) {
-        out.putBoolean(STATE_RESOURCES_OPEN, ((ReviewModeAdapter) getAdapter()).isResourcesOpen());
-        out.putBoolean(STATE_RESOURCES_DRAWER_OPEN, mResourcesDrawerOpen);
-        if(mTranslationWordId != null) {
-            out.putString(STATE_WORD_ID, mTranslationWordId);
+        out.putBoolean(STATE_RESOURCES_OPEN, isResourcesOpen());
+        out.putBoolean(STATE_RESOURCES_DRAWER_OPEN, resourcesDrawerOpen);
+        if(translationWordId != null) {
+            out.putString(STATE_WORD_ID, translationWordId);
         } else {
             out.remove(STATE_WORD_ID);
         }
-        if(mTranslationNote != null) {
-            out.putString(STATE_HELP_TITLE, mTranslationNote.title);
-            out.putString(STATE_HELP_BODY, mTranslationNote.body);
+        if(translationNote != null) {
+            out.putString(STATE_HELP_TITLE, translationNote.title);
+            out.putString(STATE_HELP_BODY, translationNote.body);
             out.putString(STATE_HELP_TYPE, "tn");
-        } else if(mTranslationQuestion != null) {
-            out.putString(STATE_HELP_TITLE, mTranslationQuestion.title);
-            out.putString(STATE_HELP_BODY, mTranslationQuestion.body);
+        } else if(translationQuestion != null) {
+            out.putString(STATE_HELP_TITLE, translationQuestion.title);
+            out.putString(STATE_HELP_BODY, translationQuestion.body);
             out.putString(STATE_HELP_TYPE, "tq");
         } else {
             out.remove(STATE_HELP_TITLE);
             out.remove(STATE_HELP_BODY);
             out.remove(STATE_HELP_TYPE);
         }
-        out.putString(STATE_RESOURCE_CONTAINER_SLUG, mResourceContainerSlug);
         super.onSaveInstanceState(out);
     }
 
@@ -759,5 +820,65 @@ public class ReviewModeFragment extends ViewModeFragment {
         String html = md.markdown(body);
 
         return new TranslationArticle(volume, "ta-" + manual,  articleId, title, html, "test");
+    }
+
+    @Override
+    public String getVerseChunk(String chapter, String verse) {
+        return Util.mapVerseToChunk(viewModel.getResourceContainer(), chapter, verse);
+    }
+
+    /**
+     * enable/disable merge conflict filter in adapter
+     *
+     * @param enableFilter
+     * @param forceMergeConflict - if true, then will initialize merge conflict flag to true
+     */
+    public final void setMergeConflictFilter(boolean enableFilter, boolean forceMergeConflict) {
+        /*if (forceMergeConflict) {
+            // initialize merge conflict flag to true
+            mHaveMergeConflict = true;
+        }
+        // update display and status flags
+        showMergeConflictIcon(mHaveMergeConflict, enableFilter);
+
+        if (!mHaveMergeConflict || !enableFilter) {
+            // if no merge conflict or filter off, then remove filter
+            mFilteredItems = mItems;
+            mFilteredChapters = mChapters;
+
+            if (mMergeConflictFilterOn) {
+                mMergeConflictFilterOn = false;
+                triggerNotifyDataSetChanged();
+            }
+            return;
+        }
+
+        mMergeConflictFilterOn = true;
+
+        CharSequence filterConstraint = enableFilter ? "true" : null; // will filter if string is
+        // not null
+        showMergeConflictIcon(mHaveMergeConflict, true);
+
+        // clear the cards displayed since we have new search string
+        mFilteredItems = new ArrayList<>();
+
+        final List<ListItem> items = this.mItems;
+        MergeConflictFilter filter = new MergeConflictFilter(mSourceContainer, mTargetTranslation, items);
+        filter.setListener(new MergeConflictFilter.OnMatchListener() {
+            @Override
+            public void onMatch(ListItem item) {
+                if (!mFilteredChapters.contains(item.chapterSlug))
+                    mFilteredChapters.add(item.chapterSlug);
+            }
+
+            @Override
+            public void onFinished(CharSequence constraint, List<ListItem> results) {
+                mFilteredItems = results;
+                updateMergeConflict();
+                triggerNotifyDataSetChanged();
+                checkForConflictSummary(mFilteredItems.size(), items.size());
+            }
+        });
+        filter.filter(filterConstraint);*/
     }
 }

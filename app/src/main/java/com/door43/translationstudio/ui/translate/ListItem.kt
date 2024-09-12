@@ -367,8 +367,7 @@ class ReviewListItem(
     @JvmField
     var refreshSearchHighlightTarget: Boolean = false
     @JvmField
-    var currentTargetTaskId: Int = -1
-    var currentSourceTaskId: Int = -1
-    @JvmField
     var hasMissingVerses: Boolean = false
+    @JvmField
+    var resourcesOpened: Boolean = false
 }

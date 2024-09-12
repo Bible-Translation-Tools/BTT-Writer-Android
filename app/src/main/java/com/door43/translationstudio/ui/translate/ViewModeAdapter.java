@@ -181,12 +181,6 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     }
 
     /**
-     * Called when coordinating operations need to be applied to all the view holders
-     * @param holder
-     */
-    abstract void onCoordinate(VH holder);
-
-    /**
      * set true if we want to initially show a summary of merge conflicts
      * @param showMergeSummary
      */
@@ -208,13 +202,10 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     }
 
     /**
-     * Requests the layout manager to coordinate all visible children in the list
+     * Sets the resources opened status
+     * @param status
      */
-    protected void coordinateViewHolders() {
-        for(VH holder: viewHolders) {
-            onCoordinate(holder);
-        }
-    }
+    abstract public void setResourcesOpened(boolean status);
 
     /**
      * calls notify dataset changed and triggers some other actions
@@ -223,6 +214,13 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         notifyDataSetChanged();
         if(listener != null) {
             listener.onDataSetChanged(getItemCount());
+        }
+    }
+
+    protected void triggerNotifyItemChanged(int position) {
+        notifyItemChanged(position);
+        if(listener != null) {
+            listener.onDataSetChanged(1);
         }
     }
 
@@ -252,8 +250,9 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
             String startingChunk
     ) {
         layoutBuildNumber++; // force resetting of fonts
-
         this.items.clear();
+        chapters.clear();
+
         var foundPosition = false;
         for (ListItem item: items) {
             if (!foundPosition && item.chapterSlug.equals(startingChapter) &&
@@ -261,8 +260,14 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
                 setListStartPosition(this.items.size());
                 foundPosition = true;
             }
+            if (!chapters.contains(item.chapterSlug)) {
+                chapters.add(item.chapterSlug);
+            }
             this.items.add(createListItem(item));
         }
+
+        filteredChapters = chapters;
+        filteredItems = this.items;
     }
 
     /**

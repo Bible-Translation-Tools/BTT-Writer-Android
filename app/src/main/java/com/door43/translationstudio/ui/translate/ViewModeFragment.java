@@ -77,6 +77,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        adapter = generateAdapter();
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentStackedCardListBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(requireActivity()).get(TargetTranslationViewModel.class);
@@ -99,7 +105,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         layoutManager = new WrapContentLinearLayoutManager(getActivity());
         binding.recyclerView.setLayoutManager(layoutManager);
         binding.recyclerView.setItemAnimator(new DefaultItemAnimator());
-        adapter = generateAdapter();
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -167,7 +172,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         return binding.getRoot();
     }
 
-    private void setupObservers() {
+    protected void setupObservers() {
         viewModel.getProgress().observe(getViewLifecycleOwner(), progress -> {
             if (progress != null) {
                 if (progressDialog != null) {
@@ -238,7 +243,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param e2
      */
     protected void onRightSwipe(MotionEvent e1, MotionEvent e2) {
-
     }
 
     /**
@@ -247,7 +251,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param e2
      */
     protected void onLeftSwipe(MotionEvent e1, MotionEvent e2) {
-
     }
 
     /**
@@ -616,7 +619,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public void onDestroy() {
-        viewModel.cancelJobs();
+        viewModel.cancelGeneralJobs();
+        viewModel.cancelRenderJobs();
         if(layoutManager != null) {
             // save position state
             updateListStartPosition();

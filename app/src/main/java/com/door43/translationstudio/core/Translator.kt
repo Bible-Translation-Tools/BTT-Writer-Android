@@ -805,7 +805,7 @@ class Translator @Inject constructor(
             }
             // grab the last bit of text
             compiledString.append(text.toString().substring(lastIndex, text.length))
-            return compiledString.toString().trim { it <= ' ' }
+            return compiledString.toString().trim()
         }
 
         /**
@@ -839,7 +839,7 @@ class Translator @Inject constructor(
             }
             // grab the last bit of text
             compiledString.append(text.toString().substring(lastIndex, text.length))
-            return compiledString.toString().trim { it <= ' ' }
+            return compiledString.toString().trim()
         }
 
         /**

@@ -80,6 +80,9 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             }
         }
 
+        filteredChapters = chapters;
+        filteredItems = this.items;
+
         targetStateOpen = new boolean[chapters.size()];
         renderedSourceBody = new CharSequence[chapters.size()];
         renderedTargetBody = new CharSequence[chapters.size()];
@@ -103,11 +106,6 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     @Override
     public void onTaskFinished(ManagedTask task) {
         TaskManager.clearTask(task);
-    }
-
-    @Override
-    void onCoordinate(ViewHolder holder) {
-
     }
 
     @Override
@@ -509,6 +507,10 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     @Override
     public int getSectionForPosition(int position) {
         return position;
+    }
+
+    @Override
+    public void setResourcesOpened(boolean status) {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
