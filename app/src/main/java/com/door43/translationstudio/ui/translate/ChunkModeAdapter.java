@@ -40,9 +40,6 @@ import com.door43.translationstudio.ui.spannables.Span;
 import com.door43.widget.ViewUtil;
 import com.google.android.material.tabs.TabLayout;
 
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -58,11 +55,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
     @Override
     public void initializeListItems(
-            List<ListItem> items,
+            List<ListItem> listItems,
             String startingChapter,
             String startingChunk
     ) {
-        super.initializeListItems(items, startingChapter, startingChunk);
+        super.initializeListItems(listItems, startingChapter, startingChunk);
 
         triggerNotifyDataSetChanged();
         updateMergeConflict();
@@ -74,15 +71,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     }
 
     /**
-     * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
+     * Check all cards for merge conflicts to see if we should show warning.
+     * Runs as background task.
      */
     private void updateMergeConflict() {
-        doCheckForMergeConflictTask();
-    }
-
-    @Override
-    public void onTaskFinished(ManagedTask task) {
-        TaskManager.clearTask(task);
+        doCheckForMergeConflict();
     }
 
     @Override
@@ -179,7 +172,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         holder.binding.sourceTranslationTabs.setOnTabSelectedListener(null);
         holder.binding.sourceTranslationTabs.removeAllTabs();
 
-        List<ContentValues> tabs = item.getTabs().invoke();
+        List<ContentValues> tabs = item.getTabs();
         for (ContentValues values : tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");

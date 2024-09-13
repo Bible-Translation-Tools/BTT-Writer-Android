@@ -25,8 +25,6 @@ import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
 import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +34,7 @@ import java.util.List;
 /**
  * Created by joel on 9/18/2015.
  */
-public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH>  implements SectionIndexer, ManagedTask.OnFinishedListener {
+public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH>  implements SectionIndexer {
     private final List<VH> viewHolders = new ArrayList<>();
     private OnEventListener listener;
     private int startPosition = 0;
@@ -224,6 +222,13 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         }
     }
 
+    protected void triggerNotifyItemChanged(ListItem item) {
+        notifyItemChanged(filteredItems.indexOf(item));
+        if(listener != null) {
+            listener.onDataSetChanged(1);
+        }
+    }
+
     /**
      * Filters the adapter by the constraint
      * @param constraint the search query
@@ -245,29 +250,31 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * Update the list of items
      */
     protected void initializeListItems(
-            List<ListItem> items,
+            List<ListItem> listItems,
             String startingChapter,
             String startingChunk
     ) {
         layoutBuildNumber++; // force resetting of fonts
-        this.items.clear();
+        items.clear();
         chapters.clear();
+        filteredItems.clear();
+        filteredChapters.clear();
 
         var foundPosition = false;
-        for (ListItem item: items) {
+        for (ListItem item: listItems) {
             if (!foundPosition && item.chapterSlug.equals(startingChapter) &&
                     item.chunkSlug.equals(startingChunk)) {
-                setListStartPosition(this.items.size());
+                setListStartPosition(items.size());
                 foundPosition = true;
             }
             if (!chapters.contains(item.chapterSlug)) {
                 chapters.add(item.chapterSlug);
             }
-            this.items.add(createListItem(item));
+            items.add(createListItem(item));
         }
 
-        filteredChapters = chapters;
-        filteredItems = this.items;
+        filteredChapters.addAll(chapters);
+        filteredItems.addAll(items);
     }
 
     /**
@@ -280,38 +287,18 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     public abstract void markAllChunksDone();
 
     /**
-     * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
+     * check all cards for merge conflicts to see if we should show warning.
      */
-    protected void doCheckForMergeConflictTask() {
-        if(!items.isEmpty()) {
-            ManagedTask task = new ManagedTask() {
-                int conflictCount = 0;
-                @Override
-                public void start() {
-                    for (ListItem item : items) {
-                        if(item.getHasMergeConflicts()) {
-                            conflictCount++;
-                        }
-                    }
-                    setResult(conflictCount);
-                }
-            };
-            task.addOnFinishedListener(t -> {
-                int conflictCount = (int) t.getResult();
-                Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(() -> {
-                    OnEventListener listener = getListener();
-                    if(listener != null) {
-                        listener.onEnableMergeConflict(conflictCount > 0, false);
-                    }
-                });
-            });
-            TaskManager.addTask(task);
-        }
+    protected void doCheckForMergeConflict() {
+        boolean hasConflicts = getConflictsCount() > 0;
+        Handler hand = new Handler(Looper.getMainLooper());
+        hand.post(() -> {
+            OnEventListener listener = getListener();
+            if(listener != null) {
+                listener.onEnableMergeConflict(hasConflicts, false);
+            }
+        });
     }
-
-    @Override
-    public abstract void onTaskFinished(ManagedTask task);
 
     /**
      * Checks if filtering is enabled for this adapter.
@@ -462,6 +449,25 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         });
 
         return root;
+    }
+
+    /**
+     * enable/disable merge conflict filter in adapter
+     * @param enableFilter
+     * @param forceMergeConflict - if true, then will initialize have merge conflict flag to true
+    */
+    protected void setMergeConflictFilter(boolean enableFilter, boolean forceMergeConflict) {
+        // Override this in your adapter to enable merge conflict filtering
+    }
+
+    protected int getConflictsCount() {
+        int conflictsCount = 0;
+        for (ListItem item : items) {
+            if(item.getHasMergeConflicts()) {
+                conflictsCount++;
+            }
+        }
+        return conflictsCount;
     }
 
 

@@ -7,7 +7,6 @@ import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProjectTranslation
-import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import org.unfoldingword.resourcecontainer.ResourceContainer
@@ -27,28 +26,16 @@ abstract class ListItem(
     @JvmField var isEditing: Boolean = false
 
     val sourceText: String
-        get() = source.readChunk(chapterSlug, chunkSlug)
+        get() = getSourceText(chapterSlug, chunkSlug)
+
+    abstract fun getSourceText(chapterSlug: String, chunkSlug: String?): String
 
     private var _targetText: String? = null
     var targetText: String
-        get() = _targetText ?: when (chapterSlug) {
-            "front" -> {
-                // project stuff
-                if (chunkSlug == "title") {
-                    pt.title
-                } else ""
-            }
-            "back" -> ""
-            else -> {
-                // chapter stuff
-                when (chunkSlug) {
-                    "title" -> ct.title
-                    "reference" -> ct.reference
-                    else -> ft?.body ?: ""
-                }
-            }
-        }
+        get() = _targetText ?: getTargetText(chapterSlug, chunkSlug)
         set(value) { _targetText = value }
+
+    abstract fun getTargetText(chapterSlug: String, chunkSlug: String?): String
 
     /**
      * Returns the title of the list item
@@ -75,7 +62,7 @@ abstract class ListItem(
 
                 val verseSpan = Frame.parseVerseTitle(sourceText, sourceTranslationFormat)
                 title += if (verseSpan.isEmpty()) {
-                    ":" + chunkSlug?.toInt()
+                    ":" + chunkSlug.toInt()
                 } else {
                     ":$verseSpan"
                 }
@@ -175,7 +162,10 @@ abstract class ListItem(
     val isChapterReference: Boolean
         get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "reference"
 
-    abstract val tabs: () -> List<ContentValues>
+    val tabs: List<ContentValues>
+        get() = fetchTabs()
+
+    abstract fun fetchTabs(): List<ContentValues>
 
     val chunkConfig: Map<String, List<String>>?
         /**
@@ -183,7 +173,7 @@ abstract class ListItem(
          * @return
          */
         get() {
-            var config: Map<*, *>?
+            val config: Map<*, *>?
             if (source.config == null || !source.config.containsKey("content") || source.config["content"] !is Map<*, *>) {
                 return HashMap()
             } else {
@@ -228,59 +218,14 @@ abstract class ListItem(
         this.hasMergeConflicts = false
     }
 
-    /**
-     * Loads the translation text from the disk.
-     * This will not do anything if the sourceText is already loaded
-     *
-     * @param sourceContainer
-     * @param targetTranslation TODO: this will become a resource container eventually
-     */
-    fun load(sourceContainer: ResourceContainer, targetTranslation: TargetTranslation) {
-        /*if (this.sourceText == null) {
-            this.renderedTargetText = null
-            this.renderedSourceText = null
-            if (this.sourceText == null) {
-                this.sourceText = sourceContainer.readChunk(chapterSlug, chunkSlug)
-            }
-            this.sourceTranslationFormat = TranslationFormat.parse(sourceContainer.contentMimeType)
-            this.targetTranslationFormat = targetTranslation.format
-            loadTarget(targetTranslation)
-        }*/
-    }
-
-    /**
-     * used for reloading target translation to get any changes from file
-     * @param targetTranslation
-     */
-    fun loadTarget(targetTranslation: TargetTranslation) {
-        // TODO: 10/1/16 this will be simplified once we migrate target translations to resource containers
-        //this.target = targetTranslation
-        /*if (chapterSlug == "front") {
-            // project stuff
-            if (chunkSlug == "title") {
-                this.isComplete = pt?.isTitleFinished == true
-            }
-        } else if (chapterSlug == "back") {
-            // back matter
-        } else {
-            // chapter stuff
-            if (chunkSlug == "title") {
-                this.isComplete = ct?.isTitleFinished == true
-            } else if (chunkSlug == "reference") {
-                this.isComplete = ct?.isReferenceFinished == true
-            } else {
-                this.isComplete = ft?.isFinished == true
-            }
-        }*/
-        //this.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(this.targetText)
-    }
-
     fun <T: ListItem>toType(
         factory: (
             String,
             String,
             ResourceContainer,
             TargetTranslation,
+            (String, String?) -> String,
+            (String, String?) -> String,
             () -> List<ContentValues>
         ) -> T
     ): T {
@@ -290,7 +235,9 @@ abstract class ListItem(
             base.chunkSlug,
             base.source,
             base.target,
-            base.tabs
+            base::getSourceText,
+            base::getTargetText,
+            base::fetchTabs
         ).apply {
             hasMergeConflicts = base.hasMergeConflicts
             renderedSourceText = base.renderedSourceText
@@ -305,33 +252,22 @@ class ReadListItem(
     chunkSlug: String,
     source: ResourceContainer,
     target: TargetTranslation,
-    override val tabs: () -> List<ContentValues>
+    private val getSourceTextFunc: (String, String?) -> String,
+    private val getTargetTextFunc: (String, String?) -> String,
+    private val getTabsFunc: () -> List<ContentValues>,
 ) : ListItem(chapterSlug, chunkSlug, source, target) {
 
-    val sourceChapterBody: String
-        get() = run {
-            var chapterBody = ""
-            val sorter = SlugSorter()
-            val chunks = sorter.sort(source.chunks(chapterSlug))
-            for (chunk in chunks) {
-                if(!chunk.equals("title")) {
-                    chapterBody += source.readChunk(chapterSlug, chunk);
-                }
-            }
-            chapterBody
-        }
+    override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+        return getSourceTextFunc(chapterSlug, null)
+    }
 
-    val targetChapterBody: String
-        get() = run {
-            var chapterBody = ""
-            val sorter = SlugSorter()
-            val chunks = sorter.sort(source.chunks(chapterSlug))
-            for (chunk in chunks) {
-                val translation = target.getFrameTranslation(chapterSlug, chunk, target.format)
-                chapterBody += " " + translation.body
-            }
-            chapterBody
-        }
+    override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+        return getTargetTextFunc(chapterSlug, null)
+    }
+
+    override fun fetchTabs(): List<ContentValues> {
+        return getTabsFunc()
+    }
 }
 
 class ChunkListItem(
@@ -339,9 +275,23 @@ class ChunkListItem(
     chunkSlug: String,
     source: ResourceContainer,
     target: TargetTranslation,
-    override val tabs: () -> List<ContentValues>
+    private val getSourceTextFunc: (String, String?) -> String,
+    private val getTargetTextFunc: (String, String?) -> String,
+    private val getTabsFunc: () -> List<ContentValues>
 ) : ListItem(chapterSlug, chunkSlug, source, target) {
     @JvmField var isTargetCardOpen = false
+
+    override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+        return getSourceTextFunc(chapterSlug, chunkSlug)
+    }
+
+    override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+        return getTargetTextFunc(chapterSlug, chunkSlug)
+    }
+
+    override fun fetchTabs(): List<ContentValues> {
+        return getTabsFunc()
+    }
 }
 
 /**
@@ -352,7 +302,9 @@ class ReviewListItem(
     chunkSlug: String,
     source: ResourceContainer,
     target: TargetTranslation,
-    override val tabs: () -> List<ContentValues>
+    private val getSourceTextFunc: (String, String?) -> String,
+    private val getTargetTextFunc: (String, String?) -> String,
+    private val getTabsFunc: () -> List<ContentValues>
 ) : ListItem(chapterSlug, chunkSlug, source, target) {
     @JvmField
     var hasSearchText: Boolean = false
@@ -370,4 +322,16 @@ class ReviewListItem(
     var hasMissingVerses: Boolean = false
     @JvmField
     var resourcesOpened: Boolean = false
+
+    override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+        return getSourceTextFunc(chapterSlug, chunkSlug)
+    }
+
+    override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+        return getTargetTextFunc(chapterSlug, chunkSlug)
+    }
+
+    override fun fetchTabs(): List<ContentValues> {
+        return getTabsFunc()
+    }
 }

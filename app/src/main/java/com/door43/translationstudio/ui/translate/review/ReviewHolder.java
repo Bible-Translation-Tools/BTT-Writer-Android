@@ -35,7 +35,6 @@ import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.tasks.MergeConflictsParseTask;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
 import com.door43.translationstudio.ui.translate.ViewModeAdapter;
 
@@ -63,7 +62,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public ReviewListItem currentItem = null;
     public int layoutBuildNumber = -1;
     public TextWatcher editableTextWatcher;
-    private List<TextView> mergeText;
+    private List<TextView> mergeTexts;
     private OnResourceClickListener listener;
     private List<TranslationHelp> notes = new ArrayList<>();
     private List<TranslationHelp> questions = new ArrayList<>();
@@ -290,29 +289,34 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * set up the merge conflicts on the card
-     * @param task
+     * @param language
+     * @param conflicts
      * @param item
      */
-    public void displayMergeConflictsOnTargetCard(Language language, MergeConflictsParseTask task, final ReviewListItem item) {
-        item.mergeItems = task.getMergeConflictItems();
+    public void displayMergeConflictsOnTargetCard(
+            Language language,
+            List<CharSequence> conflicts,
+            final ReviewListItem item
+    ) {
+        item.mergeItems = conflicts;
 
-        if(mergeText != null) { // if previously rendered (could be recycled view)
-            while (mergeText.size() > item.mergeItems.size()) { // if too many items, remove extras
-                int lastPosition = mergeText.size() - 1;
-                TextView v = mergeText.get(lastPosition);
+        if(mergeTexts != null) { // if previously rendered (could be recycled view)
+            while (mergeTexts.size() > item.mergeItems.size()) { // if too many items, remove extras
+                int lastPosition = mergeTexts.size() - 1;
+                TextView v = mergeTexts.get(lastPosition);
                 if (binding.getMergeConflictLayout() != null) {
                     binding.getMergeConflictLayout().removeView(v);
                 }
-                mergeText.remove(lastPosition);
+                mergeTexts.remove(lastPosition);
             }
         } else {
-            mergeText = new ArrayList<>();
+            mergeTexts = new ArrayList<>();
         }
 
         int tailColor = context.getResources().getColor(R.color.accent_light);
 
         for(int i = 0; i < item.mergeItems.size(); i++) {
-            boolean createNewCard = (i >= mergeText.size());
+            boolean createNewCard = (i >= mergeTexts.size());
             TextView textView = null;
 
             if(createNewCard) {
@@ -322,14 +326,14 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     textView = mergeBinding.getRoot();
 
                     binding.getMergeConflictLayout().addView(textView);
-                    mergeText.add(textView);
+                    mergeTexts.add(textView);
 
                     if (i % 2 == 1) { //every other card is different color
                         textView.setBackgroundColor(tailColor);
                     }
                 }
             } else {
-                textView = mergeText.get(i); // get previously created card
+                textView = mergeTexts.get(i); // get previously created card
             }
 
             if(initialTextSize == 0 && textView != null) { // see if we need to initialize values
@@ -358,7 +362,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public void displayMergeConflictSelectionState(ReviewListItem item) {
         for(int i = 0; i < item.mergeItems.size(); i++ ) {
             CharSequence mergeConflictCard = item.mergeItems.get(i);
-            TextView textView = mergeText.get(i);
+            TextView textView = mergeTexts.get(i);
 
             if (item.mergeItemSelected >= 0) {
                 if (item.mergeItemSelected == i) {

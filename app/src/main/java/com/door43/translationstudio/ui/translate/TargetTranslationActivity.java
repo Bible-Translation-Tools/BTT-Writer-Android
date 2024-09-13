@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.databinding.ActivityTargetTranslationDetailBinding;
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
@@ -25,8 +26,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -58,6 +57,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.inject.Inject;
+
 import dagger.hilt.android.AndroidEntryPoint;
 import it.moondroid.seekbarhint.library.SeekBarHint;
 
@@ -66,6 +67,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     private TargetTranslationViewModel viewModel;
     private ActivityTargetTranslationDetailBinding binding;
+
+    @Inject
+    IPreferenceRepository prefRepository;
 
     private static final String TAG = "TranslationActivity";
 
@@ -76,6 +80,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     public static final String STATE_HAVE_MERGE_CONFLICT = "state_have_merge_conflict";
     public static final String STATE_MERGE_CONFLICT_FILTER_ENABLED = "state_merge_conflict_filter_enabled";
     public static final String STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED = "state_merge_conflict_summary_displayed";
+    public static final String STATE_FILTER_MERGE_CONFLICTS = "state_filter_merge_conflicts";
     public static final String SEARCH_SOURCE = "search_source";
     public static final String STATE_SEARCH_AT_END = "state_search_at_end";
     public static final String STATE_SEARCH_AT_START = "state_search_at_start";
@@ -92,15 +97,14 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     private final boolean mEnableGrids = false;
     private int mSeekbarMultiplier = 1; // allows for more granularity in setting position if cards are few
-    private int mOldItemCount = 1; // so we can update the seekbar maximum when item count has changed
-    private boolean mHaveMergeConflict = false;
-    private boolean mMergeConflictFilterEnabled = false;
+    private boolean haveMergeConflict = false;
+    private boolean mergeConflictFilterEnabled = false;
     private int mFoundTextFormat;
     private boolean mSearchAtEnd = false;
     private boolean mSearchAtStart = false;
     private int mNumberOfChunkMatches = 0;
     private boolean mSearchResumed = false;
-    private boolean mShowConflictSummary = false;
+    private boolean showConflictSummary = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +119,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         assert args != null;
 
         String targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
-        mMergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false);
+        mergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false);
 
         TargetTranslation translation = viewModel.loadTargetTranslation(targetTranslationId);
         if (translation == null) {
@@ -191,9 +195,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         buildMenu();
 
         binding.translatorSidebar.warnMergeConflict.setOnClickListener(v -> {
-            mMergeConflictFilterEnabled = !mMergeConflictFilterEnabled; // toggle filter state
+            mergeConflictFilterEnabled = !mergeConflictFilterEnabled; // toggle filter state
+            setMergeConflictFilter(); // update displayed state
             openTranslationMode(TranslationViewMode.REVIEW, null); // make sure we are in review mode
-            setMergeConflictFilter(mMergeConflictFilterEnabled, false); // update displayed state
         });
 
         binding.translatorSidebar.actionRead.setOnClickListener(v -> {
@@ -208,8 +212,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
         binding.translatorSidebar.actionReview.setOnClickListener(v -> {
             removeSearchBar();
-            mMergeConflictFilterEnabled = false;
-            setMergeConflictFilter(mMergeConflictFilterEnabled, false);
+            mergeConflictFilterEnabled = false;
+            setMergeConflictFilter();
             openTranslationMode(TranslationViewMode.REVIEW, null);
         });
 
@@ -220,11 +224,11 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             mSearchAtStart = savedInstanceState.getBoolean(STATE_SEARCH_AT_START, false);
             mNumberOfChunkMatches = savedInstanceState.getInt(STATE_SEARCH_FOUND_CHUNKS, 0);
             mSearchString = savedInstanceState.getString(STATE_SEARCH_TEXT, null);
-            mHaveMergeConflict = savedInstanceState.getBoolean(STATE_HAVE_MERGE_CONFLICT, false);
-            mMergeConflictFilterEnabled = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, false);
-            mShowConflictSummary = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED, false);
+            haveMergeConflict = savedInstanceState.getBoolean(STATE_HAVE_MERGE_CONFLICT, false);
+            mergeConflictFilterEnabled = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, false);
+            showConflictSummary = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED, false);
         } else {
-            mShowConflictSummary = mMergeConflictFilterEnabled;
+            showConflictSummary = mergeConflictFilterEnabled;
         }
 
         setupSidebarModeIcons();
@@ -238,34 +242,30 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     /**
      * enable/disable merge conflict filter in adapter
-     * @param enableFilter
-     * @param forceMergeConflict - if true, then will initialize have merge conflict flag to true
      */
-    private void setMergeConflictFilter(final boolean enableFilter, final boolean forceMergeConflict) {
+    private void setMergeConflictFilter() {
         Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                mMergeConflictFilterEnabled = enableFilter;
-                if(mFragment instanceof ViewModeFragment) {
-                    ViewModeFragment viewModeFragment = (ViewModeFragment) TargetTranslationActivity.this.mFragment;
-                    viewModeFragment.setShowMergeSummary(mShowConflictSummary);
-                    //viewModeFragment.setMergeConflictFilter(enableFilter, forceMergeConflict);
-                }
-                onEnableMergeConflict(mHaveMergeConflict, mMergeConflictFilterEnabled);
+        hand.post(() -> {
+            if(mFragment instanceof ViewModeFragment viewModeFragment) {
+                viewModeFragment.setShowMergeSummary(showConflictSummary);
+                viewModeFragment.setMergeConflictFilter(
+                        mergeConflictFilterEnabled,
+                        false
+                );
             }
+            onEnableMergeConflict(haveMergeConflict, mergeConflictFilterEnabled);
         });
     }
 
-    @Override
     /**
      * called by adapter to set state for merge conflict icon
      */
+    @Override
     public void onEnableMergeConflict(boolean showConflicted, boolean active) {
-        mHaveMergeConflict = showConflicted;
-        mMergeConflictFilterEnabled = active;
+        haveMergeConflict = showConflicted;
+        mergeConflictFilterEnabled = active;
         binding.translatorSidebar.warnMergeConflict.setVisibility(showConflicted ? View.VISIBLE : View.GONE);
-        if(mMergeConflictFilterEnabled) {
+        if(mergeConflictFilterEnabled) {
             binding.translatorSidebar.warnMergeConflict.setImageResource(R.drawable.ic_warning_white_24dp);
             final int highlightedColor = getResources().getColor(R.color.primary_dark);
             binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor);
@@ -376,8 +376,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             out.putBoolean(STATE_SEARCH_AT_START, mSearchAtStart);
             out.putInt(STATE_SEARCH_FOUND_CHUNKS, mNumberOfChunkMatches);
         }
-        out.putBoolean(STATE_HAVE_MERGE_CONFLICT, mHaveMergeConflict);
-        out.putBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, mMergeConflictFilterEnabled);
+        out.putBoolean(STATE_HAVE_MERGE_CONFLICT, haveMergeConflict);
+        out.putBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, mergeConflictFilterEnabled);
         if(mFragment instanceof ViewModeFragment) {
             out.putBoolean(
                     STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED,
@@ -506,10 +506,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * Check to see if marking all chunks done is supported
      */
     public boolean isMarkAllChunksSupported() {
-        if(mFragment instanceof ReviewModeFragment) {
-            return true;
-        }
-        return false;
+        return mFragment instanceof ReviewModeFragment;
     }
 
     /**
@@ -518,104 +515,82 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      */
     private void setSearchBarVisibility(boolean show) {
         // toggle search bar
-        LinearLayout searchPane = (LinearLayout) findViewById(R.id.search_pane);
-        if(searchPane != null) {
-
-            int visibility = View.GONE;
-            if(show) {
-                visibility = View.VISIBLE;
-            } else {
-                setSearchSpinner(false, 0, true, true);
-            }
-
-            searchPane.setVisibility(visibility);
-            mSearchEnabled = show;
-
-            if(mSearchTextWatcher != null) {
-                binding.searchPane.searchText.removeTextChangedListener(mSearchTextWatcher); // remove old listener
-                mSearchTextWatcher = null;
-            }
-
-            if(show) {
-                mSearchTextWatcher = new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                    }
-
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-                    }
-
-                    @Override
-                    public void afterTextChanged(Editable s) {
-
-                        if(mSearchTimer != null) {
-                            mSearchTimer.cancel();
-                        }
-
-                        mSearchTimer = new Timer();
-                        mSearchTimerTask = new SearchTimerTask(TargetTranslationActivity.this, s);
-                        mSearchTimer.schedule(mSearchTimerTask, SEARCH_START_DELAY);
-                    }
-                };
-
-                binding.searchPane.searchText.addTextChangedListener(mSearchTextWatcher);
-                if(mSearchResumed) {
-                    // we don't have a way to reliably determine the state of the soft keyboard
-                    //   so we don't initially show the keyboard on resume.  This should be less
-                    //   annoying than always popping up the keyboard on resume
-                    mSearchResumed = false;
-                } else {
-                    setFocusOnTextSearchEdit();
-                }
-            } else {
-                filter(null); // clear search filter
-                App.closeKeyboard(TargetTranslationActivity.this);
-            }
-
-            if(mSearchString != null) { // restore after rotate
-                binding.searchPane.searchText.setText(mSearchString);
-                if(show) {
-                    filter(mSearchString);
-                }
-                mSearchString = null;
-            }
-
-            ImageButton close = (ImageButton) searchPane.findViewById(R.id.close_search);
-            if(close != null) {
-
-                close.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        removeSearchBar();
-                    }
-                });
-            }
-
-            Spinner searchType = (Spinner) searchPane.findViewById(R.id.search_type);
-            if(searchType != null) {
-                List<String> types = new ArrayList<String>();
-                types.add(this.getResources().getString(R.string.search_source));
-                types.add(this.getResources().getString(R.string.search_translation));
-                ArrayAdapter<String> typesAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, types);
-                typesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                searchType.setAdapter(typesAdapter);
-
-                // restore last search type
-                String lastSearchSourceStr = App.getUserString(SEARCH_SOURCE, SearchSubject.SOURCE.name().toUpperCase());
-                SearchSubject lastSearchSource = SearchSubject.SOURCE;
-                try {
-                    lastSearchSource = SearchSubject.valueOf(lastSearchSourceStr.toUpperCase());
-                } catch(Exception e) {
-                    e.printStackTrace();
-                }
-                searchType.setSelection(lastSearchSource.ordinal());
-
-                searchType.setOnItemSelectedListener(this);
-            }
+        int visibility = View.GONE;
+        if(show) {
+            visibility = View.VISIBLE;
+        } else {
+            App.closeKeyboard(TargetTranslationActivity.this);
+            setSearchSpinner(false, 0, true, true);
         }
+
+        binding.searchPane.getRoot().setVisibility(visibility);
+        mSearchEnabled = show;
+
+        if(mSearchTextWatcher != null) {
+            binding.searchPane.searchText.removeTextChangedListener(mSearchTextWatcher); // remove old listener
+            mSearchTextWatcher = null;
+        }
+
+        if(show) {
+            mSearchTextWatcher = new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+                @Override
+                public void afterTextChanged(Editable s) {
+                    if(mSearchTimer != null) {
+                        mSearchTimer.cancel();
+                    }
+
+                    mSearchTimer = new Timer();
+                    mSearchTimerTask = new SearchTimerTask(TargetTranslationActivity.this, s);
+                    mSearchTimer.schedule(mSearchTimerTask, SEARCH_START_DELAY);
+                }
+            };
+
+            binding.searchPane.searchText.addTextChangedListener(mSearchTextWatcher);
+            if(mSearchResumed) {
+                // we don't have a way to reliably determine the state of the soft keyboard
+                //   so we don't initially show the keyboard on resume.  This should be less
+                //   annoying than always popping up the keyboard on resume
+                mSearchResumed = false;
+            } else {
+                setFocusOnTextSearchEdit();
+            }
+        } else {
+            filter(null); // clear search filter
+        }
+
+        if(mSearchString != null) { // restore after rotate
+            binding.searchPane.searchText.setText(mSearchString);
+            if(show) {
+                filter(mSearchString);
+            }
+            mSearchString = null;
+        }
+
+        binding.searchPane.closeSearch.setOnClickListener(v -> removeSearchBar());
+
+        List<String> types = new ArrayList<String>();
+        types.add(this.getResources().getString(R.string.search_source));
+        types.add(this.getResources().getString(R.string.search_translation));
+        ArrayAdapter<String> typesAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, types);
+        typesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.searchPane.searchType.setAdapter(typesAdapter);
+
+        // restore last search type
+        String lastSearchSourceStr = App.getUserString(SEARCH_SOURCE, SearchSubject.SOURCE.name().toUpperCase());
+        SearchSubject lastSearchSource = SearchSubject.SOURCE;
+        try {
+            lastSearchSource = SearchSubject.valueOf(lastSearchSourceStr.toUpperCase());
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        binding.searchPane.searchType.setSelection(lastSearchSource.ordinal());
+        binding.searchPane.searchType.setOnItemSelectedListener(this);
     }
 
     /**
@@ -625,24 +600,18 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      */
     @Deprecated
     private void setFocusOnTextSearchEdit() {
-        if(binding.searchPane.searchText != null) {
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    binding.searchPane.searchText.setFocusableInTouchMode(true);
-                    binding.searchPane.searchText.requestFocus();
+        Handler hand = new Handler(Looper.getMainLooper());
+        hand.post(() -> {
+            binding.searchPane.searchText.setFocusableInTouchMode(true);
+            binding.searchPane.searchText.requestFocus();
 
-                    Handler hand = new Handler(Looper.getMainLooper());
-                    hand.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            App.showKeyboard(TargetTranslationActivity.this, binding.searchPane.searchText, true);
-                        }
-                    });
-                }
-            });
-        }
+            Handler hand1 = new Handler(Looper.getMainLooper());
+            hand1.post(() -> App.showKeyboard(
+                    TargetTranslationActivity.this,
+                    binding.searchPane.searchText,
+                    true
+            ));
+        });
     }
 
     /**
@@ -675,9 +644,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * @param pos
      * @param id
      */
-    public void onItemSelected(AdapterView<?> parent, View view,
-                               int pos, long id) {
-
+    public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
         filter(getFilterText());  // do search with search string in edit control
     }
 
@@ -693,16 +660,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * get the type of search
      */
     private SearchSubject getFilterSubject() {
-        LinearLayout searchPane = (LinearLayout) findViewById(R.id.search_pane);
-        if(searchPane != null) {
-
-            Spinner type = (Spinner) searchPane.findViewById(R.id.search_type);
-            if(type != null) {
-                int pos = type.getSelectedItemPosition();
-                if(pos == 0) {
-                    return SearchSubject.SOURCE;
-                }
-            }
+        int pos = binding.searchPane.searchType.getSelectedItemPosition();
+        if(pos == 0) {
+            return SearchSubject.SOURCE;
         }
         return SearchSubject.TARGET;
     }
@@ -711,30 +671,14 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * get search text in search bar
      */
     private String getFilterText() {
-        String text = null;
-
-        LinearLayout searchPane = (LinearLayout) findViewById(R.id.search_pane);
-        if(searchPane != null) {
-            if(binding.searchPane.searchText != null) {
-                text = binding.searchPane.searchText.getText().toString();
-            }
-        }
-        return text;
+        return binding.searchPane.searchText.getText().toString();
     }
 
     /**
      * set search text in search bar
      */
     private void setFilterText(String text) {
-
-        if(text == null) {
-            text = "";
-        }
-
-        LinearLayout searchPane = (LinearLayout) findViewById(R.id.search_pane);
-        if(searchPane != null) {
-            binding.searchPane.searchText.setText(text);
-        }
+        binding.searchPane.searchText.setText(text);
     }
 
 
@@ -744,18 +688,12 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      */
     public void filter(final String constraint) {
         Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if((mFragment != null) && (mFragment instanceof ViewModeFragment)) {
-
-                    // preserve current search type
-                    SearchSubject subject = getFilterSubject();
-                    App.setUserString(SEARCH_SOURCE, subject.name().toUpperCase());
-                    if(constraint != null) {
-                        ((ViewModeFragment) mFragment).filter(constraint, subject);
-                    }
-                }
+        hand.post(() -> {
+            if((mFragment != null) && (mFragment instanceof ViewModeFragment)) {
+                // preserve current search type
+                SearchSubject subject = getFilterSubject();
+                prefRepository.setDefaultPref(SEARCH_SOURCE, subject.name().toUpperCase());
+                ((ViewModeFragment) mFragment).filter(constraint, subject);
             }
         });
     }
@@ -765,13 +703,11 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * @param next if true then find next, otherwise will find previous
      */
     public void moveSearch(final boolean next) {
+        App.closeKeyboard(this);
         Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if((mFragment != null) && (mFragment instanceof ViewModeFragment)) {
-                    ((ViewModeFragment)mFragment).onMoveSearch(next);
-                }
+        hand.post(() -> {
+            if((mFragment != null) && (mFragment instanceof ViewModeFragment)) {
+                ((ViewModeFragment)mFragment).onMoveSearch(next);
             }
         });
     }
@@ -781,7 +717,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         super.onResume();
         notifyDatasetChanged();
         buildMenu();
-        setMergeConflictFilter(mMergeConflictFilterEnabled, mMergeConflictFilterEnabled); // restore last state
+        //setMergeConflictFilter(mMergeConflictFilterEnabled, mMergeConflictFilterEnabled); // restore last state
     }
 
     @Override
@@ -789,7 +725,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         super.onPause();
 
         if(mFragment instanceof ViewModeFragment) {
-            mShowConflictSummary = ((ViewModeFragment) mFragment).ismMergeConflictSummaryDisplayed(); // update current state
+            showConflictSummary = ((ViewModeFragment) mFragment).ismMergeConflictSummaryDisplayed(); // update current state
         }
     }
 
@@ -930,7 +866,6 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         if(newMax != oldMax) {
             Log.i(TAG,"setSeekbarMax: oldMax=" + oldMax + ", newMax=" + newMax + ", mSeekbarMultiplier=" + mSeekbarMultiplier);
             seekBar.setMax(newMax);
-            mOldItemCount = itemCount;
         } else {
             Log.i(TAG, "setSeekbarMax: max unchanged=" + oldMax);
         }
@@ -1083,6 +1018,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                 break;
             case REVIEW:
                 if (!(mFragment instanceof ReviewModeFragment)) {
+                    fragmentExtras.putBoolean(STATE_FILTER_MERGE_CONFLICTS, mergeConflictFilterEnabled);
                     mFragment = new ReviewModeFragment();
                     mFragment.setArguments(fragmentExtras);
 
@@ -1103,15 +1039,10 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         mCommitTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                if(viewModel.getTargetTranslation() != null) {
-                    try {
-                        viewModel.getTargetTranslation().commit();
-                    } catch (Exception e) {
-                        Logger.e(TargetTranslationActivity.class.getName(), "Failed to commit the latest translation of " + viewModel.getTargetTranslation().getId(), e);
-                    }
-                } else {
-                    Logger.w(TAG, "cannot auto commit target translation. The target translation is null.");
-                    mCommitTimer.cancel();
+                try {
+                    viewModel.getTargetTranslation().commit();
+                } catch (Exception e) {
+                    Logger.e(TargetTranslationActivity.class.getName(), "Failed to commit the latest translation of " + viewModel.getTargetTranslation().getId(), e);
                 }
             }
         }, COMMIT_INTERVAL, COMMIT_INTERVAL);
@@ -1222,7 +1153,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                 binding.translatorSidebar.actionChunk.setBackgroundColor(highlightedColor);
                 break;
             case REVIEW:
-                if(mMergeConflictFilterEnabled) {
+                if(mergeConflictFilterEnabled) {
                     binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor); // highlight background of the conflict icon
                     onEnableMergeConflict(true, true);
                 } else {

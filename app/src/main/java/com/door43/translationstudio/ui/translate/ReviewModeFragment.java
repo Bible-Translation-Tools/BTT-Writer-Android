@@ -19,7 +19,6 @@ import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.Frame;
@@ -81,10 +80,23 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     private TranslationHelp translationNote = null;
 
     private boolean resourcesOpened = false;
+    private boolean enableMergeConflictsFilter = false;
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ReviewModeAdapter(resourcesOpen);
+        return new ReviewModeAdapter(resourcesOpen, enableMergeConflictsFilter);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        Bundle args = getArguments();
+        if (args != null) {
+            enableMergeConflictsFilter = args.getBoolean(
+                    TargetTranslationActivity.STATE_FILTER_MERGE_CONFLICTS,
+                    false
+            );
+        }
+        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -834,60 +846,5 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     @Override
     public String getVerseChunk(String chapter, String verse) {
         return Util.mapVerseToChunk(viewModel.getResourceContainer(), chapter, verse);
-    }
-
-    /**
-     * enable/disable merge conflict filter in adapter
-     *
-     * @param enableFilter
-     * @param forceMergeConflict - if true, then will initialize merge conflict flag to true
-     */
-    public final void setMergeConflictFilter(boolean enableFilter, boolean forceMergeConflict) {
-        /*if (forceMergeConflict) {
-            // initialize merge conflict flag to true
-            mHaveMergeConflict = true;
-        }
-        // update display and status flags
-        showMergeConflictIcon(mHaveMergeConflict, enableFilter);
-
-        if (!mHaveMergeConflict || !enableFilter) {
-            // if no merge conflict or filter off, then remove filter
-            mFilteredItems = mItems;
-            mFilteredChapters = mChapters;
-
-            if (mMergeConflictFilterOn) {
-                mMergeConflictFilterOn = false;
-                triggerNotifyDataSetChanged();
-            }
-            return;
-        }
-
-        mMergeConflictFilterOn = true;
-
-        CharSequence filterConstraint = enableFilter ? "true" : null; // will filter if string is
-        // not null
-        showMergeConflictIcon(mHaveMergeConflict, true);
-
-        // clear the cards displayed since we have new search string
-        mFilteredItems = new ArrayList<>();
-
-        final List<ListItem> items = this.mItems;
-        MergeConflictFilter filter = new MergeConflictFilter(mSourceContainer, mTargetTranslation, items);
-        filter.setListener(new MergeConflictFilter.OnMatchListener() {
-            @Override
-            public void onMatch(ListItem item) {
-                if (!mFilteredChapters.contains(item.chapterSlug))
-                    mFilteredChapters.add(item.chapterSlug);
-            }
-
-            @Override
-            public void onFinished(CharSequence constraint, List<ListItem> results) {
-                mFilteredItems = results;
-                updateMergeConflict();
-                triggerNotifyDataSetChanged();
-                checkForConflictSummary(mFilteredItems.size(), items.size());
-            }
-        });
-        filter.filter(filterConstraint);*/
     }
 }

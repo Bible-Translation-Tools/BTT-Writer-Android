@@ -36,11 +36,8 @@ import com.door43.translationstudio.ui.spannables.NoteSpan;
 import com.door43.translationstudio.ui.spannables.Span;
 import com.door43.widget.ViewUtil;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-
 
 /**
  * Created by joel on 9/9/2015.
@@ -54,34 +51,40 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
     private boolean[] targetStateOpen = new boolean[0];
 
+    /**
+     * Reference to the list of all items (chunks)
+     */
+    private List<ListItem> chunks = new ArrayList<>();
+
     public ReadModeAdapter() {
     }
 
     @Override
     public void initializeListItems(
-            List<ListItem> items,
+            List<ListItem> listItems,
             String startingChapter,
             String startingChunk
     ) {
+        layoutBuildNumber++; // force resetting of fonts
+        chunks.clear();
         chapters.clear();
-        this.items.clear();
+        items.clear();
 
         setListStartPosition(0);
         boolean foundStartingChapter = false;
 
-        for (ListItem item: items) {
+        for (ListItem item: listItems) {
             if (!foundStartingChapter && item.chapterSlug.equals(startingChapter)) {
-                setListStartPosition(this.items.size());
+                setListStartPosition(items.size());
                 foundStartingChapter = true;
             }
             if (!chapters.contains(item.chapterSlug)) {
                 chapters.add(item.chapterSlug);
-                this.items.add(createListItem(item));
+                items.add(createListItem(item));
             }
         }
 
-        filteredChapters = chapters;
-        filteredItems = this.items;
+        chunks.addAll(listItems);
 
         targetStateOpen = new boolean[chapters.size()];
         renderedSourceBody = new CharSequence[chapters.size()];
@@ -97,15 +100,21 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     }
 
     /**
-     * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
+     * check all cards for merge conflicts to see if we should show warning. Runs as background task.
      */
     private void updateMergeConflict() {
-        doCheckForMergeConflictTask();
+        doCheckForMergeConflict();
     }
 
     @Override
-    public void onTaskFinished(ManagedTask task) {
-        TaskManager.clearTask(task);
+    protected int getConflictsCount() {
+        int conflictsCount = 0;
+        for (ListItem item : chunks) {
+            if(item.getHasMergeConflicts()) {
+                conflictsCount++;
+            }
+        }
+        return conflictsCount;
     }
 
     @Override
@@ -213,7 +222,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
         // render the source chapter body
         if(renderedSourceBody[position] == null) {
-            String sourceChapterBody = item.getSourceChapterBody();
+            String sourceChapterBody = item.getSourceText();
             TranslationFormat bodyFormat = TranslationFormat.parse(item.source.contentMimeType);
             RenderingGroup sourceRendering = new RenderingGroup();
             if (Clickables.isClickableFormat(bodyFormat)) {
@@ -257,7 +266,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         // render the target chapter body
         if(renderedTargetBody[position] == null) {
             TranslationFormat bodyFormat = item.target.getFormat();
-            String chapterBody = item.getTargetChapterBody();
+            String chapterBody = item.getTargetText();
             RenderingGroup targetRendering = new RenderingGroup();
             if(Clickables.isClickableFormat(bodyFormat)) {
                 // TODO: add click listeners
@@ -327,7 +336,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         holder.binding.sourceTranslationTabs.setOnTabSelectedListener(null);
         holder.binding.sourceTranslationTabs.removeAllTabs();
 
-        var tabs = item.getTabs().invoke().toArray(new ContentValues[0]);
+        var tabs = item.getTabs().toArray(new ContentValues[0]);
         for(ContentValues values:tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");

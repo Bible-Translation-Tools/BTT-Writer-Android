@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.content.ContentValues
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -23,6 +24,7 @@ import com.door43.usecases.RenderHelps
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
@@ -254,15 +256,7 @@ class TargetTranslationViewModel @Inject constructor(
                     for (chapterSlug: String in chapterSlugs) {
                         val chunkSlugs: List<String> = sorter.sort(source.chunks(chapterSlug))
                         for (chunkSlug in chunkSlugs) {
-                            val item = object: ListItem(
-                                chapterSlug,
-                                chunkSlug,
-                                source,
-                                targetTranslation
-                            ){
-                                override val tabs: () -> List<ContentValues>
-                                    get() = { getSourceTranslations() }
-                            }
+                            val item = createItem(chapterSlug, chunkSlug, source, targetTranslation)
                             items.add(item)
                         }
                     }
@@ -284,6 +278,32 @@ class TargetTranslationViewModel @Inject constructor(
     fun cancelRenderJobs() {
         renderHelpJobs.forEach { it.cancel() }
         renderHelpJobs.clear()
+    }
+
+    private fun createItem(
+        chapterSlug: String,
+        chunkSlug: String,
+        source: ResourceContainer,
+        targetTranslation: TargetTranslation
+    ): ListItem {
+        return object: ListItem(
+            chapterSlug,
+            chunkSlug,
+            source,
+            targetTranslation
+        ) {
+            override fun fetchTabs(): List<ContentValues> {
+                return getSourceTranslations()
+            }
+
+            override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+                return fetchSourceText(source, chapterSlug, chunkSlug)
+            }
+
+            override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+                return fetchTargetText(source, targetTranslation, chapterSlug, chunkSlug)
+            }
+        }
     }
 
     private fun getSourceTranslations(): List<ContentValues> {
@@ -308,6 +328,62 @@ class TargetTranslationViewModel @Inject constructor(
             }
         }
         return tabContents
+    }
+
+    private fun fetchSourceText(source: ResourceContainer, chapterSlug: String, chunkSlug: String?): String {
+        return if (chunkSlug != null) {
+            source.readChunk(chapterSlug, chunkSlug)
+        } else {
+            var chapterBody = ""
+            val sorter = SlugSorter()
+            val chunks = sorter.sort(source.chunks(chapterSlug))
+            for (chunk in chunks) {
+                if(!chunk.equals("title")) {
+                    chapterBody += source.readChunk(chapterSlug, chunk);
+                }
+            }
+            chapterBody
+        }
+    }
+
+    private fun fetchTargetText(
+        source: ResourceContainer,
+        target: TargetTranslation,
+        chapterSlug: String,
+        chunkSlug: String?
+    ): String {
+        return if (chunkSlug != null) {
+            when (chapterSlug) {
+                "front" -> {
+                    // project stuff
+                    if (chunkSlug == "title") {
+                        target.projectTranslation.title
+                    } else ""
+                }
+                "back" -> ""
+                else -> {
+                    // chapter stuff
+                    when (chunkSlug) {
+                        "title" -> target.getChapterTranslation(chapterSlug).title
+                        "reference" -> target.getChapterTranslation(chapterSlug).reference
+                        else -> target.getFrameTranslation(
+                            chapterSlug,
+                            chunkSlug,
+                            target.format
+                        )?.body ?: ""
+                    }
+                }
+            }
+        } else {
+            var chapterBody = ""
+            val sorter = SlugSorter()
+            val chunks = sorter.sort(source.chunks(chapterSlug))
+            for (chunk in chunks) {
+                val translation = target.getFrameTranslation(chapterSlug, chunk, target.format)
+                chapterBody += " " + translation.body
+            }
+            chapterBody
+        }
     }
 
 }
