@@ -1,282 +1,241 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.app.Dialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.tasks.CheckForLatestReleaseTask;
-import com.door43.translationstudio.tasks.UploadBugReportTask;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-import com.door43.widget.ViewUtil;
+import android.app.Dialog
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import com.door43.translationstudio.App.Companion.isNetworkAvailable
+import com.door43.translationstudio.App.Companion.isStoreVersion
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.DialogFeedbackBinding
+import com.door43.translationstudio.ui.viewmodels.FeedbackViewModel
+import com.door43.usecases.CheckForLatestRelease
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Created by joel on 9/17/2015.
  */
-public class FeedbackDialog extends DialogFragment implements ManagedTask.OnFinishedListener {
+@AndroidEntryPoint
+class FeedbackDialog : DialogFragment() {
+    private var message = ""
 
-    private static final String STATE_LATEST_RELEASE = "latest_release";
-    private static final String STATE_NOTES = "bug_notes";
-    public static final String ARG_MESSAGE = "arg_message";
-    private String mMessage = "";
-    private CheckForLatestReleaseTask.Release mLatestRelease;
-    private LinearLayout mLoadingLayout;
-    private LinearLayout mFormLayout;
-    private LinearLayout mControlsLayout;
+    private var _binding: DialogFeedbackBinding? = null
+    private val binding get() = _binding!!
 
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.setCanceledOnTouchOutside(false);
-        return dialog;
+    private val viewModel: FeedbackViewModel by viewModels()
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState)
+        dialog.setCanceledOnTouchOutside(false)
+        return dialog
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_feedback, container, false);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogFeedbackBinding.inflate(inflater, container, false)
 
-        if(savedInstanceState == null) {
-            Bundle args = getArguments();
+        if (savedInstanceState == null) {
+            val args = arguments
             if (args != null) {
-                mMessage = args.getString(ARG_MESSAGE, "");
+                message = args.getString(ARG_MESSAGE, "")
             }
         }
 
-        mLoadingLayout = (LinearLayout)v.findViewById(R.id.loadingLayout);
-        mFormLayout = (LinearLayout)v.findViewById(R.id.formLayout);
-        mControlsLayout = (LinearLayout)v.findViewById(R.id.controlsLayout);
+        setupObservers()
 
-        ImageView wifiIcon = (ImageView)v.findViewById(R.id.wifi_icon);
-        ViewUtil.tintViewDrawable(wifiIcon, getActivity().getResources().getColor(R.color.dark_secondary_text));
-        Button cancelButton = (Button)v.findViewById(R.id.cancelButton);
-        Button confirmButton = (Button)v.findViewById(R.id.confirmButton);
-        final EditText editText = (EditText)v.findViewById(R.id.editText);
-        editText.setText(mMessage);
-        editText.setSelection(editText.getText().length());
+        with(binding) {
+            ViewUtil.tintViewDrawable(
+                wifiIcon,
+                requireActivity().resources.getColor(R.color.dark_secondary_text)
+            )
+            editText.setText(message)
+            editText.setSelection(editText.text.length)
 
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-        confirmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(editText.getText().toString().isEmpty()) {
+            cancelButton.setOnClickListener { dismiss() }
+            confirmButton.setOnClickListener {
+                if (editText.text.toString().isEmpty()) {
                     // requires text
-                    notifyInputRequired();
+                    notifyInputRequired()
                 } else {
-                    reportBug(editText.getText().toString().trim());
+                    reportBug(editText.text.toString().trim())
                 }
             }
-        });
-
-        if(savedInstanceState != null) {
-            mMessage = savedInstanceState.getString(STATE_NOTES, "");
-            mLatestRelease = (CheckForLatestReleaseTask.Release)savedInstanceState.getSerializable(STATE_LATEST_RELEASE);
         }
 
-        // connect to existing tasks
-        CheckForLatestReleaseTask checkTask = (CheckForLatestReleaseTask) TaskManager.getTask(CheckForLatestReleaseTask.TASK_ID);
-        UploadBugReportTask uploadTask = (UploadBugReportTask)TaskManager.getTask(UploadBugReportTask.TASK_ID);
-
-        if(checkTask != null) {
-            showLoadingUI();
-            checkTask.addOnFinishedListener(this);
-        } else if(uploadTask != null) {
-            showLoadingUI();
-            uploadTask.addOnFinishedListener(this);
-        } else if(mLatestRelease != null) {
-            showLoadingUI();
-            notifyLatestRelease(mLatestRelease);
+        if (savedInstanceState != null) {
+            message = savedInstanceState.getString(STATE_NOTES, "")
         }
 
-        return v;
+        return binding.root
     }
 
-    private void notifyInputRequired() {
-        Snackbar snack = Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.input_required, Snackbar.LENGTH_SHORT);
-        ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-        snack.show();
-    }
-
-    private void reportBug(String message) {
-        mMessage = message;
-        showLoadingUI();
-        CheckForLatestReleaseTask task = new CheckForLatestReleaseTask();
-        task.addOnFinishedListener(FeedbackDialog.this);
-        TaskManager.addTask(task, CheckForLatestReleaseTask.TASK_ID);
-    }
-
-    private void showLoadingUI() {
-        mFormLayout.setVisibility(View.GONE);
-        mControlsLayout.setVisibility(View.GONE);
-        mLoadingLayout.setVisibility(View.VISIBLE);
-    }
-
-    private void hideLoadingUI() {
-        mFormLayout.setVisibility(View.VISIBLE);
-        mControlsLayout.setVisibility(View.VISIBLE);
-        mLoadingLayout.setVisibility(View.GONE);
-    }
-
-    @Override
-    public void onTaskFinished(ManagedTask task) {
-        TaskManager.clearTask(task);
-
-        if(task instanceof CheckForLatestReleaseTask) {
-            CheckForLatestReleaseTask.Release release = ((CheckForLatestReleaseTask)task).getLatestRelease();
-            if(release != null) {
-                mLatestRelease = release;
-                Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        notifyLatestRelease(mLatestRelease);
-                    }
-                });
+    private fun setupObservers() {
+        viewModel.loading.observe(this) {
+            if (it) {
+                showLoadingUI()
             } else {
-                if(!mMessage.isEmpty()) {
-                    doUploadBugReportTask();
+                hideLoadingUI()
+            }
+        }
+        viewModel.latestRelease.observe(this) {
+            // Do not observe on first load
+            if (!viewModel.checkReleaseRequested) return@observe
+
+            if (it != null) {
+                val hand = Handler(Looper.getMainLooper())
+                hand.post { notifyLatestRelease(it) }
+            } else {
+                if (message.isNotEmpty()) {
+                    viewModel.uploadFeedback(message)
                 } else {
-                    notifyInputRequired();
-                    FeedbackDialog.this.dismiss();
+                    notifyInputRequired()
+                    dismiss()
                 }
             }
-        } else if(task instanceof UploadBugReportTask) {
-            boolean success = ((UploadBugReportTask) task).isSuccess();
-            if(success) {
-                Snackbar snack = Snackbar.make(getActivity().findViewById(android.R.id.content), success ? R.string.success : R.string.upload_failed_label, Snackbar.LENGTH_LONG);
-                ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                snack.show();
-                FeedbackDialog.this.dismiss();
-            } else { // upload failed
-                final boolean networkAvailable = App.isNetworkAvailable();
-
-                Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        hideLoadingUI();
-                        int messageId = networkAvailable ? R.string.upload_feedback_failed : R.string.internet_not_available;
-                        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                                .setTitle(R.string.upload_failed)
-                                .setMessage(messageId)
-                                .setPositiveButton(R.string.retry_label, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        doUploadBugReportTask();
-                                    }
-                                })
-                                .setNegativeButton(R.string.label_close, null)
-                                .show();
+        }
+        viewModel.success.observe(this) {
+            it?.let { success ->
+                if (success) {
+                    val snack = Snackbar.make(
+                        requireActivity().findViewById(android.R.id.content),
+                        R.string.success,
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
+                    dismiss()
+                } else {
+                    val networkAvailable = isNetworkAvailable
+                    val hand = Handler(Looper.getMainLooper())
+                    hand.post {
+                        val messageId = if (networkAvailable) R.string.upload_feedback_failed else R.string.internet_not_available
+                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                            .setTitle(R.string.upload_failed)
+                            .setMessage(messageId)
+                            .setPositiveButton(R.string.retry_label) { _, _ -> viewModel.uploadFeedback(message) }
+                            .setNegativeButton(R.string.label_close, null)
+                            .show()
                     }
-                });
+                }
             }
         }
     }
 
-    /**
-     * start the UploadBugReportTask
-     */
-    private void doUploadBugReportTask() {
-        UploadBugReportTask newTask = new UploadBugReportTask(mMessage);
-        newTask.addOnFinishedListener(FeedbackDialog.this);
-        TaskManager.addTask(newTask, UploadBugReportTask.TASK_ID);
+    private fun notifyInputRequired() {
+        val snack = Snackbar.make(
+            requireActivity().findViewById(android.R.id.content),
+            R.string.input_required,
+            Snackbar.LENGTH_SHORT
+        )
+        ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
+        snack.show()
+    }
+
+    private fun reportBug(message: String) {
+        this.message = message
+        viewModel.checkForLatestRelease()
+    }
+
+    private fun showLoadingUI() {
+        binding.formLayout.visibility = View.GONE
+        binding.controlsLayout.visibility = View.GONE
+        binding.loadingLayout.visibility = View.VISIBLE
+    }
+
+    private fun hideLoadingUI() {
+        binding.formLayout.visibility = View.VISIBLE
+        binding.controlsLayout.visibility = View.VISIBLE
+        binding.loadingLayout.visibility = View.GONE
     }
 
     /**
      * Displays a dialog to the user telling them there is an apk update.
      * @param release
      */
-    private void notifyLatestRelease(final CheckForLatestReleaseTask.Release release) {
-        final Boolean isStoreVersion = App.isStoreVersion();
+    private fun notifyLatestRelease(release: CheckForLatestRelease.Release) {
+        val isStoreVersion = isStoreVersion
 
-        new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.apk_update_available)
-                .setMessage(R.string.upload_report_or_download_latest_apk)
-                .setNegativeButton(R.string.title_cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mLatestRelease = null;
-                        FeedbackDialog.this.dismiss();
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.apk_update_available)
+            .setMessage(R.string.upload_report_or_download_latest_apk)
+            .setNegativeButton(R.string.title_cancel) { _, _ ->
+                viewModel.clearResults()
+                this@FeedbackDialog.dismiss()
+            }
+            .setNeutralButton(R.string.download_update) { _, _ ->
+                if (isStoreVersion) {
+                    // open play store
+                    val appPackageName = requireActivity().packageName
+                    try {
+                        startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("market://details?id=$appPackageName")
+                            )
+                        )
+                    } catch (e: ActivityNotFoundException) {
+                        startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
+                            )
+                        )
                     }
-                })
-                .setNeutralButton(R.string.download_update, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (isStoreVersion) {
-                            // open play store
-                            final String appPackageName = getActivity().getPackageName();
-                            try {
-                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
-                            } catch (android.content.ActivityNotFoundException anfe) {
-                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
-                            }
-                        } else {
-                            // download from github
-                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl));
-                            startActivity(browserIntent);
-                        }
-                        FeedbackDialog.this.dismiss();
-                    }
-                })
-                .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (!mMessage.isEmpty()) {
-                            doUploadBugReportTask();
-                        } else {
-                            notifyInputRequired();
-                            FeedbackDialog.this.dismiss();
-                        }
-                    }
-                })
-                .show();
+                } else {
+                    // download from github
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl))
+                    startActivity(browserIntent)
+                }
+                this@FeedbackDialog.dismiss()
+            }
+            .setPositiveButton(R.string.label_continue) { _, _ ->
+                if (message.isNotEmpty()) {
+                    viewModel.uploadFeedback(message)
+                } else {
+                    notifyInputRequired()
+                    this@FeedbackDialog.dismiss()
+                }
+            }
+            .show()
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        if(mLatestRelease != null) {
-            outState.putSerializable(STATE_LATEST_RELEASE, mLatestRelease);
-        } else {
-            outState.remove(STATE_LATEST_RELEASE);
-        }
-        outState.putString(STATE_NOTES, mMessage);
-        super.onSaveInstanceState(outState);
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(STATE_NOTES, message)
+        super.onSaveInstanceState(outState)
     }
 
-    public void onDestroy() {
-        // disconnect listeners
-        CheckForLatestReleaseTask checkTask = (CheckForLatestReleaseTask) TaskManager.getTask(CheckForLatestReleaseTask.TASK_ID);
-        if(checkTask != null) {
-            checkTask.removeOnFinishedListener(this);
-        }
-        UploadBugReportTask uploadTask = (UploadBugReportTask)TaskManager.getTask(UploadBugReportTask.TASK_ID);
-        if(uploadTask != null) {
-            uploadTask.removeOnFinishedListener(this);
-        }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 
-        super.onDestroy();
+    override fun dismiss() {
+        viewModel.cancelJobs()
+        viewModel.clearResults()
+        super.dismiss()
+    }
+
+    companion object {
+        private const val STATE_NOTES = "bug_notes"
+        const val ARG_MESSAGE: String = "arg_message"
     }
 }
