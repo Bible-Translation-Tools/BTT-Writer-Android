@@ -86,24 +86,25 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     public static final String STATE_SEARCH_AT_START = "state_search_at_start";
     public static final String STATE_SEARCH_FOUND_CHUNKS = "state_search_found_chunks";
     public static final int RESULT_DO_UPDATE = 42;
-    private Fragment mFragment;
-    private ViewGroup mGraduations;
-    private Timer mCommitTimer = new Timer();
-    private boolean mSearchEnabled = false;
-    private TextWatcher mSearchTextWatcher;
-    private SearchTimerTask mSearchTimerTask;
-    private Timer mSearchTimer;
-    private String mSearchString;
 
-    private final boolean mEnableGrids = false;
-    private int mSeekbarMultiplier = 1; // allows for more granularity in setting position if cards are few
+    private Fragment fragment;
+    private ViewGroup graduations;
+    private Timer commitTimer = new Timer();
+    private boolean searchEnabled = false;
+    private TextWatcher searchTextWatcher;
+    private SearchTimerTask searchTimerTask;
+    private Timer searchTimer;
+    private String searchString;
+
+    private final boolean enableGrids = false;
+    private int seekbarMultiplier = 1; // allows for more granularity in setting position if cards are few
     private boolean haveMergeConflict = false;
     private boolean mergeConflictFilterEnabled = false;
-    private int mFoundTextFormat;
-    private boolean mSearchAtEnd = false;
-    private boolean mSearchAtStart = false;
-    private int mNumberOfChunkMatches = 0;
-    private boolean mSearchResumed = false;
+    private int foundTextFormat;
+    private boolean searchAtEnd = false;
+    private boolean searchAtStart = false;
+    private int numberOfChunkMatches = 0;
+    private boolean searchResumed = false;
     private boolean showConflictSummary = false;
 
     @Override
@@ -121,7 +122,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         String targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
         mergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false);
 
-        TargetTranslation translation = viewModel.loadTargetTranslation(targetTranslationId);
+        TargetTranslation translation = viewModel.getTargetTranslation(targetTranslationId);
         if (translation == null) {
             Logger.e(
                     TAG,
@@ -160,29 +161,29 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         binding.searchPane.downSearch.setOnClickListener(v -> moveSearch(true));
         binding.searchPane.upSearch.setOnClickListener(v -> moveSearch(false));
 
-        mFoundTextFormat = R.string.found_in_chunks;
+        foundTextFormat = R.string.found_in_chunks;
 
         // inject fragments
         if (findViewById(R.id.fragment_container) != null) {
             if (savedInstanceState != null) {
-                mFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+                fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             } else {
                 TranslationViewMode viewMode = viewModel.getLastViewMode();
                 switch (viewMode) {
                     case READ:
-                        mFragment = new ReadModeFragment();
+                        fragment = new ReadModeFragment();
                         break;
                     case CHUNK:
-                        mFragment = new ChunkModeFragment();
+                        fragment = new ChunkModeFragment();
                         break;
                     case REVIEW:
-                        mFragment = new ReviewModeFragment();
+                        fragment = new ReviewModeFragment();
                         break;
                 }
-                mFragment.setArguments(getIntent().getExtras());
+                fragment.setArguments(getIntent().getExtras());
                 getSupportFragmentManager()
                         .beginTransaction()
-                        .add(R.id.fragment_container, mFragment)
+                        .add(R.id.fragment_container, fragment)
                         .commit();
                 // TODO: animate
                 // TODO: udpate menu
@@ -218,12 +219,12 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         });
 
         if(savedInstanceState != null) {
-            mSearchEnabled = savedInstanceState.getBoolean(STATE_SEARCH_ENABLED, false);
-            mSearchResumed = mSearchEnabled;
-            mSearchAtEnd = savedInstanceState.getBoolean(STATE_SEARCH_AT_END, false);
-            mSearchAtStart = savedInstanceState.getBoolean(STATE_SEARCH_AT_START, false);
-            mNumberOfChunkMatches = savedInstanceState.getInt(STATE_SEARCH_FOUND_CHUNKS, 0);
-            mSearchString = savedInstanceState.getString(STATE_SEARCH_TEXT, null);
+            searchEnabled = savedInstanceState.getBoolean(STATE_SEARCH_ENABLED, false);
+            searchResumed = searchEnabled;
+            searchAtEnd = savedInstanceState.getBoolean(STATE_SEARCH_AT_END, false);
+            searchAtStart = savedInstanceState.getBoolean(STATE_SEARCH_AT_START, false);
+            numberOfChunkMatches = savedInstanceState.getInt(STATE_SEARCH_FOUND_CHUNKS, 0);
+            searchString = savedInstanceState.getString(STATE_SEARCH_TEXT, null);
             haveMergeConflict = savedInstanceState.getBoolean(STATE_HAVE_MERGE_CONFLICT, false);
             mergeConflictFilterEnabled = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, false);
             showConflictSummary = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED, false);
@@ -232,9 +233,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         }
 
         setupSidebarModeIcons();
-        setSearchBarVisibility(mSearchEnabled);
-        if(mSearchEnabled) {
-            setSearchSpinner(true, mNumberOfChunkMatches, mSearchAtEnd, mSearchAtStart); // restore initial state
+        setSearchBarVisibility(searchEnabled);
+        if(searchEnabled) {
+            setSearchSpinner(true, numberOfChunkMatches, searchAtEnd, searchAtStart); // restore initial state
         }
 
         restartAutoCommitTimer();
@@ -246,7 +247,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     private void setMergeConflictFilter() {
         Handler hand = new Handler(Looper.getMainLooper());
         hand.post(() -> {
-            if(mFragment instanceof ViewModeFragment viewModeFragment) {
+            if(fragment instanceof ViewModeFragment viewModeFragment) {
                 viewModeFragment.setShowMergeSummary(showConflictSummary);
                 viewModeFragment.setMergeConflictFilter(
                         mergeConflictFilterEnabled,
@@ -276,8 +277,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     }
 
     private void setUpSeekBar() {
-        if(mEnableGrids) {
-            mGraduations = binding.translatorSidebar.actionSeekGraduations;
+        if(enableGrids) {
+            graduations = binding.translatorSidebar.actionSeekGraduations;
         }
         SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
         seekBar.setMax(100);
@@ -288,13 +289,13 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 //                progress = handleItemCountIfChanged(progress);
                 int correctedProgress = correctProgress(progress);
                 correctedProgress = limitRange(correctedProgress, 0, seekBar.getMax() - 1);
-                int position = correctedProgress / mSeekbarMultiplier;
+                int position = correctedProgress / seekbarMultiplier;
                 int percentage = 0;
 
-                if(mSeekbarMultiplier > 1) { // if we need some granularity, calculate fractional amount
-                    int fractional = correctedProgress - position * mSeekbarMultiplier;
+                if(seekbarMultiplier > 1) { // if we need some granularity, calculate fractional amount
+                    int fractional = correctedProgress - position * seekbarMultiplier;
                     if(fractional != 0) {
-                        percentage = 100 * fractional / mSeekbarMultiplier;
+                        percentage = 100 * fractional / seekbarMultiplier;
                     }
                 }
 
@@ -302,8 +303,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
                 // If this change was initiated by a click on a UI element (rather than as a result
                 // of updates within the program), then update the view accordingly.
-                if (mFragment instanceof ViewModeFragment && fromUser) {
-                    ((ViewModeFragment) mFragment).onScrollProgressUpdate(position, percentage);
+                if (fragment instanceof ViewModeFragment && fromUser) {
+                    ((ViewModeFragment) fragment).onScrollProgressUpdate(position, percentage);
                 }
 
                 TargetTranslationActivity activity = (TargetTranslationActivity) seekBar.getContext();
@@ -314,15 +315,15 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                if(mGraduations != null) {
-                    mGraduations.animate().alpha(1.f);
+                if(graduations != null) {
+                    graduations.animate().alpha(1.f);
                 }
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                if(mGraduations != null) {
-                    mGraduations.animate().alpha(0.f);
+                if(graduations != null) {
+                    graduations.animate().alpha(0.f);
                 }
             }
         });
@@ -368,20 +369,20 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     }
 
     public void onSaveInstanceState(Bundle out) {
-        out.putBoolean(STATE_SEARCH_ENABLED, mSearchEnabled);
+        out.putBoolean(STATE_SEARCH_ENABLED, searchEnabled);
         String searchText = getFilterText();
-        if( mSearchEnabled ) {
+        if(searchEnabled) {
             out.putString(STATE_SEARCH_TEXT, searchText);
-            out.putBoolean(STATE_SEARCH_AT_END, mSearchAtEnd);
-            out.putBoolean(STATE_SEARCH_AT_START, mSearchAtStart);
-            out.putInt(STATE_SEARCH_FOUND_CHUNKS, mNumberOfChunkMatches);
+            out.putBoolean(STATE_SEARCH_AT_END, searchAtEnd);
+            out.putBoolean(STATE_SEARCH_AT_START, searchAtStart);
+            out.putInt(STATE_SEARCH_FOUND_CHUNKS, numberOfChunkMatches);
         }
         out.putBoolean(STATE_HAVE_MERGE_CONFLICT, haveMergeConflict);
         out.putBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, mergeConflictFilterEnabled);
-        if(mFragment instanceof ViewModeFragment) {
+        if(fragment instanceof ViewModeFragment) {
             out.putBoolean(
                     STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED,
-                    ((ViewModeFragment) mFragment).ismMergeConflictSummaryDisplayed()
+                    ((ViewModeFragment) fragment).ismMergeConflictSummaryDisplayed()
             );
         }
         super.onSaveInstanceState(out);
@@ -406,78 +407,79 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             markAllChunksItem.setVisible(markAllChunksSupported);
 
             moreMenu.setOnMenuItemClickListener(item -> {
-                switch (item.getItemId()) {
-                    case R.id.action_translations:
-                        finish();
-                        return true;
-                    case R.id.action_publish:
-                        Intent publishIntent = new Intent(TargetTranslationActivity.this, PublishActivity.class);
-                        publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                        publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION);
-                        startActivity(publishIntent);
-                        // TRICKY: we may move back and forth between the publisher and translation activites
-                        // so we finish to avoid filling the stack.
-                        finish();
-                        return true;
-                    case R.id.action_drafts_available:
-                        Intent intent = new Intent(TargetTranslationActivity.this, DraftActivity.class);
-                        intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                        startActivity(intent);
-                        return true;
-                    case R.id.action_backup:
-                        FragmentTransaction backupFt = getSupportFragmentManager().beginTransaction();
-                        Fragment backupPrev = getSupportFragmentManager().findFragmentByTag(BackupDialog.TAG);
-                        if (backupPrev != null) {
-                            backupFt.remove(backupPrev);
-                        }
-                        backupFt.addToBackStack(null);
+                int itemId = item.getItemId();
+                if (itemId == R.id.action_translations) {
+                    finish();
+                    return true;
+                } else if (itemId == R.id.action_publish) {
+                    Intent publishIntent = new Intent(TargetTranslationActivity.this, PublishActivity.class);
+                    publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
+                    publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION);
+                    startActivity(publishIntent);
+                    // TRICKY: we may move back and forth between the publisher and translation activites
+                    // so we finish to avoid filling the stack.
+                    finish();
+                    return true;
+                } else if (itemId == R.id.action_drafts_available) {
+                    Intent intent = new Intent(TargetTranslationActivity.this, DraftActivity.class);
+                    intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
+                    startActivity(intent);
+                    return true;
+                } else if (itemId == R.id.action_backup) {
+                    FragmentTransaction backupFt = getSupportFragmentManager().beginTransaction();
+                    Fragment backupPrev = getSupportFragmentManager().findFragmentByTag(BackupDialog.TAG);
+                    if (backupPrev != null) {
+                        backupFt.remove(backupPrev);
+                    }
+                    backupFt.addToBackStack(null);
 
-                        BackupDialog backupDialog = new BackupDialog();
-                        Bundle args = new Bundle();
-                        args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                        backupDialog.setArguments(args);
-                        backupDialog.show(backupFt, BackupDialog.TAG);
-                        return true;
-                    case R.id.action_print:
-                        FragmentTransaction printFt = getSupportFragmentManager().beginTransaction();
-                        Fragment printPrev = getSupportFragmentManager().findFragmentByTag("printDialog");
-                        if (printPrev != null) {
-                            printFt.remove(printPrev);
-                        }
-                        printFt.addToBackStack(null);
+                    BackupDialog backupDialog = new BackupDialog();
+                    Bundle args = new Bundle();
+                    args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
+                    backupDialog.setArguments(args);
+                    backupDialog.show(backupFt, BackupDialog.TAG);
+                    return true;
+                } else if (itemId == R.id.action_print) {
+                    FragmentTransaction printFt = getSupportFragmentManager().beginTransaction();
+                    Fragment printPrev = getSupportFragmentManager().findFragmentByTag("printDialog");
+                    if (printPrev != null) {
+                        printFt.remove(printPrev);
+                    }
+                    printFt.addToBackStack(null);
 
-                        PrintDialog printDialog = new PrintDialog();
-                        Bundle printArgs = new Bundle();
-                        printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                        printDialog.setArguments(printArgs);
-                        printDialog.show(printFt, "printDialog");
-                        return true;
-                    case R.id.action_feedback:
-                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                        Fragment prev = getSupportFragmentManager().findFragmentByTag("bugDialog");
-                        if (prev != null) {
-                            ft.remove(prev);
-                        }
-                        ft.addToBackStack(null);
+                    PrintDialog printDialog = new PrintDialog();
+                    Bundle printArgs = new Bundle();
+                    printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
+                    printDialog.setArguments(printArgs);
+                    printDialog.show(printFt, "printDialog");
+                    return true;
+                } else if (itemId == R.id.action_feedback) {
+                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                    Fragment prev = getSupportFragmentManager().findFragmentByTag("bugDialog");
+                    if (prev != null) {
+                        ft.remove(prev);
+                    }
+                    ft.addToBackStack(null);
 
-                        FeedbackDialog dialog = new FeedbackDialog();
-                        dialog.show(ft, "bugDialog");
-                        return true;
-                    case R.id.action_settings:
-                        Intent settingsIntent = new Intent(
-                                TargetTranslationActivity.this,
-                                SettingsActivity.class
-                        );
-                        startActivity(settingsIntent);
-                        return true;
-                    case R.id.action_search:
-                        setSearchBarVisibility(true);
-                        return true;
-                    case R.id.mark_chunks_done:
-                        ((ViewModeFragment)mFragment).markAllChunksDone();
-                        return true;
+                    FeedbackDialog dialog = new FeedbackDialog();
+                    dialog.show(ft, "bugDialog");
+                    return true;
+                } else if (itemId == R.id.action_settings) {
+                    Intent settingsIntent = new Intent(
+                            TargetTranslationActivity.this,
+                            SettingsActivity.class
+                    );
+                    startActivity(settingsIntent);
+                    return true;
+                } else if (itemId == R.id.action_search) {
+                    setSearchBarVisibility(true);
+                    return true;
+                } else if (itemId == R.id.mark_chunks_done) {
+                    ((ViewModeFragment) fragment).markAllChunksDone();
+                    return true;
+                } else {
+                    return false;
                 }
-                return false;
             });
             moreMenu.show();
         });
@@ -496,8 +498,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * method to see if searching is supported
      */
     public boolean isSearchSupported() {
-        if(mFragment instanceof ViewModeFragment) {
-            return ((ViewModeFragment) mFragment).hasFilter();
+        if(fragment instanceof ViewModeFragment) {
+            return ((ViewModeFragment) fragment).hasFilter();
         }
         return false;
     }
@@ -506,7 +508,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * Check to see if marking all chunks done is supported
      */
     public boolean isMarkAllChunksSupported() {
-        return mFragment instanceof ReviewModeFragment;
+        return fragment instanceof ReviewModeFragment;
     }
 
     /**
@@ -524,15 +526,15 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         }
 
         binding.searchPane.getRoot().setVisibility(visibility);
-        mSearchEnabled = show;
+        searchEnabled = show;
 
-        if(mSearchTextWatcher != null) {
-            binding.searchPane.searchText.removeTextChangedListener(mSearchTextWatcher); // remove old listener
-            mSearchTextWatcher = null;
+        if(searchTextWatcher != null) {
+            binding.searchPane.searchText.removeTextChangedListener(searchTextWatcher); // remove old listener
+            searchTextWatcher = null;
         }
 
         if(show) {
-            mSearchTextWatcher = new TextWatcher() {
+            searchTextWatcher = new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 }
@@ -541,22 +543,22 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                 }
                 @Override
                 public void afterTextChanged(Editable s) {
-                    if(mSearchTimer != null) {
-                        mSearchTimer.cancel();
+                    if(searchTimer != null) {
+                        searchTimer.cancel();
                     }
 
-                    mSearchTimer = new Timer();
-                    mSearchTimerTask = new SearchTimerTask(TargetTranslationActivity.this, s);
-                    mSearchTimer.schedule(mSearchTimerTask, SEARCH_START_DELAY);
+                    searchTimer = new Timer();
+                    searchTimerTask = new SearchTimerTask(TargetTranslationActivity.this, s);
+                    searchTimer.schedule(searchTimerTask, SEARCH_START_DELAY);
                 }
             };
 
-            binding.searchPane.searchText.addTextChangedListener(mSearchTextWatcher);
-            if(mSearchResumed) {
+            binding.searchPane.searchText.addTextChangedListener(searchTextWatcher);
+            if(searchResumed) {
                 // we don't have a way to reliably determine the state of the soft keyboard
                 //   so we don't initially show the keyboard on resume.  This should be less
                 //   annoying than always popping up the keyboard on resume
-                mSearchResumed = false;
+                searchResumed = false;
             } else {
                 setFocusOnTextSearchEdit();
             }
@@ -564,12 +566,12 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             filter(null); // clear search filter
         }
 
-        if(mSearchString != null) { // restore after rotate
-            binding.searchPane.searchText.setText(mSearchString);
+        if(searchString != null) { // restore after rotate
+            binding.searchPane.searchText.setText(searchString);
             if(show) {
-                filter(mSearchString);
+                filter(searchString);
             }
-            mSearchString = null;
+            searchString = null;
         }
 
         binding.searchPane.closeSearch.setOnClickListener(v -> removeSearchBar());
@@ -622,9 +624,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * @param atStart - we are at first search item
      */
     private void setSearchSpinner(boolean doingSearch, int numberOfChunkMatches, boolean atEnd, boolean atStart) {
-        mSearchAtEnd = atEnd;
-        mSearchAtStart = atStart;
-        mNumberOfChunkMatches = numberOfChunkMatches;
+        searchAtEnd = atEnd;
+        searchAtStart = atStart;
+        this.numberOfChunkMatches = numberOfChunkMatches;
         binding.searchPane.searchProgress.setVisibility(doingSearch ? View.VISIBLE : View.GONE);
 
         boolean showSearchNavigation = !doingSearch && (numberOfChunkMatches > 0);
@@ -632,7 +634,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         binding.searchPane.downSearch.setVisibility(atEnd ? View.INVISIBLE : searchVisibility);
         binding.searchPane.upSearch.setVisibility(atStart ? View.INVISIBLE : searchVisibility);
 
-        String msg = getResources().getString(mFoundTextFormat, numberOfChunkMatches);
+        String msg = getResources().getString(foundTextFormat, numberOfChunkMatches);
         binding.searchPane.found.setVisibility( !doingSearch ? View.VISIBLE : View.INVISIBLE);
         binding.searchPane.found.setText(msg);
     }
@@ -689,11 +691,11 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     public void filter(final String constraint) {
         Handler hand = new Handler(Looper.getMainLooper());
         hand.post(() -> {
-            if((mFragment != null) && (mFragment instanceof ViewModeFragment)) {
+            if((fragment != null) && (fragment instanceof ViewModeFragment)) {
                 // preserve current search type
                 SearchSubject subject = getFilterSubject();
                 prefRepository.setDefaultPref(SEARCH_SOURCE, subject.name().toUpperCase());
-                ((ViewModeFragment) mFragment).filter(constraint, subject);
+                ((ViewModeFragment) fragment).filter(constraint, subject);
             }
         });
     }
@@ -706,8 +708,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         App.closeKeyboard(this);
         Handler hand = new Handler(Looper.getMainLooper());
         hand.post(() -> {
-            if((mFragment != null) && (mFragment instanceof ViewModeFragment)) {
-                ((ViewModeFragment)mFragment).onMoveSearch(next);
+            if((fragment != null) && (fragment instanceof ViewModeFragment)) {
+                ((ViewModeFragment) fragment).onMoveSearch(next);
             }
         });
     }
@@ -724,16 +726,16 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     public void onPause() {
         super.onPause();
 
-        if(mFragment instanceof ViewModeFragment) {
-            showConflictSummary = ((ViewModeFragment) mFragment).ismMergeConflictSummaryDisplayed(); // update current state
+        if(fragment instanceof ViewModeFragment) {
+            showConflictSummary = ((ViewModeFragment) fragment).ismMergeConflictSummaryDisplayed(); // update current state
         }
     }
 
     public void closeKeyboard() {
-        if (mFragment instanceof ViewModeFragment) {
-            boolean enteringSearchText = mSearchEnabled && (binding.searchPane.searchText.hasFocus());
+        if (fragment instanceof ViewModeFragment) {
+            boolean enteringSearchText = searchEnabled && (binding.searchPane.searchText.hasFocus());
             if(!enteringSearchText) { // we don't want to close keyboard if we are entering search text
-                ((ViewModeFragment) mFragment).closeKeyboard();
+                ((ViewModeFragment) fragment).closeKeyboard();
             }
         }
     }
@@ -834,8 +836,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * @return
      */
     private int getItemCount() {
-        if((mFragment != null) && (mFragment instanceof ViewModeFragment)) {
-            return ((ViewModeFragment)mFragment).getItemCount();
+        if((fragment != null) && (fragment instanceof ViewModeFragment)) {
+            return ((ViewModeFragment) fragment).getItemCount();
         }
         return 0;
     }
@@ -855,16 +857,16 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         }
 
         if(itemCount < minimumSteps) {  // increase step size if number of cards is small, this gives more granularity in positioning
-            mSeekbarMultiplier = (int) (minimumSteps / itemCount) + 1;
+            seekbarMultiplier = (int) (minimumSteps / itemCount) + 1;
         } else {
-            mSeekbarMultiplier = 1;
+            seekbarMultiplier = 1;
         }
 
         SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        int newMax = itemCount * mSeekbarMultiplier;
+        int newMax = itemCount * seekbarMultiplier;
         int oldMax = seekBar.getMax();
         if(newMax != oldMax) {
-            Log.i(TAG,"setSeekbarMax: oldMax=" + oldMax + ", newMax=" + newMax + ", mSeekbarMultiplier=" + mSeekbarMultiplier);
+            Log.i(TAG,"setSeekbarMax: oldMax=" + oldMax + ", newMax=" + newMax + ", mSeekbarMultiplier=" + seekbarMultiplier);
             seekBar.setMax(newMax);
         } else {
             Log.i(TAG, "setSeekbarMax: max unchanged=" + oldMax);
@@ -876,9 +878,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * initialize text on graduations if enabled
      */
     private void setupGraduations() {
-        if(mEnableGrids) {
+        if(enableGrids) {
             SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-            final int numCards = seekBar.getMax() / mSeekbarMultiplier;
+            final int numCards = seekBar.getMax() / seekbarMultiplier;
 
             String maxChapterStr = getChapterSlug(numCards - 1);
             int maxChapter = Integer.valueOf(maxChapterStr);
@@ -889,7 +891,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             // Also, show nothing unless we're in read mode, since the other modes are indexed by
             // frame, not by chapter, so displaying either frame numbers or chapter numbers would be
             // nonsensical.
-            int numVisibleGraduations = Math.min(numCards, mGraduations.getChildCount());
+            int numVisibleGraduations = Math.min(numCards, graduations.getChildCount());
 
             if ((maxChapter > 0) && (maxChapter < numVisibleGraduations)) {
                 numVisibleGraduations = maxChapter;
@@ -901,7 +903,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
             // Set up the visible chapters.
             for (int i = 0; i < numVisibleGraduations; ++i) {
-                ViewGroup container = (ViewGroup) mGraduations.getChildAt(i);
+                ViewGroup container = (ViewGroup) graduations.getChildAt(i);
                 container.setVisibility(View.VISIBLE);
                 TextView text = (TextView) container.getChildAt(1);
 
@@ -911,8 +913,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             }
 
             // Undisplay the invisible chapters.
-            for (int i = numVisibleGraduations; i < mGraduations.getChildCount(); ++i) {
-                mGraduations.getChildAt(i).setVisibility(View.GONE);
+            for (int i = numVisibleGraduations; i < graduations.getChildCount(); ++i) {
+                graduations.getChildAt(i).setVisibility(View.GONE);
             }
         }
     }
@@ -923,8 +925,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * @return
      */
     private String getChapterSlug(int position) {
-        if( (mFragment != null) && (mFragment instanceof ViewModeFragment)) {
-            return ((ViewModeFragment) mFragment).getChapterSlug(position);
+        if( (fragment != null) && (fragment instanceof ViewModeFragment)) {
+            return ((ViewModeFragment) fragment).getChapterSlug(position);
         }
         return Integer.toString(position + 1);
     }
@@ -943,7 +945,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     private int computeProgressFromPosition(int position) {
         SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        int correctedProgress = correctProgress(position * mSeekbarMultiplier);
+        int correctedProgress = correctProgress(position * seekbarMultiplier);
         int progress = limitRange(correctedProgress, 0, seekBar.getMax());
         return progress;
     }
@@ -952,7 +954,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
         int correctedProgress = correctProgress(progress);
         correctedProgress = limitRange(correctedProgress, 0, seekBar.getMax() - 1);
-        int position = correctedProgress / mSeekbarMultiplier;
+        int position = correctedProgress / seekbarMultiplier;
         return position;
     }
 
@@ -968,10 +970,10 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     @Override
     public void onNoSourceTranslations() {
-        if (!(mFragment instanceof FirstTabFragment)) {
-            mFragment = new FirstTabFragment();
-            mFragment.setArguments(getIntent().getExtras());
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+        if (!(fragment instanceof FirstTabFragment)) {
+            fragment = new FirstTabFragment();
+            fragment.setArguments(getIntent().getExtras());
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
             buildMenu();
         }
     }
@@ -997,32 +999,32 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
         switch (mode) {
             case READ:
-                if (!(mFragment instanceof ReadModeFragment)) {
-                    mFragment = new ReadModeFragment();
-                    mFragment.setArguments(fragmentExtras);
+                if (!(fragment instanceof ReadModeFragment)) {
+                    fragment = new ReadModeFragment();
+                    fragment.setArguments(fragmentExtras);
 
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
                     // TODO: animate
                     // TODO: update menu
                 }
                 break;
             case CHUNK:
-                if (!(mFragment instanceof ChunkModeFragment)) {
-                    mFragment = new ChunkModeFragment();
-                    mFragment.setArguments(fragmentExtras);
+                if (!(fragment instanceof ChunkModeFragment)) {
+                    fragment = new ChunkModeFragment();
+                    fragment.setArguments(fragmentExtras);
 
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
                     // TODO: animate
                     // TODO: update menu
                 }
                 break;
             case REVIEW:
-                if (!(mFragment instanceof ReviewModeFragment)) {
+                if (!(fragment instanceof ReviewModeFragment)) {
                     fragmentExtras.putBoolean(STATE_FILTER_MERGE_CONFLICTS, mergeConflictFilterEnabled);
-                    mFragment = new ReviewModeFragment();
-                    mFragment.setArguments(fragmentExtras);
+                    fragment = new ReviewModeFragment();
+                    fragment.setArguments(fragmentExtras);
 
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, mFragment).commit();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
                     // TODO: animate
                     // TODO: update menu
                 }
@@ -1034,9 +1036,9 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * Restart scheduled translation commits
      */
     public void restartAutoCommitTimer() {
-        mCommitTimer.cancel();
-        mCommitTimer = new Timer();
-        mCommitTimer.schedule(new TimerTask() {
+        commitTimer.cancel();
+        commitTimer = new Timer();
+        commitTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 try {
@@ -1064,22 +1066,22 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     public void onHasSourceTranslations() {
         TranslationViewMode viewMode = viewModel.getLastViewMode();
         if (viewMode == TranslationViewMode.READ) {
-            mFragment = new ReadModeFragment();
+            fragment = new ReadModeFragment();
         } else if (viewMode == TranslationViewMode.CHUNK) {
-            mFragment = new ChunkModeFragment();
+            fragment = new ChunkModeFragment();
         } else if (viewMode == TranslationViewMode.REVIEW) {
-            mFragment = new ReviewModeFragment();
+            fragment = new ReviewModeFragment();
         }
-        mFragment.setArguments(getIntent().getExtras());
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, (Fragment) mFragment).commit();
+        fragment.setArguments(getIntent().getExtras());
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, (Fragment) fragment).commit();
         // TODO: animate
         // TODO: update menu
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        if (mFragment instanceof ViewModeFragment) {
-            if (!((ViewModeFragment) mFragment).onTouchEvent(event)) {
+        if (fragment instanceof ViewModeFragment) {
+            if (!((ViewModeFragment) fragment).onTouchEvent(event)) {
                 return super.dispatchTouchEvent(event);
             } else {
                 return true;
@@ -1091,7 +1093,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     @Override
     public void onDestroy() {
-        mCommitTimer.cancel();
+        commitTimer.cancel();
         try {
             viewModel.getTargetTranslation().commit();
         } catch (Exception e) {
@@ -1105,8 +1107,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * Causes the activity to tell the fragment it needs to reload
      */
     public void notifyDatasetChanged() {
-        if (mFragment instanceof ViewModeFragment && ((ViewModeFragment) mFragment).getAdapter() != null) {
-            ((ViewModeFragment) mFragment).getAdapter().triggerNotifyDataSetChanged();
+        if (fragment instanceof ViewModeFragment && ((ViewModeFragment) fragment).getAdapter() != null) {
+            ((ViewModeFragment) fragment).getAdapter().triggerNotifyDataSetChanged();
         }
     }
 
@@ -1114,8 +1116,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
      * Causes the activity to tell the fragment that everything needs to be redrawn
      */
     public void redrawTarget() {
-        if (mFragment instanceof ViewModeFragment) {
-            ((ViewModeFragment) mFragment).onResume();
+        if (fragment instanceof ViewModeFragment) {
+            ((ViewModeFragment) fragment).onResume();
         }
     }
 

@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.content.ContentValues
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -24,7 +23,6 @@ import com.door43.usecases.RenderHelps
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
@@ -69,7 +67,7 @@ class TargetTranslationViewModel @Inject constructor(
         generalJobs.clear()
     }
 
-    fun loadTargetTranslation(translationID: String?): TargetTranslation? {
+    fun getTargetTranslation(translationID: String?): TargetTranslation? {
         _targetTranslation = translator.getTargetTranslation(translationID)
         return _targetTranslation
     }
@@ -304,6 +302,18 @@ class TargetTranslationViewModel @Inject constructor(
                 return fetchTargetText(source, targetTranslation, chapterSlug, chunkSlug)
             }
         }
+    }
+
+    fun getDefaultSourceTranslation(): String? {
+        val project = getProject()
+        val resources = library.index().getResources(project.languageSlug, project.slug)
+        val resourceContainer = try {
+            library.open(project.languageSlug, project.slug, resources[0].slug)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+        return resourceContainer?.slug
     }
 
     private fun getSourceTranslations(): List<ContentValues> {

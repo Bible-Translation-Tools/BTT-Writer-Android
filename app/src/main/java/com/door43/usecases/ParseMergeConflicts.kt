@@ -17,7 +17,6 @@ object ParseMergeConflicts {
     private val mergeConflictItems = arrayListOf<CharSequence>()
 
     fun execute(searchText: String): List<CharSequence> {
-        val start = System.currentTimeMillis()
         mergeConflictItems.clear()
         val fullMergeConflict = false
         var found: Boolean = parseMergeConflicts(searchText)
@@ -64,9 +63,6 @@ object ParseMergeConflicts {
                 j++
             }
         }
-
-        val end = System.currentTimeMillis()
-        Logger.e("MAXXX", "Parse merge conflicts took ${end - start} ms")
 
         return mergeConflictItems
     }

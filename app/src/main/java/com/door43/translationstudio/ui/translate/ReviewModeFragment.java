@@ -770,11 +770,6 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
         viewModel.renderHelps(item);
     }
 
-    @Override
-    public void onCancelRenderHelps() {
-        viewModel.cancelRenderJobs();
-    }
-
     /**
      * opens the resources view
      */

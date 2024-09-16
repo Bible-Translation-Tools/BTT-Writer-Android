@@ -82,7 +82,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     public interface OnRenderHelpsListener {
         void onRenderHelps(ListItem item);
-        void onCancelRenderHelps();
     }
 
     public static final int HIGHLIGHT_COLOR = Color.YELLOW;
