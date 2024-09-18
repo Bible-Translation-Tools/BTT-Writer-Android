@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui.home;
 
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,57 +9,42 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.BibleCodes;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Typography;
 
-import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.tools.logger.Logger;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
 
+import com.door43.translationstudio.databinding.FragmentTargetTranslationListItemBinding;
 import com.door43.translationstudio.tasks.TranslationProgressTask;
-import com.door43.widget.ViewUtil;
-import com.filippudak.ProgressPieView.ProgressPieView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.unfoldingword.resourcecontainer.Resource;
 
 /**
  * Created by joel on 9/3/2015.
  */
 public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask.OnFinishedListener {
-    private final Context mContext;
-    private List<TargetTranslation> mTranslations;
-    private OnInfoClickListener mInfoClickListener = null;
-    private Map<String, Integer> mTranslationProgress = new HashMap<>();
-    private List<String> mTranslationProgressCalculated = new ArrayList<>();
-    private List<ViewHolder> holders = new ArrayList<>();
-    private SortProjectColumnType mSortProjectColumn = SortProjectColumnType.bibleOrder;
-    private SortByColumnType mSortByColumn = SortByColumnType.projectThenLanguage;;
+    private List<TranslationItem> translations;
+    private OnInfoClickListener infoClickListener = null;
+    private Map<String, Integer> translationProgress = new HashMap<>();
+    private List<String> translationProgressCalculated = new ArrayList<>();
+    private SortProjectColumnType sortProjectColumn = SortProjectColumnType.bibleOrder;
+    private SortByColumnType sortByColumn = SortByColumnType.projectThenLanguage;;
 
-    private static List<String> bookList = Arrays.asList(BibleCodes.getBibleBooks());
+    private static final List<String> bookList = Arrays.asList(BibleCodes.getBibleBooks());
 
 
-    public TargetTranslationAdapter(Context context) {
-        mContext = context;
-        mTranslations = new ArrayList<>();
+    public TargetTranslationAdapter() {
+        translations = new ArrayList<>();
     }
 
     /**
@@ -68,60 +52,54 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
      * @param listener the listener to be added
      */
     public void setOnInfoClickListener(OnInfoClickListener listener) {
-        mInfoClickListener = listener;
+        infoClickListener = listener;
     }
 
     @Override
     public int getCount() {
-        if(mTranslations != null) {
-            return mTranslations.size();
+        if(translations != null) {
+            return translations.size();
         } else {
             return 0;
         }
     }
 
     public void sort() {
-        sort(mSortByColumn, mSortProjectColumn);
+        sort(sortByColumn, sortProjectColumn);
     }
 
     public void sort(final SortByColumnType sortByColumn, final SortProjectColumnType sortProjectColumn) {
-        mSortByColumn = sortByColumn;
-        mSortProjectColumn = sortProjectColumn;
-        Collections.sort(mTranslations, new Comparator<TargetTranslation>() {
-            @Override
-            public int compare(TargetTranslation lhs, TargetTranslation rhs) {
-                int compare;
-                switch (sortByColumn) {
-                    case projectThenLanguage:
+        this.sortByColumn = sortByColumn;
+        this.sortProjectColumn = sortProjectColumn;
+        Collections.sort(translations, (lhs, rhs) -> {
+            int compare;
+            switch (sortByColumn) {
+                case projectThenLanguage:
+                    compare = compareProject(lhs, rhs, sortProjectColumn);
+                    if(compare == 0) {
+                        compare = lhs.getTranslation().getTargetLanguageName()
+                                .compareToIgnoreCase(rhs.getTranslation().getTargetLanguageName());
+                    }
+                    return compare;
+                case languageThenProject:
+                    compare = lhs.getTranslation().getTargetLanguageName()
+                            .compareToIgnoreCase(rhs.getTranslation().getTargetLanguageName());
+                    if(compare == 0) {
                         compare = compareProject(lhs, rhs, sortProjectColumn);
-                        if(compare == 0) {
-                            compare = lhs.getTargetLanguageName().compareToIgnoreCase(rhs.getTargetLanguageName());
-                        }
-                        return compare;
-                    case languageThenProject:
-                        compare = lhs.getTargetLanguageName().compareToIgnoreCase(rhs.getTargetLanguageName());
-                        if(compare == 0) {
-                            compare = compareProject(lhs, rhs, sortProjectColumn);
-                        }
-                        return compare;
-                    case progressThenProject:
-                    default:
-                        compare = getProgress(rhs) - getProgress(lhs);
-                        if(compare == 0) {
-                            compare = compareProject(lhs, rhs, sortProjectColumn);
-                        }
-                        return compare;
-                }
+                    }
+                    return compare;
+                case progressThenProject:
+                default:
+                    compare = getProgress(rhs) - getProgress(lhs);
+                    if(compare == 0) {
+                        compare = compareProject(lhs, rhs, sortProjectColumn);
+                    }
+                    return compare;
             }
         });
 
         Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                notifyDataSetChanged();
-            }
-        });
+        hand.post(this::notifyDataSetChanged);
     }
 
     /**
@@ -130,23 +108,23 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
      * @param rhs
      * @return
      */
-    private int compareProject(TargetTranslation lhs, TargetTranslation rhs, SortProjectColumnType sortProjectColumn) {
+    private int compareProject(TranslationItem lhs, TranslationItem rhs, SortProjectColumnType sortProjectColumn) {
         if(sortProjectColumn == SortProjectColumnType.bibleOrder) {
-            int lhsIndex = bookList.indexOf(lhs.getProjectId());
-            int rhsIndex = bookList.indexOf(rhs.getProjectId());
+            int lhsIndex = bookList.indexOf(lhs.getTranslation().getProjectId());
+            int rhsIndex = bookList.indexOf(rhs.getTranslation().getProjectId());
             if((lhsIndex == rhsIndex) && (lhsIndex < 0)) { // if not bible books, then compare by name
-                return getProjectName(lhs).compareToIgnoreCase(getProjectName(rhs));
+                return lhs.getFormattedProjectName().compareToIgnoreCase(rhs.getFormattedProjectName());
             }
             return lhsIndex - rhsIndex;
         }
 
         // compare project names
-        return getProjectName(lhs).compareToIgnoreCase(getProjectName(rhs));
+        return lhs.getFormattedProjectName().compareToIgnoreCase(rhs.getFormattedProjectName());
     }
 
     @Override
-    public TargetTranslation getItem(int position) {
-        return mTranslations.get(position);
+    public TranslationItem getItem(int position) {
+        return translations.get(position);
     }
 
     @Override
@@ -156,34 +134,37 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
 
     @Override
     public View getView(final int position, View convertView, final ViewGroup parent) {
-        View v = convertView;
+        Context context = parent.getContext();
         final ViewHolder holder;
 
         if(convertView == null) {
-            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_target_translation_list_item, null);
-            holder = new ViewHolder(v, parent.getContext());
-            holders.add(holder);
+            FragmentTargetTranslationListItemBinding binding =
+                    FragmentTargetTranslationListItemBinding.inflate(
+                            LayoutInflater.from(parent.getContext()),
+                            parent,
+                            false
+                    );
+            holder = new ViewHolder(binding);
         } else {
-            holder = (ViewHolder)v.getTag();
+            holder = (ViewHolder) convertView.getTag();
         }
 
-        final TargetTranslation targetTranslation = getItem(position);
-        final Door43Client library = App.getLibrary();
+        final TranslationItem targetTranslation = getItem(position);
         holder.currentTargetTranslation = targetTranslation;
-        holder.mProgressView.setVisibility(View.INVISIBLE);
+        holder.binding.translationProgress.setVisibility(View.INVISIBLE);
 
         // calculate translation progress
-        if(!mTranslationProgressCalculated.contains(targetTranslation.getId())) {
-            String taskId = TranslationProgressTask.TASK_ID + targetTranslation.getId();
+        if(!translationProgressCalculated.contains(targetTranslation.getTranslation().getId())) {
+            String taskId = TranslationProgressTask.TASK_ID + targetTranslation.getTranslation().getId();
             TranslationProgressTask progressTask = (TranslationProgressTask) TaskManager.getTask(taskId);
             if(progressTask != null) {
                 // attach listener
                 progressTask.removeAllOnFinishedListener();
                 progressTask.addOnFinishedListener(this);
             } else {
-                progressTask = new TranslationProgressTask(targetTranslation);
+                progressTask = new TranslationProgressTask(targetTranslation.getTranslation());
                 progressTask.addOnFinishedListener(this);
-                TaskManager.addTask(progressTask, TranslationProgressTask.TASK_ID + targetTranslation.getId());
+                TaskManager.addTask(progressTask, TranslationProgressTask.TASK_ID + targetTranslation.getTranslation().getId());
                 TaskManager.groupTask(progressTask, "calc-translation-progress");
             }
         } else {
@@ -191,46 +172,26 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
         }
 
         // render view
-        holder.mTitleView.setText(getProjectName(targetTranslation));
-        holder.mLanguageView.setText(targetTranslation.getTargetLanguageName());
+        holder.binding.projectTitle.setText(targetTranslation.getFormattedProjectName());
+        holder.binding.targetLanguage.setText(targetTranslation.getTranslation().getTargetLanguageName());
 
         // set typeface for language
-        TargetLanguage targetLanguage = targetTranslation.getTargetLanguage();
-        Typeface typeface = Typography.getBestFontForLanguage(mContext, TranslationType.SOURCE, targetLanguage.slug, targetLanguage.direction);
-        holder.mLanguageView.setTypeface(typeface, 0);
+        TargetLanguage targetLanguage = targetTranslation.getTranslation().getTargetLanguage();
+        Typeface typeface = Typography.getBestFontForLanguage(
+                context,
+                TranslationType.SOURCE,
+                targetLanguage.slug,
+                targetLanguage.direction
+        );
+        holder.binding.targetLanguage.setTypeface(typeface, 0);
 
         // TODO: finish rendering project icon
-        holder.mInfoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(mInfoClickListener != null) {
-                    mInfoClickListener.onClick(getItem(position).getId());
-                }
+        holder.binding.infoButton.setOnClickListener(v1 -> {
+            if(infoClickListener != null) {
+                infoClickListener.onClick(getItem(position));
             }
         });
-        return v;
-    }
-
-    /**
-     * get the project name
-     * @param targetTranslation
-     * @return
-     */
-    private String getProjectName(TargetTranslation targetTranslation) {
-        String projectName = "";
-        Project project = App.getLibrary().index.getProject(App.getDeviceLanguageCode(), targetTranslation.getProjectId(), true);
-        if(project != null) {
-            if(!targetTranslation.getResourceSlug().equals(Resource.REGULAR_SLUG) && !targetTranslation.getResourceSlug().equals("obs")) {
-                // display the resource type if not a regular resource e.g. this is for a gateway language
-                projectName = project.name + " (" + targetTranslation.getResourceSlug() + ")";
-            } else {
-                projectName = project.name;
-            }
-        } else {
-            Logger.w(this.getClass().getName(), "Could not find a source translation for " + targetTranslation.getId());
-            projectName = targetTranslation.getProjectId();
-        }
-        return projectName;
+        return holder.binding.getRoot();
     }
 
     /**
@@ -238,18 +199,18 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
      * @param targetTranslation
      * @return
      */
-    private Integer getProgress(TargetTranslation targetTranslation) {
-        if(mTranslationProgressCalculated.contains(targetTranslation.getId())) {
-            Integer value =  mTranslationProgress.get(targetTranslation.getId());
+    private Integer getProgress(TranslationItem targetTranslation) {
+        if(translationProgressCalculated.contains(targetTranslation.getTranslation().getId())) {
+            Integer value =  translationProgress.get(targetTranslation.getTranslation().getId());
             if(value != null) return value;
         }
         return -1;
     }
 
-    public void changeData(TargetTranslation[] targetTranslations) {
-        mTranslations = Arrays.asList(targetTranslations);
-        mTranslationProgress = new HashMap<>();
-        mTranslationProgressCalculated = new ArrayList<>();
+    public void changeData(List<TranslationItem> targetTranslations) {
+        translations = targetTranslations;
+        translationProgress = new HashMap<>();
+        translationProgressCalculated = new ArrayList<>();
         sort();
     }
 
@@ -262,8 +223,8 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
             double progressLong = ((TranslationProgressTask) task).getProgress();
             final int progress = Math.round((float)progressLong * 100);
             final TargetTranslation targetTranslation = ((TranslationProgressTask) task).targetTranslation;
-            mTranslationProgress.put(targetTranslation.getId(), progress);
-            mTranslationProgressCalculated.add(targetTranslation.getId());
+            translationProgress.put(targetTranslation.getId(), progress);
+            translationProgressCalculated.add(targetTranslation.getId());
 
             Handler hand = new Handler(Looper.getMainLooper());
             hand.post(new Runnable() {
@@ -276,34 +237,24 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
     }
 
     public interface OnInfoClickListener {
-        void onClick(String targetTranslationId);
+        void onClick(TranslationItem item);
     }
 
-    public class ViewHolder {
-        public ImageView mIconView;
-        public TextView mTitleView;
-        public TextView mLanguageView;
-        public ProgressPieView mProgressView;
-        public ImageButton mInfoButton;
-        public TargetTranslation currentTargetTranslation;
+    public static class ViewHolder {
+        public TranslationItem currentTargetTranslation;
+        public FragmentTargetTranslationListItemBinding binding;
 
-        public ViewHolder(View view, Context context) {
-            mIconView = (ImageView) view.findViewById(R.id.projectIcon);
-            mTitleView = (TextView) view.findViewById(R.id.projectTitle);
-            mLanguageView = (TextView) view.findViewById(R.id.targetLanguage);
-            mProgressView = (ProgressPieView) view.findViewById(R.id.translationProgress);
-            mProgressView.setMax(100);
-            mInfoButton = (ImageButton) view.findViewById(R.id.infoButton);
-            view.setTag(this);
+        public ViewHolder(FragmentTargetTranslationListItemBinding binding) {
+            this.binding = binding;
+            binding.translationProgress.setMax(100);
+            binding.getRoot().setTag(this);
         }
 
         public void setProgress(int progress) {
             if(progress < 0) progress = 0;
             if(progress > 100) progress = 100;
-            if(mProgressView != null) {
-                mProgressView.setProgress(progress);
-                mProgressView.setVisibility(View.VISIBLE);
-            }
+            binding.translationProgress.setProgress(progress);
+            binding.translationProgress.setVisibility(View.VISIBLE);
         }
     }
 
@@ -316,7 +267,7 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
         languageThenProject(1),
         progressThenProject(2);
 
-        private int _value;
+        private final int _value;
 
         SortByColumnType(int Value) {
             this._value = Value;
@@ -360,7 +311,7 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
         bibleOrder(0),
         alphabetical(1);
 
-        private int _value;
+        private final int _value;
 
         SortProjectColumnType(int Value) {
             this._value = Value;

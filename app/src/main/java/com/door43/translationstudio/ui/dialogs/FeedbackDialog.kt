@@ -94,18 +94,17 @@ class FeedbackDialog : DialogFragment() {
             }
         }
         viewModel.latestRelease.observe(this) {
-            // Do not observe on first load
-            if (!viewModel.checkReleaseRequested) return@observe
-
-            if (it != null) {
-                val hand = Handler(Looper.getMainLooper())
-                hand.post { notifyLatestRelease(it) }
-            } else {
-                if (message.isNotEmpty()) {
-                    viewModel.uploadFeedback(message)
+            it?.let { result ->
+                if (result.release != null) {
+                    val hand = Handler(Looper.getMainLooper())
+                    hand.post { notifyLatestRelease(result.release) }
                 } else {
-                    notifyInputRequired()
-                    dismiss()
+                    if (message.isNotEmpty()) {
+                        viewModel.uploadFeedback(message)
+                    } else {
+                        notifyInputRequired()
+                        dismiss()
+                    }
                 }
             }
         }

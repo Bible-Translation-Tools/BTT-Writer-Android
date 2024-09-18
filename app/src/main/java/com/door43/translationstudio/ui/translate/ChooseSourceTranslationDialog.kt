@@ -19,7 +19,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Callbacks
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.OnItemClickListener
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.RCItem
-import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
+import com.door43.translationstudio.ui.viewmodels.ChooseSourcesViewModel
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,7 +31,7 @@ import kotlin.math.min
 @AndroidEntryPoint
 class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
 
-    private val viewModel: DownloadSourcesViewModel by viewModels()
+    private val viewModel: ChooseSourcesViewModel by viewModels()
 
     private var clickListener: OnClickListener? = null
     private var progressDialog: ProgressHelper.ProgressDialog? = null

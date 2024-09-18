@@ -356,7 +356,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
             view = binding.getRoot();
             view.setTag(holder);
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            holder = (ViewHolder) view.getTag();
         }
 
         // load update status

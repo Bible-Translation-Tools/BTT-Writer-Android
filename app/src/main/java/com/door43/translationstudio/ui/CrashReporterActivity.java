@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import android.view.View;
 import android.widget.Button;
@@ -17,6 +19,7 @@ import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.tasks.CheckForLatestReleaseTask;
 import com.door43.translationstudio.tasks.UploadCrashReportTask;
+import com.door43.usecases.CheckForLatestRelease;
 
 import org.unfoldingword.tools.logger.Logger;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
@@ -30,7 +33,7 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
     private static final String STATE_LATEST_RELEASE = "state_latest_release";
     private static final String STATE_NOTES = "state_notes";
     private String mNotes = "";
-    private CheckForLatestReleaseTask.Release mLatestRelease = null;
+    private CheckForLatestRelease.Release mLatestRelease = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,12 +87,10 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
         });
     }
 
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
+    public void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        if(savedInstanceState != null) {
-            mNotes = savedInstanceState.getString(STATE_NOTES, "");
-            mLatestRelease = (CheckForLatestReleaseTask.Release)savedInstanceState.getSerializable(STATE_LATEST_RELEASE);
-        }
+        mNotes = savedInstanceState.getString(STATE_NOTES, "");
+        mLatestRelease = (CheckForLatestRelease.Release)savedInstanceState.getSerializable(STATE_LATEST_RELEASE);
         mCrashReportText.setText(mNotes);
         super.onRestoreInstanceState(savedInstanceState);
     }
@@ -110,45 +111,34 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
             mLoadingDialog.show();
             uploadTask.addOnFinishedListener(this);
         } else if(mLatestRelease != null) {
-            notifyLatestRelease(mLatestRelease);
+            notifyLatestRelease();
         }
     }
 
     /**
      * Displays a dialog to the user telling them there is an apk update.
-     * @param release
      */
-    private void notifyLatestRelease(final CheckForLatestReleaseTask.Release release) {
+    private void notifyLatestRelease() {
         new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                 .setTitle(R.string.apk_update_available)
                 .setMessage(R.string.upload_report_or_download_latest_apk)
-                .setNegativeButton(R.string.title_cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mLatestRelease = null;
-
-                        Logger.flush();
-                        openSplash();
-                    }
+                .setNegativeButton(R.string.title_cancel, (dialog, which) -> {
+                    mLatestRelease = null;
+                    Logger.flush();
+                    openSplash();
                 })
-                .setNeutralButton(R.string.download_update, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Logger.flush();
-                        getLatestAppVersion(CrashReporterActivity.this, mLatestRelease);
-                        finish();
-                    }
+                .setNeutralButton(R.string.download_update, (dialog, which) -> {
+                    Logger.flush();
+                    getLatestAppVersion(CrashReporterActivity.this, mLatestRelease);
+                    finish();
                 })
-                .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mLoadingDialog.setMessage(getResources().getString(R.string.uploading));
-                        mLoadingDialog.show();
+                .setPositiveButton(R.string.label_continue, (dialog, which) -> {
+                    mLoadingDialog.setMessage(getResources().getString(R.string.uploading));
+                    mLoadingDialog.show();
 
-                        UploadCrashReportTask newTask = new UploadCrashReportTask(mNotes);
-                        newTask.addOnFinishedListener(CrashReporterActivity.this);
-                        TaskManager.addTask(newTask, UploadCrashReportTask.TASK_ID);
-                    }
+                    UploadCrashReportTask newTask = new UploadCrashReportTask(mNotes);
+                    newTask.addOnFinishedListener(CrashReporterActivity.this);
+                    TaskManager.addTask(newTask, UploadCrashReportTask.TASK_ID);
                 })
                 .show();
     }
@@ -181,7 +171,7 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
                 hand.post(new Runnable() {
                     @Override
                     public void run() {
-                        notifyLatestRelease(mLatestRelease);
+                        notifyLatestRelease();
                     }
                 });
             } else {
@@ -227,11 +217,11 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
      * @param release
      * @return
      */
-    public static boolean getLatestAppVersion(Activity activity, CheckForLatestReleaseTask.Release release) {
+    public static boolean getLatestAppVersion(Activity activity, CheckForLatestRelease.Release release) {
         if(release == null) {
             return false;
         }
-        Boolean isStoreVersion = App.isStoreVersion();
+        boolean isStoreVersion = App.isStoreVersion();
         if (isStoreVersion) {
             // open play store
             final String appPackageName = activity.getPackageName();
@@ -242,7 +232,7 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
             }
         } else {
             // download from github
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl));
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(release.getDownloadUrl()));
             activity.startActivity(browserIntent);
         }
         return true;

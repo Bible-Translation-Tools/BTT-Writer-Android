@@ -38,6 +38,7 @@ import com.door43.translationstudio.R;
 import com.door43.translationstudio.ui.legal.LegalDocumentActivity;
 import com.door43.translationstudio.services.BackupService;
 import com.door43.translationstudio.tasks.CheckForLatestReleaseTask;
+import com.door43.usecases.CheckForLatestRelease;
 import com.door43.util.TTFAnalyzer;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
@@ -505,7 +506,7 @@ public class SettingsActivity extends PreferenceActivity implements ManagedTask.
     /**
      * ask the user if they want to download the latest version
      */
-    static public void promptUserToDownloadLatestVersion(final Activity activity, final CheckForLatestReleaseTask.Release release) {
+    static public void promptUserToDownloadLatestVersion(final Activity activity, final CheckForLatestRelease.Release release) {
         new AlertDialog.Builder(activity, R.style.AppTheme_Dialog)
                 .setTitle(R.string.apk_update_available)
                 .setMessage(R.string.download_latest_apk)

@@ -11,15 +11,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import com.door43.translationstudio.App.Companion.backupTargetTranslation
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import androidx.fragment.app.activityViewModels
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationType
-import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
 import com.door43.translationstudio.tasks.TranslationProgressTask
@@ -27,13 +23,11 @@ import com.door43.translationstudio.ui.dialogs.BackupDialog
 import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
+import com.door43.translationstudio.ui.viewmodels.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
 import org.unfoldingword.tools.taskmanager.ManagedTask
 import org.unfoldingword.tools.taskmanager.TaskManager
-import javax.inject.Inject
 import kotlin.math.min
 
 /**
@@ -41,15 +35,12 @@ import kotlin.math.min
  */
 @AndroidEntryPoint
 class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedListener {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var library: Door43Client
-
-    private var mTargetTranslation: TargetTranslation? = null
-    private var mListener: OnDeleteListener? = null
-    private var progressView: TextView? = null
+    private var targetTranslation: TranslationItem? = null
 
     private var _binding: DialogTargetTranslationInfoBinding? = null
     private val binding get() = _binding!!
+
+    private val viewModel: HomeViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,8 +55,8 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
             dismiss()
         } else {
             val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION_ID, null)
-            mTargetTranslation = translator.getTargetTranslation(targetTranslationId)
-            if (mTargetTranslation == null) {
+            targetTranslation = viewModel.getTargetTranslation(targetTranslationId)
+            if (targetTranslation == null) {
                 Logger.w(
                     "TargetTranslationInfoDialog",
                     "Unknown target translation $targetTranslationId"
@@ -75,79 +66,65 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
             }
         }
 
-        val project: Project
-        val existingSources = mTargetTranslation!!.sourceTranslations
-        // Gets an existing source project or default if none selected
-        if (existingSources.isNotEmpty()) {
-            val lastSource = existingSources[existingSources.size - 1]
-            project = library.index.getTranslation(lastSource).project
-        } else {
-            project = library.index.getProject(
-                deviceLanguageCode,
-                mTargetTranslation!!.projectId,
-                true
+        targetTranslation?.let { item ->
+            // set typeface for language
+            val targetLanguage = item.translation.targetLanguage
+            val typeface = Typography.getBestFontForLanguage(
+                requireActivity(),
+                TranslationType.SOURCE,
+                targetLanguage.slug,
+                targetLanguage.direction
             )
-        }
 
-        // set typeface for language
-        val targetLanguage = mTargetTranslation!!.targetLanguage
-        val typeface = Typography.getBestFontForLanguage(
-            activity,
-            TranslationType.SOURCE,
-            targetLanguage.slug,
-            targetLanguage.direction
-        )
-
-        var task = TaskManager.getTask(TranslationProgressTask.TASK_ID)
-        if (task == null) {
-            task = TranslationProgressTask(mTargetTranslation)
-            task.addOnFinishedListener(this)
-            TaskManager.addTask(task, TranslationProgressTask.TASK_ID)
-        } else {
-            task.addOnFinishedListener(this)
-        }
-
-        with(binding) {
-            title.setTypeface(typeface, Typeface.NORMAL)
-            languageTitle.setTypeface(typeface, Typeface.NORMAL)
-
-            title.text = project.name + " - " + mTargetTranslation!!.targetLanguageName
-            projectTitle.text = project.name + " (" + project.slug + ")"
-            languageTitle.text =
-                mTargetTranslation!!.targetLanguageName + " (" + mTargetTranslation!!.targetLanguageId + ")"
-
-            // calculate translation progress
-            progress.text = ""
-
-            // list translators
-            translators.text = ""
-            val translatorsList = getTranslatorNames()
-            if (translatorsList != null) {
-                translators.text = translatorsList
+            var task = TaskManager.getTask(TranslationProgressTask.TASK_ID)
+            if (task == null) {
+                task = TranslationProgressTask(item.translation)
+                task.addOnFinishedListener(this)
+                TaskManager.addTask(task, TranslationProgressTask.TASK_ID)
+            } else {
+                task.addOnFinishedListener(this)
             }
 
-            changeLanguage.setOnClickListener {
-                val intent = Intent(activity, NewTargetTranslationActivity::class.java)
-                intent.putExtra(
-                    NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID,
-                    mTargetTranslation!!.id
-                )
-                intent.putExtra(
-                    NewTargetTranslationActivity.EXTRA_DISABLED_LANGUAGES, arrayOf(
-                        mTargetTranslation!!.targetLanguage.slug
+            with(binding) {
+                title.setTypeface(typeface, Typeface.NORMAL)
+                languageTitle.setTypeface(typeface, Typeface.NORMAL)
+
+                title.text = item.project.name + " - " + item.translation.targetLanguageName
+                projectTitle.text = item.formattedProjectName
+                languageTitle.text =
+                    item.translation.targetLanguageName + " (" + item.translation.targetLanguageId + ")"
+
+                // calculate translation progress
+                progress.text = ""
+
+                // list translators
+                translators.text = ""
+                val translatorsList = getTranslatorNames()
+                if (translatorsList != null) {
+                    translators.text = translatorsList
+                }
+
+                changeLanguage.setOnClickListener {
+                    val intent = Intent(activity, NewTargetTranslationActivity::class.java)
+                    intent.putExtra(
+                        NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID,
+                        item.translation.id
                     )
-                )
-                intent.putExtra(NewTargetTranslationActivity.EXTRA_CHANGE_TARGET_LANGUAGE_ONLY, true)
-                startActivityForResult(intent, CHANGE_TARGET_TRANSLATION_LANGUAGE)
-            }
+                    intent.putExtra(
+                        NewTargetTranslationActivity.EXTRA_DISABLED_LANGUAGES, arrayOf(
+                            item.translation.targetLanguage.slug
+                        )
+                    )
+                    intent.putExtra(NewTargetTranslationActivity.EXTRA_CHANGE_TARGET_LANGUAGE_ONLY, true)
+                    startActivityForResult(intent, CHANGE_TARGET_TRANSLATION_LANGUAGE)
+                }
 
-            deleteButton.setOnClickListener {
-                AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                    .setTitle(R.string.label_delete)
-                    .setIcon(R.drawable.ic_delete_dark_secondary_24dp)
-                    .setMessage(R.string.confirm_delete_target_translation)
-                    .setPositiveButton(R.string.confirm) { _, _ ->
-                        if (mTargetTranslation != null) {
+                deleteButton.setOnClickListener {
+                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                        .setTitle(R.string.label_delete)
+                        .setIcon(R.drawable.ic_delete_dark_secondary_24dp)
+                        .setMessage(R.string.confirm_delete_target_translation)
+                        .setPositiveButton(R.string.confirm) { _, _ ->
                             try {
                                 deleteTargetTranslation(false)
                             } catch (e: Exception) {
@@ -158,73 +135,73 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
                                     throw RuntimeException("Could not delete target translation.", ex)
                                 }
                             }
+                            dismiss()
                         }
-                        dismiss()
+                        .setNegativeButton(R.string.no, null)
+                        .show()
+                }
+
+                backupButton.setOnClickListener {
+                    val backupFt = parentFragmentManager.beginTransaction()
+                    val backupPrev = parentFragmentManager.findFragmentByTag(BackupDialog.TAG)
+                    if (backupPrev != null) {
+                        backupFt.remove(backupPrev)
                     }
-                    .setNegativeButton(R.string.no, null)
-                    .show()
-            }
+                    backupFt.addToBackStack(null)
 
-            backupButton.setOnClickListener {
-                val backupFt = parentFragmentManager.beginTransaction()
-                val backupPrev = parentFragmentManager.findFragmentByTag(BackupDialog.TAG)
-                if (backupPrev != null) {
-                    backupFt.remove(backupPrev)
+                    val backupDialog = BackupDialog()
+                    val arguments = Bundle()
+                    arguments.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, item.translation.id)
+                    backupDialog.arguments = arguments
+                    backupDialog.show(backupFt, BackupDialog.TAG)
                 }
-                backupFt.addToBackStack(null)
 
-                val backupDialog = BackupDialog()
-                val arguments = Bundle()
-                arguments.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation!!.id)
-                backupDialog.arguments = arguments
-                backupDialog.show(backupFt, BackupDialog.TAG)
-            }
-
-            publishButton.setOnClickListener {
-                val publishIntent = Intent(activity, PublishActivity::class.java)
-                publishIntent.putExtra(
-                    PublishActivity.EXTRA_TARGET_TRANSLATION_ID,
-                    mTargetTranslation!!.id
-                )
-                publishIntent.putExtra(
-                    PublishActivity.EXTRA_CALLING_ACTIVITY,
-                    PublishActivity.ACTIVITY_HOME
-                )
-                startActivity(publishIntent)
-                dismiss() // close dialog so notifications will pass back to HomeActivity
-            }
-
-            printButton.setOnClickListener {
-                val printFt = parentFragmentManager.beginTransaction()
-                val printPrev = parentFragmentManager.findFragmentByTag("printDialog")
-                if (printPrev != null) {
-                    printFt.remove(printPrev)
+                publishButton.setOnClickListener {
+                    val publishIntent = Intent(activity, PublishActivity::class.java)
+                    publishIntent.putExtra(
+                        PublishActivity.EXTRA_TARGET_TRANSLATION_ID,
+                        item.translation.id
+                    )
+                    publishIntent.putExtra(
+                        PublishActivity.EXTRA_CALLING_ACTIVITY,
+                        PublishActivity.ACTIVITY_HOME
+                    )
+                    startActivity(publishIntent)
+                    dismiss() // close dialog so notifications will pass back to HomeActivity
                 }
-                printFt.addToBackStack(null)
 
-                val printDialog = PrintDialog()
-                val printArgs = Bundle()
-                printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation!!.id)
-                printDialog.arguments = printArgs
-                printDialog.show(printFt, "printDialog")
-            }
+                printButton.setOnClickListener {
+                    val printFt = parentFragmentManager.beginTransaction()
+                    val printPrev = parentFragmentManager.findFragmentByTag("printDialog")
+                    if (printPrev != null) {
+                        printFt.remove(printPrev)
+                    }
+                    printFt.addToBackStack(null)
 
-            contributorsGroup.setOnClickListener {
-                val ft = parentFragmentManager.beginTransaction()
-                val prev = parentFragmentManager.findFragmentByTag("manage-contributors")
-                if (prev != null) {
-                    ft.remove(prev)
+                    val printDialog = PrintDialog()
+                    val printArgs = Bundle()
+                    printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, item.translation.id)
+                    printDialog.arguments = printArgs
+                    printDialog.show(printFt, "printDialog")
                 }
-                ft.addToBackStack(null)
 
-                val dialog = ManageContributorsDialog()
-                val args1 = Bundle()
-                args1.putString(
-                    ManageContributorsDialog.EXTRA_TARGET_TRANSLATION_ID,
-                    mTargetTranslation!!.id
-                )
-                dialog.arguments = args1
-                dialog.show(ft, "manage-contributors")
+                contributorsGroup.setOnClickListener {
+                    val ft = parentFragmentManager.beginTransaction()
+                    val prev = parentFragmentManager.findFragmentByTag("manage-contributors")
+                    if (prev != null) {
+                        ft.remove(prev)
+                    }
+                    ft.addToBackStack(null)
+
+                    val dialog = ManageContributorsDialog()
+                    val args1 = Bundle()
+                    args1.putString(
+                        ManageContributorsDialog.EXTRA_TARGET_TRANSLATION_ID,
+                        item.translation.id
+                    )
+                    dialog.arguments = args1
+                    dialog.show(ft, "manage-contributors")
+                }
             }
         }
 
@@ -243,18 +220,11 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
         val correctedWidth = width / density
         var screenWidthFactor = desiredWidth / correctedWidth
         screenWidthFactor = min(screenWidthFactor.toDouble(), 1.0).toFloat() // sanity check
+
         dialog?.window?.setLayout(
             (width * screenWidthFactor).toInt(),
             WindowManager.LayoutParams.MATCH_PARENT
         )
-    }
-
-    /**
-     * Assigns a listener for this dialog
-     * @param listener
-     */
-    fun setOnDeleteListener(listener: OnDeleteListener?) {
-        mListener = listener
     }
 
     override fun onTaskFinished(task: ManagedTask) {
@@ -262,37 +232,28 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
         if (task is TranslationProgressTask) {
             val hand = Handler(Looper.getMainLooper())
             hand.post {
-                if (progressView != null) {
-                    val progress = Math.round(task.progress.toFloat() * 100)
-                    progressView!!.text = "$progress%"
-                }
+                val progress = Math.round(task.progress.toFloat() * 100)
+                binding.progress.text = "$progress%"
             }
         }
-    }
-
-    interface OnDeleteListener {
-        fun onDeleteTargetTranslation(targetTranslationId: String?)
     }
 
     /**
      * returns a concatenated list of names or null if error
      */
     private fun getTranslatorNames(): String? {
-        val nameList = mTargetTranslation!!.contributors
-
-        if (null != nameList) {
+        return targetTranslation?.translation?.contributors?.let {
             var listString = ""
 
-            for (i in nameList.indices) {
+            for (i in it.indices) {
                 if (listString.isNotEmpty()) {
                     listString += "\n"
                 }
-                listString += nameList[i].name
+                listString += it[i].name
             }
 
             return listString
         }
-        return null
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -326,14 +287,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
 
     @Throws(Exception::class)
     private fun deleteTargetTranslation(orphaned: Boolean) {
-        backupTargetTranslation(mTargetTranslation, orphaned)
-
-        translator.deleteTargetTranslation(mTargetTranslation!!.id)
-        translator.clearTargetTranslationSettings(mTargetTranslation!!.id)
-
-        if (mListener != null) {
-            mListener!!.onDeleteTargetTranslation(mTargetTranslation!!.id)
-        }
+        viewModel.deleteTargetTranslation(targetTranslation!!, orphaned)
     }
 
     companion object {

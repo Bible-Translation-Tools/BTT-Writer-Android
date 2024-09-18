@@ -6,7 +6,6 @@ import com.door43.OnProgressListener
 import com.door43.translationstudio.App.Companion.getTranslator
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.tasks.ImportProjectFromUriTask.Companion.TAG
 import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.tools.logger.Logger
@@ -39,7 +38,7 @@ class ImportProjectFromUri @Inject constructor(
                 context.contentResolver?.openInputStream(path).use {
                     it?.let { input ->
                         val translator = getTranslator()
-                        Logger.i(TAG, "Importing from uri: $filename")
+                        Logger.i(this::class.java.simpleName, "Importing from uri: $filename")
 
                         val importResults = translator.importArchive(
                             input, mergeOverwrite
@@ -57,7 +56,7 @@ class ImportProjectFromUri @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Logger.e(TAG, "Exception Importing from uri", e)
+                Logger.e(this::class.java.simpleName, "Exception Importing from uri", e)
             }
         }
 

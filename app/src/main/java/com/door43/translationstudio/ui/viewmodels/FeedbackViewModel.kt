@@ -22,13 +22,11 @@ class FeedbackViewModel @Inject constructor(
     @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
     @Inject lateinit var uploadFeedback: UploadFeedback
 
-    var checkReleaseRequested = false
-
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> = _loading
 
-    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Release?>()
-    val latestRelease: LiveData<CheckForLatestRelease.Release?> = _latestRelease
+    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result>()
+    val latestRelease: LiveData<CheckForLatestRelease.Result> = _latestRelease
 
     private val _success = MutableLiveData<Boolean?>()
     val success: LiveData<Boolean?> = _success
@@ -36,7 +34,6 @@ class FeedbackViewModel @Inject constructor(
     private val jobs = mutableListOf<Job>()
 
     fun checkForLatestRelease() {
-        checkReleaseRequested = true
         viewModelScope.launch {
             _loading.value = true
             _latestRelease.value = withContext(Dispatchers.IO) {

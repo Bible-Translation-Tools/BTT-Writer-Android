@@ -1,489 +1,455 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.graphics.Typeface;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
-
-import android.text.Editable;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.TextWatcher;
-import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
-import android.util.DisplayMetrics;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.RadioButton;
-import android.widget.TextView;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.TranslationType;
-import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.tasks.DownloadResourceContainersTask;
-import com.door43.translationstudio.tasks.GetAvailableSourcesTask;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.tools.logger.Logger;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import android.graphics.Typeface
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.TextWatcher
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import com.door43.translationstudio.App.Companion.isNetworkAvailable
+import com.door43.translationstudio.App.Companion.showKeyboard
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.databinding.DialogDownloadSourcesBinding
+import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.FilterStep
+import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.SelectedState
+import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.SelectionType
+import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
+import com.door43.usecases.DownloadResourceContainers
+import dagger.hilt.android.AndroidEntryPoint
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import org.unfoldingword.tools.logger.Logger
+import java.util.Objects
+import kotlin.math.min
 
 /**
  * Created by blm on 12/1/16.
  */
+@AndroidEntryPoint
+class DownloadSourcesDialog : DialogFragment() {
+    private lateinit var progressDialog: ProgressHelper.ProgressDialog
+    private lateinit var adapter: DownloadSourcesAdapter
 
-public class DownloadSourcesDialog extends DialogFragment implements ManagedTask.OnFinishedListener, ManagedTask.OnProgressListener {
-    public static final String TAG = DownloadSourcesDialog.class.getSimpleName();
-    public static final String STATE_SEARCH_STRING = "state_search_string";
-    private static final String TASK_DOWNLOAD_SOURCES = "download-sources";
-    public static final String STATE_FILTER_STEPS = "state_filter_steps";
-    public static final String STATE_BY_LANGUAGE_FLAG = "state_by_language_flag";
-    public static final String STATE_SELECTED_LIST = "state_selected_list";
-    public static final String STATE_DOWNLOADED_LIST = "state_downloaded_list";
-    public static final String STATE_DOWNLOADED_ERROR_MESSAGES = "state_downloaded_error_messages";
-    public static final boolean RESTORE = true;
-    private Door43Client mLibrary;
-    private ProgressDialog mProgressDialog = null;
-    private DownloadSourcesAdapter mAdapter;
-    private List<DownloadSourcesAdapter.FilterStep> mSteps;
-    private View v;
-    private LinearLayout mSelectionBar;
-    private CheckBox mSelectAllButton;
-    private CheckBox mUnSelectAllButton;
-    private Button mDownloadButton;
-    private ImageView mSearchIcon;
-    private EditText mSearchEditText;
-    private String mSearchString;
-    private LinearLayout mSearchTextBorder;
-    private RadioButton mByLanguageButton;
-    private RadioButton mByBookButton;
-    private List<String> mSelected;
-    private TextWatcher searchTextWatcher;
-    private int mGetAvailableSourcesTaskID = -1;
+    private var steps = arrayListOf<FilterStep>()
+    private var searchString: String? = null
+    private var selected = arrayListOf<String>()
+    private var searchTextWatcher: TextWatcher? = null
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        v = inflater.inflate(R.layout.dialog_download_sources, container, false);
+    private var _binding: DialogDownloadSourcesBinding? = null
+    private val binding get() = _binding!!
 
-        mLibrary = App.getLibrary();
-        mSteps = new ArrayList<>();
+    private val viewModel: DownloadSourcesViewModel by viewModels()
 
-        GetAvailableSourcesTask task = new GetAvailableSourcesTask();
-        task.setPrefix(this.getResources().getString(R.string.loading_sources));
-        createProgressDialog(task, false);
-        task.addOnProgressListener(this);
-        task.addOnFinishedListener(this);
-        mGetAvailableSourcesTaskID = TaskManager.addTask(task);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogDownloadSourcesBinding.inflate(inflater, container, false)
 
-        ImageButton backButton = (ImageButton) v.findViewById(R.id.search_back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSteps.size() > 1) {
-                    removeLastStep();
-                    setFilter(!RESTORE);
+        setupObservers()
+
+        viewModel.getAvailableSources(resources.getString(R.string.loading_sources))
+
+        progressDialog = ProgressHelper.newInstance(
+            requireContext(),
+            R.string.loading_sources,
+            false
+        )
+
+        adapter = DownloadSourcesAdapter()
+
+        with(binding) {
+            searchBackButton.setOnClickListener {
+                if (steps.size > 1) {
+                    removeLastStep()
+                    setFilter(!RESTORE)
                 } else {
-                    dismiss();
+                    dismiss()
                 }
             }
-        });
-
-        mSelectionBar = (LinearLayout) v.findViewById(R.id.selection_bar);
-
-        mSelectAllButton = (CheckBox) v.findViewById(R.id.select_all);
-        mSelectAllButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) {
-                    if(mAdapter != null) {
-                        mAdapter.forceSelection( true, false);
-                        onSelectionChanged();
+            selectAll.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    adapter.forceSelection(true, false)
+                    onSelectionChanged()
+                }
+            }
+            unselectAll.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    adapter.forceSelection(false, true)
+                    onSelectionChanged()
+                }
+            }
+            downloadButton.setOnClickListener {
+                val selected = adapter.selected
+                if (selected != null && selected.isNotEmpty()) {
+                    if (isNetworkAvailable) {
+                        viewModel.downloadSources(selected)
+                    } else {
+                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                            .setTitle(R.string.internet_not_available)
+                            .setMessage(R.string.check_network_connection)
+                            .setPositiveButton(R.string.dismiss, null)
+                            .show()
                     }
                 }
             }
-        });
-        mUnSelectAllButton = (CheckBox) v.findViewById(R.id.unselect_all);
-        mUnSelectAllButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) {
-                    if(mAdapter != null) {
-                        mAdapter.forceSelection( false, true);
-                        onSelectionChanged();
-                    }
-                }
-            }
-        });
-        mDownloadButton = (Button) v.findViewById(R.id.download_button);
-        mDownloadButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(mAdapter != null) {
-                    List<String> selected = mAdapter.getSelected();
-                    if((selected != null) && (!selected.isEmpty())) {
-                        if(App.isNetworkAvailable()) {
-                            DownloadResourceContainersTask task = new DownloadResourceContainersTask(selected);
-                            task.addOnFinishedListener(DownloadSourcesDialog.this);
-                            task.addOnProgressListener(DownloadSourcesDialog.this);
-                            createProgressDialog(task, true);
-                            TaskManager.addTask(task, TASK_DOWNLOAD_SOURCES);
-                        } else {
-                            new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                                    .setTitle(R.string.internet_not_available)
-                                    .setMessage(R.string.check_network_connection)
-                                    .setPositiveButton(R.string.dismiss, null)
-                                    .show();
-                        }
-                    }
-                }
-            }
-        });
+            list.adapter = adapter
+            list.onItemClickListener =
+                AdapterView.OnItemClickListener { _, _, position, _ ->
+                    if (steps.isNotEmpty()) {
+                        searchString = null
+                        val currentStep = steps[steps.size - 1]
+                        val item = adapter.getItem(position)
+                        currentStep.old_label = currentStep.label
+                        currentStep.label = item.title.toString()
+                        currentStep.filter = item.filter
+                        currentStep.language = item.sourceTranslation?.language
 
-        mSearchIcon = (ImageView) v.findViewById(R.id.search_mag_icon);
-        mSearchEditText = (EditText) v.findViewById(R.id.search_text);
-        mSearchTextBorder = (LinearLayout) v.findViewById(R.id.search_text_border);
-        mSearchString = null;
+                        if (steps.size < 2) { // if we haven't set up last step
+                            when (currentStep.selection) {
+                                SelectionType.language -> addStep(
+                                    SelectionType.book_type,
+                                    R.string.choose_category
+                                )
 
-        mAdapter = new DownloadSourcesAdapter(getActivity());
+                                SelectionType.oldTestament, SelectionType.newTestament, SelectionType.translationAcademy, SelectionType.other_book -> addStep(
+                                    SelectionType.language, R.string.choose_language
+                                )
 
-        ListView listView = (ListView) v.findViewById(R.id.list);
-        listView.setAdapter(mAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                if((mAdapter != null) && (mSteps != null) && (!mSteps.isEmpty())) {
-                    mSearchString = null;
-                    DownloadSourcesAdapter.FilterStep currentStep = mSteps.get(mSteps.size() - 1);
-                    DownloadSourcesAdapter.ViewItem item = mAdapter.getItem(position);
-                    currentStep.old_label = currentStep.label;
-                    currentStep.label = item.title.toString();
-                    currentStep.filter = item.filter;
-                    currentStep.language = (item.sourceTranslation != null) ? item.sourceTranslation.language : null;
+                                SelectionType.book_type -> {
+                                    val category = adapter.getCategoryForFilter(currentStep.filter)
+                                    when (category) {
+                                        SelectionType.oldTestament -> addStep(
+                                            SelectionType.oldTestament,
+                                            R.string.choose_book
+                                        )
 
-                    if(mSteps.size() < 2) { // if we haven't set up last step
-                        switch (currentStep.selection) {
-                            default:
-                            case language:
-                                addStep(DownloadSourcesAdapter.SelectionType.book_type, R.string.choose_category);
-                                break;
+                                        SelectionType.newTestament -> addStep(
+                                            SelectionType.newTestament,
+                                            R.string.choose_book
+                                        )
 
-                            case oldTestament:
-                            case newTestament:
-                            case translationAcademy:
-                            case other_book:
-                                addStep(DownloadSourcesAdapter.SelectionType.language, R.string.choose_language);
-                                break;
+                                        SelectionType.translationAcademy -> addStep(
+                                            SelectionType.translationAcademy,
+                                            R.string.choose_book
+                                        )
 
-                            case book_type:
-                                DownloadSourcesAdapter.SelectionType category = mAdapter.getCategoryForFilter(currentStep.filter);
-                                switch (category) {
-                                    case oldTestament:
-                                        addStep(DownloadSourcesAdapter.SelectionType.oldTestament, R.string.choose_book);
-                                        break;
-                                    case newTestament:
-                                        addStep(DownloadSourcesAdapter.SelectionType.newTestament, R.string.choose_book);
-                                        break;
-                                    case translationAcademy:
-                                        addStep(DownloadSourcesAdapter.SelectionType.translationAcademy, R.string.choose_book);
-                                        break;
-                                    default:
-                                    case other_book:
-                                        addStep(DownloadSourcesAdapter.SelectionType.other_book, R.string.choose_book);
-                                        break;
+                                        SelectionType.other_book -> addStep(
+                                            SelectionType.other_book,
+                                            R.string.choose_book
+                                        )
+
+                                        else -> addStep(SelectionType.other_book, R.string.choose_book)
+                                    }
                                 }
-                                break;
-                        }
-                    } else if(mSteps.size() < 3) { // set up last step
-                        DownloadSourcesAdapter.FilterStep firstStep = mSteps.get(0);
-                        if (Objects.requireNonNull(firstStep.selection) == DownloadSourcesAdapter.SelectionType.language) {
-                            addStep(DownloadSourcesAdapter.SelectionType.source_filtered_by_language, R.string.choose_sources);
-                        } else {
-                            addStep(DownloadSourcesAdapter.SelectionType.source_filtered_by_book, R.string.choose_sources);
-                        }
-                    } else { // at last step, do toggling
-                        mAdapter.toggleSelection(position);
-                        DownloadSourcesAdapter.SelectedState selectedState = mAdapter.getSelectedState();
-                        switch (selectedState) {
-                            case all:
-                                mSelectAllButton.setChecked(true);
-                                break;
 
-                            case none:
-                                mUnSelectAllButton.setChecked(true);
-                                break;
-
-                            default:
-                                onSelectionChanged();
-                                break;
+                                else -> addStep(SelectionType.book_type, R.string.choose_category)
+                            }
+                        } else if (steps.size < 3) { // set up last step
+                            val firstStep = steps[0]
+                            if (Objects.requireNonNull(firstStep.selection) == SelectionType.language) {
+                                addStep(
+                                    SelectionType.source_filtered_by_language,
+                                    R.string.choose_sources
+                                )
+                            } else {
+                                addStep(SelectionType.source_filtered_by_book, R.string.choose_sources)
+                            }
+                        } else { // at last step, do toggling
+                            adapter.toggleSelection(position)
+                            val selectedState = adapter.selectedState
+                            when (selectedState) {
+                                SelectedState.all -> selectAll.isChecked = true
+                                SelectedState.none -> unselectAll.isChecked = true
+                                else -> onSelectionChanged()
+                            }
+                            return@OnItemClickListener
                         }
-                        return;
+                        setFilter(!RESTORE)
                     }
-                    setFilter(!RESTORE);
                 }
-            }
-        });
+        }
 
-        mByLanguageButton = (RadioButton) v.findViewById(R.id.byLanguage);
-        mByBookButton = (RadioButton) v.findViewById(R.id.byBook);
+        /*selectionBar = view.findViewById<View>(R.id.selection_bar) as LinearLayout
+        searchIcon = view.findViewById<View>(R.id.search_mag_icon) as ImageView
+        searchEditText = view.findViewById<View>(R.id.search_text) as EditText
+        searchTextBorder = view.findViewById<View>(R.id.search_text_border) as LinearLayout*/
 
-        if(savedInstanceState != null) {
-            String stepsArrayJson = savedInstanceState.getString(STATE_FILTER_STEPS, null);
+        searchString = null
+
+        /*byLanguageButton = view.findViewById<View>(R.id.byLanguage) as RadioButton
+        byBookButton = view.findViewById<View>(R.id.byBook) as RadioButton*/
+
+        if (savedInstanceState != null) {
+            val stepsArrayJson = savedInstanceState.getString(STATE_FILTER_STEPS, null)
             try {
-                JSONArray stepsArray = new JSONArray(stepsArrayJson);
-                for (int i = 0; i < stepsArray.length(); i++) {
-                    JSONObject jsonObject = (JSONObject) stepsArray.get(i);
-                    DownloadSourcesAdapter.FilterStep step = DownloadSourcesAdapter.FilterStep.generate(jsonObject);
-                    mSteps.add(step);
+                val stepsArray = JSONArray(stepsArrayJson)
+                for (i in 0 until stepsArray.length()) {
+                    val jsonObject = stepsArray[i] as JSONObject
+                    val step = FilterStep.generate(jsonObject)
+                    steps.add(step)
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
+            } catch (e: JSONException) {
+                e.printStackTrace()
             }
-            mSearchString = savedInstanceState.getString(STATE_SEARCH_STRING, null);
-            boolean byLanguage = savedInstanceState.getBoolean(STATE_BY_LANGUAGE_FLAG, true);
-            if(byLanguage) {
-                mByLanguageButton.setChecked(true);
+            searchString = savedInstanceState.getString(STATE_SEARCH_STRING, null)
+            val byLanguage = savedInstanceState.getBoolean(STATE_BY_LANGUAGE_FLAG, true)
+            if (byLanguage) {
+                binding.byLanguage.isChecked = true
             } else {
-                mByBookButton.setChecked(true);
+                binding.byBook.isChecked = true
             }
 
-            mSelected = savedInstanceState.getStringArrayList(STATE_SELECTED_LIST);
-            mAdapter.setSelected(mSelected);
-            List<String> downloaded = savedInstanceState.getStringArrayList(STATE_DOWNLOADED_LIST);
-            mAdapter.setDownloaded(downloaded);
-            String errorMsgsJson = savedInstanceState.getString(STATE_DOWNLOADED_ERROR_MESSAGES, null);
-            mAdapter.setDownloadErrorMessages(errorMsgsJson);
+            savedInstanceState.getStringArrayList(STATE_SELECTED_LIST)?.let {
+                selected.clear()
+                selected.addAll(it)
+            }
+
+            adapter.selected = selected
+
+            savedInstanceState.getStringArrayList(STATE_DOWNLOADED_LIST)?.let {
+                adapter.downloaded = it
+            }
+
+            val errorMessagesJson = savedInstanceState.getString(STATE_DOWNLOADED_ERROR_MESSAGES, null)
+            adapter.setDownloadErrorMessages(errorMessagesJson)
         }
 
-        mByLanguageButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) {
-                    mSearchString = null;
-                    mSteps = new ArrayList<>(); // clear existing filter and start over
-                    addStep(DownloadSourcesAdapter.SelectionType.language, R.string.choose_language);
-                    setFilter(!RESTORE);
-                }
+        binding.byLanguage.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                searchString = null
+                steps = ArrayList() // clear existing filter and start over
+                addStep(SelectionType.language, R.string.choose_language)
+                setFilter(!RESTORE)
             }
-        });
-        mByBookButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) {
-                    mSteps = new ArrayList<>(); // clear existing filter and start over
-                    addStep(DownloadSourcesAdapter.SelectionType.book_type, R.string.choose_category);
-                    setFilter(!RESTORE);
-                }
-            }
-        });
-
-        if(savedInstanceState == null) {
-            mByLanguageButton.setChecked(true); // setup initial state
         }
-        return v;
+        binding.byBook.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                steps = ArrayList() // clear existing filter and start over
+                addStep(SelectionType.book_type, R.string.choose_category)
+                setFilter(!RESTORE)
+            }
+        }
+
+        if (savedInstanceState == null) {
+            binding.byLanguage.isChecked = true // setup initial state
+        }
+        return binding.root
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    private fun setupObservers() {
+        viewModel.progress.observe(this) {
+            if (it != null) {
+                progressDialog.show()
+                progressDialog.setProgress(it.progress)
+                progressDialog.setMessage(it.message)
+                progressDialog.setMax(it.max)
+            } else {
+                progressDialog.dismiss()
+            }
+        }
+        viewModel.availableSources.observe(this) {
+            it?.let { result ->
+                adapter.setData(result)
+                adapter.selected = selected
+                setFilter(RESTORE)
+
+                searchString?.let { search ->
+                    enableSearchText()
+                    binding.searchText.setText(search)
+                    val endPos = search.length
+                    binding.searchText.setSelection(endPos, endPos)
+                    adapter.setSearch(search)
+                }
+            }
+        }
+        viewModel.downloadedSources.observe(this) {
+            it?.let { result ->
+                getDownloadedSources(result)
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
 
         // widen dialog to accommodate more text
-        int desiredWidth = 750;
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        int width = displayMetrics.widthPixels;
-        float density = displayMetrics.density;
-        float correctedWidth = width / density;
-        float screenWidthFactor = desiredWidth /correctedWidth;
-        screenWidthFactor = Math.min(screenWidthFactor, 1f); // sanity check
-        getDialog().getWindow().setLayout((int) (width * screenWidthFactor), WindowManager.LayoutParams.MATCH_PARENT);
+        val desiredWidth = 750
+        val displayMetrics = resources.displayMetrics
+        val width = displayMetrics.widthPixels
+        val density = displayMetrics.density
+        val correctedWidth = width / density
+        var screenWidthFactor = desiredWidth / correctedWidth
+        screenWidthFactor = min(screenWidthFactor.toDouble(), 1.0).toFloat() // sanity check
+
+        dialog?.window?.setLayout(
+            (width * screenWidthFactor).toInt(),
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle out) {
-
-        JSONArray stepsArray = new JSONArray();
-        for (DownloadSourcesAdapter.FilterStep step : mSteps) {
-            JSONObject jsonObject = step.toJson();
-            stepsArray.put(jsonObject);
+    override fun onSaveInstanceState(out: Bundle) {
+        val stepsArray = JSONArray()
+        for (step in steps) {
+            val jsonObject = step.toJson()
+            stepsArray.put(jsonObject)
         }
-        out.putString(STATE_FILTER_STEPS, stepsArray.toString());
-        out.putString(STATE_SEARCH_STRING, mSearchString);
-        out.putBoolean(STATE_BY_LANGUAGE_FLAG, mByLanguageButton.isChecked());
-        if(mAdapter != null) {
-            out.putStringArrayList(STATE_SELECTED_LIST, (ArrayList) mAdapter.getSelected());
-            out.putStringArrayList(STATE_DOWNLOADED_LIST, (ArrayList) mAdapter.getDownloaded());
-            out.putString(STATE_DOWNLOADED_ERROR_MESSAGES,  mAdapter.getDownloadErrorMessages().toString());
-        }
-
-        super.onSaveInstanceState(out);
+        out.putString(STATE_FILTER_STEPS, stepsArray.toString())
+        out.putString(STATE_SEARCH_STRING, searchString)
+        out.putBoolean(STATE_BY_LANGUAGE_FLAG, binding.byLanguage.isChecked)
+        out.putStringArrayList(STATE_SELECTED_LIST, adapter.selected as ArrayList<String>)
+        out.putStringArrayList(STATE_DOWNLOADED_LIST, adapter.downloaded as ArrayList<String>)
+        out.putString(
+            STATE_DOWNLOADED_ERROR_MESSAGES,
+            adapter.downloadErrorMessages.toString()
+        )
+        super.onSaveInstanceState(out)
     }
 
     /**
      * update controls for selection state
      */
-    public void onSelectionChanged() {
-        if(mAdapter != null) {
-            DownloadSourcesAdapter.SelectedState selectedState = mAdapter.getSelectedState();
-            boolean allSelected = (selectedState == DownloadSourcesAdapter.SelectedState.all);
-            mSelectAllButton.setEnabled(!allSelected);
-            if(!allSelected) {
-                mSelectAllButton.setChecked(false);
-            }
-            boolean noneSelected = (selectedState == DownloadSourcesAdapter.SelectedState.none);
-            mUnSelectAllButton.setEnabled(!noneSelected);
-            if(!noneSelected) {
-                mUnSelectAllButton.setChecked(false);
-            }
-
-            boolean downloadSelect = !noneSelected;
-            mDownloadButton.setEnabled(downloadSelect);
-            int backgroundColor = downloadSelect ? R.color.accent : R.color.light_gray;
-            mDownloadButton.setBackgroundColor(getResources().getColor(backgroundColor));
+    private fun onSelectionChanged() {
+        val selectedState = adapter.selectedState
+        val allSelected = (selectedState == SelectedState.all)
+        binding.selectAll.isEnabled = !allSelected
+        if (!allSelected) {
+            binding.selectAll.isChecked = false
         }
+        val noneSelected = (selectedState == SelectedState.none)
+        binding.unselectAll.isEnabled = !noneSelected
+        if (!noneSelected) {
+            binding.unselectAll.isChecked = false
+        }
+
+        val downloadSelect = !noneSelected
+        binding.downloadButton.isEnabled = downloadSelect
+        val backgroundColor = if (downloadSelect) R.color.accent else R.color.light_gray
+        binding.downloadButton.setBackgroundColor(resources.getColor(backgroundColor))
     }
 
     /**
      * remove the last step from stack
      */
-    private void removeLastStep() {
-        DownloadSourcesAdapter.FilterStep lastStep = mSteps.get(mSteps.size() - 1);
-        mSteps.remove(lastStep);
-        lastStep = mSteps.get(mSteps.size() - 1);
-        lastStep.filter = null;
-        lastStep.label = lastStep.old_label;
+    private fun removeLastStep() {
+        var lastStep = steps[steps.size - 1]
+        steps.remove(lastStep)
+        lastStep = steps[steps.size - 1]
+        lastStep.filter = null
+        lastStep.label = lastStep.old_label
     }
 
     /**
      * display the nav label and show choices to user
      *
      */
-    private void setFilter(boolean restore) {
-        for (int step = 0; step < 3; step++) {
-            setNavBarStep(step);
+    private fun setFilter(restore: Boolean) {
+        for (step in 0..2) {
+            setNavBarStep(step)
         }
 
         // setup selection bar
-        boolean selectDownloads = (mSteps.size() == 3);
-        mSelectionBar.setVisibility(selectDownloads ? View.VISIBLE : View.GONE);
-        mAdapter.setFilterSteps(mSteps, mSearchString, restore);
-        if(selectDownloads) {
-            onSelectionChanged();
+        val selectDownloads = (steps.size == 3)
+        binding.selectionBar.visibility = if (selectDownloads) View.VISIBLE else View.GONE
+        adapter.setFilterSteps(steps, searchString, restore)
+        if (selectDownloads) {
+            onSelectionChanged()
         }
 
         //set up nav/search bar
-        boolean enable_language_search = (mSteps.size() == 1)
-                                        && (mSteps.get(0).selection == DownloadSourcesAdapter.SelectionType.language);
-        if(enable_language_search) {
-            setupLanguageSearch();
+        val enableLanguageSearch = ((steps.size == 1)
+                && (steps[0].selection == SelectionType.language))
+        if (enableLanguageSearch) {
+            setupLanguageSearch()
         } else {
-            mSearchIcon.setVisibility(View.GONE);
-            showNavbar(true);
+            binding.searchMagIcon.visibility = View.GONE
+            showNavbar(true)
         }
 
-        mSearchTextBorder.setVisibility(View.GONE);
-        mSearchEditText.setVisibility(View.GONE);
-        mSearchEditText.setEnabled(false);
-        if(searchTextWatcher != null) {
-            mSearchEditText.removeTextChangedListener(searchTextWatcher);
-            searchTextWatcher = null;
+        binding.searchTextBorder.visibility = View.GONE
+        binding.searchText.visibility = View.GONE
+        binding.searchText.isEnabled = false
+        if (searchTextWatcher != null) {
+            binding.searchText.removeTextChangedListener(searchTextWatcher)
+            searchTextWatcher = null
         }
 
-        TextView nav1 = getTextView(1);
-        nav1.setOnClickListener(null);
+        getTextView(1)?.setOnClickListener(null)
     }
 
     /**
      * setup UI for doing language search
      */
-    private void setupLanguageSearch() {
-        mSearchIcon.setVisibility(View.VISIBLE);
-        mSearchIcon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                enableSearchText();
-            }
-        });
+    private fun setupLanguageSearch() {
+        binding.searchMagIcon.visibility = View.VISIBLE
+        binding.searchMagIcon.setOnClickListener { enableSearchText() }
     }
 
     /**
      * enable search text box
      */
-    private void enableSearchText() {
-        showNavbar(false);
-        mSearchTextBorder.setVisibility(View.VISIBLE);
-        mSearchEditText.setVisibility(View.VISIBLE);
-        mSearchEditText.setEnabled(true);
-        mSearchEditText.requestFocus();
-        App.showKeyboard(getActivity(), mSearchEditText, false);
-        mSearchEditText.setText("");
+    private fun enableSearchText() {
+        showNavbar(false)
+        binding.searchTextBorder.visibility = View.VISIBLE
+        binding.searchText.visibility = View.VISIBLE
+        binding.searchText.isEnabled = true
+        binding.searchText.requestFocus()
+        showKeyboard(activity, binding.searchText, false)
+        binding.searchText.setText("")
 
-        if(searchTextWatcher != null) {
-            mSearchEditText.removeTextChangedListener(searchTextWatcher);
+        if (searchTextWatcher != null) {
+            binding.searchText.removeTextChangedListener(searchTextWatcher)
         }
 
-        searchTextWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+        searchTextWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
             }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (mAdapter != null) {
-                    mSearchString = s.toString();
-                    mAdapter.setSearch(mSearchString);
-                }
+            override fun afterTextChanged(s: Editable) {
+                searchString = s.toString()
+                adapter.setSearch(searchString)
             }
-        };
-        mSearchEditText.addTextChangedListener(searchTextWatcher);
+        }
+        binding.searchText.addTextChangedListener(searchTextWatcher)
     }
 
     /**
      * set text at nav bar position
      * @param stepIndex
      */
-    private void setNavBarStep(int stepIndex) {
-        CharSequence navText = getTextForStep(stepIndex);
-        Typeface typeface = getFontForStep(stepIndex);
+    private fun setNavBarStep(stepIndex: Int) {
+        val navText = getTextForStep(stepIndex)
+        val typeface = getFontForStep(stepIndex)
 
-        int viewPosition = stepIndex * 2 + 1;
+        val viewPosition = stepIndex * 2 + 1
 
-        setNavPosition(navText, viewPosition, typeface);
+        setNavPosition(navText, viewPosition, typeface)
 
-        CharSequence sep = null;
+        var sep: CharSequence? = null
         if (navText != null) { // if we have something at this position, then add separator
-            sep = ">";
+            sep = ">"
         }
-        setNavPosition(sep, viewPosition - 1, Typeface.DEFAULT);
+        setNavPosition(sep, viewPosition - 1, Typeface.DEFAULT)
     }
 
     /**
@@ -491,16 +457,18 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
      * @param stepIndex
      * @return
      */
-    private Typeface getFontForStep(int stepIndex) {
-        Typeface typeface = Typeface.DEFAULT;
-        boolean enable = (stepIndex < mSteps.size()) && (stepIndex >= 0);
+    private fun getFontForStep(stepIndex: Int): Typeface {
+        var typeface = Typeface.DEFAULT
+        val enable = (stepIndex < steps.size) && (stepIndex >= 0)
         if (enable) {
-            DownloadSourcesAdapter.FilterStep step = mSteps.get(stepIndex);
+            val step = steps[stepIndex]
             if (step.language != null) {
-                typeface = Typography.getBestFontForLanguage(getActivity(), TranslationType.SOURCE, step.language.slug, step.language.direction);
+                typeface = Typography.getBestFontForLanguage(
+                    activity, TranslationType.SOURCE, step.language.slug, step.language.direction
+                )
             }
         }
-        return typeface;
+        return typeface
     }
 
     /**
@@ -508,35 +476,38 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
      * @param stepIndex
      * @return
      */
-    private CharSequence getTextForStep(int stepIndex) {
-        CharSequence navText = null;
-        boolean enable = stepIndex < mSteps.size();
+    private fun getTextForStep(stepIndex: Int): CharSequence? {
+        var navText: CharSequence? = null
+        val enable = stepIndex < steps.size
         if (enable) {
-            DownloadSourcesAdapter.FilterStep step = mSteps.get(stepIndex);
+            val step = steps[stepIndex]
 
-            SpannableStringBuilder span = new SpannableStringBuilder(step.label);
-            boolean lastItem = (stepIndex >= (mSteps.size() - 1));
+            val span = SpannableStringBuilder(step.label)
+            val lastItem = (stepIndex >= (steps.size - 1))
             if (!lastItem) {
-
                 // insert a clickable span
-                span.setSpan(new SpannableStringBuilder(step.label), 0, span.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                final int resetToStep = stepIndex;
-                ClickableSpan clickSpan = new ClickableSpan() {
-                    @Override
-                    public void onClick(View widget) {
-                        Logger.i(TAG, "clicked on item: " + resetToStep);
-                        while (mSteps.size() > resetToStep + 1) {
-                            removeLastStep();
+
+                span.setSpan(
+                    SpannableStringBuilder(step.label),
+                    0,
+                    span.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                val clickSpan: ClickableSpan = object : ClickableSpan() {
+                    override fun onClick(widget: View) {
+                        Logger.i(TAG, "clicked on item: $stepIndex")
+                        while (steps.size > stepIndex + 1) {
+                            removeLastStep()
                         }
-                        setFilter(!RESTORE);
+                        setFilter(!RESTORE)
                     }
-                };
-                span.setSpan(clickSpan, 0, span.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                span.setSpan(clickSpan, 0, span.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
 
-            navText = span;
+            navText = span
         }
-        return navText;
+        return navText
     }
 
     /**
@@ -545,17 +516,18 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
      * @param position
      * @param typeface font to use
      */
-    private void setNavPosition(CharSequence text, int position, Typeface typeface) {
-        TextView view = getTextView( position);
-        if(view != null) {
-            if(text != null) {
-                view.setText(text);
-                view.setTypeface(typeface, Typeface.NORMAL);
-                view.setVisibility(View.VISIBLE);
-                view.setMovementMethod(LinkMovementMethod.getInstance()); // enable clicking on TextView
+    private fun setNavPosition(text: CharSequence?, position: Int, typeface: Typeface) {
+        val view = getTextView(position)
+        if (view != null) {
+            if (text != null) {
+                view.text = text
+                view.setTypeface(typeface, Typeface.NORMAL)
+                view.visibility = View.VISIBLE
+                view.movementMethod =
+                    LinkMovementMethod.getInstance() // enable clicking on TextView
             } else {
-                view.setText("");
-                view.setVisibility(View.GONE);
+                view.text = ""
+                view.visibility = View.GONE
             }
         }
     }
@@ -564,49 +536,29 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
      * show/hide navbar items
      * @param enable
      */
-    private void showNavbar(boolean enable) {
-        int visibility = enable ? View.VISIBLE : View.GONE;
-        for (int i = 1; i <= 5; i++) {
-            TextView v = getTextView(i);
-            if(v != null) {
-                v.setVisibility(visibility);
-            }
+    private fun showNavbar(enable: Boolean) {
+        val visibility = if (enable) View.VISIBLE else View.GONE
+        for (i in 1..5) {
+            getTextView(i)?.visibility = visibility
         }
     }
+
     /**
      * find text view for position
      * @param position
      * @return
      */
-    private TextView getTextView(int position) {
-
-        int resID = 0;
-        switch (position) {
-            case 1:
-                resID = R.id.nav_text1;
-                break;
-
-            case 2:
-                resID = R.id.nav_text2;
-                break;
-
-            case 3:
-                resID = R.id.nav_text3;
-                break;
-
-            case 4:
-                resID = R.id.nav_text4;
-                break;
-
-            case 5:
-                resID = R.id.nav_text5;
-                break;
-
-            default:
-                return null;
+    private fun getTextView(position: Int): TextView? {
+        val resID = when (position) {
+            1 -> R.id.nav_text1
+            2 -> R.id.nav_text2
+            3 -> R.id.nav_text3
+            4 -> R.id.nav_text4
+            5 -> R.id.nav_text5
+            else -> return null
         }
-        TextView searchView = (TextView) v.findViewById(resID);
-        return searchView;
+        val searchView = binding.root.findViewById<View>(resID) as TextView
+        return searchView
     }
 
     /**
@@ -614,266 +566,85 @@ public class DownloadSourcesDialog extends DialogFragment implements ManagedTask
      * @param selection
      * @param prompt
      */
-    private void addStep(DownloadSourcesAdapter.SelectionType selection, int prompt) {
-        String promptStr = getResources().getString(prompt);
-        DownloadSourcesAdapter.FilterStep step = new DownloadSourcesAdapter.FilterStep(selection, promptStr);
-        mSteps.add(step);
+    private fun addStep(selection: SelectionType, prompt: Int) {
+        val promptStr = resources.getString(prompt)
+        val step = FilterStep(selection, promptStr)
+        steps.add(step)
     }
 
-    @Override
-    public void onTaskFinished(final ManagedTask task) {
-        final boolean canceled = task.isCanceled();
-        TaskManager.clearTask(task);
+    private fun getDownloadedSources(result: DownloadResourceContainers.Result) {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            val downloadedTranslations = result.downloadedTranslations
+            for (slug in downloadedTranslations) {
+                Logger.i(TAG, "Received: $slug")
 
-        if(getActivity() == null) {
-            return; // if activity changed
-        }
-
-        if(task instanceof GetAvailableSourcesTask) {
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    mGetAvailableSourcesTaskID = -1;
-
-                    if(mProgressDialog != null) {
-                        mProgressDialog.dismiss();
-                    }
-
-                    if ((getActivity() == null) || (mAdapter == null)) {
-                        return; // if activity changed
-                    }
-
-                    if (!canceled) {
-                        GetAvailableSourcesTask availableSourcesTask = (GetAvailableSourcesTask) task;
-                        mAdapter.setData(availableSourcesTask);
-                        if(mSelected != null) {
-                            mAdapter.setSelected(mSelected);
-                            setFilter(RESTORE);
-                        }
-                        if(mSearchString != null) {
-                            enableSearchText();
-                            mSearchEditText.setText(mSearchString);
-                            int endPos = mSearchString.length();
-                            mSearchEditText.setSelection(endPos, endPos);
-                            mAdapter.setSearch(mSearchString);
-                        }
-
-                        // if pending download task
-                        ManagedTask downloadTask = TaskManager.getTask(TASK_DOWNLOAD_SOURCES);
-                        if(downloadTask != null) {
-                            if(downloadTask.isFinished()) {
-                                getDownloadedSources(downloadTask, false);
-                            } else {
-                                createProgressDialog(downloadTask, true);
-                                downloadTask.addOnProgressListener(DownloadSourcesDialog.this);
-                                downloadTask.addOnFinishedListener(DownloadSourcesDialog.this);
-                            }
-                        }
-                    }
-                }
-            });
-        } else if(task instanceof DownloadResourceContainersTask) {
-            getDownloadedSources(task, canceled);
-        }
-    }
-
-    protected void getDownloadedSources(final ManagedTask task, final boolean canceled) {
-        if(canceled) Logger.i(TAG, "DownloadResourceContainersTask was cancelled");
-
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if((getActivity() == null) || (mAdapter == null)) {
-                    return; // if activity changed
-                }
-
-                if(mProgressDialog != null) {
-                    mProgressDialog.dismiss();
-                }
-
-                DownloadResourceContainersTask downloadSourcesTask = (DownloadResourceContainersTask) task;
-                List<String> downloadedTranslations = downloadSourcesTask.getDownloadedTranslations();
-
-                for (String slug : downloadedTranslations) {
-                    Logger.i(TAG, "Received: " + slug);
-
-                    int pos = mAdapter.findPosition(slug);
-                    if(pos >= 0) {
-                        mAdapter.markItemDownloaded(pos);
-                    }
-                }
-
-                List<String> failedSourceDownloads = downloadSourcesTask.getFailedSourceDownloads();
-                for (String translationID : failedSourceDownloads) {
-                    Logger.e(TAG, "Download failed: " + translationID);
-                    int pos = mAdapter.findPosition(translationID);
-                    if(pos >= 0) {
-                        mAdapter.markItemError(pos, downloadSourcesTask.getFailureMessage(translationID));
-                    }
-                }
-
-                String downloads = getActivity().getResources().getString(R.string.downloads_success,downloadedTranslations.size());
-                String errors = "";
-                if((!failedSourceDownloads.isEmpty()) && !canceled) {
-                    errors = "\n" + getActivity().getResources().getString(R.string.downloads_fail, failedSourceDownloads.size());
-                }
-
-                List<String> failedHelpsDownloads = downloadSourcesTask.getFailedHelpsDownloads();
-                if(!failedHelpsDownloads.isEmpty()) {
-                    errors += "\n" + getActivity().getResources().getString(R.string.helps_download_errors, failedHelpsDownloads.toString());
-                }
-
-                mAdapter.notifyDataSetChanged();
-                onSelectionChanged();
-
-                int title = (!errors.isEmpty()) ? R.string.download_errors : R.string.download_complete;
-                title = canceled ? R.string.download_cancelled : title;
-
-                new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                        .setTitle(title)
-                        .setMessage(downloads + errors)
-                        .setPositiveButton(R.string.label_close, null)
-                        .show();
-            }
-        });
-    }
-
-    @Override
-    public void onTaskProgress(final ManagedTask task, final double progress, final String message, boolean secondary) {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                // dismiss if finished or cancelled
-                if(task.isFinished() || task.isCanceled()) {
-                    return;
-                }
-
-                // init dialog
-                if( (mProgressDialog == null)
-                        || (getActivity() == null)) {
-                    return;
-                }
-
-                // progress
-                mProgressDialog.setMax(task.maxProgress());
-                mProgressDialog.setMessage(message);
-                if(progress > 0) {
-                    mProgressDialog.setIndeterminate(false);
-                    mProgressDialog.setProgress((int)(progress * mProgressDialog.getMax()));
-                    mProgressDialog.setProgressNumberFormat("%1d/%2d");
-                    mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
-                } else {
-                    mProgressDialog.setIndeterminate(true);
-                    mProgressDialog.setProgress(mProgressDialog.getMax());
-                    mProgressDialog.setProgressNumberFormat(null);
-                    mProgressDialog.setProgressPercentFormat(null);
-                }
-
-                // show
-                if(task.isFinished()) {
-                    mProgressDialog.dismiss();
-                } else if(!mProgressDialog.isShowing()) {
-                    mProgressDialog.show();
+                val pos = adapter.findPosition(slug)
+                if (pos >= 0) {
+                    adapter.markItemDownloaded(pos)
                 }
             }
-        });
-    }
 
-    /**
-     * create the progress dialog
-     * @param task
-     * @param addCancelButton
-     */
-    protected void createProgressDialog(final ManagedTask task, boolean addCancelButton) {
-        mProgressDialog = new ProgressDialog(getActivity());
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.setCanceledOnTouchOutside(false);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mProgressDialog.setIcon(R.drawable.ic_cloud_download_secondary_24dp);
-        mProgressDialog.setTitle(R.string.updating);
-        mProgressDialog.setMessage("");
-
-        if(addCancelButton) {
-            mProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", (DialogInterface.OnClickListener) null);
-            mProgressDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-
-                @Override
-                public void onShow(final DialogInterface dialog) {
-
-                    // replace the listener for button so it won't automatically dismiss dialog
-                    final ProgressDialog progressDialog = (ProgressDialog) dialog;
-                    Button button = progressDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-                    button.setOnClickListener(new View.OnClickListener() {
-
-                        @Override
-                        public void onClick(View view) {
-                            TaskManager.cancelTask(task);
-                            progressDialog.setMessage(getActivity().getString(R.string.interrupting_download)); // add message to let the user know we are trying
-                        }
-                    });
-                }
-            });
-        }
-
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if(mProgressDialog != null) {
-                    mProgressDialog.show();
+            val failedSourceDownloads = result.failedSourceDownloads
+            for (translationID in failedSourceDownloads) {
+                Logger.e(TAG, "Download failed: $translationID")
+                val pos = adapter.findPosition(translationID)
+                if (pos >= 0) {
+                    adapter.markItemError(
+                        pos,
+                        result.failureMessages[translationID]
+                    )
                 }
             }
-        });
+
+            val downloads = resources.getString(
+                R.string.downloads_success,
+                downloadedTranslations.size
+            )
+            var errors = ""
+            if ((failedSourceDownloads.isNotEmpty())) {
+                val error = requireActivity().resources.getString(
+                    R.string.downloads_fail,
+                    failedSourceDownloads.size
+                )
+                errors = "\n$error"
+            }
+
+            val failedHelpsDownloads = result.failedHelpsDownloads
+            if (failedHelpsDownloads.isNotEmpty()) {
+                val error = requireActivity().resources.getString(
+                    R.string.helps_download_errors,
+                    failedHelpsDownloads.toString()
+                )
+                errors += "\n$error"
+            }
+
+            adapter.notifyDataSetChanged()
+            onSelectionChanged()
+
+            val title = if (errors.isNotEmpty()) R.string.download_errors else R.string.download_complete
+            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                .setTitle(title)
+                .setMessage(downloads + errors)
+                .setPositiveButton(R.string.label_close, null)
+                .show()
+        }
     }
 
-    @Override
-    public void onCancel(DialogInterface dialog) {
-        if(mGetAvailableSourcesTaskID >= 0) {
-            ManagedTask task = TaskManager.getTask(mGetAvailableSourcesTaskID);
-            if (task != null) {
-                task.removeOnProgressListener(this);
-                task.removeOnFinishedListener(this);
-                TaskManager.cancelTask(task);
-            }
-        }
-        ManagedTask task = TaskManager.getTask(TASK_DOWNLOAD_SOURCES);
-        if(task != null) {
-            task.removeOnProgressListener(this);
-            task.removeOnFinishedListener(this);
-            TaskManager.cancelTask(task);
-        }
-
-        if (mProgressDialog != null) {
-            mProgressDialog.dismiss();
-        }
+    override fun onDestroy() {
+        progressDialog.dismiss()
+        super.onDestroy()
     }
 
-    @Override
-    public void onDestroy() {
-        if(mGetAvailableSourcesTaskID >= 0) {
-            ManagedTask task = TaskManager.getTask(mGetAvailableSourcesTaskID);
-            if (task != null) {
-                task.removeOnProgressListener(this);
-                task.removeOnFinishedListener(this);
-                TaskManager.cancelTask(task);
-            }
-        }
+    companion object {
+        val TAG: String = DownloadSourcesDialog::class.java.simpleName
 
-        ManagedTask task = TaskManager.getTask(TASK_DOWNLOAD_SOURCES);
-        if(task != null) {
-            task.removeOnProgressListener(this);
-            task.removeOnFinishedListener(this);
-        }
-
-        if (mProgressDialog != null) {
-            mProgressDialog.dismiss();
-        }
-
-        mAdapter = null;
-
-        super.onDestroy();
+        const val STATE_SEARCH_STRING: String = "state_search_string"
+        const val STATE_FILTER_STEPS: String = "state_filter_steps"
+        const val STATE_BY_LANGUAGE_FLAG: String = "state_by_language_flag"
+        const val STATE_SELECTED_LIST: String = "state_selected_list"
+        const val STATE_DOWNLOADED_LIST: String = "state_downloaded_list"
+        const val STATE_DOWNLOADED_ERROR_MESSAGES: String = "state_downloaded_error_messages"
+        const val RESTORE: Boolean = true
     }
 }

@@ -1,14 +1,11 @@
 package com.door43.usecases
 
-import android.content.Context
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.tasks.LogoutTask
 import com.door43.translationstudio.tasks.io.OkHttpRequest
 import com.door43.translationstudio.tasks.io.RequestAPI
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.unfoldingword.gogsclient.User
@@ -16,7 +13,6 @@ import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 class GogsLogout @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val profile: Profile,
     private val prefs: IPreferenceRepository
 ) {
@@ -80,7 +76,7 @@ class GogsLogout @Inject constructor(
 
         if (response.code != 200 || response.code != 204) {
             Logger.w(
-                LogoutTask::class.java.name,
+                this::class.java.name,
                 "delete access token - gogs api responded with code " + response.code,
                 response.exception
             )

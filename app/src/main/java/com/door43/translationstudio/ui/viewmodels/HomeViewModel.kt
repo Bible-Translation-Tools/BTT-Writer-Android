@@ -1,0 +1,291 @@
+package com.door43.translationstudio.ui.viewmodels
+
+import android.app.Application
+import android.net.Uri
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
+import com.door43.OnProgressListener
+import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.App.Companion.backupTargetTranslation
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.ui.home.TranslationItem
+import com.door43.usecases.CheckForLatestRelease
+import com.door43.usecases.DownloadIndex
+import com.door43.usecases.ExamineImportsForCollisions
+import com.door43.usecases.GogsLogout
+import com.door43.usecases.Import
+import com.door43.usecases.PullTargetTranslation
+import com.door43.usecases.UpdateCatalogs
+import com.door43.usecases.UpdateSource
+import com.door43.usecases.cleanup
+import com.door43.util.FileUtilities
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.eclipse.jgit.merge.MergeStrategy
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.resourcecontainer.Project
+import java.io.File
+import javax.inject.Inject
+
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val application: Application
+) : AndroidViewModel(application) {
+
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var library: Door43Client
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var gogsLogout: GogsLogout
+    @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var pullTargetTranslation: PullTargetTranslation
+    @Inject lateinit var examineImportsForCollisions: ExamineImportsForCollisions
+    @Inject lateinit var import: Import
+    @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
+    @Inject lateinit var downloadIndex: DownloadIndex
+    @Inject lateinit var updateSource: UpdateSource
+    @Inject lateinit var updateCatalogs: UpdateCatalogs
+
+    private val _progress = MutableLiveData<ProgressHelper.Progress?>()
+    val progress: LiveData<ProgressHelper.Progress?> = _progress
+
+    private val _loggedOut = MutableLiveData<Boolean?>(null)
+    val loggedOut: LiveData<Boolean?> = _loggedOut
+
+    private val _translations = MutableLiveData<List<TranslationItem>?>()
+    val translations: LiveData<List<TranslationItem>?> = _translations
+
+    private val _exportedApp = MutableLiveData<File?>()
+    val exportedApp: LiveData<File?> = _exportedApp
+
+    private val _pullTranslationResult = MutableLiveData<PullTargetTranslation.Result?>(null)
+    val pullTranslationResult: LiveData<PullTargetTranslation.Result?> = _pullTranslationResult
+
+    private val _examineImportsResult = MutableLiveData<ExamineImportsForCollisions.Result>()
+    val examineImportsResult: LiveData<ExamineImportsForCollisions.Result> = _examineImportsResult
+
+    private val _importResult = MutableLiveData<Translator.ImportResults>()
+    val importResult: LiveData<Translator.ImportResults> = _importResult
+
+    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result>()
+    val latestRelease: LiveData<CheckForLatestRelease.Result> = _latestRelease
+
+    var lastFocusTargetTranslation: String?
+        get() = translator.lastFocusTargetTranslation
+        set(value) { translator.lastFocusTargetTranslation = value }
+
+    var notifyTargetTranslationWithUpdates: String?
+        get() = translator.notifyTargetTranslationWithUpdates
+        set(value) { translator.notifyTargetTranslationWithUpdates = value }
+
+    /**
+     * get last project opened and make sure it is still present
+     * @return
+     */
+    val lastOpened: TranslationItem?
+        get() {
+            val lastTarget = translator.lastFocusTargetTranslation
+            if (lastTarget != null) {
+                return translator.getTargetTranslation(lastTarget)?.let {
+                    TranslationItem(it, ::getProject)
+                }
+            }
+            return null
+        }
+
+    val loggedIn: Boolean
+        get() = profile.gogsUser != null
+
+    fun loadTranslations() {
+        viewModelScope.launch {
+            _translations.value = withContext(Dispatchers.IO) {
+                translator.targetTranslations.map {
+                    TranslationItem(it, ::getProject)
+                }
+            }
+        }
+    }
+
+    /**
+     * Log out the current gogs user
+     */
+    fun logout() {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.log_out)
+            )
+            _loggedOut.value = withContext(Dispatchers.IO) {
+                gogsLogout.execute()
+                profile.logout()
+                true
+            }
+            _progress.value = null
+        }
+    }
+
+    fun getTargetTranslation(translationId: String?): TranslationItem? {
+        return translations.value?.singleOrNull {
+            it.translation.id == translationId
+        }
+    }
+
+    fun deleteTargetTranslation(item: TranslationItem, orphaned: Boolean) {
+        backupTargetTranslation(item.translation, orphaned)
+        translator.deleteTargetTranslation(item.translation.id)
+        translator.clearTargetTranslationSettings(item.translation.id)
+
+        _translations.value = _translations.value?.filter {
+            it.translation.id != item.translation.id
+        }
+    }
+
+    fun exportApp() {
+        viewModelScope.launch {
+            _exportedApp.value = withContext(Dispatchers.IO) {
+                val pInfo = application.packageManager.getPackageInfo(application.packageName, 0)
+                val apkFile = File(pInfo.applicationInfo.publicSourceDir)
+                val exportFile = File(
+                    directoryProvider.sharingDir, pInfo.applicationInfo.loadLabel(
+                        application.packageManager
+                    ).toString() + "_" + pInfo.versionName + ".apk"
+                )
+                FileUtilities.copyFile(apkFile, exportFile)
+                exportFile
+            }
+        }
+    }
+
+    fun pullTargetTranslation(mergeStrategy: MergeStrategy) {
+        viewModelScope.launch {
+            _pullTranslationResult.value = withContext(Dispatchers.IO) {
+                getTargetTranslation(notifyTargetTranslationWithUpdates)?.let { item ->
+                    pullTargetTranslation.execute(item.translation, mergeStrategy)
+                }
+            }
+        }
+    }
+
+    fun getProject(targetTranslation: TargetTranslation): Project {
+        val project: Project
+        val existingSources = targetTranslation.sourceTranslations
+        // Gets an existing source project or default if none selected
+        if (existingSources.isNotEmpty()) {
+            val lastSource = existingSources[existingSources.size - 1]
+            project = library.index.getTranslation(lastSource).project
+        } else {
+            project = library.index.getProject(
+                targetTranslation.targetLanguageName,
+                targetTranslation.projectId,
+                true
+            )
+        }
+        return project
+    }
+
+    fun examineImportsForCollisions(contentUri: Uri) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                examineImportsForCollisions.execute(contentUri)
+            }
+        }
+    }
+
+    fun importProjects(projectsFolder: File, overwrite: Boolean) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress()
+            _importResult.value = withContext(Dispatchers.IO) {
+                import.importProjects(projectsFolder, overwrite)
+            }
+            _progress.value = null
+        }
+    }
+
+    fun checkForLatestRelease() {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress()
+            _latestRelease.value = withContext(Dispatchers.IO) {
+                checkForLatestRelease.execute()
+            }
+            _progress.value = null
+        }
+    }
+
+    fun downloadIndex() {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress()
+            withContext(Dispatchers.IO) {
+                downloadIndex.execute(object: OnProgressListener {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress(message, progress, max)
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress()
+                        }
+                    }
+                })
+            }
+            _progress.value = null
+        }
+    }
+
+    fun updateSource(message: String) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress()
+            withContext(Dispatchers.IO) {
+                updateSource.execute(message, object : OnProgressListener {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress(message, progress, max)
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress()
+                        }
+                    }
+                })
+            }
+            _progress.value = null
+        }
+    }
+
+    fun updateCatalogs(message: String) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress()
+            withContext(Dispatchers.IO) {
+                updateCatalogs.execute(message, object : OnProgressListener {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress(message, progress, max)
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress()
+                        }
+                    }
+                })
+            }
+            _progress.value = null
+        }
+    }
+
+    fun cleanupExamineImportResult() {
+        _examineImportsResult.value?.cleanup()
+        _examineImportsResult.value = null
+    }
+
+    fun clearResults() {
+        _loggedOut.value = null
+    }
+}

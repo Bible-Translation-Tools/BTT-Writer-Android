@@ -95,7 +95,7 @@ public class TranslationProgressTask extends ManagedTask {
      */
     private Translation getSourceTranslation(Index index, TargetTranslation targetTranslation) {
         List<Translation> sourceTranslations = index.findTranslations(null, targetTranslation.getProjectId(), null, "book", null, App.MIN_CHECKING_LEVEL, -1);
-        if(sourceTranslations.size() > 0) {
+        if(!sourceTranslations.isEmpty()) {
             return sourceTranslations.get(0);
         }
         return null;

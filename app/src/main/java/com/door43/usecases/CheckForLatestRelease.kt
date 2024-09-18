@@ -16,7 +16,9 @@ import javax.inject.Inject
 class CheckForLatestRelease @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    fun execute(): Release? {
+    data class Result(val release: Release?)
+
+    fun execute(): Result {
         var latestRelease: Release? = null
 
         val githubApiUrl = context.resources.getString(R.string.github_repo_api)
@@ -78,7 +80,7 @@ class CheckForLatestRelease @Inject constructor(
             }
         }
 
-        return latestRelease
+        return Result(latestRelease)
     }
 
     companion object {
