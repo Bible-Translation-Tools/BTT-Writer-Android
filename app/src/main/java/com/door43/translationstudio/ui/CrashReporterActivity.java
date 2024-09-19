@@ -1,8 +1,6 @@
 package com.door43.translationstudio.ui;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,106 +9,129 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.tasks.CheckForLatestReleaseTask;
-import com.door43.translationstudio.tasks.UploadCrashReportTask;
+import com.door43.translationstudio.databinding.ActivityCrashReporterBinding;
+import com.door43.translationstudio.ui.dialogs.ProgressHelper;
+import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel;
 import com.door43.usecases.CheckForLatestRelease;
 
 import org.unfoldingword.tools.logger.Logger;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
 
-public class CrashReporterActivity extends BaseActivity implements ManagedTask.OnFinishedListener {
-    private Button mOkButton;
-    private Button mCancelButton;
-    private ProgressDialog mLoadingDialog;
-    private EditText mCrashReportText;
+public class CrashReporterActivity extends BaseActivity {
     private static final String STATE_LATEST_RELEASE = "state_latest_release";
     private static final String STATE_NOTES = "state_notes";
+
+    private ProgressHelper.ProgressDialog progressDialog;
     private String mNotes = "";
-    private CheckForLatestRelease.Release mLatestRelease = null;
+    private CheckForLatestRelease.Release latestRelease = null;
+
+    private ActivityCrashReporterBinding binding;
+    private CrashReporterViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_crash_reporter);
+        binding = ActivityCrashReporterBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        mOkButton = (Button)findViewById(R.id.okButton);
-        mCancelButton = (Button)findViewById(R.id.cancelButton);
-        mCrashReportText = (EditText)findViewById(R.id.crashDescriptioneditText);
+        viewModel = new ViewModelProvider(this).get(CrashReporterViewModel.class);
 
-        mLoadingDialog = new ProgressDialog(CrashReporterActivity.this);
-        mLoadingDialog.setCancelable(false);
-        mLoadingDialog.setCanceledOnTouchOutside(false);
+        progressDialog = ProgressHelper.newInstance(this, R.string.loading, false);
 
-        mOkButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mNotes = mCrashReportText.getText().toString().trim();
+        binding.okButton.setOnClickListener(view -> {
+            mNotes = binding.crashDescription.getText().toString().trim();
 
-                new AlertDialog.Builder(CrashReporterActivity.this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.title_upload)
-                        .setMessage(R.string.use_internet_confirmation)
-                        .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                mLoadingDialog.setMessage(getResources().getString(R.string.loading));
-                                mLoadingDialog.show();
+            new AlertDialog.Builder(CrashReporterActivity.this, R.style.AppTheme_Dialog)
+                    .setTitle(R.string.title_upload)
+                    .setMessage(R.string.use_internet_confirmation)
+                    .setPositiveButton(R.string.label_continue, (dialog, which) -> {
+                        progressDialog.setMessage(getResources().getString(R.string.loading));
+                        progressDialog.show();
 
-                                CheckForLatestReleaseTask task = new CheckForLatestReleaseTask();
-                                task.addOnFinishedListener(CrashReporterActivity.this);
-                                TaskManager.addTask(task, CheckForLatestReleaseTask.TASK_ID);
-                            }
-                        })
-                        .setNegativeButton(R.string.label_close, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Logger.flush();
-                                openSplash();
-                            }
-                        })
-                        .show();
-            }
+                        viewModel.checkForLatestRelease();
+                    })
+                    .setNegativeButton(R.string.label_close, (dialog, which) -> {
+                        Logger.flush();
+                        openSplash();
+                    })
+                    .show();
         });
 
-        mCancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Logger.flush();
-                openSplash();
+        binding.cancelButton.setOnClickListener(view -> {
+            Logger.flush();
+            openSplash();
+        });
+
+        setupObservers();
+    }
+
+    private void setupObservers() {
+        viewModel.getProgress().observe(this, progress -> {
+            if (progress != null) {
+                progressDialog.show();
+                progressDialog.setProgress(progress.getProgress());
+                progressDialog.setMessage(progress.getMessage());
+                progressDialog.setMax(progress.getMax());
+            } else {
+                progressDialog.dismiss();
             }
+        });
+        viewModel.getLatestRelease().observe(this, result -> {
+            if (result != null) {
+                Handler hand = new Handler(Looper.getMainLooper());
+                if(result.getRelease() != null) {
+                    // ask user if they would like to download updates
+                    latestRelease = result.getRelease();
+                    hand.post(this::notifyLatestRelease);
+                } else {
+                    // upload crash report
+                    hand.post(() -> {
+                        progressDialog.setMessage(getResources().getString(R.string.uploading));
+                        progressDialog.show();
+                    });
+
+                    String report = binding.crashDescription.getText().toString().trim();
+                    viewModel.uploadCrashReport(report);
+                }
+            }
+        });
+        viewModel.getCrashReportUploaded().observe(this, uploaded -> {
+           if (uploaded != null) {
+               Logger.i(this.getClass().getSimpleName(),"UploadCrashReportTask success:" + uploaded);
+               if(uploaded) {
+                   openSplash();
+               } else { // upload failed
+                   final boolean networkAvailable = App.isNetworkAvailable();
+
+                   Handler hand = new Handler(Looper.getMainLooper());
+                   hand.post(() -> {
+                       int messageId = networkAvailable ? R.string.upload_crash_report_failed : R.string.internet_not_available;
+                       new AlertDialog.Builder(CrashReporterActivity.this, R.style.AppTheme_Dialog)
+                               .setTitle(R.string.upload_failed)
+                               .setMessage(messageId)
+                               .setPositiveButton(R.string.label_ok, null)
+                               .show();
+                   });
+               }
+           }
         });
     }
 
     public void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         mNotes = savedInstanceState.getString(STATE_NOTES, "");
-        mLatestRelease = (CheckForLatestRelease.Release)savedInstanceState.getSerializable(STATE_LATEST_RELEASE);
-        mCrashReportText.setText(mNotes);
+        latestRelease = (CheckForLatestRelease.Release)savedInstanceState.getSerializable(STATE_LATEST_RELEASE);
+        binding.crashDescription.setText(mNotes);
         super.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
-        CheckForLatestReleaseTask checkTask = (CheckForLatestReleaseTask) TaskManager.getTask(CheckForLatestReleaseTask.TASK_ID);
-        UploadCrashReportTask uploadTask = (UploadCrashReportTask)TaskManager.getTask(UploadCrashReportTask.TASK_ID);
-
-        if(checkTask != null) {
-            mLoadingDialog.setMessage(getResources().getString(R.string.loading));
-            mLoadingDialog.show();
-            checkTask.addOnFinishedListener(this);
-        } else if(uploadTask != null) {
-            mLoadingDialog.setMessage(getResources().getString(R.string.uploading));
-            mLoadingDialog.show();
-            uploadTask.addOnFinishedListener(this);
-        } else if(mLatestRelease != null) {
+        if(latestRelease != null) {
             notifyLatestRelease();
         }
     }
@@ -123,22 +144,19 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
                 .setTitle(R.string.apk_update_available)
                 .setMessage(R.string.upload_report_or_download_latest_apk)
                 .setNegativeButton(R.string.title_cancel, (dialog, which) -> {
-                    mLatestRelease = null;
+                    latestRelease = null;
                     Logger.flush();
                     openSplash();
                 })
                 .setNeutralButton(R.string.download_update, (dialog, which) -> {
                     Logger.flush();
-                    getLatestAppVersion(CrashReporterActivity.this, mLatestRelease);
+                    getLatestAppVersion(CrashReporterActivity.this, latestRelease);
                     finish();
                 })
                 .setPositiveButton(R.string.label_continue, (dialog, which) -> {
-                    mLoadingDialog.setMessage(getResources().getString(R.string.uploading));
-                    mLoadingDialog.show();
-
-                    UploadCrashReportTask newTask = new UploadCrashReportTask(mNotes);
-                    newTask.addOnFinishedListener(CrashReporterActivity.this);
-                    TaskManager.addTask(newTask, UploadCrashReportTask.TASK_ID);
+                    progressDialog.setMessage(getResources().getString(R.string.uploading));
+                    progressDialog.show();
+                    viewModel.uploadCrashReport(mNotes);
                 })
                 .show();
     }
@@ -149,77 +167,15 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
         finish();
     }
 
-    @Override
-    public void onTaskFinished(ManagedTask task) {
-        TaskManager.clearTask(task);
-
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                if (mLoadingDialog.isShowing()) {
-                    mLoadingDialog.dismiss();
-                }
-            }
-        });
-
-        if(task instanceof CheckForLatestReleaseTask) {
-            CheckForLatestReleaseTask.Release release = ((CheckForLatestReleaseTask)task).getLatestRelease();
-            if(release != null) {
-                // ask user if they would like to download updates
-                mLatestRelease = release;
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        notifyLatestRelease();
-                    }
-                });
-            } else {
-                // upload crash report
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mLoadingDialog.setMessage(getResources().getString(R.string.uploading));
-                        mLoadingDialog.show();
-                    }
-                });
-
-                UploadCrashReportTask newTask = new UploadCrashReportTask(mCrashReportText.getText().toString().trim());
-                newTask.addOnFinishedListener(CrashReporterActivity.this);
-                TaskManager.addTask(newTask, UploadCrashReportTask.TASK_ID);
-            }
-        } else if(task instanceof UploadCrashReportTask) {
-            boolean success = ((UploadCrashReportTask) task).isSuccess();
-            Logger.i(this.getClass().getSimpleName(),"UploadCrashReportTask success:" + success);
-            if(success) {
-              openSplash();
-            } else { // upload failed
-                final boolean networkAvailable = App.isNetworkAvailable();
-
-                hand.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        int messageId = networkAvailable ? R.string.upload_crash_report_failed : R.string.internet_not_available;
-                        new AlertDialog.Builder(CrashReporterActivity.this, R.style.AppTheme_Dialog)
-                                .setTitle(R.string.upload_failed)
-                                .setMessage(messageId)
-                                .setPositiveButton(R.string.label_ok, null)
-                                .show();
-                    }
-                });
-            }
-        }
-    }
-
     /**
      * download latest app version
+     *
      * @param activity
      * @param release
-     * @return
      */
-    public static boolean getLatestAppVersion(Activity activity, CheckForLatestRelease.Release release) {
+    public static void getLatestAppVersion(Activity activity, CheckForLatestRelease.Release release) {
         if(release == null) {
-            return false;
+            return;
         }
         boolean isStoreVersion = App.isStoreVersion();
         if (isStoreVersion) {
@@ -235,31 +191,16 @@ public class CrashReporterActivity extends BaseActivity implements ManagedTask.O
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(release.getDownloadUrl()));
             activity.startActivity(browserIntent);
         }
-        return true;
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        if(mLatestRelease != null) {
-            outState.putSerializable(STATE_LATEST_RELEASE, mLatestRelease);
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        if(latestRelease != null) {
+            outState.putSerializable(STATE_LATEST_RELEASE, latestRelease);
         } else {
             outState.remove(STATE_LATEST_RELEASE);
         }
-        outState.putString(STATE_NOTES, mCrashReportText.getText().toString().trim());
+        outState.putString(STATE_NOTES, binding.crashDescription.getText().toString().trim());
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onDestroy() {
-        // disconnect listeners
-        CheckForLatestReleaseTask checkTask = (CheckForLatestReleaseTask) TaskManager.getTask(CheckForLatestReleaseTask.TASK_ID);
-        if(checkTask != null) {
-            checkTask.removeOnFinishedListener(this);
-        }
-        UploadCrashReportTask uploadTask = (UploadCrashReportTask)TaskManager.getTask(UploadCrashReportTask.TASK_ID);
-        if(uploadTask != null) {
-            uploadTask.removeOnFinishedListener(this);
-        }
-        super.onDestroy();
     }
 }

@@ -66,6 +66,11 @@ interface IDirectoryProvider {
     val sharingDir: File
 
     /**
+     * Returns the log file
+     */
+    val logFile: File
+
+    /**
      * Returns the directory in which the ssh keys are stored
      */
     val sshKeysDir: File

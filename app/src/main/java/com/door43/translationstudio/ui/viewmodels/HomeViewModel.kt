@@ -21,6 +21,7 @@ import com.door43.usecases.ExamineImportsForCollisions
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.Import
 import com.door43.usecases.PullTargetTranslation
+import com.door43.usecases.RegisterSSHKeys
 import com.door43.usecases.UpdateCatalogs
 import com.door43.usecases.UpdateSource
 import com.door43.usecases.cleanup
@@ -52,6 +53,7 @@ class HomeViewModel @Inject constructor(
     @Inject lateinit var downloadIndex: DownloadIndex
     @Inject lateinit var updateSource: UpdateSource
     @Inject lateinit var updateCatalogs: UpdateCatalogs
+    @Inject lateinit var registerSSHKeys: RegisterSSHKeys
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -68,14 +70,26 @@ class HomeViewModel @Inject constructor(
     private val _pullTranslationResult = MutableLiveData<PullTargetTranslation.Result?>(null)
     val pullTranslationResult: LiveData<PullTargetTranslation.Result?> = _pullTranslationResult
 
-    private val _examineImportsResult = MutableLiveData<ExamineImportsForCollisions.Result>()
-    val examineImportsResult: LiveData<ExamineImportsForCollisions.Result> = _examineImportsResult
+    private val _examineImportsResult = MutableLiveData<ExamineImportsForCollisions.Result?>()
+    val examineImportsResult: LiveData<ExamineImportsForCollisions.Result?> = _examineImportsResult
 
-    private val _importResult = MutableLiveData<Translator.ImportResults>()
-    val importResult: LiveData<Translator.ImportResults> = _importResult
+    private val _importResult = MutableLiveData<Translator.ImportResults?>()
+    val importResult: LiveData<Translator.ImportResults?> = _importResult
 
-    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result>()
-    val latestRelease: LiveData<CheckForLatestRelease.Result> = _latestRelease
+    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result?>()
+    val latestRelease: LiveData<CheckForLatestRelease.Result?> = _latestRelease
+
+    private val _registeredSSHKeys = MutableLiveData<Boolean?>()
+    val registeredSSHKeys: LiveData<Boolean?> = _registeredSSHKeys
+
+    private val _updateSourceResult = MutableLiveData<UpdateSource.Result?>()
+    val updateSourceResult: LiveData<UpdateSource.Result?> = _updateSourceResult
+
+    private val _uploadCatalogResult = MutableLiveData<UpdateCatalogs.Result?>()
+    val uploadCatalogResult: LiveData<UpdateCatalogs.Result?> = _uploadCatalogResult
+
+    private val _indexDownloaded = MutableLiveData<Boolean?>()
+    val indexDownloaded: LiveData<Boolean?> = _indexDownloaded
 
     var lastFocusTargetTranslation: String?
         get() = translator.lastFocusTargetTranslation
@@ -130,10 +144,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getTargetTranslation(translationId: String?): TranslationItem? {
+    fun findTranslationItem(translationId: String?): TranslationItem? {
         return translations.value?.singleOrNull {
             it.translation.id == translationId
         }
+    }
+
+    fun getTargetTranslation(translationId: String?): TargetTranslation? {
+        return translator.getTargetTranslation(translationId)
     }
 
     fun deleteTargetTranslation(item: TranslationItem, orphaned: Boolean) {
@@ -164,11 +182,13 @@ class HomeViewModel @Inject constructor(
 
     fun pullTargetTranslation(mergeStrategy: MergeStrategy) {
         viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress()
             _pullTranslationResult.value = withContext(Dispatchers.IO) {
-                getTargetTranslation(notifyTargetTranslationWithUpdates)?.let { item ->
+                findTranslationItem(notifyTargetTranslationWithUpdates)?.let { item ->
                     pullTargetTranslation.execute(item.translation, mergeStrategy)
                 }
             }
+            _progress.value = null
         }
     }
 
@@ -220,7 +240,7 @@ class HomeViewModel @Inject constructor(
     fun downloadIndex() {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
-            withContext(Dispatchers.IO) {
+            _indexDownloaded.value = withContext(Dispatchers.IO) {
                 downloadIndex.execute(object: OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
                         launch(Dispatchers.Main) {
@@ -241,7 +261,7 @@ class HomeViewModel @Inject constructor(
     fun updateSource(message: String) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
-            withContext(Dispatchers.IO) {
+            _updateSourceResult.value = withContext(Dispatchers.IO) {
                 updateSource.execute(message, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
                         launch(Dispatchers.Main) {
@@ -262,7 +282,7 @@ class HomeViewModel @Inject constructor(
     fun updateCatalogs(message: String) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
-            withContext(Dispatchers.IO) {
+            _uploadCatalogResult.value = withContext(Dispatchers.IO) {
                 updateCatalogs.execute(message, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
                         launch(Dispatchers.Main) {
@@ -278,6 +298,37 @@ class HomeViewModel @Inject constructor(
             }
             _progress.value = null
         }
+    }
+
+    fun registerSSHKeys(force: Boolean) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.registering_keys)
+            )
+            _registeredSSHKeys.value = withContext(Dispatchers.IO) {
+                registerSSHKeys.execute(force, object : OnProgressListener {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress(
+                                message,
+                                progress,
+                                max
+                            )
+                        }
+                    }
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress()
+                        }
+                    }
+                })
+            }
+            _progress.value = null
+        }
+    }
+
+    fun hasSSHKeys(): Boolean {
+        return directoryProvider.hasSSHKeys()
     }
 
     fun cleanupExamineImportResult() {

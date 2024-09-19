@@ -55,7 +55,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
             dismiss()
         } else {
             val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION_ID, null)
-            targetTranslation = viewModel.getTargetTranslation(targetTranslationId)
+            targetTranslation = viewModel.findTranslationItem(targetTranslationId)
             if (targetTranslation == null) {
                 Logger.w(
                     "TargetTranslationInfoDialog",

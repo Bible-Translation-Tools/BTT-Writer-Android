@@ -16,7 +16,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.restart
 import com.door43.translationstudio.App.Companion.startBackupService
@@ -26,12 +25,6 @@ import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictLi
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityHomeBinding
-import com.door43.translationstudio.tasks.CheckForLatestReleaseTask
-import com.door43.translationstudio.tasks.DownloadIndexTask
-import com.door43.translationstudio.tasks.RegisterSSHKeysTask
-import com.door43.translationstudio.tasks.UpdateAllTask
-import com.door43.translationstudio.tasks.UpdateCatalogsTask
-import com.door43.translationstudio.tasks.UpdateSourceTask
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.ProfileActivity
 import com.door43.translationstudio.ui.SettingsActivity
@@ -43,7 +36,7 @@ import com.door43.translationstudio.ui.home.WelcomeFragment.OnCreateNewTargetTra
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
-import com.door43.usecases.ExamineImportsForCollisions
+import com.door43.usecases.PullTargetTranslation
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,18 +44,11 @@ import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.tools.eventbuffer.EventBuffer
 import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 import org.unfoldingword.tools.logger.Logger
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.TaskManager
 
 @AndroidEntryPoint
 class HomeActivity : BaseActivity(),
     OnCreateNewTargetTranslation, TargetTranslationListFragment.OnItemClickListener,
     EventBuffer.OnEventListener, DialogInterface.OnCancelListener {
-
-//    @Inject lateinit var library: Door43Client
-//    @Inject lateinit var translator: Translator
-//    @Inject lateinit var profile: Profile
-//    @Inject lateinit var directoryProvider: IDirectoryProvider
 
     private var fragment: Fragment? = null
     private var alertShown = DialogShown.NONE
@@ -300,6 +286,110 @@ class HomeActivity : BaseActivity(),
                 viewModel.cleanupExamineImportResult()
             }
         }
+        viewModel.pullTranslationResult.observe(this) {
+            it?.let { result ->
+                val status = result.status
+                if (status == PullTargetTranslation.Status.UP_TO_DATE || status == PullTargetTranslation.Status.UNKNOWN) {
+                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                        .setTitle(R.string.success)
+                        .setMessage(R.string.success_translation_update)
+                        .setPositiveButton(R.string.dismiss, null)
+                        .show()
+                } else if (status == PullTargetTranslation.Status.AUTH_FAILURE) {
+                    // regenerate ssh keys
+                    // if we have already tried ask the user if they would like to try again
+                    if (viewModel.hasSSHKeys()) {
+                        showAuthFailure()
+                    } else {
+                        viewModel.registerSSHKeys(false)
+                    }
+                } else if (status == PullTargetTranslation.Status.MERGE_CONFLICTS) {
+                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                        .setTitle(R.string.success)
+                        .setMessage(R.string.success_translation_update_with_conflicts)
+                        .setNeutralButton(
+                            R.string.review
+                        ) { _, _ ->
+                            val intent =
+                                Intent(this@HomeActivity, TargetTranslationActivity::class.java)
+                            intent.putExtra(
+                                Translator.EXTRA_TARGET_TRANSLATION_ID,
+                                viewModel.notifyTargetTranslationWithUpdates
+                            )
+                            startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
+                        }
+                        .show()
+                } else {
+                    notifyTranslationUpdateFailed()
+                }
+                viewModel.notifyTargetTranslationWithUpdates = null
+            }
+        }
+        viewModel.registeredSSHKeys.observe(this) {
+            it?.let { registered ->
+                if (registered && viewModel.notifyTargetTranslationWithUpdates != null) {
+                    Logger.i(this.javaClass.name, "SSH keys were registered with the server")
+                    // try to pull again
+                    downloadTargetTranslationUpdates()
+                } else {
+                    notifyTranslationUpdateFailed()
+                }
+            }
+        }
+        viewModel.indexDownloaded.observe(this) {
+            it?.let { success ->
+                if (success) {
+                    showUpdateResultDialog(
+                        message = resources.getString(R.string.download_index_success),
+                        onConfirm = ::restart
+                    )
+                } else {
+                    showUpdateResultDialog(
+                        R.string.error,
+                        resources.getString(R.string.options_update_failed)
+                    )
+                }
+            }
+        }
+        viewModel.updateSourceResult.observe(this) {
+            it?.let { result ->
+                if (result.success) {
+                    // immediately go to select downloads
+                    val message = String.format(
+                        resources.getString(R.string.update_sources_success),
+                        result.addedCount,
+                        result.updatedCount
+                    )
+                    showUpdateResultDialog(
+                        message = message,
+                        onConfirm = ::selectDownloadSources
+                    )
+                } else {
+                    showUpdateResultDialog(
+                        R.string.error,
+                        resources.getString(R.string.options_update_failed)
+                    )
+                }
+            }
+        }
+        viewModel.uploadCatalogResult.observe(this) {
+            it?.let { result ->
+                if (result.success) {
+                    val message = String.format(
+                        resources.getString(R.string.update_languages_success),
+                        result.addedCount
+                    )
+                    showUpdateResultDialog(
+                        message = message
+                    )
+                } else {
+                    showUpdateResultDialog(
+                        R.string.error,
+                        resources.getString(R.string.options_update_failed)
+                    )
+                }
+            }
+        }
     }
 
     /**
@@ -395,57 +485,6 @@ class HomeActivity : BaseActivity(),
         dialog.show(ft, tag)
     }
 
-    override fun onFinished(task: ManagedTask) {
-        if (task is PullTargetTranslationTask) {
-            val status = task.status
-            if (status == PullTargetTranslationTask.Status.UP_TO_DATE || status == PullTargetTranslationTask.Status.UNKNOWN) {
-                AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                    .setTitle(R.string.success)
-                    .setMessage(R.string.success_translation_update)
-                    .setPositiveButton(R.string.dismiss, null)
-                    .show()
-            } else if (status == PullTargetTranslationTask.Status.AUTH_FAILURE) {
-                // regenerate ssh keys
-                // if we have already tried ask the user if they would like to try again
-                if (directoryProvider.hasSSHKeys()) {
-                    showAuthFailure()
-                    return
-                }
-
-                val keyTask = RegisterSSHKeysTask(false)
-                taskWatcher?.watch(keyTask)
-                TaskManager.addTask(keyTask, RegisterSSHKeysTask.TASK_ID)
-            } else if (status == PullTargetTranslationTask.Status.MERGE_CONFLICTS) {
-                AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                    .setTitle(R.string.success)
-                    .setMessage(R.string.success_translation_update_with_conflicts)
-                    .setNeutralButton(
-                        R.string.review
-                    ) { _, _ ->
-                        val intent =
-                            Intent(this@HomeActivity, TargetTranslationActivity::class.java)
-                        intent.putExtra(
-                            Translator.EXTRA_TARGET_TRANSLATION_ID,
-                            task.targetTranslation.id
-                        )
-                        startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
-                    }
-                    .show()
-            } else {
-                notifyTranslationUpdateFailed()
-            }
-            viewModel.notifyTargetTranslationWithUpdates = null
-        } else if (task is RegisterSSHKeysTask) {
-            if (task.isSuccess && viewModel.notifyTargetTranslationWithUpdates != null) {
-                Logger.i(this.javaClass.name, "SSH keys were registered with the server")
-                // try to pull again
-                downloadTargetTranslationUpdates()
-            } else {
-                notifyTranslationUpdateFailed()
-            }
-        }
-    }
-
     /**
      * let user know there was a merge conflict
      * @param targetTranslationID
@@ -484,9 +523,7 @@ class HomeActivity : BaseActivity(),
                 R.string.yes
             ) { _, _ ->
                 alertShown = DialogShown.NONE
-                val keyTask = RegisterSSHKeysTask(true)
-                taskWatcher!!.watch(keyTask)
-                TaskManager.addTask(keyTask, RegisterSSHKeysTask.TASK_ID)
+                viewModel.registerSSHKeys(true)
             }
             .setNegativeButton(
                 R.string.no
@@ -629,10 +666,10 @@ class HomeActivity : BaseActivity(),
                 val targetTranslationId = data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
                 )
-                val existingTranslation = translator.getTargetTranslation(targetTranslationId)
+                val existingTranslation = viewModel.getTargetTranslation(targetTranslationId)
                 if (existingTranslation != null) {
-                    val project = library.index()
-                        .getProject(deviceLanguageCode, existingTranslation.projectId, true)
+                    val project = viewModel.getProject(existingTranslation)
+
                     val snack = Snackbar.make(
                         findViewById(android.R.id.content), String.format(
                             resources.getString(R.string.duplicate_target_translation),
@@ -667,7 +704,7 @@ class HomeActivity : BaseActivity(),
      */
     private fun showTranslationUpdatePrompt() {
         val translationId = viewModel.notifyTargetTranslationWithUpdates
-        val item = viewModel.getTargetTranslation(translationId)
+        val item = viewModel.findTranslationItem(translationId)
 
         item?.let { translationItem ->
             val message = String.format(
@@ -819,104 +856,25 @@ class HomeActivity : BaseActivity(),
         return
     }
 
-    override fun onTaskFinished(task: ManagedTask) {
-        TaskManager.clearTask(task)
-
-        val hand = Handler(Looper.getMainLooper())
-        hand.post {
-            if (task is CheckForLatestReleaseTask) {
-                if (progressDialog != null) {
-                    progressDialog?.dismiss()
-                    progressDialog = null
-                }
-
-                val release = task.latestRelease
-
-            } else {
-                if (progressDialog != null) {
-                    progressDialog?.dismiss()
-                    progressDialog = null
-                }
-
-                var titleID = R.string.success
-                var msgID = R.string.update_success
-                var message: String? = null
-                var failed = true
-
-                if (task.isCanceled) {
-                    titleID = R.string.error
-                    msgID = R.string.update_cancelled
-                } else if (!isTaskSuccess(task)) {
-                    titleID = R.string.error
-                    msgID = R.string.options_update_failed
-                } else { // success
-                    failed = false
-                    if (task is UpdateSourceTask) {
-                        message = String.format(
-                            resources.getString(R.string.update_sources_success),
-                            task.addedCnt,
-                            task.updatedCnt
-                        )
-                    }
-                    if (task is UpdateCatalogsTask) {
-                        message = String.format(
-                            resources.getString(R.string.update_languages_success),
-                            task.addedCnt
-                        )
-                    }
-                    if (task is DownloadIndexTask) {
-                        message =
-                            String.format(resources.getString(R.string.download_index_success))
-                    }
-                }
-                val finalFailed = failed
-                val showDownloadDialog = task is UpdateSourceTask
-
-                // notify update is done
-                val dlg =
-                    AlertDialog.Builder(this@HomeActivity, R.style.AppTheme_Dialog)
-                        .setTitle(titleID)
-                        .setPositiveButton(
-                            R.string.dismiss
-                        ) { _, _ ->
-                            if (!finalFailed && showDownloadDialog) {
-                                selectDownloadSources() // if not failed, immediately go to select downloads
-                            }
-                            if (task is DownloadIndexTask) {
-                                restart()
-                            }
-                        }
-                if (message == null) {
-                    dlg.setMessage(msgID)
-                } else {
-                    dlg.setMessage(message)
-                }
-
-                dlg.show()
-            }
-        }
-    }
-
-    private fun isTaskSuccess(task: ManagedTask): Boolean {
-        return when (task) {
-            is UpdateAllTask -> task.isSuccess
-            is UpdateCatalogsTask -> task.isSuccess
-            is UpdateSourceTask -> task.isSuccess
-            is DownloadIndexTask -> task.isSuccess
-            else -> false
-        }
-    }
-
     override fun onCancel(dialog: DialogInterface) {
-        // cancel the running update tasks
-        var task = TaskManager.getTask(UpdateAllTask.TASK_ID)
-        if (task != null) TaskManager.cancelTask(task)
-        task = TaskManager.getTask(UpdateSourceTask.TASK_ID)
-        if (task != null) TaskManager.cancelTask(task)
-        task = TaskManager.getTask(DownloadIndexTask.TASK_ID)
-        if (task != null) TaskManager.cancelTask(task)
-        task = TaskManager.getTask(UpdateCatalogsTask.TASK_ID)
-        if (task != null) TaskManager.cancelTask(task)
+        // TODO cancel running tasks
+    }
+
+    private fun showUpdateResultDialog(
+        titleId: Int = R.string.update_success,
+        message: String = resources.getString(R.string.update_success),
+        onConfirm: () -> Unit = {}
+    ) {
+        val dialog = AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+            .setTitle(titleId)
+            .setMessage(message)
+            .setPositiveButton(
+                R.string.dismiss
+            ) { _, _ ->
+                onConfirm()
+            }
+
+        dialog.show()
     }
 
     /**

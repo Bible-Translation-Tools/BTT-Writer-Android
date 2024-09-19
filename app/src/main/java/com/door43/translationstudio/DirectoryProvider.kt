@@ -79,6 +79,9 @@ class DirectoryProvider @Inject constructor(
             file
         }
 
+    override val logFile: File
+        get() = File(externalAppDir, "log.txt")
+
     override val sshKeysDir: File
         get() = run {
             val dir = File(
