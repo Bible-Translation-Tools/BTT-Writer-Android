@@ -28,7 +28,7 @@ import java.io.PrintStream
 import java.util.Locale
 import javax.inject.Inject
 
-class Export @Inject constructor(
+class ExportProjects @Inject constructor(
     @ApplicationContext private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val library: Door43Client

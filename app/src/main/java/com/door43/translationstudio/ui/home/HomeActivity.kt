@@ -36,6 +36,7 @@ import com.door43.translationstudio.ui.home.WelcomeFragment.OnCreateNewTargetTra
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
+import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.PullTargetTranslation
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
@@ -247,8 +248,7 @@ class HomeActivity : BaseActivity(),
                         .setPositiveButton(R.string.label_ok, null)
                         .show()
                 } else { // have newer
-                    SettingsActivity.promptUserToDownloadLatestVersion(
-                        this@HomeActivity,
+                    promptUserToDownloadLatestVersion(
                         result.release
                     )
                 }
@@ -875,6 +875,22 @@ class HomeActivity : BaseActivity(),
             }
 
         dialog.show()
+    }
+
+    /**
+     * ask the user if they want to download the latest version
+     */
+    private fun promptUserToDownloadLatestVersion(
+        release: CheckForLatestRelease.Release
+    ) {
+        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+            .setTitle(R.string.apk_update_available)
+            .setMessage(R.string.download_latest_apk)
+            .setPositiveButton(R.string.label_ok) { _, _ ->
+                viewModel.downloadLatestRelease(release)
+            }
+            .setNegativeButton(R.string.title_cancel, null)
+            .show()
     }
 
     /**

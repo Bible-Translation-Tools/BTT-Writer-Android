@@ -4,10 +4,10 @@ import com.door43.translationstudio.core.Translator
 import java.io.File
 import javax.inject.Inject
 
-class Import @Inject constructor(
+class ImportProjects @Inject constructor(
     private val translator: Translator
 ) {
-    fun importProjects(
+    fun execute(
         projectsFolder: File,
         overwrite: Boolean
     ): Translator.ImportResults? {

@@ -1,8 +1,6 @@
 package com.door43.translationstudio.ui;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -150,7 +148,7 @@ public class CrashReporterActivity extends BaseActivity {
                 })
                 .setNeutralButton(R.string.download_update, (dialog, which) -> {
                     Logger.flush();
-                    getLatestAppVersion(CrashReporterActivity.this, latestRelease);
+                    viewModel.downloadLatestRelease(latestRelease);
                     finish();
                 })
                 .setPositiveButton(R.string.label_continue, (dialog, which) -> {
@@ -165,32 +163,6 @@ public class CrashReporterActivity extends BaseActivity {
         Intent intent = new Intent(CrashReporterActivity.this, SplashScreenActivity.class);
         startActivity(intent);
         finish();
-    }
-
-    /**
-     * download latest app version
-     *
-     * @param activity
-     * @param release
-     */
-    public static void getLatestAppVersion(Activity activity, CheckForLatestRelease.Release release) {
-        if(release == null) {
-            return;
-        }
-        boolean isStoreVersion = App.isStoreVersion();
-        if (isStoreVersion) {
-            // open play store
-            final String appPackageName = activity.getPackageName();
-            try {
-                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
-            } catch (android.content.ActivityNotFoundException anfe) {
-                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
-            }
-        } else {
-            // download from github
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(release.getDownloadUrl()));
-            activity.startActivity(browserIntent);
-        }
     }
 
     @Override

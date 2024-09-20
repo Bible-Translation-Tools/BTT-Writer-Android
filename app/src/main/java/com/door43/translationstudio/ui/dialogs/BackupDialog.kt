@@ -19,6 +19,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -32,7 +33,7 @@ import com.door43.translationstudio.ui.ProfileActivity
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
-import com.door43.usecases.Export
+import com.door43.usecases.ExportProjects
 import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.PushTargetTranslation
 import com.door43.util.FileUtilities
@@ -59,6 +60,7 @@ class BackupDialog : DialogFragment() {
 
     @Inject lateinit var profile: Profile
     @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var prefRepository: IPreferenceRepository
 
     private val viewModel: ExportViewModel by viewModels()
 
@@ -220,7 +222,7 @@ class BackupDialog : DialogFragment() {
         viewModel.exportResult.observe(this) {
             it?.let { result ->
                 when (result.taskName) {
-                    Export.TaskName.EXPORT_USFM -> {
+                    ExportProjects.TaskName.EXPORT_USFM -> {
                         val message = if (result.success) {
                             val format = resources.getString(R.string.export_success)
                             String.format(
@@ -233,7 +235,7 @@ class BackupDialog : DialogFragment() {
                         Logger.i(TAG, "USFM export success = " + result.success)
                         showUsfmExportResults(message)
                     }
-                    Export.TaskName.EXPORT_PROJECT -> {
+                    ExportProjects.TaskName.EXPORT_PROJECT -> {
                         if (result.success) {
                             showBackupResults(R.string.backup_success, result.uri)
                         } else {
@@ -385,7 +387,7 @@ class BackupDialog : DialogFragment() {
      * display confirmation prompt before USFM export (also allow entry of filename
      */
     private fun showExportToUsfmPrompt() {
-        val bookData = Export.BookData.generate(targetTranslation)
+        val bookData = ExportProjects.BookData.generate(targetTranslation)
         val defaultFileName = bookData.defaultUSFMFileName
         showExportPathPrompt(defaultFileName, EXPORT_USFM_MIME_TYPE)
     }
@@ -536,12 +538,13 @@ class BackupDialog : DialogFragment() {
     private fun showPushSuccess(message: String?) {
         mDialogShown = DialogShown.SHOW_PUSH_SUCCESS
         mDialogMessage = message
-        val apiURL = App.getPref(
+        val apiURL = prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_READER_SERVER,
-            App.getRes(R.string.pref_default_reader_server)
+            resources.getString(R.string.pref_default_reader_server)
         )
-        val url =
-            Uri.parse(apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id)
+        val url = Uri.parse(
+            apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id
+        )
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_complete)
             .setMessage(
@@ -680,18 +683,11 @@ class BackupDialog : DialogFragment() {
     }
 
     private fun showFeedbackDialog(targetTranslation: TargetTranslation) {
-        val project = App.library
-            ?.index()
-            ?.getProject(
-                "en",
-                targetTranslation.projectId,
-                true
-            )
-
+        val project = viewModel.getProject(targetTranslation)
         // open bug report dialog
         val feedbackDialog = FeedbackDialog()
         val args = Bundle()
-        val message = "Failed to upload the translation of ${project?.name}" +
+        val message = "Failed to upload the translation of ${project.name}" +
                 "into ${targetTranslation.targetLanguageName}.\n" +
                 "targetTranslation: ${targetTranslation.id}" +
                 "\n--------\n\n"

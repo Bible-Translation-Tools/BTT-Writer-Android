@@ -17,9 +17,10 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.TranslationItem
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadIndex
+import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.ExamineImportsForCollisions
 import com.door43.usecases.GogsLogout
-import com.door43.usecases.Import
+import com.door43.usecases.ImportProjects
 import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.RegisterSSHKeys
 import com.door43.usecases.UpdateCatalogs
@@ -48,12 +49,13 @@ class HomeViewModel @Inject constructor(
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var pullTargetTranslation: PullTargetTranslation
     @Inject lateinit var examineImportsForCollisions: ExamineImportsForCollisions
-    @Inject lateinit var import: Import
+    @Inject lateinit var importProjects: ImportProjects
     @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
     @Inject lateinit var downloadIndex: DownloadIndex
     @Inject lateinit var updateSource: UpdateSource
     @Inject lateinit var updateCatalogs: UpdateCatalogs
     @Inject lateinit var registerSSHKeys: RegisterSSHKeys
+    @Inject lateinit var downloadLatestRelease: DownloadLatestRelease
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -221,7 +223,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _importResult.value = withContext(Dispatchers.IO) {
-                import.importProjects(projectsFolder, overwrite)
+                importProjects.execute(projectsFolder, overwrite)
             }
             _progress.value = null
         }
@@ -334,6 +336,10 @@ class HomeViewModel @Inject constructor(
     fun cleanupExamineImportResult() {
         _examineImportsResult.value?.cleanup()
         _examineImportsResult.value = null
+    }
+
+    fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
+        downloadLatestRelease.execute(release)
     }
 
     fun clearResults() {

@@ -16,7 +16,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.CreateRepository
-import com.door43.usecases.Export
+import com.door43.usecases.ExportProjects
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.PushTargetTranslation
@@ -27,6 +27,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.merge.MergeStrategy
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.security.InvalidParameterException
@@ -37,7 +39,7 @@ class ExportViewModel @Inject constructor(
     private val application: Application,
 ) : AndroidViewModel(application) {
 
-    @Inject lateinit var export: Export
+    @Inject lateinit var export: ExportProjects
     @Inject lateinit var downloadImages: DownloadImages
     @Inject lateinit var translator: Translator
     @Inject lateinit var profile: Profile
@@ -47,6 +49,7 @@ class ExportViewModel @Inject constructor(
     @Inject lateinit var createRepository: CreateRepository
     @Inject lateinit var gogsLogout: GogsLogout
     @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var library: Door43Client
 
     private val _translation = MutableLiveData<TargetTranslation?>(null)
     val translation: LiveData<TargetTranslation?> = _translation
@@ -54,8 +57,8 @@ class ExportViewModel @Inject constructor(
     private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
     val progress: LiveData<ProgressHelper.Progress?> = _progress
 
-    private val _exportResult = MutableLiveData<Export.Result?>(null)
-    val exportResult: LiveData<Export.Result?> = _exportResult
+    private val _exportResult = MutableLiveData<ExportProjects.Result?>(null)
+    val exportResult: LiveData<ExportProjects.Result?> = _exportResult
 
     private val _downloadResult = MutableLiveData<DownloadImages.Result?>(null)
     val downloadResult: LiveData<DownloadImages.Result?> = _downloadResult
@@ -84,6 +87,14 @@ class ExportViewModel @Inject constructor(
         )
     }
 
+    fun getProject(targetTranslation: TargetTranslation): Project {
+        return library.index().getProject(
+            "en",
+            targetTranslation.projectId,
+            true
+        )
+    }
+
     /**
      * back up project - will try to write to user selected destination
      * @param uri
@@ -106,7 +117,7 @@ class ExportViewModel @Inject constructor(
                 }
 
                 _progress.value = null
-                _exportResult.value = Export.Result(uri, success, Export.TaskName.EXPORT_PROJECT)
+                _exportResult.value = ExportProjects.Result(uri, success, ExportProjects.TaskName.EXPORT_PROJECT)
             }
         }
     }
@@ -127,7 +138,7 @@ class ExportViewModel @Inject constructor(
                 }
             }
             _progress.value = null
-            _exportResult.value = Export.Result(uri, success, Export.TaskName.EXPORT_USFM)
+            _exportResult.value = ExportProjects.Result(uri, success, ExportProjects.TaskName.EXPORT_USFM)
         }
     }
 
@@ -154,7 +165,7 @@ class ExportViewModel @Inject constructor(
                 }
             }
             _progress.value = null
-            _exportResult.value = Export.Result(uri, success, Export.TaskName.EXPORT_PDF)
+            _exportResult.value = ExportProjects.Result(uri, success, ExportProjects.TaskName.EXPORT_PDF)
         }
     }
 

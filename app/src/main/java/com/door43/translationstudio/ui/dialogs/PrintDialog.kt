@@ -26,7 +26,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogPrintBinding
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
-import com.door43.usecases.Export
+import com.door43.usecases.ExportProjects
 import com.door43.util.FileUtilities
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.door43client.Door43Client
@@ -148,7 +148,7 @@ class PrintDialog : DialogFragment() {
         viewModel.exportResult.observe(this) {
             it?.let { result ->
                 when (result.taskName) {
-                    Export.TaskName.EXPORT_PDF -> {
+                    ExportProjects.TaskName.EXPORT_PDF -> {
                         if (result.success) {
                             val filename = FileUtilities.getUriDisplayName(
                                 requireContext(),

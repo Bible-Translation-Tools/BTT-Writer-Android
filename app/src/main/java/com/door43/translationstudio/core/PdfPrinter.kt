@@ -9,7 +9,7 @@ import com.door43.translationstudio.App.Companion.context
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.spannables.Span
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
-import com.door43.usecases.Export.Companion.sortFrameTranslations
+import com.door43.usecases.ExportProjects.Companion.sortFrameTranslations
 import com.itextpdf.text.Anchor
 import com.itextpdf.text.Chapter
 import com.itextpdf.text.Chunk

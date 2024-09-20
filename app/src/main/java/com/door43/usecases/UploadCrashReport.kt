@@ -48,6 +48,8 @@ class UploadCrashReport @Inject constructor(
                 }
             }
         }
+
+        return isSuccess(responseCode)
     }
 
     private fun isSuccess(responseCode: Int): Boolean {

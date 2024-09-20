@@ -302,38 +302,6 @@ class App : Application() {
             }
 
         /**
-         * Moves an asset into the cache directory and returns a file reference to it
-         * @param path
-         * @return
-         */
-        @JvmStatic
-        fun getAssetAsFile(path: String): File? {
-            // TODO: we probably don't want to do this for everything.
-            // think about changing this up a bit.
-            // TODO: we need to figure out when the clear out these cached files. Probably just on version bumps.
-            return sInstance?.let { context ->
-                var cacheFile = File(context.cacheDir, "assets/$path")
-                if (!cacheFile.exists()) {
-                    cacheFile.parentFile?.mkdirs()
-                    try {
-                        context.assets.open(path).use { inputStream ->
-                            FileOutputStream(cacheFile).use { outputStream ->
-                                val buf = ByteArray(1024)
-                                var len: Int
-                                while ((inputStream.read(buf).also { len = it }) > 0) {
-                                    outputStream.write(buf, 0, len)
-                                }
-                            }
-                        }
-                    } catch (e: IOException) {
-                        return null
-                    }
-                }
-                cacheFile
-            }
-        }
-
-        /**
          * Looks up a string preference
          * @param key
          * @return

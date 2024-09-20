@@ -6,7 +6,6 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.core.ArchiveDetails
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.tasks.ExamineImportsForCollisionsTask
 import com.door43.usecases.ExamineImportsForCollisions.Result
 import com.door43.util.FileUtilities.deleteQuietly
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -69,7 +68,7 @@ class ExamineImportsForCollisions @Inject constructor(
             }
         } catch (e: Exception) {
             Logger.e(
-                ExamineImportsForCollisionsTask.TAG,
+                this.javaClass.simpleName,
                 "Error processing input file: $contentUri"
             )
         }
