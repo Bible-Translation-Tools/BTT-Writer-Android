@@ -1,107 +1,83 @@
-package com.door43.questionnaire;
+package com.door43.questionnaire
 
-import android.app.Activity;
-import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.TextView;
-
-import com.door43.translationstudio.R;
-import com.door43.widget.ViewUtil;
-
-import org.unfoldingword.door43client.models.Question;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import android.app.Activity
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.animation.AnimationUtils
+import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
+import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.RecyclerView
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentQuestionnaireBooleanQuestionBinding
+import com.door43.translationstudio.databinding.FragmentQuestionnaireTextQuestionBinding
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import org.unfoldingword.door43client.models.Question
 
 /**
  * Handles the rendering of the questions in a questionnaire
  */
-public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdapter.ViewHolder> {
-
-    public static final String TAG = QuestionnaireAdapter.class.getSimpleName();
-    private static final int TYPE_BOOLEAN = 1;
-    private static final int TYPE_STRING = 2;
-    private final Activity context;
-    private QuestionnairePage page;
-    private List<ViewHolder> viewHolders = new ArrayList<>();
-    private OnEventListener onEventListener = null;
-    private int lastPosition = -1;
-    private boolean animateRight = true;
-
-    public QuestionnaireAdapter(Activity context) {
-        this.context = context;
-    }
+class QuestionnaireAdapter : RecyclerView.Adapter<QuestionnaireAdapter.ViewHolder>() {
+    private lateinit var context: Context
+    private var page: QuestionnairePage? = null
+    private val viewHolders: MutableList<ViewHolder> = ArrayList()
+    private var onEventListener: OnEventListener? = null
+    private var lastPosition = -1
+    private var animateRight = true
 
     /**
      * Sets the questionnaire page that should be displayed
      * @param page
      * @param animateRight indicates the direction of the question animations
      */
-    public void setPage(QuestionnairePage page, boolean animateRight) {
-        this.page = page;
-        lastPosition = -1;
-        this.animateRight = animateRight;
-        notifyDataSetChanged();
+    fun setPage(page: QuestionnairePage?, animateRight: Boolean) {
+        this.page = page
+        lastPosition = -1
+        this.animateRight = animateRight
+        notifyDataSetChanged()
     }
 
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v;
-        ViewHolder vh;
-        switch (viewType) {
-            case TYPE_BOOLEAN:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_questionnaire_boolean_question, parent, false);
-                vh = new BooleanViewHolder(context, v);
-                break;
-            case TYPE_STRING:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_questionnaire_text_question, parent, false);
-                vh = new StringViewHolder(context, v);
-                break;
-            default:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_questionnaire_text_question, parent, false);
-                vh = new StringViewHolder(context, v);
-                break;
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        context = parent.context
+        val vh: ViewHolder
+        when (viewType) {
+            TYPE_BOOLEAN -> {
+                val booleanBinding = FragmentQuestionnaireBooleanQuestionBinding.inflate(
+                    LayoutInflater.from(parent.context), parent, false
+                )
+                vh = BooleanViewHolder(booleanBinding)
+            }
+
+            else -> {
+                val stringBinding = FragmentQuestionnaireTextQuestionBinding.inflate(
+                    LayoutInflater.from(parent.context), parent, false
+                )
+                vh = StringViewHolder(stringBinding)
+            }
         }
-        viewHolders.add(vh);
-        return vh;
+        viewHolders.add(vh)
+        return vh
     }
 
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.currentPosition = position;
-        setAnimation(holder.card, position);
-        switch (holder.getItemViewType()) {
-            case TYPE_BOOLEAN:
-                onBindBooleanQuestion((BooleanViewHolder)holder, position);
-                break;
-            case TYPE_STRING:
-                onBindStringQuestion((StringViewHolder)holder, position);
-                break;
-            default:
-                onBindStringQuestion((StringViewHolder)holder, position);
-                break;
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.currentPosition = position
+        setAnimation(holder.card, position)
+        when (holder.itemViewType) {
+            TYPE_BOOLEAN -> onBindBooleanQuestion(holder as BooleanViewHolder, position)
+            TYPE_STRING -> onBindStringQuestion(holder as StringViewHolder, position)
+            else -> onBindStringQuestion(holder as StringViewHolder, position)
         }
     }
 
-    @Override
-    public void onViewDetachedFromWindow(final ViewHolder holder) {
-        holder.clearAnimation();
+    override fun onViewDetachedFromWindow(holder: ViewHolder) {
+        holder.clearAnimation()
     }
 
     /**
@@ -109,35 +85,29 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
      * @param viewToAnimate
      * @param position
      */
-    private void setAnimation(View viewToAnimate, int position) {
+    private fun setAnimation(viewToAnimate: View, position: Int) {
         if (position > lastPosition) {
-            Animation animation;
-            if(animateRight) {
-                animation = AnimationUtils.loadAnimation(context, R.anim.slide_in_right);
+            val animation = if (animateRight) {
+                AnimationUtils.loadAnimation(context, R.anim.slide_in_right)
             } else {
-                animation = AnimationUtils.loadAnimation(context, android.R.anim.slide_in_left);
+                AnimationUtils.loadAnimation(context, android.R.anim.slide_in_left)
             }
-            viewToAnimate.startAnimation(animation);
-            lastPosition = position;
+            viewToAnimate.startAnimation(animation)
+            lastPosition = position
         }
     }
 
-    @Override
-    public int getItemCount() {
-        if(page != null) {
-            return page.getNumQuestions();
-        }
-        return 0;
+    override fun getItemCount(): Int {
+        return page?.numQuestions ?: 0
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        if(page.getQuestion(position).inputType == Question.InputType.Boolean) {
-            return TYPE_BOOLEAN;
-        } else if(page.getQuestion(position).inputType == Question.InputType.String) {
-            return TYPE_STRING;
+    override fun getItemViewType(position: Int): Int {
+        if (page?.getQuestion(position)?.inputType == Question.InputType.Boolean) {
+            return TYPE_BOOLEAN
+        } else if (page?.getQuestion(position)?.inputType == Question.InputType.String) {
+            return TYPE_STRING
         }
-        return -1;
+        return -1
     }
 
     /**
@@ -145,42 +115,42 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
      * @param holder
      * @param position
      */
-    public void onBindBooleanQuestion(BooleanViewHolder holder, int position) {
-        final Question question = page.getQuestion(position);
-        holder.question.setText(question.text);
-        holder.question.setHint(question.help);
-        holder.radioGroup.setOnCheckedChangeListener(null);
+    private fun onBindBooleanQuestion(holder: BooleanViewHolder, position: Int) {
+        page?.getQuestion(position)?.let { question ->
+            holder.binding.label.text = question.text
+            holder.binding.label.hint = question.help
+            holder.binding.radioGroup.setOnCheckedChangeListener(null)
 
-        holder.setRequired(question.isRequired);
+            holder.setRequired(question.isRequired)
 
-        String answerString = getQuestionAnswer(question);
-        boolean answer = Boolean.parseBoolean(answerString);
+            val answerString = getQuestionAnswer(question)
+            val answer = answerString.toBoolean()
 
-        holder.radioGroup.clearCheck();
+            holder.binding.radioGroup.clearCheck()
 
-        // provide answer if given
-        if(answerString != null && !answerString.isEmpty()) {
-            holder.radioButtonYes.setChecked(answer);
-            holder.radioButtonNo.setChecked(!answer);
-        }
-
-        if(isQuestionEnabled(question)) {
-            holder.enable();
-        } else {
-            holder.disable();
-        }
-
-        holder.radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if(checkedId == R.id.radio_button_yes) {
-                    saveAnswer(question, "true");
-                } else {
-                    saveAnswer(question, "false");
-                }
-                reload();
+            // provide answer if given
+            if (answerString.isNotEmpty()) {
+                holder.binding.radioButtonYes.isChecked = answer
+                holder.binding.radioButtonNo.isChecked = !answer
             }
-        });
+
+            if (isQuestionEnabled(question)) {
+                holder.enable()
+            } else {
+                holder.disable()
+            }
+
+            val context = holder.binding.root.context
+
+            holder.binding.radioGroup.setOnCheckedChangeListener { _, checkedId ->
+                if (checkedId == R.id.radio_button_yes) {
+                    saveAnswer(context, question, "true")
+                } else {
+                    saveAnswer(context, question, "false")
+                }
+                reload()
+            }
+        }
     }
 
     /**
@@ -188,42 +158,42 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
      * @param holder
      * @param position
      */
-    public void onBindStringQuestion(StringViewHolder holder, int position) {
-        final Question question = page.getQuestion(position);
-        holder.question.setText(question.text);
-        holder.answer.setHint(question.help);
-        holder.answer.removeTextChangedListener(holder.textWatcher);
+    private fun onBindStringQuestion(holder: StringViewHolder, position: Int) {
+        page?.getQuestion(position)?.let { question ->
+            holder.binding.label.text = question.text
+            holder.binding.editText.hint = question.help
+            holder.binding.editText.removeTextChangedListener(holder.textWatcher)
 
-        holder.setRequired(question.isRequired);
+            holder.setRequired(question.isRequired)
 
-        String answer = getQuestionAnswer(question);
-        holder.answer.setText(answer);
+            val answer = getQuestionAnswer(question)
+            holder.binding.editText.setText(answer)
 
-        if(isQuestionEnabled(question)) {
-            holder.enable();
-        } else {
-            holder.disable();
-        }
-
-        holder.textWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String answer = getQuestionAnswer(question);
-                boolean wasAnswered = answer != null && !answer.isEmpty();
-                boolean isAnswered = !s.toString().isEmpty();
-                saveAnswer(question, s.toString());
-                if(wasAnswered != isAnswered) {
-                    reload();
-                }
+            if (isQuestionEnabled(question)) {
+                holder.enable()
+            } else {
+                holder.disable()
             }
 
-            @Override
-            public void afterTextChanged(Editable s) {}
-        };
-        holder.answer.addTextChangedListener(holder.textWatcher);
+            val context = holder.binding.root.context
+
+            holder.textWatcher = object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                    val a = getQuestionAnswer(question)
+                    val wasAnswered = a.isNotEmpty()
+                    val isAnswered = s.isNotEmpty()
+                    saveAnswer(context, question, s.toString())
+                    if (wasAnswered != isAnswered) {
+                        reload()
+                    }
+                }
+
+                override fun afterTextChanged(s: Editable) {}
+            }
+            holder.binding.editText.addTextChangedListener(holder.textWatcher)
+        }
     }
 
     /**
@@ -231,36 +201,42 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
      * @param question
      * @param answer
      */
-    private boolean saveAnswer(Question question, String answer) {
-        if(onEventListener != null) {
-            onEventListener.onAnswerChanged(question, answer);
-            return true;
+    private fun saveAnswer(context: Context, question: Question?, answer: String): Boolean {
+        if (onEventListener != null) {
+            onEventListener!!.onAnswerChanged(question, answer)
+            return true
         } else {
-            Snackbar snack = Snackbar.make(context.findViewById(android.R.id.content), context.getResources().getString(R.string.answer_not_saved), Snackbar.LENGTH_LONG);
-            ViewUtil.setSnackBarTextColor(snack, context.getResources().getColor(R.color.light_primary_text));
-            snack.show();
-            return false;
+            (context as? Activity)?.let {
+                val snack = Snackbar.make(
+                    it.findViewById(android.R.id.content),
+                    context.resources.getString(R.string.answer_not_saved),
+                    Snackbar.LENGTH_LONG
+                )
+                ViewUtil.setSnackBarTextColor(
+                    snack,
+                    it.resources.getColor(R.color.light_primary_text)
+                )
+                snack.show()
+            }
+            return false
         }
     }
 
     /**
      * Re-evaluates the enabled state of each question
      */
-    private void reload() {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                for(ViewHolder vh:viewHolders) {
-                    Question question = page.getQuestion(vh.currentPosition);
-                    if(isQuestionEnabled(question)) {
-                        vh.enable();
-                    } else {
-                        vh.disable();
-                    }
+    private fun reload() {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            for (vh in viewHolders) {
+                val question = page?.getQuestion(vh.currentPosition)
+                if (isQuestionEnabled(question)) {
+                    vh.enable()
+                } else {
+                    vh.disable()
                 }
             }
-        });
+        }
     }
 
     /**
@@ -268,13 +244,13 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
      * @param question
      * @return
      */
-    private boolean isQuestionEnabled(Question question) {
-        if(question != null) {
-            return question.dependsOn <= 0
-                    || (isAnswerAffirmative(page.getQuestionById(question.dependsOn))
-                    && isQuestionEnabled(page.getQuestionById(question.dependsOn)));
+    private fun isQuestionEnabled(question: Question?): Boolean {
+        if (question != null) {
+            return (question.dependsOn <= 0
+                    || (isAnswerAffirmative(page!!.getQuestionById(question.dependsOn))
+                    && isQuestionEnabled(page!!.getQuestionById(question.dependsOn))))
         }
-        return false;
+        return false
     }
 
     /**
@@ -283,18 +259,18 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
      * @param question
      * @return
      */
-    private boolean isAnswerAffirmative(Question question) {
-        if(question != null) {
-            String answer = getQuestionAnswer(question);
-            if(answer != null && !answer.isEmpty()) {
-                if (question.inputType == Question.InputType.Boolean) {
-                    return Boolean.parseBoolean(answer);
+    private fun isAnswerAffirmative(question: Question?): Boolean {
+        if (question != null) {
+            val answer = getQuestionAnswer(question)
+            if (answer.isNotEmpty()) {
+                return if (question.inputType == Question.InputType.Boolean) {
+                    answer.toBoolean()
                 } else {
-                    return true;
+                    true
                 }
             }
         }
-        return false;
+        return false
     }
 
     /**
@@ -302,47 +278,38 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
      * @param question
      * @return
      */
-    private String getQuestionAnswer(Question question) {
-        if(question != null && onEventListener != null) {
-            return onEventListener.onGetAnswer(question);
-        }
-        return "";
+    private fun getQuestionAnswer(question: Question?): String {
+        return question?.let { onEventListener?.onGetAnswer(question) } ?: ""
     }
 
     /**
      * Sets the listener that will be called when certain ui events happen
      * @param onEventListener
      */
-    public void setOnEventListener(OnEventListener onEventListener) {
-        this.onEventListener = onEventListener;
+    fun setOnEventListener(onEventListener: OnEventListener?) {
+        this.onEventListener = onEventListener
     }
 
     /**
      * An abstract view holder for questions
      */
-    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
+    abstract class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+        abstract val card: CardView
+        abstract val requiredView: TextView
+        var currentPosition: Int = -1
 
-        protected final CardView card;
-        protected final TextView requiredView;
-        public int currentPosition = -1;
+        abstract fun enable()
+        abstract fun disable()
 
-        public ViewHolder(View v) {
-            super(v);
-            this.card = (CardView)v.findViewById(R.id.card);
-            this.requiredView = (TextView)v.findViewById(R.id.required);
+        fun clearAnimation() {
+            card.clearAnimation()
         }
 
-        abstract void enable();
-        abstract void disable();
-
-        public void clearAnimation() {
-            this.card.clearAnimation();
-        }
-        public void setRequired(boolean required) {
-            if(required) {
-                this.requiredView.setVisibility(View.VISIBLE);
+        fun setRequired(required: Boolean) {
+            if (required) {
+                requiredView.visibility = View.VISIBLE
             } else {
-                this.requiredView.setVisibility(View.GONE);
+                requiredView.visibility = View.GONE
             }
         }
     }
@@ -350,116 +317,119 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
     /**
      * A view holder for boolean questions
      */
-    public static class BooleanViewHolder extends ViewHolder {
-        private final TextView question;
-        private final RadioButton radioButtonYes;
-        private final RadioButton radioButtonNo;
-        private final Context context;
-        private final RadioGroup radioGroup;
+    class BooleanViewHolder(
+        val binding: FragmentQuestionnaireBooleanQuestionBinding
+    ) : ViewHolder(binding.root) {
+        override val card: CardView
+            get() = binding.card
 
-        public BooleanViewHolder(final Context context, View v) {
-            super(v);
+        override val requiredView: TextView
+            get() = binding.required
 
-            this.context = context;
-            this.question = (TextView)v.findViewById(R.id.label);
-            this.radioButtonYes = (RadioButton)v.findViewById(R.id.radio_button_yes);
-            this.radioButtonNo = (RadioButton)v.findViewById(R.id.radio_button_no);
-            this.radioGroup = (RadioGroup)v.findViewById(R.id.radio_group);
+        private val context = binding.root.context.applicationContext
 
-            this.card.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    View focusedView = ((View)v.getParent()).findFocus();
-                    if(focusedView != null) {
-                        focusedView.clearFocus();
-                        InputMethodManager imm = (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(focusedView.getWindowToken(), 0);
-                    }
+        init {
+            card.setOnClickListener { v ->
+                val focusedView = (v.parent as View).findFocus()
+                if (focusedView != null) {
+                    focusedView.clearFocus()
+                    val imm = context.getSystemService(
+                        Context.INPUT_METHOD_SERVICE
+                    ) as InputMethodManager
+                    imm.hideSoftInputFromWindow(focusedView.windowToken, 0)
                 }
-            });
+            }
         }
 
-        @Override
-        public void enable() {
-            question.setTextColor(context.getResources().getColor(R.color.dark_primary_text));
-            radioButtonNo.setEnabled(true);
-            radioButtonYes.setEnabled(true);
-            requiredView.setTextColor(context.getResources().getColor(R.color.red));
+        override fun enable() {
+            with(binding) {
+                label.setTextColor(context.resources.getColor(R.color.dark_primary_text))
+                radioButtonNo.isEnabled = true
+                radioButtonYes.isEnabled = true
+            }
+            requiredView.setTextColor(context.resources.getColor(R.color.red))
         }
 
-        @Override
-        public void disable() {
-            question.setTextColor(context.getResources().getColor(R.color.dark_disabled_text));
-            radioButtonNo.setEnabled(false);
-            radioButtonYes.setEnabled(false);
-            requiredView.setTextColor(context.getResources().getColor(R.color.light_red));
+        override fun disable() {
+            with(binding) {
+                label.setTextColor(context.resources.getColor(R.color.dark_disabled_text))
+                radioButtonNo.isEnabled = false
+                radioButtonYes.isEnabled = false
+            }
+            requiredView.setTextColor(context.resources.getColor(R.color.light_red))
         }
     }
 
     /**
      * A view holder for string questions
      */
-    public static class StringViewHolder extends ViewHolder {
-        private final EditText answer;
-        private final TextView question;
-        private final Context context;
-        public TextWatcher textWatcher = null;
+    class StringViewHolder(
+        val binding: FragmentQuestionnaireTextQuestionBinding
+    ) : ViewHolder(binding.root) {
+        var textWatcher: TextWatcher? = null
 
-        public StringViewHolder(final Context context, View v) {
-            super(v);
+        override val card: CardView
+            get() = binding.card
 
-            this.context = context;
-            this.question = (TextView)v.findViewById(R.id.label);
-            this.answer = (EditText)v.findViewById(R.id.edit_text);
+        override val requiredView: TextView
+            get() = binding.required
 
-            this.card.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(answer.isFocusable()) {
-                        View focusedView = ((View)v.getParent()).findFocus();
-                        if(focusedView != null) {
-                            focusedView.clearFocus();
-                        }
-                        answer.requestFocus();
-                        InputMethodManager imm = (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.showSoftInput(answer, InputMethodManager.SHOW_FORCED);
-                    }
+        private val context = binding.root.context.applicationContext
+
+        init {
+            card.setOnClickListener { v ->
+                if (binding.editText.isFocusable) {
+                    val focusedView = (v.parent as View).findFocus()
+                    focusedView?.clearFocus()
+                    binding.editText.requestFocus()
+                    val imm = context.getSystemService(
+                        Context.INPUT_METHOD_SERVICE
+                    ) as InputMethodManager
+                    imm.showSoftInput(binding.editText, InputMethodManager.SHOW_FORCED)
                 }
-            });
+            }
         }
 
-        @Override
-        public void enable() {
-            question.setTextColor(context.getResources().getColor(R.color.dark_primary_text));
-            question.setFocusable(true);
-            question.setFocusableInTouchMode(true);
-            answer.setEnabled(true);
-            answer.setTextColor(context.getResources().getColor(R.color.dark_primary_text));
-            answer.setHintTextColor(context.getResources().getColor(R.color.transparent));
-            answer.setFocusable(true);
-            answer.setFocusableInTouchMode(true);
-            requiredView.setTextColor(context.getResources().getColor(R.color.red));
+        override fun enable() {
+            with(binding) {
+                label.setTextColor(context.resources.getColor(R.color.dark_primary_text))
+                label.isFocusable = true
+                label.isFocusableInTouchMode = true
+                editText.isEnabled = true
+                editText.setTextColor(context.resources.getColor(R.color.dark_primary_text))
+                editText.setHintTextColor(context.resources.getColor(R.color.transparent))
+                editText.isFocusable = true
+                editText.isFocusableInTouchMode = true
+            }
+            requiredView.setTextColor(context.resources.getColor(R.color.red))
         }
 
-        @Override
-        public void disable() {
-            question.setTextColor(context.getResources().getColor(R.color.dark_disabled_text));
-            question.setFocusable(false);
-            question.setFocusableInTouchMode(false);
-            answer.setEnabled(false);
-            answer.setTextColor(context.getResources().getColor(R.color.dark_disabled_text));
-            answer.setHintTextColor(context.getResources().getColor(R.color.half_transparent));
-            answer.setFocusable(false);
-            answer.setFocusableInTouchMode(false);
-            requiredView.setTextColor(context.getResources().getColor(R.color.light_red));
+        override fun disable() {
+            with(binding) {
+                label.setTextColor(context.resources.getColor(R.color.dark_disabled_text))
+                label.isFocusable = false
+                label.isFocusableInTouchMode = false
+                editText.isEnabled = false
+                editText.setTextColor(context.resources.getColor(R.color.dark_disabled_text))
+                editText.setHintTextColor(context.resources.getColor(R.color.half_transparent))
+                editText.isFocusable = false
+                editText.isFocusableInTouchMode = false
+            }
+            requiredView.setTextColor(context.resources.getColor(R.color.light_red))
         }
     }
 
     /**
      * The interface by which answers are sent/received
      */
-    public interface OnEventListener {
-        String onGetAnswer(Question question);
-        void onAnswerChanged(Question question, String answer);
+    interface OnEventListener {
+        fun onGetAnswer(question: Question?): String?
+        fun onAnswerChanged(question: Question?, answer: String?)
+    }
+
+    companion object {
+        val TAG: String = QuestionnaireAdapter::class.java.simpleName
+        private const val TYPE_BOOLEAN = 1
+        private const val TYPE_STRING = 2
     }
 }

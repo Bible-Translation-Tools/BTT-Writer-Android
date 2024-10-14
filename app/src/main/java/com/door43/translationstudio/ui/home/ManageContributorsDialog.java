@@ -13,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.NativeSpeaker;
 import com.door43.translationstudio.core.Profile;
@@ -22,16 +21,25 @@ import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.ui.ContributorsAdapter;
 import com.door43.translationstudio.ui.dialogs.ContributorDialog;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * Created by joel on 2/22/2016.
  */
+@AndroidEntryPoint
 public class ManageContributorsDialog extends DialogFragment implements ContributorsAdapter.OnClickListener  {
+    @Inject
+    Translator translator;
+    @Inject
+    Profile profile;
 
     public static final String EXTRA_TARGET_TRANSLATION_ID = "target_translation_id";
-    private TargetTranslation mTargetTranslation;
-    private RecyclerView mRecylerView;
-    private ContributorsAdapter mContributorsAdapter;
-    private View.OnClickListener mOnNativeSpeakerDialogClick;
+    private TargetTranslation targetTranslation;
+    private RecyclerView recyclerView;
+    private ContributorsAdapter contributorsAdapter;
+    private View.OnClickListener onNativeSpeakerDialogClick;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,40 +54,36 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
 
         String targetTranslationId = args.getString(ManageContributorsDialog.EXTRA_TARGET_TRANSLATION_ID);
 
-        Translator translator = App.getTranslator();
-        mTargetTranslation = translator.getTargetTranslation(targetTranslationId);
+        targetTranslation = translator.getTargetTranslation(targetTranslationId);
 
 //         auto add profile
-        Profile profile = App.getProfile();
-        if(profile != null) {
-            mTargetTranslation.addContributor(profile.getNativeSpeaker());
-        }
+        targetTranslation.addContributor(profile.getNativeSpeaker());
 
-        mRecylerView = (RecyclerView)view.findViewById(R.id.recycler_view);
+        recyclerView = (RecyclerView)view.findViewById(R.id.recycler_view);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        mRecylerView.setLayoutManager(linearLayoutManager);
-        mRecylerView.setItemAnimator(new DefaultItemAnimator());
-        mContributorsAdapter = new ContributorsAdapter();
-        mContributorsAdapter.setDisplayNext(false);
-        mContributorsAdapter.setContributors(mTargetTranslation.getContributors());
-        mContributorsAdapter.setOnClickListener(this);
-        mRecylerView.setAdapter(mContributorsAdapter);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        contributorsAdapter = new ContributorsAdapter();
+        contributorsAdapter.setDisplayNext(false);
+        contributorsAdapter.setContributors(targetTranslation.getContributors());
+        contributorsAdapter.setOnClickListener(this);
+        recyclerView.setAdapter(contributorsAdapter);
 
-        mOnNativeSpeakerDialogClick = new View.OnClickListener() {
+        onNativeSpeakerDialogClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mContributorsAdapter.setContributors(mTargetTranslation.getContributors());
+                contributorsAdapter.setContributors(targetTranslation.getContributors());
             }
         };
 
         // re-attach to dialogs
         Fragment prevEditDialog = getParentFragmentManager().findFragmentByTag("edit-native-speaker");
         if(prevEditDialog != null) {
-            ((ContributorDialog)prevEditDialog).setOnClickListener(mOnNativeSpeakerDialogClick);
+            ((ContributorDialog)prevEditDialog).setOnClickListener(onNativeSpeakerDialogClick);
         }
         Fragment prevAddDialog = getParentFragmentManager().findFragmentByTag("add-native-speaker");
         if(prevAddDialog != null) {
-            ((ContributorDialog)prevAddDialog).setOnClickListener(mOnNativeSpeakerDialogClick);
+            ((ContributorDialog)prevAddDialog).setOnClickListener(onNativeSpeakerDialogClick);
         }
 
         return view;
@@ -96,10 +100,10 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
 
         ContributorDialog dialog = new ContributorDialog();
         Bundle args = new Bundle();
-        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, mTargetTranslation.getId());
+        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.getId());
         args.putString(ContributorDialog.ARG_NATIVE_SPEAKER, speaker.getName());
         dialog.setArguments(args);
-        dialog.setOnClickListener(mOnNativeSpeakerDialogClick);
+        dialog.setOnClickListener(onNativeSpeakerDialogClick);
         dialog.show(ft, "edit-native-speaker");
     }
 
@@ -128,9 +132,9 @@ public class ManageContributorsDialog extends DialogFragment implements Contribu
 
         ContributorDialog dialog = new ContributorDialog();
         Bundle args = new Bundle();
-        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, mTargetTranslation.getId());
+        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.getId());
         dialog.setArguments(args);
-        dialog.setOnClickListener(mOnNativeSpeakerDialogClick);
+        dialog.setOnClickListener(onNativeSpeakerDialogClick);
         dialog.show(ft, "add-native-speaker");
     }
 

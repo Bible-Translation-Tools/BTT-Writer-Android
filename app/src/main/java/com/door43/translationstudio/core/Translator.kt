@@ -1,44 +1,45 @@
 package com.door43.translationstudio.core
 
 import android.content.Context
-import android.net.Uri
 import android.text.Editable
 import android.text.SpannedString
-import androidx.annotation.Nullable
+import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getPrivatePref
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
+import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
-import org.json.JSONArray
-import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
-import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.Locale
-import javax.inject.Inject
 
 /**
  * Created by joel on 8/29/2015.
  */
-class Translator @Inject constructor(
+class Translator (
     private val context: Context,
     private val profile: Profile,
     private val prefRepository: IPreferenceRepository,
-    private val library: Door43Client,
+    private val directoryProvider: IDirectoryProvider,
+    private val archiveImporter: ArchiveImporter,
+    private val backupRC: BackupRC,
+    private val library: Door43Client
+) {
     /**
      * Returns the root directory to the target translations
-     * @return
      */
-    val path: File
-) {
+    val path
+        get() = directoryProvider.translationsDir
+
     val targetTranslations: Array<TargetTranslation>
         /**
          * Returns an array of all active translations
@@ -113,7 +114,7 @@ class Translator @Inject constructor(
          * Returns the last focused target translation
          * @return
          */
-        get() = prefRepository.getPrivatePref("last_translation", null)
+        get() = prefRepository.getPrivatePref<String>("last_translation")
         /**
          * Sets the last focused target translation
          * @param targetTranslationId
@@ -211,7 +212,15 @@ class Translator @Inject constructor(
     fun getTargetTranslation(targetTranslationId: String?): TargetTranslation? {
         return targetTranslationId?.let {
             val targetTranslationDir = File(path, targetTranslationId)
-            val targetTranslation = TargetTranslation.open(targetTranslationDir)
+            val targetTranslation = TargetTranslation.open(targetTranslationDir) {
+                // Try to backup and delete corrupt project
+                try {
+                    backupRC.backupTargetTranslation(targetTranslationDir)
+                    deleteTargetTranslation(targetTranslationDir)
+                } catch (ex: java.lang.Exception) {
+                    ex.printStackTrace()
+                }
+            }
             setTargetTranslationAuthor(targetTranslation)
             targetTranslation
         }
@@ -239,112 +248,15 @@ class Translator @Inject constructor(
     }
 
     /**
-     * creates a JSON object that contains the manifest.
-     * @param targetTranslation
-     * @return
-     * @throws Exception
-     */
-    @Throws(Exception::class)
-    private fun buildArchiveManifest(targetTranslation: TargetTranslation): JSONObject {
-        targetTranslation.commit()
-
-        // build manifest
-        val manifestJson = JSONObject()
-        val generatorJson = JSONObject()
-        generatorJson.put("name", GENERATOR_NAME)
-        val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        generatorJson.put("build", pInfo.versionCode)
-        manifestJson.put("generator", generatorJson)
-        manifestJson.put("package_version", TSTUDIO_PACKAGE_VERSION)
-        manifestJson.put("timestamp", Util.unixTime())
-        val translationsJson = JSONArray()
-        val translationJson = JSONObject()
-        translationJson.put("path", targetTranslation.id)
-        translationJson.put("id", targetTranslation.id)
-        translationJson.put("commit_hash", targetTranslation.commitHash)
-        translationJson.put("direction", targetTranslation.targetLanguageDirection)
-        translationJson.put("target_language_name", targetTranslation.targetLanguageName)
-        translationsJson.put(translationJson)
-        manifestJson.put("target_translations", translationsJson)
-        return manifestJson
-    }
-
-    /**
-     * Exports a single target translation in .tstudio format to File
-     * @param targetTranslation
-     * @param outputFile
-     */
-    @Throws(Exception::class)
-    fun exportArchive(targetTranslation: TargetTranslation?, outputFile: File?) {
-        exportArchive(targetTranslation, Uri.fromFile(outputFile))
-    }
-
-    /**
-     * Exports a single target translation in .tstudio format to OutputStream
-     * @param targetTranslation
-     * @param fileUri
-     */
-    @Throws(Exception::class)
-    fun exportArchive(targetTranslation: TargetTranslation?, fileUri: Uri?) {
-        if (targetTranslation == null) {
-            throw Exception("Not a valid target translation")
-        }
-
-        try {
-            targetTranslation.commitSync(".", false)
-        } catch (e: Exception) {
-            // it's not the end of the world if we cannot commit.
-            e.printStackTrace()
-        }
-
-        val manifestJson = buildArchiveManifest(targetTranslation)
-        val tempDir = File(localCacheDir, System.currentTimeMillis().toString() + "")
-        try {
-            tempDir.mkdirs()
-            val manifestFile = File(tempDir, "manifest.json")
-            manifestFile.createNewFile()
-            FileUtilities.writeStringToFile(manifestFile, manifestJson.toString())
-
-            context.contentResolver.openOutputStream(fileUri!!).use { out ->
-                Zip.zipToStream(
-                    arrayOf(manifestFile, targetTranslation.path), out
-                )
-            }
-        } finally {
-            FileUtilities.deleteQuietly(tempDir)
-        }
-    }
-
-    @Throws(Exception::class)
-    fun exportArchive(projectDir: File, outputFile: File) {
-        if (!isValidArchiveExtension(outputFile.path)) {
-            throw Exception("Output file must have '$TSTUDIO_EXTENSION' or '$ZIP_EXTENSION' extension")
-        }
-        if (!projectDir.exists()) {
-            throw Exception("Project directory doesn't exist.")
-        }
-        val outputStream = FileOutputStream(outputFile)
-        val out = BufferedOutputStream(outputStream)
-
-        try {
-            Zip.zipToStream(arrayOf(projectDir), out)
-        } finally {
-            FileUtilities.closeQuietly(out)
-        }
-    }
-
-    /**
      * Imports a draft translation into a target translation.
      * A new target translation will be created if one does not already exist.
      * This is a lengthy operation and should be ran within a task
      * @param draftTranslation the draft translation to be imported
-     * @param library
      * @return
      */
     fun importDraftTranslation(
         nativeSpeaker: NativeSpeaker?,
         draftTranslation: ResourceContainer,
-        library: Door43Client
     ): TargetTranslation? {
         val targetLanguage = library.index().getTargetLanguage(draftTranslation.language.slug)
         // TRICKY: for now android only supports "regular" or "obs" "text" translations
@@ -447,23 +359,47 @@ class Translator @Inject constructor(
             archiveDir.mkdirs()
             Zip.unzipFromStream(inputStream, archiveDir)
 
-            val targetTranslationDirs = ArchiveImporter.importArchive(archiveDir)
+            val targetTranslationDirs = archiveImporter.importArchive(archiveDir)
             for (newDir in targetTranslationDirs) {
-                val newTargetTranslation = TargetTranslation.open(newDir)
+                val newTargetTranslation = TargetTranslation.open(newDir) {
+                    // Try to backup and delete corrupt project
+                    try {
+                        backupRC.backupTargetTranslation(newDir)
+                        deleteTargetTranslation(newDir)
+                    } catch (ex: java.lang.Exception) {
+                        ex.printStackTrace()
+                    }
+                }
                 if (newTargetTranslation != null) {
                     // TRICKY: the correct id is pulled from the manifest
                     // to avoid propagation of bad folder names
                     val targetTranslationId = newTargetTranslation.id
                     val localDir = File(path, targetTranslationId)
-                    val localTargetTranslation = TargetTranslation.open(localDir)
+                    val localTargetTranslation = TargetTranslation.open(localDir) {
+                        // Try to backup and delete corrupt project
+                        try {
+                            backupRC.backupTargetTranslation(localDir)
+                            deleteTargetTranslation(localDir)
+                        } catch (ex: java.lang.Exception) {
+                            ex.printStackTrace()
+                        }
+                    }
                     alreadyExists = localTargetTranslation != null
                     if (alreadyExists && !overwrite) {
                         // commit local changes to history
-                        localTargetTranslation?.commitSync()
+                        localTargetTranslation!!.commitSync()
 
                         // merge translations
                         try {
-                            val mergeSuccess = localTargetTranslation!!.merge(newDir)
+                            val mergeSuccess = localTargetTranslation.merge(newDir) {
+                                // Try to backup and delete corrupt project
+                                try {
+                                    backupRC.backupTargetTranslation(newDir)
+                                    deleteTargetTranslation(newDir)
+                                } catch (ex: java.lang.Exception) {
+                                    ex.printStackTrace()
+                                }
+                            }
                             if (!mergeSuccess) {
                                 mergeConflict = true
                             }
@@ -477,7 +413,15 @@ class Translator @Inject constructor(
                         FileUtilities.moveOrCopyQuietly(newDir, localDir)
                     }
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
-                    TargetTranslation.updateGenerator(context, TargetTranslation.open(localDir))
+                    TargetTranslation.updateGenerator(context, TargetTranslation.open(localDir) {
+                        // Try to backup and delete corrupt project
+                        try {
+                            backupRC.backupTargetTranslation(localDir)
+                            deleteTargetTranslation(localDir)
+                        } catch (ex: java.lang.Exception) {
+                            ex.printStackTrace()
+                        }
+                    })
 
                     importedSlug = targetTranslationId
                 }
@@ -489,6 +433,21 @@ class Translator @Inject constructor(
         }
 
         return ImportResults(importedSlug, mergeConflict, alreadyExists)
+    }
+
+    fun getConflictingTargetTranslation(file: File): TargetTranslation? {
+        var conflictingTranslation: TargetTranslation? = null
+
+        val targetTranslation = TargetTranslation.open(file, null)
+        if (targetTranslation != null) {
+            // TRICKY: the correct id is pulled from the manifest to avoid propagating bad folder names
+            val targetTranslationId = targetTranslation.id
+            val destTargetTranslationDir = File(path, targetTranslationId)
+
+            // check if target already exists
+            conflictingTranslation = TargetTranslation.open(destTargetTranslationDir, null)
+        }
+        return conflictingTranslation
     }
 
     /**
@@ -524,68 +483,6 @@ class Translator @Inject constructor(
     }
 
     /**
-     * Ensures the name of the target translation directory matches the target translation id and corrects it if not
-     * If the destination already exists the file path will not be changed
-     * @param tt
-     */
-    fun normalizePath(tt: TargetTranslation): Boolean {
-        if (tt.path.name != tt.id) {
-            val dest = File(tt.path.parentFile, tt.id)
-            if (!dest.exists()) {
-                return FileUtilities.moveOrCopyQuietly(tt.path, dest)
-            }
-        }
-        return false
-    }
-
-    /**
-     * Returns an array of open source translation tabs on a target translation
-     * @param targetTranslationId
-     * @return
-     */
-    fun getOpenSourceTranslations(targetTranslationId: String): Array<String?> {
-        val idSet = prefRepository.getPrivatePref(
-            OPEN_SOURCE_TRANSLATIONS + targetTranslationId,
-            ""
-        )?.trim()
-
-        if (idSet.isNullOrEmpty()) {
-            return arrayOfNulls(0)
-        } else {
-            val ids: Array<String?> =
-                idSet.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()
-            for (i in ids.indices) {
-                ids[i] = Migration.migrateSourceTranslationSlug(ids[i])
-            }
-            return ids
-        }
-    }
-
-    /**
-     * Adds a source translation to the list of open tabs on a target translation
-     * @param targetTranslationId
-     * @param sourceTranslationId
-     */
-    fun addOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String?) {
-        if (!sourceTranslationId.isNullOrEmpty()) {
-            val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
-            var newIdSet: String? = ""
-            for (id in sourceTranslationIds) {
-                if (id != sourceTranslationId) {
-                    newIdSet += "$id|"
-                }
-            }
-            newIdSet += sourceTranslationId
-
-            prefRepository.setPrivatePref(
-                OPEN_SOURCE_TRANSLATIONS + targetTranslationId,
-                newIdSet
-            )
-        }
-    }
-
-    /**
      * Returns the last view mode of the target translation.
      * The default view mode will be returned if there is no recorded last view mode
      *
@@ -598,7 +495,7 @@ class Translator @Inject constructor(
                 LAST_VIEW_MODE + targetTranslationId,
                 TranslationViewMode.READ.name
             )
-            return TranslationViewMode.valueOf(modeName!!.uppercase(Locale.getDefault()))
+            return TranslationViewMode.valueOf(modeName.uppercase(Locale.getDefault()))
         } catch (e: Exception) {
         }
         return TranslationViewMode.READ
@@ -634,7 +531,7 @@ class Translator @Inject constructor(
      * @return
      */
     fun getLastFocusChapterId(targetTranslationId: String): String? {
-        return prefRepository.getPrivatePref(LAST_FOCUS_CHAPTER + targetTranslationId, null)
+        return prefRepository.getPrivatePref<String>(LAST_FOCUS_CHAPTER + targetTranslationId)
     }
 
     /**
@@ -643,32 +540,7 @@ class Translator @Inject constructor(
      * @return
      */
     fun getLastFocusFrameId(targetTranslationId: String): String? {
-        return prefRepository.getPrivatePref(LAST_FOCUS_FRAME + targetTranslationId, null)
-    }
-
-    /**
-     * Removes a source translation from the list of open tabs on a target translation
-     * @param targetTranslationId
-     * @param sourceTranslationId
-     */
-    fun removeOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String?) {
-        if (!sourceTranslationId.isNullOrEmpty()) {
-            val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
-            var newIdSet: String? = ""
-            for (id in sourceTranslationIds) {
-                if (id != sourceTranslationId) {
-                    if (newIdSet!!.isEmpty()) {
-                        newIdSet = id
-                    } else {
-                        newIdSet += "|$id"
-                    }
-                } else if (id == getSelectedSourceTranslationId(targetTranslationId)) {
-                    // unset the selected tab if it is removed
-                    setSelectedSourceTranslation(targetTranslationId, null)
-                }
-            }
-            prefRepository.setPrivatePref(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, newIdSet)
-        }
+        return prefRepository.getPrivatePref<String>(LAST_FOCUS_FRAME + targetTranslationId)
     }
 
     /**
@@ -686,7 +558,7 @@ class Translator @Inject constructor(
                 Migration.migrateSourceTranslationSlug(sourceTranslationId)
             )
         } else {
-            prefRepository.setPrivatePref(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
+            prefRepository.setPrivatePref<String>(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
         }
     }
 
@@ -697,11 +569,12 @@ class Translator @Inject constructor(
      * @return
      */
     fun getSelectedSourceTranslationId(targetTranslationId: String): String? {
-        var selectedSourceTranslationId =
-            prefRepository.getPrivatePref(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
+        var selectedSourceTranslationId = prefRepository.getPrivatePref<String>(
+            SELECTED_SOURCE_TRANSLATION + targetTranslationId
+        )
         if (selectedSourceTranslationId.isNullOrEmpty()) {
             // default to first tab
-            val openSourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
+            val openSourceTranslationIds = prefRepository.getOpenSourceTranslations(targetTranslationId)
             if (openSourceTranslationIds.isNotEmpty()) {
                 selectedSourceTranslationId = openSourceTranslationIds[0]
                 setSelectedSourceTranslation(targetTranslationId, selectedSourceTranslationId)
@@ -715,11 +588,11 @@ class Translator @Inject constructor(
      * @param targetTranslationId
      */
     fun clearTargetTranslationSettings(targetTranslationId: String) {
-        prefRepository.setPrivatePref(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
-        prefRepository.setPrivatePref(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, null)
-        prefRepository.setPrivatePref(LAST_FOCUS_FRAME + targetTranslationId, null)
-        prefRepository.setPrivatePref(LAST_FOCUS_CHAPTER + targetTranslationId, null)
-        prefRepository.setPrivatePref(LAST_VIEW_MODE + targetTranslationId, null)
+        prefRepository.setPrivatePref<String>(SELECTED_SOURCE_TRANSLATION + targetTranslationId, null)
+        prefRepository.setPrivatePref<String>(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, null)
+        prefRepository.setPrivatePref<String>(LAST_FOCUS_FRAME + targetTranslationId, null)
+        prefRepository.setPrivatePref<String>(LAST_FOCUS_CHAPTER + targetTranslationId, null)
+        prefRepository.setPrivatePref<String>(LAST_VIEW_MODE + targetTranslationId, null)
     }
 
     /**
@@ -754,11 +627,11 @@ class Translator @Inject constructor(
     }
 
     companion object {
-        private const val OPEN_SOURCE_TRANSLATIONS = "open_source_translations_"
-        private const val LAST_VIEW_MODE = "last_view_mode_"
-        private const val LAST_FOCUS_CHAPTER = "last_focus_chapter_"
-        private const val LAST_FOCUS_FRAME = "last_focus_frame_"
-        private const val SELECTED_SOURCE_TRANSLATION = "selected_source_translation_"
+        const val OPEN_SOURCE_TRANSLATIONS = "open_source_translations_"
+        const val LAST_VIEW_MODE = "last_view_mode_"
+        const val LAST_FOCUS_CHAPTER = "last_focus_chapter_"
+        const val LAST_FOCUS_FRAME = "last_focus_frame_"
+        const val SELECTED_SOURCE_TRANSLATION = "selected_source_translation_"
 
         const val EXTRA_SOURCE_DRAFT_TRANSLATION_ID: String = "extra_source_translation_id"
         const val EXTRA_TARGET_TRANSLATION_ID: String = "extra_target_translation_id"
@@ -840,19 +713,6 @@ class Translator @Inject constructor(
             // grab the last bit of text
             compiledString.append(text.toString().substring(lastIndex, text.length))
             return compiledString.toString().trim()
-        }
-
-        /**
-         * Check if file extension is supported archive extension
-         * @param fileName
-         * @return boolean
-         */
-        fun isValidArchiveExtension(fileName: String): Boolean {
-            val isTstudio =
-                FileUtilities.getExtension(fileName).equals(TSTUDIO_EXTENSION, ignoreCase = true)
-            val isZip = FileUtilities.getExtension(fileName).equals(ZIP_EXTENSION, ignoreCase = true)
-
-            return isTstudio || isZip
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App.Companion.recoverRepo
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.DownloadImages
@@ -21,6 +22,7 @@ import com.door43.usecases.GogsLogout
 import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.PushTargetTranslation
 import com.door43.usecases.RegisterSSHKeys
+import com.door43.util.RSAEncryption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,10 +30,14 @@ import kotlinx.coroutines.withContext
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.security.InvalidParameterException
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -49,6 +55,7 @@ class ExportViewModel @Inject constructor(
     @Inject lateinit var createRepository: CreateRepository
     @Inject lateinit var gogsLogout: GogsLogout
     @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var prefRepository: IPreferenceRepository
     @Inject lateinit var library: Door43Client
 
     private val _translation = MutableLiveData<TargetTranslation?>(null)
@@ -350,6 +357,77 @@ class ExportViewModel @Inject constructor(
         }
     }
 
+    fun initializeP2PKeys(): P2PKeys {
+        if (!directoryProvider.p2pPrivateKey.exists() || !directoryProvider.p2pPublicKey.exists()) {
+            generateP2PKeys()
+        }
+
+        val (privateKey, publicKey) = try {
+            Pair(
+                RSAEncryption.readPrivateKeyFromFile(directoryProvider.p2pPrivateKey),
+                RSAEncryption.readPublicKeyFromFile(directoryProvider.p2pPublicKey)
+            )
+        } catch (e: Exception) {
+            // try to regenerate the keys if loading fails
+            Logger.w(
+                this.javaClass.name,
+                "Failed to load the p2p keys. Attempting to regenerate...",
+                e
+            )
+            generateP2PKeys()
+            Pair(
+                RSAEncryption.readPrivateKeyFromFile(directoryProvider.p2pPrivateKey),
+                RSAEncryption.readPublicKeyFromFile(directoryProvider.p2pPublicKey)
+            )
+        }
+        return P2PKeys(privateKey, publicKey)
+    }
+
+    fun getTargetTranslationName(translationId: String?): String {
+        return translator.getTargetTranslation(translationId)?.let { targetTranslation ->
+            val sourceTranslation = library.index().getTranslation(targetTranslation.id)
+            return if (sourceTranslation != null) {
+                sourceTranslation.project.name + " - " + targetTranslation.targetLanguage.name
+            } else {
+                targetTranslation.projectId + " - " + targetTranslation.targetLanguage.name
+            }
+        } ?: ""
+    }
+
+    fun getProjectTitle(targetTranslation: TargetTranslation): String {
+        val project = library.index.getProject(
+            Locale.getDefault().language,
+            targetTranslation.projectId,
+            true
+        )
+        return if (project != null) {
+            project.name + " - " + targetTranslation.targetLanguageName
+        } else {
+            targetTranslation.projectId + " - " + targetTranslation.targetLanguageName
+        }
+    }
+
+    fun getProject(targetTranslationId: String?): Project? {
+        return library.index.getProject(
+            Locale.getDefault().language,
+            targetTranslationId
+        )
+    }
+
+    fun getTranslation(sourceTranslationId: String): Translation? {
+        return library.index.getTranslation(sourceTranslationId)
+    }
+
+    fun getOpenSourceTranslations(targetTranslationId: String?): Array<String> {
+        return targetTranslationId?.let {
+            prefRepository.getOpenSourceTranslations(it)
+        } ?: arrayOf()
+    }
+
+    private fun generateP2PKeys() {
+        RSAEncryption.generateKeys(directoryProvider.p2pPrivateKey, directoryProvider.p2pPublicKey)
+    }
+
     fun clearResults() {
         _exportResult.value = null
         _downloadResult.value = null
@@ -358,5 +436,7 @@ class ExportViewModel @Inject constructor(
     companion object {
         const val TAG = "BackupViewModel"
     }
+
+    data class P2PKeys(val privateKey: PrivateKey, val publicKey: PublicKey)
 
 }

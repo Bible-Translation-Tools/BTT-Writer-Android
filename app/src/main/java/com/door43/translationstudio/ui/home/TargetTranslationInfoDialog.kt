@@ -11,6 +11,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -42,6 +45,8 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
 
     private val viewModel: HomeViewModel by activityViewModels()
 
+    private lateinit var changeTargetLanguageLauncher: ActivityResultLauncher<Intent>
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -64,6 +69,12 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
                 dismiss()
                 return binding.root
             }
+        }
+
+        changeTargetLanguageLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            onChangeTargetLanguageRequest(result)
         }
 
         targetTranslation?.let { item ->
@@ -115,8 +126,11 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
                             item.translation.targetLanguage.slug
                         )
                     )
-                    intent.putExtra(NewTargetTranslationActivity.EXTRA_CHANGE_TARGET_LANGUAGE_ONLY, true)
-                    startActivityForResult(intent, CHANGE_TARGET_TRANSLATION_LANGUAGE)
+                    intent.putExtra(
+                        NewTargetTranslationActivity.EXTRA_CHANGE_TARGET_LANGUAGE_ONLY,
+                        true
+                    )
+                    changeTargetLanguageLauncher.launch(intent)
                 }
 
                 deleteButton.setOnClickListener {
@@ -256,22 +270,18 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (CHANGE_TARGET_TRANSLATION_LANGUAGE == requestCode) {
-            if (NewTargetTranslationActivity.RESULT_MERGE_CONFLICT == resultCode) {
-                val targetTranslationID =
-                    data!!.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID)
-                if (targetTranslationID != null) {
-                    val activity: Activity? = activity
-                    if (activity is HomeActivity) {
-                        activity.doManualMerge(targetTranslationID)
-                    }
+    private fun onChangeTargetLanguageRequest(result: ActivityResult) {
+        if (NewTargetTranslationActivity.RESULT_MERGE_CONFLICT == result.resultCode) {
+            val targetTranslationID =
+                result.data!!.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID)
+            if (targetTranslationID != null) {
+                val activity: Activity? = activity
+                if (activity is HomeActivity) {
+                    activity.doManualMerge(targetTranslationID)
                 }
             }
-
-            dismiss()
         }
+        dismiss()
     }
 
     override fun onDestroy() {
@@ -292,6 +302,5 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
 
     companion object {
         const val ARG_TARGET_TRANSLATION_ID: String = "target_translation_id"
-        const val CHANGE_TARGET_TRANSLATION_LANGUAGE: Int = 2
     }
 }

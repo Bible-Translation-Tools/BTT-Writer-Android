@@ -66,12 +66,13 @@ public class MergeConflictsHandler {
      * @param targetTranslationId
      * @return
      */
-    static public boolean isTranslationMergeConflicted(String targetTranslationId) {
+    static public boolean isTranslationMergeConflicted(
+            String targetTranslationId,
+            Translator translator
+    ) {
         if(targetTranslationId == null) {
             return false;
         }
-
-        Translator translator = App.getTranslator();
 
         TargetTranslation targetTranslation = translator.getTargetTranslation(targetTranslationId);
         if(targetTranslation == null) {
@@ -113,13 +114,17 @@ public class MergeConflictsHandler {
      * @param targetTranslationId
      * @param listener
      */
-    public static void backgroundTestForConflictedChunks(final String targetTranslationId, final OnMergeConflictListener listener) {
+    public static void backgroundTestForConflictedChunks(
+            final String targetTranslationId,
+            final Translator translator,
+            final OnMergeConflictListener listener
+            ) {
         ManagedTask task = new ManagedTask() {
             @Override
             public void start() {
                 try {
                     if(interrupted()) return;
-                    boolean conflicted = MergeConflictsHandler.isTranslationMergeConflicted(targetTranslationId);
+                    boolean conflicted = MergeConflictsHandler.isTranslationMergeConflicted(targetTranslationId, translator);
                     setResult(conflicted);
                 } catch (Exception e) {
                     e.printStackTrace();

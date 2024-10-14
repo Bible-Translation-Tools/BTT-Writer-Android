@@ -1,11 +1,14 @@
 package com.door43.usecases
 
+import android.content.Context
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.tasks.io.OkHttpRequest
 import com.door43.translationstudio.tasks.io.RequestAPI
 import com.door43.translationstudio.ui.SettingsActivity
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.unfoldingword.gogsclient.User
@@ -13,6 +16,7 @@ import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 class GogsLogout @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val profile: Profile,
     private val prefs: IPreferenceRepository
 ) {
@@ -28,7 +32,7 @@ class GogsLogout @Inject constructor(
 
         val apiUrl = prefs.getDefaultPref(
             SettingsActivity.KEY_PREF_GOGS_API,
-            R.string.pref_default_gogs_api
+            context.resources.getString(R.string.pref_default_gogs_api)
         )
         val requester: RequestAPI = OkHttpRequest(apiUrl)
         val tokenId: Int = getTokenId(user, requester, tokenName)

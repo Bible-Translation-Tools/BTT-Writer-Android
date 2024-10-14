@@ -2,13 +2,16 @@ package com.door43.translationstudio.ui
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.lifecycle.lifecycleScope
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.databinding.ActivityTermsBinding
-import com.door43.translationstudio.tasks.LogoutTask
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.legal.LegalDocumentActivity
+import com.door43.usecases.GogsLogout
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.unfoldingword.tools.taskmanager.ManagedTask
 import org.unfoldingword.tools.taskmanager.TaskManager
 import javax.inject.Inject
@@ -19,6 +22,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class TermsOfUseActivity : BaseActivity(), ManagedTask.OnFinishedListener {
     @Inject lateinit var profile: Profile
+    @Inject lateinit var logout: GogsLogout
 
     private lateinit var binding: ActivityTermsBinding
 
@@ -41,11 +45,12 @@ class TermsOfUseActivity : BaseActivity(), ManagedTask.OnFinishedListener {
 
             with(binding) {
                 rejectTermsBtn.setOnClickListener { // log out
-                    val user = profile.gogsUser
-                    val task = LogoutTask(user)
-                    TaskManager.addTask(task, LogoutTask.TASK_ID)
-                    task.addOnFinishedListener(this@TermsOfUseActivity)
-                    profile.logout()
+                    lifecycleScope.launch {
+                        launch(Dispatchers.IO) {
+                            logout.execute()
+                            profile.logout()
+                        }
+                    }
 
                     // return to login
                     val intent = Intent(

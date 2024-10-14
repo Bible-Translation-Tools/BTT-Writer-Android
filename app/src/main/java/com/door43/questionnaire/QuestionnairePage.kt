@@ -1,26 +1,19 @@
-package com.door43.questionnaire;
+package com.door43.questionnaire
 
-import androidx.annotation.Nullable;
-
-import org.unfoldingword.door43client.models.Question;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import org.unfoldingword.door43client.models.Question
 
 /**
  * Represents a page of questions in questionnaire pager
  */
-public class QuestionnairePage {
-    private Map<Long, Question> questions = new LinkedHashMap<>();
+class QuestionnairePage {
+    private val questions: MutableMap<Long, Question> = LinkedHashMap()
 
     /**
      * Adds a question to this page
      * @param question
      */
-    public void addQuestion(Question question) {
-        this.questions.put(question.tdId, question);
+    fun addQuestion(question: Question) {
+        questions[question.tdId] = question
     }
 
     /**
@@ -28,37 +21,35 @@ public class QuestionnairePage {
      * @param id
      * @return
      */
-    public boolean containsQuestion(long id) {
-        return this.questions.containsKey(id);
+    fun containsQuestion(id: Long): Boolean {
+        return questions.containsKey(id)
     }
 
     /**
      * Returns the questions on this page
      * @return
      */
-    public List<Question> getQuestions() {
-        return new ArrayList<>(this.questions.values());
+    fun getQuestions(): List<Question> {
+        return ArrayList(questions.values)
     }
 
-    /**
-     * Returns the number of questions on this page
-     * @return
-     */
-    public int getNumQuestions() {
-        return this.questions.size();
-    }
+    val numQuestions: Int
+        /**
+         * Returns the number of questions on this page
+         * @return
+         */
+        get() = questions.size
 
     /**
      * Returns the question on this page by position
      * @param position
      * @return
      */
-    @Nullable
-    public Question getQuestion(int position) {
-        if(position >= 0 && position < getNumQuestions()) {
-            return getQuestions().get(position);
+    fun getQuestion(position: Int): Question? {
+        if (position in 0 until numQuestions) {
+            return getQuestions()[position]
         }
-        return null;
+        return null
     }
 
     /**
@@ -66,9 +57,8 @@ public class QuestionnairePage {
      * @param id
      * @return
      */
-    @Nullable
-    public Question getQuestionById(long id) {
-        return this.questions.get(id);
+    fun getQuestionById(id: Long): Question? {
+        return questions[id]
     }
 
     /**
@@ -76,15 +66,15 @@ public class QuestionnairePage {
      * @param questionId
      * @return
      */
-    public int indexOf(long questionId) {
-        return new ArrayList<>(questions.keySet()).indexOf(questionId);
+    fun indexOf(questionId: Long): Int {
+        return ArrayList(questions.keys).indexOf(questionId)
     }
 
     /**
      * Removes a question from the page
      * @param questionId
      */
-    public void removeQuestion(long questionId) {
-        questions.remove(questionId);
+    fun removeQuestion(questionId: Long) {
+        questions.remove(questionId)
     }
 }

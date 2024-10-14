@@ -32,7 +32,7 @@ public class LoginDoor43Task extends ManagedTask {
     private final String tokenName;
     private final String fullName;
     private User user = null;
-    private String apiUrl = App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api);
+    private String apiUrl = "";//App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api);
 
     /**
      * Logs into a door43 account

@@ -2,17 +2,17 @@ package com.door43.translationstudio.core
 
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.setDefaultPref
 import com.door43.util.FileUtilities
 import org.json.JSONException
 import org.json.JSONObject
 import org.unfoldingword.gogsclient.Token
 import org.unfoldingword.gogsclient.User
-import javax.inject.Inject
 
 /**
  * Represents a single user profile
  */
-class Profile @Inject constructor(
+class Profile(
     private val prefs: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider
 ) {
@@ -28,6 +28,22 @@ class Profile @Inject constructor(
      * Returns the gogs user associated with this profile
      */
     var gogsUser: User? = null
+
+    val currentUser: String
+        get() {
+            var userName: String? = null
+            if (gogsUser != null) {
+                userName = gogsUser!!.username
+            }
+            if (userName == null) {
+                userName = fullName
+            }
+
+            if (userName == null) {
+                userName = ""
+            }
+            return userName
+        }
 
     /**
      * Returns the version of the terms of use accepted last time
@@ -98,7 +114,7 @@ class Profile @Inject constructor(
      * Deletes the profile from the preferences
      */
     private fun deleteProfile() {
-        prefs.setDefaultPref("profile", null)
+        prefs.setDefaultPref<String>("profile", null)
         FileUtilities.deleteQuietly(directoryProvider.sshKeysDir)
     }
 

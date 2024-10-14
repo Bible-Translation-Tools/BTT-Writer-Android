@@ -1,81 +1,81 @@
-package com.door43.translationstudio.ui.newtranslation;
+package com.door43.translationstudio.ui.newtranslation
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ListView;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.Searchable;
-import com.door43.translationstudio.ui.BaseFragment;
-import com.door43.translationstudio.App;
-
-import org.unfoldingword.door43client.models.TargetLanguage;
+import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import androidx.fragment.app.activityViewModels
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentLanguageListBinding
+import com.door43.translationstudio.ui.BaseFragment
+import com.door43.translationstudio.ui.Searchable
+import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
+import org.unfoldingword.door43client.models.TargetLanguage
 
 /**
  * Created by joel on 9/4/2015.
  */
-public class TargetLanguageListFragment extends BaseFragment implements Searchable {
-    private OnItemClickListener mListener;
-    private TargetLanguageAdapter mAdapter;
+class TargetLanguageListFragment : BaseFragment(), Searchable {
+    private var listener: OnItemClickListener? = null
+    private val adapter by lazy { TargetLanguageAdapter() }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_language_list, container, false);
+    private var _binding: FragmentLanguageListBinding? = null
+    private val binding get() = _binding!!
 
-        ListView list = (ListView) rootView.findViewById(R.id.list);
-        mAdapter = new TargetLanguageAdapter(getActivity(), App.getLibrary().index.getTargetLanguages());
-        Bundle args = getArguments();
-        if(args != null) {
-            String[] disabledLanguages = args.getStringArray(NewTargetTranslationActivity.EXTRA_DISABLED_LANGUAGES);
-            if(disabledLanguages != null) {
-                mAdapter.setDisabledLanguages(disabledLanguages);
+    private val viewModel: NewTargetTranslationModel by activityViewModels()
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentLanguageListBinding.inflate(inflater, container, false)
+
+        with(binding) {
+            adapter.setLanguages(viewModel.getTargetLanguages())
+            val args = arguments
+            if (args != null) {
+                val disabledLanguages = args.getStringArray(
+                    NewTargetTranslationActivity.EXTRA_DISABLED_LANGUAGES
+                ) ?: arrayOf()
+                adapter.setDisabledLanguages(disabledLanguages.toList())
             }
-        }
-        list.setAdapter(mAdapter);
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(!mAdapter.isItemDisabled(position)) {
-                    mListener.onItemClick(mAdapter.getItem(position));
+            list.adapter = adapter
+            list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                if (!adapter.isItemDisabled(position)) {
+                    listener?.onItemClick(adapter.getItem(position))
                 }
             }
-        });
+            search.searchText.setHint(R.string.choose_target_language)
+            search.searchText.isEnabled = false
+            search.searchBackButton.visibility = View.GONE
+            search.searchMagIcon.visibility = View.GONE
+        }
 
-        EditText searchView = (EditText) rootView.findViewById(R.id.search_text);
-        searchView.setHint(R.string.choose_target_language);
-        searchView.setEnabled(false);
-        ImageButton searchBackButton = (ImageButton) rootView.findViewById(R.id.search_back_button);
-        searchBackButton.setVisibility(View.GONE);
-        ImageView searchIcon = (ImageView) rootView.findViewById(R.id.search_mag_icon);
-        searchIcon.setVisibility(View.GONE);
-
-        return rootView;
+        return binding.root
     }
 
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         try {
-            this.mListener = (OnItemClickListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement OnItemClickListener");
+            listener = activity as OnItemClickListener
+        } catch (e: ClassCastException) {
+            throw ClassCastException("$activity must implement OnItemClickListener")
         }
     }
 
-    @Override
-    public void onSearchQuery(String query) {
-        if(mAdapter != null) {
-            mAdapter.getFilter().filter(query);
-        }
+    override fun onSearchQuery(query: String) {
+        adapter.getFilter().filter(query)
     }
 
-    public interface OnItemClickListener {
-        void onItemClick(TargetLanguage targetLanguage);
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    interface OnItemClickListener {
+        fun onItemClick(targetLanguage: TargetLanguage)
     }
 }

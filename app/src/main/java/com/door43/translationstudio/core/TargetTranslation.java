@@ -11,7 +11,6 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.tools.logger.Logger;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
 import com.door43.util.NumericStringComparator;
@@ -286,10 +285,11 @@ public class TargetTranslation {
     /**
      * Opens an existing target translation.
      * @param targetTranslationDir
+     * @param onError An action to take if there is an error opening this translation
      * @return null if the directory does not exist or the manifest is invalid
      */
     @Nullable
-    public static TargetTranslation open(File targetTranslationDir) {
+    public static TargetTranslation open(File targetTranslationDir, @Nullable OnError onError) {
         if(targetTranslationDir != null && targetTranslationDir.exists()) {
             File manifestFile = new File(targetTranslationDir, "manifest.json");
             if (manifestFile.exists()) {
@@ -303,12 +303,8 @@ public class TargetTranslation {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    // Try to backup and delete corrupt project
-                    try {
-                        App.backupTargetTranslation(targetTranslationDir);
-                        App.getTranslator().deleteTargetTranslation(targetTranslationDir);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                    if (onError != null) {
+                        onError.doAction();
                     }
                 }
             } else {
@@ -1168,12 +1164,13 @@ public class TargetTranslation {
     /**
      * Merges a local repository into this one
      * @param newDir
+     * @param onError An action to take if there is an error opening this translation
      * @return boolean false if there were merge conflicts
      * @throws Exception
      */
-    public boolean merge(File newDir) throws Exception {
+    public boolean merge(File newDir, OnError onError) throws Exception {
         // commit everything
-        TargetTranslation importedTargetTranslation = TargetTranslation.open(newDir);
+        TargetTranslation importedTargetTranslation = TargetTranslation.open(newDir, onError);
         if(importedTargetTranslation != null) {
             importedTargetTranslation.commitSync();
         }
@@ -1248,6 +1245,16 @@ public class TargetTranslation {
     }
 
     /**
+     * Returns the new language request if one exists
+     * @return
+     */
+    @Nullable
+    public NewLanguageRequest getNewLanguageRequest(Context context) {
+        File requestFile = new File(getPath(), "new_language.json");
+        return new NewLanguageRequest.Builder(context).fromFile(requestFile).build();
+    }
+
+    /**
      * Sets the new language request that represents the temporary language code being used by this target translation
      * @param request
      * @throws IOException
@@ -1255,29 +1262,13 @@ public class TargetTranslation {
     public void setNewLanguageRequest(NewLanguageRequest request) throws IOException {
         File requestFile = new File(getPath(), "new_language.json");
         if(request != null) {
-            FileUtilities.writeStringToFile(requestFile, request.toJson());
+            String json = request.toJson();
+            if (json != null) {
+                FileUtilities.writeStringToFile(requestFile, json);
+            }
         } else if(requestFile.exists()) {
             FileUtilities.safeDelete(requestFile);
         }
-    }
-
-    /**
-     * Returns the new language request if one exists
-     * @return
-     * @throws IOException
-     */
-    @Nullable
-    public NewLanguageRequest getNewLanguageRequest() {
-        File requestFile = new File(getPath(), "new_language.json");
-        if(requestFile.exists()) {
-            try {
-                String data = FileUtilities.readFileToString(requestFile);
-                return NewLanguageRequest.generate(data);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
     }
 
     /**
@@ -1529,7 +1520,21 @@ public class TargetTranslation {
         return frameTranslations.toArray(new FrameTranslation[frameTranslations.size()]);
     }
 
+    public Boolean normalizePath() {
+        if (!getPath().getName().equals(getId())) {
+            File dest = new File(getPath().getParentFile(), getId());
+            if (!dest.exists()) {
+                return FileUtilities.moveOrCopyQuietly(getPath(), dest);
+            }
+        }
+        return false;
+    }
+
     public interface OnCommitListener {
         void onCommit(boolean success);
+    }
+
+    public interface OnError {
+        void doAction();
     }
 }

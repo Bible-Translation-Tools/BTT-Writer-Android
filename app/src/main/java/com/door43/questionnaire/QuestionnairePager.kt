@@ -1,26 +1,13 @@
-package com.door43.questionnaire;
+package com.door43.questionnaire
 
-import androidx.annotation.Nullable;
-
-import org.unfoldingword.door43client.models.Question;
-import org.unfoldingword.door43client.models.Questionnaire;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.unfoldingword.door43client.models.Question
+import org.unfoldingword.door43client.models.Questionnaire
 
 /**
  * paginates a questionnaire
  */
-
-public class QuestionnairePager {
-
-    public final Questionnaire questionnaire;
-    private final static int QUESTIONS_PER_PAGE = 3;
-    public List<QuestionnairePage> pages = new ArrayList<>();
-
-    public QuestionnairePager(Questionnaire questionnaire) {
-        this.questionnaire = questionnaire;
-    }
+class QuestionnairePager(val questionnaire: Questionnaire) {
+    private var pages: MutableList<QuestionnairePage> = ArrayList()
 
     /**
      * Checks if a data field exists.
@@ -28,8 +15,8 @@ public class QuestionnairePager {
      * @param key
      * @return
      */
-    public boolean hasDataField(String key) {
-        return questionnaire.dataFields.containsKey(key);
+    fun hasDataField(key: String): Boolean {
+        return questionnaire.dataFields.containsKey(key)
     }
 
     /**
@@ -37,62 +24,68 @@ public class QuestionnairePager {
      * @param key
      * @return
      */
-    public long getDataField(String key) {
-        return questionnaire.dataFields.get(key);
+    fun getDataField(key: String): Long? {
+        return questionnaire.dataFields[key]
     }
 
     /**
      * Loads the questions in pages
      * @param questions these questions should already be sorted correctly
      */
-    public void loadQuestions(List<Question> questions) {
-        pages = new ArrayList<>();
-        List<Long> questionsAdded = new ArrayList<>();
-        QuestionnairePage currentPage = new QuestionnairePage();
+    fun loadQuestions(questions: List<Question>) {
+        pages = ArrayList()
+        val questionsAdded: MutableList<Long> = ArrayList()
+        var currentPage = QuestionnairePage()
 
-        for(Question q:questions) {
-            if(!currentPage.containsQuestion(q.dependsOn) && currentPage.getNumQuestions() >= QUESTIONS_PER_PAGE) {
-                // close full page
-                pages.add(currentPage);
-                currentPage = new QuestionnairePage();
-            } else if(!currentPage.containsQuestion(q.dependsOn) && questionsAdded.contains(q.dependsOn)) {
-                // add out of order question to correct page
-                boolean placedQuestion = false;
-                for(QuestionnairePage processedPage:pages) {
-                    if(processedPage.containsQuestion(q.dependsOn)) {
-                        processedPage.addQuestion(q);
-                        placedQuestion = true;
-                        break;
+        for (q in questions) {
+            val inCurrentPage = currentPage.containsQuestion(q.dependsOn)
+            val questionAdded = questionsAdded.contains(q.tdId)
+            val currentQuestion = currentPage.getQuestionById(q.dependsOn)
+            val currentIndex = currentPage.indexOf(q.dependsOn)
+
+            when {
+                !inCurrentPage && currentPage.numQuestions >= QUESTIONS_PER_PAGE -> {
+                    // close full page
+                    pages.add(currentPage)
+                    currentPage = QuestionnairePage()
+                }
+                !inCurrentPage && questionAdded -> {
+                    // add out of order question to correct page
+                    var placedQuestion = false
+                    for (processedPage in pages) {
+                        if (processedPage.containsQuestion(q.dependsOn)) {
+                            processedPage.addQuestion(q)
+                            placedQuestion = true
+                            break
+                        }
+                    }
+                    if (placedQuestion) {
+                        questionsAdded.add(q.tdId)
+                        continue
                     }
                 }
-                if(placedQuestion) {
-                    questionsAdded.add(q.tdId);
-                    continue;
+                inCurrentPage && currentQuestion != null && currentQuestion.dependsOn < 0 && currentIndex > 0 -> {
+                    // place non-dependent reliant question in it's own page
+                    currentPage.removeQuestion(q.dependsOn)
+
+                    // close page
+                    pages.add(currentPage)
+                    currentPage = QuestionnairePage()
+
+                    // add questions to page
+                    currentPage.addQuestion(currentQuestion)
+                    currentPage.addQuestion(q)
+                    questionsAdded.add(q.tdId)
+                    continue
                 }
-            } else if(currentPage.containsQuestion(q.dependsOn)
-                    && currentPage.getQuestionById(q.dependsOn).dependsOn < 0
-                    && currentPage.indexOf(q.dependsOn) > 0) {
-                // place non-dependent reliant question in it's own page
-                Question reliantQuestion = currentPage.getQuestionById(q.dependsOn);
-                currentPage.removeQuestion(q.dependsOn);
-
-                // close page
-                pages.add(currentPage);
-                currentPage = new QuestionnairePage();
-
-                // add questions to page
-                currentPage.addQuestion(reliantQuestion);
-                currentPage.addQuestion(q);
-                questionsAdded.add(q.tdId);
-                continue;
             }
 
             // add question to page
-            currentPage.addQuestion(q);
-            questionsAdded.add(q.tdId);
+            currentPage.addQuestion(q)
+            questionsAdded.add(q.tdId)
         }
-        if(currentPage.getNumQuestions() > 0) {
-            pages.add(currentPage);
+        if (currentPage.numQuestions > 0) {
+            pages.add(currentPage)
         }
     }
 
@@ -100,8 +93,8 @@ public class QuestionnairePager {
      * Returns the number of pages
      * @return
      */
-    public int size() {
-        return pages.size();
+    fun size(): Int {
+        return pages.size
     }
 
     /**
@@ -109,12 +102,11 @@ public class QuestionnairePager {
      * @param position
      * @return
      */
-    @Nullable
-    public QuestionnairePage getPage(int position) {
-        if(position >= 0 && position < size()) {
-            return pages.get(position);
+    fun getPage(position: Int): QuestionnairePage? {
+        if (position >= 0 && position < size()) {
+            return pages[position]
         }
-        return null;
+        return null
     }
 
     /**
@@ -122,13 +114,16 @@ public class QuestionnairePager {
      * @param tdId
      * @return
      */
-    @Nullable
-    public Question getQuestion(long tdId) {
-        for(QuestionnairePage page:pages) {
-            for(Question question:page.getQuestions()) {
-                if(question.tdId == tdId) return question;
+    fun getQuestion(tdId: Long): Question? {
+        for (page in pages) {
+            for (question in page.getQuestions()) {
+                if (question.tdId == tdId) return question
             }
         }
-        return null;
+        return null
+    }
+
+    companion object {
+        private const val QUESTIONS_PER_PAGE = 3
     }
 }

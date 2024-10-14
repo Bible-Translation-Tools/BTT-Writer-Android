@@ -1,44 +1,46 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import android.content.res.AssetManager;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.rendering.USXtoUSFMConverter;
-import com.door43.util.FileUtilities;
-import com.door43.util.Manifest;
-import com.door43.util.StringUtilities;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.unfoldingword.door43client.models.TargetLanguage;
-
-import org.unfoldingword.resourcecontainer.Project;
+import android.content.Context
+import com.door43.data.IDirectoryProvider
+import com.door43.data.ILanguageRequestRepository
+import com.door43.translationstudio.rendering.USXtoUSFMConverter
+import com.door43.util.FileUtilities.copyInputStreamToFile
+import com.door43.util.FileUtilities.deleteQuietly
+import com.door43.util.FileUtilities.moveOrCopyQuietly
+import com.door43.util.FileUtilities.readFileToString
+import com.door43.util.FileUtilities.safeDelete
+import com.door43.util.FileUtilities.writeStringToFile
+import com.door43.util.Manifest
+import dagger.hilt.android.qualifiers.ApplicationContext
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.door43client.models.TargetLanguage
+import org.unfoldingword.resourcecontainer.Resource
+import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.tools.logger.Logger
+import java.io.File
+import java.io.IOException
+import java.util.Arrays
+import java.util.Locale
+import javax.inject.Inject
 
 /**
  * Created by joel on 11/4/2015.
  */
-public class TargetTranslationMigrator {
+class TargetTranslationMigrator @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val directoryProvider: IDirectoryProvider,
+    private val languageRequestRepository: ILanguageRequestRepository,
+    private val library: Door43Client
+) {
 
-    private static final String MANIFEST_FILE = "manifest.json";
-    public static final String LICENSE = "LICENSE";
-    public static final String TAG = "TargetTranslationMigrator";
+    companion object {
+        private const val MANIFEST_FILE = "manifest.json"
+        const val LICENSE: String = "LICENSE"
+        const val TAG: String = "TargetTranslationMigrator"
+    }
 
     /**
      * Performs a migration on a manifest object.
@@ -46,25 +48,26 @@ public class TargetTranslationMigrator {
      * @param manifestJson
      * @return
      */
-    public static JSONObject migrateManifest(JSONObject manifestJson) {
-        File tempDir = new File(App.context().getCacheDir(), System.currentTimeMillis() + "");
+    fun migrateManifest(manifestJson: JSONObject): JSONObject? {
+        val tempDir = directoryProvider.createTempDir(System.currentTimeMillis().toString())
         // TRICKY: the migration can change the name of the translation dir so we nest it to avoid conflicts.
-        File fakeTranslationDir = new File(tempDir, "translation");
-        fakeTranslationDir.mkdirs();
-        JSONObject migratedManifest = null;
+        val fakeTranslationDir = File(tempDir, "translation")
+        fakeTranslationDir.mkdirs()
+        var migratedManifest: JSONObject? = null
         try {
-            FileUtilities.writeStringToFile(new File(fakeTranslationDir, "manifest.json"), manifestJson.toString());
-            fakeTranslationDir = migrate(fakeTranslationDir);
-            if(fakeTranslationDir != null) {
-                migratedManifest = new JSONObject(FileUtilities.readFileToString(new File(fakeTranslationDir, "manifest.json")));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            val manifestFile = File(fakeTranslationDir, MANIFEST_FILE)
+            writeStringToFile(manifestFile, manifestJson.toString())
+            migrate(fakeTranslationDir, manifestFile)
+            migratedManifest = JSONObject(
+                readFileToString(manifestFile)
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
         } finally {
             // clean up
-            FileUtilities.deleteQuietly(tempDir);
+            deleteQuietly(tempDir)
         }
-        return migratedManifest;
+        return migratedManifest
     }
 
     /**
@@ -72,117 +75,164 @@ public class TargetTranslationMigrator {
      * @param targetTranslationDir
      * @return the target translation dir. Null if the migration failed
      */
-    public static File migrate(File targetTranslationDir) {
-        File migratedDir = targetTranslationDir;
-        File manifestFile = new File(targetTranslationDir, MANIFEST_FILE);
+    fun migrate(
+        targetTranslationDir: File,
+        manifestFile: File = File(targetTranslationDir, MANIFEST_FILE)
+    ): Boolean {
+        var success = false
+
         try {
-            JSONObject manifest = new JSONObject(FileUtilities.readFileToString(manifestFile));
-            int packageVersion = 2; // default to version 2 if no package version is available
-            if(manifest.has("package_version")) {
-                packageVersion = manifest.getInt("package_version");
+            val manifest = JSONObject(readFileToString(manifestFile))
+            var packageVersion = 2 // default to version 2 if no package version is available
+            if (manifest.has("package_version")) {
+                packageVersion = manifest.getInt("package_version")
             }
-            switch (packageVersion) {
-                case 2:
-                    migratedDir = v2(migratedDir);
-                    if (migratedDir == null) break;
-                case 3:
-                    migratedDir = v3(migratedDir);
-                    if (migratedDir == null) break;
-                case 4:
-                    migratedDir = v4(migratedDir);
-                    if (migratedDir == null) break;
-                case 5:
-                    migratedDir = v5(migratedDir);
-                    if (migratedDir == null) break;
-                case 6:
-                    migratedDir = v6(migratedDir);
-                    if (migratedDir == null) break;
-                case 7:
-                    migratedDir = v7(migratedDir);
-                    if (migratedDir == null) break;
-                default:
-                    if (migratedDir != null && !validateTranslationType(migratedDir)) {
-                        migratedDir = null;
+            when (packageVersion) {
+                2 -> {
+                    v2(targetTranslationDir)
+                    v3(targetTranslationDir)
+                    v4(targetTranslationDir)
+                    v5(targetTranslationDir)
+                    v6(targetTranslationDir)
+                    v7(targetTranslationDir)
+                    if (validateTranslationType(targetTranslationDir)) {
+                        success = true
                     }
+                }
+                3 -> {
+                    v3(targetTranslationDir)
+                    v4(targetTranslationDir)
+                    v5(targetTranslationDir)
+                    v6(targetTranslationDir)
+                    v7(targetTranslationDir)
+                    if (validateTranslationType(targetTranslationDir)) {
+                        success = true
+                    }
+                }
+                4 -> {
+                    v4(targetTranslationDir)
+                    v5(targetTranslationDir)
+                    v6(targetTranslationDir)
+                    v7(targetTranslationDir)
+                    if (validateTranslationType(targetTranslationDir)) {
+                        success = true
+                    }
+                }
+                5 -> {
+                    v5(targetTranslationDir)
+                    v6(targetTranslationDir)
+                    v7(targetTranslationDir)
+                    if (validateTranslationType(targetTranslationDir)) {
+                        success = true
+                    }
+                }
+                6 -> {
+                    v6(targetTranslationDir)
+                    v7(targetTranslationDir)
+                    if (validateTranslationType(targetTranslationDir)) {
+                        success = true
+                    }
+                }
+                7 -> {
+                    v7(targetTranslationDir)
+                    if (validateTranslationType(targetTranslationDir)) {
+                        success = true
+                    }
+                }
+                else -> if (validateTranslationType(targetTranslationDir)) {
+                    success = true
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            migratedDir = null;
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        if(migratedDir != null) {
+        if (success) {
             // import new language requests
-            TargetTranslation tt = TargetTranslation.open(targetTranslationDir);
-            if(tt != null) {
-                NewLanguageRequest newRequest = tt.getNewLanguageRequest();
-                if(newRequest != null) {
-                    TargetLanguage approvedTargetLanguage = App.getLibrary().index.getApprovedTargetLanguage(newRequest.tempLanguageCode);
-                    if(approvedTargetLanguage != null) {
+            val tt = TargetTranslation.open(targetTranslationDir, null)
+            if (tt != null) {
+                val newRequest = tt.getNewLanguageRequest(context)
+                if (newRequest != null) {
+                    val approvedTargetLanguage = library.index.getApprovedTargetLanguage(
+                        newRequest.tempLanguageCode
+                    )
+                    if (approvedTargetLanguage != null) {
                         // this language request has already been approved so let's migrate it
                         try {
-                            tt.setNewLanguageRequest(null);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            tt.setNewLanguageRequest(null)
+                        } catch (e: IOException) {
+                            e.printStackTrace()
                         }
-                        TargetLanguage originalTargetLanguage = tt.getTargetLanguage();
-                        tt.changeTargetLanguage(approvedTargetLanguage);
-                        if(App.getTranslator().normalizePath(tt)) {
-                            Logger.i(TAG, "Migrated target language of target translation " + tt.getId() + " to " + approvedTargetLanguage.slug);
+                        val originalTargetLanguage = tt.targetLanguage
+                        tt.changeTargetLanguage(approvedTargetLanguage)
+                        if (tt.normalizePath()) {
+                            Logger.i(
+                                TAG,
+                                "Migrated target language of target translation " + tt.id + " to " + approvedTargetLanguage.slug
+                            )
                         } else {
                             // revert if normalization failed
-                            tt.changeTargetLanguage(originalTargetLanguage);
+                            tt.changeTargetLanguage(originalTargetLanguage)
                         }
                     } else {
-                        NewLanguageRequest existingRequest = App.getNewLanguageRequest(newRequest.tempLanguageCode);
-                        if(existingRequest == null) {
+                        val existingRequest = languageRequestRepository.getNewLanguageRequest(newRequest.tempLanguageCode)
+                        if (existingRequest == null) {
                             // we don't have this language request
-                            Logger.i(TAG, "Importing language request " + newRequest.tempLanguageCode + " from " + tt.getId());
-                            App.addNewLanguageRequest(newRequest);
+                            Logger.i(
+                                TAG,
+                                "Importing language request " + newRequest.tempLanguageCode + " from " + tt.id
+                            )
+                            languageRequestRepository.addNewLanguageRequest(newRequest)
                         } else {
                             // we already have this language request
-                            if (existingRequest.getSubmittedAt() > 0 && newRequest.getSubmittedAt() == 0) {
+                            if (existingRequest.submittedAt > 0 && newRequest.submittedAt == 0L) {
                                 // indicated this language request has been submitted
-                                newRequest.setSubmittedAt(existingRequest.getSubmittedAt());
+                                newRequest.submittedAt = existingRequest.submittedAt
                                 try {
-                                    tt.setNewLanguageRequest(newRequest);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                                    tt.setNewLanguageRequest(newRequest)
+                                } catch (e: IOException) {
+                                    e.printStackTrace()
                                 }
-                            } else if (existingRequest.getSubmittedAt() == 0 && newRequest.getSubmittedAt() > 0) {
+                            } else if (existingRequest.submittedAt == 0L && newRequest.submittedAt > 0) {
                                 // indicate global language request has been submitted
-                                existingRequest.setSubmittedAt(newRequest.getSubmittedAt());
-                                App.addNewLanguageRequest(existingRequest);
+                                existingRequest.submittedAt = newRequest.submittedAt
+                                languageRequestRepository.addNewLanguageRequest(existingRequest)
                                 // TODO: 6/15/16 technically we need to look through all the existing target translations and update ones using this language.
                                 // if we don't then they should get updated the next time the restart the app.
                             }
                         }
                         // store the temp language in the index so we can use it
                         try {
-                            App.getLibrary().index.addTempTargetLanguage(existingRequest.getTempTargetLanguage());
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            library.index.addTempTargetLanguage(newRequest.tempTargetLanguage)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
                 } else {
                     // make missing language codes usable even if we can't find the new language request
-                    TargetLanguage tl = App.getLibrary().index.getTargetLanguage(tt.getTargetLanguageId());
-                    if(tl == null) {
-                        Logger.i(TAG, "Importing missing language code " + tt.getTargetLanguageId() + " from " + tt.getId());
-                        TargetLanguage tempLanguage = new TargetLanguage(tt.getTargetLanguageId(),
-                                tt.getTargetLanguageName(),
-                                "",
-                                tt.getTargetLanguageDirection(),
-                                tt.getTargetLanguageRegion(),
-                                false);
+                    val tl = library.index.getTargetLanguage(tt.targetLanguageId)
+                    if (tl == null) {
+                        Logger.i(
+                            TAG,
+                            "Importing missing language code " + tt.targetLanguageId + " from " + tt.id
+                        )
+                        val tempLanguage = TargetLanguage(
+                            tt.targetLanguageId,
+                            tt.targetLanguageName,
+                            "",
+                            tt.targetLanguageDirection,
+                            tt.targetLanguageRegion,
+                            false
+                        )
                         try {
-                            App.getLibrary().index.addTempTargetLanguage(tempLanguage);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            library.index.addTempTargetLanguage(tempLanguage)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
                 }
             }
         }
-        return migratedDir;
+        return success
     }
 
     /**
@@ -191,8 +241,9 @@ public class TargetTranslationMigrator {
      * @return the path to the translation directory
      * @throws Exception
      */
-    private static File v7(File path) throws Exception {
-        return path;
+    @Throws(Exception::class)
+    private fun v7(path: File): File {
+        return path
     }
 
     /**
@@ -202,47 +253,53 @@ public class TargetTranslationMigrator {
      * @return
      * @throws Exception
      */
-    private static File v6(File path) throws Exception {
-        File manifestFile = new File(path, MANIFEST_FILE);
-        JSONObject manifest = new JSONObject(FileUtilities.readFileToString(manifestFile));
-        String projectSlug = manifest.getJSONObject("project").getString("id");
-        File[] chapters = path.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.isDirectory() && !file.getName().equals(".git") && !file.getName().equals("cache");
-            }
-        });
+    @Throws(Exception::class)
+    private fun v6(path: File): File {
+        val manifestFile = File(path, MANIFEST_FILE)
+        val manifest = JSONObject(readFileToString(manifestFile))
+        val projectSlug = manifest.getJSONObject("project").getString("id")
+        val chapters = path.listFiles { file ->
+            file.isDirectory && file.name != ".git" && file.name != "cache"
+        }
         // migrate 00 chunk
         // TRICKY: ts android only supports book translations right now
-        List<Translation> translations = App.getLibrary().index.findTranslations(null, projectSlug, null, "book", null, 3, -1);
-        if(translations.size() > 0) {
-            ResourceContainer container = App.getLibrary().open(translations.get(0).resourceContainerSlug);
-            for (File dir : chapters) {
-                File chunk00 = new File(dir, "00.txt");
+        val translations = library.index.findTranslations(
+            null,
+            projectSlug,
+            null,
+            "book",
+            null,
+            3,
+            -1
+        )
+        if (translations.size > 0) {
+            val container = library.open(translations[0].resourceContainerSlug)
+            for (dir in chapters) {
+                val chunk00 = File(dir, "00.txt")
                 if (chunk00.exists()) {
-
                     // find verse in source text
-                    String[] chunkIds = container.chunks(dir.getName());
-                    String chunkId = largestIntVal(chunkIds);
+
+                    val chunkIds = container.chunks(dir.name)
+                    val chunkId = largestIntVal(chunkIds)
 
                     // move the chunk
-                    File chunk = new File(dir, chunkId + ".txt");
-                    if (FileUtilities.moveOrCopyQuietly(chunk00, chunk)) {
-                        FileUtilities.deleteQuietly(chunk00);
+                    val chunk = File(dir, "$chunkId.txt")
+                    if (moveOrCopyQuietly(chunk00, chunk)) {
+                        deleteQuietly(chunk00)
 
                         // migrate finished chunks
                         if (manifest.has("finished_chunks")) {
-                            JSONArray finished = manifest.getJSONArray("finished_chunks");
-                            String finished_chunk00 = dir.getName() + "-00";
-                            JSONArray newFinished = new JSONArray();
-                            for (int i = 0; i < finished.length(); i++) {
-                                if (finished.getString(i).equals(finished_chunk00)) {
-                                    newFinished.put(dir.getName() + "-" + chunkId);
+                            val finished = manifest.getJSONArray("finished_chunks")
+                            val finishedChunk00 = dir.name + "-00"
+                            val newFinished = JSONArray()
+                            for (i in 0 until finished.length()) {
+                                if (finished.getString(i) == finishedChunk00) {
+                                    newFinished.put(dir.name + "-" + chunkId)
                                 } else {
-                                    newFinished.put(finished.get(i));
+                                    newFinished.put(finished[i])
                                 }
                             }
-                            manifest.put("finished_chunks", newFinished);
+                            manifest.put("finished_chunks", newFinished)
                         }
                     }
                 }
@@ -250,16 +307,16 @@ public class TargetTranslationMigrator {
         }
 
         // migrate 00 chapter
-        File chapter00 = new File(path, "00");
-        if(chapter00.exists() && chapter00.isDirectory()) {
-            if(FileUtilities.moveOrCopyQuietly(chapter00, new File(path, "front"))) {
-                FileUtilities.deleteQuietly(chapter00);
+        val chapter00 = File(path, "00")
+        if (chapter00.exists() && chapter00.isDirectory) {
+            if (moveOrCopyQuietly(chapter00, File(path, "front"))) {
+                deleteQuietly(chapter00)
             }
         }
 
-        manifest.put("package_version", 7);
-        FileUtilities.writeStringToFile(manifestFile, manifest.toString(2));
-        return path;
+        manifest.put("package_version", 7)
+        writeStringToFile(manifestFile, manifest.toString(2))
+        return path
     }
 
     /**
@@ -267,16 +324,17 @@ public class TargetTranslationMigrator {
      * @param list a list of strings to compare
      * @return the largest numeric string
      */
-    private static String largestIntVal(String[] list) {
-        String largest = null;
-        for(String item:list) {
+    private fun largestIntVal(list: Array<String>): String? {
+        var largest: String? = null
+        for (item in list) {
             try {
-                if (largest == null || Integer.parseInt(item) > Integer.parseInt(largest)) {
-                    largest = item;
+                if (largest == null || item.toInt() > largest.toInt()) {
+                    largest = item
                 }
-            } catch (NumberFormatException e) {}
+            } catch (_: NumberFormatException) {
+            }
         }
-        return largest;
+        return largest
     }
 
     /**
@@ -284,46 +342,48 @@ public class TargetTranslationMigrator {
      * @param path
      * @return
      */
-    private static File v5(File path) throws Exception {
-        File manifestFile = new File(path, MANIFEST_FILE);
-        JSONObject manifest = new JSONObject(FileUtilities.readFileToString(manifestFile));
+    @Throws(Exception::class)
+    private fun v5(path: File): File {
+        val manifestFile = File(path, MANIFEST_FILE)
+        val manifest = JSONObject(readFileToString(manifestFile))
 
         // pull info to build id
-        String targetLanguageCode = manifest.getJSONObject("target_language").getString("id");
-        String projectSlug = manifest.getJSONObject("project").getString("id");
-        String translationTypeSlug = manifest.getJSONObject("type").getString("id");
-        String resourceSlug = null;
-        if(translationTypeSlug.equals("text")) {
-            resourceSlug = manifest.getJSONObject("resource").getString("id");
+        val targetLanguageCode = manifest.getJSONObject("target_language").getString("id")
+        val projectSlug = manifest.getJSONObject("project").getString("id")
+        val translationTypeSlug = manifest.getJSONObject("type").getString("id")
+        var resourceSlug: String? = null
+        if (translationTypeSlug == "text") {
+            resourceSlug = manifest.getJSONObject("resource").getString("id")
         }
 
         // build new id
-        String id = targetLanguageCode + "_" + projectSlug + "_" + translationTypeSlug;
-        if(translationTypeSlug.equals("text") && resourceSlug != null) {
-            id += "_" + resourceSlug;
+        var id = targetLanguageCode + "_" + projectSlug + "_" + translationTypeSlug
+        if (translationTypeSlug == "text" && resourceSlug != null) {
+            id += "_$resourceSlug"
         }
 
         // add license file
-        File licenseFile = new File(path, "LICENSE.md");
-        if(!licenseFile.exists()) {
-            AssetManager am = App.context().getAssets();
-            InputStream is = am.open("LICENSE.md");
-            if(is != null) {
-                FileUtilities.copyInputStreamToFile(is, licenseFile);
-            } else {
-                throw new Exception("Failed to open the template license file");
+        val licenseFile = File(path, "LICENSE.md")
+        if (!licenseFile.exists()) {
+            try {
+                val am = context.assets
+                am.open("LICENSE.md").use { input ->
+                    copyInputStreamToFile(input, licenseFile)
+                }
+            } catch (e: Exception) {
+                throw Exception("Failed to open the template license file")
             }
         }
 
         // update package version
-        manifest.put("package_version", 6);
-        FileUtilities.writeStringToFile(manifestFile, manifest.toString(2));
+        manifest.put("package_version", 6)
+        writeStringToFile(manifestFile, manifest.toString(2))
 
         // update target translation dir name
-        File newPath = new File(path.getParentFile(), id.toLowerCase());
-        FileUtilities.safeDelete(newPath);
-        FileUtilities.moveOrCopyQuietly(path, newPath);
-        return newPath;
+        val newPath = File(path.parentFile, id.lowercase(Locale.getDefault()))
+        safeDelete(newPath)
+        moveOrCopyQuietly(path, newPath)
+        return newPath
     }
 
     /**
@@ -332,232 +392,247 @@ public class TargetTranslationMigrator {
      * @param path
      * @return
      */
-    private static File v4(File path) throws Exception {
-        File manifestFile = new File(path, MANIFEST_FILE);
-        JSONObject manifest = new JSONObject(FileUtilities.readFileToString(manifestFile));
+    @Throws(Exception::class)
+    private fun v4(path: File): File {
+        val manifestFile = File(path, MANIFEST_FILE)
+        val manifest = JSONObject(readFileToString(manifestFile))
 
         // type
-        {
-            String typeId = "text";
+        run {
+            var typeId = "text"
             if (manifest.has("project")) {
                 try {
-                    JSONObject projectJson = manifest.getJSONObject("project");
-                    typeId = projectJson.getString("type");
-                    projectJson.remove("type");
-                    manifest.put("project", projectJson);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    val projectJson = manifest.getJSONObject("project")
+                    typeId = projectJson.getString("type")
+                    projectJson.remove("type")
+                    manifest.put("project", projectJson)
+                } catch (e: JSONException) {
+                    e.printStackTrace()
                 }
             }
-            JSONObject typeJson = new JSONObject();
-            ResourceType resourceType = ResourceType.get(typeId);
-            typeJson.put("id", typeId);
-            if(resourceType != null) {
-                typeJson.put("name", resourceType.getName());
+            val typeJson = JSONObject()
+            val resourceType = ResourceType.get(typeId)
+            typeJson.put("id", typeId)
+            if (resourceType != null) {
+                typeJson.put("name", resourceType.getName())
             } else {
-                typeJson.put("name", "");
+                typeJson.put("name", "")
             }
-            manifest.put("type", typeJson);
+            manifest.put("type", typeJson)
         }
 
         // update project
         // NOTE: this was actually in v3 but we missed it so we need to catch it here
-        if(manifest.has("project_id")) {
-            String projectId = manifest.getString("project_id");
-            manifest.remove("project_id");
-            JSONObject projectJson = new JSONObject();
-            projectJson.put("id", projectId);
-            projectJson.put("name", projectId.toUpperCase()); // we don't know the full name at this point
-            manifest.put("project", projectJson);
+        if (manifest.has("project_id")) {
+            val projectId = manifest.getString("project_id")
+            manifest.remove("project_id")
+            val projectJson = JSONObject()
+            projectJson.put("id", projectId)
+            projectJson.put(
+                "name",
+                projectId.uppercase(Locale.getDefault())
+            ) // we don't know the full name at this point
+            manifest.put("project", projectJson)
         }
 
         // update resource
-        if(manifest.getJSONObject("type").getString("id").equals("text")) {
+        if (manifest.getJSONObject("type").getString("id") == "text") {
             if (manifest.has("resource_id")) {
-                String resourceId = manifest.getString("resource_id");
-                manifest.remove("resource_id");
-                JSONObject resourceJson = new JSONObject();
+                var resourceId = manifest.getString("resource_id")
+                manifest.remove("resource_id")
+                val resourceJson = JSONObject()
                 // TRICKY: supported resource id's (or now types) are "reg", "obs", "ulb", and "udb".
-                if (resourceId.equals("ulb")) {
-                    resourceJson.put("name", "Unlocked Literal Bible");
-                } else if (resourceId.equals("udb")) {
-                    resourceJson.put("name", "Unlocked Dynamic Bible");
-                } else if (resourceId.equals("obs")) {
-                    resourceJson.put("name", "Open Bible Stories");
+                if (resourceId == "ulb") {
+                    resourceJson.put("name", "Unlocked Literal Bible")
+                } else if (resourceId == "udb") {
+                    resourceJson.put("name", "Unlocked Dynamic Bible")
+                } else if (resourceId == "obs") {
+                    resourceJson.put("name", "Open Bible Stories")
                 } else {
                     // everything else changes to "reg"
-                    resourceId = "reg";
-                    resourceJson.put("name", "Regular");
+                    resourceId = "reg"
+                    resourceJson.put("name", "Regular")
                 }
-                resourceJson.put("id", resourceId);
-                manifest.put("resource", resourceJson);
+                resourceJson.put("id", resourceId)
+                manifest.put("resource", resourceJson)
             } else if (!manifest.has("resource")) {
                 // add missing resource
-                JSONObject resourceJson = new JSONObject();
-                JSONObject projectJson = manifest.getJSONObject("project");
-                JSONObject typeJson = manifest.getJSONObject("type");
-                if (typeJson.getString("id").equals("text")) {
-                    String resourceId = projectJson.getString("id");
-                    if (resourceId.equals("obs")) {
-                        resourceJson.put("id", "obs");
-                        resourceJson.put("name", "Open Bible Stories");
+                val resourceJson = JSONObject()
+                val projectJson = manifest.getJSONObject("project")
+                val typeJson = manifest.getJSONObject("type")
+                if (typeJson.getString("id") == "text") {
+                    val resourceId = projectJson.getString("id")
+                    if (resourceId == "obs") {
+                        resourceJson.put("id", "obs")
+                        resourceJson.put("name", "Open Bible Stories")
                     } else {
                         // everything else changes to reg
-                        resourceJson.put("id", "reg");
-                        resourceJson.put("name", "Regular");
+                        resourceJson.put("id", "reg")
+                        resourceJson.put("name", "Regular")
                     }
-                    manifest.put("resource", resourceJson);
+                    manifest.put("resource", resourceJson)
                 }
             }
         } else {
             // non-text translation types do not have resources
-            manifest.remove("resource_id");
-            manifest.remove("resource");
+            manifest.remove("resource_id")
+            manifest.remove("resource")
         }
 
         // update source translations
-        if(manifest.has("source_translations")) {
-            JSONObject oldSourceTranslationsJson = manifest.getJSONObject("source_translations");
-            manifest.remove("source_translations");
-            JSONArray newSourceTranslationsJson = new JSONArray();
-            Iterator<String> keys = oldSourceTranslationsJson.keys();
+        if (manifest.has("source_translations")) {
+            val oldSourceTranslationsJson = manifest.getJSONObject("source_translations")
+            manifest.remove("source_translations")
+            val newSourceTranslationsJson = JSONArray()
+            val keys = oldSourceTranslationsJson.keys()
             while (keys.hasNext()) {
                 try {
-                    String key = keys.next();
-                    JSONObject oldObj = oldSourceTranslationsJson.getJSONObject(key);
-                    JSONObject sourceTranslation = new JSONObject();
-                    String[] parts = key.split("-", 2);
-                    if (parts.length == 2) {
-                        String languageResourceId = parts[1];
-                        String[] pieces = languageResourceId.split("-");
-                        if (pieces.length > 0) {
-                            String resId = pieces[pieces.length - 1];
-                            sourceTranslation.put("resource_id", resId);
-                            sourceTranslation.put("language_id", languageResourceId.substring(0, languageResourceId.length() - resId.length() - 1));
-                            sourceTranslation.put("checking_level", oldObj.getString("checking_level"));
-                            sourceTranslation.put("date_modified", oldObj.getInt("date_modified"));
-                            sourceTranslation.put("version", oldObj.getString("version"));
-                            newSourceTranslationsJson.put(sourceTranslation);
+                    val key = keys.next()
+                    val oldObj = oldSourceTranslationsJson.getJSONObject(key)
+                    val sourceTranslation = JSONObject()
+                    val parts = key.split("-".toRegex(), limit = 2).toTypedArray()
+                    if (parts.size == 2) {
+                        val languageResourceId = parts[1]
+                        val pieces =
+                            languageResourceId.split("-".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                        if (pieces.isNotEmpty()) {
+                            val resId = pieces[pieces.size - 1]
+                            sourceTranslation.put("resource_id", resId)
+                            sourceTranslation.put(
+                                "language_id",
+                                languageResourceId.substring(
+                                    0,
+                                    languageResourceId.length - resId.length - 1
+                                )
+                            )
+                            sourceTranslation.put(
+                                "checking_level",
+                                oldObj.getString("checking_level")
+                            )
+                            sourceTranslation.put("date_modified", oldObj.getInt("date_modified"))
+                            sourceTranslation.put("version", oldObj.getString("version"))
+                            newSourceTranslationsJson.put(sourceTranslation)
                         }
                     }
-                } catch (Exception e) {
+                } catch (e: Exception) {
                     // don't fail migration just because a source translation was invalid
-                    e.printStackTrace();
+                    e.printStackTrace()
                 }
             }
-            manifest.put("source_translations", newSourceTranslationsJson);
+            manifest.put("source_translations", newSourceTranslationsJson)
         }
 
         // update parent draft
-        if(manifest.has("parent_draft_resource_id")) {
-            JSONObject draftStatus = new JSONObject();
-            draftStatus.put("resource_id", manifest.getString("parent_draft_resource_id"));
-            draftStatus.put("checking_entity", "");
-            draftStatus.put("checking_level", "");
-            draftStatus.put("comments", "The parent draft is unknown");
-            draftStatus.put("contributors", "");
-            draftStatus.put("publish_date", "");
-            draftStatus.put("source_text", "");
-            draftStatus.put("source_text_version", "");
-            draftStatus.put("version", "");
-            manifest.put("parent_draft", draftStatus);
-            manifest.remove("parent_draft_resource_id");
+        if (manifest.has("parent_draft_resource_id")) {
+            val draftStatus = JSONObject()
+            draftStatus.put("resource_id", manifest.getString("parent_draft_resource_id"))
+            draftStatus.put("checking_entity", "")
+            draftStatus.put("checking_level", "")
+            draftStatus.put("comments", "The parent draft is unknown")
+            draftStatus.put("contributors", "")
+            draftStatus.put("publish_date", "")
+            draftStatus.put("source_text", "")
+            draftStatus.put("source_text_version", "")
+            draftStatus.put("version", "")
+            manifest.put("parent_draft", draftStatus)
+            manifest.remove("parent_draft_resource_id")
         }
 
         // update finished chunks
-        if(manifest.has("finished_frames")) {
-            JSONArray finishedFrames = manifest.getJSONArray("finished_frames");
-            manifest.remove("finished_frames");
-            manifest.put("finished_chunks", finishedFrames);
+        if (manifest.has("finished_frames")) {
+            val finishedFrames = manifest.getJSONArray("finished_frames")
+            manifest.remove("finished_frames")
+            manifest.put("finished_chunks", finishedFrames)
         }
 
         // remove finished titles
-        if(manifest.has("finished_titles")) {
-            JSONArray finishedChunks = manifest.getJSONArray("finished_chunks");
-            JSONArray finishedTitles = manifest.getJSONArray("finished_titles");
-            manifest.remove("finished_titles");
-            for(int i = 0; i < finishedTitles.length(); i ++) {
-                String chapterId = finishedTitles.getString(i);
-                finishedChunks.put(chapterId + "-title");
+        if (manifest.has("finished_titles")) {
+            val finishedChunks = manifest.getJSONArray("finished_chunks")
+            val finishedTitles = manifest.getJSONArray("finished_titles")
+            manifest.remove("finished_titles")
+            for (i in 0 until finishedTitles.length()) {
+                val chapterId = finishedTitles.getString(i)
+                finishedChunks.put("$chapterId-title")
             }
-            manifest.put("finished_chunks", finishedChunks);
+            manifest.put("finished_chunks", finishedChunks)
         }
 
         // remove finished references
-        if(manifest.has("finished_references")) {
-            JSONArray finishedChunks = manifest.getJSONArray("finished_chunks");
-            JSONArray finishedReferences = manifest.getJSONArray("finished_references");
-            manifest.remove("finished_references");
-            for(int i = 0; i < finishedReferences.length(); i ++) {
-                String chapterId = finishedReferences.getString(i);
-                finishedChunks.put(chapterId + "-reference");
+        if (manifest.has("finished_references")) {
+            val finishedChunks = manifest.getJSONArray("finished_chunks")
+            val finishedReferences = manifest.getJSONArray("finished_references")
+            manifest.remove("finished_references")
+            for (i in 0 until finishedReferences.length()) {
+                val chapterId = finishedReferences.getString(i)
+                finishedChunks.put("$chapterId-reference")
             }
-            manifest.put("finished_chunks", finishedChunks);
+            manifest.put("finished_chunks", finishedChunks)
         }
 
         // remove project components
         // NOTE: this was never quite official, just in android
-        if(manifest.has("finished_project_components")) {
-            JSONArray finishedChunks = manifest.getJSONArray("finished_chunks");
-            JSONArray finishedProjectComponents = manifest.getJSONArray("finished_project_components");
-            manifest.remove("finished_project_components");
-            for(int i = 0; i < finishedProjectComponents.length(); i ++) {
-                String component = finishedProjectComponents.getString(i);
-                finishedChunks.put("00-" + component);
+        if (manifest.has("finished_project_components")) {
+            val finishedChunks = manifest.getJSONArray("finished_chunks")
+            val finishedProjectComponents = manifest.getJSONArray("finished_project_components")
+            manifest.remove("finished_project_components")
+            for (i in 0 until finishedProjectComponents.length()) {
+                val component = finishedProjectComponents.getString(i)
+                finishedChunks.put("00-$component")
             }
-            manifest.put("finished_chunks", finishedChunks);
+            manifest.put("finished_chunks", finishedChunks)
         }
 
         // add format
-        if(!Manifest.valueExists(manifest, "format") || manifest.getString("format").equals("usx") || manifest.getString("format").equals("default")) {
-            String typeId = manifest.getJSONObject("type").getString("id");
-            String projectId = manifest.getJSONObject("project").getString("id");
-            if(!typeId.equals("text") || projectId.equals("obs")) {
-                manifest.put("format", "markdown");
+        if (!Manifest.valueExists(
+                manifest,
+                "format"
+            ) || manifest.getString("format") == "usx" || manifest.getString("format") == "default"
+        ) {
+            val typeId = manifest.getJSONObject("type").getString("id")
+            val projectId = manifest.getJSONObject("project").getString("id")
+            if (typeId != "text" || projectId == "obs") {
+                manifest.put("format", "markdown")
             } else {
-                manifest.put("format", "usfm");
+                manifest.put("format", "usfm")
             }
         }
 
         // update where project title is saved.
-        File oldProjectTitle = new File(path, "title.txt");
-        File newProjectTitle = new File(path, "00/title.txt");
-        if(oldProjectTitle.exists()) {
-            newProjectTitle.getParentFile().mkdirs();
-            FileUtilities.moveOrCopyQuietly(oldProjectTitle, newProjectTitle);
+        val oldProjectTitle = File(path, "title.txt")
+        val newProjectTitle = File(path, "00/title.txt")
+        if (oldProjectTitle.exists()) {
+            newProjectTitle.parentFile?.mkdirs()
+            moveOrCopyQuietly(oldProjectTitle, newProjectTitle)
         }
 
         // update package version
-        manifest.put("package_version", 5);
+        manifest.put("package_version", 5)
 
-        FileUtilities.writeStringToFile(manifestFile, manifest.toString(2));
+        writeStringToFile(manifestFile, manifest.toString(2))
 
         // migrate usx to usfm
-        String format = manifest.getString("format");
+        val format = manifest.getString("format")
         // TRICKY: we just added the new format field, anything marked as usfm may have residual usx and needs to be migrated
-        if (format.equals("usfm")) {
-            File[] chapterDirs = path.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File pathname) {
-                    return pathname.isDirectory() && !pathname.getName().equals(".git");
-                }
-            });
-            for(File cDir:chapterDirs) {
-                File[] chunkFiles = cDir.listFiles();
-                for(File chunkFile:chunkFiles) {
+        if (format == "usfm") {
+            val chapterDirs =
+                path.listFiles { pathname -> pathname.isDirectory && pathname.name != ".git" }
+            for (cDir in chapterDirs) {
+                val chunkFiles = cDir.listFiles()
+                for (chunkFile in chunkFiles) {
                     try {
-                        String usx = FileUtilities.readFileToString(chunkFile);
-                        String usfm = USXtoUSFMConverter.doConversion(usx).toString();
-                        FileUtilities.writeStringToFile(chunkFile, usfm);
-                    } catch (IOException e) {
+                        val usx = readFileToString(chunkFile)
+                        val usfm = USXtoUSFMConverter.doConversion(usx).toString()
+                        writeStringToFile(chunkFile, usfm)
+                    } catch (e: IOException) {
                         // this conversion may have failed but don't stop the rest of the migration
-                        e.printStackTrace();
+                        e.printStackTrace()
                     }
                 }
             }
         }
 
-        return path;
+        return path
     }
 
     /**
@@ -566,27 +641,28 @@ public class TargetTranslationMigrator {
      * @param path
      * @return
      */
-    private static File v3(File path) throws Exception {
-        File manifestFile = new File(path, MANIFEST_FILE);
-        JSONObject manifest = new JSONObject(FileUtilities.readFileToString(manifestFile));
-        if(manifest.has("translators")) {
-            JSONArray legacyTranslators = manifest.getJSONArray("translators");
-            JSONArray translators = new JSONArray();
-            for(int i = 0; i < legacyTranslators.length(); i ++) {
-                Object obj = legacyTranslators.get(i);
-                if(obj instanceof JSONObject) {
-                    translators.put(((JSONObject)obj).getString("name"));
-                } else if(obj instanceof String) {
-                    translators.put(obj);
+    @Throws(Exception::class)
+    private fun v3(path: File): File {
+        val manifestFile = File(path, MANIFEST_FILE)
+        val manifest = JSONObject(readFileToString(manifestFile))
+        if (manifest.has("translators")) {
+            val legacyTranslators = manifest.getJSONArray("translators")
+            val translators = JSONArray()
+            for (i in 0 until legacyTranslators.length()) {
+                val obj = legacyTranslators[i]
+                if (obj is JSONObject) {
+                    translators.put(obj.getString("name"))
+                } else if (obj is String) {
+                    translators.put(obj)
                 }
             }
-            manifest.put("translators", translators);
-            manifest.put("package_version", 4);
-            FileUtilities.writeStringToFile(manifestFile, manifest.toString(2));
+            manifest.put("translators", translators)
+            manifest.put("package_version", 4)
+            writeStringToFile(manifestFile, manifest.toString(2))
         }
-        String projectSlug = manifest.getString("project_id");
-        migrateChunkChanges(path, projectSlug);
-        return path;
+        val projectSlug = manifest.getString("project_id")
+        migrateChunkChanges(path, projectSlug)
+        return path
     }
 
     /**
@@ -594,74 +670,75 @@ public class TargetTranslationMigrator {
      * @param path
      * @return
      */
-    private static File v2( File path) throws Exception {
-        File manifestFile = new File(path, MANIFEST_FILE);
-        JSONObject manifest = new JSONObject(FileUtilities.readFileToString(manifestFile));
+    @Throws(Exception::class)
+    private fun v2(path: File): File {
+        val manifestFile = File(path, MANIFEST_FILE)
+        val manifest = JSONObject(readFileToString(manifestFile))
         // fix finished frames
-        if(manifest.has("frames")) {
-            JSONObject legacyFrames = manifest.getJSONObject("frames");
-            Iterator<String> keys = legacyFrames.keys();
-            JSONArray finishedFrames = new JSONArray();
-            while(keys.hasNext()) {
-                String key = keys.next();
-                JSONObject frameState = legacyFrames.getJSONObject(key);
-                boolean finished = false;
-                if(frameState.has("finished")) {
-                    finished = frameState.getBoolean("finished");
+        if (manifest.has("frames")) {
+            val legacyFrames = manifest.getJSONObject("frames")
+            val keys = legacyFrames.keys()
+            val finishedFrames = JSONArray()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                val frameState = legacyFrames.getJSONObject(key)
+                var finished = false
+                if (frameState.has("finished")) {
+                    finished = frameState.getBoolean("finished")
                 }
-                if(finished) {
-                    finishedFrames.put(key);
+                if (finished) {
+                    finishedFrames.put(key)
                 }
             }
-            manifest.remove("frames");
-            manifest.put("finished_frames", finishedFrames);
+            manifest.remove("frames")
+            manifest.put("finished_frames", finishedFrames)
         }
         // fix finished chapter titles and references
-        if(manifest.has("chapters")) {
-            JSONObject legacyChapters = manifest.getJSONObject("chapters");
-            Iterator<String> keys = legacyChapters.keys();
-            JSONArray finishedTitles = new JSONArray();
-            JSONArray finishedReferences = new JSONArray();
-            while(keys.hasNext()) {
-                String key = keys.next();
-                JSONObject chapterState = legacyChapters.getJSONObject(key);
-                boolean finishedTitle = false;
-                boolean finishedReference = false;
-                if(chapterState.has("finished_title")) {
-                    finishedTitle = chapterState.getBoolean("finished_title");
+        if (manifest.has("chapters")) {
+            val legacyChapters = manifest.getJSONObject("chapters")
+            val keys = legacyChapters.keys()
+            val finishedTitles = JSONArray()
+            val finishedReferences = JSONArray()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                val chapterState = legacyChapters.getJSONObject(key)
+                var finishedTitle = false
+                val finishedReference = false
+                if (chapterState.has("finished_title")) {
+                    finishedTitle = chapterState.getBoolean("finished_title")
                 }
-                if(chapterState.has("finished_reference")) {
-                    finishedTitle = chapterState.getBoolean("finished_reference");
+                if (chapterState.has("finished_reference")) {
+                    finishedTitle = chapterState.getBoolean("finished_reference")
                 }
-                if(finishedTitle) {
-                    finishedTitles.put(key);
+                if (finishedTitle) {
+                    finishedTitles.put(key)
                 }
-                if(finishedReference) {
-                    finishedReferences.put(key);
+                if (finishedReference) {
+                    finishedReferences.put(key)
                 }
             }
-            manifest.remove("chapters");
-            manifest.put("finished_titles", finishedTitles);
-            manifest.put("finished_references", finishedReferences);
+            manifest.remove("chapters")
+            manifest.put("finished_titles", finishedTitles)
+            manifest.put("finished_references", finishedReferences)
         }
         // fix project id
-        if(manifest.has("slug")) {
-            String projectSlug = manifest.getString("slug");
-            manifest.remove("slug");
-            manifest.put("project_id", projectSlug);
+        if (manifest.has("slug")) {
+            val projectSlug = manifest.getString("slug")
+            manifest.remove("slug")
+            manifest.put("project_id", projectSlug)
         }
         // fix target language id
-        JSONObject targetLanguage = manifest.getJSONObject("target_language");
-        if(targetLanguage.has("slug")) {
-            String targetLanguageSlug = targetLanguage.getString("slug");
-            targetLanguage.remove("slug");
-            targetLanguage.put("id", targetLanguageSlug);
-            manifest.put("target_language", targetLanguage);
+        val targetLanguage = manifest.getJSONObject("target_language")
+        if (targetLanguage.has("slug")) {
+            val targetLanguageSlug = targetLanguage.getString("slug")
+            targetLanguage.remove("slug")
+            targetLanguage.put("id", targetLanguageSlug)
+            manifest.put("target_language", targetLanguage)
         }
 
-        manifest.put("package_version", 3);
-        FileUtilities.writeStringToFile(manifestFile, manifest.toString(2));
-        return path;
+        manifest.put("package_version", 3)
+        writeStringToFile(manifestFile, manifest.toString(2))
+        return path
     }
 
     /**
@@ -671,151 +748,159 @@ public class TargetTranslationMigrator {
      * @param projectSlug
      * @return
      */
-    private static boolean migrateChunkChanges(File targetTranslationDir, String projectSlug)  {
+    private fun migrateChunkChanges(targetTranslationDir: File, projectSlug: String): Boolean {
         // TRICKY: calling the App here is bad practice, but we'll deprecate this soon anyway.
-        final Door43Client library = App.getLibrary();
-        Project p = library.index().getProject("en", projectSlug, true);
-        List<Resource> resources = library.index().getResources(p.languageSlug, p.slug);
-        final ResourceContainer resourceContainer;
+        val p = library.index().getProject("en", projectSlug, true)
+        val resources = library.index().getResources(p.languageSlug, p.slug)
+        val resourceContainer: ResourceContainer
         try {
-            Resource resource = null;
-            for (int i = 0; i < resources.size(); i++) {
-                Resource r = resources.get(i);
-                if("book".equalsIgnoreCase(r.type)) {
-                    resource = r;
-                    break;
+            var resource: Resource? = null
+            for (i in resources.indices) {
+                val r = resources[i]
+                if ("book".equals(r.type, ignoreCase = true)) {
+                    resource = r
+                    break
                 }
             }
-            resourceContainer = library.open(p.languageSlug, p.slug, resource.slug);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return true;
+            resourceContainer = library.open(p.languageSlug, p.slug, resource!!.slug)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return true
         }
-        File[] chapterDirs = targetTranslationDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isDirectory() && !pathname.getName().equals(".git") && !pathname.getName().equals("00"); // 00 contains project title translations
-            }
-        });
-        for(File cDir:chapterDirs) {
-            mergeInvalidChunksInChapter(library, new File(targetTranslationDir, "manifest.json"), resourceContainer, cDir);
+        val chapterDirs = targetTranslationDir.listFiles { pathname ->
+            pathname.isDirectory && pathname.name != ".git" && pathname.name != "00" // 00 contains project title translations
         }
-        return true;
+        for (cDir in chapterDirs) {
+            mergeInvalidChunksInChapter(
+                File(targetTranslationDir, "manifest.json"),
+                resourceContainer,
+                cDir
+            )
+        }
+        return true
     }
 
     /**
      * Merges invalid chunks found in the target translation with a valid sibling chunk in order
      * to preserve translation data. Merged chunks are marked as not finished to force
      * translators to review the changes.
-     * @param library
      * @param manifestFile
      * @param resourceContainer
      * @param chapterDir
      * @return
      */
-    private static boolean mergeInvalidChunksInChapter(final Door43Client library, File manifestFile, final ResourceContainer resourceContainer, final File chapterDir) {
-        JSONObject manifest;
+    private fun mergeInvalidChunksInChapter(
+        manifestFile: File,
+        resourceContainer: ResourceContainer,
+        chapterDir: File
+    ): Boolean {
+        val manifest: JSONObject
         try {
-            manifest = new JSONObject(FileUtilities.readFileToString(manifestFile));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            manifest = JSONObject(readFileToString(manifestFile))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
         }
 
-        final String chunkMergeMarker = "\n----------\n";
-        File[] frameFiles = chapterDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return !pathname.getName().equals("title.txt") && !pathname.getName().equals("reference.txt");
-            }
-        });
-        Arrays.sort(frameFiles);
-        String invalidChunks = "";
-        File lastValidFrameFile = null;
-        String chapterId = chapterDir.getName();
-        for(File frameFile:frameFiles) {
-            String frameFileName = frameFile.getName();
-            String[] parts = frameFileName.split(".txt");
-            String frameId = parts[0];
-            String chunkText = resourceContainer.readChunk(chapterId, frameId);
-            String frameBody = "";
+        val chunkMergeMarker = "\n----------\n"
+        var frameFiles =
+            chapterDir.listFiles { pathname -> pathname.name != "title.txt" && pathname.name != "reference.txt" }
+        Arrays.sort(frameFiles)
+        var invalidChunks = ""
+        var lastValidFrameFile: File? = null
+        val chapterId = chapterDir.name
+        for (frameFile in frameFiles!!) {
+            val frameFileName = frameFile.name
+            val parts =
+                frameFileName.split(".txt".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val frameId = parts[0]
+            val chunkText = resourceContainer.readChunk(chapterId, frameId)
+            var frameBody = ""
             try {
-                frameBody = FileUtilities.readFileToString(frameFile).trim();
-            } catch (Exception e) {
-                e.printStackTrace();
+                frameBody = readFileToString(frameFile).trim { it <= ' ' }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            if(!chunkText.isEmpty()) {
-                lastValidFrameFile =  frameFile;
+            if (chunkText.isNotEmpty()) {
+                lastValidFrameFile = frameFile
                 // merge invalid frames into the existing frame
-                if(!invalidChunks.isEmpty()) {
+                if (invalidChunks.isNotEmpty()) {
                     try {
-                        FileUtilities.writeStringToFile(frameFile, invalidChunks + frameBody);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        writeStringToFile(frameFile, invalidChunks + frameBody)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
                     }
-                    invalidChunks = "";
+                    invalidChunks = ""
                     try {
-                        Manifest.removeValue(manifest.getJSONArray("finished_frames"), chapterId + "-" + frameId);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                        Manifest.removeValue(
+                            manifest.getJSONArray("finished_frames"),
+                            "$chapterId-$frameId"
+                        )
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
                     }
                 }
-            } else if(!frameBody.isEmpty()) {
+            } else if (frameBody.isNotEmpty()) {
                 // collect invalid frame
-                if(lastValidFrameFile == null) {
-                    invalidChunks += frameBody + chunkMergeMarker;
+                if (lastValidFrameFile == null) {
+                    invalidChunks += frameBody + chunkMergeMarker
                 } else {
                     // append to last valid frame
-                    String lastValidFrameBody = "";
+                    var lastValidFrameBody = ""
                     try {
-                        lastValidFrameBody = FileUtilities.readFileToString(lastValidFrameFile);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        lastValidFrameBody = readFileToString(lastValidFrameFile)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
                     }
                     try {
-                        FileUtilities.writeStringToFile(lastValidFrameFile, lastValidFrameBody + chunkMergeMarker + frameBody);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        writeStringToFile(
+                            lastValidFrameFile,
+                            lastValidFrameBody + chunkMergeMarker + frameBody
+                        )
+                    } catch (e: IOException) {
+                        e.printStackTrace()
                     }
                     try {
-                        Manifest.removeValue(manifest.getJSONArray("finished_frames"), chapterId + "-" + lastValidFrameFile.getName());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                        Manifest.removeValue(
+                            manifest.getJSONArray("finished_frames"),
+                            chapterId + "-" + lastValidFrameFile.name
+                        )
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
                     }
                 }
                 // delete invalid frame
-                FileUtilities.deleteQuietly(frameFile);
+                deleteQuietly(frameFile)
             }
         }
         // clean up remaining invalid chunks
-        if(!invalidChunks.isEmpty()) {
+        if (invalidChunks.isNotEmpty()) {
             // grab updated list of frames
-            frameFiles = chapterDir.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File pathname) {
-                    return !pathname.getName().equals("title.txt") && !pathname.getName().equals("reference.txt");
-                }
-            });
-            if(frameFiles != null && frameFiles.length > 0) {
-                String frameBody = "";
+            frameFiles =
+                chapterDir.listFiles { pathname -> pathname.name != "title.txt" && pathname.name != "reference.txt" }
+            if (frameFiles != null && frameFiles.isNotEmpty()) {
+                var frameBody = ""
                 try {
-                    frameBody = FileUtilities.readFileToString(frameFiles[0]);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    frameBody = readFileToString(frameFiles[0])
+                } catch (e: IOException) {
+                    e.printStackTrace()
                 }
                 try {
-                    FileUtilities.writeStringToFile(frameFiles[0], invalidChunks + chunkMergeMarker + frameBody);
+                    writeStringToFile(frameFiles[0], invalidChunks + chunkMergeMarker + frameBody)
                     try {
-                        Manifest.removeValue(manifest.getJSONArray("finished_frames"), chapterId + "-" + frameFiles[0].getName());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                        Manifest.removeValue(
+                            manifest.getJSONArray("finished_frames"),
+                            chapterId + "-" + frameFiles[0].name
+                        )
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (e: IOException) {
+                    e.printStackTrace()
                 }
             }
         }
-        return true;
+        return true
     }
 
     /**
@@ -824,15 +909,16 @@ public class TargetTranslationMigrator {
      * @param path
      * @return
      */
-    private static boolean validateTranslationType(File path) throws Exception{
-        JSONObject manifest = new JSONObject(FileUtilities.readFileToString(new File(path, MANIFEST_FILE)));
-        String typeId = manifest.getJSONObject("type").getString("id");
+    @Throws(Exception::class)
+    private fun validateTranslationType(path: File): Boolean {
+        val manifest = JSONObject(readFileToString(File(path, MANIFEST_FILE)))
+        val typeId = manifest.getJSONObject("type").getString("id")
         // android only supports TEXT translations for now
-        if(ResourceType.get(typeId) == ResourceType.TEXT) {
-            return true;
+        if (ResourceType.get(typeId) == ResourceType.TEXT) {
+            return true
         } else {
-            Logger.w(TAG, "Only text translation types are supported");
-            return false;
+            Logger.w(TAG, "Only text translation types are supported")
+            return false
         }
     }
 }

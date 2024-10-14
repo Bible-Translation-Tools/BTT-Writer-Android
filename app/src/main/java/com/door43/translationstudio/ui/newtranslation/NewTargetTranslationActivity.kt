@@ -1,520 +1,520 @@
-package com.door43.translationstudio.ui.newtranslation;
+package com.door43.translationstudio.ui.newtranslation
 
-import android.app.SearchManager;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.core.view.MenuItemCompat;
-import android.os.Bundle;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.SearchView;
-import android.view.Menu;
-import android.view.MenuItem;
-
-import org.json.JSONException;
-import org.unfoldingword.door43client.models.Questionnaire;
-import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.tools.logger.Logger;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.MergeConflictsHandler;
-import com.door43.translationstudio.core.TranslationViewMode;
-import com.door43.translationstudio.tasks.MergeTargetTranslationTask;
-import com.door43.translationstudio.ui.SettingsActivity;
-import com.door43.translationstudio.core.NewLanguageRequest;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.core.ResourceType;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.ui.Searchable;
-import com.door43.translationstudio.ui.BaseActivity;
-import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity;
-import com.door43.util.StringUtilities;
-import com.door43.widget.ViewUtil;
-
-import org.json.JSONObject;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.SimpleTaskWatcher;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-
-import java.io.IOException;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import android.app.SearchManager
+import android.content.Intent
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SearchView
+import androidx.core.view.MenuItemCompat
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.MergeConflictsHandler
+import com.door43.translationstudio.core.ResourceType
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.databinding.ActivityNewTargetTranslationBinding
+import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.Searchable
+import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
+import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
+import com.door43.usecases.MergeTargetTranslation
+import com.door43.util.StringUtilities
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import org.json.JSONException
+import org.json.JSONObject
+import org.unfoldingword.door43client.models.TargetLanguage
+import javax.inject.Inject
 
 @AndroidEntryPoint
-public class NewTargetTranslationActivity extends BaseActivity implements TargetLanguageListFragment.OnItemClickListener, ProjectListFragment.OnItemClickListener, SimpleTaskWatcher.OnFinishedListener {
+class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.OnItemClickListener,
+    ProjectListFragment.OnItemClickListener {
 
-    public static final String EXTRA_TARGET_TRANSLATION_ID = "extra_target_translation_id";
-    public static final String EXTRA_CHANGE_TARGET_LANGUAGE_ONLY = "extra_change_target_language_only";
-    public static final int RESULT_DUPLICATE = 2;
-    public static final int RESULT_MERGE_CONFLICT = 3;
-    private static final String STATE_TARGET_TRANSLATION_ID = "state_target_translation_id";
-    private static final String STATE_TARGET_LANGUAGE = "state_target_language_id";
-    public static final String STATE_DIALOG_SHOWN = "state_dialog_shown";
-    public static final int RESULT_ERROR = 3;
-    public static final String TAG = NewTargetTranslationActivity.class.getSimpleName();
-    public static final int NEW_LANGUAGE_REQUEST = 1001;
-    public static final String NEW_LANGUAGE_CONFIRMATION = "new-language-confirmation";
-    private static final String STATE_NEW_LANGUAGE = "new_language";
-    public static final int INVALID = -1;
-    public static final String EXTRA_DISABLED_LANGUAGES = "extra_disabled_language_ids";
-    private TargetLanguage mSelectedTargetLanguage = null;
-    private Searchable mFragment;
-    private String mNewTargetTranslationId = null;
-    private boolean createdNewLanguage = false;
-    private boolean mChangeTargetLanguageOnly = false;
-    private String mTargetTranslationId = null;
-    private SimpleTaskWatcher taskWatcher;
-    private DialogShown mDialogShown = DialogShown.NONE;
+    @Inject lateinit var translator: Translator
 
-    @Inject Translator translator;
+    private var fragment: Searchable? = null
+    private var dialogShown = DialogShown.NONE
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_new_target_translation);
+    private lateinit var binding: ActivityNewTargetTranslationBinding
 
-        Bundle extras = getIntent().getExtras();
-        if(extras != null) {
-            mTargetTranslationId = extras.getString(EXTRA_TARGET_TRANSLATION_ID, null);
-            mChangeTargetLanguageOnly = extras.getBoolean(EXTRA_CHANGE_TARGET_LANGUAGE_ONLY, false);
+    private val viewModel: NewTargetTranslationModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityNewTargetTranslationBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val extras = intent.extras
+        if (extras != null) {
+            viewModel.targetTranslationId = extras.getString(EXTRA_TARGET_TRANSLATION_ID, null)
+            viewModel.changeTargetLanguageOnly = extras.getBoolean(EXTRA_CHANGE_TARGET_LANGUAGE_ONLY, false)
         }
 
-        if(savedInstanceState != null) {
-            createdNewLanguage = savedInstanceState.getBoolean(STATE_NEW_LANGUAGE, false);
-            mDialogShown = DialogShown.fromInt(savedInstanceState.getInt(STATE_DIALOG_SHOWN, INVALID), DialogShown.NONE);
+        if (savedInstanceState != null) {
+            viewModel.createdNewLanguage = savedInstanceState.getBoolean(
+                STATE_NEW_LANGUAGE,
+                false
+            )
+            dialogShown = DialogShown.fromInt(
+                savedInstanceState.getInt(STATE_DIALOG_SHOWN, INVALID),
+                DialogShown.NONE
+            )
             if (savedInstanceState.containsKey(STATE_TARGET_TRANSLATION_ID)) {
-                mNewTargetTranslationId = (String) savedInstanceState.getSerializable(STATE_TARGET_TRANSLATION_ID);
+                viewModel.newTargetTranslationId = savedInstanceState.getString(
+                    STATE_TARGET_TRANSLATION_ID
+                )
             }
 
             if (savedInstanceState.containsKey(STATE_TARGET_LANGUAGE)) {
-                String targetLanguageJsonStr = savedInstanceState.getString(STATE_TARGET_LANGUAGE);
-                try {
-                    mSelectedTargetLanguage = TargetLanguage.fromJSON(new JSONObject(targetLanguageJsonStr));
-                } catch (Exception e) { }
+                savedInstanceState.getString(STATE_TARGET_LANGUAGE)?.let { targetLanguageJsonStr ->
+                    try {
+                        viewModel.selectedTargetLanguage = TargetLanguage.fromJSON(
+                            JSONObject(targetLanguageJsonStr)
+                        )
+                    } catch (_: Exception) {
+                    }
+                }
             }
         }
 
-        if(findViewById(R.id.fragment_container) != null) {
-            if(savedInstanceState != null) {
-                mFragment = (Searchable)getFragmentManager().findFragmentById(R.id.fragment_container);
+        if (findViewById<View?>(R.id.fragment_container) != null) {
+            if (savedInstanceState != null) {
+                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as Searchable
             } else {
-                mFragment = new TargetLanguageListFragment();
-                ((TargetLanguageListFragment) mFragment).setArguments(getIntent().getExtras());
-                getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, (TargetLanguageListFragment) mFragment).commit();
+                fragment = TargetLanguageListFragment()
+                (fragment as TargetLanguageListFragment).arguments = intent.extras
+                supportFragmentManager.beginTransaction()
+                    .add(R.id.fragment_container, fragment as TargetLanguageListFragment)
+                    .commit()
                 // TODO: animate
             }
         }
 
-        taskWatcher = new SimpleTaskWatcher(this, R.string.merge);
-        taskWatcher.setOnFinishedListener(this);
-
-        if(createdNewLanguage) {
-            confirmTempLanguage(mSelectedTargetLanguage);
+        if (viewModel.createdNewLanguage && viewModel.selectedTargetLanguage != null) {
+            confirmTempLanguage()
         }
 
-        // connect to existing tasks
-        MergeTargetTranslationTask mergeTask = (MergeTargetTranslationTask) TaskManager.getTask(MergeTargetTranslationTask.TASK_ID);
-        if(mergeTask != null) {
-            taskWatcher.watch(mergeTask);
-        }
+        setupObservers()
+        restoreDialogs()
+    }
 
-        restoreDialogs();
+    private fun setupObservers() {
+        viewModel.mergeTranslationResult.observe(this) {
+            it?.let { result ->
+                val status = result.status
+                var results = RESULT_ERROR
+
+                if (MergeTargetTranslation.Status.MERGE_CONFLICTS == status) {
+                    results = if (MergeConflictsHandler.isTranslationMergeConflicted(
+                            result.destinationTranslation.id,
+                            translator
+                    )) {
+                        RESULT_MERGE_CONFLICT
+                    } else {
+                        RESULT_OK
+                    }
+
+                    // clean up original settings
+                    viewModel.clearTargetTranslationSettings(result.sourceTranslation.id)
+                } else if (MergeTargetTranslation.Status.SUCCESS == status) {
+                    results = RESULT_OK
+                    // clean up original settings
+                    viewModel.clearTargetTranslationSettings(result.sourceTranslation.id)
+                }
+
+                val data = Intent()
+                data.putExtra(EXTRA_TARGET_TRANSLATION_ID, result.destinationTranslation.id)
+                setResult(results, data)
+                finish()
+            }
+        }
     }
 
     /**
      * restore the dialogs that were displayed before rotation
      */
-    private void restoreDialogs() {
-        switch(mDialogShown) {
-            case RENAME_CONFLICT:
-                {
-                    TargetTranslation sourceTargetTranslation = App.getTranslator().getTargetTranslation(mTargetTranslationId);
-                    TargetTranslation destTargetTranslation = App.getTranslator().getTargetTranslation(mNewTargetTranslationId);
-                    showTargetTranslationConflict(sourceTargetTranslation, destTargetTranslation);
+    private fun restoreDialogs() {
+        when (dialogShown) {
+            DialogShown.RENAME_CONFLICT -> {
+                val sourceTargetTranslation = viewModel.getTargetTranslation(
+                    viewModel.targetTranslationId
+                )
+                val destTargetTranslation = viewModel.getTargetTranslation(
+                    viewModel.newTargetTranslationId
+                )
+                if(sourceTargetTranslation != null && destTargetTranslation != null) {
+                    showTargetTranslationConflict(sourceTargetTranslation, destTargetTranslation)
                 }
-                break;
-
-            case NONE:
-                break;
-
-            default:
-                Logger.e(TAG,"Unsupported restore dialog: " + mDialogShown.toString());
-                break;
+            }
+            DialogShown.NONE -> {}
         }
     }
 
 
     /**
-     * warn user that there is already an existing project with that language.  Give them the option of merging.
+     * Warn user that there is already an existing project with that language.
+     * Give them the option of merging.
      * @param sourceTargetTranslation
      * @param existingTranslation
      */
-    private void showTargetTranslationConflict(final TargetTranslation sourceTargetTranslation, final TargetTranslation existingTranslation) {
-        mDialogShown = DialogShown.RENAME_CONFLICT;
-        mNewTargetTranslationId = existingTranslation.getId();
-        Project project = App.getLibrary().index().getProject(App.getDeviceLanguageCode(), existingTranslation.getProjectId());
-        String message = String.format(getResources().getString(R.string.warn_existing_target_translation), project.name, existingTranslation.getTargetLanguageName());
+    private fun showTargetTranslationConflict(
+        sourceTargetTranslation: TargetTranslation,
+        existingTranslation: TargetTranslation
+    ) {
+        dialogShown = DialogShown.RENAME_CONFLICT
+        viewModel.newTargetTranslationId = existingTranslation.id
+        val project = viewModel.getProject(existingTranslation)
+        val message = String.format(
+            resources.getString(R.string.warn_existing_target_translation),
+            project.name,
+            existingTranslation.targetLanguageName
+        )
 
-        new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                .setTitle(R.string.warn_existing_target_translation_label)
-                .setMessage(message)
-                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // TODO: 11/1/16 the activity should return the language and let the calling activity perform the merge
-                        mDialogShown = DialogShown.NONE;
-                        MergeTargetTranslationTask mergeTask = new MergeTargetTranslationTask(existingTranslation, sourceTargetTranslation, true);
-                        taskWatcher.watch(mergeTask);
-                        TaskManager.addTask(mergeTask, MergeTargetTranslationTask.TASK_ID);
-                    }
-                })
-                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mDialogShown = DialogShown.NONE;
-                        Snackbar snack = Snackbar.make(findViewById(android.R.id.content), R.string.rename_canceled, Snackbar.LENGTH_LONG);
-                        ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                        snack.show();
-                        setResult(RESULT_CANCELED);
-                        finish();
-                    }
-                })
-                .show();
-    }
-
-    /**
-     * use new language information passed in JSON format string to create a new target language
-     * @param request
-     */
-    private void registerTempLanguage(NewLanguageRequest request) {
-        if(request != null) {
-            Questionnaire questionnaire = App.getLibrary().index().getQuestionnaire(request.questionnaireId);
-            if (questionnaire != null && App.addNewLanguageRequest(request)) {
-                mSelectedTargetLanguage = request.getTempTargetLanguage();
-                this.createdNewLanguage = true;
-                confirmTempLanguage(mSelectedTargetLanguage);
-                return;
+        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+            .setTitle(R.string.warn_existing_target_translation_label)
+            .setMessage(message)
+            .setPositiveButton(R.string.yes) { _, _ ->
+                // TODO: 11/1/16 the activity should return the language
+                //  and let the calling activity perform the merge
+                dialogShown = DialogShown.NONE
+                viewModel.mergeTargetTranslation(
+                    existingTranslation,
+                    sourceTargetTranslation,
+                    true
+                )
             }
-        }
-        new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                .setTitle(R.string.error)
-                .setMessage(R.string.try_again)
-                .show();
+            .setNegativeButton(R.string.no) { _, _ ->
+                dialogShown = DialogShown.NONE
+                val snack = Snackbar.make(
+                    findViewById(android.R.id.content),
+                    R.string.rename_canceled,
+                    Snackbar.LENGTH_LONG
+                )
+                ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
+                snack.show()
+                setResult(RESULT_CANCELED)
+                finish()
+            }
+            .show()
     }
 
     /**
      * Displays a confirmation for the new language
-     * @param language
      */
-    private void confirmTempLanguage(final TargetLanguage language) {
-        if(language != null) {
-            String msg = String.format(getResources().getString(R.string.new_language_confirmation), language.slug, language.name);
-            new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                    .setCancelable(false)
-//                    .setAutoDismiss(false)
-                    .setTitle(R.string.language)
-                    .setMessage(msg)
-                    .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            onItemClick(language);
-                        }
-                    })
-                    .setNeutralButton(R.string.copy, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            StringUtilities.copyToClipboard(NewTargetTranslationActivity.this, language.slug);
-                            Snackbar snack = Snackbar.make(findViewById(android.R.id.content), R.string.copied_to_clipboard, Snackbar.LENGTH_SHORT);
-                            ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                            snack.show();
-                        }
-                    })
-                    .show();
+    private fun confirmTempLanguage() {
+        viewModel.selectedTargetLanguage?.let { language ->
+            val msg = String.format(
+                resources.getString(R.string.new_language_confirmation),
+                language.slug,
+                language.name
+            )
+            AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                .setCancelable(false)
+                .setTitle(R.string.language)
+                .setMessage(msg)
+                .setPositiveButton(R.string.label_continue) { dialog, _ ->
+                    dialog.dismiss()
+                    onItemClick(language)
+                }
+                .setNeutralButton(R.string.copy) { _, _ ->
+                    StringUtilities.copyToClipboard(
+                        this,
+                        language.slug
+                    )
+                    val snack = Snackbar.make(
+                        findViewById(android.R.id.content),
+                        R.string.copied_to_clipboard,
+                        Snackbar.LENGTH_SHORT
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
+                }
+                .show()
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_new_target_translation, menu);
-        return true;
+        menuInflater.inflate(R.menu.menu_new_target_translation, menu)
+        return true
     }
 
-    @Override
-    public void onItemClick(TargetLanguage targetLanguage) {
-        mSelectedTargetLanguage = targetLanguage;
+    override fun onItemClick(targetLanguage: TargetLanguage) {
+        viewModel.selectedTargetLanguage = targetLanguage
 
-        if(!mChangeTargetLanguageOnly) {
+        if (!viewModel.changeTargetLanguageOnly) {
             // display project list
-            mFragment = new ProjectListFragment();
-            ((ProjectListFragment) mFragment).setArguments(getIntent().getExtras());
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, (ProjectListFragment) mFragment).commit();
+            fragment = ProjectListFragment()
+            (fragment as ProjectListFragment).arguments = intent.extras
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, (fragment as ProjectListFragment?)!!).commit()
             // TODO: animate
-            invalidateOptionsMenu();
+            invalidateOptionsMenu()
         } else { // just change the target language
-            Translator translator = App.getTranslator();
-            TargetTranslation sourceTargetTranslation = translator.getTargetTranslation(mTargetTranslationId);
-
-            if(targetLanguage.slug.equals(sourceTargetTranslation.getTargetLanguage().slug)) { // if nothing to do then skip
-                setResult(RESULT_OK);
-                finish();
-                return;
-            }
-
-            // check for project conflict
-            String projectId = sourceTargetTranslation.getProjectId();
-            String resourceSlug = sourceTargetTranslation.getResourceSlug();
-            TargetTranslation existingTranslation = translator.getTargetTranslation(TargetTranslation.generateTargetTranslationId(mSelectedTargetLanguage.slug, projectId, ResourceType.TEXT, resourceSlug));
-
-            if(existingTranslation != null) {
-                showTargetTranslationConflict(sourceTargetTranslation, existingTranslation);
-
-            } else { // no existing translation so change language and move
-                String originalTargetTranslationId = sourceTargetTranslation.getId();
-                sourceTargetTranslation.changeTargetLanguage(mSelectedTargetLanguage);
-                translator.normalizePath(sourceTargetTranslation);
-                String newSourceTargetTranslationID = sourceTargetTranslation.getId();
-                moveTargetTranslationAppSettings(originalTargetTranslationId, newSourceTargetTranslationID);
-                setResult(RESULT_OK);
-                finish();
-            }
-        }
-    }
-
-    /**
-     * moves all settings for a target translation to new target translation (such as when target language changed)
-     * @param targetTranslationId
-     */
-    public void moveTargetTranslationAppSettings(String targetTranslationId, String newTargetTranslationId) {
-        String[] sources = translator.getOpenSourceTranslations(targetTranslationId);
-        for (String source : sources) {
-            translator.addOpenSourceTranslation(newTargetTranslationId, source);
-        }
-
-        String source = translator.getSelectedSourceTranslationId(targetTranslationId);
-        translator.setSelectedSourceTranslation(newTargetTranslationId, source);
-
-        String lastFocusChapterId = translator.getLastFocusChapterId(targetTranslationId);
-        String lastFocusFrameId = translator.getLastFocusFrameId(targetTranslationId);
-        translator.setLastFocus(newTargetTranslationId, lastFocusChapterId, lastFocusFrameId);
-
-        TranslationViewMode lastViewMode = translator.getLastViewMode(targetTranslationId);
-        translator.setLastViewMode(newTargetTranslationId, lastViewMode);
-
-        //remove old settings
-        translator.clearTargetTranslationSettings(targetTranslationId);
-    }
-
-    @Override
-    public void onItemClick(String projectId) {
-        Translator translator = App.getTranslator();
-        // TRICKY: android only supports translating regular text projects
-        String resourceSlug = projectId.equals("obs") ? "obs" : "reg";//Resource.REGULAR_SLUG;
-        TargetTranslation existingTranslation = translator.getTargetTranslation(TargetTranslation.generateTargetTranslationId(mSelectedTargetLanguage.slug, projectId, ResourceType.TEXT, resourceSlug));
-        if(existingTranslation == null) {
-            // create new target translation
-//            SourceLanguage sourceLanguage = App.getLibrary().getPreferredSourceLanguage(projectId, App.getDeviceLanguageCode()); // get project name
-            // TODO: 3/2/2016 eventually the format will be specified in the project
-
-            TranslationFormat format = projectId.equals("obs") ? TranslationFormat.MARKDOWN : TranslationFormat.USFM;
-            final TargetTranslation targetTranslation = App.getTranslator().createTargetTranslation(App.getProfile().getNativeSpeaker(), mSelectedTargetLanguage, projectId, ResourceType.TEXT, resourceSlug, format);
-            if(targetTranslation != null) {
-                // deploy custom language code request to the translation
-                NewLanguageRequest request = App.getNewLanguageRequest(mSelectedTargetLanguage.slug);
-                if(request != null) {
-                    try {
-                        targetTranslation.setNewLanguageRequest(request);
-                    } catch (IOException e) {
-                        Logger.e(this.getClass().getName(), "Failed to deploy the new language code request", e);
-                    }
+            viewModel.getTargetTranslation(viewModel.targetTranslationId)?.let { sourceTargetTranslation ->
+                // if nothing to do then skip
+                if (targetLanguage.slug == sourceTargetTranslation.targetLanguage?.slug) {
+                    setResult(RESULT_OK)
+                    finish()
+                    return
                 }
 
-                newProjectCreated(targetTranslation);
+                // check for project conflict
+                val projectId = sourceTargetTranslation.projectId
+                val resourceSlug = sourceTargetTranslation.resourceSlug
+
+                val existingTranslation = viewModel.selectedTargetLanguage?.let { selected ->
+                    viewModel.getTargetTranslation(
+                        TargetTranslation.generateTargetTranslationId(
+                            selected.slug, projectId, ResourceType.TEXT, resourceSlug
+                        )
+                    )
+                }
+
+                if (existingTranslation != null) {
+                    showTargetTranslationConflict(sourceTargetTranslation, existingTranslation)
+                } else { // no existing translation so change language and move
+                    val originalTargetTranslationId = sourceTargetTranslation.id
+                    sourceTargetTranslation.changeTargetLanguage(viewModel.selectedTargetLanguage)
+                    viewModel.normalizeTargetTranslationPath(sourceTargetTranslation)
+                    val newSourceTargetTranslationID = sourceTargetTranslation.id
+                    viewModel.moveTargetTranslationAppSettings(
+                        originalTargetTranslationId,
+                        newSourceTargetTranslationID
+                    )
+                    setResult(RESULT_OK)
+                    finish()
+                }
+            } ?: run {
+                setResult(RESULT_OK)
+                finish()
+            }
+        }
+    }
+
+    override fun onItemClick(projectId: String) {
+        // TRICKY: android only supports translating regular text projects
+        val resourceSlug = if (projectId == "obs") "obs" else "reg" //Resource.REGULAR_SLUG;
+        val existingTranslation = viewModel.selectedTargetLanguage?.let { selected ->
+            viewModel.getTargetTranslation(
+                TargetTranslation.generateTargetTranslationId(
+                    selected.slug, projectId, ResourceType.TEXT, resourceSlug
+                )
+            )
+        }
+        if (existingTranslation == null) {
+            // create new target translation
+            // SourceLanguage sourceLanguage = App.getLibrary().getPreferredSourceLanguage(projectId, App.getDeviceLanguageCode()); // get project name
+            // TODO: 3/2/2016 eventually the format will be specified in the project
+
+            val format =
+                if (projectId == "obs") TranslationFormat.MARKDOWN else TranslationFormat.USFM
+            val targetTranslation = viewModel.createTargetTranslation(
+                projectId,
+                ResourceType.TEXT,
+                resourceSlug,
+                format
+            )
+            if (targetTranslation != null) {
+                newProjectCreated(targetTranslation)
             } else {
-                App.getTranslator().deleteTargetTranslation(TargetTranslation.generateTargetTranslationId(mSelectedTargetLanguage.slug, projectId, ResourceType.TEXT, resourceSlug));
-                Intent data = new Intent();
-                setResult(RESULT_ERROR, data);
-                finish();
+                viewModel.deleteTargetTranslation(projectId, resourceSlug)
+
+                val data = Intent()
+                setResult(RESULT_ERROR, data)
+                finish()
             }
         } else {
             // that translation already exists
-            Intent data = new Intent();
-            data.putExtra(EXTRA_TARGET_TRANSLATION_ID, existingTranslation.getId());
-            setResult(RESULT_DUPLICATE, data);
-            finish();
+            val data = Intent()
+            data.putExtra(EXTRA_TARGET_TRANSLATION_ID, existingTranslation.id)
+            setResult(RESULT_DUPLICATE, data)
+            finish()
         }
     }
 
-    private void newProjectCreated(TargetTranslation targetTranslation) {
-        mNewTargetTranslationId = targetTranslation.getId();
+    private fun newProjectCreated(targetTranslation: TargetTranslation) {
+        viewModel.newTargetTranslationId = targetTranslation.id
 
-        Intent data = new Intent();
-        data.putExtra(EXTRA_TARGET_TRANSLATION_ID, mNewTargetTranslationId);
-        setResult(RESULT_OK, data);
-        finish();
+        val data = Intent()
+        data.putExtra(EXTRA_TARGET_TRANSLATION_ID, viewModel.newTargetTranslationId)
+        setResult(RESULT_OK, data)
+        finish()
     }
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        super.onPrepareOptionsMenu(menu);
-        if(mFragment instanceof ProjectListFragment) {
-            menu.findItem(R.id.action_update).setVisible(true);
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        super.onPrepareOptionsMenu(menu)
+        if (fragment is ProjectListFragment) {
+            menu.findItem(R.id.action_update).setVisible(true)
         } else {
-            menu.findItem(R.id.action_update).setVisible(false);
+            menu.findItem(R.id.action_update).setVisible(false)
         }
-        SearchManager searchManager = (SearchManager)getSystemService(Context.SEARCH_SERVICE);
-        final MenuItem searchMenuItem = menu.findItem(R.id.action_search);
-        final SearchView searchViewAction = (SearchView) MenuItemCompat.getActionView(searchMenuItem);
-        searchViewAction.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String s) {
-                return true;
+        val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
+        val searchMenuItem = menu.findItem(R.id.action_search)
+        val searchViewAction = MenuItemCompat.getActionView(searchMenuItem) as SearchView
+        searchViewAction.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(s: String): Boolean {
+                return true
             }
 
-            @Override
-            public boolean onQueryTextChange(String s) {
-                mFragment.onSearchQuery(s);
-                return true;
+            override fun onQueryTextChange(s: String): Boolean {
+                fragment!!.onSearchQuery(s)
+                return true
             }
-        });
-        searchViewAction.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-        return true;
+        })
+        searchViewAction.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+        return true
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
 
-        switch(id) {
-            case R.id.action_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-                return true;
-            case R.id.action_search:
-                return true;
-            case R.id.action_add_language:
-                new AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.title_new_language_code)
-                        .setMessage(R.string.confirm_start_new_language_code)
-                        .setPositiveButton(R.string.label_continue, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Intent requestNewLangaugeIntent = new Intent(NewTargetTranslationActivity.this, NewTempLanguageActivity.class);
-                                startActivityForResult(requestNewLangaugeIntent, NEW_LANGUAGE_REQUEST);
-                            }
-                        })
-                        .setNegativeButton(R.string.title_cancel, null)
-                        .show();
-                return true;
-            case R.id.action_update:
-                // TODO: 10/18/16 display dialog for updating
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        when (id) {
+            R.id.action_settings -> {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+                return true
+            }
+
+            R.id.action_search -> return true
+            R.id.action_add_language -> {
+                AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                    .setTitle(R.string.title_new_language_code)
+                    .setMessage(R.string.confirm_start_new_language_code)
+                    .setPositiveButton(R.string.label_continue) { _, _ ->
+                        val requestNewLanguageIntent = Intent(
+                            this@NewTargetTranslationActivity,
+                            NewTempLanguageActivity::class.java
+                        )
+                        startActivityForResult(requestNewLanguageIntent, NEW_LANGUAGE_REQUEST)
+                    }
+                    .setNegativeButton(R.string.title_cancel, null)
+                    .show()
+                return true
+            }
+
+            // TODO: 10/18/16 display dialog for updating
+            R.id.action_update -> return true
+
+            else -> return super.onOptionsItemSelected(item)
         }
     }
 
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putSerializable(STATE_TARGET_TRANSLATION_ID, mNewTargetTranslationId);
-        outState.putInt(STATE_DIALOG_SHOWN, mDialogShown.getValue());
-        outState.putBoolean(STATE_NEW_LANGUAGE, createdNewLanguage);
-        if(mSelectedTargetLanguage != null) {
-            JSONObject targetLanguageJson = null;
+    public override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(STATE_TARGET_TRANSLATION_ID, viewModel.newTargetTranslationId)
+        outState.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
+        outState.putBoolean(STATE_NEW_LANGUAGE, viewModel.createdNewLanguage)
+        if (viewModel.selectedTargetLanguage != null) {
+            var targetLanguageJson: JSONObject? = null
             try {
-                targetLanguageJson = mSelectedTargetLanguage.toJSON();
-            } catch (JSONException e) {
-                e.printStackTrace();
+                targetLanguageJson = viewModel.selectedTargetLanguage!!.toJSON()
+            } catch (e: JSONException) {
+                e.printStackTrace()
             }
-            if(targetLanguageJson != null) {
-                outState.putString(STATE_TARGET_LANGUAGE, targetLanguageJson.toString());
+            if (targetLanguageJson != null) {
+                outState.putString(STATE_TARGET_LANGUAGE, targetLanguageJson.toString())
             }
         } else {
-            outState.remove(STATE_TARGET_LANGUAGE);
+            outState.remove(STATE_TARGET_LANGUAGE)
         }
 
-        super.onSaveInstanceState(outState);
+        super.onSaveInstanceState(outState)
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (NEW_LANGUAGE_REQUEST == requestCode) {
             if (RESULT_OK == resultCode) {
-                String rawResponse = data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_REQUEST);
-                registerTempLanguage(NewLanguageRequest.generate(rawResponse));
+                val rawResponse = data?.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_REQUEST)
+                val registered = viewModel.registerTempLanguage(rawResponse)
+                if (registered) {
+                    confirmTempLanguage()
+                } else {
+                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                        .setTitle(R.string.error)
+                        .setMessage(R.string.try_again)
+                        .show()
+                }
             } else if (RESULT_FIRST_USER == resultCode) {
-                int secondResultCode = data.getIntExtra(NewTempLanguageActivity.EXTRA_RESULT_CODE, -1);
+                val secondResultCode =
+                    data!!.getIntExtra(NewTempLanguageActivity.EXTRA_RESULT_CODE, -1)
                 if (secondResultCode == NewTempLanguageActivity.RESULT_MISSING_QUESTIONNAIRE) {
-                    Snackbar snack = Snackbar.make(findViewById(android.R.id.content), R.string.missing_questionnaire, Snackbar.LENGTH_LONG);
-                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                    snack.show();
+                    val snack = Snackbar.make(
+                        findViewById(android.R.id.content),
+                        R.string.missing_questionnaire,
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
                 } else if (secondResultCode == NewTempLanguageActivity.RESULT_USE_EXISTING_LANGUAGE) {
-                    String targetLanguageId = data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_ID);
-                    TargetLanguage targetLanguage = App.getLibrary().index().getTargetLanguage(targetLanguageId);
+                    val targetLanguageId =
+                        data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_ID)
+                    val targetLanguage = viewModel.getTargetLanguage(targetLanguageId)
                     if (targetLanguage != null) {
-                        onItemClick(targetLanguage);
+                        onItemClick(targetLanguage)
                     }
                 } else {
-                    Snackbar snack = Snackbar.make(findViewById(android.R.id.content), R.string.error, Snackbar.LENGTH_LONG);
-                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                    snack.show();
+                    val snack = Snackbar.make(
+                        findViewById(android.R.id.content),
+                        R.string.error,
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
                 }
             }
         }
     }
-
-    @Override
-    public void onFinished(ManagedTask task) {
-        taskWatcher.stop();
-        if(task instanceof MergeTargetTranslationTask) {
-            MergeTargetTranslationTask mergeTask = (MergeTargetTranslationTask) task;
-            MergeTargetTranslationTask.Status status = mergeTask.getStatus();
-
-            int results = RESULT_ERROR;
-
-            if(MergeTargetTranslationTask.Status.MERGE_CONFLICTS == status) {
-                if(MergeConflictsHandler.isTranslationMergeConflicted(mergeTask.getDestinationTranslation().getId())) {
-                    results = RESULT_MERGE_CONFLICT;
-                } else {
-                    results = RESULT_OK;
-                }
-                translator.clearTargetTranslationSettings(mergeTask.getSourceTranslation().getId()); // clean up original settings
-            } else if(MergeTargetTranslationTask.Status.SUCCESS == status) {
-                results = RESULT_OK;
-                translator.clearTargetTranslationSettings(mergeTask.getSourceTranslation().getId()); // clean up original settings
-            }
-
-            Intent data = new Intent();
-            data.putExtra(EXTRA_TARGET_TRANSLATION_ID, mergeTask.getDestinationTranslation().getId());
-            setResult(results, data);
-            finish();
-        }
-    }
-
 
     /**
      * for keeping track if dialog is being shown for orientation changes
      */
-    public enum DialogShown {
+    enum class DialogShown {
         NONE,
         RENAME_CONFLICT;
 
-        public int getValue() {
-            return this.ordinal();
-        }
+        val value: Int
+            get() = this.ordinal
 
-        public static DialogShown fromInt(int ordinal, DialogShown defaultValue) {
-            if (ordinal > 0 && ordinal < DialogShown.values().length) {
-                return DialogShown.values()[ordinal];
+        companion object {
+            fun fromInt(ordinal: Int, defaultValue: DialogShown): DialogShown {
+                if (ordinal > 0 && ordinal < entries.size) {
+                    return entries[ordinal]
+                }
+                return defaultValue
             }
-            return defaultValue;
         }
+    }
+
+    companion object {
+        const val EXTRA_TARGET_TRANSLATION_ID: String = "extra_target_translation_id"
+        const val EXTRA_CHANGE_TARGET_LANGUAGE_ONLY: String = "extra_change_target_language_only"
+        const val RESULT_DUPLICATE: Int = 2
+        const val RESULT_MERGE_CONFLICT: Int = 3
+        private const val STATE_TARGET_TRANSLATION_ID = "state_target_translation_id"
+        private const val STATE_TARGET_LANGUAGE = "state_target_language_id"
+        const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
+        const val RESULT_ERROR: Int = 3
+        val TAG: String = NewTargetTranslationActivity::class.java.simpleName
+        const val NEW_LANGUAGE_REQUEST: Int = 1001
+        const val NEW_LANGUAGE_CONFIRMATION: String = "new-language-confirmation"
+        private const val STATE_NEW_LANGUAGE = "new_language"
+        const val INVALID: Int = -1
+        const val EXTRA_DISABLED_LANGUAGES: String = "extra_disabled_language_ids"
     }
 }

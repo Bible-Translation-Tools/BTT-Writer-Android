@@ -5,14 +5,13 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.door43.data.IPreferenceRepository
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.core.Migration
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.core.Translator
 import java.util.Locale
-import javax.inject.Inject
 
-class PreferenceRepository @Inject constructor(
-    private val context: Context
-) : IPreferenceRepository {
+class PreferenceRepository (private val context: Context) : IPreferenceRepository {
 
     private companion object {
         const val PREFERENCES_NAME = "com.door43.translationstudio.general"
@@ -51,34 +50,81 @@ class PreferenceRepository @Inject constructor(
     private val privatePrefs
         get() = context.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
 
-    override fun getDefaultPref(key: String, defaultValue: String?): String? {
-        return defaultPrefs.getString(key, defaultValue)
+    override fun <T> getDefaultPref(key: String, type: Class<T>): T? {
+        return getPref(key, type, defaultPrefs)
     }
 
-    override fun getDefaultPref(key: String, defaultResource: Int): String? {
-        return getDefaultPref(key, context.resources.getString(defaultResource))
+    override fun <T> getDefaultPref(key: String, defaultValue: T, type: Class<T>): T {
+        return getPref(key, defaultValue, type, defaultPrefs)
     }
 
-    override fun setDefaultPref(key: String, value: String?) {
-        val editor = defaultPrefs.edit()
-        if (value == null) {
-            editor.remove(key)
+    override fun <T> setDefaultPref(key: String, value: T?, type: Class<T>) {
+        setPref(key, value, type, defaultPrefs)
+    }
+
+    override fun <T> getPrivatePref(key: String, type: Class<T>): T? {
+        return getPref(key, type, privatePrefs)
+    }
+
+    override fun <T> getPrivatePref(key: String, defaultValue: T, type: Class<T>): T {
+        return getPref(key, defaultValue, type, privatePrefs)
+    }
+
+    override fun <T> setPrivatePref(key: String, value: T?, type: Class<T>) {
+        setPref(key, value, type, privatePrefs)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T>getPref(
+        key: String,
+        type: Class<T>,
+        sharedPreferences: SharedPreferences
+    ): T {
+        return when (type) {
+            java.lang.String::class.java -> sharedPreferences.getString(key, null)
+            java.lang.Integer::class.java -> sharedPreferences.getInt(key, -1)
+            java.lang.Long::class.java -> sharedPreferences.getLong(key, -1L)
+            java.lang.Float::class.java -> sharedPreferences.getFloat(key, -1F)
+            java.lang.Boolean::class.java -> sharedPreferences.getBoolean(key, false)
+            else -> null
+        } as T
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T>getPref(
+        key: String,
+        value: T,
+        type: Class<T>,
+        sharedPreferences: SharedPreferences
+    ): T {
+        return when (type) {
+            java.lang.String::class.java -> sharedPreferences.getString(key, value as String)
+            java.lang.Integer::class.java -> sharedPreferences.getInt(key, value as Int)
+            java.lang.Long::class.java -> sharedPreferences.getLong(key, value as Long)
+            java.lang.Float::class.java -> sharedPreferences.getFloat(key, value as Float)
+            java.lang.Boolean::class.java -> sharedPreferences.getBoolean(key, value as Boolean)
+            else -> value as String
+        } as T
+    }
+
+    private fun <T>setPref(
+        key: String,
+        value: T?,
+        type: Class<T>,
+        sharedPreferences: SharedPreferences
+    ) {
+        val editor = sharedPreferences.edit()
+        if (value != null) {
+            when (type) {
+                java.lang.String::class.java -> editor.putString(key, value as String?)
+                java.lang.Integer::class.java -> editor.putInt(key, value as Int)
+                java.lang.Long::class.java -> editor.putLong(key, value as Long)
+                java.lang.Float::class.java -> editor.putFloat(key, value as Float)
+                java.lang.Boolean::class.java -> editor.putBoolean(key, value as Boolean)
+                else -> editor.apply()
+            }
         } else {
-            editor.putString(key, value)
-        }
-        editor.apply()
-    }
-
-    override fun getPrivatePref(key: String, defaultValue: String?): String? {
-        return privatePrefs.getString(key, defaultValue)
-    }
-
-    override fun setPrivatePref(key: String, value: String?) {
-        val editor = privatePrefs.edit()
-        if (value == null) {
             editor.remove(key)
-        } else {
-            editor.putString(key, value)
         }
         editor.apply()
     }
@@ -164,6 +210,29 @@ class PreferenceRepository @Inject constructor(
         newIdSet += sourceTranslationId
         editor.putString(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, newIdSet)
         editor.apply()
+    }
+
+    override fun removeOpenSourceTranslation(
+        targetTranslationId: String,
+        sourceTranslationId: String?
+    ) {
+        if (!sourceTranslationId.isNullOrEmpty()) {
+            val sourceTranslationIds = getOpenSourceTranslations(targetTranslationId)
+            var newIdSet: String? = ""
+            for (id in sourceTranslationIds) {
+                if (id != sourceTranslationId) {
+                    if (newIdSet!!.isEmpty()) {
+                        newIdSet = id
+                    } else {
+                        newIdSet += "|$id"
+                    }
+                } else if (id == getSelectedSourceTranslationId(targetTranslationId)) {
+                    // unset the selected tab if it is removed
+                    setSelectedSourceTranslation(targetTranslationId, null)
+                }
+            }
+            setPrivatePref(Translator.OPEN_SOURCE_TRANSLATIONS + targetTranslationId, newIdSet)
+        }
     }
 
     override fun getSelectedSourceTranslationId(targetTranslationId: String): String? {

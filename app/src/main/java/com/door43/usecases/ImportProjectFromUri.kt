@@ -3,7 +3,6 @@ package com.door43.usecases
 import android.content.Context
 import android.net.Uri
 import com.door43.OnProgressListener
-import com.door43.translationstudio.App.Companion.getTranslator
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
@@ -13,7 +12,8 @@ import java.util.Locale
 import javax.inject.Inject
 
 class ImportProjectFromUri @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val translator: Translator
 ) {
     private val max = 100
 
@@ -37,7 +37,6 @@ class ImportProjectFromUri @Inject constructor(
             try {
                 context.contentResolver?.openInputStream(path).use {
                     it?.let { input ->
-                        val translator = getTranslator()
                         Logger.i(this::class.java.simpleName, "Importing from uri: $filename")
 
                         val importResults = translator.importArchive(
@@ -50,7 +49,8 @@ class ImportProjectFromUri @Inject constructor(
                             // make sure we have actual merge conflicts
                             mergeConflict =
                                 MergeConflictsHandler.isTranslationMergeConflicted(
-                                    importResults.importedSlug
+                                    importResults.importedSlug,
+                                    translator
                                 )
                         }
                     }

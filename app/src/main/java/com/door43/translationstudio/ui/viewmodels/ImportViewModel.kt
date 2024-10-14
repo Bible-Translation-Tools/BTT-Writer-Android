@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,16 +13,17 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.AdvancedGogsRepoSearch
+import com.door43.usecases.BackupRC
 import com.door43.usecases.CloneRepository
 import com.door43.usecases.ImportProjectFromUri
 import com.door43.usecases.RegisterSSHKeys
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.gogsclient.User
+import java.io.File
 import java.security.InvalidParameterException
 import javax.inject.Inject
 
@@ -35,6 +37,7 @@ class ImportViewModel @Inject constructor(
     @Inject lateinit var cloneRepository: CloneRepository
     @Inject lateinit var registerSSHKeys: RegisterSSHKeys
     @Inject lateinit var importProjectFromUri: ImportProjectFromUri
+    @Inject lateinit var backupRC: BackupRC
 
     private val _translation = MutableLiveData<TargetTranslation?>(null)
     val translation: LiveData<TargetTranslation?> = _translation
@@ -143,6 +146,15 @@ class ImportViewModel @Inject constructor(
             }
             _registeredSSHKeys.value = result
             _progress.value = null
+        }
+    }
+
+    fun backupAndDeleteTranslation(dir: File) {
+        try {
+            backupRC.backupTargetTranslation(dir)
+            translator.deleteTargetTranslation(dir)
+        } catch (e: Exception) {
+            Log.w(this::class.simpleName, e)
         }
     }
 

@@ -9,20 +9,25 @@ import android.view.ViewGroup
 import android.view.Window
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import com.door43.translationstudio.App.Companion.getTranslator
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NativeSpeaker
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.DialogNativeSpeakerBinding
 import com.door43.translationstudio.ui.legal.LegalDocumentActivity
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import java.security.InvalidParameterException
+import javax.inject.Inject
 
 /**
  * Created by joel on 2/19/2016.
  */
+@AndroidEntryPoint
 class ContributorDialog : DialogFragment() {
+    @Inject lateinit var translator: Translator
+
     private var mTargetTranslation: TargetTranslation? = null
     private var mNativeSpeaker: NativeSpeaker? = null
     private var mListener: View.OnClickListener? = null
@@ -43,7 +48,7 @@ class ContributorDialog : DialogFragment() {
         if (args != null) {
             val nativeSpeakerName = args.getString(ARG_NATIVE_SPEAKER, null)
             val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION, null)
-            mTargetTranslation = getTranslator().getTargetTranslation(targetTranslationId)
+            mTargetTranslation = translator.getTargetTranslation(targetTranslationId)
             if (nativeSpeakerName != null && mTargetTranslation != null) {
                 mNativeSpeaker = mTargetTranslation!!.getContributor(nativeSpeakerName)
             }
@@ -139,6 +144,11 @@ class ContributorDialog : DialogFragment() {
         }
 
         return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     /**

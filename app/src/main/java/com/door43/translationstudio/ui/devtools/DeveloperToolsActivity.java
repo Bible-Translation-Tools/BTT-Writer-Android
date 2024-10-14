@@ -14,6 +14,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+
+import com.door43.data.IDirectoryProvider;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.content.FileProvider;
 import androidx.appcompat.app.AlertDialog;
@@ -29,7 +31,6 @@ import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.ui.dialogs.ErrorLogDialog;
 import com.door43.translationstudio.ui.BaseActivity;
-import com.door43.util.SdUtils;
 import com.door43.util.StringUtilities;
 import com.door43.widget.ViewUtil;
 
@@ -42,7 +43,15 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.OnProgressListener, ManagedTask.OnFinishedListener {
+
+    @Inject
+    IDirectoryProvider directoryProvider;
 
     public static final String TASK_INDEX_CHUNK_MARKERS = "index_chunk_markers";
     public static final String TAG = DeveloperToolsActivity.class.getSimpleName();
@@ -133,7 +142,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
                     @Override
                     public void start() {
                         publishProgress(-1, "Regenerating keys");
-                        App.generateSSHKeys();
+                        directoryProvider.generateSSHKeys();
                     }
                 };
                 task.addOnProgressListener(DeveloperToolsActivity.this);
@@ -162,15 +171,13 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
             }
         }));
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mDeveloperTools.add(new ToolItem("Reset SD Card Access", "", R.drawable.ic_warning_secondary_24dp, new ToolItem.ToolAction() {
-                @Override
-                public void run() {
-                    Logger.i(this.getClass().getSimpleName(), "User has reset SD Card access");
-                    SdUtils.removeSdCardWriteAccess();
-                }
-            }));
-        }
+        mDeveloperTools.add(new ToolItem("Reset SD Card Access", "", R.drawable.ic_warning_secondary_24dp, new ToolItem.ToolAction() {
+            @Override
+            public void run() {
+                Logger.i(this.getClass().getSimpleName(), "User has reset SD Card access");
+                //SdUtils.removeSdCardWriteAccess();
+            }
+        }));
 
         mDeveloperTools.add(new ToolItem("Check system resources", "Check for minimum system resources.", R.drawable.ic_description_secondary_24dp, new ToolItem.ToolAction() {
             @Override
@@ -190,9 +197,7 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
                     String availMemStr = getFormattedSize(info.availMem);
                     message += "Available memory on the system: " + availMemStr + "\n";
                     String totalMemStr = "NA";
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        totalMemStr = getFormattedSize(info.totalMem);
-                    }
+                    totalMemStr = getFormattedSize(info.totalMem);
                     message += "Total memory on the system (getMemoryInfo): " + totalMemStr + "\n";
                     String getTotalRamStr = getFormattedSize(getTotalRAM());
                     message += "Total memory on the system (/proc/meminfo): " + getTotalRamStr + "\n";
@@ -225,7 +230,12 @@ public class DeveloperToolsActivity extends BaseActivity implements ManagedTask.
         mDeveloperTools.add(new ToolItem("Delete Library", "Deletes the entire library database so it can be rebuilt from scratch", R.drawable.ic_delete_dark_secondary_24dp, new ToolItem.ToolAction() {
             @Override
             public void run() {
-                App.deleteLibrary();
+                try {
+                    library.tearDown();
+                    directoryProvider.deleteLibrary();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 Snackbar snack = Snackbar.make(findViewById(android.R.id.content), "The library content was deleted", Snackbar.LENGTH_LONG);
                 ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
                 snack.show();

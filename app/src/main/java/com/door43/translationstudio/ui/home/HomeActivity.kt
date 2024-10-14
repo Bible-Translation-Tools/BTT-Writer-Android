@@ -11,6 +11,9 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.PopupMenu
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
@@ -18,13 +21,14 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.restart
-import com.door43.translationstudio.App.Companion.startBackupService
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictListener
+import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityHomeBinding
+import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.ProfileActivity
 import com.door43.translationstudio.ui.SettingsActivity
@@ -45,19 +49,26 @@ import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.tools.eventbuffer.EventBuffer
 import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 import org.unfoldingword.tools.logger.Logger
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeActivity : BaseActivity(),
     OnCreateNewTargetTranslation, TargetTranslationListFragment.OnItemClickListener,
     EventBuffer.OnEventListener, DialogInterface.OnCancelListener {
 
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var translator: Translator
+
     private var fragment: Fragment? = null
     private var alertShown = DialogShown.NONE
     private var targetTranslationID: String? = null
     private var updateDialog: UpdateLibraryDialog? = null
     private var progressDialog: ProgressHelper.ProgressDialog? = null
+    private var backupsRunning = false
 
     private lateinit var binding: ActivityHomeBinding
+    private lateinit var newTranslationLauncher: ActivityResultLauncher<Intent>
+    private lateinit var translationViewRequestLauncher: ActivityResultLauncher<Intent>
 
     private val viewModel: HomeViewModel by viewModels()
 
@@ -68,6 +79,18 @@ class HomeActivity : BaseActivity(),
 
         startBackupService()
         setupObservers()
+
+        newTranslationLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            onNewTranslationRequest(result)
+        }
+
+        translationViewRequestLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            onTranslationViewRequest(result)
+        }
 
         progressDialog = ProgressHelper.newInstance(baseContext, R.string.loading, false)
 
@@ -179,6 +202,14 @@ class HomeActivity : BaseActivity(),
         })
     }
 
+    private fun startBackupService() {
+        if (!backupsRunning) {
+            backupsRunning = true
+            val backupIntent = Intent(baseContext, BackupService::class.java)
+            baseContext.startService(backupIntent)
+        }
+    }
+
     private fun setupObservers() {
         viewModel.progress.observe(this) {
             if (it != null) {
@@ -263,6 +294,7 @@ class HomeActivity : BaseActivity(),
                     if (success && result.mergeConflict) {
                         MergeConflictsHandler.backgroundTestForConflictedChunks(
                             result.importedSlug,
+                            translator,
                             object : OnMergeConflictListener {
                                 override fun onNoMergeConflict(targetTranslationId: String) {
                                     showImportResults(
@@ -307,16 +339,13 @@ class HomeActivity : BaseActivity(),
                     AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                         .setTitle(R.string.success)
                         .setMessage(R.string.success_translation_update_with_conflicts)
-                        .setNeutralButton(
-                            R.string.review
-                        ) { _, _ ->
-                            val intent =
-                                Intent(this@HomeActivity, TargetTranslationActivity::class.java)
+                        .setNeutralButton(R.string.review) { _, _ ->
+                            val intent = Intent(this, TargetTranslationActivity::class.java)
                             intent.putExtra(
                                 Translator.EXTRA_TARGET_TRANSLATION_ID,
                                 viewModel.notifyTargetTranslationWithUpdates
                             )
-                            startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
+                            translationViewRequestLauncher.launch(intent)
                         }
                         .show()
                 } else {
@@ -407,7 +436,7 @@ class HomeActivity : BaseActivity(),
         viewModel.loadTranslations()
         viewModel.lastFocusTargetTranslation = null
 
-        val userText = resources.getString(R.string.current_user, ProfileActivity.currentUser)
+        val userText = resources.getString(R.string.current_user, profile.currentUser)
         binding.currentUser.text = userText
 
         val numTranslations = viewModel.translations.value?.size ?: 0
@@ -513,7 +542,7 @@ class HomeActivity : BaseActivity(),
         args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
         args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtras(args)
-        startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
+        translationViewRequestLauncher.launch(intent)
     }
 
     private fun showAuthFailure() {
@@ -640,65 +669,6 @@ class HomeActivity : BaseActivity(),
             .show()
     }
 
-    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (NEW_TARGET_TRANSLATION_REQUEST == requestCode) {
-            if (RESULT_OK == resultCode) {
-                if (fragment is WelcomeFragment) {
-                    // display target translations list
-                    fragment = TargetTranslationListFragment().apply {
-                        setArguments(intent.extras)
-                        supportFragmentManager.beginTransaction()
-                            .replace(R.id.fragment_container, this).commit()
-                    }
-                } else {
-                    (fragment as TargetTranslationListFragment?)!!.reloadList()
-                }
-
-                val intent = Intent(this@HomeActivity, TargetTranslationActivity::class.java)
-                intent.putExtra(
-                    Translator.EXTRA_TARGET_TRANSLATION_ID,
-                    data!!.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID)
-                )
-                startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
-            } else if (NewTargetTranslationActivity.RESULT_DUPLICATE == resultCode) {
-                // display duplicate notice to user
-                val targetTranslationId = data?.getStringExtra(
-                    NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
-                )
-                val existingTranslation = viewModel.getTargetTranslation(targetTranslationId)
-                if (existingTranslation != null) {
-                    val project = viewModel.getProject(existingTranslation)
-
-                    val snack = Snackbar.make(
-                        findViewById(android.R.id.content), String.format(
-                            resources.getString(R.string.duplicate_target_translation),
-                            project.name,
-                            existingTranslation.targetLanguageName
-                        ), Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(
-                        snack,
-                        resources.getColor(R.color.light_primary_text)
-                    )
-                    snack.show()
-                }
-            } else if (NewTargetTranslationActivity.RESULT_ERROR == resultCode) {
-                val snack = Snackbar.make(
-                    findViewById(android.R.id.content),
-                    resources.getString(R.string.error),
-                    Snackbar.LENGTH_LONG
-                )
-                ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-                snack.show()
-            }
-        } else if (TARGET_TRANSLATION_VIEW_REQUEST == requestCode) {
-            if (TargetTranslationActivity.RESULT_DO_UPDATE == resultCode) {
-                viewModel.updateSource(resources.getString(R.string.updating_languages))
-            }
-        }
-    }
-
     /**
      * prompt user that project has changed
      */
@@ -754,8 +724,8 @@ class HomeActivity : BaseActivity(),
     }
 
     override fun onCreateNewTargetTranslation() {
-        val intent = Intent(this@HomeActivity, NewTargetTranslationActivity::class.java)
-        startActivityForResult(intent, NEW_TARGET_TRANSLATION_REQUEST)
+        val intent = Intent(this, NewTargetTranslationActivity::class.java)
+        newTranslationLauncher.launch(intent)
     }
 
     override fun onItemClick(item: TranslationItem) {
@@ -779,9 +749,9 @@ class HomeActivity : BaseActivity(),
             ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
             snack.show()
         } else {
-            val intent = Intent(this@HomeActivity, TargetTranslationActivity::class.java)
+            val intent = Intent(this, TargetTranslationActivity::class.java)
             intent.putExtra(Translator.EXTRA_TARGET_TRANSLATION_ID, item.translation.id)
-            startActivityForResult(intent, TARGET_TRANSLATION_VIEW_REQUEST)
+            translationViewRequestLauncher.launch(intent)
         }
     }
 
@@ -856,6 +826,64 @@ class HomeActivity : BaseActivity(),
         return
     }
 
+    private fun onNewTranslationRequest(result: ActivityResult) {
+        if (RESULT_OK == result.resultCode) {
+            if (fragment is WelcomeFragment) {
+                // display target translations list
+                fragment = TargetTranslationListFragment().apply {
+                    setArguments(intent.extras)
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, this).commit()
+                }
+            } else {
+                (fragment as? TargetTranslationListFragment?)?.reloadList()
+            }
+
+            val intent = Intent(this, TargetTranslationActivity::class.java)
+            intent.putExtra(
+                Translator.EXTRA_TARGET_TRANSLATION_ID,
+                result.data!!.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID)
+            )
+            translationViewRequestLauncher.launch(intent)
+        } else if (NewTargetTranslationActivity.RESULT_DUPLICATE == result.resultCode) {
+            // display duplicate notice to user
+            val targetTranslationId = result.data?.getStringExtra(
+                NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
+            )
+            val existingTranslation = viewModel.getTargetTranslation(targetTranslationId)
+            if (existingTranslation != null) {
+                val project = viewModel.getProject(existingTranslation)
+
+                val snack = Snackbar.make(
+                    findViewById(android.R.id.content), String.format(
+                        resources.getString(R.string.duplicate_target_translation),
+                        project.name,
+                        existingTranslation.targetLanguageName
+                    ), Snackbar.LENGTH_LONG
+                )
+                ViewUtil.setSnackBarTextColor(
+                    snack,
+                    resources.getColor(R.color.light_primary_text)
+                )
+                snack.show()
+            }
+        } else if (NewTargetTranslationActivity.RESULT_ERROR == result.resultCode) {
+            val snack = Snackbar.make(
+                findViewById(android.R.id.content),
+                resources.getString(R.string.error),
+                Snackbar.LENGTH_LONG
+            )
+            ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
+            snack.show()
+        }
+    }
+
+    private fun onTranslationViewRequest(result: ActivityResult) {
+        if (TargetTranslationActivity.RESULT_DO_UPDATE == result.resultCode) {
+            viewModel.updateSource(resources.getString(R.string.updating_languages))
+        }
+    }
+
     override fun onCancel(dialog: DialogInterface) {
         // TODO cancel running tasks
     }
@@ -918,8 +946,6 @@ class HomeActivity : BaseActivity(),
 
     companion object {
         val TAG: String = HomeActivity::class.java.simpleName
-        private const val NEW_TARGET_TRANSLATION_REQUEST = 1
-        private const val TARGET_TRANSLATION_VIEW_REQUEST = 101
         const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
         const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
         const val INVALID: Int = -1

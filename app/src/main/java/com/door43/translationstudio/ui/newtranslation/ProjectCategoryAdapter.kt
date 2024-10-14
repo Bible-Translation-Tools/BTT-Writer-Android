@@ -1,204 +1,201 @@
-package com.door43.translationstudio.ui.newtranslation;
+package com.door43.translationstudio.ui.newtranslation
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.Filter;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import com.door43.translationstudio.R;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import org.unfoldingword.door43client.models.CategoryEntry;
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import android.widget.Filter
+import com.door43.translationstudio.databinding.FragmentProjectListItemBinding
+import org.unfoldingword.door43client.models.CategoryEntry
+import java.util.Collections
+import java.util.Locale
 
 /**
  * Created by joel on 9/4/2015.
  */
-public class ProjectCategoryAdapter extends BaseAdapter {
-    private CategoryEntry[] mCategories;
-    private CategoryEntry[] mFilteredCategories;
-    private ProjectCategoryFilter mProjectFilter;
+class ProjectCategoryAdapter : BaseAdapter() {
+    private val categories = arrayListOf<CategoryEntry>()
+    private val filteredCategories = arrayListOf<CategoryEntry>()
+    private var projectFilter: ProjectCategoryFilter = ProjectCategoryFilter()
 
-    public ProjectCategoryAdapter(List<CategoryEntry> categories) {
-        mCategories = categories.toArray(new CategoryEntry[categories.size()]);
-        mFilteredCategories = mCategories;
+    fun setCategories(categories: List<CategoryEntry>) {
+        this.categories.clear()
+        this.categories.addAll(categories)
+
+        filteredCategories.clear()
+        filteredCategories.addAll(categories)
+        notifyDataSetChanged()
     }
 
-    @Override
-    public int getCount() {
-        if(mFilteredCategories != null) {
-            return mFilteredCategories.length;
+    override fun getCount(): Int {
+        return filteredCategories.size
+    }
+
+    override fun getItem(position: Int): CategoryEntry {
+        return filteredCategories[position]
+    }
+
+    override fun getItemId(position: Int): Long {
+        return 0
+    }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val holder: ViewHolder
+
+        if (convertView == null) {
+            val binding = FragmentProjectListItemBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            holder = ViewHolder(binding)
         } else {
-            return 0;
-        }
-    }
-
-    @Override
-    public CategoryEntry getItem(int position) {
-        return mFilteredCategories[position];
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return 0;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View v = convertView;
-        ViewHolder holder;
-
-        if(convertView == null) {
-            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_project_list_item, null);
-            holder = new ViewHolder(v);
-        } else {
-            holder = (ViewHolder)v.getTag();
+            holder = convertView.tag as ViewHolder
         }
 
         // render view
-        holder.mProjectView.setText(getItem(position).name);
-        if(getItem(position).entryType == CategoryEntry.Type.PROJECT) {
-            holder.mMoreImage.setVisibility(View.GONE);
+        holder.binding.projectName.text = getItem(position).name
+        if (getItem(position).entryType == CategoryEntry.Type.PROJECT) {
+            holder.binding.moreIcon.visibility = View.GONE
         } else {
-            holder.mMoreImage.setVisibility(View.VISIBLE);
+            holder.binding.moreIcon.visibility = View.VISIBLE
         }
+
         // TODO: render icon
-
-        return v;
-    }
-
-    /**
-     * Updates the data set
-     * @param categories
-     */
-    public void changeData(List<CategoryEntry> categories) {
-        mCategories = categories.toArray(new CategoryEntry[categories.size()]);
-        mFilteredCategories = mCategories;
-        notifyDataSetChanged();
+        return holder.binding.root
     }
 
     /**
      * Returns the project filter
      * @return
      */
-    public Filter getFilter() {
-        if(mProjectFilter == null) {
-            mProjectFilter = new ProjectCategoryFilter();
-        }
-        return mProjectFilter;
-    }
+    val filter: Filter
+        get() = projectFilter
 
-    public static class ViewHolder {
-        public ImageView mIconImage;
-        public TextView mProjectView;
-        public ImageView mMoreImage;
-
-        public ViewHolder(View view) {
-            mIconImage = (ImageView) view.findViewById(R.id.projectIcon);
-            mProjectView = (TextView) view.findViewById(R.id.projectName);
-            mMoreImage = (ImageView) view.findViewById(R.id.moreIcon);
-            view.setTag(this);
+    class ViewHolder(val binding: FragmentProjectListItemBinding) {
+        init {
+            binding.root.tag = this
         }
     }
 
     /**
      * A filter for projects
      */
-    private class ProjectCategoryFilter extends Filter {
-
-        @Override
-        protected FilterResults performFiltering(CharSequence charSequence) {
-            FilterResults results = new FilterResults();
-            if(charSequence == null || charSequence.length() == 0) {
+    private inner class ProjectCategoryFilter : Filter() {
+        override fun performFiltering(charSequence: CharSequence?): FilterResults {
+            val results = FilterResults()
+            if (charSequence.isNullOrEmpty()) {
                 // no filter
-                results.values = Arrays.asList(mCategories);
-                results.count = mCategories.length;
+                results.values = categories
+                results.count = categories.size
             } else {
                 // perform filter
-                List<CategoryEntry> filteredCategories = new ArrayList<>();
-                for(CategoryEntry category:mCategories) {
-                    boolean match = false;
-                    if(category.entryType == CategoryEntry.Type.PROJECT) {
+                val filteredCategories: MutableList<CategoryEntry> = ArrayList()
+                for (category in categories) {
+                    var match = false
+                    if (category.entryType == CategoryEntry.Type.PROJECT) {
                         // match the project id
-                        match = category.slug.toLowerCase().startsWith(charSequence.toString().toLowerCase());
+                        match = category.slug.lowercase(Locale.getDefault()).startsWith(
+                            charSequence.toString().lowercase(
+                                Locale.getDefault()
+                            )
+                        )
                     }
-                    if(!match) {
-                        String[] categoryComponents = category.slug.split("-");
-                        String[] titleComponents = category.name.split(" ");
-                        if (category.name.toLowerCase().startsWith(charSequence.toString().toLowerCase())) {
+                    if (!match) {
+                        val categoryComponents =
+                            category.slug.split("-".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                        val titleComponents =
+                            category.name.split(" ".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                        if (category.name.lowercase(Locale.getDefault()).startsWith(
+                                charSequence.toString().lowercase(
+                                    Locale.getDefault()
+                                )
+                            )
+                        ) {
                             // match the project title in any language
-                            match = true;
-                        } else if (category.sourceLanguageSlug.toLowerCase().startsWith(charSequence.toString().toLowerCase())) {// || l.getName().toLowerCase().startsWith(charSequence.toString().toLowerCase())) {
+                            match = true
+                        } else if (category.sourceLanguageSlug.lowercase(Locale.getDefault())
+                                .startsWith(
+                                    charSequence.toString().lowercase(
+                                        Locale.getDefault()
+                                    )
+                                )
+                        ) { // || l.getName().toLowerCase().startsWith(charSequence.toString().toLowerCase())) {
                             // match the language id or name
-                            match = true;
+                            match = true
                         } else {
                             // match category id components
-                            for(String component:categoryComponents) {
-                                if (component.toLowerCase().startsWith(charSequence.toString().toLowerCase())) {
-                                    match = true;
-                                    break;
+                            for (component in categoryComponents) {
+                                if (component.lowercase(Locale.getDefault()).startsWith(
+                                        charSequence.toString().lowercase(
+                                            Locale.getDefault()
+                                        )
+                                    )
+                                ) {
+                                    match = true
+                                    break
                                 }
                             }
-                            if(!match) {
+                            if (!match) {
                                 // match title components
-                                for(String component:titleComponents) {
-                                    if (component.toLowerCase().startsWith(charSequence.toString().toLowerCase())) {
-                                        match = true;
-                                        break;
+                                for (component in titleComponents) {
+                                    if (component.lowercase(Locale.getDefault()).startsWith(
+                                            charSequence.toString().lowercase(
+                                                Locale.getDefault()
+                                            )
+                                        )
+                                    ) {
+                                        match = true
+                                        break
                                     }
                                 }
                             }
                         }
                     }
-                    if(match) {
-                        filteredCategories.add(category);
+                    if (match) {
+                        filteredCategories.add(category)
                     }
                 }
-                results.values = filteredCategories;
-                results.count = filteredCategories.size();
+                results.values = filteredCategories
+                results.count = filteredCategories.size
             }
-            return results;
+            return results
         }
 
-        @Override
-        protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-            List<CategoryEntry> filteredProjects = ((List<CategoryEntry>) filterResults.values);
-            if(filteredProjects != null) {
-                mFilteredCategories = filteredProjects.toArray(new CategoryEntry[filterResults.count]);
-            } else {
-                mFilteredCategories = new CategoryEntry[0];
+        override fun publishResults(charSequence: CharSequence, filterResults: FilterResults) {
+            val filteredProjects = (filterResults.values as? List<CategoryEntry>)
+            filteredCategories.clear()
+            if (filteredProjects != null) {
+                filteredCategories.addAll(filteredProjects)
             }
-            notifyDataSetChanged();
+            notifyDataSetChanged()
         }
     }
 
-    /**
-     * Sorts project categories by id
-     * @param categories
-     * @param referenceId categories are sorted according to the reference id
-     */
-    private static void sortProjectCategories(List<CategoryEntry> categories, final CharSequence referenceId) {
-        Collections.sort(categories, new Comparator<CategoryEntry>() {
-            @Override
-            public int compare(CategoryEntry lhs, CategoryEntry rhs) {
-                String lhId = lhs.slug;
-                String rhId = rhs.slug;
+    companion object {
+        /**
+         * Sorts project categories by id
+         * @param categories
+         * @param referenceId categories are sorted according to the reference id
+         */
+        private fun sortProjectCategories(
+            categories: List<CategoryEntry>,
+            referenceId: CharSequence
+        ) {
+            Collections.sort(categories) { lhs, rhs ->
+                var lhId = lhs.slug
+                var rhId = rhs.slug
                 // give priority to matches with the reference
-                if (lhId.startsWith(referenceId.toString().toLowerCase())) {
-                    lhId = "!" + lhId;
+                if (lhId.startsWith(referenceId.toString().lowercase(Locale.getDefault()))) {
+                    lhId = "!$lhId"
                 }
-                if (rhId.startsWith(referenceId.toString().toLowerCase())) {
-                    rhId = "!" + rhId;
+                if (rhId.startsWith(referenceId.toString().lowercase(Locale.getDefault()))) {
+                    rhId = "!$rhId"
                 }
-                return lhId.compareToIgnoreCase(rhId);
+                lhId.compareTo(rhId, ignoreCase = true)
             }
-        });
+        }
     }
 }

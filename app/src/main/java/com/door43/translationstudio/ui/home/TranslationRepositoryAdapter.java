@@ -33,8 +33,8 @@ public class TranslationRepositoryAdapter extends BaseAdapter {
     private final Door43Client library;
     private boolean textOnlyResources = false; // if set then anything not a text resource is disabled
 
-    public TranslationRepositoryAdapter() {
-        this.library = App.getLibrary();
+    public TranslationRepositoryAdapter(Door43Client library) {
+        this.library = library;
     }
 
     @Override
@@ -213,7 +213,7 @@ public class TranslationRepositoryAdapter extends BaseAdapter {
 
             // set default typeface for language
             Typeface typeface = Typography.getBestFontForLanguage(context, TranslationType.SOURCE, item.languageCode, item.languageDirection);
-            targetLanguageName.setTypeface(typeface, 0);
+            targetLanguageName.setTypeface(typeface, Typeface.NORMAL);
 
             if(item.isPrivate) {
                 this.privacy.setImageResource(R.drawable.ic_lock_secondary_18dp);

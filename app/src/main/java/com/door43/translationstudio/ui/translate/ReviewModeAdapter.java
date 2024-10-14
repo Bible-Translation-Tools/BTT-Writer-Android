@@ -155,19 +155,16 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     @Override
     public void onResourceTabNotesSelected(ReviewHolder holder, ReviewListItem item) {
-        int position = filteredItems.indexOf(item);
         holder.showNotes(item.source.language);
     }
 
     @Override
     public void onResourceTabWordsSelected(ReviewHolder holder, ReviewListItem item) {
-        int position = filteredItems.indexOf(item);
         holder.showWords(item.source.language);
     }
 
     @Override
     public void onResourceTabQuestionsSelected(ReviewHolder holder, ReviewListItem item) {
-        int position = filteredItems.indexOf(item);
         holder.showQuestions(item.source.language);
     }
 

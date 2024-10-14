@@ -183,7 +183,7 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
                 targetLanguage.slug,
                 targetLanguage.direction
         );
-        holder.binding.targetLanguage.setTypeface(typeface, 0);
+        holder.binding.targetLanguage.setTypeface(typeface, Typeface.NORMAL);
 
         // TODO: finish rendering project icon
         holder.binding.infoButton.setOnClickListener(v1 -> {
@@ -207,7 +207,7 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
         return -1;
     }
 
-    public void changeData(List<TranslationItem> targetTranslations) {
+    public void setData(List<TranslationItem> targetTranslations) {
         translations = targetTranslations;
         translationProgress = new HashMap<>();
         translationProgressCalculated = new ArrayList<>();

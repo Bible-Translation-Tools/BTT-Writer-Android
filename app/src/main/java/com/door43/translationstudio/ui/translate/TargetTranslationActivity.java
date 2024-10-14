@@ -64,12 +64,11 @@ import it.moondroid.seekbarhint.library.SeekBarHint;
 
 @AndroidEntryPoint
 public class TargetTranslationActivity extends BaseActivity implements ViewModeFragment.OnEventListener, FirstTabFragment.OnEventListener, Spinner.OnItemSelectedListener {
+    @Inject
+    IPreferenceRepository prefRepository;
 
     private TargetTranslationViewModel viewModel;
     private ActivityTargetTranslationDetailBinding binding;
-
-    @Inject
-    IPreferenceRepository prefRepository;
 
     private static final String TAG = "TranslationActivity";
 
@@ -584,7 +583,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         binding.searchPane.searchType.setAdapter(typesAdapter);
 
         // restore last search type
-        String lastSearchSourceStr = App.getUserString(SEARCH_SOURCE, SearchSubject.SOURCE.name().toUpperCase());
+        String lastSearchSourceStr = prefRepository.getDefaultPref(SEARCH_SOURCE, SearchSubject.SOURCE.name().toUpperCase(), String.class);
         SearchSubject lastSearchSource = SearchSubject.SOURCE;
         try {
             lastSearchSource = SearchSubject.valueOf(lastSearchSourceStr.toUpperCase());
@@ -694,7 +693,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             if((fragment != null) && (fragment instanceof ViewModeFragment)) {
                 // preserve current search type
                 SearchSubject subject = getFilterSubject();
-                prefRepository.setDefaultPref(SEARCH_SOURCE, subject.name().toUpperCase());
+                viewModel.saveSearchSource(subject.name().toUpperCase());
                 ((ViewModeFragment) fragment).filter(constraint, subject);
             }
         });

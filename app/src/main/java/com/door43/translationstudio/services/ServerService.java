@@ -10,10 +10,12 @@ import org.unfoldingword.resourcecontainer.Project;
 import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
+import com.door43.translationstudio.core.Profile;
 import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.network.Connection;
 import com.door43.translationstudio.network.Peer;
+import com.door43.usecases.ExportProjects;
 import com.door43.util.RSAEncryption;
 
 import org.json.JSONException;
@@ -35,11 +37,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * This class provides an exporting service (effectively a server) from which
  * other devices may browse and retreive translations
  */
+@AndroidEntryPoint
 public class ServerService extends NetworkService {
+    @Inject
+    Translator translator;
+    @Inject
+    Door43Client library;
+    @Inject
+    ExportProjects exportProjects;
+    @Inject
+    Profile profile;
+
     public static final String PARAM_PRIVATE_KEY = "param_private_key";
     public static final String PARAM_PUBLIC_KEY = "param_public_key";
     public static final String PARAM_DEVICE_ALIAS = "param_device_alias";
@@ -292,35 +308,33 @@ public class ServerService extends NetworkService {
                     break;
                 }
 
-                Translator translator = App.getTranslator();
                 TargetTranslation targetTranslation = translator.getTargetTranslation(targetTranslationSlug);
                 if(targetTranslation != null) {
                     try {
-                        targetTranslation.setDefaultContributor(App.getProfile().getNativeSpeaker());
-                        translator.exportArchive(targetTranslation, exportFile);
+                        targetTranslation.setDefaultContributor(profile.getNativeSpeaker());
+                        exportProjects.exportProject(targetTranslation, exportFile);
                         if(exportFile.exists()) {
-                            ServerSocket fileSocket = openWriteSocket(new OnSocketEventListener() {
-                                @Override
-                                public void onOpen(Connection connection) {
-                                    try {
-                                        DataOutputStream out = new DataOutputStream(connection.getSocket().getOutputStream());
-                                        DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(exportFile)));
-                                        byte[] buffer = new byte[8 * 1024];
-                                        int count;
-                                        while ((count = in.read(buffer)) > 0) {
-                                            out.write(buffer, 0, count);
-                                        }
-                                        out.close();
-                                        in.close();
-                                    } catch (IOException e) {
-                                        Logger.e(ServerService.class.getName(), "Failed to send the target translation", e);
+                            JSONObject targetTranslationContext;
+                            try (ServerSocket fileSocket = openWriteSocket(connection -> {
+                                try {
+                                    DataOutputStream out = new DataOutputStream(connection.getSocket().getOutputStream());
+                                    DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(exportFile)));
+                                    byte[] buffer = new byte[8 * 1024];
+                                    int count;
+                                    while ((count = in.read(buffer)) > 0) {
+                                        out.write(buffer, 0, count);
                                     }
+                                    out.close();
+                                    in.close();
+                                } catch (IOException e) {
+                                    Logger.e(ServerService.class.getName(), "Failed to send the target translation", e);
                                 }
-                            });
+                            })) {
 
-                            // send file details
-                            JSONObject targetTranslationContext = new JSONObject();
-                            targetTranslationContext.put("port", fileSocket.getLocalPort());
+                                // send file details
+                                targetTranslationContext = new JSONObject();
+                                targetTranslationContext.put("port", fileSocket.getLocalPort());
+                            }
                             targetTranslationContext.put("name", exportFile.getName());
                             targetTranslationContext.put("size", exportFile.length());
                             Request reply = request.makeReply(targetTranslationContext);
@@ -370,11 +384,14 @@ public class ServerService extends NetworkService {
      * @param targetTranslationSlug
      */
     public void offerTargetTranslation(Peer client, String sourceLanguageSlug, String targetTranslationSlug) {
-        Door43Client library = App.getLibrary();
-        TargetTranslation targetTranslation = App.getTranslator().getTargetTranslation(targetTranslationSlug);
+        TargetTranslation targetTranslation = translator.getTargetTranslation(targetTranslationSlug);
         if(targetTranslation != null) {
             try {
-                Project p = App.getLibrary().index.getProject(sourceLanguageSlug, targetTranslation.getProjectId(), true);
+                Project p = library.index.getProject(
+                        sourceLanguageSlug,
+                        targetTranslation.getProjectId(),
+                        true
+                );
                 JSONObject json = new JSONObject();
                 json.put("target_translation_id", targetTranslation.getId());
                 json.put("package_version", TargetTranslation.PACKAGE_VERSION);
@@ -507,9 +524,7 @@ public class ServerService extends NetworkService {
             // close the connection
             mConnection.close();
             // remove all instances of the peer
-            if(mClientConnections.containsKey(mConnection.getIpAddress())) {
-                mClientConnections.remove(mConnection.getIpAddress());
-            }
+            mClientConnections.remove(mConnection.getIpAddress());
             removePeer(mClient);
             if(listener != null) {
                 listener.onClientLost(mClient);

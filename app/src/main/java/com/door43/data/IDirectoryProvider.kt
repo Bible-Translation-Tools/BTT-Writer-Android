@@ -1,6 +1,5 @@
 package com.door43.data
 
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.IOException
 
@@ -43,21 +42,14 @@ interface IDirectoryProvider {
     val databaseFile: File
 
     /**
-     * Returns an instance of the door43 client
-     * @return
-     */
-    val library: Door43Client?
-
-    /**
-     * Check if the default index and resource containers have been deployed
-     * @return Boolean
-     */
-    val isLibraryDeployed: Boolean
-
-    /**
      * The directory where all source resource containers will be stored
      */
     val containersDir: File
+
+    /**
+     * The directory where all backup files will be stored
+     */
+    val backupsDir: File
 
     /**
      * Returns the sharing directory

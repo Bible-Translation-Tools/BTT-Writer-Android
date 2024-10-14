@@ -53,10 +53,9 @@ public class ValidationTask extends ManagedTask {
 
     @Override
     public void start() {
-        Door43Client library = App.getLibrary();
-        Translator translator = App.getTranslator();
+        // TODO refactor this task for the favour of usecase
 
-        TargetTranslation targetTranslation = translator.getTargetTranslation(mTargetTranslationId);
+        /*TargetTranslation targetTranslation = translator.getTargetTranslation(mTargetTranslationId);
         TargetLanguage targetLanguage = library.index().getTargetLanguage(targetTranslation.getTargetLanguageId());
 
         ResourceContainer container;
@@ -207,7 +206,7 @@ public class ValidationTask extends ManagedTask {
             mValidations.addAll(chapterValidations);
         } else {
             mValidations.add(ValidationItem.generateValidGroup(projectTitle, sourceLanguage, true));
-        }
+        }*/
     }
 
     /**

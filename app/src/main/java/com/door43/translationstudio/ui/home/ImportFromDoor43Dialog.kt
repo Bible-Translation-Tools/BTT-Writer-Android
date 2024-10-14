@@ -36,6 +36,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.json.JSONObject
+import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
@@ -53,6 +54,10 @@ open class ImportFromDoor43Dialog : DialogFragment() {
     lateinit var profile: Profile
     @Inject
     lateinit var directoryProvider: IDirectoryProvider
+    @Inject
+    lateinit var targetTranslationMigrator: TargetTranslationMigrator
+    @Inject
+    lateinit var library: Door43Client
 
     private val viewModel: ImportViewModel by viewModels()
 
@@ -119,7 +124,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
             }
 
             (root.findViewById<View>(R.id.list) as? ListView)?.let { list ->
-                adapter = TranslationRepositoryAdapter().apply {
+                adapter = TranslationRepositoryAdapter(library).apply {
                     setTextOnlyResources(true) // only allow importing of text resources
                     list.adapter = this
                     list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
@@ -208,61 +213,70 @@ open class ImportFromDoor43Dialog : DialogFragment() {
 
                 if (result.status == CloneRepository.Status.SUCCESS) {
                     Logger.i(this.javaClass.name, "Repository cloned from ${result.cloneUrl}")
-                    val cloneDir = TargetTranslationMigrator.migrate(result.cloneDir)
+                    val cloned = targetTranslationMigrator.migrate(result.cloneDir)
                     var importFailed = false
                     mergeConflicted = false
 
-                    TargetTranslation.open(cloneDir)?.let { tempTargetTranslation ->
-                        val existingTargetTranslation = translator.getTargetTranslation(
-                            tempTargetTranslation.id
-                        )
+                    if (cloned) {
+                        TargetTranslation.open(result.cloneDir) {
+                            // Try to backup and delete corrupt project
+                            viewModel.backupAndDeleteTranslation(result.cloneDir)
+                        }?.let { tempTargetTranslation ->
+                            val existingTargetTranslation = translator.getTargetTranslation(
+                                tempTargetTranslation.id
+                            )
 
-                        alreadyExisted = existingTargetTranslation != null
+                            alreadyExisted = existingTargetTranslation != null
 
-                        if (alreadyExisted && mergeSelection != MergeOptions.OVERWRITE) {
-                            // merge target translation
-                            try {
-                                val success = existingTargetTranslation!!.merge(cloneDir)
-                                if (!success) {
-                                    if (MergeConflictsHandler.isTranslationMergeConflicted(
-                                            existingTargetTranslation.id
-                                        )
-                                    ) {
-                                        mergeConflicted = true
+                            if (alreadyExisted && mergeSelection != MergeOptions.OVERWRITE) {
+                                // merge target translation
+                                try {
+                                    val success = existingTargetTranslation!!.merge(result.cloneDir) {
+                                        // Try to backup and delete corrupt project
+                                        viewModel.backupAndDeleteTranslation(result.cloneDir)
                                     }
+                                    if (!success) {
+                                        if (MergeConflictsHandler.isTranslationMergeConflicted(
+                                                existingTargetTranslation.id,
+                                                translator
+                                            )
+                                        ) {
+                                            mergeConflicted = true
+                                        }
+                                    }
+                                    showMergeOverwritePrompt(existingTargetTranslation)
+                                } catch (e: Exception) {
+                                    Logger.e(
+                                        this.javaClass.name,
+                                        "Failed to merge the target translation",
+                                        e
+                                    )
+                                    notifyImportFailed()
+                                    importFailed = true
                                 }
-                                showMergeOverwritePrompt(existingTargetTranslation)
-                            } catch (e: Exception) {
-                                Logger.e(
-                                    this.javaClass.name,
-                                    "Failed to merge the target translation",
-                                    e
-                                )
-                                notifyImportFailed()
-                                importFailed = true
+                            } else {
+                                alreadyExisted = false
+                                // restore the new target translation
+                                try {
+                                    translator.restoreTargetTranslation(tempTargetTranslation)
+                                } catch (e: IOException) {
+                                    Logger.e(
+                                        this.javaClass.name,
+                                        "Failed to import the target translation " + tempTargetTranslation.id,
+                                        e
+                                    )
+                                    notifyImportFailed()
+                                    importFailed = true
+                                }
                             }
-                        } else {
-                            alreadyExisted = false
-                            // restore the new target translation
-                            try {
-                                translator.restoreTargetTranslation(tempTargetTranslation)
-                            } catch (e: IOException) {
-                                Logger.e(
-                                    this.javaClass.name,
-                                    "Failed to import the target translation " + tempTargetTranslation.id,
-                                    e
-                                )
-                                notifyImportFailed()
-                                importFailed = true
-                            }
+                        } ?: run {
+                            Logger.e(this.javaClass.name, "Failed to open the online backup")
+                            notifyImportFailed()
+                            importFailed = true
                         }
-                    } ?: run {
-                        Logger.e(this.javaClass.name, "Failed to open the online backup")
-                        notifyImportFailed()
-                        importFailed = true
                     }
 
-                    deleteQuietly(cloneDir)
+                    deleteQuietly(result.cloneDir)
 
                     if (!importFailed && !alreadyExisted) {
                         // todo: terrible hack. We should instead register a listener with the dialog

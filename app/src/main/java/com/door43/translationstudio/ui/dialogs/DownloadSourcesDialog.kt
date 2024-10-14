@@ -189,15 +189,7 @@ class DownloadSourcesDialog : DialogFragment() {
                 }
         }
 
-        /*selectionBar = view.findViewById<View>(R.id.selection_bar) as LinearLayout
-        searchIcon = view.findViewById<View>(R.id.search_mag_icon) as ImageView
-        searchEditText = view.findViewById<View>(R.id.search_text) as EditText
-        searchTextBorder = view.findViewById<View>(R.id.search_text_border) as LinearLayout*/
-
         searchString = null
-
-        /*byLanguageButton = view.findViewById<View>(R.id.byLanguage) as RadioButton
-        byBookButton = view.findViewById<View>(R.id.byBook) as RadioButton*/
 
         if (savedInstanceState != null) {
             val stepsArrayJson = savedInstanceState.getString(STATE_FILTER_STEPS, null)
@@ -634,6 +626,11 @@ class DownloadSourcesDialog : DialogFragment() {
     override fun onDestroy() {
         progressDialog.dismiss()
         super.onDestroy()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     companion object {

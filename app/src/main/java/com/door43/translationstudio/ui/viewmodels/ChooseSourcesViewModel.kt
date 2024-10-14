@@ -7,6 +7,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
+import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TargetTranslation
@@ -30,8 +32,10 @@ class ChooseSourcesViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
 
     @Inject lateinit var downloadResourceContainer: DownloadResourceContainer
-    @Inject lateinit var library: Door43Client
+    @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var translator: Translator
+    @Inject lateinit var prefRepository: IPreferenceRepository
+    @Inject lateinit var library: Door43Client
 
     private val jobs = arrayListOf<Job>()
 
@@ -128,8 +132,8 @@ class ChooseSourcesViewModel @Inject constructor(
         library.delete(slug)
     }
 
-    fun getOpenSourceTranslations(targetTranslationId: String): Array<String?> {
-        return translator.getOpenSourceTranslations(targetTranslationId)
+    fun getOpenSourceTranslations(targetTranslationId: String): Array<String> {
+        return prefRepository.getOpenSourceTranslations(targetTranslationId)
     }
 
     fun checkForContainerUpdates(containerSlug: String, position: Int) {

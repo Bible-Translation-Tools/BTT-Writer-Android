@@ -1,204 +1,192 @@
-package com.door43.translationstudio.ui.draft;
+package com.door43.translationstudio.ui.draft
 
-import android.app.Activity;
-import androidx.appcompat.app.AlertDialog;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.core.TranslationType;
-import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.rendering.ClickableRenderingEngine;
-import com.door43.translationstudio.rendering.Clickables;
-import com.door43.translationstudio.rendering.DefaultRenderer;
-import com.door43.translationstudio.rendering.RenderingGroup;
-import com.door43.translationstudio.ui.spannables.NoteSpan;
-import com.door43.translationstudio.ui.spannables.Span;
-import com.door43.widget.ViewUtil;
-
-import org.json.JSONException;
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.SourceLanguage;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.RecyclerView
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.databinding.FragmentDraftListItemBinding
+import com.door43.translationstudio.rendering.Clickables
+import com.door43.translationstudio.rendering.DefaultRenderer
+import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.ui.spannables.NoteSpan
+import com.door43.translationstudio.ui.spannables.Span
+import com.door43.widget.ViewUtil
+import org.json.JSONException
+import org.unfoldingword.door43client.models.SourceLanguage
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
 /**
  * Created by blm on 1/10/2016.
  */
-public class DraftAdapter extends RecyclerView.Adapter<DraftAdapter.ViewHolder> {
+class DraftAdapter :
+    RecyclerView.Adapter<DraftAdapter.ViewHolder>() {
 
-    private SourceLanguage mSourceLanguage;
-    private CharSequence[] mRenderedDraftBody;
-    private final Activity mContext;
+    private var draftTranslation: ResourceContainer? = null
+    private var sourceLanguage: SourceLanguage? = null
+    private var renderedDraftBody = arrayOf<CharSequence?>()
+    private val chapters = arrayListOf<String>()
+    private val layoutBuildNumber = 0
 
-    private ResourceContainer mDraftTranslation;
-    private final Door43Client mLibrary;
-    private String[] mChapters;
-    private int mLayoutBuildNumber = 0;
+    fun setData(draftTranslation: ResourceContainer, sourceLanguage: SourceLanguage?) {
+        this.draftTranslation = draftTranslation
+        this.sourceLanguage = sourceLanguage
 
-    public DraftAdapter(Activity context, ResourceContainer draftTranslation) {
-        mLibrary = App.getLibrary();
-        mContext = context;
-        mDraftTranslation = draftTranslation;
-        mSourceLanguage = null;
-        try {
-            mSourceLanguage = mLibrary.index().getSourceLanguage(mDraftTranslation.info.getJSONObject("language").getString("slug"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        mChapters = draftTranslation.chapters();
-        mRenderedDraftBody = new CharSequence[mChapters.length];
+        chapters.clear()
+        chapters.addAll(draftTranslation.chapters())
+
+        renderedDraftBody = arrayOfNulls(chapters.size)
+        notifyDataSetChanged()
     }
 
-    /**
-     * Updates the draft translation displayed
-     * @param draftTranslation
-     */
-    public void setDraftTranslation(ResourceContainer draftTranslation) {
-        mDraftTranslation = draftTranslation;
-        mSourceLanguage = null;
-        try {
-            mSourceLanguage = mLibrary.index().getSourceLanguage(mDraftTranslation.info.getJSONObject("language").getString("slug"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        mChapters = draftTranslation.chapters();
-        mRenderedDraftBody = new CharSequence[mChapters.length];
-        notifyDataSetChanged();
+    fun getFocusedFrameId(position: Int): String? {
+        return null
     }
 
-    public String getFocusedFrameId(int position) {
-        return null;
-    }
-
-    public String getFocusedChapterId(int position) {
-        if(position >= 0 && position < mChapters.length) {
-            return mChapters[position];
+    fun getFocusedChapterId(position: Int): String? {
+        return if (position >= 0 && position < chapters.size) {
+            chapters[position]
         } else {
-            return null;
+            null
         }
     }
 
-    public int getItemPosition(String chapterId, String frameId) {
-        for(int i = 0; i < mChapters.length; i ++) {
-            if(mChapters[i].equals(chapterId)) {
-                return i;
+    fun getItemPosition(chapterId: String, frameId: String?): Int {
+        for (i in chapters.indices) {
+            if (chapters[i] == chapterId) {
+                return i
             }
         }
-        return -1;
+        return -1
     }
 
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_draft_list_item, parent, false);
-        ViewHolder vh = new ViewHolder(v);
-        return vh;
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val binding = FragmentDraftListItemBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return ViewHolder(binding)
     }
 
-    @Override
-    public void onBindViewHolder(final ViewHolder holder, final int position) {
-        int cardMargin = mContext.getResources().getDimensionPixelSize(R.dimen.card_margin);
-        int stackedCardMargin = mContext.getResources().getDimensionPixelSize(R.dimen.stacked_card_margin);
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val context = holder.binding.root.context
+        val cardMargin = context.resources.getDimensionPixelSize(R.dimen.card_margin)
+        val stackedCardMargin =
+            context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
 
-        CardView.LayoutParams sourceParams = (CardView.LayoutParams)holder.mSourceCard.getLayoutParams();
-        sourceParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin);
-        holder.mSourceCard.setLayoutParams(sourceParams);
-        ((View) holder.mSourceCard.getParent()).requestLayout();
-        ((View) holder.mSourceCard.getParent()).invalidate();
+        val sourceParams = holder.binding.sourceTranslationCard.layoutParams as FrameLayout.LayoutParams
+        sourceParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin)
+        holder.binding.sourceTranslationCard.layoutParams = sourceParams
+        (holder.binding.sourceTranslationCard.parent as View).requestLayout()
+        (holder.binding.sourceTranslationCard.parent as View).invalidate()
 
-        final String chapterSlug = mChapters[position];
+        val chapterSlug = chapters[position]
 
         // render the draft chapter body
-        if(mRenderedDraftBody[position] == null) {
-            String chapterBody = "";
-            for (String chunk:mDraftTranslation.chunks(chapterSlug)) {
-                chapterBody += mDraftTranslation.readChunk(chapterSlug, chunk);
+        if (renderedDraftBody[position] == null) {
+            var chapterBody: String? = ""
+            for (chunk in draftTranslation?.chunks(chapterSlug) ?: arrayOf()) {
+                chapterBody += draftTranslation!!.readChunk(chapterSlug, chunk)
             }
-//            String chapterBody = getChapterBody(mDraftTranslation, chapterSlug.getId());/
-            TranslationFormat bodyFormat = null;// mLibrary.getChapterBodyFormat(mDraftTranslation, chapterSlug.getId());
+            // String chapterBody = getChapterBody(mDraftTranslation, chapterSlug.getId());/
+            var bodyFormat: TranslationFormat? =
+                null // mLibrary.getChapterBodyFormat(mDraftTranslation, chapterSlug.getId());
             try {
-                bodyFormat = TranslationFormat.parse(mDraftTranslation.info.getString("content_mime_type"));
-            } catch (JSONException e) {
-                e.printStackTrace();
+                bodyFormat =
+                    TranslationFormat.parse(draftTranslation?.info?.getString("content_mime_type"))
+            } catch (e: JSONException) {
+                e.printStackTrace()
             }
-            RenderingGroup sourceRendering = new RenderingGroup();
+            val sourceRendering = RenderingGroup()
             if (Clickables.isClickableFormat(bodyFormat)) {
                 // TODO: add click listeners
-                Span.OnClickListener noteClickListener = new Span.OnClickListener() {
-                    @Override
-                    public void onClick(View view, Span span, int start, int end) {
-                        if(span instanceof NoteSpan) {
-                            new AlertDialog.Builder(mContext, R.style.AppTheme_Dialog)
-                                    .setTitle(R.string.title_footnote)
-                                    .setMessage(((NoteSpan)span).getNotes())
-                                    .setPositiveButton(R.string.dismiss, null)
-                                    .show();
+                val noteClickListener: Span.OnClickListener = object : Span.OnClickListener {
+                    override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                        if (span is NoteSpan) {
+                            AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                                .setTitle(R.string.title_footnote)
+                                .setMessage(span.notes)
+                                .setPositiveButton(R.string.dismiss, null)
+                                .show()
                         }
                     }
 
-                    @Override
-                    public void onLongClick(View view, Span span, int start, int end) {
-
+                    override fun onLongClick(view: View, span: Span, start: Int, end: Int) {
                     }
-                };
-                ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(bodyFormat, sourceRendering, null, noteClickListener, true);
+                }
+                val renderer = Clickables.setupRenderingGroup(
+                    bodyFormat,
+                    sourceRendering,
+                    null,
+                    noteClickListener,
+                    true
+                )
 
                 // In read mode (and only in read mode), pull leading major section headings out for
                 // display above chapter headings.
-                renderer.setSuppressLeadingMajorSectionHeadings(true);
-                CharSequence heading = renderer.getLeadingMajorSectionHeading(chapterBody);
-                holder.mSourceHeading.setText(heading);
-                holder.mSourceHeading.setVisibility(
-                        heading.length() > 0 ? View.VISIBLE : View.GONE);
+                renderer.setSuppressLeadingMajorSectionHeadings(true)
+                val heading = renderer.getLeadingMajorSectionHeading(chapterBody)
+                holder.binding.sourceTranslationHeading.text = heading
+                holder.binding.sourceTranslationHeading.visibility =
+                    if (heading.isNotEmpty()) View.VISIBLE else View.GONE
             } else {
-                sourceRendering.addEngine(new DefaultRenderer());
+                sourceRendering.addEngine(DefaultRenderer())
             }
-            sourceRendering.init(chapterBody);
-            mRenderedDraftBody[position] = sourceRendering.start();
+            sourceRendering.init(chapterBody)
+            renderedDraftBody[position] = sourceRendering.start()
         }
 
-        holder.mSourceBody.setText(mRenderedDraftBody[position]);
-        ViewUtil.makeLinksClickable(holder.mSourceBody);
-        String chapterTitle = null;//chapterSlug.title;
-        chapterTitle = mDraftTranslation.readChunk(chapterSlug, "title");
-        if(chapterTitle == null) {
-            chapterTitle = mDraftTranslation.readChunk("front", "title") + " " + Integer.parseInt(chapterSlug);
+        holder.binding.sourceTranslationBody.text = renderedDraftBody[position]
+        ViewUtil.makeLinksClickable(holder.binding.sourceTranslationBody)
+        var chapterTitle: String? = null //chapterSlug.title;
+        chapterTitle = draftTranslation?.readChunk(chapterSlug, "title")
+        if (chapterTitle == null) {
+            chapterTitle = draftTranslation?.readChunk("front", "title") + " " + chapterSlug.toInt()
         }
-        holder.mSourceTitle.setText(chapterTitle);
+        holder.binding.sourceTranslationTitle.text = chapterTitle
 
         // set up fonts
-        if(holder.mLayoutBuildNumber != mLayoutBuildNumber) {
-            holder.mLayoutBuildNumber = mLayoutBuildNumber;
-            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.mSourceHeading, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.formatTitle(mContext, TranslationType.SOURCE, holder.mSourceTitle, mSourceLanguage.slug, mSourceLanguage.direction);
-            Typography.format(mContext, TranslationType.SOURCE, holder.mSourceBody, mSourceLanguage.slug, mSourceLanguage.direction);
+        if (holder.layoutBuildNumber != layoutBuildNumber) {
+            holder.layoutBuildNumber = layoutBuildNumber
+            sourceLanguage?.let { source ->
+                Typography.formatTitle(
+                    context,
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationHeading,
+                    source.slug,
+                    source.direction
+                )
+                Typography.formatTitle(
+                    context,
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationTitle,
+                    source.slug,
+                    source.direction
+                )
+                Typography.format(
+                    context,
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationBody,
+                    source.slug,
+                    source.direction
+                )
+            }
         }
     }
 
-    @Override
-    public int getItemCount() {
-        return mChapters.length;
+    override fun getItemCount(): Int {
+        return chapters.size
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        private final CardView mSourceCard;
-        public TextView mSourceHeading;
-        public TextView mSourceTitle;
-        public TextView mSourceBody;
-        public int mLayoutBuildNumber = -1;
-
-        public ViewHolder(View v) {
-            super(v);
-            mSourceCard = (CardView)v.findViewById(R.id.source_translation_card);
-            mSourceHeading = (TextView)v.findViewById(R.id.source_translation_heading);
-            mSourceTitle = (TextView)v.findViewById(R.id.source_translation_title);
-            mSourceBody = (TextView)v.findViewById(R.id.source_translation_body);
-        }
+    class ViewHolder(
+        val binding: FragmentDraftListItemBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        var layoutBuildNumber: Int = -1
     }
 }

@@ -1,60 +1,35 @@
-package com.door43.translationstudio.ui.newtranslation;
+package com.door43.translationstudio.ui.newtranslation
 
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.Filter;
-import android.widget.TextView;
-
-import com.door43.translationstudio.R;
-import com.door43.util.ColorUtil;
-
-import org.unfoldingword.door43client.models.TargetLanguage;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import android.widget.Filter
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentLanguageListItemBinding
+import com.door43.util.ColorUtil
+import org.unfoldingword.door43client.models.TargetLanguage
+import java.util.Locale
 
 /**
  * Created by joel on 9/4/2015.
  */
-public class TargetLanguageAdapter extends BaseAdapter {
-    private final Context context;
-    private TargetLanguage[] mTargetLanguages;
-    private TargetLanguage[] mFilteredTargetLanguages;
-    private TargetLanguageFilter mTargetLanguageFilter;
-    private String[] disabledLanguages;
+class TargetLanguageAdapter : BaseAdapter() {
+    private val targetLanguages = arrayListOf<TargetLanguage>()
+    private val filteredTargetLanguages = arrayListOf<TargetLanguage>()
+    private val disabledLanguages = arrayListOf<String>()
+    private val targetLanguageFilter = TargetLanguageFilter()
 
-    public TargetLanguageAdapter(Context context, List<TargetLanguage> targetLanguages) {
-        this.context = context;
-        if(targetLanguages != null) {
-            Collections.sort(targetLanguages);
-            mTargetLanguages = targetLanguages.toArray(new TargetLanguage[targetLanguages.size()]);
-            mFilteredTargetLanguages = mTargetLanguages;
-        }
+    override fun getCount(): Int {
+        return filteredTargetLanguages.size
     }
 
-    @Override
-    public int getCount() {
-        if(mFilteredTargetLanguages != null) {
-            return mFilteredTargetLanguages.length;
-        } else {
-            return 0;
-        }
+    override fun getItem(position: Int): TargetLanguage {
+        return filteredTargetLanguages[position]
     }
 
-    @Override
-    public TargetLanguage getItem(int position) {
-        return mFilteredTargetLanguages[position];
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return 0;
+    override fun getItemId(position: Int): Long {
+        return 0
     }
 
     /**
@@ -62,163 +37,198 @@ public class TargetLanguageAdapter extends BaseAdapter {
      * @param position
      * @return
      */
-    public boolean isItemDisabled(int position) {
-        TargetLanguage l = getItem(position);
-        return isLanguageDisabled(l.slug);
+    fun isItemDisabled(position: Int): Boolean {
+        val l = getItem(position)
+        return isLanguageDisabled(l.slug)
     }
 
     /**
      * Checks if the language is disabled
      * @return true if disabled
      */
-    private boolean isLanguageDisabled(String id) {
-        if(this.disabledLanguages != null) {
-            for (String l : this.disabledLanguages) {
-                if (id.equals(l)) return true;
-            }
+    private fun isLanguageDisabled(id: String): Boolean {
+        for (l in disabledLanguages) {
+            if (id == l) return true
         }
-        return false;
+        return false
     }
 
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View v = convertView;
-        ViewHolder holder;
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val holder: ViewHolder
 
-        if(convertView == null) {
-            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_language_list_item, null);
-            holder = new ViewHolder(v);
+        if (convertView == null) {
+            val binding = FragmentLanguageListItemBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            holder = ViewHolder(binding)
         } else {
-            holder = (ViewHolder)v.getTag();
+            holder = convertView.tag as ViewHolder
         }
 
+        val language = getItem(position)
 
-        TargetLanguage l = getItem(position);
         // render view
-        holder.mLanguageView.setText(l.name);
-        holder.mCodeView.setText(l.slug);
-        holder.setDisabled(this.context, isLanguageDisabled(l.slug));
+        holder.bind(language)
+        holder.setDisabled(isLanguageDisabled(language.slug))
 
-        return v;
+        return holder.binding.root
+    }
+
+    fun setLanguages(targetLanguages: List<TargetLanguage>) {
+        this.targetLanguages.clear()
+        this.targetLanguages.addAll(targetLanguages.sorted())
+        filteredTargetLanguages.clear()
+        filteredTargetLanguages.addAll(targetLanguages)
+        notifyDataSetChanged()
     }
 
     /**
      * Returns the target language filter
      * @return
      */
-    public Filter getFilter() {
-        if(mTargetLanguageFilter == null) {
-            mTargetLanguageFilter = new TargetLanguageFilter();
-        }
-        return mTargetLanguageFilter;
+    fun getFilter(): Filter {
+        return targetLanguageFilter
     }
 
     /**
      * Sets the language id's that will be disabled (not selectable)
      * @param disabledLanguages
      */
-    public void setDisabledLanguages(String[] disabledLanguages) {
-        if(disabledLanguages == null) {
-            this.disabledLanguages = new String[0];
-        } else {
-            this.disabledLanguages = disabledLanguages;
-        }
-        notifyDataSetChanged();
+    fun setDisabledLanguages(disabledLanguages: List<String>) {
+        this.disabledLanguages.clear()
+        this.disabledLanguages.addAll(disabledLanguages)
+        notifyDataSetChanged()
     }
 
-    public static class ViewHolder {
-        private final View mRootView;
-        public TextView mLanguageView;
-        public TextView mCodeView;
+    class ViewHolder(val binding: FragmentLanguageListItemBinding) {
+        private val context = binding.root.context
 
-        public ViewHolder(View view) {
-            mLanguageView = (TextView) view.findViewById(R.id.languageName);
-            mCodeView = (TextView) view.findViewById(R.id.languageCode);
-            mRootView = view;
-            view.setTag(this);
+        init {
+            binding.root.tag = this
         }
 
-        public void setDisabled(Context context, boolean disabled) {
-            if(disabled) {
-                mRootView.setBackgroundColor(ColorUtil.getColor(context, R.color.graph_background));
-                mCodeView.setTextColor(ColorUtil.getColor(context, R.color.dark_disabled_text));
-                mLanguageView.setTextColor(ColorUtil.getColor(context, R.color.dark_disabled_text));
+        fun bind(language: TargetLanguage) {
+            binding.languageName.text = language.name
+            binding.languageCode.text = language.slug
+        }
+
+        fun setDisabled(disabled: Boolean) {
+            if (disabled) {
+                binding.root.setBackgroundColor(ColorUtil.getColor(context, R.color.graph_background))
+                binding.languageCode.setTextColor(ColorUtil.getColor(context, R.color.dark_disabled_text))
+                binding.languageName.setTextColor(ColorUtil.getColor(context, R.color.dark_disabled_text))
             } else {
-                mRootView.setBackgroundColor(ColorUtil.getColor(context, android.R.color.transparent));
-                mCodeView.setTextColor(ColorUtil.getColor(context, R.color.dark_secondary_text));
-                mLanguageView.setTextColor(ColorUtil.getColor(context, R.color.dark_primary_text));
+                binding.root.setBackgroundColor(
+                    ColorUtil.getColor(
+                        context,
+                        android.R.color.transparent
+                    )
+                )
+                binding.languageCode.setTextColor(ColorUtil.getColor(context, R.color.dark_secondary_text))
+                binding.languageName.setTextColor(ColorUtil.getColor(context, R.color.dark_primary_text))
             }
         }
     }
 
-    private class TargetLanguageFilter extends Filter {
-
-        @Override
-        protected FilterResults performFiltering(CharSequence charSequence) {
-            FilterResults results = new FilterResults();
-            if(charSequence == null || charSequence.length() == 0) {
+    private inner class TargetLanguageFilter : Filter() {
+        override fun performFiltering(charSequence: CharSequence): FilterResults {
+            val results = FilterResults()
+            if (charSequence.isEmpty()) {
                 // no filter
-                results.values = Arrays.asList(mTargetLanguages);
-                results.count = mTargetLanguages.length;
+                results.values = targetLanguages
+                results.count = targetLanguages.size
             } else {
                 // perform filter
-                List<TargetLanguage> filteredCategories = new ArrayList<>();
-                for(TargetLanguage language:mTargetLanguages) {
+                val filteredCategories = arrayListOf<TargetLanguage>()
+                for (language in targetLanguages) {
                     // match the target language id
-                    boolean match = language.slug.toLowerCase().startsWith(charSequence.toString().toLowerCase());
-                    if(!match) {
-                        if (language.name.toLowerCase().contains(charSequence.toString().toLowerCase())) {
+                    var match = language.slug.lowercase(Locale.getDefault()).startsWith(
+                        charSequence.toString().lowercase(
+                            Locale.getDefault()
+                        )
+                    )
+                    if (!match) {
+                        if (language.name.lowercase(Locale.getDefault()).contains(
+                                charSequence.toString().lowercase(
+                                    Locale.getDefault()
+                                )
+                            )
+                        ) {
                             // match the target language name
-                            match = true;
+                            match = true
                         }
                     }
-                    if(match) {
-                        filteredCategories.add(language);
+                    if (match) {
+                        filteredCategories.add(language)
                     }
                 }
-                results.values = filteredCategories;
-                results.count = filteredCategories.size();
+                results.values = filteredCategories
+                results.count = filteredCategories.size
             }
-            return results;
+            return results
         }
 
-        @Override
-        protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-            List<TargetLanguage> filteredLanguages = (List<TargetLanguage>)filterResults.values;
-            if(charSequence != null && charSequence.length() > 0) {
-                sortTargetLanguages(filteredLanguages, charSequence);
+        override fun publishResults(charSequence: CharSequence, filterResults: FilterResults) {
+            val filteredLanguages = filterResults.values as ArrayList<TargetLanguage>
+            if (charSequence.isNotEmpty()) {
+                sortTargetLanguages(filteredLanguages, charSequence)
             }
-            mFilteredTargetLanguages = filteredLanguages.toArray(new TargetLanguage[filteredLanguages.size()]);
-            notifyDataSetChanged();
+            filteredTargetLanguages.clear()
+            filteredTargetLanguages.addAll(filteredLanguages)
+            notifyDataSetChanged()
         }
     }
 
-    /**
-     * Sorts target languages by id
-     * @param languages
-     * @param referenceId languages are sorted according to the reference id
-     */
-    private static void sortTargetLanguages(List<TargetLanguage> languages, final CharSequence referenceId) {
-        Collections.sort(languages, new Comparator<TargetLanguage>() {
-            @Override
-            public int compare(TargetLanguage lhs, TargetLanguage rhs) {
-                String lhId = lhs.slug;
-                String rhId = rhs.slug;
+    companion object {
+        /**
+         * Sorts target languages by id
+         * @param languages
+         * @param referenceId languages are sorted according to the reference id
+         */
+        private fun sortTargetLanguages(
+            languages: ArrayList<TargetLanguage>,
+            referenceId: CharSequence
+        ) {
+            languages.sortWith { lhs, rhs ->
+                var lhId = lhs.slug
+                var rhId = rhs.slug
                 // give priority to matches with the reference
-                if(lhId.toLowerCase().startsWith(referenceId.toString().toLowerCase())) {
-                    lhId = "!!" + lhId;
+                if (lhId.lowercase(Locale.getDefault()).startsWith(
+                        referenceId.toString().lowercase(
+                            Locale.getDefault()
+                        )
+                    )
+                ) {
+                    lhId = "!!$lhId"
                 }
-                if(rhId.toLowerCase().startsWith(referenceId.toString().toLowerCase())) {
-                    rhId = "!!" + rhId;
+                if (rhId.lowercase(Locale.getDefault()).startsWith(
+                        referenceId.toString().lowercase(
+                            Locale.getDefault()
+                        )
+                    )
+                ) {
+                    rhId = "!!$rhId"
                 }
-                if(lhs.name.toLowerCase().startsWith(referenceId.toString().toLowerCase())) {
-                    lhId = "!" + lhId;
+                if (lhs.name.lowercase(Locale.getDefault()).startsWith(
+                        referenceId.toString().lowercase(
+                            Locale.getDefault()
+                        )
+                    )
+                ) {
+                    lhId = "!$lhId"
                 }
-                if(rhs.name.toLowerCase().startsWith(referenceId.toString().toLowerCase())) {
-                    rhId = "!" + rhId;
+                if (rhs.name.lowercase(Locale.getDefault()).startsWith(
+                        referenceId.toString().lowercase(
+                            Locale.getDefault()
+                        )
+                    )
+                ) {
+                    rhId = "!$rhId"
                 }
-                return lhId.compareToIgnoreCase(rhId);
+                lhId.compareTo(rhId, ignoreCase = true)
             }
-        });
+        }
     }
 }

@@ -1,85 +1,83 @@
-package com.door43.translationstudio.ui.newlanguage;
+package com.door43.translationstudio.ui.newlanguage
 
-import android.app.DialogFragment;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.AdapterView;
-import android.widget.ListView;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.newtranslation.TargetLanguageAdapter;
-
-import org.unfoldingword.door43client.models.TargetLanguage;
-
-import java.util.List;
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.widget.AdapterView
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.activityViewModels
+import com.door43.translationstudio.databinding.DialogTargetLanguageSuggestionsBinding
+import com.door43.translationstudio.ui.newtranslation.TargetLanguageAdapter
+import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel
+import org.unfoldingword.door43client.models.TargetLanguage
 
 /**
  * Created by joel on 6/9/16.
  */
-public class LanguageSuggestionsDialog extends DialogFragment {
+class LanguageSuggestionsDialog : DialogFragment() {
+    private var listener: OnClickListener? = null
+    private val adapter by lazy { TargetLanguageAdapter() }
+    private var targetLanguages: List<TargetLanguage> = arrayListOf()
 
-    public static final String TAG = "language_suggestions_dialog";
-    public static final String ARG_LANGUAGE_QUERY = "language_query";
-    private OnClickListener listener = null;
-    private TargetLanguageAdapter adapter;
-    private List<TargetLanguage> targetLanguages;
+    private var _binding: DialogTargetLanguageSuggestionsBinding? = null
+    private val binding = _binding!!
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
-        View v = inflater.inflate(R.layout.dialog_target_language_suggestions, container, false);
+    private val viewModel: NewTempLanguageViewModel by activityViewModels()
 
-        Bundle args = getArguments();
-        if(args != null) {
-            targetLanguages = App.getLibrary().index().findTargetLanguage(args.getString(ARG_LANGUAGE_QUERY));
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        _binding = DialogTargetLanguageSuggestionsBinding.inflate(inflater, container, false)
+
+        val args = arguments
+        if (args != null) {
+            targetLanguages = viewModel.findTargetLanguages(args.getString(ARG_LANGUAGE_QUERY))
         } else {
-            dismiss();
-            return v;
+            dismiss()
+            return binding.root
         }
 
-        v.findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(listener != null) {
-                    listener.onDismissLanguageSuggestion();
-                    dismiss();
-                } else {
-                    dismiss();
-                }
+        with (binding) {
+            cancelButton.setOnClickListener {
+                listener?.onDismissLanguageSuggestion()
+                dismiss()
             }
-        });
-
-        ListView listView = (ListView)v.findViewById(R.id.list_view);
-
-        adapter = new TargetLanguageAdapter(getActivity(), targetLanguages);
-        listView.setAdapter(adapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(listener != null) {
-                    listener.onAcceptLanguageSuggestion(adapter.getItem(position));
-                    dismiss();
-                }
+            listView.adapter = adapter
+            adapter.setLanguages(targetLanguages)
+            listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                listener?.onAcceptLanguageSuggestion(adapter.getItem(position))
+                dismiss()
             }
-        });
+        }
 
-        return v;
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     /**
      * Sets the listener to receive click events
      * @param listener
      */
-    public void setOnClickListener(OnClickListener listener) {
-        this.listener = listener;
+    fun setOnClickListener(listener: OnClickListener?) {
+        this.listener = listener
     }
 
-    public interface OnClickListener {
-        void onAcceptLanguageSuggestion(TargetLanguage language);
-        void onDismissLanguageSuggestion();
+    interface OnClickListener {
+        fun onAcceptLanguageSuggestion(language: TargetLanguage?)
+        fun onDismissLanguageSuggestion()
+    }
+
+    companion object {
+        const val TAG: String = "language_suggestions_dialog"
+        const val ARG_LANGUAGE_QUERY: String = "language_query"
     }
 }

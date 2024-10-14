@@ -2,11 +2,11 @@ package com.door43.usecases
 
 import android.content.Context
 import com.door43.OnProgressListener
-import com.door43.translationstudio.App
-import com.door43.translationstudio.App.Companion.externalAppDir
-import com.door43.translationstudio.App.Companion.getTranslator
+import com.door43.data.IDirectoryProvider
+import com.door43.data.ILanguageRequestRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NewLanguageRequest
+import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities.writeStringToFile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
@@ -22,14 +22,17 @@ import java.util.Locale
 import javax.inject.Inject
 
 class SubmitNewLanguageRequests @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val languageRequestRepository: ILanguageRequestRepository,
+    private val directoryProvider: IDirectoryProvider,
+    private val translator: Translator
 ) {
     private val requests: ArrayList<NewLanguageRequest> = arrayListOf()
     private val max = 100
 
     init {
         // load requests that have not been submitted
-        val allRequests = App.newLanguageRequests
+        val allRequests = languageRequestRepository.getNewLanguageRequests()
         for (r in allRequests) {
             if (r.submittedAt == 0L) {
                 requests.add(r)
@@ -123,19 +126,23 @@ class SubmitNewLanguageRequests @Inject constructor(
             "Sealing new language request '" + request.tempLanguageCode + "'"
         )
         request.submittedAt = System.currentTimeMillis()
-        val requestFile =
-            File(externalAppDir(), "new_languages/" + request.tempLanguageCode + ".json")
-        writeStringToFile(requestFile, request.toJson())
+        val requestFile = File(
+            directoryProvider.externalAppDir,
+            "new_languages/" + request.tempLanguageCode + ".json"
+        )
+        request.toJson()?.let { json ->
+            writeStringToFile(requestFile, json)
+        }
 
         // updated affected target translations
-        val translations = getTranslator().targetTranslations
+        val translations = translator.targetTranslations
         for (t in translations) {
             if (t.targetLanguageId == request.tempLanguageCode) {
                 Logger.i(
                     this.javaClass.name,
                     "Updating language request in target translation '" + t.id + "'"
                 )
-                t.newLanguageRequest = request
+                t.setNewLanguageRequest(request)
             }
         }
     }

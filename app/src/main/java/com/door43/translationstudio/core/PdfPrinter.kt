@@ -4,8 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App
-import com.door43.translationstudio.App.Companion.context
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.spannables.Span
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
@@ -43,7 +41,6 @@ import java.util.regex.Pattern
  */
 class PdfPrinter(
     private val context: Context,
-    library: Door43Client,
     private val translation: TargetTranslation,
     private val format: TranslationFormat,
     fontPath: String?,
@@ -52,6 +49,7 @@ class PdfPrinter(
     licenseFontPath: String?,
     private val imagesDir: File?,
     private val directoryProvider: IDirectoryProvider,
+    private val library: Door43Client
 ) : PdfPageEventHelper() {
     private val titleFont: Font
     private val chapterFont: Font
@@ -156,7 +154,7 @@ class PdfPrinter(
         document.newPage()
         document.resetPageCount() // disable page numbering for this page (TOC)
 
-        val toc = context()!!.resources.getString(R.string.table_of_contents)
+        val toc = context.resources.getString(R.string.table_of_contents)
         val intro = Chapter(Paragraph(toc, chapterFont), 0)
         intro.numberDepth = 0
         document.add(intro)
@@ -281,7 +279,7 @@ class PdfPrinter(
         val projectTranslation = translation.projectTranslation
         var title = projectTranslation.title
         if (title.isEmpty()) {
-            val project = App.library!!.index.getProject(
+            val project = library.index.getProject(
                 translation.targetLanguageId,
                 translation.projectId,
                 true
@@ -577,10 +575,10 @@ class PdfPrinter(
         document.add(chapter)
 
         // translate simple html to paragraphs
-        var license = context()!!.resources.getString(R.string.license_pdf)
+        var license = context.resources.getString(R.string.license_pdf)
 
         if (includeMedia) {
-            license += context()!!.resources.getString(R.string.artwork_attribution_pdf)
+            license += context.resources.getString(R.string.artwork_attribution_pdf)
         }
 
         license = license.replace("&#8226;", "\u2022")

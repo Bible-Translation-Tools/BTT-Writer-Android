@@ -1,6 +1,8 @@
 package com.door43.data
 
+import androidx.annotation.StringRes
 import com.door43.translationstudio.core.TranslationViewMode
+import kotlin.reflect.KClass
 
 interface IPreferenceRepository {
     /**
@@ -16,40 +18,42 @@ interface IPreferenceRepository {
     var lastCheckedForUpdates: Long
 
     /**
-     * Looks up a string preference
+     * Returns the value of a user preference
      * @param key
      * @return String
      */
-    fun getDefaultPref(key: String, defaultValue: String? = null): String?
+    fun <T>getDefaultPref(key: String, type: Class<T>): T?
 
     /**
-     * Returns the string value of a user preference or the default value
-     * @param key
-     * @param defaultResource
-     * @return
+     * Returns the value of a user preference or the default value
      */
-    fun getDefaultPref(key: String, defaultResource: Int): String?
+    fun <T>getDefaultPref(key: String, defaultValue: T, type: Class<T>): T
 
     /**
      * Sets the value of a default preference.
      * @param key
      * @param value if null the string will be removed
      */
-    fun setDefaultPref(key: String, value: String?)
+    fun <T>setDefaultPref(key: String, value: T?, type: Class<T>)
 
     /**
      * Looks up a string preference in private storage
      * @param key
      * @return String
      */
-    fun getPrivatePref(key: String, defaultValue: String? = null): String?
+    fun <T>getPrivatePref(key: String, type: Class<T>): T?
+
+    /**
+     * Returns the value of a private preference or the default value
+     */
+    fun <T>getPrivatePref(key: String, defaultValue: T, type: Class<T>): T
 
     /**
      * Sets the value of a private preference.
      * @param key
      * @param value if null the string will be removed
      */
-    fun setPrivatePref(key: String, value: String?)
+    fun <T>setPrivatePref(key: String, value: T?, type: Class<T>)
 
     /**
      * Removes all settings for a target translation
@@ -110,6 +114,13 @@ interface IPreferenceRepository {
     fun addOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String)
 
     /**
+     * Removes a source translation from the list of open tabs on a target translation
+     * @param targetTranslationId
+     * @param sourceTranslationId
+     */
+    fun removeOpenSourceTranslation(targetTranslationId: String, sourceTranslationId: String?)
+
+    /**
      * Returns the selected open source translation tab on the target translation
      * If there is no selection the first open tab will be set as the selected tab
      * @param targetTranslationId
@@ -123,5 +134,22 @@ interface IPreferenceRepository {
      * @param sourceTranslationId if null the selection will be unset
      */
     fun setSelectedSourceTranslation(targetTranslationId: String, sourceTranslationId: String?)
-
 }
+
+inline fun <reified T> IPreferenceRepository.getDefaultPref(key: String) =
+    getDefaultPref(key, T::class.java)
+
+inline fun <reified T> IPreferenceRepository.getDefaultPref(key: String, defaultValue: T) =
+    getDefaultPref(key, defaultValue, T::class.java)
+
+inline fun <reified T> IPreferenceRepository.setDefaultPref(key: String, value: T?) =
+    setDefaultPref(key, value, T::class.java)
+
+inline fun <reified T> IPreferenceRepository.getPrivatePref(key: String) =
+    getPrivatePref(key, T::class.java)
+
+inline fun <reified T> IPreferenceRepository.getPrivatePref(key: String, defaultValue: T) =
+    getPrivatePref(key, defaultValue, T::class.java)
+
+inline fun <reified T> IPreferenceRepository.setPrivatePref(key: String, value: T?) =
+    setPrivatePref(key, value, T::class.java)

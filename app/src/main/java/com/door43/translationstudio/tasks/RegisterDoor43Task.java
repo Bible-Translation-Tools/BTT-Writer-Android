@@ -14,6 +14,10 @@ import org.unfoldingword.gogsclient.User;
 /**
  * Created by joel on 4/15/16.
  */
+@Deprecated
+/**
+ * Not used anymore
+ */
 public class RegisterDoor43Task extends ManagedTask {
     public static final String TASK_ID = "register_door43_account";
     private final String tokenName;
@@ -34,7 +38,7 @@ public class RegisterDoor43Task extends ManagedTask {
 
     @Override
     public void start() {
-        int gogsAdminTokenIdentifier = App.context().getResources().getIdentifier("gogs_admin_token", "string", App.context().getPackageName());
+        /*int gogsAdminTokenIdentifier = App.context().getResources().getIdentifier("gogs_admin_token", "string", App.context().getPackageName());
         if(gogsAdminTokenIdentifier != 0) {
             GogsAPI api = new GogsAPI(App.getUserString(SettingsActivity.KEY_PREF_GOGS_API, R.string.pref_default_gogs_api));
 
@@ -75,7 +79,7 @@ public class RegisterDoor43Task extends ManagedTask {
             }
         } else {
             Logger.w(this.getClass().getName(), "The gogs admin token is missing");
-        }
+        }*/
     }
 
     /**

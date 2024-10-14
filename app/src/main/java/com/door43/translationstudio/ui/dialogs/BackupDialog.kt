@@ -20,6 +20,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -42,6 +43,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.merge.MergeStrategy
+import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.security.InvalidParameterException
 import javax.inject.Inject
@@ -61,6 +63,8 @@ class BackupDialog : DialogFragment() {
     @Inject lateinit var profile: Profile
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var prefRepository: IPreferenceRepository
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var library: Door43Client
 
     private val viewModel: ExportViewModel by viewModels()
 
@@ -287,6 +291,7 @@ class BackupDialog : DialogFragment() {
                         )
                         MergeConflictsHandler.backgroundTestForConflictedChunks(
                             targetTranslation.id,
+                            translator,
                             object : OnMergeConflictListener {
                                 override fun onNoMergeConflict(targetTranslationId: String) {
                                     // probably the manifest or license gave a false positive
@@ -387,7 +392,7 @@ class BackupDialog : DialogFragment() {
      * display confirmation prompt before USFM export (also allow entry of filename
      */
     private fun showExportToUsfmPrompt() {
-        val bookData = ExportProjects.BookData.generate(targetTranslation)
+        val bookData = ExportProjects.BookData.generate(targetTranslation, library)
         val defaultFileName = bookData.defaultUSFMFileName
         showExportPathPrompt(defaultFileName, EXPORT_USFM_MIME_TYPE)
     }
@@ -489,12 +494,12 @@ class BackupDialog : DialogFragment() {
     }
 
     override fun onResume() {
-        if (settingDeviceAlias && App.deviceNetworkAlias != null) {
+        if (settingDeviceAlias && App.deviceNetworkAlias.isNotEmpty()) {
             settingDeviceAlias = false
             showP2PDialog()
         }
 
-        val userText = resources.getString(R.string.current_user, ProfileActivity.currentUser)
+        val userText = resources.getString(R.string.current_user, profile.currentUser)
         binding.currentUser.text = userText
 
         super.onResume()

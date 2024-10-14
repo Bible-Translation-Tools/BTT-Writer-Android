@@ -7,16 +7,12 @@ import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.KeyPair
-import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import javax.inject.Inject
 
-class DirectoryProvider @Inject constructor(
-    private val context: Context
-) : IDirectoryProvider {
+class DirectoryProvider (private val context: Context) : IDirectoryProvider {
 
     companion object {
         const val TAG = "DirectoryProvider"
@@ -51,23 +47,8 @@ class DirectoryProvider @Inject constructor(
     override val databaseFile: File
         get() = File(databaseDir, "index.sqlite")
 
-    override val library: Door43Client
-        get() = run {
-            return try {
-                Door43Client(context, databaseFile, containersDir)
-            } catch (e: IOException) {
-                throw NullPointerException("Failed to initialize the door43 client")
-            }
-        }
-
-    override val isLibraryDeployed: Boolean
-        get() = run {
-            val hasContainers =
-                containersDir.exists() &&
-                        containersDir.isDirectory &&
-                        containersDir.list()?.isNotEmpty() == true
-            return library.index.sourceLanguages.size > 0 && hasContainers
-        }
+    override val backupsDir: File
+        get() = File(externalAppDir, "backups")
 
     override val containersDir: File
         get() = File(externalAppDir, "resource_containers")
@@ -179,11 +160,6 @@ class DirectoryProvider @Inject constructor(
     }
 
     override fun deleteLibrary() {
-        try {
-            library.tearDown()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
         FileUtilities.deleteQuietly(databaseFile)
         FileUtilities.deleteQuietly(containersDir)
     }

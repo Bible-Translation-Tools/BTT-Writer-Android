@@ -41,7 +41,6 @@ import com.door43.translationstudio.ui.translate.ViewModeAdapter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.unfoldingword.resourcecontainer.Language;
 import org.unfoldingword.resourcecontainer.Link;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.taskmanager.ThreadableUI;
 
 import java.io.IOException;
@@ -190,7 +189,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 tab.select();
                 Object tag = tab.getTag();
                 // show the contents
-                switch((int)tab.getTag()) {
+                switch((int)tag) {
                     case TAB_NOTES:
                         showNotes(language);
                         break;
@@ -255,12 +254,12 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public void showWords(final Language language) {
         clearHelps();
         for(final Link word: words) {
-            ResourceContainer rc = ContainerCache.cacheClosest(App.getLibrary(), language.slug, word.project, word.resource);
+            String rcSlug = language.slug + "_" + word.project + "_" + word.resource;
             FragmentResourcesListItemBinding wordsBinding = FragmentResourcesListItemBinding.inflate(inflater);
             wordsBinding.getRoot().setText(word.title);
             wordsBinding.getRoot().setOnClickListener(v -> {
-                if (listener != null && rc != null) {
-                    listener.onWordClick(rc.slug, word, getResourceCardWidth());
+                if (listener != null) {
+                    listener.onWordClick(rcSlug, word, getResourceCardWidth());
                 }
             });
             Typography.formatSub(context, TranslationType.SOURCE, wordsBinding.getRoot(), language.slug, language.direction);

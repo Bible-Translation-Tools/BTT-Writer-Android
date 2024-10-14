@@ -25,15 +25,26 @@ import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.ui.home.HomeActivity;
 import com.door43.translationstudio.App;
+import com.door43.usecases.BackupRC;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * This services runs in the background to provide automatic backups for translations.
  * For now this service is backup the translations to two locations for added peace of mind.
  */
+@AndroidEntryPoint
 public class BackupService extends Service implements Foreground.Listener {
+    @Inject
+    Translator translator;
+    @Inject
+    BackupRC backupRC;
+
     public static final String TAG = BackupService.class.getName();
     private final Timer sTimer = new Timer();
     private static boolean sRunning = false;
@@ -93,12 +104,11 @@ public class BackupService extends Service implements Foreground.Listener {
                     }
                 }
             }, backupInterval, backupInterval);
-            return START_STICKY;
         } else {
             Logger.i(this.getClass().getName(), "Backups are disabled");
             sRunning = true;
-            return START_STICKY;
         }
+        return START_STICKY;
     }
 
     /**
@@ -128,7 +138,6 @@ public class BackupService extends Service implements Foreground.Listener {
         boolean backupPerformed = false;
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED) {
-            Translator translator = App.getTranslator();
             Logger.i(TAG, "Checking for changes");
             String[] targetTranslations = translator.getTargetTranslationFileNames();
             for (String filename : targetTranslations) {
@@ -161,7 +170,7 @@ public class BackupService extends Service implements Foreground.Listener {
                 // run backup if there are translations
                 if (t.numTranslated() > 0) {
                     try {
-                        boolean success = App.backupTargetTranslation(t, false);
+                        boolean success = backupRC.backupTargetTranslation(t, false);
                         if(success) {
                             Logger.i(TAG, t.getId() + " backed up");
                             backupPerformed = true;

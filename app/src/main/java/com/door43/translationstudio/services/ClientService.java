@@ -33,11 +33,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * This class provides an importing service (effectively a client) that can
  * communicate with an exporting service (server) to browse and retrieve translations
  */
+@AndroidEntryPoint
 public class ClientService extends NetworkService {
+    @Inject
+    Translator translator;
+
     private static final String PARAM_PUBLIC_KEY = "param_public_key";
     private static final String PARAM_PRIVATE_KEY = "param_private_key";
     private static final String PARAM_DEVICE_ALIAS = "param_device_alias";
@@ -354,7 +362,6 @@ public class ClientService extends NetworkService {
                                 in.close();
 
                                 // import the target translation
-                                Translator translator = App.getTranslator();
                                 // TODO: 11/23/2015 perform a diff first
                                 try {
                                     Translator.ImportResults results = translator.importArchive(file);

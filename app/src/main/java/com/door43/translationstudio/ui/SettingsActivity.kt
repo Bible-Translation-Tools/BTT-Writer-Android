@@ -16,6 +16,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App.Companion.configureLogger
 import com.door43.translationstudio.App.Companion.updateColorTheme
 import com.door43.translationstudio.R

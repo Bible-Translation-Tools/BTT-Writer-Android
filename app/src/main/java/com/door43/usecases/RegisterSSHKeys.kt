@@ -3,6 +3,8 @@ package com.door43.usecases
 import android.content.Context
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
@@ -18,7 +20,8 @@ import javax.inject.Inject
 class RegisterSSHKeys @Inject constructor(
     @ApplicationContext private val context: Context,
     private val profile: Profile,
-    private val directoryProvider: IDirectoryProvider
+    private val directoryProvider: IDirectoryProvider,
+    private val prefRepository: IPreferenceRepository
 ) {
     private val max = 100
 
@@ -28,9 +31,9 @@ class RegisterSSHKeys @Inject constructor(
         val keyName = context.resources.getString(R.string.gogs_public_key_name) + " " + App.udid();
 
         val api = GogsAPI(
-            App.getUserString(
+            prefRepository.getDefaultPref(
                 SettingsActivity.KEY_PREF_GOGS_API,
-                R.string.pref_default_gogs_api
+                context.getString(R.string.pref_default_gogs_api)
             )
         )
 

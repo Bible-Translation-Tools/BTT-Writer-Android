@@ -6,7 +6,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
+import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Profile
@@ -40,9 +43,10 @@ class TargetTranslationViewModel @Inject constructor(
 
     @Inject lateinit var translator: Translator
     @Inject lateinit var profile: Profile
-    @Inject lateinit var library: Door43Client
+    @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var prefRepository: IPreferenceRepository
     @Inject lateinit var renderHelps: RenderHelps
+    @Inject lateinit var library: Door43Client
 
     private val generalJobs = arrayListOf<Job>()
     private val renderHelpJobs = arrayListOf<Job>()
@@ -73,10 +77,10 @@ class TargetTranslationViewModel @Inject constructor(
     }
 
     fun openUsedSourceTranslations() {
-        if (translator.getOpenSourceTranslations(targetTranslation.id).isEmpty()) {
+        if (prefRepository.getOpenSourceTranslations(targetTranslation.id).isEmpty()) {
             val resourceContainerSlugs = targetTranslation.getSourceTranslations()
             for (slug in resourceContainerSlugs) {
-                translator.addOpenSourceTranslation(targetTranslation.id, slug)
+                prefRepository.addOpenSourceTranslation(targetTranslation.id, slug)
             }
         }
     }
@@ -116,8 +120,9 @@ class TargetTranslationViewModel @Inject constructor(
             Locale.getDefault()
         )
         return prefRepository.getDefaultPref(
-            SEARCH_SOURCE, defaultSource
-        ) ?: defaultSource
+            SEARCH_SOURCE,
+            defaultSource
+        )
     }
 
     fun setLastSearchSource(subject: SearchSubject) {
@@ -143,16 +148,16 @@ class TargetTranslationViewModel @Inject constructor(
         return translator.getSelectedSourceTranslationId(targetTranslation.id)
     }
 
-    fun getOpenSourceTranslations(): Array<String?> {
-        return translator.getOpenSourceTranslations(targetTranslation.id)
+    fun getOpenSourceTranslations(): Array<String> {
+        return prefRepository.getOpenSourceTranslations(targetTranslation.id)
     }
 
     fun removeOpenSourceTranslation(sourceTranslationId: String) {
-        translator.removeOpenSourceTranslation(targetTranslation.id, sourceTranslationId)
+        prefRepository.removeOpenSourceTranslation(targetTranslation.id, sourceTranslationId)
     }
 
     fun addOpenSourceTranslation(slug: String) {
-        translator.addOpenSourceTranslation(targetTranslation.id, slug)
+        prefRepository.addOpenSourceTranslation(targetTranslation.id, slug)
     }
 
     fun getResourceContainer(slug: String): ResourceContainer? {
@@ -318,7 +323,7 @@ class TargetTranslationViewModel @Inject constructor(
 
     private fun getSourceTranslations(): List<ContentValues> {
         val tabContents = arrayListOf<ContentValues>()
-        val sourceTranslationSlugs = translator.getOpenSourceTranslations(targetTranslation.id)
+        val sourceTranslationSlugs = prefRepository.getOpenSourceTranslations(targetTranslation.id)
         for (slug in sourceTranslationSlugs) {
             val st: Translation? = library.index().getTranslation(slug)
             if (st != null) {
@@ -394,6 +399,13 @@ class TargetTranslationViewModel @Inject constructor(
             }
             chapterBody
         }
+    }
+
+    fun saveSearchSource(source: String) {
+        prefRepository.setDefaultPref<String>(
+            SEARCH_SOURCE,
+            source
+        )
     }
 
 }

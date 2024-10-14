@@ -1,85 +1,75 @@
-package com.door43.translationstudio.ui;
+package com.door43.translationstudio.ui
 
-import android.content.Intent;
-import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.door43.translationstudio.App;
-
-import org.unfoldingword.tools.foreground.Foreground;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.io.File;
+import android.content.Intent
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import com.door43.data.IDirectoryProvider
+import dagger.hilt.android.AndroidEntryPoint
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.tools.foreground.Foreground
+import org.unfoldingword.tools.logger.Logger
+import javax.inject.Inject
 
 /**
  * This should be extended by all activities in the app so that we can perform verification on
  * activities such as recovery from crashes.
  *
  */
-public abstract class BaseActivity extends AppCompatActivity implements Foreground.Listener {
+@AndroidEntryPoint
+abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
+    private var foreground: Foreground? = null
 
-    private Foreground foreground;
+    @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var library: Door43Client
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         try {
-            this.foreground = Foreground.get();
-            this.foreground.addListener(this);
-        } catch (IllegalStateException e) {
-            Logger.i(this.getClass().getName(), "Foreground was not initialized");
+            foreground = Foreground.get()
+            foreground?.addListener(this)
+        } catch (e: IllegalStateException) {
+            Logger.i(this.javaClass.name, "Foreground was not initialized")
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    public override fun onResume() {
+        super.onResume()
 
-        if (!isBootActivity()) {
-            File[] crashFiles = Logger.listStacktraces();;
-            if (crashFiles.length > 0) {
+        if (!isBootActivity) {
+            val crashFiles = Logger.listStacktraces()
+
+            if (crashFiles.isNotEmpty()) {
                 // restart
-                Intent intent = new Intent(this, SplashScreenActivity.class);
-                startActivity(intent);
-                finish();
+                val intent = Intent(this, SplashScreenActivity::class.java)
+                startActivity(intent)
+                finish()
             }
         }
     }
 
-    private boolean isBootActivity() {
-        return this instanceof TermsOfUseActivity
-                || this instanceof SplashScreenActivity
-                || this instanceof CrashReporterActivity;
-    }
+    private val isBootActivity: Boolean
+        get() = (this is TermsOfUseActivity
+                || this is SplashScreenActivity
+                || this is CrashReporterActivity)
 
-    @Override
-    public void onDestroy() {
-        if(this.foreground != null) {
-            this.foreground.removeListener(this);
+    public override fun onDestroy() {
+        if (this.foreground != null) {
+            foreground!!.removeListener(this)
         }
-        super.onDestroy();
+        super.onDestroy()
     }
 
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onBecameForeground() {
+    override fun onBecameForeground() {
         // check if the index had been loaded
-        if(!isBootActivity() && !App.isLibraryDeployed()) {
-            Logger.w(this.getClass().getName(), "The library was not deployed.");
+        if (!isBootActivity && !library.isLibraryDeployed) {
+            Logger.w(this.javaClass.name, "The library was not deployed.")
             // restart
-            Intent intent = new Intent(this, SplashScreenActivity.class);
-            startActivity(intent);
-            finish();
+            val intent = Intent(this, SplashScreenActivity::class.java)
+            startActivity(intent)
+            finish()
         }
     }
 
-    @Override
-    public void onBecameBackground() {
+    override fun onBecameBackground() {
     }
 }

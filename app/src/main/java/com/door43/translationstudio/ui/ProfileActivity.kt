@@ -10,9 +10,8 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.PopupMenu
 import androidx.appcompat.app.AlertDialog
-import com.door43.translationstudio.App.Companion.context
-import com.door43.translationstudio.App.Companion.getProfile
-import com.door43.translationstudio.App.Companion.userPreferences
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.databinding.ActivityProfileBinding
@@ -23,6 +22,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ProfileActivity : BaseActivity() {
     @Inject lateinit var profile: Profile
+    @Inject lateinit var preRepository: IPreferenceRepository
+
     private lateinit var binding: ActivityProfileBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,10 +37,10 @@ class ProfileActivity : BaseActivity() {
                 startActivity(intent)
             }
             account.registerDoor43.setOnClickListener {
-                val defaultAccountCreateUrl = context()!!.resources.getString(
+                val defaultAccountCreateUrl = resources.getString(
                     R.string.pref_default_create_account_url
                 )
-                val accountCreateUrl = userPreferences.getString(
+                val accountCreateUrl = preRepository.getDefaultPref(
                     SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
                     defaultAccountCreateUrl
                 )
@@ -84,23 +85,6 @@ class ProfileActivity : BaseActivity() {
     }
 
     companion object {
-        val currentUser: String
-            get() {
-                val currentUserProfile = getProfile()
-                var userName: String? = null
-                if (currentUserProfile.gogsUser != null) {
-                    userName = currentUserProfile.gogsUser!!.username
-                }
-                if (userName == null) {
-                    userName = currentUserProfile.fullName
-                }
-
-                if (userName == null) {
-                    userName = ""
-                }
-                return userName
-            }
-
         /**
          * Displays the privacy notice
          * @param listener if set the dialog will become a confirmation dialog

@@ -5,6 +5,7 @@ import android.net.Uri
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.core.ArchiveDetails
+import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.usecases.ExamineImportsForCollisions.Result
 import com.door43.util.FileUtilities.deleteQuietly
@@ -16,9 +17,10 @@ import javax.inject.Inject
 
 class ExamineImportsForCollisions @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val library: Door43Client,
     private val translator: Translator,
-    private val directoryProvider: IDirectoryProvider
+    private val directoryProvider: IDirectoryProvider,
+    private val migrator: TargetTranslationMigrator,
+    private val library: Door43Client
 ) {
 
     data class Result(
@@ -47,13 +49,19 @@ class ExamineImportsForCollisions @Inject constructor(
                         success = true
                     }
 
-                    val details = ArchiveDetails.newInstance(
-                        projectsFolder,
-                        deviceLanguageCode,
+                    val details = ArchiveDetails.Builder(
+                        context,
+                        directoryProvider,
+                        migrator,
                         library
-                    )
+                    ).fromFile(
+                        projectsFolder!!,
+                        deviceLanguageCode
+                    ).build()
+
                     projectsFound = ""
-                    for (td in details.targetTranslationDetails) {
+
+                    for (td in details?.targetTranslationDetails ?: listOf()) {
                         projectsFound += td.projectName + " - " + td.targetLanguageName + ", "
 
                         val targetTranslationId = td.targetTranslationSlug

@@ -8,13 +8,13 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App.Companion.backupTargetTranslation
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.TranslationItem
+import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadIndex
 import com.door43.usecases.DownloadLatestRelease
@@ -43,7 +43,6 @@ class HomeViewModel @Inject constructor(
 ) : AndroidViewModel(application) {
 
     @Inject lateinit var translator: Translator
-    @Inject lateinit var library: Door43Client
     @Inject lateinit var profile: Profile
     @Inject lateinit var gogsLogout: GogsLogout
     @Inject lateinit var directoryProvider: IDirectoryProvider
@@ -56,6 +55,8 @@ class HomeViewModel @Inject constructor(
     @Inject lateinit var updateCatalogs: UpdateCatalogs
     @Inject lateinit var registerSSHKeys: RegisterSSHKeys
     @Inject lateinit var downloadLatestRelease: DownloadLatestRelease
+    @Inject lateinit var backupRC: BackupRC
+    @Inject lateinit var library: Door43Client
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -157,7 +158,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun deleteTargetTranslation(item: TranslationItem, orphaned: Boolean) {
-        backupTargetTranslation(item.translation, orphaned)
+        backupRC.backupTargetTranslation(item.translation, orphaned)
         translator.deleteTargetTranslation(item.translation.id)
         translator.clearTargetTranslationSettings(item.translation.id)
 
@@ -223,7 +224,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _importResult.value = withContext(Dispatchers.IO) {
-                importProjects.execute(projectsFolder, overwrite)
+                importProjects.importProject(projectsFolder, overwrite)
             }
             _progress.value = null
         }

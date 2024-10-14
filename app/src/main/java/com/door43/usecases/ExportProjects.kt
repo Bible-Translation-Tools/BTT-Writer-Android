@@ -3,7 +3,6 @@ package com.door43.usecases
 import android.content.Context
 import android.net.Uri
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App.Companion.library
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.PdfPrinter
@@ -101,7 +100,7 @@ class ExportProjects @Inject constructor(
         tempDir.mkdirs()
         val chapters = targetTranslation.chapterTranslations
 
-        val bookData = BookData.generate(targetTranslation)
+        val bookData = BookData.generate(targetTranslation, library)
         val bookCode = bookData.bookCode
         val bookTitle = bookData.bookTitle
         val bookName = bookData.bookName
@@ -208,8 +207,9 @@ class ExportProjects @Inject constructor(
         val licenseFontPath = "assets/fonts/$licenseFontName"
         val targetLanguageRtl = "rtl" == targetTranslation.targetLanguageDirection
         val printer = PdfPrinter(
-            context, library, targetTranslation, targetTranslation.format, fontPath,
-            fontSize, targetLanguageRtl, licenseFontPath, imagesDir, directoryProvider
+            context, targetTranslation, targetTranslation.format, fontPath,
+            fontSize, targetLanguageRtl, licenseFontPath, imagesDir, directoryProvider,
+            library
         )
         printer.includeMedia(includeImages)
         printer.includeIncomplete(includeIncompleteFrames)
@@ -288,7 +288,10 @@ class ExportProjects @Inject constructor(
     /**
      * class to extract book data as well as default USFM output file name
      */
-    class BookData private constructor(targetTranslation: TargetTranslation) {
+    class BookData private constructor(
+        targetTranslation: TargetTranslation,
+        library: Door43Client,
+    ) {
         val defaultUSFMFileName: String
         val bookCode: String = targetTranslation.projectId.uppercase(Locale.getDefault())
         val languageId: String = targetTranslation.targetLanguageId
@@ -301,7 +304,11 @@ class ExportProjects @Inject constructor(
         init {
             val projectTranslation = targetTranslation.projectTranslation
             // TODO refactor
-            val project = library!!.index.getProject(languageId, targetTranslation.projectId, true)
+            val project = library.index.getProject(
+                languageId,
+                targetTranslation.projectId,
+                true
+            )
 
             bookName = bookCode
             if ((project != null) && (project.name != null)) {
@@ -328,8 +335,11 @@ class ExportProjects @Inject constructor(
         }
 
         companion object {
-            fun generate(targetTranslation: TargetTranslation): BookData {
-                return BookData(targetTranslation)
+            fun generate(
+                targetTranslation: TargetTranslation,
+                library: Door43Client
+            ): BookData {
+                return BookData(targetTranslation, library)
             }
         }
     }

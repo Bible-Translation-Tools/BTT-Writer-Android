@@ -2,6 +2,9 @@ package com.door43.translationstudio.ui.publish;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+
+import com.door43.translationstudio.core.Profile;
+import com.door43.translationstudio.core.Translator;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
@@ -13,23 +16,30 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.NativeSpeaker;
-import com.door43.translationstudio.core.Profile;
 import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.ui.ContributorsAdapter;
 import com.door43.translationstudio.ui.dialogs.ContributorDialog;
 import com.door43.widget.ViewUtil;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * Created by joel on 9/20/2015.
  */
+@AndroidEntryPoint
 public class TranslatorsFragment extends PublishStepFragment implements ContributorsAdapter.OnClickListener {
 
+    @Inject
+    Translator translator;
+    @Inject
+    Profile profile;
+
     private TargetTranslation mTargetTranslation;
-    private RecyclerView mRecylerView;
+    private RecyclerView recyclerView;
     private ContributorsAdapter mContributorsAdapter;
     private View.OnClickListener mOnNativeSpeakerDialogClick;
 
@@ -38,23 +48,19 @@ public class TranslatorsFragment extends PublishStepFragment implements Contribu
 
         Bundle args = getArguments();
         String targetTranslationId = args.getString(PublishActivity.EXTRA_TARGET_TRANSLATION_ID);
-        Translator translator = App.getTranslator();
         mTargetTranslation = translator.getTargetTranslation(targetTranslationId);
 
         // auto add profile
-        Profile profile = App.getProfile();
-        if(profile != null) {
-            mTargetTranslation.addContributor(profile.getNativeSpeaker());
-        }
+        mTargetTranslation.addContributor(profile.getNativeSpeaker());
 
-        mRecylerView = (RecyclerView)view.findViewById(R.id.recycler_view);
+        recyclerView = (RecyclerView)view.findViewById(R.id.recycler_view);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        mRecylerView.setLayoutManager(linearLayoutManager);
-        mRecylerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
         mContributorsAdapter = new ContributorsAdapter();
         mContributorsAdapter.setContributors(mTargetTranslation.getContributors());
         mContributorsAdapter.setOnClickListener(this);
-        mRecylerView.setAdapter(mContributorsAdapter);
+        recyclerView.setAdapter(mContributorsAdapter);
 
         mOnNativeSpeakerDialogClick = new View.OnClickListener() {
             @Override

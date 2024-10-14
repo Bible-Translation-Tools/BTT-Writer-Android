@@ -4,6 +4,7 @@ import android.content.Context
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.git.TransportCallback
 import com.door43.translationstudio.ui.SettingsActivity
@@ -37,7 +38,7 @@ class CloneRepository @Inject constructor(
             val port = prefRepository.getDefaultPref(
                 SettingsActivity.KEY_PREF_GIT_SERVER_PORT,
                 context.resources.getString(R.string.pref_default_git_server_port)
-            )?.toInt() ?: 22
+            ).toInt()
             val cloneCommand = Git.cloneRepository()
                 .setTransportConfigCallback(TransportCallback(directoryProvider, port))
                 .setURI(cloneUrl)

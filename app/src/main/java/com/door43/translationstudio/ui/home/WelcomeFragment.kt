@@ -1,50 +1,51 @@
-package com.door43.translationstudio.ui.home;
+package com.door43.translationstudio.ui.home
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.BaseFragment;
+import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import com.door43.translationstudio.databinding.FragmentTargetTranslationWelcomeBinding
+import com.door43.translationstudio.ui.BaseFragment
 
 /**
  * Displays a welcome message with instructions about creating target translations
  */
-public class WelcomeFragment extends BaseFragment {
+class WelcomeFragment : BaseFragment() {
+    private var listener: OnCreateNewTargetTranslation? = null
 
-    private OnCreateNewTargetTranslation mListener;
+    private var _binding: FragmentTargetTranslationWelcomeBinding? = null
+    private val binding get() = _binding!!
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_target_translation_welcome, container, false);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentTargetTranslationWelcomeBinding.inflate(inflater, container, false)
 
-        // new project Button
-        Button createTargetTranslationButton = (Button) rootView.findViewById(R.id.extraAddTargetTranslationButton);
-        if(createTargetTranslationButton != null) {
-            createTargetTranslationButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onCreateNewTargetTranslation();
-                }
-            });
+        binding.extraAddTargetTranslationButton.setOnClickListener {
+            listener?.onCreateNewTargetTranslation()
         }
 
-        return rootView;
+        return binding.root
     }
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         try {
-            this.mListener = (OnCreateNewTargetTranslation) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement OnCreateNewTargetTranslation");
+            this.listener = context as OnCreateNewTargetTranslation
+        } catch (e: ClassCastException) {
+            throw ClassCastException("$context must implement OnCreateNewTargetTranslation")
         }
     }
-    public interface OnCreateNewTargetTranslation {
-        void onCreateNewTargetTranslation();
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    interface OnCreateNewTargetTranslation {
+        fun onCreateNewTargetTranslation()
     }
 }

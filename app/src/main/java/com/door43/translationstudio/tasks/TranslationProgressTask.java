@@ -26,7 +26,9 @@ public class TranslationProgressTask extends ManagedTask {
 
     @Override
     public void start() {
-        Door43Client library = App.getLibrary();
+        // todo refactor this task in favour of usecase
+
+        /*Door43Client library = App.getLibrary();
         if(library == null) return;
 
         // find matching source
@@ -53,7 +55,7 @@ public class TranslationProgressTask extends ManagedTask {
         }
 
         // correct invalid values
-        if(this.progress > 1) this.progress = 1.0;
+        if(this.progress > 1) this.progress = 1.0;*/
     }
 
     /**

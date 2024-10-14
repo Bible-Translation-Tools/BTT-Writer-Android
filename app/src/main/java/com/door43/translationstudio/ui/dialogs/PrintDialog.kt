@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TargetTranslation
@@ -42,6 +43,7 @@ import kotlin.math.min
 @AndroidEntryPoint
 class PrintDialog : DialogFragment() {
 
+    @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var library: Door43Client
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null

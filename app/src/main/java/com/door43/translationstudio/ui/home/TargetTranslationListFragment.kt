@@ -1,180 +1,195 @@
-package com.door43.translationstudio.ui.home;
+package com.door43.translationstudio.ui.home
 
-import android.content.Context;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProvider;
-
-import com.door43.data.IPreferenceRepository;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.databinding.FragmentTargetTranslationListBinding;
-import com.door43.translationstudio.ui.BaseFragment;
-import com.door43.translationstudio.ui.viewmodels.HomeViewModel;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import androidx.fragment.app.activityViewModels
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
+import com.door43.data.setDefaultPref
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentTargetTranslationListBinding
+import com.door43.translationstudio.ui.BaseFragment
+import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortByColumnType
+import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortProjectColumnType
+import com.door43.translationstudio.ui.viewmodels.HomeViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * Displays a list of target translations
  */
 @AndroidEntryPoint
-public class TargetTranslationListFragment extends BaseFragment {
-
+class TargetTranslationListFragment : BaseFragment() {
     @Inject
-    IPreferenceRepository prefRepository;
+    lateinit var prefRepository: IPreferenceRepository
 
-    public static final String TAG = TargetTranslationListFragment.class.getSimpleName();
-    public static final String STATE_SORT_BY_COLUMN = "state_sort_by_column";
-    public static final String STATE_SORT_PROJECT_COLUMN = "state_sort_project_column";
-    public static final String SORT_PROJECT_ITEM = "sort_project_item";
-    public static final String SORT_BY_COLUMN_ITEM = "sort_by_column_item";
+    private var listener: OnItemClickListener? = null
+    private var sortProjectColumn = SortProjectColumnType.bibleOrder
+    private var sortByColumn = SortByColumnType.projectThenLanguage
 
-    private TargetTranslationAdapter adapter;
-    private OnItemClickListener listener;
-    private TargetTranslationAdapter.SortProjectColumnType sortProjectColumn = TargetTranslationAdapter.SortProjectColumnType.bibleOrder;
-    private TargetTranslationAdapter.SortByColumnType sortByColumn = TargetTranslationAdapter.SortByColumnType.projectThenLanguage;
+    private val adapter by lazy {TargetTranslationAdapter()  }
+    private val viewModel: HomeViewModel by activityViewModels()
 
-    private HomeViewModel viewModel;
+    private var _binding: FragmentTargetTranslationListBinding? = null
+    private val binding get() = _binding!!
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        FragmentTargetTranslationListBinding binding =
-                FragmentTargetTranslationListBinding.inflate(inflater, container, false);
-        viewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentTargetTranslationListBinding.inflate(inflater, container, false)
 
-        setupObservers();
+        setupObservers()
 
-        adapter = new TargetTranslationAdapter();
-        adapter.setOnInfoClickListener(item -> {
-            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-            Fragment prev = getParentFragmentManager().findFragmentByTag("infoDialog");
+        adapter.setOnInfoClickListener { item: TranslationItem ->
+            val ft = parentFragmentManager.beginTransaction()
+            val prev = parentFragmentManager.findFragmentByTag("infoDialog")
             if (prev != null) {
-                ft.remove(prev);
+                ft.remove(prev)
             }
-            ft.addToBackStack(null);
+            ft.addToBackStack(null)
 
-            TargetTranslationInfoDialog dialog = new TargetTranslationInfoDialog();
-            Bundle args = new Bundle();
-            args.putString(TargetTranslationInfoDialog.ARG_TARGET_TRANSLATION_ID, item.getTranslation().getId());
-            dialog.setArguments(args);
-            dialog.show(ft, "infoDialog");
-        });
-        binding.translationsList.setAdapter(adapter);
+            val dialog = TargetTranslationInfoDialog()
+            val args = Bundle()
+            args.putString(
+                TargetTranslationInfoDialog.ARG_TARGET_TRANSLATION_ID,
+                item.translation.id
+            )
+            dialog.arguments = args
+            dialog.show(ft, "infoDialog")
+        }
+        binding.translationsList.adapter = adapter
 
         // open target translation
-        binding.translationsList.setOnItemClickListener(
-                (parent, view, position, id) -> listener.onItemClick(adapter.getItem(position))
-        );
+        binding.translationsList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+            listener?.onItemClick(adapter.getItem(position))
+        }
 
-        if(savedInstanceState != null) {
-            sortByColumn = TargetTranslationAdapter.SortByColumnType.fromInt(savedInstanceState.getInt(STATE_SORT_BY_COLUMN, sortByColumn.getValue()));
-            sortProjectColumn = TargetTranslationAdapter.SortProjectColumnType.fromInt(savedInstanceState.getInt(STATE_SORT_PROJECT_COLUMN, sortProjectColumn.getValue()));
+        if (savedInstanceState != null) {
+            sortByColumn = SortByColumnType.fromInt(
+                savedInstanceState.getInt(
+                    STATE_SORT_BY_COLUMN,
+                    sortByColumn.value
+                )
+            )
+            sortProjectColumn = SortProjectColumnType.fromInt(
+                savedInstanceState.getInt(
+                    STATE_SORT_PROJECT_COLUMN, sortProjectColumn.value
+                )
+            )
         } else { // if not restoring states, get last values
-            sortByColumn = TargetTranslationAdapter.SortByColumnType.fromString(
-                    prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, null),
-                    TargetTranslationAdapter.SortByColumnType.projectThenLanguage
-            );
-            sortProjectColumn = TargetTranslationAdapter.SortProjectColumnType.fromString(
-                    prefRepository.getDefaultPref(SORT_PROJECT_ITEM, null),
-                    TargetTranslationAdapter.SortProjectColumnType.bibleOrder
-            );
+            sortByColumn = SortByColumnType.fromString(
+                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM),
+                SortByColumnType.projectThenLanguage
+            )
+            sortProjectColumn = SortProjectColumnType.fromString(
+                prefRepository.getDefaultPref(SORT_PROJECT_ITEM),
+                SortProjectColumnType.bibleOrder
+            )
         }
-        adapter.sort(sortByColumn, sortProjectColumn);
+        adapter.sort(sortByColumn, sortProjectColumn)
 
-        List<String> projectTypes = new ArrayList<>();
-        projectTypes.add(this.getResources().getString(R.string.sort_project_then_language));
-        projectTypes.add(this.getResources().getString(R.string.sort_language_then_project));
-        projectTypes.add(this.getResources().getString(R.string.sort_progress_then_project));
-        ArrayAdapter<String> projectTypesAdapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_spinner_item, projectTypes);
-        projectTypesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.sortColumn.setAdapter(projectTypesAdapter);
-        binding.sortColumn.setSelection(sortByColumn.getValue());
-        binding.sortColumn.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        val projectTypes: MutableList<String> = ArrayList()
+        projectTypes.add(this.resources.getString(R.string.sort_project_then_language))
+        projectTypes.add(this.resources.getString(R.string.sort_language_then_project))
+        projectTypes.add(this.resources.getString(R.string.sort_progress_then_project))
+        val projectTypesAdapter =
+            ArrayAdapter(requireActivity(), android.R.layout.simple_spinner_item, projectTypes)
+        projectTypesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.sortColumn.adapter = projectTypesAdapter
+        binding.sortColumn.setSelection(sortByColumn.value)
+        binding.sortColumn.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View,
+                position: Int,
+                id: Long
+            ) {
 //                    Logger.i(TAG, "Sort column item selected: " + position);
-                sortByColumn = TargetTranslationAdapter.SortByColumnType.fromInt(position);
-                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, String.valueOf(sortByColumn.getValue()));
-                if(adapter != null) {
-                    adapter.sort(sortByColumn, sortProjectColumn);
-                }
+                sortByColumn = SortByColumnType.fromInt(position)
+                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, sortByColumn.value.toString())
+                adapter.sort(sortByColumn, sortProjectColumn)
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
             }
-        });
+        }
 
-        List<String> bibleTypes = new ArrayList<>();
-        bibleTypes.add(this.getResources().getString(R.string.sort_bible_order));
-        bibleTypes.add(this.getResources().getString(R.string.sort_alphabetical_order));
-        ArrayAdapter<String> bibleTypesAdapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_spinner_item, bibleTypes);
-        bibleTypesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.sortProjects.setAdapter(bibleTypesAdapter);
-        binding.sortProjects.setSelection(sortProjectColumn.getValue());
-        binding.sortProjects.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        val bibleTypes: MutableList<String> = ArrayList()
+        bibleTypes.add(this.resources.getString(R.string.sort_bible_order))
+        bibleTypes.add(this.resources.getString(R.string.sort_alphabetical_order))
+        val bibleTypesAdapter =
+            ArrayAdapter(requireActivity(), android.R.layout.simple_spinner_item, bibleTypes)
+        bibleTypesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.sortProjects.adapter = bibleTypesAdapter
+        binding.sortProjects.setSelection(sortProjectColumn.value)
+        binding.sortProjects.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View,
+                position: Int,
+                id: Long
+            ) {
 //                    Logger.i(TAG, "Sort project column item selected: " + position);
-                sortProjectColumn = TargetTranslationAdapter.SortProjectColumnType.fromInt(position);
-                prefRepository.setDefaultPref(SORT_PROJECT_ITEM, String.valueOf(sortProjectColumn.getValue()));
-                if(adapter != null) {
-                    adapter.sort(sortByColumn, sortProjectColumn);
-                }
+                sortProjectColumn = SortProjectColumnType.fromInt(position)
+                prefRepository.setDefaultPref(
+                    SORT_PROJECT_ITEM,
+                    sortProjectColumn.value.toString()
+                )
+                adapter.sort(sortByColumn, sortProjectColumn)
             }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
             }
-        });
+        }
 
-        return binding.getRoot();
+        return binding.root
     }
 
-    private void setupObservers() {
-        viewModel.getTranslations().observe(getViewLifecycleOwner(), translations -> {
-            if (translations != null && adapter != null) {
-                adapter.changeData(translations);
-            }
-        });
-    }
-
-    public void reloadList() {
-        if (adapter != null) {
-            adapter.notifyDataSetChanged();
+    private fun setupObservers() {
+        viewModel.translations.observe(viewLifecycleOwner) {
+            it?.let { adapter.setData(it) }
         }
     }
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
+    fun reloadList() {
+        adapter.notifyDataSetChanged()
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         try {
-            this.listener = (OnItemClickListener) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context + " must implement OnItemClickListener");
+            this.listener = context as OnItemClickListener
+        } catch (e: ClassCastException) {
+            throw ClassCastException("$context must implement OnItemClickListener")
         }
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle out) {
-        out.putInt(STATE_SORT_BY_COLUMN, sortByColumn.getValue());
-        out.putInt(STATE_SORT_PROJECT_COLUMN, sortProjectColumn.getValue());
-        super.onSaveInstanceState(out);
+    override fun onSaveInstanceState(out: Bundle) {
+        out.putInt(STATE_SORT_BY_COLUMN, sortByColumn.value)
+        out.putInt(STATE_SORT_PROJECT_COLUMN, sortProjectColumn.value)
+        super.onSaveInstanceState(out)
     }
 
-    public interface OnItemClickListener {
-        void onItemClick(TranslationItem item);
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    interface OnItemClickListener {
+        fun onItemClick(item: TranslationItem)
+    }
+
+    companion object {
+        val TAG: String = TargetTranslationListFragment::class.java.simpleName
+        const val STATE_SORT_BY_COLUMN: String = "state_sort_by_column"
+        const val STATE_SORT_PROJECT_COLUMN: String = "state_sort_project_column"
+        const val SORT_PROJECT_ITEM: String = "sort_project_item"
+        const val SORT_BY_COLUMN_ITEM: String = "sort_by_column_item"
     }
 }

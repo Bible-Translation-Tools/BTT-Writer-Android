@@ -10,7 +10,9 @@ import org.unfoldingword.tools.logger.Logger
 import java.util.regex.Pattern
 import javax.inject.Inject
 
-class RenderHelps @Inject constructor(private val library: Door43Client) {
+class RenderHelps @Inject constructor(
+    private val library: Door43Client
+) {
     data class RenderHelpsResult(val item: ListItem, val helps: Map<String, Any>)
 
     fun execute(item: ListItem): RenderHelpsResult {
@@ -42,7 +44,11 @@ class RenderHelps @Inject constructor(private val library: Door43Client) {
     }
 
     private fun getWordsLinks(config: List<String>, item: ListItem): List<Link> {
-        val links = ContainerCache.cacheFromLinks(library, config, item.source.language)
+        val links = ContainerCache.cacheFromLinks(
+            library,
+            config,
+            item.source.language
+        )
         val titlePattern = Pattern.compile("#(.*)")
         for (link in links) {
             try {
@@ -135,7 +141,10 @@ class RenderHelps @Inject constructor(private val library: Door43Client) {
         )
         if (noteTranslations.isNotEmpty()) {
             try {
-                val rc = ContainerCache.cache(library, noteTranslations[0].resourceContainerSlug)
+                val rc = ContainerCache.cache(
+                    library,
+                    noteTranslations[0].resourceContainerSlug
+                )
                 if (rc != null) {
                     val rawNotes = rc.readChunk(item.chapterSlug, item.chunkSlug)
                     if (rawNotes.isNotEmpty()) {

@@ -4,6 +4,7 @@ import android.content.Context
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,8 +16,8 @@ import javax.inject.Inject
 class DownloadIndex @Inject constructor(
     @ApplicationContext private val context: Context,
     private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client,
-    private val prefRepository: IPreferenceRepository
+    private val prefRepository: IPreferenceRepository,
+    private val library: Door43Client
 ) {
     fun execute(progressListener: OnProgressListener? = null): Boolean {
         var connection: HttpURLConnection? = null

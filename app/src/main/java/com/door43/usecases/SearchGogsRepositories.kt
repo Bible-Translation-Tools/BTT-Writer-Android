@@ -1,15 +1,21 @@
 package com.door43.usecases
 
+import android.content.Context
 import com.door43.OnProgressListener
-import com.door43.translationstudio.App
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.gogsclient.User
 import javax.inject.Inject
 
-class SearchGogsRepositories @Inject constructor() {
+class SearchGogsRepositories @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val prefRepository: IPreferenceRepository
+) {
     private val max = 100
 
     fun execute(
@@ -23,9 +29,9 @@ class SearchGogsRepositories @Inject constructor() {
         val repositories = arrayListOf<Repository>()
 
         val api = GogsAPI(
-            App.getUserString(
+            prefRepository.getDefaultPref(
                 SettingsActivity.KEY_PREF_GOGS_API,
-                R.string.pref_default_gogs_api
+                context.getString(R.string.pref_default_gogs_api)
             )
         )
         val repos = api.searchRepos(query, uid, limit)

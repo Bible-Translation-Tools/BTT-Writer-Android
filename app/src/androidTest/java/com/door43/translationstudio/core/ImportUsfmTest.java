@@ -43,7 +43,7 @@ public class ImportUsfmTest {
 
     private JSONArray mExpectedBooks;
     private TargetLanguage mTargetLanguage;
-    private ImportUsfm mUsfm;
+    private ImportUSFM mUsfm;
     private Context mTestContext;
     private Context mAppContext;
     private Door43Client mLibrary;
@@ -82,7 +82,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 678;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -100,7 +100,7 @@ public class ImportUsfmTest {
         boolean expectSucccess = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -119,7 +119,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 678;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
         InputStream usfmStream = mTestContext.getAssets().open("usfm/" + source);
         String text = FileUtilities.readStreamToString(usfmStream);
 
@@ -139,7 +139,7 @@ public class ImportUsfmTest {
         boolean expectSucccess = true;
         boolean expectAllVerses = false;
         int expectedVerseCount = 2461;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -156,7 +156,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectSucccess = false;
         boolean expectAllVerses = true;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -174,7 +174,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 45;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -192,7 +192,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -210,7 +210,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = false;
         int expectedVerseCount = 677;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -228,7 +228,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 633;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -246,7 +246,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -264,7 +264,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -282,7 +282,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 74;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -300,7 +300,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 74;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -317,7 +317,7 @@ public class ImportUsfmTest {
         boolean expectSucccess = false;
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -335,7 +335,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 81;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -353,7 +353,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 104;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -371,7 +371,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 104;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -389,7 +389,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 104;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -407,7 +407,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = false;
         int expectedVerseCount = 25;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
@@ -425,7 +425,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = false;
         int expectedVerseCount = 6;
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
 
         //when
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);

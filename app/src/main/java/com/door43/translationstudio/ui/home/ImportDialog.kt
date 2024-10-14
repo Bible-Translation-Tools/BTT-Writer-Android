@@ -15,11 +15,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog
@@ -46,6 +48,7 @@ import javax.inject.Inject
 class ImportDialog : DialogFragment() {
     @Inject lateinit var profile: Profile
     @Inject lateinit var translator: Translator
+    @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var library: Door43Client
 
     private val viewModel: ImportViewModel by viewModels()
@@ -60,7 +63,7 @@ class ImportDialog : DialogFragment() {
     private var mergeSelection: MergeOptions? = MergeOptions.NONE
     private var mergeConflicted = false
 
-    private lateinit var openFileContent: ActivityResultLauncher<String>
+    private lateinit var openFileContent: ActivityResultLauncher<Array<String>>
     private lateinit var openDirectory: ActivityResultLauncher<Uri?>
 
     private var _binding: DialogImportBinding? = null
@@ -70,10 +73,15 @@ class ImportDialog : DialogFragment() {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.setCanceledOnTouchOutside(true)
 
-        openFileContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        openFileContent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let {
-                requireContext().contentResolver.getType(it)?.let { mimeType ->
-                    importLocal(it, mimeType)
+                val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
+                if (filename.endsWith(USFM_EXTENSION)) {
+                    importLocal(uri, IMPORT_USFM_MIME)
+                } else {
+                    requireContext().contentResolver.getType(it)?.let { mimeType ->
+                        importLocal(it, mimeType)
+                    }
                 }
             }
         }
@@ -175,7 +183,7 @@ class ImportDialog : DialogFragment() {
                 mergeSelection = MergeOptions.NONE
                 // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
                 if (App.isNetworkAvailable) {
-                    if (App.deviceNetworkAlias == null) {
+                    if (App.deviceNetworkAlias.isEmpty()) {
                         // get device alias
                         settingDeviceAlias = true
                         val dialog = DeviceNetworkAliasDialog()
@@ -252,11 +260,13 @@ class ImportDialog : DialogFragment() {
     }
 
     private fun onImportUSFM() {
-        onImportLocal(IMPORT_USFM_MIME)
+        // SAF doesn't allow to select file with custom extensions that are created by other apps
+        // So we use all types to filter .usfm file later
+        onImportLocal("*/*")
     }
 
     private fun onImportLocal(mimeType: String) {
-        openFileContent.launch(mimeType)
+        openFileContent.launch(arrayOf(mimeType))
     }
 
     private fun importLocal(fileUri: Uri, mimeType: String) {
@@ -278,7 +288,7 @@ class ImportDialog : DialogFragment() {
     }
 
     override fun onResume() {
-        if (settingDeviceAlias && App.deviceNetworkAlias != null) {
+        if (settingDeviceAlias && App.deviceNetworkAlias.isNotEmpty()) {
             settingDeviceAlias = false
             showP2PDialog()
         }
@@ -358,8 +368,8 @@ class ImportDialog : DialogFragment() {
      * import USFM uri
      * @param uri
      */
-    private fun doUsfmImportUri(uri: Uri?) {
-        ImportUsfmActivity.startActivityForUriImport(activity, uri)
+    private fun doUsfmImportUri(uri: Uri) {
+        ImportUsfmActivity.startActivityForUriImport(requireActivity(), uri)
     }
 
     private fun doImportSourceText(uri: Uri) {

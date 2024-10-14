@@ -49,7 +49,7 @@ public class ExportUsfmTest {
     private Context mAppContext;
     private TargetLanguage mTargetLanguage;
     private Door43Client mLibrary;
-    private ImportUsfm mUsfm;
+    private ImportUSFM mUsfm;
     private File mOutputFile;
     private TargetTranslation mTargetTranslation;
     private String mErrorLog;
@@ -237,16 +237,16 @@ public class ExportUsfmTest {
      * @param output
      */
     private void verifyBookID(String input, String output) {
-        String bookTitle = extractString(input, ImportUsfm.PATTERN_BOOK_TITLE_MARKER);
-        String bookLongName = extractString(input, ImportUsfm.PATTERN_BOOK_LONG_NAME_MARKER);
-        String bookShortName = extractString(input, ImportUsfm.PATTERN_BOOK_ABBREVIATION_MARKER);
-        String bookTitleOut = extractString(output, ImportUsfm.PATTERN_BOOK_TITLE_MARKER);
-        String bookLongNameOut = extractString(output, ImportUsfm.PATTERN_BOOK_LONG_NAME_MARKER);
-        String bookShortNameOut = extractString(output, ImportUsfm.PATTERN_BOOK_ABBREVIATION_MARKER);
+        String bookTitle = extractString(input, ImportUSFM.PATTERN_BOOK_TITLE_MARKER);
+        String bookLongName = extractString(input, ImportUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
+        String bookShortName = extractString(input, ImportUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
+        String bookTitleOut = extractString(output, ImportUSFM.PATTERN_BOOK_TITLE_MARKER);
+        String bookLongNameOut = extractString(output, ImportUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
+        String bookShortNameOut = extractString(output, ImportUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
 
-        String bookID = extractString(input, ImportUsfm.ID_TAG_MARKER);
+        String bookID = extractString(input, ImportUSFM.ID_TAG_MARKER);
         String[] bookIdParts = bookID.split(" ");
-        String bookIDOut = extractString(output, ImportUsfm.ID_TAG_MARKER);
+        String bookIDOut = extractString(output, ImportUSFM.ID_TAG_MARKER);
         String[] bookIdOutParts = bookIDOut.split(" ");
 
         assertEquals("Input and output book titles (\\toc1) should equal", bookTitle.toLowerCase(), bookTitleOut.toLowerCase());
@@ -342,7 +342,7 @@ public class ExportUsfmTest {
         InputStream usfmStream = mTestContext.getAssets().open("usfm/" + source);
         String usfmInputText = FileUtilities.readStreamToString(usfmStream);
 
-        Matcher inputMatcher = ImportUsfm.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
+        Matcher inputMatcher = ImportUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
 
         int lastInputChapterStart = -1;
         String chapterIn = "";
@@ -399,8 +399,8 @@ public class ExportUsfmTest {
 
         verifyBookID(usfmInputText, usfmOutputText);
 
-        Matcher inputMatcher = ImportUsfm.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
-        Matcher outputMatcher = ImportUsfm.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmOutputText);
+        Matcher inputMatcher = ImportUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
+        Matcher outputMatcher = ImportUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmOutputText);
 
         int lastInputChapterStart = -1;
         int lastOutputChapterStart = -1;
@@ -450,8 +450,8 @@ public class ExportUsfmTest {
      * @param outputChapter
      */
     private void compareVersesInChapter(int chapter, String inputChapter, String outputChapter) {
-        Matcher inputVerseMatcher = ImportUsfm.PATTERN_USFM_VERSE_SPAN.matcher(inputChapter);
-        Matcher outputVerseMatcher = ImportUsfm.PATTERN_USFM_VERSE_SPAN.matcher(outputChapter);
+        Matcher inputVerseMatcher = ImportUSFM.PATTERN_USFM_VERSE_SPAN.matcher(inputChapter);
+        Matcher outputVerseMatcher = ImportUSFM.PATTERN_USFM_VERSE_SPAN.matcher(outputChapter);
         int lastInputVerseStart = -1;
         int lastOutputVerseStart = -1;
         String verseIn = "";
@@ -573,7 +573,7 @@ public class ExportUsfmTest {
      */
     private void importTestTranslation(String source) throws IOException {
         //import USFM file to be used for testing
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
+        mUsfm = new ImportUSFM(mAppContext, mTargetLanguage);
         assertNotNull("mTargetLanguage", mTargetLanguage);
         boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
         assertTrue("import usfm test file should succeed", success);
@@ -594,7 +594,7 @@ public class ExportUsfmTest {
         List<ChunkMarker> markers = App.getLibrary().index().getChunkMarkers(projectSlug, versifications.get(0).slug);
         assertTrue("chunk markers should not be empty", markers.size() > 0);
 
-        ImportUsfm.ParsedChunks parsedChunks = ImportUsfm.parseChunks(markers);
+        ImportUSFM.ParsedChunks parsedChunks = ImportUSFM.parseChunks(markers);
         List<String> mChapters = parsedChunks.chapters;
         HashMap<String, List<String>> mChunks = parsedChunks.chunks;
 

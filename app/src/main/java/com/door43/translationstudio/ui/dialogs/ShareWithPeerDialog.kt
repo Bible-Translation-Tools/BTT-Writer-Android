@@ -18,7 +18,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
-import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceNetworkAlias
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -41,33 +40,26 @@ import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.util.RSAEncryption
 import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
-import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
-import java.io.File
 import java.security.InvalidParameterException
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
     BroadcastListenerService.Callbacks, OnClientEventListener {
 
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
-    @Inject
-    lateinit var translator: Translator
-    @Inject
-    lateinit var library: Door43Client
+    @Inject lateinit var translator: Translator
 
-    private var publicKeyFile: File? = null
-    private var privateKeyFile: File? = null
+    private var serverIntent: Intent? = null
+    private var clientIntent: Intent? = null
+    private var broadcastIntent: Intent? = null
+    private var listenerIntent: Intent? = null
+
     private var operationMode = 0
     private var targetTranslationId: String? = null
     private var shutDownServices = true
     private var deviceAlias: String? = null
-    private var mDialogShown: DialogShown? = DialogShown.NONE
+    private var dialogShown: DialogShown? = DialogShown.NONE
     private lateinit var targetTranslation: TargetTranslation
     private lateinit var adapter: PeerAdapter
 
@@ -176,9 +168,6 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
 
         setupObservers()
 
-        publicKeyFile = directoryProvider.p2pPublicKey
-        privateKeyFile = directoryProvider.p2pPrivateKey
-
         adapter = PeerAdapter(activity)
 
         with(binding) {
@@ -192,26 +181,24 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
                 val peer = adapter.getItem(position)
                 if (operationMode == MODE_SERVER) {
                     // offer target translation to the client
-                    val sourceTranslationSlugs =
-                        translator.getOpenSourceTranslations(targetTranslationId!!)
+                    val sourceTranslationSlugs = viewModel.getOpenSourceTranslations(
+                        targetTranslationId
+                    )
                     var sourceLanguageSlug = "en"
                     // try using their selected source first
                     if (sourceTranslationSlugs.isNotEmpty()) {
-                        val t = library.index.getTranslation(sourceTranslationSlugs[0])
+                        val t = viewModel.getTranslation(sourceTranslationSlugs[0])
                         if (t != null) {
                             sourceLanguageSlug = t.language.slug
                         }
                     } else {
                         // try using the next available source
-                        val p = library.index.getProject(
-                            Locale.getDefault().language,
-                            targetTranslationId
-                        )
+                        val p = viewModel.getProject(targetTranslationId)
                         if (p != null) {
                             sourceLanguageSlug = p.languageSlug
                         }
                     }
-                    serverService!!.offerTargetTranslation(
+                    serverService?.offerTargetTranslation(
                         peer,
                         sourceLanguageSlug,
                         targetTranslationId
@@ -301,7 +288,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
         }
 
         if (savedInstanceState != null) {
-            mDialogShown = DialogShown.fromInt(
+            dialogShown = DialogShown.fromInt(
                 savedInstanceState.getInt(
                     STATE_DIALOG_SHOWN,
                     DialogShown.NONE.value
@@ -329,19 +316,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
     private fun onTranslationLoaded() {
         with(binding) {
             title.text = resources.getString(R.string.export_to_device)
-
-            // get project title
-            val p = library.index.getProject(
-                Locale.getDefault().language,
-                targetTranslation.projectId,
-                true
-            )
-            if (p != null) {
-                targetTranslationTitle.text = p.name + " - " + targetTranslation.targetLanguageName
-            } else {
-                targetTranslationTitle.text =
-                    targetTranslation.projectId + " - " + targetTranslation.targetLanguageName
-            }
+            targetTranslationTitle.text = viewModel.getProjectTitle(targetTranslation)
         }
     }
 
@@ -349,10 +324,10 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
      * restore the dialogs that were displayed before rotation
      */
     private fun restoreDialogs() {
-        when (mDialogShown) {
+        when (dialogShown) {
             DialogShown.MERGE_CONFLICT -> showMergeConflict(targetTranslationId)
             DialogShown.NONE -> {}
-            else -> Logger.e(TAG, "Unsupported restore dialog: " + mDialogShown.toString())
+            else -> Logger.e(TAG, "Unsupported restore dialog: " + dialogShown.toString())
         }
     }
 
@@ -402,36 +377,16 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
      */
     @Throws(Exception::class)
     private fun initializeService(intent: Intent?) {
-        if (!privateKeyFile!!.exists() || !publicKeyFile!!.exists()) {
-            RSAEncryption.generateKeys(privateKeyFile, publicKeyFile)
-        }
-        // TODO: 11/30/2015 we should use a shared interface for setting parameters so we don't have to manage two sets
-        var privateKey: PrivateKey?
-        var publicKey: PublicKey?
-        try {
-            privateKey = RSAEncryption.readPrivateKeyFromFile(privateKeyFile)
-            publicKey = RSAEncryption.readPublicKeyFromFile(publicKeyFile)
-        } catch (e: Exception) {
-            // try to regenerate the keys if loading fails
-            Logger.w(
-                this.javaClass.name,
-                "Failed to load the p2p keys. Attempting to regenerate...",
-                e
-            )
-            RSAEncryption.generateKeys(privateKeyFile, publicKeyFile)
-            privateKey = RSAEncryption.readPrivateKeyFromFile(privateKeyFile)
-            publicKey = RSAEncryption.readPublicKeyFromFile(publicKeyFile)
-        }
+        val p2pKeys = viewModel.initializeP2PKeys()
 
-        intent!!.putExtra(ServerService.PARAM_PRIVATE_KEY, privateKey)
-        intent.putExtra(
+        intent?.putExtra(ServerService.PARAM_PRIVATE_KEY, p2pKeys.privateKey)
+        intent?.putExtra(
             ServerService.PARAM_PUBLIC_KEY,
-            RSAEncryption.getPublicKeyAsString(publicKey)
+            RSAEncryption.getPublicKeyAsString(p2pKeys.publicKey)
         )
-        intent.putExtra(ServerService.PARAM_DEVICE_ALIAS, deviceNetworkAlias)
+        intent?.putExtra(ServerService.PARAM_DEVICE_ALIAS, deviceNetworkAlias)
         Logger.i(
-            this.javaClass.name, "Starting service " + intent.component!!
-                .className
+            this.javaClass.name, "Starting service " + intent?.component?.className
         )
         requireActivity().startService(intent)
     }
@@ -457,7 +412,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
 
     override fun onSaveInstanceState(out: Bundle) {
         shutDownServices = false
-        out.putInt(STATE_DIALOG_SHOWN, mDialogShown!!.value)
+        out.putInt(STATE_DIALOG_SHOWN, dialogShown!!.value)
         out.putString(STATE_DIALOG_TRANSLATION_ID, targetTranslationId)
         super.onSaveInstanceState(out)
     }
@@ -521,6 +476,11 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
             }
         }
         super.onDestroy()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onServerServiceReady(port: Int) {
@@ -606,14 +566,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
         importResults: Translator.ImportResults
     ) {
         // build name list
-        val targetTranslation = translator.getTargetTranslation(importResults.importedSlug)
-        val st = library.index().getTranslation(targetTranslation!!.id)
-        val tempName = if (st != null) {
-            st.project.name + " - " + targetTranslation.targetLanguage.name
-        } else {
-            targetTranslation.projectId + " - " + targetTranslation.targetLanguage.name
-        }
-        val name = tempName
+        val name = viewModel.getTargetTranslationName(importResults.importedSlug)
 
         // notify user
         val hand = Handler(Looper.getMainLooper())
@@ -621,6 +574,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
             if (importResults.isSuccess && importResults.mergeConflict) {
                 MergeConflictsHandler.backgroundTestForConflictedChunks(
                     importResults.importedSlug,
+                    translator,
                     object : OnMergeConflictListener {
                         override fun onNoMergeConflict(targetTranslationId: String) {
                             showShareSuccess(name)
@@ -656,12 +610,12 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
     }
 
     fun showMergeConflict(targetTranslationID: String?) {
-        mDialogShown = DialogShown.MERGE_CONFLICT
+        dialogShown = DialogShown.MERGE_CONFLICT
         this.targetTranslationId = targetTranslationID
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.merge_conflict_title).setMessage(R.string.import_merge_conflict)
             .setPositiveButton(R.string.label_ok) { _, _ ->
-                mDialogShown = DialogShown.NONE
+                dialogShown = DialogShown.NONE
                 doManualMerge()
             }.show()
     }
@@ -705,22 +659,19 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
     }
 
     companion object {
+        val TAG: String = ShareWithPeerDialog::class.java.simpleName
+
         const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
         const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
 
         // TODO: 11/30/2015 get port from settings
-        private const val PORT_CLIENT_UDP = 9939
-        private const val REFRESH_FREQUENCY = 2000
-        private const val SERVER_TTL = 2000
+        const val PORT_CLIENT_UDP = 9939
+        const val REFRESH_FREQUENCY = 2000
+        const val SERVER_TTL = 2000
         const val MODE_CLIENT: Int = 0
         const val MODE_SERVER: Int = 1
         const val ARG_DEVICE_ALIAS: String = "arg_device_alias"
-        val TAG: String = ShareWithPeerDialog::class.java.simpleName
         const val ARG_OPERATION_MODE: String = "arg_operation_mode"
         const val ARG_TARGET_TRANSLATION: String = "arg_target_translation"
-        private var serverIntent: Intent? = null
-        private var clientIntent: Intent? = null
-        private var broadcastIntent: Intent? = null
-        private var listenerIntent: Intent? = null
     }
 }

@@ -8,19 +8,24 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import androidx.fragment.app.DialogFragment
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App.Companion.context
-import com.door43.translationstudio.App.Companion.userPreferences
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.DialogDoor43LoginBinding
 import com.door43.translationstudio.ui.LoginDoor43Activity
 import com.door43.translationstudio.ui.SettingsActivity
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * This dialog provides options for the user to login into or create a Door43 account
  * and connect it to their profile.
  * This should be used anywhere a Door43 account is required but does not exist.
  */
+@AndroidEntryPoint
 class Door43LoginDialog : DialogFragment() {
+    @Inject lateinit var prefRepository: IPreferenceRepository
 
     private var _binding: DialogDoor43LoginBinding? = null
     val binding get() = _binding!!
@@ -38,7 +43,7 @@ class Door43LoginDialog : DialogFragment() {
                 val defaultAccountCreateUrl = context()!!.resources.getString(
                     R.string.pref_default_create_account_url
                 )
-                val accountCreateUrl = userPreferences.getString(
+                val accountCreateUrl = prefRepository.getDefaultPref(
                     SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
                     defaultAccountCreateUrl
                 )

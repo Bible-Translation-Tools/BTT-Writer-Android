@@ -1,89 +1,82 @@
-package com.door43.translationstudio.ui.newtranslation;
+package com.door43.translationstudio.ui.newtranslation
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ListView;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.Searchable;
-import com.door43.translationstudio.ui.BaseFragment;
-import com.door43.translationstudio.App;
-
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.CategoryEntry;
-
-import java.util.List;
-
+import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import androidx.fragment.app.activityViewModels
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentProjectListBinding
+import com.door43.translationstudio.ui.BaseFragment
+import com.door43.translationstudio.ui.Searchable
+import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
+import org.unfoldingword.door43client.models.CategoryEntry
 
 /**
  * Created by joel on 9/4/2015.
  */
-public class ProjectListFragment extends BaseFragment implements Searchable {
-    private OnItemClickListener mListener;
-    private Door43Client mLibrary;
-    private ProjectCategoryAdapter mAdapter;
+class ProjectListFragment : BaseFragment(), Searchable {
+    private var listener: OnItemClickListener? = null
+    private val adapter by lazy { ProjectCategoryAdapter() }
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_project_list, container, false);
+    private var _binding: FragmentProjectListBinding? = null
+    val binding get() = _binding!!
 
-        mLibrary = App.getLibrary();
+    private val viewModel: NewTargetTranslationModel by activityViewModels()
 
-        EditText searchView = (EditText) rootView.findViewById(R.id.search_text);
-        searchView.setHint(R.string.choose_a_project);
-        searchView.setEnabled(false);
-        ImageButton searchBackButton = (ImageButton) rootView.findViewById(R.id.search_back_button);
-        searchBackButton.setVisibility(View.GONE);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentProjectListBinding.inflate(inflater, container, false)
 
-        final ImageView updateIcon = (ImageView) rootView.findViewById(R.id.search_mag_icon);
-        updateIcon.setBackgroundResource(R.drawable.ic_refresh_secondary_24dp);
-        // TODO: set up update button
+        with(binding) {
+            search.searchText.setHint(R.string.choose_a_project)
+            search.searchText.isEnabled = false
 
-        ListView list = (ListView) rootView.findViewById(R.id.list);
-        List<CategoryEntry> entries = mLibrary.index().getProjectCategories(0, App.getDeviceLanguageCode(), "all");
-        mAdapter = new ProjectCategoryAdapter(entries);
-        list.setAdapter(mAdapter);
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                CategoryEntry category = mAdapter.getItem(position);
+            search.searchBackButton.visibility = View.GONE
+            search.searchMagIcon.setBackgroundResource(R.drawable.ic_refresh_secondary_24dp)
+
+            // TODO: set up update button
+            adapter.setCategories(viewModel.getCategories())
+            list.adapter = adapter
+            list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                val category = adapter.getItem(position)
                 if (category.entryType == CategoryEntry.Type.PROJECT) {
-                    mListener.onItemClick(category.slug);
+                    listener?.onItemClick(category.slug)
                 } else {
                     // TODO: we need to display another back arrow to back up a level in the categories
-                    mAdapter.changeData(mLibrary.index().getProjectCategories(category.id, App.getDeviceLanguageCode(), "all"));
-
-                    updateIcon.setVisibility(View.GONE);
+                    adapter.setCategories(viewModel.getCategories(category.id))
+                    search.searchMagIcon.visibility = View.GONE
                 }
             }
-        });
+        }
 
-        return rootView;
+        return binding.root
     }
 
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         try {
-            this.mListener = (OnItemClickListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement OnItemClickListener");
+            this.listener = context as OnItemClickListener
+        } catch (e: ClassCastException) {
+            throw ClassCastException("$context must implement OnItemClickListener")
         }
     }
 
-    @Override
-    public void onSearchQuery(String query) {
-        if(mAdapter != null) {
-            mAdapter.getFilter().filter(query);
-        }
+    override fun onSearchQuery(query: String) {
+        adapter.filter.filter(query)
     }
 
-    public interface OnItemClickListener {
-        void onItemClick(String projectId);
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    interface OnItemClickListener {
+        fun onItemClick(projectId: String)
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -113,7 +114,7 @@ class PullTargetTranslation @Inject constructor(
         val port = prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_GIT_SERVER_PORT,
             context.resources.getString(R.string.pref_default_git_server_port)
-        )?.toInt() ?: 22
+        ).toInt()
         val pullCommand = git.pull()
             .setTransportConfigCallback(TransportCallback(directoryProvider, port))
             .setRemote("origin")
