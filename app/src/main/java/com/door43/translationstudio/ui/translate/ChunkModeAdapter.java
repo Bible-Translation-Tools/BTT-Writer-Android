@@ -50,7 +50,8 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     private static final int BOTTOM_ELEVATION = 2;
     private static final int TOP_ELEVATION = 3;
 
-    public ChunkModeAdapter() {
+    public ChunkModeAdapter(Typography typography) {
+        this.typography = typography;
     }
 
     @Override
@@ -176,14 +177,14 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         for (ContentValues values : tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            View tabLayout = createRemovableTabLayout(context, getListener(), tag, title);
+            View tabLayout = createRemovableTabLayout(getListener(), tag, title);
 
             TabLayout.Tab tab = holder.binding.sourceTranslationTabs.newTab();
             tab.setTag(tag);
             tab.setCustomView(tabLayout);
             holder.binding.sourceTranslationTabs.addTab(tab);
 
-            ViewModeAdapter.applyLanguageTypefaceToTab(context, holder.binding.sourceTranslationTabs, values, title);
+            applyLanguageTypefaceToTab(holder.binding.sourceTranslationTabs, values, title);
         }
 
         // select correct tab
@@ -227,10 +228,30 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         if (holder.mLayoutBuildNumber != layoutBuildNumber) {
             holder.mLayoutBuildNumber = layoutBuildNumber;
 
-            Typography.formatSub(context, TranslationType.SOURCE, holder.binding.sourceTranslationTitle, item.source.language.slug, item.source.language.direction);
-            Typography.format(context, TranslationType.SOURCE, holder.binding.sourceTranslationBody, item.source.language.slug, item.source.language.direction);
-            Typography.formatSub(context, TranslationType.TARGET, holder.binding.targetTranslationTitle, item.target.getTargetLanguage().slug, item.target.getTargetLanguage().direction);
-            Typography.format(context, TranslationType.TARGET, holder.binding.targetTranslationBody, item.target.getTargetLanguage().slug, item.target.getTargetLanguage().direction);
+            typography.formatSub(
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationTitle,
+                    item.source.language.slug,
+                    item.source.language.direction
+            );
+            typography.format(
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationBody,
+                    item.source.language.slug,
+                    item.source.language.direction
+            );
+            typography.formatSub(
+                    TranslationType.TARGET,
+                    holder.binding.targetTranslationTitle,
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
+            typography.format(
+                    TranslationType.TARGET,
+                    holder.binding.targetTranslationBody,
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
         }
 
         //////

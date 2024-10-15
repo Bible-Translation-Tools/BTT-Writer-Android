@@ -76,8 +76,8 @@ class HomeViewModel @Inject constructor(
     private val _examineImportsResult = MutableLiveData<ExamineImportsForCollisions.Result?>()
     val examineImportsResult: LiveData<ExamineImportsForCollisions.Result?> = _examineImportsResult
 
-    private val _importResult = MutableLiveData<Translator.ImportResults?>()
-    val importResult: LiveData<Translator.ImportResults?> = _importResult
+    private val _importResult = MutableLiveData<ImportProjects.ImportResults?>()
+    val importResult: LiveData<ImportProjects.ImportResults?> = _importResult
 
     private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result?>()
     val latestRelease: LiveData<CheckForLatestRelease.Result?> = _latestRelease

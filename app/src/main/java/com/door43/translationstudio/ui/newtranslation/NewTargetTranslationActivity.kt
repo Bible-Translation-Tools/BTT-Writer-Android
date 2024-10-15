@@ -6,10 +6,10 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
-import androidx.core.view.MenuItemCompat
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ResourceType
@@ -44,6 +44,12 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
     private lateinit var binding: ActivityNewTargetTranslationBinding
 
     private val viewModel: NewTargetTranslationModel by viewModels()
+
+    private val activityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        onTempLanguageCreated(result.resultCode, result.data)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -360,12 +366,11 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         }
         val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
         val searchMenuItem = menu.findItem(R.id.action_search)
-        val searchViewAction = MenuItemCompat.getActionView(searchMenuItem) as SearchView
+        val searchViewAction = searchMenuItem.actionView as SearchView
         searchViewAction.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(s: String): Boolean {
                 return true
             }
-
             override fun onQueryTextChange(s: String): Boolean {
                 fragment!!.onSearchQuery(s)
                 return true
@@ -395,7 +400,7 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
                             this@NewTargetTranslationActivity,
                             NewTempLanguageActivity::class.java
                         )
-                        startActivityForResult(requestNewLanguageIntent, NEW_LANGUAGE_REQUEST)
+                        activityResultLauncher.launch(requestNewLanguageIntent)
                     }
                     .setNegativeButton(R.string.title_cancel, null)
                     .show()
@@ -430,53 +435,50 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         super.onSaveInstanceState(outState)
     }
 
-    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (NEW_LANGUAGE_REQUEST == requestCode) {
-            if (RESULT_OK == resultCode) {
-                val rawResponse = data?.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_REQUEST)
-                val registered = viewModel.registerTempLanguage(rawResponse)
-                if (registered) {
-                    confirmTempLanguage()
-                } else {
-                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.error)
-                        .setMessage(R.string.try_again)
-                        .show()
+    private fun onTempLanguageCreated(resultCode: Int, data: Intent?) {
+        if (RESULT_OK == resultCode) {
+            val rawResponse = data?.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_REQUEST)
+            val registered = viewModel.registerTempLanguage(rawResponse)
+            if (registered) {
+                confirmTempLanguage()
+            } else {
+                AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                    .setTitle(R.string.error)
+                    .setMessage(R.string.try_again)
+                    .show()
+            }
+        } else if (RESULT_FIRST_USER == resultCode) {
+            val secondResultCode =
+                data?.getIntExtra(NewTempLanguageActivity.EXTRA_RESULT_CODE, -1)
+            if (secondResultCode == NewTempLanguageActivity.RESULT_MISSING_QUESTIONNAIRE) {
+                val snack = Snackbar.make(
+                    findViewById(android.R.id.content),
+                    R.string.missing_questionnaire,
+                    Snackbar.LENGTH_LONG
+                )
+                ViewUtil.setSnackBarTextColor(
+                    snack,
+                    resources.getColor(R.color.light_primary_text)
+                )
+                snack.show()
+            } else if (secondResultCode == NewTempLanguageActivity.RESULT_USE_EXISTING_LANGUAGE) {
+                val targetLanguageId =
+                    data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_ID)
+                val targetLanguage = viewModel.getTargetLanguage(targetLanguageId)
+                if (targetLanguage != null) {
+                    onItemClick(targetLanguage)
                 }
-            } else if (RESULT_FIRST_USER == resultCode) {
-                val secondResultCode =
-                    data!!.getIntExtra(NewTempLanguageActivity.EXTRA_RESULT_CODE, -1)
-                if (secondResultCode == NewTempLanguageActivity.RESULT_MISSING_QUESTIONNAIRE) {
-                    val snack = Snackbar.make(
-                        findViewById(android.R.id.content),
-                        R.string.missing_questionnaire,
-                        Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(
-                        snack,
-                        resources.getColor(R.color.light_primary_text)
-                    )
-                    snack.show()
-                } else if (secondResultCode == NewTempLanguageActivity.RESULT_USE_EXISTING_LANGUAGE) {
-                    val targetLanguageId =
-                        data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_ID)
-                    val targetLanguage = viewModel.getTargetLanguage(targetLanguageId)
-                    if (targetLanguage != null) {
-                        onItemClick(targetLanguage)
-                    }
-                } else {
-                    val snack = Snackbar.make(
-                        findViewById(android.R.id.content),
-                        R.string.error,
-                        Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(
-                        snack,
-                        resources.getColor(R.color.light_primary_text)
-                    )
-                    snack.show()
-                }
+            } else {
+                val snack = Snackbar.make(
+                    findViewById(android.R.id.content),
+                    R.string.error,
+                    Snackbar.LENGTH_LONG
+                )
+                ViewUtil.setSnackBarTextColor(
+                    snack,
+                    resources.getColor(R.color.light_primary_text)
+                )
+                snack.show()
             }
         }
     }

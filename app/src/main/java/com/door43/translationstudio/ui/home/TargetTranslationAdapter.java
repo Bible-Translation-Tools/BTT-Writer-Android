@@ -41,10 +41,11 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
     private SortByColumnType sortByColumn = SortByColumnType.projectThenLanguage;;
 
     private static final List<String> bookList = Arrays.asList(BibleCodes.getBibleBooks());
+    private final Typography typography;
 
-
-    public TargetTranslationAdapter() {
+    public TargetTranslationAdapter(Typography typography) {
         translations = new ArrayList<>();
+        this.typography = typography;
     }
 
     /**
@@ -134,7 +135,6 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
 
     @Override
     public View getView(final int position, View convertView, final ViewGroup parent) {
-        Context context = parent.getContext();
         final ViewHolder holder;
 
         if(convertView == null) {
@@ -177,8 +177,7 @@ public class TargetTranslationAdapter extends BaseAdapter implements ManagedTask
 
         // set typeface for language
         TargetLanguage targetLanguage = targetTranslation.getTranslation().getTargetLanguage();
-        Typeface typeface = Typography.getBestFontForLanguage(
-                context,
+        Typeface typeface = typography.getBestFontForLanguage(
                 TranslationType.SOURCE,
                 targetLanguage.slug,
                 targetLanguage.direction

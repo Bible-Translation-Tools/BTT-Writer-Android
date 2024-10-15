@@ -1,109 +1,92 @@
-package com.door43.translationstudio.services;
+package com.door43.translationstudio.services
 
-import android.content.Intent;
-import android.os.Binder;
-import android.os.Bundle;
-import android.os.IBinder;
-
-import org.unfoldingword.tools.logger.Logger;
-
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.network.Connection;
-import com.door43.translationstudio.network.Peer;
-import com.door43.util.RSAEncryption;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import android.content.Intent
+import android.os.Binder
+import android.os.IBinder
+import com.door43.translationstudio.App.Companion.isTablet
+import com.door43.translationstudio.App.Companion.udid
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.network.Connection
+import com.door43.translationstudio.network.Peer
+import com.door43.usecases.ImportProjects
+import com.door43.usecases.ImportProjects.ImportResults
+import com.door43.util.RSAEncryption
+import dagger.hilt.android.AndroidEntryPoint
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import org.unfoldingword.tools.logger.Logger
+import java.io.DataInputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import java.math.BigInteger
+import java.net.InetAddress
+import java.net.Socket
+import java.security.MessageDigest
+import java.security.PrivateKey
+import java.util.UUID
+import javax.inject.Inject
 
 /**
  * This class provides an importing service (effectively a client) that can
  * communicate with an exporting service (server) to browse and retrieve translations
  */
 @AndroidEntryPoint
-public class ClientService extends NetworkService {
+class ClientService : NetworkService() {
     @Inject
-    Translator translator;
+    lateinit var translator: Translator
+    @Inject
+    lateinit var importProjects: ImportProjects
 
-    private static final String PARAM_PUBLIC_KEY = "param_public_key";
-    private static final String PARAM_PRIVATE_KEY = "param_private_key";
-    private static final String PARAM_DEVICE_ALIAS = "param_device_alias";
-    private final IBinder binder = new LocalBinder();
-    private OnClientEventListener listener;
-    private Map<String, Connection> serverConnections = new HashMap<>();
-    private PrivateKey privateKey;
-    private String publicKey;
-    private static Boolean isRunning = false;
-    private String deviceAlias;
-    private Map<UUID, Request> requests = new HashMap<>();
+    private val binder: IBinder = LocalBinder()
+    private var listener: OnClientEventListener? = null
+    private val serverConnections: MutableMap<String, Connection> = HashMap()
+    private var privateKey: PrivateKey? = null
+    private var publicKey: String? = null
+    private var deviceAlias: String? = null
+    private val requests: MutableMap<UUID, Request> = HashMap()
 
     /**
      * Sets whether or not the service is running
      * @param running
      */
-    protected void setRunning(Boolean running) {
-        isRunning = running;
+    fun setRunning(running: Boolean) {
+        isRunning = running
     }
 
-    /**
-     * Checks if the service is currently running
-     * @return
-     */
-    public static boolean isRunning() {
-        return isRunning;
+    override fun onBind(intent: Intent): IBinder? {
+        return binder
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return binder;
-    }
-
-    public void setOnClientEventListener(OnClientEventListener callback) {
-        listener = callback;
-        if(isRunning() && listener != null) {
-            listener.onClientServiceReady();
+    fun setOnClientEventListener(callback: OnClientEventListener?) {
+        listener = callback
+        if (isRunning && listener != null) {
+            listener!!.onClientServiceReady()
         }
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startid) {
-        if(intent != null) {
-            Bundle args = intent.getExtras();
-            if (args != null && args.containsKey(PARAM_PRIVATE_KEY) && args.containsKey(PARAM_PUBLIC_KEY) && args.containsKey(PARAM_DEVICE_ALIAS)) {
-                privateKey = (PrivateKey) args.get(PARAM_PRIVATE_KEY);
-                publicKey = args.getString(PARAM_PUBLIC_KEY);
-                deviceAlias = args.getString(PARAM_DEVICE_ALIAS);
+    override fun onStartCommand(intent: Intent?, flags: Int, startid: Int): Int {
+        if (intent != null) {
+            val args = intent.extras
+            if (args != null && args.containsKey(PARAM_PRIVATE_KEY) && args.containsKey(
+                    PARAM_PUBLIC_KEY
+                ) && args.containsKey(PARAM_DEVICE_ALIAS)
+            ) {
+                privateKey = args.getString(PARAM_PRIVATE_KEY) as PrivateKey?
+                publicKey = args.getString(PARAM_PUBLIC_KEY)
+                deviceAlias = args.getString(PARAM_DEVICE_ALIAS)
                 if (listener != null) {
-                    listener.onClientServiceReady();
+                    listener!!.onClientServiceReady()
                 }
-                setRunning(true);
-                return START_STICKY;
+                setRunning(true)
+                return START_STICKY
             }
         }
-        Logger.e(this.getClass().getName(), "Import service requires arguments");
-        stopService();
-        return START_NOT_STICKY;
+        Logger.e(this.javaClass.name, "Import service requires arguments")
+        stopService()
+        return START_NOT_STICKY
     }
 
     /**
@@ -111,28 +94,27 @@ public class ClientService extends NetworkService {
      * Once this connection has been made the cleanup thread won't identify the server as lost unless the tcp connection is also disconnected.
      * @param server the server we will connect to
      */
-    public void connectToServer(Peer server) {
-        if(!serverConnections.containsKey(server.getIpAddress())) {
-            ServerThread serverThread = new ServerThread(server);
-            new Thread(serverThread).start();
+    fun connectToServer(server: Peer) {
+        if (!serverConnections.containsKey(server.ipAddress)) {
+            val serverThread = ServerThread(server)
+            Thread(serverThread).start()
         }
     }
 
     /**
      * Stops the service
      */
-    public void stopService() {
-        Logger.i(this.getClass().getName(), "Stopping client service");
+    fun stopService() {
+        Logger.i(this.javaClass.name, "Stopping client service")
         // close sockets
-        for(String key: serverConnections.keySet()) {
-            serverConnections.get(key).close();
+        for (key in serverConnections.keys) {
+            serverConnections[key]!!.close()
         }
-        setRunning(false);
+        setRunning(false)
     }
 
-    @Override
-    public void onDestroy() {
-        stopService();
+    override fun onDestroy() {
+        stopService()
     }
 
     /**
@@ -140,19 +122,21 @@ public class ClientService extends NetworkService {
      * @param server the client to which the message will be sent
      * @param message the message being sent to the client
      */
-    private void sendMessage(Peer server, String message) {
-        if (serverConnections.containsKey(server.getIpAddress())) {
-            if(server.isSecure()) {
+    private fun sendMessage(server: Peer, message: String) {
+        var text = message
+        if (serverConnections.containsKey(server.ipAddress)) {
+            if (server.isSecure) {
                 // encrypt message
-                PublicKey key = RSAEncryption.getPublicKeyFromString(server.keyStore.getString(PeerStatusKeys.PUBLIC_KEY));
-                if(key != null) {
-                    message = encryptMessage(key, message);
+                val key =
+                    RSAEncryption.getPublicKeyFromString(server.keyStore.getString(PeerStatusKeys.PUBLIC_KEY))
+                if (key != null) {
+                    text = encryptMessage(key, text)
                 } else {
-                    Logger.w(this.getClass().getName(), "Missing the server's public key");
-                    message = SocketMessages.MSG_EXCEPTION;
+                    Logger.w(this.javaClass.name, "Missing the server's public key")
+                    text = SocketMessages.MSG_EXCEPTION
                 }
             }
-            serverConnections.get(server.getIpAddress()).write(message);
+            serverConnections[server.ipAddress]?.write(text)
         }
     }
 
@@ -161,12 +145,12 @@ public class ClientService extends NetworkService {
      * @param server the server that will give the project list
      * @param preferredLanguages the languages preferred by the client
      */
-    public void requestProjectList(Peer server, List<String> preferredLanguages) {
-        JSONArray languagesJson = new JSONArray();
-        for(String l:preferredLanguages) {
-            languagesJson.put(l);
+    fun requestProjectList(server: Peer, preferredLanguages: List<String?>) {
+        val languagesJson = JSONArray()
+        for (l in preferredLanguages) {
+            languagesJson.put(l)
         }
-        sendMessage(server, SocketMessages.MSG_PROJECT_LIST + ":" + languagesJson);
+        sendMessage(server, SocketMessages.MSG_PROJECT_LIST + ":" + languagesJson)
     }
 
     /**
@@ -174,16 +158,14 @@ public class ClientService extends NetworkService {
      * @param server
      * @param targetTranslationSlug
      */
-    public void requestTargetTranslation(Peer server, String targetTranslationSlug) {
-        JSONObject json = new JSONObject();
+    fun requestTargetTranslation(server: Peer, targetTranslationSlug: String?) {
+        val json = JSONObject()
         try {
-            json.put("target_translation_id", targetTranslationSlug);
-            Request request = new Request(Request.Type.TargetTranslation, json);
-            sendRequest(server, request);
-        } catch (JSONException e) {
-            if(listener != null) {
-                listener.onClientServiceError(e);
-            }
+            json.put("target_translation_id", targetTranslationSlug)
+            val request = Request(Request.Type.TargetTranslation, json)
+            sendRequest(server, request)
+        } catch (e: JSONException) {
+            listener?.onClientServiceError(e)
         }
     }
 
@@ -192,86 +174,83 @@ public class ClientService extends NetworkService {
      * @param server
      * @param message
      */
-    private void onMessageReceived(Peer server, String message) {
-        if(server.isSecure() && server.hasIdentity()) {
-            message = decryptMessage(privateKey, message);
-            if(message != null) {
+    private fun onMessageReceived(server: Peer, message: String) {
+        var text = message
+        if (server.isSecure && server.hasIdentity()) {
+            text = decryptMessage(privateKey, text)
+            if (text != null) {
                 try {
-                    Request request = Request.parse(message);
-                    onRequestReceived(server, request);
-                } catch (JSONException e) {
-                    if(listener != null) {
-                        listener.onClientServiceError(e);
+                    val request = Request.parse(text)
+                    onRequestReceived(server, request)
+                } catch (e: JSONException) {
+                    if (listener != null) {
+                        listener!!.onClientServiceError(e)
                     } else {
-                        Logger.e(this.getClass().getName(), "Failed to parse request", e);
+                        Logger.e(this.javaClass.name, "Failed to parse request", e)
                     }
                 }
-            } else if(listener != null) {
-                listener.onClientServiceError(new Exception("Message descryption failed"));
+            } else {
+                listener?.onClientServiceError(Exception("Message decryption failed"))
             }
-        } else if(!server.isSecure()){
+        } else if (!server.isSecure) {
             // receive the key
             try {
-                JSONObject json = new JSONObject(message);
-                server.keyStore.add(PeerStatusKeys.PUBLIC_KEY, json.getString("key"));
-                server.setIsSecure(true);
-            } catch (JSONException e) {
-                Logger.w(this.getClass().getName(), "Invalid request: " + message, e);
-//                sendMessage(server, SocketMessages.MSG_INVALID_REQUEST);
+                val json = JSONObject(text)
+                server.keyStore.add(PeerStatusKeys.PUBLIC_KEY, json.getString("key"))
+                server.setIsSecure(true)
+            } catch (e: JSONException) {
+                Logger.w(this.javaClass.name, "Invalid request: $text", e)
+                //                sendMessage(server, SocketMessages.MSG_INVALID_REQUEST);
             }
 
             // send public key
             try {
-                JSONObject json = new JSONObject();
-                json.put("key", publicKey);
+                val json = JSONObject()
+                json.put("key", publicKey)
                 // TRICKY: manually write to server so we don't encrypt it
-                if(serverConnections.containsKey(server.getIpAddress())) {
-                    serverConnections.get(server.getIpAddress()).write(json.toString());
+                if (serverConnections.containsKey(server.ipAddress)) {
+                    serverConnections[server.ipAddress]?.write(json.toString())
                 }
-            } catch (JSONException e) {
-                if(listener != null) {
-                    listener.onClientServiceError(e);
-                }
+            } catch (e: JSONException) {
+                listener?.onClientServiceError(e)
             }
 
             // send identity
-            if(server.isSecure()) {
+            if (server.isSecure) {
                 try {
-                    JSONObject json = new JSONObject();
-                    json.put("name", deviceAlias);
-                    if(App.isTablet()) {
-                        json.put("device", "tablet");
+                    val json = JSONObject()
+                    json.put("name", deviceAlias)
+                    if (isTablet) {
+                        json.put("device", "tablet")
                     } else {
-                        json.put("device", "phone");
+                        json.put("device", "phone")
                     }
-                    MessageDigest md = MessageDigest.getInstance("SHA-256");
-                    md.update(App.udid().getBytes("UTF-8"));
-                    byte[] digest = md.digest();
-                    BigInteger bigInt = new BigInteger(1, digest);
-                    String hash = bigInt.toString();
-                    json.put("id", hash);
-                    sendMessage(server, json.toString());
-                } catch (Exception e){
-                    Logger.w(this.getClass().getName(), "Failed to prepare response ", e);
-                    if(listener != null) {
-                        listener.onClientServiceError(e);
+                    val md = MessageDigest.getInstance("SHA-256")
+                    md.update(udid().toByteArray(charset("UTF-8")))
+                    val digest = md.digest()
+                    val bigInt = BigInteger(1, digest)
+                    val hash = bigInt.toString()
+                    json.put("id", hash)
+                    sendMessage(server, json.toString())
+                } catch (e: Exception) {
+                    Logger.w(this.javaClass.name, "Failed to prepare response ", e)
+                    if (listener != null) {
+                        listener!!.onClientServiceError(e)
                     }
                 }
             }
-        } else if(!server.hasIdentity()) {
+        } else if (!server.hasIdentity()) {
             // receive identity
-            message = decryptMessage(privateKey, message);
+            text = decryptMessage(privateKey, text)
             try {
-                JSONObject json = new JSONObject(message);
-                server.setName(json.getString("name"));
-                server.setDevice(json.getString("device"));
-                server.setId(json.getString("id"));
-                server.setHasIdentity(true);
-                if(listener != null) {
-                    listener.onServerConnectionChanged(server);
-                }
-            } catch (JSONException e) {
-                Logger.w(this.getClass().getName(), "Invalid request: " + message, e);
+                val json = JSONObject(text)
+                server.name = json.getString("name")
+                server.device = json.getString("device")
+                server.id = json.getString("id")
+                server.setHasIdentity(true)
+                listener?.onServerConnectionChanged(server)
+            } catch (e: JSONException) {
+                Logger.w(this.javaClass.name, "Invalid request: $text", e)
             }
         }
     }
@@ -282,12 +261,12 @@ public class ClientService extends NetworkService {
      * @param client
      * @param request
      */
-    private void sendRequest(Peer client, Request request) {
-        if(serverConnections.containsKey(client.getIpAddress()) && client.isSecure()) {
+    private fun sendRequest(client: Peer, request: Request) {
+        if (serverConnections.containsKey(client.ipAddress) && client.isSecure) {
             // remember request
-            this.requests.put(request.uuid, request);
+            requests[request.uuid] = request
             // send request
-            sendMessage(client, request.toString());
+            sendMessage(client, request.toString())
         }
     }
 
@@ -296,100 +275,92 @@ public class ClientService extends NetworkService {
      * @param server
      * @param request
      */
-    private void onRequestReceived(final Peer server, Request request) {
-        JSONObject contextJson = request.context;
+    private fun onRequestReceived(server: Peer, request: Request) {
+        val contextJson = request.context
 
-        switch(request.type) {
-            case AlertTargetTranslation:
-                queueRequest(server, request);
-                break;
-            case TargetTranslation:
-                if(requests.containsKey(request.uuid)) {
-                    requests.remove(request.uuid);
-                    // receive file download details
-                    int port;
-                    final long size;
-                    final String name;
-                    try {
-                        port = contextJson.getInt("port");
-                        size = contextJson.getLong("size");
-                        name = contextJson.getString("name");
-                    } catch (JSONException e) {
-                        if(listener != null) {
-                            listener.onClientServiceError(e);
-                        } else {
-                            Logger.e(this.getClass().getName(), "Invalid context", e);
-                        }
-                        break;
+        when (request.type) {
+            Request.Type.AlertTargetTranslation -> queueRequest(server, request)
+            Request.Type.TargetTranslation -> if (requests.containsKey(request.uuid)) {
+                requests.remove(request.uuid)
+                // receive file download details
+                val port: Int
+                val size: Long
+                val name: String
+                try {
+                    port = contextJson.getInt("port")
+                    size = contextJson.getLong("size")
+                    name = contextJson.getString("name")
+                } catch (e: JSONException) {
+                    if (listener != null) {
+                        listener!!.onClientServiceError(e)
+                    } else {
+                        Logger.e(this.javaClass.name, "Invalid context", e)
                     }
-                    // open download socket
-                    openReadSocket(server, port, new OnSocketEventListener() {
-                        @Override
-                        public void onOpen(Connection connection) {
-                            connection.setOnCloseListener(new Connection.OnCloseListener() {
-                                @Override
-                                public void onClose() {
-                                    if (listener != null) {
-                                        listener.onClientServiceError(new Exception("Socket was closed before download completed"));
-                                    }
-                                }
-                            });
-
-                            File file = null;
-                            try {
-                                file = File.createTempFile("p2p", name);
-                                // download archive
-                                DataInputStream in = new DataInputStream(connection.getSocket().getInputStream());
-                                file.getParentFile().mkdirs();
-                                file.createNewFile();
-                                OutputStream out = new FileOutputStream(file.getAbsolutePath());
-                                byte[] buffer = new byte[8 * 1024];
-                                int totalCount = 0;
-                                int count;
-                                while ((count = in.read(buffer)) > 0) {
-                                    totalCount += count;
-                                    server.keyStore.add(PeerStatusKeys.PROGRESS, totalCount / ((int) size) * 100);
-                                    if (listener != null) {
-                                        listener.onServerConnectionChanged(server);
-                                    }
-                                    out.write(buffer, 0, count);
-                                }
-                                server.keyStore.add(PeerStatusKeys.PROGRESS, 0);
-                                if (listener != null) {
-                                    listener.onServerConnectionChanged(server);
-                                }
-                                out.close();
-                                in.close();
-
-                                // import the target translation
-                                // TODO: 11/23/2015 perform a diff first
-                                try {
-                                    Translator.ImportResults results = translator.importArchive(file);
-                                    if(listener != null) {
-                                        listener.onReceivedTargetTranslations(server, results);
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                file.delete();
-                            } catch (IOException e) {
-                                Logger.e(this.getClass().getName(), "Failed to download the file", e);
-                                if(file != null) {
-                                    file.delete();
-                                }
-                                if (listener != null) {
-                                    listener.onClientServiceError(e);
-                                }
+                    return
+                }
+                // open download socket
+                openReadSocket(server, port, object : OnSocketEventListener {
+                    override fun onOpen(connection: Connection) {
+                        connection.setOnCloseListener {
+                            if (listener != null) {
+                                listener!!.onClientServiceError(Exception("Socket was closed before download completed"))
                             }
                         }
-                    });
-                } else {
-                    // the server is trying to send the target translation without asking
-                    // TODO: 12/1/2015 accept according to user configuration
-                }
-                break;
-            default:
-                Logger.i(this.getClass().getName(), "received invalid request from " + server.getIpAddress() + ": " + request.toString());
+
+                        var file: File? = null
+                        try {
+                            file = File.createTempFile("p2p", name)
+                            // download archive
+                            val inputStream = DataInputStream(connection.socket.getInputStream())
+                            file.parentFile.mkdirs()
+                            file.createNewFile()
+                            val out: OutputStream = FileOutputStream(file.absolutePath)
+                            val buffer = ByteArray(8 * 1024)
+                            var totalCount = 0
+                            var count: Int
+                            while ((inputStream.read(buffer).also { count = it }) > 0) {
+                                totalCount += count
+                                server.keyStore.add(
+                                    PeerStatusKeys.PROGRESS,
+                                    totalCount / (size.toInt()) * 100
+                                )
+                                if (listener != null) {
+                                    listener!!.onServerConnectionChanged(server)
+                                }
+                                out.write(buffer, 0, count)
+                            }
+                            server.keyStore.add(PeerStatusKeys.PROGRESS, 0)
+                            if (listener != null) {
+                                listener!!.onServerConnectionChanged(server)
+                            }
+                            out.close()
+                            inputStream.close()
+
+                            // import the target translation
+                            // TODO: 11/23/2015 perform a diff first
+                            try {
+                                val results = importProjects.importProject(file)
+                                listener?.onReceivedTargetTranslations(server, results)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                            file.delete()
+                        } catch (e: IOException) {
+                            Logger.e(this.javaClass.name, "Failed to download the file", e)
+                            file?.delete()
+                            listener?.onClientServiceError(e)
+                        }
+                    }
+                })
+            } else {
+                // the server is trying to send the target translation without asking
+                // TODO: 12/1/2015 accept according to user configuration
+            }
+
+            else -> Logger.i(
+                this.javaClass.name,
+                "received invalid request from " + server.ipAddress + ": " + request.toString()
+            )
         }
     }
 
@@ -399,98 +370,100 @@ public class ClientService extends NetworkService {
      * @param server
      * @param request
      */
-    private void queueRequest(Peer server, Request request) {
-        server.queueRequest(request);
-        if(this.listener != null) {
-            this.listener.onReceivedRequest(server, request);
+    private fun queueRequest(server: Peer, request: Request) {
+        server.queueRequest(request)
+        if (this.listener != null) {
+            listener!!.onReceivedRequest(server, request)
         }
     }
 
     /**
      * Interface for communication with service clients.
      */
-    public interface OnClientEventListener {
-        void onClientServiceReady();
-        void onServerConnectionLost(Peer peer);
-        void onServerConnectionChanged(Peer peer);
-        void onClientServiceError(Throwable e);
-//        void onReceivedProjectList(Peer server, Model[] models);
-//        void onReceivedProject(Peer server, ProjectImport[] importStatuses);
-        void onReceivedTargetTranslations(Peer server, Translator.ImportResults results);
-        void onReceivedRequest(Peer peer, Request request);
+    interface OnClientEventListener {
+        fun onClientServiceReady()
+        fun onServerConnectionLost(peer: Peer)
+        fun onServerConnectionChanged(peer: Peer)
+        fun onClientServiceError(e: Throwable)
+
+        //        void onReceivedProjectList(Peer server, Model[] models);
+        //        void onReceivedProject(Peer server, ProjectImport[] importStatuses);
+        fun onReceivedTargetTranslations(server: Peer, results: ImportResults?)
+        fun onReceivedRequest(peer: Peer, request: Request)
     }
 
     /**
      * Class to retrieve instance of service
      */
-    public class LocalBinder extends Binder {
-        public ClientService getServiceInstance() {
-            return ClientService.this;
-        }
+    inner class LocalBinder : Binder() {
+        val serviceInstance: ClientService
+            get() = this@ClientService
     }
 
     /**
      * Manages a single server connection on it's own thread
      */
-    private class ServerThread implements Runnable {
-        private Connection mConnection;
-        private Peer mServer;
+    private inner class ServerThread(private val mServer: Peer) : Runnable {
+        private var mConnection: Connection? = null
 
-        public ServerThread(Peer server) {
-            mServer = server;
-        }
-
-        @Override
-        public void run() {
+        override fun run() {
             // set up sockets
             try {
-                InetAddress serverAddr = InetAddress.getByName(mServer.getIpAddress());
-                mConnection = new Connection(new Socket(serverAddr, mServer.getPort()));
-                mConnection.setOnCloseListener(new Connection.OnCloseListener() {
-                    @Override
-                    public void onClose() {
-                        Thread.currentThread().interrupt();
-                    }
-                });
+                val serverAddr = InetAddress.getByName(mServer.ipAddress)
+                mConnection = Connection(Socket(serverAddr, mServer.port))
+                mConnection!!.setOnCloseListener { Thread.currentThread().interrupt() }
                 // we store references to all connections so we can access them later
-                if(!serverConnections.containsKey(mConnection.getIpAddress())) {
-                    addPeer(mServer);
-                    serverConnections.put(mConnection.getIpAddress(), mConnection);
+                if (!serverConnections.containsKey(mConnection!!.ipAddress)) {
+                    addPeer(mServer)
+                    serverConnections[mConnection!!.ipAddress] = mConnection!!
                 } else {
                     // we already have a connection to this server
-                    mConnection.close();
-                    return;
+                    mConnection!!.close()
+                    return
                 }
-            } catch (Exception e) {
+            } catch (e: Exception) {
                 // the connection could not be established
-                if(mConnection != null) {
-                    mConnection.close();
+                if (mConnection != null) {
+                    mConnection!!.close()
                 }
-                if(listener != null) {
-                    listener.onClientServiceError(e);
+                if (listener != null) {
+                    listener!!.onClientServiceError(e)
                 }
-                return;
+                return
             }
 
             // begin listening to server
-            while (!Thread.currentThread().isInterrupted()) {
-                String message = mConnection.readLine();
-                if(message == null) {
-                    Thread.currentThread().interrupt();
+            while (!Thread.currentThread().isInterrupted) {
+                val message = mConnection!!.readLine()
+                if (message == null) {
+                    Thread.currentThread().interrupt()
                 } else {
-                    onMessageReceived(mServer, message);
+                    onMessageReceived(mServer, message)
                 }
             }
             // close the connection
-            mConnection.close();
+            mConnection!!.close()
             // remove all instances of the peer
-            if(serverConnections.containsKey(mConnection.getIpAddress())) {
-                serverConnections.remove(mConnection.getIpAddress());
+            if (serverConnections.containsKey(mConnection!!.ipAddress)) {
+                serverConnections.remove(mConnection!!.ipAddress)
             }
-            removePeer(mServer);
-            if(listener != null) {
-                listener.onServerConnectionLost(mServer);
+            removePeer(mServer)
+            if (listener != null) {
+                listener!!.onServerConnectionLost(mServer)
             }
         }
+    }
+
+    companion object {
+        private const val PARAM_PUBLIC_KEY = "param_public_key"
+        private const val PARAM_PRIVATE_KEY = "param_private_key"
+        private const val PARAM_DEVICE_ALIAS = "param_device_alias"
+
+        /**
+         * Checks if the service is currently running
+         * @return
+         */
+        var isRunning: Boolean = false
+            private set
     }
 }

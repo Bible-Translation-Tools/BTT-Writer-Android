@@ -12,7 +12,7 @@ public class ChunkModeFragment extends ViewModeFragment {
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ChunkModeAdapter();
+        return new ChunkModeAdapter(typography);
     }
 
     /***

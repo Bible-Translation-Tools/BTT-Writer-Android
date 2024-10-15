@@ -24,7 +24,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 /**
  * Created by blm on 1/10/2016.
  */
-class DraftAdapter :
+class DraftAdapter(private val typography: Typography) :
     RecyclerView.Adapter<DraftAdapter.ViewHolder>() {
 
     private var draftTranslation: ResourceContainer? = null
@@ -155,22 +155,19 @@ class DraftAdapter :
         if (holder.layoutBuildNumber != layoutBuildNumber) {
             holder.layoutBuildNumber = layoutBuildNumber
             sourceLanguage?.let { source ->
-                Typography.formatTitle(
-                    context,
+                typography.formatTitle(
                     TranslationType.SOURCE,
                     holder.binding.sourceTranslationHeading,
                     source.slug,
                     source.direction
                 )
-                Typography.formatTitle(
-                    context,
+                typography.formatTitle(
                     TranslationType.SOURCE,
                     holder.binding.sourceTranslationTitle,
                     source.slug,
                     source.direction
                 )
-                Typography.format(
-                    context,
+                typography.format(
                     TranslationType.SOURCE,
                     holder.binding.sourceTranslationBody,
                     source.slug,

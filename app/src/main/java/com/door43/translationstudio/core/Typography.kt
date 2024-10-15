@@ -1,44 +1,59 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Typeface;
-import android.preference.PreferenceManager;
-import android.util.TypedValue;
-import android.widget.TextView;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.SettingsActivity;
-
-import org.json.JSONObject;
+import android.content.Context
+import android.graphics.Typeface
+import android.util.TypedValue
+import android.widget.TextView
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
+import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.SettingsActivity
+import dagger.hilt.android.qualifiers.ApplicationContext
+import org.json.JSONObject
+import javax.inject.Inject
 
 /**
  * Created by joel on 9/11/2015.
  */
-public class Typography {
+class Typography @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val prefRepository: IPreferenceRepository
+) {
+    // If you would override font used in tabs and language lists for a specific language code
+    // just add a language code and the font to the default configuration.
+    // For example:
+    // {
+    //      "gu" : "NotoSansGuLanguage-Regular.ttf",
+    //      "default" : "NotoSansMultiLanguage-Regular.ttf"
+    // }
+    private val languageSubstituteFontsJson = """
+        {
+            "default" : "NotoSansMultiLanguage-Regular.ttf"
+        }
+    """.trimIndent()
 
-    private static String languageSubstituteFontsJson = "{" +
-//            "        \"gu\" : \"NotoSansMultiLanguage-Regular.ttf\"," +   // this is how you would override font used in tabs and language lists for a specific language code
-            "        \"default\" : \"NotoSansMultiLanguage-Regular.ttf\"" +
-            "    }";
-    private static JSONObject languageSubstituteFonts = null;
-    private static Typeface defaultLanguageTypeface = null;
+    private var languageSubstituteFonts: JSONObject? = null
+    private var defaultLanguageTypeface: Typeface? = null
 
     /**
      * Formats the text in the text view using the users preferences
-     * @param context
      * @param translationType
      * @param view
      * @param languageCode the spoken language of the text
      * @param direction the reading direction of the text
      */
-    public static void format(Context context, TranslationType translationType, TextView view, String languageCode, String direction) {
-        if(view != null) {
-            Typeface typeface = getTypeface(context, translationType, languageCode, direction);
-            float fontSize = getFontSize(context, translationType);
+    fun format(
+        translationType: TranslationType,
+        view: TextView?,
+        languageCode: String?,
+        direction: String?
+    ) {
+        if (view != null) {
+            val typeface = getTypeface(translationType, languageCode, direction)
+            val fontSize = getFontSize(translationType)
 
-            view.setTypeface(typeface, 0);
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
+            view.setTypeface(typeface, Typeface.NORMAL)
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
         }
     }
 
@@ -46,19 +61,23 @@ public class Typography {
      * Formats the text in the text view using the users preferences.
      * Titles are a little larger than normal text and bold
      *
-     * @param context
      * @param translationType
      * @param view
      * @param languageCode the spoken language of the text
      * @param direction the reading direction of the text
      */
-    public static void formatTitle(Context context, TranslationType translationType, TextView view, String languageCode, String direction) {
-        if(view != null) {
-            Typeface typeface = getTypeface(context, translationType, languageCode, direction);
-            float fontSize = getFontSize(context, translationType) * 1.3f;
+    fun formatTitle(
+        translationType: TranslationType,
+        view: TextView?,
+        languageCode: String?,
+        direction: String?
+    ) {
+        if (view != null) {
+            val typeface = getTypeface(translationType, languageCode, direction)
+            val fontSize = getFontSize(translationType) * 1.3f
 
-            view.setTypeface(typeface, Typeface.BOLD);
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
+            view.setTypeface(typeface, Typeface.BOLD)
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
         }
     }
 
@@ -66,88 +85,113 @@ public class Typography {
      * Formats the text in the text view using the users preferences.
      * Sub text is a little smaller than normal text
      *
-     * @param context
      * @param translationType
      * @param view
      * @param languageCode the spoken language of the text
      * @param direction the reading direction of the text
      */
-    public static void formatSub(Context context, TranslationType translationType, TextView view, String languageCode, String direction) {
-        if(view != null) {
-            Typeface typeface = getTypeface(context, translationType, languageCode, direction);
-            float fontSize = getFontSize(context, translationType) * .7f;
+    fun formatSub(
+        translationType: TranslationType,
+        view: TextView?,
+        languageCode: String?,
+        direction: String?
+    ) {
+        if (view != null) {
+            val typeface = getTypeface(translationType, languageCode, direction)
+            val fontSize = getFontSize(translationType) * .7f
 
-            view.setTypeface(typeface, 0);
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
+            view.setTypeface(typeface, Typeface.NORMAL)
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
         }
     }
 
     /**
      * Returns a subset of user preferences (currently, just the size) as a CSS style tag.
-     * @param context
      * @param translationType
      * @return Valid HTML, for prepending to unstyled HTML text
      */
-    public static CharSequence getStyle(Context context, TranslationType translationType) {
-        return "<style type=\"text/css\">"
+    fun getStyle(translationType: TranslationType): CharSequence {
+        return ("<style type=\"text/css\">"
                 + "body {"
-                + "  font-size: " + getFontSize(context, translationType) + ";"
+                + "  font-size: " + getFontSize(translationType) + ";"
                 + "}"
-                + "</style>";
+                + "</style>")
     }
 
     /**
      * Returns the font size chosen by the user
-     * @param context
      * @param translationType
      * @return
      */
-    public static float getFontSize(Context context, TranslationType translationType) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String typefaceSize = (translationType == com.door43.translationstudio.core.TranslationType.SOURCE) ? SettingsActivity.KEY_PREF_SOURCE_TYPEFACE_SIZE :  SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE_SIZE;
-        return Integer.parseInt(prefs.getString(typefaceSize, context.getResources().getString(R.string.pref_default_typeface_size)));
+    fun getFontSize(translationType: TranslationType): Float {
+        val typefaceSize = if ((translationType == TranslationType.SOURCE)) {
+            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE_SIZE
+        } else {
+            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE_SIZE
+        }
+        return prefRepository.getDefaultPref(
+            typefaceSize,
+            context.resources.getString(R.string.pref_default_typeface_size)
+        ).toFloat()
     }
 
     /**
      * Returns the path to the font asset
-     * @param context
      * @param translationType
      * @return
      */
-    public static String getAssetPath(Context context, TranslationType translationType) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String selectedTypeface = (translationType == com.door43.translationstudio.core.TranslationType.SOURCE) ? SettingsActivity.KEY_PREF_SOURCE_TYPEFACE : SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE;
-        String fontName = prefs.getString(selectedTypeface, context.getResources().getString(R.string.pref_default_translation_typeface));
-        return "assets/fonts/" + fontName;
+    fun getAssetPath(translationType: TranslationType): String {
+        val selectedTypeface = if ((translationType == TranslationType.SOURCE)) {
+            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE
+        } else {
+            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE
+        }
+        val fontName = prefRepository.getDefaultPref(
+            selectedTypeface,
+            context.resources.getString(R.string.pref_default_translation_typeface)
+        )
+        return "assets/fonts/$fontName"
     }
 
     /**
      * Returns the typeface chosen by the user
-     * @param context
      * @param translationType
      * @param languageCode the spoken language
      * @param direction the reading direction
      * @return
      */
-    public static Typeface getTypeface(Context context, TranslationType translationType, String languageCode, String direction) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String selectedTypeface = (translationType == com.door43.translationstudio.core.TranslationType.SOURCE) ? SettingsActivity.KEY_PREF_SOURCE_TYPEFACE : SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE;
-        String fontName = prefs.getString(selectedTypeface, context.getResources().getString(R.string.pref_default_translation_typeface));
+    fun getTypeface(
+        translationType: TranslationType,
+        languageCode: String?,
+        direction: String?
+    ): Typeface {
+        val selectedTypeface = if ((translationType == TranslationType.SOURCE)) {
+            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE
+        } else {
+            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE
+        }
+        val fontName = prefRepository.getDefaultPref(
+            selectedTypeface,
+            context.resources.getString(R.string.pref_default_translation_typeface)
+        )
 
-        Typeface typeface = getTypeface(context, translationType, fontName, languageCode, direction);
-        return typeface;
+        val typeface = getTypeface(translationType, fontName, languageCode, direction)
+        return typeface
     }
 
     /**
      * Returns the typeface by font name
-     * @param context
      * @param translationType
      * @param languageCode the spoken language
      * @param direction the reading direction
      * @return
      */
-    public static Typeface getTypeface(Context context, TranslationType translationType, String fontName, String languageCode, String direction) {
-
+    fun getTypeface(
+        translationType: TranslationType?,
+        fontName: String?,
+        languageCode: String?,
+        direction: String?
+    ): Typeface {
         // TODO: provide graphite support
 //        File fontFile = new File(context.getCacheDir(), "assets/fonts" + fontName);
 //        if(!fontFile.exists()) {
@@ -176,43 +220,46 @@ public class Typography {
 //            }
 //        }
 
-        Typeface typeface = Typeface.DEFAULT;
+        var typeface = Typeface.DEFAULT
         try {
-            typeface = Typeface.createFromAsset(context.getAssets(), "fonts/" + fontName);
-        } catch (Exception e) {
-            e.printStackTrace();
+            typeface = Typeface.createFromAsset(context.assets, "fonts/$fontName")
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        return typeface;
+        return typeface
     }
 
     /**
      * get the font to use for language code. This is the font to be used in tabs and language lists.
      *
-     * @param context
      * @param translationType
      * @param code
      * @param direction
      * @return Typeface for font, or Typeface.DEFAULT on error
      */
-    public static Typeface getBestFontForLanguage(Context context, TranslationType translationType, String code, String direction) {
-
+    fun getBestFontForLanguage(
+        translationType: TranslationType?,
+        code: String?,
+        direction: String?
+    ): Typeface? {
         // substitute language font by lookup
-        if(languageSubstituteFonts == null) {
+        if (languageSubstituteFonts == null) {
             try {
-                languageSubstituteFonts = new JSONObject(languageSubstituteFontsJson);
-                String defaultSubstituteFont = languageSubstituteFonts.optString("default", null);
-                defaultLanguageTypeface = Typography.getTypeface(context, translationType, defaultSubstituteFont, code, direction);
-            } catch (Exception e) { }
-        }
-        if(languageSubstituteFonts != null) {
-            String substituteFont = languageSubstituteFonts.optString(code, null);
-            if(substituteFont != null) {
-                Typeface typeface = Typography.getTypeface(context, translationType, substituteFont, code, direction);
-                return typeface;
-            } else {
-                return defaultLanguageTypeface;
+                languageSubstituteFonts = JSONObject(languageSubstituteFontsJson)
+                val defaultSubstituteFont = languageSubstituteFonts!!.optString("default", null)
+                defaultLanguageTypeface =
+                    getTypeface(translationType, defaultSubstituteFont, code, direction)
+            } catch (e: Exception) {
             }
         }
-        return Typeface.DEFAULT;
+        if (languageSubstituteFonts != null) {
+            val substituteFont = languageSubstituteFonts!!.optString(code, "")
+            return if (substituteFont.isNotEmpty()) {
+                getTypeface(translationType, substituteFont, code, direction)
+            } else {
+                defaultLanguageTypeface
+            }
+        }
+        return Typeface.DEFAULT
     }
 }

@@ -21,6 +21,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.ui.ImportUsfmActivity
@@ -76,12 +77,10 @@ class ImportDialog : DialogFragment() {
         openFileContent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let {
                 val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
-                if (filename.endsWith(USFM_EXTENSION)) {
-                    importLocal(uri, IMPORT_USFM_MIME)
-                } else {
-                    requireContext().contentResolver.getType(it)?.let { mimeType ->
-                        importLocal(it, mimeType)
-                    }
+                when {
+                    filename.endsWith(USFM_EXTENSION) -> importLocal(uri, IMPORT_USFM_MIME)
+                    filename.endsWith(TSTUDIO_EXTENSION) -> importLocal(uri, IMPORT_TRANSLATION_MIME)
+                    else -> showImportResults(R.string.invalid_file, filename)
                 }
             }
         }
@@ -171,12 +170,12 @@ class ImportDialog : DialogFragment() {
 
             importTargetTranslation.setOnClickListener {
                 mergeSelection = MergeOptions.NONE
-                onImportProject()
+                onImportFile()
             }
 
             importUsfm.setOnClickListener {
                 mergeSelection = MergeOptions.NONE
-                onImportUSFM()
+                onImportFile()
             }
 
             importFromDevice.setOnClickListener {
@@ -236,7 +235,7 @@ class ImportDialog : DialogFragment() {
                 }
 
                 // TODO: terrible hack.
-                (activity as? HomeActivity)?.notifyDatasetChanged()
+                (activity as? HomeActivity)?.loadTranslations()
             }
         }
     }
@@ -255,18 +254,10 @@ class ImportDialog : DialogFragment() {
         }
     }
 
-    private fun onImportProject() {
-        onImportLocal(IMPORT_TRANSLATION_MIME)
-    }
-
-    private fun onImportUSFM() {
+    private fun onImportFile() {
         // SAF doesn't allow to select file with custom extensions that are created by other apps
-        // So we use all types to filter .usfm file later
-        onImportLocal("*/*")
-    }
-
-    private fun onImportLocal(mimeType: String) {
-        openFileContent.launch(arrayOf(mimeType))
+        // So we use all types to filter .usfm and .tstudio files later
+        openFileContent.launch(arrayOf("*/*"))
     }
 
     private fun importLocal(fileUri: Uri, mimeType: String) {

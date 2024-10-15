@@ -37,6 +37,7 @@ import com.door43.translationstudio.services.ServerService.OnServerEventListener
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
+import com.door43.usecases.ImportProjects
 import com.door43.util.RSAEncryption
 import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
@@ -354,7 +355,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
         } else if (operationMode == MODE_CLIENT) {
             clientIntent = Intent(activity, ClientService::class.java)
             listenerIntent = Intent(activity, BroadcastListenerService::class.java)
-            if (!ClientService.isRunning()) {
+            if (!ClientService.isRunning) {
                 try {
                     initializeService(clientIntent)
                 } catch (e: Exception) {
@@ -466,7 +467,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
                     )
                 }
             }
-            if (ClientService.isRunning() && clientIntent != null) {
+            if (ClientService.isRunning && clientIntent != null) {
                 if (!requireActivity().stopService(clientIntent)) {
                     Logger.w(
                         this.javaClass.name,
@@ -563,17 +564,19 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
 
     override fun onReceivedTargetTranslations(
         server: Peer,
-        importResults: Translator.ImportResults
+        results: ImportProjects.ImportResults?
     ) {
+        if (results == null) return
+
         // build name list
-        val name = viewModel.getTargetTranslationName(importResults.importedSlug)
+        val name = viewModel.getTargetTranslationName(results.importedSlug)
 
         // notify user
         val hand = Handler(Looper.getMainLooper())
         hand.post {
-            if (importResults.isSuccess && importResults.mergeConflict) {
+            if (results.isSuccess && results.mergeConflict) {
                 MergeConflictsHandler.backgroundTestForConflictedChunks(
-                    importResults.importedSlug,
+                    results.importedSlug,
                     translator,
                     object : OnMergeConflictListener {
                         override fun onNoMergeConflict(targetTranslationId: String) {
@@ -606,7 +609,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
             .setPositiveButton(R.string.dismiss, null)
             .show()
         // TODO: 12/1/2015 this is a bad hack
-        (activity as HomeActivity?)!!.notifyDatasetChanged()
+        (activity as HomeActivity?)!!.loadTranslations()
     }
 
     fun showMergeConflict(targetTranslationID: String?) {

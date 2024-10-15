@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 
+import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.databinding.FragmentMergeCardBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding;
 import com.door43.translationstudio.ui.translate.IReviewListItemBinding;
@@ -28,13 +29,10 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
-import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
 import com.door43.translationstudio.ui.translate.ViewModeAdapter;
 
@@ -70,6 +68,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     private int marginInitialLeft = 0;
 
     public IReviewListItemBinding binding;
+    private final Typography typography;
+    private final ViewModeAdapter<ReviewHolder> adapter;
 
     private enum MergeConflictDisplayState {
         NORMAL,
@@ -78,10 +78,16 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public ReviewHolder(IReviewListItemBinding binding) {
+    public ReviewHolder(
+            IReviewListItemBinding binding,
+            Typography typography,
+            ViewModeAdapter<ReviewHolder> adapter
+    ) {
         super(binding.getRoot());
         this.binding = binding;
 
+        this.typography = typography;
+        this.adapter = adapter;
         context = binding.getRoot().getContext();
         inflater = LayoutInflater.from(context);
         
@@ -236,8 +242,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     listener.onNoteClick(note, getResourceCardWidth());
                 }
             });
-            Typography.formatSub(
-                    context,
+            typography.formatSub(
                     TranslationType.SOURCE,
                     notesBinding.getRoot(),
                     language.slug,
@@ -262,7 +267,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     listener.onWordClick(rcSlug, word, getResourceCardWidth());
                 }
             });
-            Typography.formatSub(context, TranslationType.SOURCE, wordsBinding.getRoot(), language.slug, language.direction);
+            typography.formatSub(TranslationType.SOURCE, wordsBinding.getRoot(), language.slug, language.direction);
             binding.getResourceList().addView(wordsBinding.getRoot());
         }
     }
@@ -281,7 +286,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     listener.onQuestionClick(question, getResourceCardWidth());
                 }
             });
-            Typography.formatSub(context, TranslationType.SOURCE, questionsBinding.getRoot(), language.slug, language.direction);
+            typography.formatSub(TranslationType.SOURCE, questionsBinding.getRoot(), language.slug, language.direction);
             binding.getResourceList().addView(questionsBinding.getRoot());
         }
     }
@@ -336,11 +341,11 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             }
 
             if(initialTextSize == 0 && textView != null) { // see if we need to initialize values
-                initialTextSize = Typography.getFontSize(context, TranslationType.SOURCE);
+                initialTextSize = typography.getFontSize(TranslationType.SOURCE);
                 marginInitialLeft = getLeftMargin(textView);
             }
 
-            Typography.format(context, TranslationType.SOURCE, textView, language.slug, language.direction);
+            typography.format(TranslationType.SOURCE, textView, language.slug, language.direction);
 
             final int pos = i;
             if (textView != null) {
@@ -489,14 +494,14 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         for(ContentValues values:tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            View tabLayout = ViewModeAdapter.createRemovableTabLayout(context, listener, tag, title);
+            View tabLayout = adapter.createRemovableTabLayout(listener, tag, title);
 
             TabLayout.Tab tab = binding.getTranslationTabs().newTab();
             tab.setTag(tag);
             tab.setCustomView(tabLayout);
             binding.getTranslationTabs().addTab(tab);
 
-            ViewModeAdapter.applyLanguageTypefaceToTab(context, binding.getTranslationTabs(), values, title);
+            adapter.applyLanguageTypefaceToTab(binding.getTranslationTabs(), values, title);
         }
 
         // open selected tab

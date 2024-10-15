@@ -14,6 +14,7 @@ import androidx.fragment.app.viewModels
 import com.door43.translationstudio.App.Companion.showKeyboard
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
+import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogChooseSourceTranslationBinding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Callbacks
@@ -23,6 +24,7 @@ import com.door43.translationstudio.ui.viewmodels.ChooseSourcesViewModel
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlin.math.min
 
 /**
@@ -30,6 +32,8 @@ import kotlin.math.min
  */
 @AndroidEntryPoint
 class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
+
+    @Inject lateinit var typography: Typography
 
     private val viewModel: ChooseSourcesViewModel by viewModels()
 
@@ -68,7 +72,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
             false
         )
 
-        adapter = ChooseSourceTranslationAdapter(requireContext())
+        adapter = ChooseSourceTranslationAdapter(requireContext(), typography)
         adapter.setItemClickListener(this)
 
         with(binding) {

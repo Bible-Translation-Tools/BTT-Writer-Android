@@ -45,6 +45,7 @@ class PrintDialog : DialogFragment() {
 
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var library: Door43Client
+    @Inject lateinit var typography: Typography
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
     private lateinit var targetTranslation: TargetTranslation
@@ -288,8 +289,7 @@ class PrintDialog : DialogFragment() {
         with(binding) {
             // set typeface for language
             val targetLanguage = targetTranslation.targetLanguage
-            val typeface = Typography.getBestFontForLanguage(
-                requireContext(),
+            val typeface = typography.getBestFontForLanguage(
                 TranslationType.SOURCE,
                 targetLanguage.slug,
                 targetLanguage.direction

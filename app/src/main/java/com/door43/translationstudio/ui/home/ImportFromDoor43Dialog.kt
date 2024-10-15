@@ -23,6 +23,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogImportFromDoor43Binding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions
@@ -48,24 +49,20 @@ import kotlin.math.min
  */
 @AndroidEntryPoint
 open class ImportFromDoor43Dialog : DialogFragment() {
-    @Inject
-    lateinit var translator: Translator
-    @Inject
-    lateinit var profile: Profile
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
-    @Inject
-    lateinit var targetTranslationMigrator: TargetTranslationMigrator
-    @Inject
-    lateinit var library: Door43Client
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var targetTranslationMigrator: TargetTranslationMigrator
+    @Inject lateinit var library: Door43Client
+    @Inject lateinit var typography: Typography
 
     private val viewModel: ImportViewModel by viewModels()
 
     private var targetTranslation: TargetTranslation? = null
-    private var repositories = arrayListOf<Repository>()
+    private var repositories = arrayListOf<RepositoryItem>()
     private var dialogShown: DialogShown = DialogShown.NONE
 
-    private var adapter: TranslationRepositoryAdapter? = null
+    private val adapter by lazy { TranslationRepositoryAdapter(typography) }
     private var mCloneHtmlUrl: String? = null
     private var mergeSelection = MergeOptions.NONE
     private var mergeConflicted = false
@@ -124,25 +121,22 @@ open class ImportFromDoor43Dialog : DialogFragment() {
             }
 
             (root.findViewById<View>(R.id.list) as? ListView)?.let { list ->
-                adapter = TranslationRepositoryAdapter(library).apply {
-                    setTextOnlyResources(true) // only allow importing of text resources
-                    list.adapter = this
-                    list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-                        if (isSupported(position)) {
-                            doImportProject(position)
-                        } else {
-                            val projectName = getProjectName(position)
-                            val message =
-                                requireActivity().getString(R.string.import_warning, projectName)
-                            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                                .setTitle(R.string.import_from_door43)
-                                .setMessage(message)
-                                .setPositiveButton(R.string.label_import) { _, _ ->
-                                    doImportProject(position)
-                                }
-                                .setNegativeButton(R.string.title_cancel, null)
-                                .show()
-                        }
+                list.adapter = adapter
+                list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                    if (adapter.isSupported(position)) {
+                        doImportProject(position)
+                    } else {
+                        val projectName = adapter.getProjectName(position)
+                        val message =
+                            requireActivity().getString(R.string.import_warning, projectName)
+                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                            .setTitle(R.string.import_from_door43)
+                            .setMessage(message)
+                            .setPositiveButton(R.string.label_import) { _, _ ->
+                                doImportProject(position)
+                            }
+                            .setNegativeButton(R.string.title_cancel, null)
+                            .show()
                     }
                 }
             }
@@ -163,21 +157,19 @@ open class ImportFromDoor43Dialog : DialogFragment() {
             val targetTranslationId = savedInstanceState.getString(STATE_TARGET_TRANSLATION, null)
             targetTranslationId?.let { viewModel.loadTargetTranslation(it) }
 
-            adapter?.let { listAdapter ->
-                val repoJsonArray = savedInstanceState.getStringArray(STATE_REPOSITORIES)
-                if (repoJsonArray != null) {
-                    for (json in repoJsonArray) {
-                        try {
-                            val repo = Repository.fromJSON(JSONObject(json))
-                            if (json != null) {
-                                repositories.add(repo)
-                            }
-                        } catch (e: JSONException) {
-                            e.printStackTrace()
+            val repoJsonArray = savedInstanceState.getStringArray(STATE_REPOSITORIES)
+            if (repoJsonArray != null) {
+                for (json in repoJsonArray) {
+                    try {
+                        val repo = Repository.fromJSON(JSONObject(json))
+                        if (json != null) {
+                            repositories.add(viewModel.mapRepository(repo))
                         }
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
                     }
-                    listAdapter.setRepositories(repositories)
                 }
+                adapter.setRepositories(repositories)
             }
         }
 
@@ -204,7 +196,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         viewModel.repositories.observe(this) {
             it?.let {
                 repositories.addAll(it)
-                adapter?.setRepositories(it)
+                adapter.setRepositories(it)
             }
         }
         viewModel.cloneRepoResult.observe(this) {
@@ -213,11 +205,11 @@ open class ImportFromDoor43Dialog : DialogFragment() {
 
                 if (result.status == CloneRepository.Status.SUCCESS) {
                     Logger.i(this.javaClass.name, "Repository cloned from ${result.cloneUrl}")
-                    val cloned = targetTranslationMigrator.migrate(result.cloneDir)
+                    val clonedDir = targetTranslationMigrator.migrate(result.cloneDir)
                     var importFailed = false
                     mergeConflicted = false
 
-                    if (cloned) {
+                    if (clonedDir != null) {
                         TargetTranslation.open(result.cloneDir) {
                             // Try to backup and delete corrupt project
                             viewModel.backupAndDeleteTranslation(result.cloneDir)
@@ -279,8 +271,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                     deleteQuietly(result.cloneDir)
 
                     if (!importFailed && !alreadyExisted) {
-                        // todo: terrible hack. We should instead register a listener with the dialog
-                        (activity as? HomeActivity)?.notifyDatasetChanged()
+                        (activity as? HomeActivity)?.loadTranslations()
                         showImportSuccess()
                     }
                 } else if (result.status == CloneRepository.Status.AUTH_FAILURE) {
@@ -314,9 +305,9 @@ open class ImportFromDoor43Dialog : DialogFragment() {
      */
     private fun doImportProject(position: Int) {
         val repo = adapter?.getItem(position)
-        val repoName = repo?.fullName?.replace("/", "-")
+        val repoName = repo?.repoName?.replace("/", "-")
         if (repo != null && repoName != null) {
-            mCloneHtmlUrl = repo.htmlUrl
+            mCloneHtmlUrl = repo.url
             cloneRepository(MergeOptions.NONE)
         }
     }
@@ -464,7 +455,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
     override fun onSaveInstanceState(out: Bundle) {
         val repoJsonList = arrayListOf<String>()
         for (r in repositories) {
-            repoJsonList.add(r.toJSON().toString())
+            repoJsonList.add(r.toJson().toString())
         }
         out.putStringArray(STATE_REPOSITORIES, repoJsonList.toTypedArray<String>())
         out.putInt(STATE_DIALOG_SHOWN, dialogShown.value)

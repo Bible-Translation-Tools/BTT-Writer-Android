@@ -56,7 +56,8 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      */
     private List<ListItem> chunks = new ArrayList<>();
 
-    public ReadModeAdapter() {
+    public ReadModeAdapter(Typography typography) {
+        this.typography = typography;
     }
 
     @Override
@@ -340,14 +341,14 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         for(ContentValues values:tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            View tabLayout = createRemovableTabLayout(context, getListener(), tag, title);
+            View tabLayout = createRemovableTabLayout(getListener(), tag, title);
 
             TabLayout.Tab tab = holder.binding.sourceTranslationTabs.newTab();
             tab.setTag(tag);
             tab.setCustomView(tabLayout);
             holder.binding.sourceTranslationTabs.addTab(tab);
 
-            applyLanguageTypefaceToTab(context, holder.binding.sourceTranslationTabs, values, title);
+            applyLanguageTypefaceToTab(holder.binding.sourceTranslationTabs, values, title);
         }
 
         // select correct tab
@@ -380,11 +381,36 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         // set up fonts
         if(holder.layoutBuildNumber != layoutBuildNumber) {
             holder.layoutBuildNumber = layoutBuildNumber;
-            Typography.formatTitle(context, TranslationType.SOURCE, holder.binding.sourceTranslationHeading, item.source.language.slug, item.source.language.direction);
-            Typography.formatTitle(context, TranslationType.SOURCE, holder.binding.sourceTranslationTitle, item.source.language.slug, item.source.language.direction);
-            Typography.format(context, TranslationType.SOURCE, holder.binding.sourceTranslationBody, item.source.language.slug, item.source.language.direction);
-            Typography.formatTitle(context, TranslationType.TARGET, holder.binding.targetTranslationTitle, item.target.getTargetLanguage().slug, item.target.getTargetLanguage().direction);
-            Typography.format(context, TranslationType.TARGET, holder.binding.targetTranslationBody, item.target.getTargetLanguage().slug, item.target.getTargetLanguage().direction);
+            typography.formatTitle(
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationHeading,
+                    item.source.language.slug,
+                    item.source.language.direction
+            );
+            typography.formatTitle(
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationTitle,
+                    item.source.language.slug,
+                    item.source.language.direction
+            );
+            typography.format(
+                    TranslationType.SOURCE,
+                    holder.binding.sourceTranslationBody,
+                    item.source.language.slug,
+                    item.source.language.direction
+            );
+            typography.formatTitle(
+                    TranslationType.TARGET,
+                    holder.binding.targetTranslationTitle,
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
+            typography.format(
+                    TranslationType.TARGET,
+                    holder.binding.targetTranslationBody,
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
         }
 
         if (tabs.length >= MAX_SOURCE_ITEMS) {

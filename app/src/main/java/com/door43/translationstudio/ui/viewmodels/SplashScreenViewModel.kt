@@ -16,6 +16,7 @@ import com.door43.usecases.UpdateApp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,18 +40,20 @@ class SplashScreenViewModel @Inject constructor(
             _progress.value = ProgressHelper.Progress(
                 application.getString(R.string.updating_app)
             )
-            updateApp.execute(object : OnProgressListener {
-                override fun onProgress(progress: Int, max: Int, message: String?) {
-                    launch(Dispatchers.Main) {
-                        _progress.value = ProgressHelper.Progress(message, progress, max)
+            withContext(Dispatchers.IO) {
+                updateApp.execute(object : OnProgressListener {
+                    override fun onProgress(progress: Int, max: Int, message: String?) {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress(message, progress, max)
+                        }
                     }
-                }
-                override fun onIndeterminate() {
-                    launch(Dispatchers.Main) {
-                        _progress.value = ProgressHelper.Progress()
+                    override fun onIndeterminate() {
+                        launch(Dispatchers.Main) {
+                            _progress.value = ProgressHelper.Progress()
+                        }
                     }
-                }
-            })
+                })
+            }
             _updateFinished.value = true
             _progress.value = null
         }

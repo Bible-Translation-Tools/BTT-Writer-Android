@@ -45,7 +45,7 @@ public class LocalImageGetter implements Html.ImageGetter {
             Log.e(HtmlTextView.TAG, "source could not be found: " + source);
             return null;
         } else {
-            Drawable d = c.getResources().getDrawable(id);
+            Drawable d = c.getDrawable(id);
             d.setBounds(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
             return d;
         }

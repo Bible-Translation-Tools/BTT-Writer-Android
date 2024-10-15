@@ -2,6 +2,8 @@ package com.door43.translationstudio.ui.home
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +14,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentTargetTranslationListBinding
 import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortByColumnType
@@ -25,14 +28,14 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class TargetTranslationListFragment : BaseFragment() {
-    @Inject
-    lateinit var prefRepository: IPreferenceRepository
+    @Inject lateinit var prefRepository: IPreferenceRepository
+    @Inject lateinit var typography: Typography
 
     private var listener: OnItemClickListener? = null
     private var sortProjectColumn = SortProjectColumnType.bibleOrder
     private var sortByColumn = SortByColumnType.projectThenLanguage
 
-    private val adapter by lazy {TargetTranslationAdapter()  }
+    private lateinit var adapter: TargetTranslationAdapter
     private val viewModel: HomeViewModel by activityViewModels()
 
     private var _binding: FragmentTargetTranslationListBinding? = null
@@ -47,6 +50,7 @@ class TargetTranslationListFragment : BaseFragment() {
 
         setupObservers()
 
+        adapter = TargetTranslationAdapter(typography)
         adapter.setOnInfoClickListener { item: TranslationItem ->
             val ft = parentFragmentManager.beginTransaction()
             val prev = parentFragmentManager.findFragmentByTag("infoDialog")
@@ -107,7 +111,7 @@ class TargetTranslationListFragment : BaseFragment() {
         binding.sortColumn.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
-                view: View,
+                view: View?,
                 position: Int,
                 id: Long
             ) {
@@ -131,7 +135,7 @@ class TargetTranslationListFragment : BaseFragment() {
         binding.sortProjects.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
-                view: View,
+                view: View?,
                 position: Int,
                 id: Long
             ) {
@@ -158,7 +162,8 @@ class TargetTranslationListFragment : BaseFragment() {
     }
 
     fun reloadList() {
-        adapter.notifyDataSetChanged()
+        val handler = Handler(Looper.getMainLooper())
+        handler.post { adapter.notifyDataSetChanged() }
     }
 
     override fun onAttach(context: Context) {

@@ -185,7 +185,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                         .add(R.id.fragment_container, fragment)
                         .commit();
                 // TODO: animate
-                // TODO: udpate menu
+                // TODO: update menu
             }
         }
 
@@ -1072,7 +1072,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             fragment = new ReviewModeFragment();
         }
         fragment.setArguments(getIntent().getExtras());
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, (Fragment) fragment).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
         // TODO: animate
         // TODO: update menu
     }

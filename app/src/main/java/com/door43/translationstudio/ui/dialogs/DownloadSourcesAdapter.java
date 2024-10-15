@@ -3,6 +3,9 @@ package com.door43.translationstudio.ui.dialogs;
 import android.content.Context;
 import android.graphics.Typeface;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.viewbinding.ViewBinding;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +17,8 @@ import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.core.Util;
+import com.door43.translationstudio.databinding.FragmentSelectDownloadSourceItemBinding;
+import com.door43.translationstudio.databinding.FragmentSelectFilterItemBinding;
 import com.door43.usecases.GetAvailableSources;
 import com.door43.widget.ViewUtil;
 
@@ -35,7 +40,7 @@ import java.util.Map;
  * Created by blm on 12/1/16.
  */
 
-public class DownloadSourcesAdapter  extends BaseAdapter {
+public class DownloadSourcesAdapter extends BaseAdapter {
 
     public static final String TAG = DownloadSourcesAdapter.class.getSimpleName();
     public static final int TYPE_ITEM_FILTER_SELECTION = 0;
@@ -69,6 +74,12 @@ public class DownloadSourcesAdapter  extends BaseAdapter {
     private String bookFilter;
     private String search = null;
     private final Map<String, String> downloadErrors = new HashMap<>();
+
+    private Typography typography;
+
+    public DownloadSourcesAdapter(Typography typography) {
+        this.typography = typography;
+    }
 
     @Override
     public int getCount() {
@@ -585,15 +596,18 @@ a     * @param task
 
         if(sort) {
             // do numeric sort
-            Collections.sort(items, Comparator.comparing(lhs -> lhs.title.toString()));
+            // do numeric sort
+            Collections.sort(items, (lhs, rhs) -> lhs.title.toString().compareTo(rhs.title.toString()));
         }
     }
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         context = parent.getContext();
-        View v = convertView;
-        ViewHolder holder = null;
+        final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        ViewHolder holder;
+        ViewBinding binding;
+
         int rowType = getItemViewType(position);
         final ViewItem item = getItem(position);
 
@@ -601,24 +615,36 @@ a     * @param task
             holder = new ViewHolder();
             switch (rowType) {
                 case TYPE_ITEM_FILTER_SELECTION:
-                    v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_select_filter_item, null);
+                    binding = FragmentSelectFilterItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectFilterItemBinding filterBinding =
+                            ((FragmentSelectFilterItemBinding) binding);
+                    holder.titleView = filterBinding.title;
+                    holder.imageView = filterBinding.itemIcon;
                     break;
                 case TYPE_ITEM_SOURCE_SELECTION:
                 default:
-                    v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_select_download_source_item, null);
-                    holder.titleView2 = v.findViewById(R.id.title2);
-                    holder.errorView = v.findViewById(R.id.error_icon);
+                    binding = FragmentSelectDownloadSourceItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectDownloadSourceItemBinding sourceBinding =
+                            ((FragmentSelectDownloadSourceItemBinding) binding);
+                    holder.titleView2 = sourceBinding.title2;
+                    holder.errorView = sourceBinding.errorIcon;
                     break;
             }
-            holder.titleView = v.findViewById(R.id.title);
-            holder.imageView = v.findViewById(R.id.item_icon);
-
-            v.setTag(holder);
+            holder.binding = binding;
+            binding.getRoot().setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        holder.titleView.setTypeface(Typeface.DEFAULT, 0); // make sure this is reset to default
+        holder.titleView.setTypeface(Typeface.DEFAULT, Typeface.NORMAL); // make sure this is reset to default
         holder.titleView.setText(item.title);
 
         if(holder.titleView2 != null) {
@@ -655,22 +681,21 @@ a     * @param task
             }
         } else {
             if(selectionType == SelectionType.book_type) {
-                holder.imageView.setImageDrawable(context.getResources().getDrawable(item.icon));
+                holder.imageView.setImageDrawable(AppCompatResources.getDrawable(context, item.icon));
                 holder.imageView.setVisibility(View.VISIBLE);
             } else {
                 holder.imageView.setVisibility(View.GONE);
                 // if language selection, look up font
-                Typeface typeface = Typography.getBestFontForLanguage(
-                        context,
+                Typeface typeface = typography.getBestFontForLanguage(
                         TranslationType.SOURCE,
                         item.sourceTranslation.language.slug,
                         item.sourceTranslation.language.direction
                 );
-                holder.titleView.setTypeface(typeface, 0);
+                holder.titleView.setTypeface(typeface, Typeface.NORMAL);
             }
         }
 
-        return v;
+        return holder.binding.getRoot();
     }
 
     /**
@@ -774,12 +799,11 @@ a     * @param task
     }
 
     public static class ViewHolder {
+        public ViewBinding binding;
         public TextView titleView;
         public TextView titleView2;
         public ImageView imageView;
         public ImageView errorView;
-        public Object currentTaskId;
-        public int currentPosition;
     }
 
     public static class ViewItem {

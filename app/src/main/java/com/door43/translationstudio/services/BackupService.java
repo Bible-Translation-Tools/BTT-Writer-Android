@@ -1,24 +1,23 @@
 package com.door43.translationstudio.services;
 
-import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 import android.util.Log;
 
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.unfoldingword.tools.foreground.Foreground;
 import org.unfoldingword.tools.logger.Logger;
+
+import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.ui.SettingsActivity;
 import com.door43.translationstudio.core.TargetTranslation;
@@ -44,6 +43,8 @@ public class BackupService extends Service implements Foreground.Listener {
     Translator translator;
     @Inject
     BackupRC backupRC;
+    @Inject
+    IPreferenceRepository prefRepository;
 
     public static final String TAG = BackupService.class.getName();
     private final Timer sTimer = new Timer();
@@ -86,8 +87,8 @@ public class BackupService extends Service implements Foreground.Listener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startid) {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplication());
-        int backupIntervalMinutes = Integer.parseInt(pref.getString(SettingsActivity.KEY_PREF_BACKUP_INTERVAL, getResources().getString(R.string.pref_default_backup_interval)));
+        //SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplication());
+        int backupIntervalMinutes = Integer.parseInt(prefRepository.getDefaultPref(SettingsActivity.KEY_PREF_BACKUP_INTERVAL, getResources().getString(R.string.pref_default_backup_interval), String.class));
         if(backupIntervalMinutes > 0) {
             int backupInterval = backupIntervalMinutes * 1000 * 60;
             Logger.i(this.getClass().getName(), "Backups running every " + backupIntervalMinutes + " minute/s");
@@ -136,57 +137,55 @@ public class BackupService extends Service implements Foreground.Listener {
 
         this.executingBackup = true;
         boolean backupPerformed = false;
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED) {
-            Logger.i(TAG, "Checking for changes");
-            String[] targetTranslations = translator.getTargetTranslationFileNames();
-            for (String filename : targetTranslations) {
 
-                try {
-                    // add delay to ease background processing and also slow the memory thrashing in background
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    Logger.e(TAG, "sleep problem", e);
-                }
+        Logger.i(TAG, "Checking for changes");
 
-                TargetTranslation t = translator.getTargetTranslation(filename);
-                if(t == null) { // skip if not valid
-                    Logger.i(TAG, "Skipping invalid translation: " + filename);
-                    continue;
-                }
+        String[] targetTranslations = translator.getTargetTranslationFileNames();
 
-                // commit pending changes
-                try {
-                    t.commitSync(".", false);
-                } catch (Exception e) {
-                    if(e instanceof JGitInternalException) {
-                        Logger.w(TAG, "History corrupt in " + t.getId() + ". Repairing...", e);
-                        App.recoverRepo(t);
-                    } else {
-                        Logger.w(TAG, "Could not commit changes to " + t.getId(), e);
-                    }
-                }
-
-                // run backup if there are translations
-                if (t.numTranslated() > 0) {
-                    try {
-                        boolean success = backupRC.backupTargetTranslation(t, false);
-                        if(success) {
-                            Logger.i(TAG, t.getId() + " backed up");
-                            backupPerformed = true;
-                        }
-                    } catch (Exception e) {
-                        Logger.e(TAG, "Could not backup " + t.getId(), e);
-                    }
-                }
-            }
-            Logger.i(TAG, "Finished backup check.");
-            if (backupPerformed) {
-                onBackupComplete();
+        for (String filename : targetTranslations) {
+            try {
+                // add delay to ease background processing and also slow the memory thrashing in background
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                Logger.e(TAG, "sleep problem", e);
             }
 
-        } else {
-            Logger.e(TAG, "Missing permission to write to external storage. Automatic backups skipped.");
+            TargetTranslation t = translator.getTargetTranslation(filename);
+            if(t == null) { // skip if not valid
+                Logger.i(TAG, "Skipping invalid translation: " + filename);
+                continue;
+            }
+
+            // commit pending changes
+            try {
+                t.commitSync(".", false);
+            } catch (Exception e) {
+                if(e instanceof JGitInternalException) {
+                    Logger.w(TAG, "History corrupt in " + t.getId() + ". Repairing...", e);
+                    App.recoverRepo(t);
+                } else {
+                    Logger.w(TAG, "Could not commit changes to " + t.getId(), e);
+                }
+            }
+
+            // run backup if there are translations
+            if (t.numTranslated() > 0) {
+                try {
+                    boolean success = backupRC.backupTargetTranslation(t, false);
+                    if(success) {
+                        Logger.i(TAG, t.getId() + " backed up");
+                        backupPerformed = true;
+                    }
+                } catch (Exception e) {
+                    Logger.e(TAG, "Could not backup " + t.getId(), e);
+                }
+            }
+        }
+
+        Logger.i(TAG, "Finished backup check.");
+
+        if (backupPerformed) {
+            onBackupComplete();
         }
         this.executingBackup = false;
     }

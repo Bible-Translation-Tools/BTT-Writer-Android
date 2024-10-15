@@ -37,6 +37,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.unfoldingword.tools.logger.Logger
 import java.util.Objects
+import javax.inject.Inject
 import kotlin.math.min
 
 /**
@@ -44,6 +45,8 @@ import kotlin.math.min
  */
 @AndroidEntryPoint
 class DownloadSourcesDialog : DialogFragment() {
+    @Inject lateinit var typography: Typography
+
     private lateinit var progressDialog: ProgressHelper.ProgressDialog
     private lateinit var adapter: DownloadSourcesAdapter
 
@@ -75,7 +78,7 @@ class DownloadSourcesDialog : DialogFragment() {
             false
         )
 
-        adapter = DownloadSourcesAdapter()
+        adapter = DownloadSourcesAdapter(typography)
 
         with(binding) {
             searchBackButton.setOnClickListener {
@@ -455,8 +458,10 @@ class DownloadSourcesDialog : DialogFragment() {
         if (enable) {
             val step = steps[stepIndex]
             if (step.language != null) {
-                typeface = Typography.getBestFontForLanguage(
-                    activity, TranslationType.SOURCE, step.language.slug, step.language.direction
+                typeface = typography.getBestFontForLanguage(
+                    TranslationType.SOURCE,
+                    step.language.slug,
+                    step.language.direction
                 )
             }
         }

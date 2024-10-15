@@ -183,7 +183,7 @@ class UpdateApp @Inject constructor(
                     this.javaClass.simpleName,
                     "Migrating: $tt"
                 )
-                if (!migrator.migrate(tt)) {
+                if (migrator.migrate(tt) == null) {
                     Logger.w(
                         this.javaClass.name,
                         "Failed to migrate the target translation " + tt.name

@@ -10,16 +10,13 @@ import com.door43.data.setPrivatePref
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
-import com.door43.util.Zip
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
-import java.io.InputStream
 import java.util.Locale
 
 /**
@@ -324,117 +321,6 @@ class Translator (
         return translation
     }
 
-    /**
-     * Imports a tstudio archive
-     * @param file
-     * @param overwrite - if true then local changes are clobbered
-     * @return ImportResults object
-     */
-    /**
-     * Imports a tstudio archive, uses default of merge, not overwrite
-     * @param file
-     * @return ImportResults object
-     */
-    @JvmOverloads
-    @Throws(Exception::class)
-    fun importArchive(file: File?, overwrite: Boolean = false): ImportResults {
-        FileInputStream(file).use { input ->
-            return importArchive(input, overwrite)
-        }
-    }
-
-    /**
-     * Imports a tstudio archive from an input stream
-     * @param `in`
-     * @param overwrite - if true then local changes are clobbered
-     * @return ImportResults object
-     */
-    @Throws(Exception::class)
-    fun importArchive(inputStream: InputStream, overwrite: Boolean): ImportResults {
-        val archiveDir = File(localCacheDir, System.currentTimeMillis().toString() + "")
-        var importedSlug: String? = null
-        var mergeConflict = false
-        var alreadyExists = false
-        try {
-            archiveDir.mkdirs()
-            Zip.unzipFromStream(inputStream, archiveDir)
-
-            val targetTranslationDirs = archiveImporter.importArchive(archiveDir)
-            for (newDir in targetTranslationDirs) {
-                val newTargetTranslation = TargetTranslation.open(newDir) {
-                    // Try to backup and delete corrupt project
-                    try {
-                        backupRC.backupTargetTranslation(newDir)
-                        deleteTargetTranslation(newDir)
-                    } catch (ex: java.lang.Exception) {
-                        ex.printStackTrace()
-                    }
-                }
-                if (newTargetTranslation != null) {
-                    // TRICKY: the correct id is pulled from the manifest
-                    // to avoid propagation of bad folder names
-                    val targetTranslationId = newTargetTranslation.id
-                    val localDir = File(path, targetTranslationId)
-                    val localTargetTranslation = TargetTranslation.open(localDir) {
-                        // Try to backup and delete corrupt project
-                        try {
-                            backupRC.backupTargetTranslation(localDir)
-                            deleteTargetTranslation(localDir)
-                        } catch (ex: java.lang.Exception) {
-                            ex.printStackTrace()
-                        }
-                    }
-                    alreadyExists = localTargetTranslation != null
-                    if (alreadyExists && !overwrite) {
-                        // commit local changes to history
-                        localTargetTranslation!!.commitSync()
-
-                        // merge translations
-                        try {
-                            val mergeSuccess = localTargetTranslation.merge(newDir) {
-                                // Try to backup and delete corrupt project
-                                try {
-                                    backupRC.backupTargetTranslation(newDir)
-                                    deleteTargetTranslation(newDir)
-                                } catch (ex: java.lang.Exception) {
-                                    ex.printStackTrace()
-                                }
-                            }
-                            if (!mergeSuccess) {
-                                mergeConflict = true
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            continue
-                        }
-                    } else {
-                        // import new translation
-                        FileUtilities.safeDelete(localDir) // in case local was an invalid target translation
-                        FileUtilities.moveOrCopyQuietly(newDir, localDir)
-                    }
-                    // update the generator info. TRICKY: we re-open to get the updated manifest.
-                    TargetTranslation.updateGenerator(context, TargetTranslation.open(localDir) {
-                        // Try to backup and delete corrupt project
-                        try {
-                            backupRC.backupTargetTranslation(localDir)
-                            deleteTargetTranslation(localDir)
-                        } catch (ex: java.lang.Exception) {
-                            ex.printStackTrace()
-                        }
-                    })
-
-                    importedSlug = targetTranslationId
-                }
-            }
-        } catch (e: Exception) {
-            throw e
-        } finally {
-            FileUtilities.deleteQuietly(archiveDir)
-        }
-
-        return ImportResults(importedSlug, mergeConflict, alreadyExists)
-    }
-
     fun getConflictingTargetTranslation(file: File): TargetTranslation? {
         var conflictingTranslation: TargetTranslation? = null
 
@@ -448,23 +334,6 @@ class Translator (
             conflictingTranslation = TargetTranslation.open(destTargetTranslationDir, null)
         }
         return conflictingTranslation
-    }
-
-    /**
-     * returns the import results which includes:
-     * the target translation slug that was successfully imported
-     * a flag indicating a merge conflict
-     */
-    inner class ImportResults internal constructor(
-        @JvmField val importedSlug: String?,
-        @JvmField val mergeConflict: Boolean,
-        @JvmField val alreadyExists: Boolean
-    ) {
-        val isSuccess: Boolean
-            get() {
-                val success = !importedSlug.isNullOrEmpty()
-                return success
-            }
     }
 
     /**

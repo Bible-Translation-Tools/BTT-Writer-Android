@@ -43,6 +43,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     protected boolean showMergeSummary = false;
     protected int layoutBuildNumber = 0;
     protected Context context;
+    protected Typography typography;
 
     protected List<ListItem> items = new ArrayList<>();
     protected List<ListItem> filteredItems = new ArrayList<>();
@@ -351,34 +352,17 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     }
 
     /**
-     * if better font for language, save language info in values
-     * @param context
-     * @param st
-     * @param values
-     */
-    public static void getFontForLanguageTab(Context context, Translation st, ContentValues values) {
-        //see if there is a special font for tab
-        Typeface typeface = Typography.getBestFontForLanguage(context, TranslationType.SOURCE, st.language.slug, st.language.direction);
-        if(typeface != Typeface.DEFAULT) {
-            values.put("language", st.language.slug);
-            values.put("direction", st.language.direction);
-        }
-    }
-
-
-    /**
      * if language is specified in values, finds the created tab that has the title text and applies the Typeface for the language
-     * @param context
      * @param layout
      * @param values
      * @param title
      */
-    public static void applyLanguageTypefaceToTab(Context context, ViewGroup layout, ContentValues values, String title) {
+    public void applyLanguageTypefaceToTab(ViewGroup layout, ContentValues values, String title) {
         if(values.containsKey("language")) {
             String code = values.getAsString("language");
             String direction = values.getAsString("direction");
-            Typeface typeface = Typography.getBestFontForLanguage(context, TranslationType.SOURCE, code, direction);
-            TextView view = ViewModeAdapter.findTab(layout, title);
+            Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, direction);
+            TextView view = findTab(layout, title);
             if(view != null) {
                 view.setTypeface(typeface, Typeface.NORMAL);
             }
@@ -391,8 +375,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @param match
      * @return
      */
-    public static TextView findTab(ViewGroup viewGroup, String match) {
-
+    public TextView findTab(ViewGroup viewGroup, String match) {
         int count = viewGroup.getChildCount();
         for (int i = 0; i < count; i++) {
             View view = viewGroup.getChildAt(i);
@@ -433,7 +416,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         return false;
     }
 
-    public static View createRemovableTabLayout(Context context, final OnViewModeListener listener, String tag, String title) {
+    public View createRemovableTabLayout(final OnViewModeListener listener, String tag, String title) {
         View root = LayoutInflater.from(context).inflate(R.layout.removable_tab, null);
         TextView tabText = root.findViewById(R.id.tab);
         tabText.setText(title);

@@ -26,6 +26,7 @@ import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
+import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.databinding.FragmentStackedCardListBinding;
 import com.door43.translationstudio.ui.BaseFragment;
@@ -38,6 +39,8 @@ import org.unfoldingword.tools.taskmanager.ManagedTask;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -62,6 +65,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     protected String chapterSlug;
     protected String chunkSlug;
+
+    @Inject
+    Typography typography;
 
     /**
      * Returns an instance of the adapter

@@ -31,6 +31,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.logger.Logger
 import org.unfoldingword.tools.taskmanager.ManagedTask
 import org.unfoldingword.tools.taskmanager.TaskManager
+import javax.inject.Inject
 import kotlin.math.min
 
 /**
@@ -38,6 +39,7 @@ import kotlin.math.min
  */
 @AndroidEntryPoint
 class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedListener {
+    @Inject lateinit var typography: Typography
     private var targetTranslation: TranslationItem? = null
 
     private var _binding: DialogTargetTranslationInfoBinding? = null
@@ -80,8 +82,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
         targetTranslation?.let { item ->
             // set typeface for language
             val targetLanguage = item.translation.targetLanguage
-            val typeface = Typography.getBestFontForLanguage(
-                requireActivity(),
+            val typeface = typography.getBestFontForLanguage(
                 TranslationType.SOURCE,
                 targetLanguage.slug,
                 targetLanguage.direction

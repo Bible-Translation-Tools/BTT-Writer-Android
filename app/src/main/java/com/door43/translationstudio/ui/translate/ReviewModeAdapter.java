@@ -104,9 +104,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     private OnRenderHelpsListener renderHelpsListener = null;
 
-    public ReviewModeAdapter(boolean openResources, boolean enableMergeConflictsFilter) {
+    public ReviewModeAdapter(
+            boolean openResources,
+            boolean enableMergeConflictsFilter,
+            Typography typography
+    ) {
         resourcesOpened = openResources;
         mergeConflictFilterOn = enableMergeConflictsFilter;
+        this.typography = typography;
     }
 
     @Override
@@ -276,7 +281,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 binding = new ReviewListItemBinding(lb);
                 break;
         }
-        ReviewHolder vh = new ReviewHolder(binding);
+        ReviewHolder vh = new ReviewHolder(binding, typography, this);
         vh.setOnClickListener(this);
         return vh;
     }
@@ -371,39 +376,34 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         // set up fonts
         if (holder.layoutBuildNumber != layoutBuildNumber) {
             holder.layoutBuildNumber = layoutBuildNumber;
-            Typography.format(
-                    context,
+            typography.format(
                     TranslationType.SOURCE,
                     holder.binding.getSourceBody(),
                     item.source.language.slug,
                     item.source.language.direction
             );
             if (!item.getHasMergeConflicts()) {
-                Typography.format(
-                        context,
+                typography.format(
                         TranslationType.TARGET,
                         holder.binding.getTargetBody(),
                         item.target.getTargetLanguage().slug,
                         item.target.getTargetLanguage().direction
                 );
-                Typography.format(
-                        context,
+                typography.format(
                         TranslationType.TARGET,
                         holder.binding.getTargetEditableBody(),
                         item.target.getTargetLanguage().slug,
                         item.target.getTargetLanguage().direction
                 );
             } else {
-                Typography.formatSub(
-                        context,
+                typography.formatSub(
                         TranslationType.TARGET,
                         holder.binding.getConflictText(),
                         item.target.getTargetLanguage().slug,
                         item.target.getTargetLanguage().direction
                 );
             }
-            Typography.formatSub(
-                    context,
+            typography.formatSub(
                     TranslationType.TARGET,
                     holder.binding.getTargetTitle(),
                     item.target.getTargetLanguage().slug,

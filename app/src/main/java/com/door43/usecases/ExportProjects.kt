@@ -30,7 +30,8 @@ import javax.inject.Inject
 class ExportProjects @Inject constructor(
     @ApplicationContext private val context: Context,
     private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client
+    private val library: Door43Client,
+    private val typography: Typography
 ) {
 
     /**
@@ -201,8 +202,8 @@ class ExportProjects @Inject constructor(
         includeIncompleteFrames: Boolean,
         imagesDir: File?
     ) {
-        val fontPath = Typography.getAssetPath(context, TranslationType.TARGET)
-        val fontSize = Typography.getFontSize(context, TranslationType.TARGET)
+        val fontPath = typography.getAssetPath(TranslationType.TARGET)
+        val fontSize = typography.getFontSize(TranslationType.TARGET)
         val licenseFontName = context.getString(R.string.pref_default_translation_typeface)
         val licenseFontPath = "assets/fonts/$licenseFontName"
         val targetLanguageRtl = "rtl" == targetTranslation.targetLanguageDirection

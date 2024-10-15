@@ -78,8 +78,8 @@ class NewTempLanguageActivity : QuestionnaireActivity(), LanguageSuggestionsDial
             return
         }
 
-        val prev = supportFragmentManager.findFragmentByTag(LanguageSuggestionsDialog.TAG) as LanguageSuggestionsDialog
-        prev.setOnClickListener(this)
+        val prev = supportFragmentManager.findFragmentByTag(LanguageSuggestionsDialog.TAG) as? LanguageSuggestionsDialog
+        prev?.setOnClickListener(this)
     }
 
     override val questionnaire: QuestionnairePager?
@@ -144,9 +144,7 @@ class NewTempLanguageActivity : QuestionnaireActivity(), LanguageSuggestionsDial
     }
 
     override fun onDestroy() {
-        if (languageSuggestionsDialog != null) {
-            languageSuggestionsDialog!!.setOnClickListener(null)
-        }
+        languageSuggestionsDialog?.setOnClickListener(null)
         super.onDestroy()
     }
 

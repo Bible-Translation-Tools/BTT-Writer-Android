@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.content.ContentValues
+import android.graphics.Typeface
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -15,12 +16,13 @@ import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ListItem
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.SEARCH_SOURCE
-import com.door43.translationstudio.ui.translate.ViewModeAdapter
 import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.usecases.RenderHelps
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,6 +49,8 @@ class TargetTranslationViewModel @Inject constructor(
     @Inject lateinit var prefRepository: IPreferenceRepository
     @Inject lateinit var renderHelps: RenderHelps
     @Inject lateinit var library: Door43Client
+
+    @Inject lateinit var typography: Typography
 
     private val generalJobs = arrayListOf<Job>()
     private val renderHelpJobs = arrayListOf<Job>()
@@ -182,16 +186,17 @@ class TargetTranslationViewModel @Inject constructor(
     fun setSelectedResourceContainer(sourceTranslationId: String) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
-            _resourceContainer = withContext(Dispatchers.IO) {
-                translator.setSelectedSourceTranslation(targetTranslation.id, sourceTranslationId)
-                library.index.getTranslation(sourceTranslationId)?.let { sourceTranslation ->
-                    ContainerCache.cache(
-                        library,
-                        sourceTranslation.resourceContainerSlug
-                    )
-                }
+
+            translator.setSelectedSourceTranslation(targetTranslation.id, sourceTranslationId)
+            _resourceContainer = library.index.getTranslation(sourceTranslationId)?.let { sourceTranslation ->
+                ContainerCache.cache(
+                    library,
+                    sourceTranslation.resourceContainerSlug
+                )
             }
             loadListItems()
+
+            _progress.value = null
         }.also(generalJobs::add)
     }
 
@@ -250,24 +255,19 @@ class TargetTranslationViewModel @Inject constructor(
     }
 
     private fun loadListItems() {
-        viewModelScope.launch {
-            val items = mutableListOf<ListItem>()
-            withContext(Dispatchers.IO) {
-                _resourceContainer?.let { source ->
-                    val sorter = SlugSorter()
-                    val chapterSlugs: List<String> = sorter.sort(source.chapters())
-                    for (chapterSlug: String in chapterSlugs) {
-                        val chunkSlugs: List<String> = sorter.sort(source.chunks(chapterSlug))
-                        for (chunkSlug in chunkSlugs) {
-                            val item = createItem(chapterSlug, chunkSlug, source, targetTranslation)
-                            items.add(item)
-                        }
-                    }
+        val items = mutableListOf<ListItem>()
+        _resourceContainer?.let { source ->
+            val sorter = SlugSorter()
+            val chapterSlugs: List<String> = sorter.sort(source.chapters())
+            for (chapterSlug: String in chapterSlugs) {
+                val chunkSlugs: List<String> = sorter.sort(source.chunks(chapterSlug))
+                for (chunkSlug in chunkSlugs) {
+                    val item = createItem(chapterSlug, chunkSlug, source, targetTranslation)
+                    items.add(item)
                 }
             }
-            _listItems.value = items
-            _progress.value = null
-        }.also(generalJobs::add)
+        }
+        _listItems.value = items
     }
 
     fun renderHelps(item: ListItem) {
@@ -338,11 +338,29 @@ class TargetTranslationViewModel @Inject constructor(
                 }
                 values.put("tag", st.resourceContainerSlug)
 
-                ViewModeAdapter.getFontForLanguageTab(application, st, values)
+                getFontForLanguageTab(st, values)
                 tabContents.add(values)
             }
         }
         return tabContents
+    }
+
+    /**
+     * if better font for language, save language info in values
+     * @param st
+     * @param values
+     */
+    private fun getFontForLanguageTab(translation: Translation, values: ContentValues) {
+        //see if there is a special font for tab
+        val typeface = typography.getBestFontForLanguage(
+            TranslationType.SOURCE,
+            translation.language.slug,
+            translation.language.direction
+        )
+        if (typeface != Typeface.DEFAULT) {
+            values.put("language", translation.language.slug);
+            values.put("direction", translation.language.direction)
+        }
     }
 
     private fun fetchSourceText(source: ResourceContainer, chapterSlug: String, chunkSlug: String?): String {

@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.door43.translationstudio.App.Companion.closeKeyboard
@@ -10,19 +11,20 @@ import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.databinding.ActivityLoginDoor43Binding
-import com.door43.translationstudio.tasks.LoginDoor43Task
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.ui.viewmodels.LoginViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.TaskManager
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class LoginDoor43Activity : AppCompatActivity(), ManagedTask.OnFinishedListener {
+class LoginDoor43Activity : AppCompatActivity() {
     @Inject
     lateinit var profile: Profile
+
     private lateinit var binding: ActivityLoginDoor43Binding
     private var progressDialog: ProgressHelper.ProgressDialog? = null
+
+    private val viewModel: LoginViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,55 +40,55 @@ class LoginDoor43Activity : AppCompatActivity(), ManagedTask.OnFinishedListener 
                 val username = account.username.text.toString()
                 val password = account.password.text.toString()
                 val fullName = profile.fullName
-                val task = LoginDoor43Task(username, password, fullName)
-                showProgressDialog()
-                task.addOnFinishedListener(this@LoginDoor43Activity)
-                TaskManager.addTask(task, LoginDoor43Task.TASK_ID)
+
+                viewModel.login(username, password, fullName)
             }
         }
 
-        val task = TaskManager.getTask(LoginDoor43Task.TASK_ID) as? LoginDoor43Task
-        if (task != null) {
-            showProgressDialog()
-            task.addOnFinishedListener(this)
-        }
+        setupObservers()
     }
 
-    override fun onTaskFinished(task: ManagedTask) {
-        TaskManager.clearTask(task)
-
-        progressDialog?.dismiss()
-
-        val user = (task as? LoginDoor43Task)?.user
-        if (user != null) {
-            // save gogs user to profile
-            if (user.fullName.isNullOrEmpty()) {
-                // TODO: 4/15/16 if the fullname has not been set we need to ask for it
-                // this is our quick fix to get the full name for now
-                user.fullName = user.username
-            }
-            profile.login(user.fullName, user)
-            finish()
-        } else {
-            val networkAvailable = isNetworkAvailable
-
-            // login failed
-            val hand = Handler(Looper.getMainLooper())
-            hand.post {
-                val messageId =
-                    if (networkAvailable) R.string.double_check_credentials else R.string.internet_not_available
-                AlertDialog.Builder(this@LoginDoor43Activity, R.style.AppTheme_Dialog)
-                    .setTitle(R.string.error)
-                    .setMessage(messageId)
-                    .setPositiveButton(R.string.label_ok, null)
-                    .show()
+    private fun setupObservers() {
+        viewModel.progress.observe(this) {
+            if (it != null) {
+                progressDialog?.show()
+                progressDialog?.setProgress(it.progress)
+                progressDialog?.setMessage(it.message)
+                progressDialog?.setMax(it.max)
+            } else {
+                progressDialog?.dismiss()
             }
         }
-    }
-
-    private fun showProgressDialog() {
-        progressDialog?.setMessage(resources.getString(R.string.please_wait))
-        progressDialog?.show()
+        viewModel.loginResult.observe(this) {
+            it?.let { result ->
+                if (result.user != null) {
+                    // save gogs user to profile
+                    if (result.user.fullName.isNullOrEmpty()) {
+                        // TODO: 4/15/16 if the fullname has not been set we need to ask for it
+                        // this is our quick fix to get the full name for now
+                        result.user.fullName = result.user.username
+                    }
+                    profile.login(result.user.fullName, result.user)
+                    finish()
+                } else {
+                    val networkAvailable = isNetworkAvailable
+                    // login failed
+                    val hand = Handler(Looper.getMainLooper())
+                    hand.post {
+                        val messageId = if (networkAvailable) {
+                            R.string.double_check_credentials
+                        } else {
+                            R.string.internet_not_available
+                        }
+                        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+                            .setTitle(R.string.error)
+                            .setMessage(messageId)
+                            .setPositiveButton(R.string.label_ok, null)
+                            .show()
+                    }
+                }
+            }
+        }
     }
 
     override fun onDestroy() {

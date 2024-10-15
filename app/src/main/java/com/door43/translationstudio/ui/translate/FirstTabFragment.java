@@ -5,9 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -17,8 +14,8 @@ import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.resourcecontainer.Project;
 import org.unfoldingword.tools.logger.Logger;
 
-import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.TargetTranslation;
+import com.door43.translationstudio.databinding.FragmentFirstTabBinding;
 import com.door43.translationstudio.ui.BaseFragment;
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
 
@@ -34,20 +31,21 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
     private OnEventListener mListener;
     protected TargetTranslationViewModel viewModel;
 
+    private FragmentFirstTabBinding binding;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_first_tab, container, false);
+        binding = FragmentFirstTabBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(requireActivity()).get(TargetTranslationViewModel.class);
 
         Bundle args = getArguments();
         assert args != null;
 
-        ImageButton newTabButton = rootView.findViewById(R.id.newTabButton);
-        LinearLayout secondaryNewTabButton = rootView.findViewById(R.id.secondaryNewTabButton);
-        TextView translationTitle = rootView.findViewById(R.id.source_translation_title);
         try {
             Project p = viewModel.getProject();
-            translationTitle.setText(p.name + " - " + viewModel.getTargetTranslation().getTargetLanguageName());
+            binding.sourceTranslationTitle.setText(
+                    p.name + " - " + viewModel.getTargetTranslation().getTargetLanguageName()
+            );
         } catch (Exception e) {
             Logger.e(
                 FirstTabFragment.class.getSimpleName(),
@@ -72,8 +70,8 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
             dialog.show(ft, "tabsDialog");
         };
 
-        newTabButton.setOnClickListener(clickListener);
-        secondaryNewTabButton.setOnClickListener(clickListener);
+        binding.newTabButton.setOnClickListener(clickListener);
+        binding.secondaryNewTabButton.setOnClickListener(clickListener);
 
         // attach to tabs dialog
         if(savedInstanceState != null) {
@@ -83,7 +81,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
             }
         }
 
-        return rootView;
+        return binding.getRoot();
     }
 
     @Override
@@ -94,6 +92,12 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
         } catch (ClassCastException e) {
             throw new ClassCastException(context + " must implement FirstTabFragment.OnEventListener");
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     /**

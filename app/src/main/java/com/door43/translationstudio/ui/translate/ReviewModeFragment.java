@@ -84,7 +84,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ReviewModeAdapter(resourcesOpen, enableMergeConflictsFilter);
+        return new ReviewModeAdapter(resourcesOpen, enableMergeConflictsFilter, typography);
     }
 
     @Override
@@ -353,10 +353,10 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
 //            title.setText(article.getTitle());
 //            SourceLanguage sourceLanguage = library.getSourceLanguage(sourceTranslation.projectSlug, sourceTranslation.sourceLanguageSlug);
-//            Typography.format(requireActivity(), title, sourceLanguage.getId(), sourceLanguage.getDirection());
+//            typography.format(title, sourceLanguage.getId(), sourceLanguage.getDirection());
 
 //            descriptionView.setText(renderer.render(article.getBody()));
-//            Typography.formatSub(requireActivity(), descriptionView, sourceLanguage.getId(), sourceLanguage.getDirection());
+//            typography.formatSub(descriptionView, sourceLanguage.getId(), sourceLanguage.getDirection());
 //            descriptionView.setMovementMethod(LocalLinkMovementMethod.getInstance());
 
             articleBinding.getRoot().setWebViewClient(new LinkToHtmlRenderer.CustomWebViewClient() {
@@ -388,7 +388,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                             .show();
                 }
             });
-            articleBinding.getRoot().loadData(Typography.getStyle(requireActivity(), TranslationType.SOURCE )
+            articleBinding.getRoot().loadData(typography.getStyle(TranslationType.SOURCE )
                     + renderer.render(article.getBody()).toString(), "text/html", "utf-8");
 
             binding.scrollingResourcesDrawerContent.removeAllViews();
@@ -424,7 +424,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                 // TODO: 10/12/16 load the description title. This should be read from the config maybe?
                 wordBinding.descriptionTitle.setText("Description");
             }
-            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, wordBinding.descriptionTitle, rc.language.slug, rc.language.direction);
+            typography.formatTitle(TranslationType.SOURCE, wordBinding.descriptionTitle, rc.language.slug, rc.language.direction);
             HtmlRenderer renderer = new HtmlRenderer(span -> {
                 boolean result = false;
 
@@ -511,7 +511,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
             });
             wordBinding.description.setText(renderer.render(description));
             wordBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
-            Typography.formatSub(requireActivity(), TranslationType.SOURCE, wordBinding.description, rc.language.slug, rc.language.direction);
+            typography.formatSub(TranslationType.SOURCE, wordBinding.description, rc.language.slug, rc.language.direction);
 
             wordBinding.seeAlso.removeAllViews();
             wordBinding.seeAlsoTitle.setVisibility(View.GONE);
@@ -536,7 +536,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                         button.setOnClickListener(v ->
                                 onTranslationWordClick(rc.slug, relatedSlug, binding.resourcesDrawerCard.getLayoutParams().width)
                         );
-                        Typography.formatSub(requireActivity(), TranslationType.SOURCE, button, rc.language.slug, rc.language.direction);
+                        typography.formatSub(TranslationType.SOURCE, button, rc.language.slug, rc.language.direction);
                         wordBinding.seeAlso.addView(button);
                     }
                     if(!relatedSlugs.isEmpty()) wordBinding.seeAlsoTitle.setVisibility(View.VISIBLE);
@@ -563,15 +563,15 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                         examplesBinding.reference.setText(projectTitle.trim() + " " + StringUtilities.formatNumber(slugs[0]) + ":" + verseTitle);
                         examplesBinding.passage.setHtmlFromString(viewModel.getResourceContainer().readChunk(slugs[0], slugs[1]), true);
                         examplesBinding.getRoot().setOnClickListener(v -> scrollToChunk(slugs[0], slugs[1]));
-                        Typography.formatSub(requireActivity(), TranslationType.SOURCE, examplesBinding.reference, rc.language.slug, rc.language.direction);
-                        Typography.formatSub(requireActivity(), TranslationType.SOURCE, examplesBinding.passage, rc.language.slug, rc.language.direction);
+                        typography.formatSub( TranslationType.SOURCE, examplesBinding.reference, rc.language.slug, rc.language.direction);
+                        typography.formatSub(TranslationType.SOURCE, examplesBinding.passage, rc.language.slug, rc.language.direction);
                         wordBinding.examples.addView(examplesBinding.getRoot());
                     }
                     if(!exampleSlugs.isEmpty()) wordBinding.examplesTitle.setVisibility(View.VISIBLE);
                 }
             }
-            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, wordBinding.seeAlsoTitle, rc.language.slug, rc.language.direction);
-            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, wordBinding.examplesTitle, rc.language.slug, rc.language.direction);
+            typography.formatTitle(TranslationType.SOURCE, wordBinding.seeAlsoTitle, rc.language.slug, rc.language.direction);
+            typography.formatTitle(TranslationType.SOURCE, wordBinding.examplesTitle, rc.language.slug, rc.language.direction);
 
             binding.scrollingResourcesDrawerContent.removeAllViews();
             binding.scrollingResourcesDrawerContent.addView(wordBinding.getRoot());
@@ -703,9 +703,9 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
         noteBinding.title.setText(note.title);
         Language sourceLanguage = viewModel.getSourceLanguage();
         if (sourceLanguage != null) {
-            Typography.format(requireActivity(), TranslationType.SOURCE, noteBinding.title, sourceLanguage.slug, sourceLanguage.direction);
+            typography.format(TranslationType.SOURCE, noteBinding.title, sourceLanguage.slug, sourceLanguage.direction);
             noteBinding.description.setText(renderer.render(note.body));
-            Typography.formatSub(requireActivity(), TranslationType.SOURCE, noteBinding.description, sourceLanguage.slug, sourceLanguage.direction);
+            typography.formatSub(TranslationType.SOURCE, noteBinding.description, sourceLanguage.slug, sourceLanguage.direction);
             noteBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
         }
 
@@ -730,13 +730,13 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
         Language sourceLanguage = viewModel.getSourceLanguage();
         if (sourceLanguage != null) {
-            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.questionTitle, sourceLanguage.slug, sourceLanguage.direction);
-            Typography.formatTitle(requireActivity(), TranslationType.SOURCE, questionBinding.answerTitle, sourceLanguage.slug, sourceLanguage.direction);
+            typography.formatTitle(TranslationType.SOURCE, questionBinding.questionTitle, sourceLanguage.slug, sourceLanguage.direction);
+            typography.formatTitle(TranslationType.SOURCE, questionBinding.answerTitle, sourceLanguage.slug, sourceLanguage.direction);
 
             questionBinding.question.setText(question.title);
-            Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.question, sourceLanguage.slug, sourceLanguage.direction);
+            typography.formatSub(TranslationType.SOURCE, questionBinding.question, sourceLanguage.slug, sourceLanguage.direction);
             questionBinding.answer.setText(question.body);
-            Typography.formatSub(requireActivity(), TranslationType.SOURCE, questionBinding.answer, sourceLanguage.slug, sourceLanguage.direction);
+            typography.formatSub(TranslationType.SOURCE, questionBinding.answer, sourceLanguage.slug, sourceLanguage.direction);
         }
 
         binding.scrollingResourcesDrawerContent.removeAllViews();

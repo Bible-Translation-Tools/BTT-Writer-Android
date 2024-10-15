@@ -1,99 +1,102 @@
-package com.door43.translationstudio.ui.publish;
+package com.door43.translationstudio.ui.publish
 
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.tasks.ValidationTask;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-
-import java.security.InvalidParameterException;
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.tasks.ValidationTask
+import dagger.hilt.android.AndroidEntryPoint
+import org.unfoldingword.tools.taskmanager.ManagedTask
+import org.unfoldingword.tools.taskmanager.TaskManager
+import java.security.InvalidParameterException
+import javax.inject.Inject
 
 /**
  * Created by joel on 9/20/2015.
  */
-public class ValidationFragment extends PublishStepFragment implements ManagedTask.OnFinishedListener, ValidationAdapter.OnClickListener {
-    private LinearLayout mLoadingLayout;
-    private RecyclerView mRecyclerView;
-    private ValidationAdapter mValidationAdapter;
+@AndroidEntryPoint
+class ValidationFragment : PublishStepFragment(), ManagedTask.OnFinishedListener,
+    ValidationAdapter.OnClickListener {
+    private var mLoadingLayout: LinearLayout? = null
+    private var mRecyclerView: RecyclerView? = null
+    private var mValidationAdapter: ValidationAdapter? = null
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_publish_validation_list, container, false);
+    @Inject
+    lateinit var typography: Typography
 
-        Bundle args = getArguments();
-        String targetTranslationId = args.getString(PublishActivity.EXTRA_TARGET_TRANSLATION_ID);
-        String sourceTranslationId = args.getString(ARG_SOURCE_TRANSLATION_ID);
-        if(targetTranslationId == null) {
-            throw new InvalidParameterException("a valid target translation id is required");
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val rootView = inflater.inflate(R.layout.fragment_publish_validation_list, container, false)
+
+        val args = arguments
+        val targetTranslationId = args!!.getString(PublishActivity.EXTRA_TARGET_TRANSLATION_ID)
+        val sourceTranslationId = args.getString(ARG_SOURCE_TRANSLATION_ID)
+        if (targetTranslationId == null) {
+            throw InvalidParameterException("a valid target translation id is required")
         }
-        if(sourceTranslationId == null) {
-            throw new InvalidParameterException("a valid source translation id is required");
+        if (sourceTranslationId == null) {
+            throw InvalidParameterException("a valid source translation id is required")
         }
 
-        mRecyclerView = (RecyclerView)rootView.findViewById(R.id.recycler_view);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView.setLayoutManager(linearLayoutManager);
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        mValidationAdapter = new ValidationAdapter(getActivity());
-        mValidationAdapter.setOnClickListener(this);
-        mRecyclerView.setAdapter(mValidationAdapter);
-        mLoadingLayout = (LinearLayout)rootView.findViewById(R.id.loading_layout);
+        mRecyclerView = rootView.findViewById<View>(R.id.recycler_view) as RecyclerView
+        val linearLayoutManager = LinearLayoutManager(activity)
+        mRecyclerView!!.layoutManager = linearLayoutManager
+        mRecyclerView!!.itemAnimator = DefaultItemAnimator()
+        mValidationAdapter = ValidationAdapter(typography!!)
+        mValidationAdapter!!.setOnClickListener(this)
+        mRecyclerView!!.adapter = mValidationAdapter
+        mLoadingLayout = rootView.findViewById<View>(R.id.loading_layout) as LinearLayout
 
         // display loading view
-        mRecyclerView.setVisibility(View.GONE);
-        mLoadingLayout.setVisibility(View.VISIBLE);
+        mRecyclerView!!.visibility = View.GONE
+        mLoadingLayout!!.visibility = View.VISIBLE
 
         // start task to validate items
-        ValidationTask task = (ValidationTask) TaskManager.getTask(ValidationTask.TASK_ID);
-        if(task != null) {
-            task.addOnFinishedListener(this);
+        var task = TaskManager.getTask(ValidationTask.TASK_ID) as ValidationTask
+        if (task != null) {
+            task.addOnFinishedListener(this)
         } else {
             // start new task
-            task = new ValidationTask(getActivity(), targetTranslationId, sourceTranslationId);
-            task.addOnFinishedListener(this);
-            TaskManager.addTask(task);
+            task = ValidationTask(activity, targetTranslationId, sourceTranslationId)
+            task.addOnFinishedListener(this)
+            TaskManager.addTask(task)
         }
 
-        return rootView;
+        return rootView
     }
 
-    @Override
-    public void onTaskFinished(final ManagedTask task) {
-        TaskManager.clearTask(task);
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(new Runnable() {
-            @Override
-            public void run() {
-                mValidationAdapter.setValidations(((ValidationTask) task).getValidations());
-                mRecyclerView.setVisibility(View.VISIBLE);
-                mLoadingLayout.setVisibility(View.GONE);
-                // TODO: animate
-            }
-        });
+    override fun onTaskFinished(task: ManagedTask) {
+        TaskManager.clearTask(task)
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            mValidationAdapter!!.setValidations((task as ValidationTask).validations.toList())
+            mRecyclerView!!.visibility = View.VISIBLE
+            mLoadingLayout!!.visibility = View.GONE
+            // TODO: animate
+        }
     }
 
-    @Override
-    public void onClickReview(String targetTranslationId, String chapterId, String frameId) {
-        openReview(targetTranslationId, chapterId, frameId);
+    override fun onClickReview(targetTranslationId: String?, chapterId: String?, frameId: String?) {
+        openReview(targetTranslationId, chapterId, frameId)
     }
 
-    @Override
-    public void onClickNext() {
-        getListener().nextStep();
+    override fun onClickNext() {
+        listener.nextStep()
     }
 
-    @Override
-    public void onDestroy() {
-        mValidationAdapter.setOnClickListener(null);
-        super.onDestroy();
+    override fun onDestroy() {
+        mValidationAdapter!!.setOnClickListener(null)
+        super.onDestroy()
     }
 }

@@ -50,6 +50,8 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     public static final int MAX_SOURCE_ITEMS = 3;
 
     private final Context context;
+    private final Typography typography;
+
     private final Map<String, RCItem> data = new HashMap<>();
     private final List<String> selected = new ArrayList<>();
     private final List<String> available = new ArrayList<>();
@@ -79,8 +81,9 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         }
     }
 
-    public ChooseSourceTranslationAdapter(Context context) {
+    public ChooseSourceTranslationAdapter(Context context, Typography typography) {
         this.context = context;
+        this.typography = typography;
     }
 
     public void setItems(List<RCItem> items) {
@@ -326,29 +329,53 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         if(convertView == null) {
             switch (rowType) {
                 case TYPE_SEPARATOR:
-                    binding = FragmentSelectSourceTranslationListHeaderBinding.inflate(inflater, parent, false);
+                    binding = FragmentSelectSourceTranslationListHeaderBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListHeaderBinding separatorBinding =
+                            ((FragmentSelectSourceTranslationListHeaderBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = ((FragmentSelectSourceTranslationListHeaderBinding) binding).title;
-                    ((FragmentSelectSourceTranslationListHeaderBinding) binding).title.setTransformationMethod(null);
+                    holder.titleView = separatorBinding.title;
+                    separatorBinding.title.setTransformationMethod(null);
                     break;
                 case TYPE_ITEM_SELECTABLE:
-                    binding = FragmentSelectSourceTranslationListItemBinding.inflate(inflater, parent, false);
+                    binding = FragmentSelectSourceTranslationListItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListItemBinding selectableBinding =
+                            ((FragmentSelectSourceTranslationListItemBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = ((FragmentSelectSourceTranslationListItemBinding) binding).title;
-                    holder.checkboxView = ((FragmentSelectSourceTranslationListItemBinding) binding).checkBoxView;
+                    holder.titleView = selectableBinding.title;
+                    holder.checkboxView = selectableBinding.checkBoxView;
                     break;
                 case TYPE_ITEM_SELECTABLE_UPDATABLE:
-                    binding = FragmentSelectSourceTranslationListUpdatableItemBinding.inflate(inflater, parent, false);
+                    binding = FragmentSelectSourceTranslationListUpdatableItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListUpdatableItemBinding updatableItemBinding =
+                            ((FragmentSelectSourceTranslationListUpdatableItemBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = ((FragmentSelectSourceTranslationListUpdatableItemBinding) binding).title;
-                    holder.checkboxView = ((FragmentSelectSourceTranslationListUpdatableItemBinding) binding).checkBoxView;
-                    holder.downloadView = ((FragmentSelectSourceTranslationListUpdatableItemBinding) binding).downloadResource;
+                    holder.titleView = updatableItemBinding.title;
+                    holder.checkboxView = updatableItemBinding.checkBoxView;
+                    holder.downloadView = updatableItemBinding.downloadResource;
                     break;
                 case TYPE_ITEM_NEED_DOWNLOAD:
-                    binding = FragmentSelectSourceTranslationListDownloadItemBinding.inflate(inflater, parent, false);
+                    binding = FragmentSelectSourceTranslationListDownloadItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListDownloadItemBinding downloadBinding =
+                            ((FragmentSelectSourceTranslationListDownloadItemBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = ((FragmentSelectSourceTranslationListDownloadItemBinding) binding).title;
-                    holder.downloadView = ((FragmentSelectSourceTranslationListDownloadItemBinding) binding).downloadResource;
+                    holder.titleView = downloadBinding.title;
+                    holder.downloadView = downloadBinding.downloadResource;
                     break;
                 default:
                     throw new IllegalArgumentException("Incorrect view type");
@@ -426,9 +453,9 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      */
     private void setFontForLanguage(ViewHolder holder, RCItem item) {
         String code = item.sourceTranslation.language.slug;
-        Typography.format(context, TranslationType.SOURCE, holder.titleView, code, item.sourceTranslation.language.direction);
+        typography.format(TranslationType.SOURCE, holder.titleView, code, item.sourceTranslation.language.direction);
 
-        Typeface typeface = Typography.getBestFontForLanguage(context, TranslationType.SOURCE, code, item.sourceTranslation.language.direction);
+        Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, item.sourceTranslation.language.direction);
         if(typeface != Typeface.DEFAULT) {
             holder.titleView.setTypeface(typeface, Typeface.NORMAL);
         }

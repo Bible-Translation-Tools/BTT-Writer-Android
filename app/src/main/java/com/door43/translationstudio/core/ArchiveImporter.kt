@@ -44,9 +44,9 @@ class ArchiveImporter @Inject constructor(
         // migrate target translations
         val validTargetTranslations = arrayListOf<File>()
         for (dir in targetTranslationDirs) {
-            val migrated = migrator.migrate(dir)
-            if (migrated) {
-                validTargetTranslations.add(dir)
+            val migratedDir = migrator.migrate(dir)
+            if (migratedDir != null) {
+                validTargetTranslations.add(migratedDir)
             }
         }
         return validTargetTranslations

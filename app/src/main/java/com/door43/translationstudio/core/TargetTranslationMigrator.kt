@@ -78,16 +78,15 @@ class TargetTranslationMigrator @Inject constructor(
     fun migrate(
         targetTranslationDir: File,
         manifestFile: File = File(targetTranslationDir, MANIFEST_FILE)
-    ): Boolean {
-        var success = false
-
+    ): File? {
+        var migratedDir: File?
         try {
             val manifest = JSONObject(readFileToString(manifestFile))
             var packageVersion = 2 // default to version 2 if no package version is available
             if (manifest.has("package_version")) {
                 packageVersion = manifest.getInt("package_version")
             }
-            when (packageVersion) {
+            migratedDir = when (packageVersion) {
                 2 -> {
                     v2(targetTranslationDir)
                     v3(targetTranslationDir)
@@ -95,9 +94,6 @@ class TargetTranslationMigrator @Inject constructor(
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
-                    if (validateTranslationType(targetTranslationDir)) {
-                        success = true
-                    }
                 }
                 3 -> {
                     v3(targetTranslationDir)
@@ -105,48 +101,33 @@ class TargetTranslationMigrator @Inject constructor(
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
-                    if (validateTranslationType(targetTranslationDir)) {
-                        success = true
-                    }
                 }
                 4 -> {
                     v4(targetTranslationDir)
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
-                    if (validateTranslationType(targetTranslationDir)) {
-                        success = true
-                    }
                 }
                 5 -> {
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
-                    if (validateTranslationType(targetTranslationDir)) {
-                        success = true
-                    }
                 }
                 6 -> {
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
-                    if (validateTranslationType(targetTranslationDir)) {
-                        success = true
-                    }
                 }
-                7 -> {
-                    v7(targetTranslationDir)
-                    if (validateTranslationType(targetTranslationDir)) {
-                        success = true
-                    }
-                }
-                else -> if (validateTranslationType(targetTranslationDir)) {
-                    success = true
-                }
+                7 -> v7(targetTranslationDir)
+                else -> targetTranslationDir
+            }
+            if (!validateTranslationType(targetTranslationDir)) {
+                migratedDir = null
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            migratedDir = null
         }
-        if (success) {
+        if (migratedDir != null) {
             // import new language requests
             val tt = TargetTranslation.open(targetTranslationDir, null)
             if (tt != null) {
@@ -232,7 +213,7 @@ class TargetTranslationMigrator @Inject constructor(
                 }
             }
         }
-        return success
+        return migratedDir
     }
 
     /**
@@ -264,7 +245,7 @@ class TargetTranslationMigrator @Inject constructor(
         // migrate 00 chunk
         // TRICKY: ts android only supports book translations right now
         val translations = library.index.findTranslations(
-            null,
+            "en",
             projectSlug,
             null,
             "book",

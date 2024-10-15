@@ -22,11 +22,7 @@ public class CustomDragShadowBuilder extends View.DragShadowBuilder {
     public static View.DragShadowBuilder fromResource(Context context, int drawableId) {
         CustomDragShadowBuilder builder = new CustomDragShadowBuilder();
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            builder.shadow = context.getResources().getDrawable(drawableId, null);
-        } else {
-            builder.shadow = context.getResources().getDrawable(drawableId);
-        }
+        builder.shadow = context.getResources().getDrawable(drawableId, null);
         if (builder.shadow == null) {
             throw new NullPointerException("Drawable from id is null");
         }

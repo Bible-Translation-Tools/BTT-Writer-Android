@@ -664,7 +664,7 @@ class HomeActivity : BaseActivity(),
             .setMessage(R.string.exit_confirmation)
             .setPositiveButton(
                 R.string.yes
-            ) { _, _ -> onBackPressedDispatcher.onBackPressed() }
+            ) { _, _ -> finishAffinity() }
             .setNegativeButton(R.string.no, null)
             .show()
     }
@@ -755,8 +755,8 @@ class HomeActivity : BaseActivity(),
         }
     }
 
-    fun notifyDatasetChanged() {
-        onResume()
+    fun loadTranslations() {
+        viewModel.loadTranslations()
     }
 
     public override fun onSaveInstanceState(outState: Bundle) {
