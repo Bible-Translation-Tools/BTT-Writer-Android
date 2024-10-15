@@ -241,8 +241,8 @@ class HomeActivity : BaseActivity(),
             if (it != null) {
                 if (it.exists()) {
                     val u = FileProvider.getUriForFile(
-                        this@HomeActivity,
-                        "com.door43.translationstudio.fileprovider",
+                        this,
+                        "${application.packageName}.fileprovider",
                         it
                     )
                     val i = Intent(Intent.ACTION_SEND)
