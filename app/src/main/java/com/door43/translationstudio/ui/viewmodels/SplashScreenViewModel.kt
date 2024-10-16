@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
+import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
@@ -67,6 +68,6 @@ class SplashScreenViewModel @Inject constructor(
     }
 
     fun saveHardwareCheck(checked: Boolean) {
-        prefRepository.setPrivatePref(KEY_PREF_CHECK_HARDWARE, checked)
+        prefRepository.setDefaultPref(KEY_PREF_CHECK_HARDWARE, checked)
     }
 }

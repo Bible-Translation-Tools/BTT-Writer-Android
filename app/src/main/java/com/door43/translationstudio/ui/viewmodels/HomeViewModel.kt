@@ -23,6 +23,7 @@ import com.door43.usecases.GogsLogout
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.RegisterSSHKeys
+import com.door43.usecases.TranslationProgress
 import com.door43.usecases.UpdateCatalogs
 import com.door43.usecases.UpdateSource
 import com.door43.usecases.cleanup
@@ -57,6 +58,7 @@ class HomeViewModel @Inject constructor(
     @Inject lateinit var downloadLatestRelease: DownloadLatestRelease
     @Inject lateinit var backupRC: BackupRC
     @Inject lateinit var library: Door43Client
+    @Inject lateinit var calculateProgress: TranslationProgress
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -94,6 +96,9 @@ class HomeViewModel @Inject constructor(
     private val _indexDownloaded = MutableLiveData<Boolean?>()
     val indexDownloaded: LiveData<Boolean?> = _indexDownloaded
 
+    private val _translationProgress = MutableLiveData<Double?>()
+    val translationProgress: LiveData<Double?> = _translationProgress
+
     var lastFocusTargetTranslation: String?
         get() = translator.lastFocusTargetTranslation
         set(value) { translator.lastFocusTargetTranslation = value }
@@ -111,7 +116,8 @@ class HomeViewModel @Inject constructor(
             val lastTarget = translator.lastFocusTargetTranslation
             if (lastTarget != null) {
                 return translator.getTargetTranslation(lastTarget)?.let {
-                    TranslationItem(it, ::getProject)
+                    val progress = calculateProgress.execute(it)
+                    TranslationItem(it, progress, ::getProject)
                 }
             }
             return null
@@ -124,7 +130,8 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _translations.value = withContext(Dispatchers.IO) {
                 translator.targetTranslations.map {
-                    TranslationItem(it, ::getProject)
+                    val progress = calculateProgress.execute(it)
+                    TranslationItem(it, progress, ::getProject)
                 }
             }
         }
@@ -341,6 +348,14 @@ class HomeViewModel @Inject constructor(
 
     fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
         downloadLatestRelease.execute(release)
+    }
+
+    fun getTranslationProgress(targetTranslation: TargetTranslation) {
+        viewModelScope.launch {
+            _translationProgress.value = withContext(Dispatchers.IO) {
+                calculateProgress.execute(targetTranslation)
+            }
+        }
     }
 
     fun clearResults() {

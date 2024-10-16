@@ -6,6 +6,7 @@ import org.unfoldingword.resourcecontainer.Resource
 
 data class TranslationItem(
     val translation: TargetTranslation,
+    val progress: Double,
     private val onGetProject: (TargetTranslation) -> Project
 ) {
     val project

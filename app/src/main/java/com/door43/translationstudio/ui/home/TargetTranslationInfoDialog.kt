@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.home
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Typeface
@@ -21,7 +22,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
-import com.door43.translationstudio.tasks.TranslationProgressTask
 import com.door43.translationstudio.ui.dialogs.BackupDialog
 import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
@@ -29,8 +29,6 @@ import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.logger.Logger
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.TaskManager
 import javax.inject.Inject
 import kotlin.math.min
 
@@ -38,7 +36,7 @@ import kotlin.math.min
  * Displays detailed information about a target translation
  */
 @AndroidEntryPoint
-class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedListener {
+class TargetTranslationInfoDialog : DialogFragment() {
     @Inject lateinit var typography: Typography
     private var targetTranslation: TranslationItem? = null
 
@@ -79,6 +77,8 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
             onChangeTargetLanguageRequest(result)
         }
 
+        setupObservers()
+
         targetTranslation?.let { item ->
             // set typeface for language
             val targetLanguage = item.translation.targetLanguage
@@ -88,14 +88,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
                 targetLanguage.direction
             )
 
-            var task = TaskManager.getTask(TranslationProgressTask.TASK_ID)
-            if (task == null) {
-                task = TranslationProgressTask(item.translation)
-                task.addOnFinishedListener(this)
-                TaskManager.addTask(task, TranslationProgressTask.TASK_ID)
-            } else {
-                task.addOnFinishedListener(this)
-            }
+            viewModel.getTranslationProgress(item.translation)
 
             with(binding) {
                 title.setTypeface(typeface, Typeface.NORMAL)
@@ -224,6 +217,18 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
         return binding.root
     }
 
+    @SuppressLint("SetTextI18n")
+    private fun setupObservers() {
+        viewModel.translationProgress.observe(viewLifecycleOwner) {
+            it?.let { progress ->
+                val hand = Handler(Looper.getMainLooper())
+                hand.post {
+                    binding.progress.text = "${Math.round(progress * 100)}%"
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
 
@@ -240,17 +245,6 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
             (width * screenWidthFactor).toInt(),
             WindowManager.LayoutParams.MATCH_PARENT
         )
-    }
-
-    override fun onTaskFinished(task: ManagedTask) {
-        TaskManager.clearTask(task)
-        if (task is TranslationProgressTask) {
-            val hand = Handler(Looper.getMainLooper())
-            hand.post {
-                val progress = Math.round(task.progress.toFloat() * 100)
-                binding.progress.text = "$progress%"
-            }
-        }
     }
 
     /**
@@ -283,12 +277,6 @@ class TargetTranslationInfoDialog : DialogFragment(), ManagedTask.OnFinishedList
             }
         }
         dismiss()
-    }
-
-    override fun onDestroy() {
-        val task = TaskManager.getTask(TranslationProgressTask.TASK_ID)
-        task?.removeOnFinishedListener(this)
-        super.onDestroy()
     }
 
     override fun onDestroyView() {

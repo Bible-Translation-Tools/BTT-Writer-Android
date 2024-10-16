@@ -32,8 +32,8 @@ class TargetTranslationListFragment : BaseFragment() {
     @Inject lateinit var typography: Typography
 
     private var listener: OnItemClickListener? = null
-    private var sortProjectColumn = SortProjectColumnType.bibleOrder
-    private var sortByColumn = SortByColumnType.projectThenLanguage
+    private var sortProjectColumn = SortProjectColumnType.BibleOrder
+    private var sortByColumn = SortByColumnType.ProjectThenLanguage
 
     private lateinit var adapter: TargetTranslationAdapter
     private val viewModel: HomeViewModel by activityViewModels()
@@ -51,23 +51,25 @@ class TargetTranslationListFragment : BaseFragment() {
         setupObservers()
 
         adapter = TargetTranslationAdapter(typography)
-        adapter.setOnInfoClickListener { item: TranslationItem ->
-            val ft = parentFragmentManager.beginTransaction()
-            val prev = parentFragmentManager.findFragmentByTag("infoDialog")
-            if (prev != null) {
-                ft.remove(prev)
-            }
-            ft.addToBackStack(null)
+        adapter.setOnInfoClickListener(object : TargetTranslationAdapter.OnInfoClickListener {
+            override fun onClick(item: TranslationItem) {
+                val ft = parentFragmentManager.beginTransaction()
+                val prev = parentFragmentManager.findFragmentByTag("infoDialog")
+                if (prev != null) {
+                    ft.remove(prev)
+                }
+                ft.addToBackStack(null)
 
-            val dialog = TargetTranslationInfoDialog()
-            val args = Bundle()
-            args.putString(
-                TargetTranslationInfoDialog.ARG_TARGET_TRANSLATION_ID,
-                item.translation.id
-            )
-            dialog.arguments = args
-            dialog.show(ft, "infoDialog")
-        }
+                val dialog = TargetTranslationInfoDialog()
+                val args = Bundle()
+                args.putString(
+                    TargetTranslationInfoDialog.ARG_TARGET_TRANSLATION_ID,
+                    item.translation.id
+                )
+                dialog.arguments = args
+                dialog.show(ft, "infoDialog")
+            }
+        })
         binding.translationsList.adapter = adapter
 
         // open target translation
@@ -89,12 +91,12 @@ class TargetTranslationListFragment : BaseFragment() {
             )
         } else { // if not restoring states, get last values
             sortByColumn = SortByColumnType.fromString(
-                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM),
-                SortByColumnType.projectThenLanguage
+                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, "0"),
+                SortByColumnType.ProjectThenLanguage
             )
             sortProjectColumn = SortProjectColumnType.fromString(
-                prefRepository.getDefaultPref(SORT_PROJECT_ITEM),
-                SortProjectColumnType.bibleOrder
+                prefRepository.getDefaultPref(SORT_PROJECT_ITEM, "0"),
+                SortProjectColumnType.BibleOrder
             )
         }
         adapter.sort(sortByColumn, sortProjectColumn)
@@ -157,7 +159,7 @@ class TargetTranslationListFragment : BaseFragment() {
 
     private fun setupObservers() {
         viewModel.translations.observe(viewLifecycleOwner) {
-            it?.let { adapter.setData(it) }
+            it?.let { adapter.setTranslations(it) }
         }
     }
 
