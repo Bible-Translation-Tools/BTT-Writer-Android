@@ -1,164 +1,148 @@
-package com.door43.translationstudio.ui.home;
+package com.door43.translationstudio.ui.home
 
-import android.content.DialogInterface;
-import android.os.Bundle;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.NativeSpeaker;
-import com.door43.translationstudio.core.Profile;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.ui.ContributorsAdapter;
-import com.door43.translationstudio.ui.dialogs.ContributorDialog;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.NativeSpeaker
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.databinding.FragmentContributorsBinding
+import com.door43.translationstudio.ui.ContributorsAdapter
+import com.door43.translationstudio.ui.dialogs.ContributorDialog
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * Created by joel on 2/22/2016.
  */
 @AndroidEntryPoint
-public class ManageContributorsDialog extends DialogFragment implements ContributorsAdapter.OnClickListener  {
-    @Inject
-    Translator translator;
-    @Inject
-    Profile profile;
+class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickListener {
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var profile: Profile
 
-    public static final String EXTRA_TARGET_TRANSLATION_ID = "target_translation_id";
-    private TargetTranslation targetTranslation;
-    private RecyclerView recyclerView;
-    private ContributorsAdapter contributorsAdapter;
-    private View.OnClickListener onNativeSpeakerDialogClick;
+    private lateinit var targetTranslation: TargetTranslation
+    private val adapter by lazy { ContributorsAdapter() }
+    private var onNativeSpeakerDialogClick: View.OnClickListener? = null
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setStyle(DialogFragment.STYLE_NO_TITLE, 0);
+    private var _binding: FragmentContributorsBinding? = null
+    val binding get() = _binding!!
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NO_TITLE, 0)
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Bundle args = getArguments();
-        View view = inflater.inflate(R.layout.fragment_contributors, container, false);
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _binding = FragmentContributorsBinding.inflate(inflater, container, false)
 
-        String targetTranslationId = args.getString(ManageContributorsDialog.EXTRA_TARGET_TRANSLATION_ID);
+        val args = requireArguments()
+        val targetTranslationId = args.getString(EXTRA_TARGET_TRANSLATION_ID)
 
-        targetTranslation = translator.getTargetTranslation(targetTranslationId);
+        targetTranslation = translator.getTargetTranslation(targetTranslationId)!!
 
-//         auto add profile
-        targetTranslation.addContributor(profile.getNativeSpeaker());
+        // auto add profile
+        targetTranslation.addContributor(profile.nativeSpeaker)
 
-        recyclerView = (RecyclerView)view.findViewById(R.id.recycler_view);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        recyclerView.setLayoutManager(linearLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        contributorsAdapter = new ContributorsAdapter();
-        contributorsAdapter.setDisplayNext(false);
-        contributorsAdapter.setContributors(targetTranslation.getContributors());
-        contributorsAdapter.setOnClickListener(this);
-        recyclerView.setAdapter(contributorsAdapter);
+        with (binding) {
+            adapter.setDisplayNext(false)
+            adapter.setContributors(targetTranslation.contributors)
+            adapter.setOnClickListener(this@ManageContributorsDialog)
 
-        onNativeSpeakerDialogClick = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                contributorsAdapter.setContributors(targetTranslation.getContributors());
-            }
-        };
+            recyclerView.layoutManager = LinearLayoutManager(activity)
+            recyclerView.itemAnimator = DefaultItemAnimator()
+            recyclerView.adapter = adapter
+        }
+
+        onNativeSpeakerDialogClick = View.OnClickListener {
+            adapter.setContributors(targetTranslation.contributors)
+        }
 
         // re-attach to dialogs
-        Fragment prevEditDialog = getParentFragmentManager().findFragmentByTag("edit-native-speaker");
-        if(prevEditDialog != null) {
-            ((ContributorDialog)prevEditDialog).setOnClickListener(onNativeSpeakerDialogClick);
+        val prevEditDialog = parentFragmentManager.findFragmentByTag("edit-native-speaker")
+        if (prevEditDialog != null) {
+            (prevEditDialog as ContributorDialog).setOnClickListener(onNativeSpeakerDialogClick)
         }
-        Fragment prevAddDialog = getParentFragmentManager().findFragmentByTag("add-native-speaker");
-        if(prevAddDialog != null) {
-            ((ContributorDialog)prevAddDialog).setOnClickListener(onNativeSpeakerDialogClick);
+        val prevAddDialog = parentFragmentManager.findFragmentByTag("add-native-speaker")
+        if (prevAddDialog != null) {
+            (prevAddDialog as ContributorDialog).setOnClickListener(onNativeSpeakerDialogClick)
         }
 
-        return view;
+        return binding.root
     }
 
-    @Override
-    public void onEditNativeSpeaker(NativeSpeaker speaker) {
-        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-        Fragment prev = getParentFragmentManager().findFragmentByTag("edit-native-speaker");
-        if(prev != null) {
-            ft.remove(prev);
+    override fun onEditNativeSpeaker(speaker: NativeSpeaker) {
+        val ft = parentFragmentManager.beginTransaction()
+        val prev = parentFragmentManager.findFragmentByTag("edit-native-speaker")
+        if (prev != null) {
+            ft.remove(prev)
         }
-        ft.addToBackStack(null);
+        ft.addToBackStack(null)
 
-        ContributorDialog dialog = new ContributorDialog();
-        Bundle args = new Bundle();
-        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.getId());
-        args.putString(ContributorDialog.ARG_NATIVE_SPEAKER, speaker.getName());
-        dialog.setArguments(args);
-        dialog.setOnClickListener(onNativeSpeakerDialogClick);
-        dialog.show(ft, "edit-native-speaker");
+        val dialog = ContributorDialog()
+        val args = Bundle()
+        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.id)
+        args.putString(ContributorDialog.ARG_NATIVE_SPEAKER, speaker.name)
+        dialog.arguments = args
+        dialog.setOnClickListener(onNativeSpeakerDialogClick)
+        dialog.show(ft, "edit-native-speaker")
     }
 
-    @Override
-    public void onClickAddNativeSpeaker() {
-        showAddNativeSpeakerDialog();
+    override fun onClickAddNativeSpeaker() {
+        showAddNativeSpeakerDialog()
     }
 
-    @Override
-    public void onClickNext() {
-
+    override fun onClickNext() {
     }
 
-    @Override
-    public void onClickPrivacyNotice() {
-        showPrivacyNotice(null);
+    override fun onClickPrivacyNotice() {
+        showPrivacyNotice()
     }
 
-    public void showAddNativeSpeakerDialog() {
-        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-        Fragment prev = getParentFragmentManager().findFragmentByTag("add-native-speaker");
-        if(prev != null) {
-            ft.remove(prev);
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    private fun showAddNativeSpeakerDialog() {
+        val ft = parentFragmentManager.beginTransaction()
+        val prev = parentFragmentManager.findFragmentByTag("add-native-speaker")
+        if (prev != null) {
+            ft.remove(prev)
         }
-        ft.addToBackStack(null);
+        ft.addToBackStack(null)
 
-        ContributorDialog dialog = new ContributorDialog();
-        Bundle args = new Bundle();
-        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.getId());
-        dialog.setArguments(args);
-        dialog.setOnClickListener(onNativeSpeakerDialogClick);
-        dialog.show(ft, "add-native-speaker");
+        val dialog = ContributorDialog()
+        val args = Bundle()
+        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.id)
+        dialog.arguments = args
+        dialog.setOnClickListener(onNativeSpeakerDialogClick)
+        dialog.show(ft, "add-native-speaker")
     }
 
     /**
      * Displays the privacy notice
-     * @param listener if set the dialog will become a confirmation dialog
      */
-    public void showPrivacyNotice(DialogInterface.OnClickListener listener) {
+    private fun showPrivacyNotice() {
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.privacy_notice)
+            .setIcon(R.drawable.ic_info_secondary_24dp)
+            .setMessage(R.string.publishing_privacy_notice)
+            .setPositiveButton(R.string.dismiss, null)
+            .show()
+    }
 
-        if(listener != null) {
-            new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                    .setTitle(R.string.privacy_notice)
-                    .setIcon(R.drawable.ic_info_secondary_24dp)
-                    .setMessage(R.string.publishing_privacy_notice)
-                    .setPositiveButton(R.string.label_continue, listener)
-                    .setNegativeButton(R.string.title_cancel, null)
-                    .show();
-        } else {
-            new AlertDialog.Builder(getActivity(), R.style.AppTheme_Dialog)
-                    .setTitle(R.string.privacy_notice)
-                    .setIcon(R.drawable.ic_info_secondary_24dp)
-                    .setMessage(R.string.publishing_privacy_notice)
-                    .setPositiveButton(R.string.dismiss, null)
-                    .show();
-        }
+    companion object {
+        const val EXTRA_TARGET_TRANSLATION_ID: String = "target_translation_id"
     }
 }

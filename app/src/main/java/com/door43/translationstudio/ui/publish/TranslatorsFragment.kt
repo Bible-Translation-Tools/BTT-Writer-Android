@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.publish
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -112,7 +111,7 @@ class TranslatorsFragment : PublishStepFragment(), ContributorsAdapter.OnClickLi
     }
 
     override fun onClickPrivacyNotice() {
-        showPrivacyNotice(null)
+        showPrivacyNotice()
     }
 
     private fun showAddNativeSpeakerDialog() {
@@ -133,25 +132,14 @@ class TranslatorsFragment : PublishStepFragment(), ContributorsAdapter.OnClickLi
 
     /**
      * Displays the privacy notice
-     * @param listener if set the dialog will become a confirmation dialog
      */
-    private fun showPrivacyNotice(listener: DialogInterface.OnClickListener?) {
-        if (listener != null) {
-            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.privacy_notice)
-                .setIcon(R.drawable.ic_info_secondary_24dp)
-                .setMessage(R.string.publishing_privacy_notice)
-                .setPositiveButton(R.string.label_continue, listener)
-                .setNegativeButton(R.string.title_cancel, null)
-                .show()
-        } else {
-            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.privacy_notice)
-                .setIcon(R.drawable.ic_info_secondary_24dp)
-                .setMessage(R.string.publishing_privacy_notice)
-                .setPositiveButton(R.string.dismiss, null)
-                .show()
-        }
+    private fun showPrivacyNotice() {
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.privacy_notice)
+            .setIcon(R.drawable.ic_info_secondary_24dp)
+            .setMessage(R.string.publishing_privacy_notice)
+            .setPositiveButton(R.string.dismiss, null)
+            .show()
     }
 
     override fun onDestroyView() {
