@@ -58,7 +58,17 @@ class CrashReporterViewModel @Inject constructor(
         }
     }
 
-    fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
-        downloadLatestRelease.execute(release)
+    fun downloadLatestRelease() {
+        _latestRelease.value?.release?.let { release ->
+            viewModelScope.launch {
+                _progress.value = ProgressHelper.Progress(
+                    application.resources.getString(R.string.downloading)
+                )
+                withContext(Dispatchers.IO) {
+                    downloadLatestRelease.execute(release)
+                }
+                _progress.value = null
+            }
+        }
     }
 }
