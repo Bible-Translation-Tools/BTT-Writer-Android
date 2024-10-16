@@ -1,87 +1,86 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import org.unfoldingword.tools.logger.LogEntry;
-import org.unfoldingword.tools.logger.LogLevel;
-import com.door43.translationstudio.R;
-import com.door43.widget.ViewUtil;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentLogItemBinding
+import com.door43.widget.ViewUtil
+import org.unfoldingword.tools.logger.LogEntry
+import org.unfoldingword.tools.logger.LogLevel
 
 /**
  * Created by joel on 2/26/2015.
  */
-public class LogAdapter extends BaseAdapter {
-
-    private List<LogEntry> mLogs = new ArrayList<>();
+class LogAdapter : BaseAdapter() {
+    private var logs = arrayListOf<LogEntry>()
 
     /**
      * Adds an item to the adapter
      * @param logs
      */
-    public void setItems(List<LogEntry> logs) {
-        mLogs = logs;
-        notifyDataSetChanged();
+    fun setItems(logs: List<LogEntry>) {
+        this.logs.clear()
+        this.logs.addAll(logs)
+        notifyDataSetChanged()
     }
 
-    @Override
-    public int getCount() {
-        return mLogs.size();
+    override fun getCount(): Int {
+        return logs.size
     }
 
-    @Override
-    public LogEntry getItem(int i) {
-        return mLogs.get(i);
+    override fun getItem(i: Int): LogEntry {
+        return logs[i]
     }
 
-    @Override
-    public long getItemId(int i) {
-        return 0;
+    override fun getItemId(i: Int): Long {
+        return 0
     }
 
-    @Override
-    public View getView(int i, View view, ViewGroup viewGroup) {
-        View v = view;
-        ViewHolder holder = new ViewHolder();
+    override fun getView(i: Int, view: View?, viewGroup: ViewGroup): View {
+        val logEntry = getItem(i)
 
-        LogEntry logEntry = getItem(i);
-
-        if(view == null) {
-            v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.fragment_log_item, null);
-            holder.icon = (ImageView)v.findViewById(R.id.log_icon);
-            holder.title = (TextView)v.findViewById(R.id.log_title);
-            holder.namespace = (TextView)v.findViewById(R.id.log_namespace);
-            v.setTag(holder);
+        val binding = if (view == null) {
+            FragmentLogItemBinding.inflate(
+                LayoutInflater.from(viewGroup.context),
+                viewGroup,
+                false
+            )
         } else {
-            holder = (ViewHolder)v.getTag();
+            FragmentLogItemBinding.bind(view)
         }
 
-        holder.title.setText(logEntry.message);
-        holder.namespace.setText(logEntry.classPath);
-        if(logEntry.level == LogLevel.Error) {
-            holder.icon.setBackgroundResource(R.drawable.ic_error_black_18dp);
-            ViewUtil.tintViewDrawable(holder.icon, viewGroup.getContext().getResources().getColor(R.color.danger));
-        } else if(logEntry.level == LogLevel.Warning) {
-            holder.icon.setBackgroundResource(R.drawable.ic_warning_black_18dp);
-            ViewUtil.tintViewDrawable(holder.icon, viewGroup.getContext().getResources().getColor(R.color.warning));
-        } else if(logEntry.level == LogLevel.Info) {
-            holder.icon.setBackgroundResource(R.drawable.ic_info_black_18dp);
-            ViewUtil.tintViewDrawable(holder.icon, viewGroup.getContext().getResources().getColor(R.color.info));
+        with(binding) {
+            logTitle.text = logEntry.message
+            logNamespace.text = logEntry.classPath
+
+            when (logEntry.level) {
+                LogLevel.Error -> {
+                    logIcon.setBackgroundResource(R.drawable.ic_error_black_18dp)
+                    ViewUtil.tintViewDrawable(
+                        logIcon,
+                        viewGroup.context.resources.getColor(R.color.danger)
+                    )
+                }
+                LogLevel.Warning -> {
+                    logIcon.setBackgroundResource(R.drawable.ic_warning_black_18dp)
+                    ViewUtil.tintViewDrawable(
+                        logIcon,
+                        viewGroup.context.resources.getColor(R.color.warning)
+                    )
+                }
+                LogLevel.Info -> {
+                    logIcon.setBackgroundResource(R.drawable.ic_info_black_18dp)
+                    ViewUtil.tintViewDrawable(
+                        logIcon,
+                        viewGroup.context.resources.getColor(R.color.info)
+                    )
+                }
+                else -> {}
+            }
         }
 
-        return v;
-    }
-
-    private static class ViewHolder {
-        public ImageView icon;
-        public TextView title;
-        public TextView namespace;
+        return binding.root
     }
 }

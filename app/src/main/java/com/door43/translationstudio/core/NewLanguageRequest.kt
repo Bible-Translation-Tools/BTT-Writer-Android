@@ -223,10 +223,6 @@ class NewLanguageRequest private constructor(
 
         fun build(): NewLanguageRequest? {
             if (requestUUID == null) {
-                Logger.w(
-                    NewLanguageRequest::class.java.name,
-                    "RequestUUID is null"
-                )
                 return null
             }
 

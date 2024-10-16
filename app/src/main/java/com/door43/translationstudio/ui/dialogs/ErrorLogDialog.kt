@@ -1,125 +1,86 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import org.unfoldingword.tools.logger.LogEntry;
-import org.unfoldingword.tools.logger.Logger;
-import com.door43.translationstudio.R;
-import org.unfoldingword.tools.taskmanager.ThreadableUI;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import android.app.Dialog
+import android.os.Bundle
+import android.text.method.ScrollingMovementMethod
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.activityViewModels
+import com.door43.translationstudio.databinding.DialogErrorLogBinding
+import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel
+import org.unfoldingword.tools.logger.Logger
 
 /**
  * This dialog display a list of all the error logs
  */
-public class ErrorLogDialog  extends DialogFragment{
+class ErrorLogDialog : DialogFragment() {
+    private val adapter by lazy { LogAdapter() }
 
-    public static final String ARG_LOG_TEXT = "arg_log_text";
-    private LogAdapter mAdapter;
-    private ThreadableUI mThread;
+    private var _binding: DialogErrorLogBinding? = null
+    private val binding get() = _binding!!
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getDialog().setTitle("Logs");
-        View v = inflater.inflate(R.layout.dialog_error_log, container, false);
+    private val viewModel: DeveloperViewModel by activityViewModels()
 
-        ListView list = (ListView)v.findViewById(R.id.errorLogListView);
-        mAdapter = new LogAdapter();
-        list.setAdapter(mAdapter);
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String details = mAdapter.getItem(i).getDetails();
-                if(ErrorLogDialog.this.getActivity() != null && details != null && !details.isEmpty()) {
-                    Dialog dialog = new Dialog(ErrorLogDialog.this.getActivity());
-                    TextView text = new TextView(ErrorLogDialog.this.getActivity());
-                    text.setText(details);
-                    text.setVerticalScrollBarEnabled(true);
-                    text.setPadding(10, 0, 10, 0);
-                    text.setMovementMethod(ScrollingMovementMethod.getInstance());
-                    text.canScrollVertically(View.SCROLL_AXIS_VERTICAL);
-                    dialog.setContentView(text);
-                    dialog.setTitle("Log Details");
-                    dialog.show();
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        dialog?.setTitle("Logs")
+
+        _binding = DialogErrorLogBinding.inflate(inflater, container, false)
+
+        with(binding) {
+            errorLogListView.adapter = adapter
+            errorLogListView.onItemClickListener = AdapterView.OnItemClickListener { _, _, i, _ ->
+                val details = adapter.getItem(i).details
+                if (activity != null && details != null && details.isNotEmpty()) {
+                    val dialog = Dialog(requireActivity())
+                    val text = TextView(activity)
+                    text.text = details
+                    text.isVerticalScrollBarEnabled = true
+                    text.setPadding(32, 32, 32, 32)
+                    text.movementMethod = ScrollingMovementMethod.getInstance()
+                    text.canScrollVertically(View.SCROLL_AXIS_VERTICAL)
+                    dialog.setContentView(text)
+                    dialog.setTitle("Log Details")
+                    dialog.show()
                 }
             }
-        });
 
-        // close
-        Button dismissButton = (Button)v.findViewById(R.id.dismissButton);
-        dismissButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dismiss();
+            dismissButton.setOnClickListener { dismiss() }
+
+            emptyLogButton.setOnClickListener {
+                Logger.flush()
+                dismiss()
             }
-        });
+        }
 
-        // empty log
-        Button emtpyButton = (Button)v.findViewById(R.id.emptyLogButton);
-        emtpyButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Logger.flush();
-                dismiss();
-            }
-        });
+        setupObservers()
 
-        init();
+        viewModel.readErrorLog()
 
-        return v;
+        return binding.root
     }
 
-    /**
-     * Loads the error logs from the disk
-     */
-    private void init() {
-        if(mThread != null) {
-            mThread.stop();
-        }
-
-        if(getActivity() == null) {
-            dismiss();
-            return;
-        }
-
-        mThread = new ThreadableUI(getActivity()) {
-            private List<LogEntry> mLogs = new ArrayList<>();
-
-            @Override
-            public void onStop() {
-
-            }
-
-            @Override
-            public void run() {
-                mLogs = Logger.getLogEntries();
-            }
-
-            @Override
-            public void onPostExecute() {
-                if(mLogs.size() > 0) {
-                    mAdapter.setItems(mLogs);
+    private fun setupObservers() {
+        viewModel.logs.observe(viewLifecycleOwner) {
+            it?.let { logs ->
+                if (logs.isNotEmpty()) {
+                    adapter.setItems(logs)
                 } else {
-                    Toast toast = Toast.makeText(getActivity(), "There are no logs", Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.TOP, 0, 0);
-                    toast.show();
-                    dismiss();
+                    dismiss()
+                    val toast = Toast.makeText(requireActivity(), "There are no logs", Toast.LENGTH_LONG)
+                    toast.setGravity(Gravity.TOP, 0, 0)
+                    toast.show()
                 }
             }
-        };
-        mThread.start();
+        }
     }
 }

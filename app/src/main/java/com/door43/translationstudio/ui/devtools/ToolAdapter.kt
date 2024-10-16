@@ -1,87 +1,76 @@
-package com.door43.translationstudio.ui.devtools;
+package com.door43.translationstudio.ui.devtools
 
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import com.door43.translationstudio.R;
-
-import java.util.ArrayList;
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentToolItemBinding
 
 /**
  * The tool adapter allows you to easily create a ListView full of tools
  */
-public class ToolAdapter extends BaseAdapter {
-    private Context mContext;
-    private ArrayList<ToolItem> mTools;
+class ToolAdapter : BaseAdapter() {
+    private val tools = arrayListOf<ToolItem>()
 
-    public ToolAdapter(ArrayList<ToolItem> tools, Context context) {
-        mTools = tools;
-        mContext = context;
+    override fun getCount(): Int {
+        return tools.size
     }
 
-    @Override
-    public int getCount() {
-        return mTools.size();
+    override fun getItem(i: Int): ToolItem {
+        return tools[i]
     }
 
-    @Override
-    public ToolItem getItem(int i) {
-        return mTools.get(i);
+    override fun getItemId(i: Int): Long {
+        return 0
     }
 
-    @Override
-    public long getItemId(int i) {
-        return 0;
-    }
-
-    @Override
-    public View getView(int i, View recycledView, ViewGroup viewGroup) {
-        LinearLayout view;
-
-        // build or reuse layout
-        if(recycledView == null) {
-            LayoutInflater inflater = (LayoutInflater)mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = (LinearLayout)inflater.inflate(R.layout.fragment_tool_item, null);
+    override fun getView(i: Int, recycledView: View?, viewGroup: ViewGroup): View {
+        val context = viewGroup.context
+        val binding = if (recycledView == null) {
+            val inflater = LayoutInflater.from(context)
+            FragmentToolItemBinding.inflate(inflater, viewGroup, false).apply {
+                root.tag = this
+            }
         } else {
-            view = (LinearLayout)recycledView;
+            recycledView.tag as FragmentToolItemBinding
         }
 
+        val item = getItem(i)
+
         // title
-        TextView titleText = (TextView)view.findViewById(R.id.toolTitleText);
-        titleText.setText(getItem(i).getName());
+        binding.toolTitleText.text = item.name
 
         // description
-        TextView descriptionText = (TextView)view.findViewById(R.id.toolDescriptionText);
-        descriptionText.setText(getItem(i).getDescription());
+        binding.toolDescriptionText.text = item.description
 
-        if(getItem(i).getDescription().isEmpty()) {
-            descriptionText.setVisibility(View.GONE);
+        if (item.description.isEmpty()) {
+            binding.toolDescriptionText.visibility = View.GONE
         } else {
-            descriptionText.setVisibility(View.VISIBLE);
+            binding.toolDescriptionText.visibility = View.VISIBLE
         }
 
         // image
-        ImageView iconImage = (ImageView)view.findViewById(R.id.toolIconImageView);
-        if(getItem(i).getIcon() > 0) {
-            iconImage.setVisibility(View.VISIBLE);
-            iconImage.setBackgroundResource(getItem(i).getIcon());
+        if (item.icon > 0) {
+            binding.toolIconImageView.visibility = View.VISIBLE
+            binding.toolIconImageView.setBackgroundResource(getItem(i).icon)
         } else {
-            iconImage.setVisibility(View.GONE);
+            binding.toolIconImageView.visibility = View.GONE
         }
 
         // mark tool as disabled.
-        if (!getItem(i).isEnabled()) {
-            titleText.setTextColor(mContext.getResources().getColor(R.color.gray));
+        if (!getItem(i).isEnabled) {
+            binding.toolTitleText.setTextColor(context.resources.getColor(R.color.gray))
         } else {
-            titleText.setTextColor(mContext.getResources().getColor(R.color.dark_primary_text));
+            binding.toolTitleText.setTextColor(context.resources.getColor(R.color.dark_primary_text))
         }
 
-        return view;
+        return binding.root
+    }
+
+    fun setTools(tools: List<ToolItem>) {
+        this.tools.clear()
+        this.tools.addAll(tools)
+        notifyDataSetChanged()
     }
 }
