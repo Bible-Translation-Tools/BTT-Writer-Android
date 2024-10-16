@@ -28,9 +28,9 @@ import javax.inject.Inject
 class ContributorDialog : DialogFragment() {
     @Inject lateinit var translator: Translator
 
-    private var mTargetTranslation: TargetTranslation? = null
-    private var mNativeSpeaker: NativeSpeaker? = null
-    private var mListener: View.OnClickListener? = null
+    private var targetTranslation: TargetTranslation? = null
+    private var nativeSpeaker: NativeSpeaker? = null
+    private var listener: View.OnClickListener? = null
 
     private var _binding: DialogNativeSpeakerBinding? = null
     private val binding get() = _binding!!
@@ -48,18 +48,18 @@ class ContributorDialog : DialogFragment() {
         if (args != null) {
             val nativeSpeakerName = args.getString(ARG_NATIVE_SPEAKER, null)
             val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION, null)
-            mTargetTranslation = translator.getTargetTranslation(targetTranslationId)
-            if (nativeSpeakerName != null && mTargetTranslation != null) {
-                mNativeSpeaker = mTargetTranslation!!.getContributor(nativeSpeakerName)
+            targetTranslation = translator.getTargetTranslation(targetTranslationId)
+            if (nativeSpeakerName != null && targetTranslation != null) {
+                nativeSpeaker = targetTranslation!!.getContributor(nativeSpeakerName)
             }
         }
-        if (mTargetTranslation == null) {
+        if (targetTranslation == null) {
             throw InvalidParameterException("Missing the target translation parameter")
         }
 
         with(binding) {
-            if (mNativeSpeaker != null) {
-                name.setText(mNativeSpeaker!!.name)
+            if (nativeSpeaker != null) {
+                name.setText(nativeSpeaker!!.name)
                 title.setText(R.string.edit_contributor)
                 deleteButton.visibility = View.VISIBLE
                 agreementCheck.isEnabled = false
@@ -91,6 +91,10 @@ class ContributorDialog : DialogFragment() {
                 startActivity(intent)
             }
 
+            cancelButton.setOnClickListener {
+                dismiss()
+            }
+
             deleteButton.setOnClickListener {
                 AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                     .setTitle(R.string.delete_translator_title)
@@ -98,9 +102,9 @@ class ContributorDialog : DialogFragment() {
                     .setPositiveButton(
                         R.string.confirm
                     ) { _, _ ->
-                        mTargetTranslation!!.removeContributor(mNativeSpeaker)
-                        if (mListener != null) {
-                            mListener!!.onClick(deleteButton)
+                        targetTranslation!!.removeContributor(nativeSpeaker)
+                        if (listener != null) {
+                            listener!!.onClick(deleteButton)
                         }
                         dismiss()
                     }
@@ -111,9 +115,9 @@ class ContributorDialog : DialogFragment() {
             saveButton.setOnClickListener {
                 val name = name.text.toString()
                 if (agreementCheck.isChecked && name.isNotEmpty()) {
-                    val duplicate = mTargetTranslation!!.getContributor(name)
+                    val duplicate = targetTranslation!!.getContributor(name)
                     if (duplicate != null) {
-                        if (mNativeSpeaker != null && mNativeSpeaker == duplicate) {
+                        if (nativeSpeaker != null && nativeSpeaker == duplicate) {
                             // no change
                             dismiss()
                         } else {
@@ -129,14 +133,13 @@ class ContributorDialog : DialogFragment() {
                             snack.show()
                         }
                     } else {
-                        mTargetTranslation!!.removeContributor(mNativeSpeaker) // remove old name
-                        mTargetTranslation!!.addContributor(NativeSpeaker(name))
-                        mListener?.onClick(saveButton)
+                        targetTranslation!!.removeContributor(nativeSpeaker) // remove old name
+                        targetTranslation!!.addContributor(NativeSpeaker(name))
+                        listener?.onClick(saveButton)
                         dismiss()
                     }
                 } else {
-                    val snack =
-                        Snackbar.make(saveButton, R.string.complete_required_fields, Snackbar.LENGTH_SHORT)
+                    val snack = Snackbar.make(saveButton, R.string.complete_required_fields, Snackbar.LENGTH_SHORT)
                     ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
                     snack.show()
                 }
@@ -156,7 +159,7 @@ class ContributorDialog : DialogFragment() {
      * @param listener
      */
     fun setOnClickListener(listener: View.OnClickListener?) {
-        mListener = listener
+        this.listener = listener
     }
 
     companion object {

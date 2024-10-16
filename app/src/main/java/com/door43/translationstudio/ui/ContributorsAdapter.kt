@@ -1,216 +1,201 @@
-package com.door43.translationstudio.ui;
+package com.door43.translationstudio.ui
 
-import android.os.Bundle;
-import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.TextView;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.NativeSpeaker;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.NativeSpeaker
+import com.door43.translationstudio.databinding.FragmentPublishNativeSpeakerControlsBinding
+import com.door43.translationstudio.databinding.FragmentPublishNativeSpeakerItemBinding
+import com.door43.translationstudio.databinding.FragmentPublishNativeSpeakerSecurityNoticeBinding
+import com.door43.translationstudio.ui.ContributorsAdapter.GenericViewHolder
 
 /**
  * Created by joel on 2/19/2016.
  */
-public class ContributorsAdapter extends RecyclerView.Adapter<ContributorsAdapter.GenericViewHolder> {
-
-    private static final int TYPE_SECURITY_NOTICE = 0;
-    private static final int TYPE_SPEAKER = 1;
-    private static final int TYPE_CONTROLS = 2;
-    public static final String EXTRA_DISPLAY_NEXT = "display_next";
-    private List<NativeSpeaker> mData = new ArrayList<>();
-    private OnClickListener mListener;
-    private boolean mDisplayNext = true;
+class ContributorsAdapter : RecyclerView.Adapter<GenericViewHolder>() {
+    private val contributors = arrayListOf<NativeSpeaker>()
+    private var listener: OnClickListener? = null
+    private var displayNext = true
 
     /**
      * Loads a new set of native speakers
      * @param speakers
      */
-    public void setContributors(List<NativeSpeaker> speakers) {
-        mData = speakers;
-        notifyDataSetChanged();
+    fun setContributors(speakers: List<NativeSpeaker>) {
+        this.contributors.clear()
+        this.contributors.addAll(speakers)
+        notifyDataSetChanged()
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        if(position == 0) {
-            return TYPE_SECURITY_NOTICE;
-        } else if(position == getItemCount() - 1) {
-            return TYPE_CONTROLS;
-        } else {
-            return TYPE_SPEAKER;
+    override fun getItemViewType(position: Int): Int {
+        return when (position) {
+            0 -> TYPE_SECURITY_NOTICE
+            itemCount - 1 -> TYPE_CONTROLS
+            else -> TYPE_SPEAKER
         }
     }
 
-    @Override
-    public GenericViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        switch (viewType) {
-            case TYPE_SECURITY_NOTICE:
-                View noticeView = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_publish_native_speaker_security_notice, parent, false);
-                return new ViewHolderNotice(noticeView);
-            case TYPE_CONTROLS:
-                View controlsView = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_publish_native_speaker_controls, parent, false);
-                return new ViewHolderControls(controlsView);
-            case TYPE_SPEAKER:
-            default:
-                View speakerView = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_publish_native_speaker_item, parent, false);
-                return new ViewHolderSpeaker(speakerView);
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GenericViewHolder {
+        when (viewType) {
+            TYPE_SECURITY_NOTICE -> {
+                val binding = FragmentPublishNativeSpeakerSecurityNoticeBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+                return ViewHolderNotice(binding)
+            }
+
+            TYPE_CONTROLS -> {
+                val binding = FragmentPublishNativeSpeakerControlsBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+                return ViewHolderControls(binding)
+            }
+
+            TYPE_SPEAKER -> {
+                val binding = FragmentPublishNativeSpeakerItemBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+                return ViewHolderSpeaker(binding)
+            }
+
+            else -> {
+                val binding = FragmentPublishNativeSpeakerItemBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+                return ViewHolderSpeaker(binding)
+            }
         }
     }
 
-    @Override
-    public void onBindViewHolder(GenericViewHolder holder, int position) {
+    override fun onBindViewHolder(holder: GenericViewHolder, position: Int) {
         // TRICKY: only the Native Speaker holder uses the position so we must account for the privacy notice
-        Bundle extras = new Bundle();
-        extras.putBoolean(EXTRA_DISPLAY_NEXT, mDisplayNext);
-        holder.putExtras(extras);
-        holder.loadView(mData, position - 1, mListener);
+        val extras = Bundle()
+        extras.putBoolean(EXTRA_DISPLAY_NEXT, displayNext)
+        holder.putExtras(extras)
+        holder.loadView(contributors, position - 1, listener)
     }
 
-    @Override
-    public int getItemCount() {
-        if(mData.size() > 0) {
-            return mData.size() + 2; // add space for security info and controls
+    override fun getItemCount(): Int {
+        return if (contributors.size > 0) {
+            contributors.size + 2 // add space for security info and controls
         } else {
-            return 1 + 2; // display notice card explaining they must add a translator
+            1 + 2 // display notice card explaining they must add a translator
         }
     }
 
-    public void setOnClickListener(OnClickListener listener) {
-        mListener = listener;
+    fun setOnClickListener(listener: OnClickListener?) {
+        this.listener = listener
     }
 
     /**
      * Specifies if the next button should be displayed
      * @param display
      */
-    public void setDisplayNext(boolean display) {
-        mDisplayNext = display;
+    fun setDisplayNext(display: Boolean) {
+        displayNext = display
     }
 
-    public interface OnClickListener {
-        void onEditNativeSpeaker(NativeSpeaker speaker);
-        void onClickAddNativeSpeaker();
-        void onClickNext();
-        void onClickPrivacyNotice();
+    interface OnClickListener {
+        fun onEditNativeSpeaker(speaker: NativeSpeaker)
+        fun onClickAddNativeSpeaker()
+        fun onClickNext()
+        fun onClickPrivacyNotice()
     }
 
-    public static abstract class GenericViewHolder extends RecyclerView.ViewHolder {
+    abstract class GenericViewHolder(
+        binding: ViewBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        abstract fun loadView(
+            speakers: List<NativeSpeaker>,
+            position: Int,
+            listener: OnClickListener?
+        )
 
-        public GenericViewHolder(View v) {
-            super(v);
+        abstract fun putExtras(extras: Bundle)
+    }
+
+    class ViewHolderNotice(
+        val binding: FragmentPublishNativeSpeakerSecurityNoticeBinding
+    ) : GenericViewHolder(binding) {
+        override fun loadView(
+            speakers: List<NativeSpeaker>,
+            position: Int,
+            listener: OnClickListener?
+        ) {
+            binding.root.setOnClickListener {
+                listener?.onClickPrivacyNotice()
+            }
         }
-
-        public abstract void loadView(List<NativeSpeaker> speakers, int position, OnClickListener listener);
-
-        public abstract void putExtras(Bundle extras);
+        override fun putExtras(extras: Bundle) {
+        }
     }
 
-    public static class ViewHolderNotice extends GenericViewHolder {
-        private final View mView;
-        public ViewHolderNotice(View v) {
-            super(v);
-            mView = v;
-        }
-
-        @Override
-        public void loadView(List<NativeSpeaker> speakers, int position, final OnClickListener listener) {
-            mView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    listener.onClickPrivacyNotice();
+    class ViewHolderSpeaker(
+        val binding: FragmentPublishNativeSpeakerItemBinding
+    ) : GenericViewHolder(binding) {
+        override fun loadView(
+            speakers: List<NativeSpeaker>,
+            position: Int,
+            listener: OnClickListener?
+        ) {
+            if (speakers.isNotEmpty()) {
+                binding.name.text = speakers[position].toString()
+                binding.editButton.setOnClickListener {
+                    listener?.onEditNativeSpeaker(speakers[position])
                 }
-            });
-        }
-
-        @Override
-        public void putExtras(Bundle extras) {
-
-        }
-    }
-
-    public static class ViewHolderSpeaker extends GenericViewHolder {
-        private final TextView mNameView;
-        private final ImageButton mEditButton;
-
-        public ViewHolderSpeaker(View v) {
-            super(v);
-
-            mNameView = (TextView)v.findViewById(R.id.name);
-            mEditButton = (ImageButton)v.findViewById(R.id.edit_button);
-        }
-
-        @Override
-        public void loadView(final List<NativeSpeaker> speakers, final int position, final OnClickListener listener) {
-            if(speakers.size() > 0) {
-                mNameView.setText(speakers.get(position).toString());
-                mEditButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        listener.onEditNativeSpeaker(speakers.get(position));
-                    }
-                });
             } else {
                 // display notice a translator must be added
-                mNameView.setText(R.string.who_translated_notice);
-                mEditButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        listener.onClickAddNativeSpeaker();
-                    }
-                });
+                binding.name.setText(R.string.who_translated_notice)
+                binding.editButton.setOnClickListener {
+                    listener?.onClickAddNativeSpeaker()
+                }
             }
         }
 
-        @Override
-        public void putExtras(Bundle extras) {
-
+        override fun putExtras(extras: Bundle) {
         }
     }
 
-    public static class ViewHolderControls extends GenericViewHolder {
+    class ViewHolderControls(
+        val binding: FragmentPublishNativeSpeakerControlsBinding
+    ) : GenericViewHolder(binding) {
+        private var displayNext = true
 
-        private final Button mNextButton;
-        private final Button mAddButton;
-        private boolean displayNext = true;
-
-        public ViewHolderControls(View v) {
-            super(v);
-
-            mNextButton = (Button)v.findViewById(R.id.next_button);
-            mAddButton = (Button)v.findViewById(R.id.add_button);
-        }
-
-        @Override
-        public void loadView(List<NativeSpeaker> speakers, int position, final OnClickListener listener) {
-            if(displayNext) {
-                mNextButton.setVisibility(View.VISIBLE);
+        override fun loadView(
+            speakers: List<NativeSpeaker>,
+            position: Int,
+            listener: OnClickListener?
+        ) {
+            if (displayNext) {
+                binding.nextButton.visibility = View.VISIBLE
             } else {
-                mNextButton.setVisibility(View.GONE);
+                binding.nextButton.visibility = View.GONE
             }
-            mNextButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    listener.onClickNext();
-                }
-            });
-            mAddButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    listener.onClickAddNativeSpeaker();
-                }
-            });
+            binding.nextButton.setOnClickListener { listener?.onClickNext() }
+            binding.addButton.setOnClickListener { listener?.onClickAddNativeSpeaker() }
         }
 
-        @Override
-        public void putExtras(Bundle extras) {
-            this.displayNext = extras.getBoolean(EXTRA_DISPLAY_NEXT, true);
+        override fun putExtras(extras: Bundle) {
+            this.displayNext = extras.getBoolean(EXTRA_DISPLAY_NEXT, true)
         }
+    }
+
+    companion object {
+        private const val TYPE_SECURITY_NOTICE = 0
+        private const val TYPE_SPEAKER = 1
+        private const val TYPE_CONTROLS = 2
+        const val EXTRA_DISPLAY_NEXT: String = "display_next"
     }
 }
