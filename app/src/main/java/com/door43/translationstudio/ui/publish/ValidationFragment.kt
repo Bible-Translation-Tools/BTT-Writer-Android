@@ -1,21 +1,16 @@
 package com.door43.translationstudio.ui.publish
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.tasks.ValidationTask
+import com.door43.translationstudio.databinding.FragmentPublishValidationListBinding
+import com.door43.translationstudio.ui.viewmodels.ValidationViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.TaskManager
 import java.security.InvalidParameterException
 import javax.inject.Inject
 
@@ -23,24 +18,26 @@ import javax.inject.Inject
  * Created by joel on 9/20/2015.
  */
 @AndroidEntryPoint
-class ValidationFragment : PublishStepFragment(), ManagedTask.OnFinishedListener,
-    ValidationAdapter.OnClickListener {
-    private var mLoadingLayout: LinearLayout? = null
-    private var mRecyclerView: RecyclerView? = null
-    private var mValidationAdapter: ValidationAdapter? = null
-
+class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListener {
     @Inject
     lateinit var typography: Typography
+
+    private val adapter by lazy { ValidationAdapter(typography) }
+
+    private var _binding: FragmentPublishValidationListBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: ValidationViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val rootView = inflater.inflate(R.layout.fragment_publish_validation_list, container, false)
+    ): View {
+        _binding = FragmentPublishValidationListBinding.inflate(layoutInflater, container, false)
 
-        val args = arguments
-        val targetTranslationId = args!!.getString(PublishActivity.EXTRA_TARGET_TRANSLATION_ID)
+        val args = requireArguments()
+        val targetTranslationId = args.getString(PublishActivity.EXTRA_TARGET_TRANSLATION_ID)
         val sourceTranslationId = args.getString(ARG_SOURCE_TRANSLATION_ID)
         if (targetTranslationId == null) {
             throw InvalidParameterException("a valid target translation id is required")
@@ -49,54 +46,51 @@ class ValidationFragment : PublishStepFragment(), ManagedTask.OnFinishedListener
             throw InvalidParameterException("a valid source translation id is required")
         }
 
-        mRecyclerView = rootView.findViewById<View>(R.id.recycler_view) as RecyclerView
-        val linearLayoutManager = LinearLayoutManager(activity)
-        mRecyclerView!!.layoutManager = linearLayoutManager
-        mRecyclerView!!.itemAnimator = DefaultItemAnimator()
-        mValidationAdapter = ValidationAdapter(typography!!)
-        mValidationAdapter!!.setOnClickListener(this)
-        mRecyclerView!!.adapter = mValidationAdapter
-        mLoadingLayout = rootView.findViewById<View>(R.id.loading_layout) as LinearLayout
+        with (binding) {
+            adapter.setOnClickListener(this@ValidationFragment)
 
-        // display loading view
-        mRecyclerView!!.visibility = View.GONE
-        mLoadingLayout!!.visibility = View.VISIBLE
+            recyclerView.layoutManager = LinearLayoutManager(activity)
+            recyclerView.itemAnimator = DefaultItemAnimator()
+            recyclerView.adapter = adapter
 
-        // start task to validate items
-        var task = TaskManager.getTask(ValidationTask.TASK_ID) as ValidationTask
-        if (task != null) {
-            task.addOnFinishedListener(this)
-        } else {
-            // start new task
-            task = ValidationTask(activity, targetTranslationId, sourceTranslationId)
-            task.addOnFinishedListener(this)
-            TaskManager.addTask(task)
+            // display loading view
+            recyclerView.visibility = View.GONE
+            loadingLayout.visibility = View.VISIBLE
         }
 
-        return rootView
+        setupObservers()
+
+        viewModel.validateProject(targetTranslationId, sourceTranslationId)
+
+        return binding.root
     }
 
-    override fun onTaskFinished(task: ManagedTask) {
-        TaskManager.clearTask(task)
-        val hand = Handler(Looper.getMainLooper())
-        hand.post {
-            mValidationAdapter!!.setValidations((task as ValidationTask).validations.toList())
-            mRecyclerView!!.visibility = View.VISIBLE
-            mLoadingLayout!!.visibility = View.GONE
-            // TODO: animate
+    private fun setupObservers() {
+        viewModel.validations.observe(viewLifecycleOwner) {
+            it?.let { validations ->
+                adapter.setValidations(validations)
+                binding.recyclerView.visibility = View.VISIBLE
+                binding.loadingLayout.visibility = View.GONE
+                // TODO: animate
+            }
         }
     }
 
-    override fun onClickReview(targetTranslationId: String?, chapterId: String?, frameId: String?) {
+    override fun onClickReview(targetTranslationId: String, chapterId: String, frameId: String) {
         openReview(targetTranslationId, chapterId, frameId)
     }
 
     override fun onClickNext() {
-        listener.nextStep()
+        listener?.nextStep()
     }
 
     override fun onDestroy() {
-        mValidationAdapter!!.setOnClickListener(null)
+        adapter.setOnClickListener(null)
         super.onDestroy()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

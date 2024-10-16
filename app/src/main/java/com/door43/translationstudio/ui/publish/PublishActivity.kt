@@ -1,194 +1,187 @@
-package com.door43.translationstudio.ui.publish;
+package com.door43.translationstudio.ui.publish
 
-import android.content.Intent;
-import android.os.Bundle;
-
-import com.door43.translationstudio.databinding.ActivityPublishBinding;
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.activity.OnBackPressedCallback;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProvider;
-
-import android.view.MenuItem;
-import android.widget.Button;
-
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.ui.dialogs.BackupDialog;
-import com.door43.translationstudio.ui.BaseActivity;
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity;
-import com.door43.widget.ViewUtil;
-
-import java.security.InvalidParameterException;
-import org.unfoldingword.tools.logger.Logger;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import android.content.Intent
+import android.os.Bundle
+import android.view.MenuItem
+import android.view.View
+import android.widget.Button
+import androidx.activity.addCallback
+import androidx.activity.viewModels
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.databinding.ActivityPublishBinding
+import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.dialogs.BackupDialog
+import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import org.unfoldingword.tools.logger.Logger
+import java.security.InvalidParameterException
 
 @AndroidEntryPoint
-public class PublishActivity extends BaseActivity implements PublishStepFragment.OnEventListener {
+class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
+    private var fragment: PublishStepFragment? = null
+    private var currentStep = 0
+    private var publishFinished = false
+    private var callingActivity = 0
 
-    public static final int STEP_VALIDATE = 0;
-    public static final int STEP_PROFILE = 1;
-    public static final String EXTRA_TARGET_TRANSLATION_ID = "extra_target_translation_id";
-    public static final String EXTRA_CALLING_ACTIVITY = "extra_calling_activity";
-    private static final String STATE_STEP = "state_step";
-    private static final String STATE_PUBLISH_FINISHED = "state_publish_finished";
-    public static final int ACTIVITY_HOME = 1001;
-    public static final int ACTIVITY_TRANSLATION = 1002;
+    private val viewModel: TargetTranslationViewModel by viewModels()
+    private lateinit var binding: ActivityPublishBinding
 
-    private PublishStepFragment fragment;
-    private int currentStep = 0;
-    private boolean publishFinished = false;
-    private int callingActivity;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityPublishBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-    private TargetTranslationViewModel viewModel;
-    private ActivityPublishBinding binding;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        binding = ActivityPublishBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-
-        setSupportActionBar(binding.toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        viewModel = new ViewModelProvider(this).get(TargetTranslationViewModel.class);
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // validate parameters
-        Bundle args = getIntent().getExtras();
-        assert args != null;
-
-        String targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
-        TargetTranslation translation = viewModel.getTargetTranslation(targetTranslationId);
+        val args = checkNotNull(intent.extras)
+        val targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null)
+        val translation = viewModel.getTargetTranslation(targetTranslationId)
         if (translation == null) {
             Logger.e(
-                    PublishActivity.class.getSimpleName(),
-                    "A valid target translation id is required. Received " + targetTranslationId + " but the translation could not be found"
-            );
-            finish();
-            return;
+                PublishActivity::class.java.simpleName,
+                "A valid target translation id is required. Received $targetTranslationId but the translation could not be found"
+            )
+            finish()
+            return
         }
 
         // identify calling activity
-        callingActivity = args.getInt(EXTRA_CALLING_ACTIVITY, 0);
-        if(callingActivity == 0) {
-            throw new InvalidParameterException("you must specify the calling activity");
+        callingActivity = args.getInt(EXTRA_CALLING_ACTIVITY, 0)
+        if (callingActivity == 0) {
+            throw InvalidParameterException("you must specify the calling activity")
         }
 
         // stage indicators
-
-        if(savedInstanceState != null) {
-            currentStep = savedInstanceState.getInt(STATE_STEP, 0);
-            publishFinished = savedInstanceState.getBoolean(STATE_PUBLISH_FINISHED, false);
+        if (savedInstanceState != null) {
+            currentStep = savedInstanceState.getInt(STATE_STEP, 0)
+            publishFinished = savedInstanceState.getBoolean(STATE_PUBLISH_FINISHED, false)
         }
 
         // inject fragments
-        if(findViewById(R.id.fragment_container) != null) {
-            if(savedInstanceState != null) {
-                fragment = (PublishStepFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        if (findViewById<View?>(R.id.fragment_container) != null) {
+            if (savedInstanceState != null) {
+                fragment = supportFragmentManager.findFragmentById(
+                    R.id.fragment_container
+                ) as? PublishStepFragment
             } else {
-                fragment = new ValidationFragment();
-                String sourceTranslationId = viewModel.getSelectedSourceTranslationId();
+                fragment = ValidationFragment()
+                var sourceTranslationId = viewModel.getSelectedSourceTranslationId()
 
-                if(sourceTranslationId == null) {
+                if (sourceTranslationId == null) {
                     // use the default target translation if they have not chosen one.
-                    sourceTranslationId = viewModel.getDefaultSourceTranslation();
+                    sourceTranslationId = viewModel.getDefaultSourceTranslation()
                 }
-                if(sourceTranslationId != null) {
-                    args.putSerializable(PublishStepFragment.ARG_SOURCE_TRANSLATION_ID, sourceTranslationId);
-                    fragment.setArguments(args);
-                    getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, fragment).commit();
+                if (sourceTranslationId != null) {
+                    args.putSerializable(
+                        PublishStepFragment.ARG_SOURCE_TRANSLATION_ID,
+                        sourceTranslationId
+                    )
+                    fragment?.setArguments(args)
+                    supportFragmentManager
+                        .beginTransaction()
+                        .add(R.id.fragment_container, fragment!!)
+                        .commit()
                     // TODO: animate
                 } else {
                     // the user must choose a source translation before they can publish
-                    Snackbar snack = Snackbar.make(findViewById(android.R.id.content), R.string.choose_source_translations, Snackbar.LENGTH_LONG);
-                    ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-                    snack.show();
-                    finish();
+                    val snack = Snackbar.make(
+                        findViewById(android.R.id.content),
+                        R.string.choose_source_translations,
+                        Snackbar.LENGTH_LONG
+                    )
+                    ViewUtil.setSnackBarTextColor(
+                        snack,
+                        resources.getColor(R.color.light_primary_text)
+                    )
+                    snack.show()
+                    finish()
                 }
             }
         }
 
-        selectButtonForCurrentStep();
+        selectButtonForCurrentStep()
 
         // add step button listeners
+        binding.validationButton.setOnClickListener {
+            goToStep(STEP_VALIDATE, false)
+        }
 
-        binding.validationButton.setOnClickListener(v -> goToStep(STEP_VALIDATE, false));
+        binding.profileButton.setOnClickListener {
+            goToStep(STEP_PROFILE, false)
+        }
 
-        binding.profileButton.setOnClickListener(v -> goToStep(STEP_PROFILE, false));
+        binding.uploadButton.setOnClickListener {
+            showBackupDialog()
+        }
 
-        binding.uploadButton.setOnClickListener(v -> showBackupDialog());
-
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                onBackPressedHandler();
-            }
-        });
+        onBackPressedDispatcher.addCallback {
+            onBackPressedHandler()
+        }
     }
 
     /**
      * display Backup dialog
      */
-    private void showBackupDialog() {
-        FragmentTransaction backupFt = getSupportFragmentManager().beginTransaction();
-        Fragment backupPrev = getSupportFragmentManager().findFragmentByTag(BackupDialog.TAG);
+    private fun showBackupDialog() {
+        val backupFt = supportFragmentManager.beginTransaction()
+        val backupPrev = supportFragmentManager.findFragmentByTag(BackupDialog.TAG)
         if (backupPrev != null) {
-            backupFt.remove(backupPrev);
+            backupFt.remove(backupPrev)
         }
-        backupFt.addToBackStack(null);
+        backupFt.addToBackStack(null)
 
-        BackupDialog backupDialog = new BackupDialog();
-        Bundle args = new Bundle();
-        args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-        backupDialog.setArguments(args);
-        backupDialog.show(backupFt, BackupDialog.TAG);
+        val backupDialog = BackupDialog()
+        val args = Bundle()
+        args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
+        backupDialog.arguments = args
+        backupDialog.show(backupFt, BackupDialog.TAG)
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == android.R.id.home) {
-            if(callingActivity == ACTIVITY_TRANSLATION) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            if (callingActivity == ACTIVITY_TRANSLATION) {
                 // TRICKY: the translation activity is finished after opening the publish activity
                 // because we may have to go back and forth and don't want to fill up the stack
-                Intent intent = new Intent(this, TargetTranslationActivity.class);
-                Bundle args = new Bundle();
-                args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                intent.putExtras(args);
-                startActivity(intent);
+                val intent = Intent(this, TargetTranslationActivity::class.java)
+                val args = Bundle()
+                args.putString(
+                    Translator.EXTRA_TARGET_TRANSLATION_ID,
+                    viewModel.targetTranslation.id
+                )
+                intent.putExtras(args)
+                startActivity(intent)
             }
-            finish();
+            finish()
         }
-        return true;
+        return true
     }
 
-    public void onBackPressedHandler() {
+    private fun onBackPressedHandler() {
         // TRICKY: the translation activity is finished after opening the publish activity
         // because we may have to go back and forth and don't want to fill up the stack
-        if(callingActivity == ACTIVITY_TRANSLATION) {
-            Intent intent = new Intent(this, TargetTranslationActivity.class);
-            Bundle args = new Bundle();
-            args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-            intent.putExtras(args);
-            startActivity(intent);
+        if (callingActivity == ACTIVITY_TRANSLATION) {
+            val intent = Intent(this, TargetTranslationActivity::class.java)
+            val args = Bundle()
+            args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
+            intent.putExtras(args)
+            startActivity(intent)
         }
-        finish();
+        finish()
     }
 
 
-    @Override
-    public void nextStep() {
-        goToStep(currentStep + 1, true);
+    override fun nextStep() {
+        goToStep(currentStep + 1, true)
     }
 
-    @Override
-    public void finishPublishing() {
-        publishFinished = true;
+    override fun finishPublishing() {
+        publishFinished = true
     }
 
     /**
@@ -196,45 +189,46 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
      * @param step
      * @param force forces the step to be opened even if it has never been opened before
      */
-    private void goToStep(int step, boolean force) {
-        if( step == currentStep) {
-            return;
+    private fun goToStep(step: Int, force: Boolean) {
+        if (step == currentStep) {
+            return
         }
 
-        if(step > STEP_PROFILE) { // if we are ready to upload
-            currentStep = STEP_PROFILE;
-            showBackupDialog();
-            return;
+        if (step > STEP_PROFILE) { // if we are ready to upload
+            currentStep = STEP_PROFILE
+            showBackupDialog()
+            return
         } else {
-            currentStep = step;
+            currentStep = step
         }
 
-        switch(currentStep) {
-            case STEP_PROFILE:
-                fragment = new TranslatorsFragment();
-                break;
-            case STEP_VALIDATE:
-            default:
-                currentStep = STEP_VALIDATE;
-                fragment = new ValidationFragment();
-                break;
+        when (currentStep) {
+            STEP_PROFILE -> fragment = TranslatorsFragment()
+            STEP_VALIDATE -> {
+                currentStep = STEP_VALIDATE
+                fragment = ValidationFragment()
+            }
+            else -> {
+                currentStep = STEP_VALIDATE
+                fragment = ValidationFragment()
+            }
         }
+        selectButtonForCurrentStep()
 
-        selectButtonForCurrentStep();
-
-        Bundle args = getIntent().getExtras();
-        assert args != null;
-
-        String sourceTranslationId = viewModel.getSelectedSourceTranslationId();
+        val args = checkNotNull(intent.extras)
+        var sourceTranslationId = viewModel.getSelectedSourceTranslationId()
         // TRICKY: if the user has not chosen a source translation (this is an empty translation) the id will be null
-        if(sourceTranslationId == null) {
-            sourceTranslationId = viewModel.getDefaultSourceTranslation();
+        if (sourceTranslationId == null) {
+            sourceTranslationId = viewModel.getDefaultSourceTranslation()
         }
         if (sourceTranslationId != null) {
-            args.putSerializable(PublishStepFragment.ARG_SOURCE_TRANSLATION_ID, sourceTranslationId);
-            args.putBoolean(PublishStepFragment.ARG_PUBLISH_FINISHED, publishFinished);
-            fragment.setArguments(args);
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+            args.putSerializable(PublishStepFragment.ARG_SOURCE_TRANSLATION_ID, sourceTranslationId)
+            args.putBoolean(PublishStepFragment.ARG_PUBLISH_FINISHED, publishFinished)
+            fragment!!.arguments = args
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment!!)
+                .commit()
             // TODO: animate
         }
     }
@@ -242,9 +236,9 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
     /**
      * select the button for current state
      */
-    private void selectButtonForCurrentStep() {
-        setButtonSelectionState(binding.validationButton, currentStep == STEP_VALIDATE);
-        setButtonSelectionState(binding.profileButton, currentStep == STEP_PROFILE);
+    private fun selectButtonForCurrentStep() {
+        setButtonSelectionState(binding.validationButton, currentStep == STEP_VALIDATE)
+        setButtonSelectionState(binding.profileButton, currentStep == STEP_PROFILE)
     }
 
     /**
@@ -252,20 +246,29 @@ public class PublishActivity extends BaseActivity implements PublishStepFragment
      * @param button
      * @param selected
      */
-    private void setButtonSelectionState(Button button, boolean selected) {
-        if(button != null) {
-            int newResource = R.color.accent;
-            if (selected) {
-                newResource = R.color.accent_dark;
-            }
-            button.setBackgroundResource(newResource);
+    private fun setButtonSelectionState(button: Button, selected: Boolean) {
+        var newResource = R.color.accent
+        if (selected) {
+            newResource = R.color.accent_dark
         }
+        button.setBackgroundResource(newResource)
     }
 
-    public void onSaveInstanceState(Bundle out) {
-        out.putInt(STATE_STEP, currentStep);
-        out.putBoolean(STATE_PUBLISH_FINISHED, publishFinished);
+    public override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(STATE_STEP, currentStep)
+        outState.putBoolean(STATE_PUBLISH_FINISHED, publishFinished)
 
-        super.onSaveInstanceState(out);
+        super.onSaveInstanceState(outState)
+    }
+
+    companion object {
+        const val STEP_VALIDATE: Int = 0
+        const val STEP_PROFILE: Int = 1
+        const val EXTRA_TARGET_TRANSLATION_ID: String = "extra_target_translation_id"
+        const val EXTRA_CALLING_ACTIVITY: String = "extra_calling_activity"
+        private const val STATE_STEP = "state_step"
+        private const val STATE_PUBLISH_FINISHED = "state_publish_finished"
+        const val ACTIVITY_HOME: Int = 1001
+        const val ACTIVITY_TRANSLATION: Int = 1002
     }
 }

@@ -51,8 +51,9 @@ class ValidationAdapter(
 
             // margin
             val p = holder.binding.cardContainer.layoutParams as MarginLayoutParams
-            val stackedCardMargin =
-                context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
+            val stackedCardMargin = context.resources.getDimensionPixelSize(
+                R.dimen.stacked_card_margin
+            )
             if (item.isFrame) {
                 p.setMargins(stackedCardMargin, 0, 0, 0)
             } else {
@@ -152,7 +153,7 @@ class ValidationAdapter(
     ) : RecyclerView.ViewHolder(binding.root)
 
     interface OnClickListener {
-        fun onClickReview(targetTranslationId: String?, chapterId: String?, frameId: String?)
+        fun onClickReview(targetTranslationId: String, chapterId: String, frameId: String)
         fun onClickNext()
     }
 }
