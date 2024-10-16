@@ -169,7 +169,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.translate.TargetTranslationActivity" />
         </activity>
-        <activity android:name=".ui.RegisterDoor43Activity" />
         <activity android:name=".ui.LoginDoor43Activity" />
         <activity android:name=".ui.RegisterOfflineActivity" />
         <activity
