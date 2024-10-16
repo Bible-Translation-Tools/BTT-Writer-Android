@@ -23,6 +23,7 @@ class SplashScreenActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySplashBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         with(binding) {
             loadingBar.max = 100
