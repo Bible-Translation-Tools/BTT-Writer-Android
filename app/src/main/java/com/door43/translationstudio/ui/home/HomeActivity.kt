@@ -92,8 +92,6 @@ class HomeActivity : BaseActivity(),
             onTranslationViewRequest(result)
         }
 
-        progressDialog = ProgressHelper.newInstance(baseContext, R.string.loading, false)
-
         with(binding) {
             if (savedInstanceState != null) {
                 // use current fragment
@@ -200,6 +198,11 @@ class HomeActivity : BaseActivity(),
                 onBackPressedHandler()
             }
         })
+    }
+
+    override fun onStart() {
+        super.onStart()
+        progressDialog = ProgressHelper.newInstance(this, R.string.loading, false)
     }
 
     private fun startBackupService() {
