@@ -9,7 +9,6 @@ import com.door43.translationstudio.ui.SettingsActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.Repository
-import org.unfoldingword.gogsclient.User
 import javax.inject.Inject
 
 class SearchGogsRepositories @Inject constructor(
@@ -19,7 +18,6 @@ class SearchGogsRepositories @Inject constructor(
     private val max = 100
 
     fun execute(
-        authUser: User,
         uid: Int,
         query: String,
         limit: Int,
@@ -38,7 +36,7 @@ class SearchGogsRepositories @Inject constructor(
 
         // fetch additional information about the repos (clone urls)
         for (repo in repos) {
-            val extraRepo = api.getRepo(repo, authUser)
+            val extraRepo = api.getRepo(repo, null)
             if (extraRepo != null) {
                 repositories.add(extraRepo)
             }

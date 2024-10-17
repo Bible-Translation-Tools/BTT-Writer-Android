@@ -64,7 +64,8 @@ class TargetTranslationAdapter(private val typography: Typography) : BaseAdapter
                 }
 
                 SortByColumnType.ProgressThenProject -> {
-                    compare = (rhs.progress - lhs.progress).toInt()
+                    compare = ((rhs.progress - lhs.progress) * 100).toInt()
+
                     if (compare == 0) {
                         compare = compareProject(lhs, rhs, sortProjectColumn)
                     }
@@ -72,7 +73,7 @@ class TargetTranslationAdapter(private val typography: Typography) : BaseAdapter
                 }
 
                 else -> {
-                    compare = (rhs.progress - lhs.progress).toInt()
+                    compare = ((rhs.progress - lhs.progress) * 100).toInt()
                     if (compare == 0) {
                         compare = compareProject(lhs, rhs, sortProjectColumn)
                     }

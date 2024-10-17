@@ -71,10 +71,10 @@ class ImportViewModel @Inject constructor(
         )
     }
 
-    fun searchRepositories(authUser: User, userQuery: String, repoQuery: String, limit: Int) {
+    fun searchRepositories(userQuery: String, repoQuery: String, limit: Int) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                advancedGogsRepoSearch.execute(authUser, userQuery, repoQuery, limit, object : OnProgressListener {
+                advancedGogsRepoSearch.execute(userQuery, repoQuery, limit, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
                         launch(Dispatchers.Main) {
                             _progress.value = ProgressHelper.Progress(message, progress, max)

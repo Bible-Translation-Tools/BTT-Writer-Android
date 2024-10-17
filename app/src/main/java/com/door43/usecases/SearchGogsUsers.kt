@@ -18,7 +18,6 @@ class SearchGogsUsers @Inject constructor(
     private val max = 100
 
     fun execute(
-        authUser: User,
         userQuery: String,
         limit: Int,
         progressListener: OnProgressListener? = null
@@ -31,6 +30,6 @@ class SearchGogsUsers @Inject constructor(
                 context.getString(R.string.pref_default_gogs_api)
             )
         )
-        return api.searchUsers(userQuery, limit, authUser)
+        return api.searchUsers(userQuery, limit, null)
     }
 }

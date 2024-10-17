@@ -26,7 +26,6 @@ import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog
-import com.door43.translationstudio.ui.dialogs.Door43LoginDialog
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.dialogs.ShareWithPeerDialog
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
@@ -156,13 +155,6 @@ class ImportDialog : DialogFragment() {
             }
 
             importFromDoor43.setOnClickListener {
-                // make sure we have a gogs user
-                if (profile.gogsUser == null) {
-                    val dialog = Door43LoginDialog()
-                    showDialogFragment(dialog, Door43LoginDialog.TAG)
-                    return@setOnClickListener
-                }
-
                 // open dialog for browsing repositories
                 val dialog = ImportFromDoor43Dialog()
                 showDialogFragment(dialog, ImportFromDoor43Dialog.TAG)

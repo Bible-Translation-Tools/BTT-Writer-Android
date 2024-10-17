@@ -32,8 +32,6 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.usecases.CloneRepository
 import com.door43.util.FileUtilities.deleteQuietly
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.json.JSONObject
@@ -103,21 +101,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                     closeKeyboard(activity, translationId)
                 }
 
-                if (profile.gogsUser != null) {
-                    viewModel.searchRepositories(profile.gogsUser!!, userQuery, repoQuery, 50)
-                } else {
-                    val snack = Snackbar.make(
-                        requireActivity().findViewById(android.R.id.content),
-                        resources.getString(R.string.login_doo43),
-                        Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(
-                        snack,
-                        resources.getColor(R.color.light_primary_text)
-                    )
-                    snack.show()
-                    dismiss()
-                }
+                viewModel.searchRepositories(userQuery, repoQuery, 50)
             }
 
             (root.findViewById<View>(R.id.list) as? ListView)?.let { list ->
