@@ -6,9 +6,9 @@ import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.core.Util
 import com.door43.translationstudio.ui.publish.ValidationItem
 import com.door43.util.StringUtilities
+import com.door43.util.sortNumerically
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONException
 import org.unfoldingword.door43client.Door43Client
@@ -65,11 +65,11 @@ class ValidateProject @Inject constructor(
 
             val projectTranslation = targetTranslation.projectTranslation
 
-            sortArrayNumerically(chapters)
+            chapters.sortNumerically()
             for (i in chapters.indices) {
                 val chapterSlug = chapters[i]
                 val chunks = container.chunks(chapterSlug)
-                sortArrayNumerically(chunks)
+                chunks.sortNumerically()
 
                 // validate frames
                 var lastValidFrameIndex = -1
@@ -307,30 +307,6 @@ class ValidateProject @Inject constructor(
         }
 
         return validations
-    }
-
-    /**
-     * sort the array numerically
-     * @param array An array to sort
-     */
-    private fun sortArrayNumerically(array: Array<String>) {
-        // sort frames
-        array.sortWith { o1, o2 ->
-            // do numeric sort
-            val lhInt = getIdOrder(o1)
-            val rhInt = getIdOrder(o2)
-            lhInt.compareTo(rhInt)
-        }
-    }
-
-    /**
-     *
-     * @param id
-     * @return
-     */
-    private fun getIdOrder(id: String): Int {
-        // if not numeric, then will move to top of list and leave order unchanged
-        return Util.strToInt(id, -1)
     }
 
     /**

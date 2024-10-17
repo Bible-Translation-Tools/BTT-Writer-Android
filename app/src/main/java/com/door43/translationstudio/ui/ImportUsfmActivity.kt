@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui
 
-import android.app.Activity
 import android.app.SearchManager
 import android.content.Intent
 import android.net.Uri
@@ -45,7 +44,6 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
     private var shuttingDown = false
     private var mergeConflict = false
     private var conflictingTargetTranslation: TargetTranslation? = null
-    private var destinationTargetTranslationDir: File? = null
 
     private lateinit var binding: ActivityImportUsfmBinding
     private val viewModel: ImportUsfmViewModel by viewModels()
@@ -68,8 +66,6 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
         binding = ActivityImportUsfmBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        progressDialog = ProgressHelper.newInstance(baseContext, R.string.importing_usfm, false)
-
         if (findViewById<View?>(R.id.fragment_container) != null) {
             if (savedInstanceState != null) {
                 fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as Searchable
@@ -81,6 +77,11 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
         setupObservers()
 
         onBackPressedDispatcher.addCallback { onBackPressedHandler() }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        progressDialog = ProgressHelper.newInstance(this, R.string.importing_usfm, false)
     }
 
     private fun setupObservers() {
@@ -119,14 +120,13 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
      * process an USFM file using the selected language
      */
     private fun processUSFMFile() {
-        val intent = intent
         val args = intent.extras
 
         currentState = ImportState.ProcessingFiles
 
         targetLanguage?.let {
             title = languageTitle
-            beginUsfmProcessing(it, intent, args)
+            beginUsfmProcessing(it, args)
         }
     }
 
@@ -329,18 +329,17 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
     /**
      * begin USFM processing using type passed (URI, File, or resource)
      *
-     * @param intent
      * @param args
      * @return
      */
-    private fun beginUsfmProcessing(language: TargetLanguage, intent: Intent, args: Bundle?) {
+    private fun beginUsfmProcessing(language: TargetLanguage, args: Bundle?) {
         if (args == null) return
 
         when {
             args.containsKey(EXTRA_USFM_IMPORT_URI) -> {
-                // val uriStr = args.getString(EXTRA_USFM_IMPORT_URI)
-                intent.data?.let { uri ->
-                    viewModel.processUsfm(language, uri)
+                val uriStr = args.getString(EXTRA_USFM_IMPORT_URI)
+                uriStr?.let { uri ->
+                    viewModel.processUsfm(language, Uri.parse(uri))
                 } ?: run {
                     // todo show the error message
                 }
@@ -673,42 +672,5 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
         const val STATE_FINISH_SUCCESS: String = "state_finish_success"
         const val RESULT_MERGED: Int = 2001
         val TAG: String = ImportUsfmActivity::class.java.simpleName
-
-        /**
-         * begins activity to process and import a file
-         *
-         * @param context
-         * @param path
-         */
-        fun startActivityForFileImport(context: Activity, path: File?) {
-            val intent = Intent(context, ImportUsfmActivity::class.java)
-            intent.putExtra(EXTRA_USFM_IMPORT_FILE, path)
-            context.startActivity(intent)
-        }
-
-        /**
-         * begins an activity to process and import a Uri
-         *
-         * @param context
-         * @param uri
-         */
-        fun startActivityForUriImport(context: Activity, uri: Uri) {
-            val intent = Intent(context, ImportUsfmActivity::class.java)
-            intent.putExtra(EXTRA_USFM_IMPORT_URI, uri.toString()) // flag that we are using Uri
-            intent.setData(uri) // only way to pass data since Uri does not serialize
-            context.startActivity(intent)
-        }
-
-        /**
-         * begins an activity to process and import a resource
-         *
-         * @param context
-         * @param resourceName
-         */
-        fun startActivityForResourceImport(context: Activity, resourceName: String?) {
-            val intent = Intent(context, ImportUsfmActivity::class.java)
-            intent.putExtra(EXTRA_USFM_IMPORT_RESOURCE_FILE, resourceName)
-            context.startActivity(intent)
-        }
     }
 }

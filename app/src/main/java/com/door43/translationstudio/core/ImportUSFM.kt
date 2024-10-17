@@ -8,6 +8,7 @@ import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.deleteQuietly
 import com.door43.util.FileUtilities.forceMkdir
 import com.door43.util.FileUtilities.getExtension
@@ -15,6 +16,7 @@ import com.door43.util.FileUtilities.readFileToString
 import com.door43.util.FileUtilities.readStreamToString
 import com.door43.util.FileUtilities.writeStringToFile
 import com.door43.util.Zip
+import com.door43.util.sortNumerically
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -27,6 +29,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.util.Locale
+import java.util.TreeMap
 import java.util.regex.Pattern
 
 /**
@@ -655,7 +658,7 @@ class ImportUSFM {
         var success = false
         updateStatus(R.string.initializing_import)
 
-        val path = uri.toString()
+        val path = FileUtilities.getUriDisplayName(context, uri)
 
         try {
             val ext = getExtension(path)
@@ -664,7 +667,7 @@ class ImportUSFM {
             context.contentResolver.openInputStream(uri)?.use { stream ->
                 if (!zip) {
                     val text = readStreamToString(stream)
-                    success = processBook(text, uri.toString())
+                    success = processBook(text, path)
                 } else {
                     success = readZipStream(stream)
                 }
@@ -793,13 +796,11 @@ class ImportUSFM {
             val versifications = library.index()
                 .getVersifications("en")
             val markers: List<ChunkMarker> =
-                library.index()
-                    .getChunkMarkers(bookShortName, versifications[0].slug)
+                library.index().getChunkMarkers(bookShortName, versifications[0].slug)
             val haveChunksList = markers.isNotEmpty()
 
             if (!haveChunksList) { // no chunk list
                 // TODO: 4/13/16 add support for processing by sections
-
                 addWarning(R.string.no_chunk_list, bookShortName!!)
                 addBookMissingName(bookName, bookShortName, book)
                 return promptForName
@@ -808,8 +809,12 @@ class ImportUSFM {
                 chapters.clear()
                 chapters.addAll(parsedChunks.chapters)
 
+                chapters.sortNumerically()
+
+                val sortedChunks = TreeMap(parsedChunks.chunks)
+
                 chunks.clear()
-                chunks.putAll(parsedChunks.chunks)
+                chunks.putAll(sortedChunks)
                 chapterCount = chapters.size
 
                 success = extractChaptersFromBook(book)

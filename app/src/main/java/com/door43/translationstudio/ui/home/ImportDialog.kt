@@ -6,13 +6,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.registerForActivityResult
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity.RESULT_OK
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
@@ -25,6 +28,7 @@ import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.ui.ImportUsfmActivity
+import com.door43.translationstudio.ui.ImportUsfmActivity.Companion.EXTRA_USFM_IMPORT_URI
 import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.dialogs.ShareWithPeerDialog
@@ -69,9 +73,19 @@ class ImportDialog : DialogFragment() {
     private var _binding: DialogImportBinding? = null
     private val binding get() = _binding!!
 
+    private lateinit var activityLauncher: ActivityResultLauncher<Intent>
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.setCanceledOnTouchOutside(true)
+
+        activityLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                Log.e("MAXXX", "da8w79f7a9w8f79aw87f9a87w8f")
+            }
+        }
 
         openFileContent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let {
@@ -352,7 +366,12 @@ class ImportDialog : DialogFragment() {
      * @param uri
      */
     private fun doUsfmImportUri(uri: Uri) {
-        ImportUsfmActivity.startActivityForUriImport(requireActivity(), uri)
+
+
+        val intent = Intent(requireActivity(), ImportUsfmActivity::class.java)
+        intent.putExtra(EXTRA_USFM_IMPORT_URI, uri.toString()) // flag that we are using Uri
+        //requireActivity().startActivity(intent)
+        activityLauncher.launch(intent)
     }
 
     private fun doImportSourceText(uri: Uri) {
