@@ -8,9 +8,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
+import com.door43.usecases.GogsLogout
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,6 +29,8 @@ class SettingsViewModel @Inject constructor(
     @Inject lateinit var downloadLatestRelease: DownloadLatestRelease
     @Inject lateinit var prefRepository: IPreferenceRepository
     @Inject lateinit var library: Door43Client
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var logout: GogsLogout
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -36,6 +40,9 @@ class SettingsViewModel @Inject constructor(
 
     private val _settings = MutableLiveData<Settings>()
     val settings: LiveData<Settings> get() = _settings
+
+    private val _loggedOut = MutableLiveData<Boolean?>()
+    val loggedOut: LiveData<Boolean?> get() = _loggedOut
 
     fun checkForLatestRelease() {
         viewModelScope.launch {
@@ -55,5 +62,21 @@ class SettingsViewModel @Inject constructor(
 
     fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
         downloadLatestRelease.execute(release)
+    }
+
+    fun logout() {
+        if (profile.gogsUser != null) {
+            viewModelScope.launch {
+                _progress.value = ProgressHelper.Progress(
+                    application.resources.getString(R.string.log_out)
+                )
+                withContext(Dispatchers.IO) {
+                    logout.execute()
+                    profile.logout()
+                    _loggedOut.postValue(true)
+                }
+                _progress.value = null
+            }
+        }
     }
 }

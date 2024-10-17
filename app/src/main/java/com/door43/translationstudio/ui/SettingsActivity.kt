@@ -240,6 +240,9 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }
             }
+            viewModel.loggedOut.observe(this) {
+                if (it == true) doLogout()
+            }
         }
 
         /**
@@ -399,6 +402,7 @@ class SettingsActivity : AppCompatActivity() {
                     }
                     KEY_PREF_CONTENT_SERVER -> {
                         updateGitServerPrefs(value)
+                        viewModel.logout()
                     }
                     KEY_PREF_COLOR_THEME -> {
                         Logger.i(
@@ -429,6 +433,12 @@ class SettingsActivity : AppCompatActivity() {
                 }
                 .setNegativeButton(R.string.title_cancel, null)
                 .show()
+        }
+
+        private fun doLogout() {
+            val logoutIntent = Intent(requireActivity(), ProfileActivity::class.java)
+            startActivity(logoutIntent)
+            requireActivity().finish()
         }
     }
 
