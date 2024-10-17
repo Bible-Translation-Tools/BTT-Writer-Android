@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.ImportDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -20,14 +22,17 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DraftViewModel @Inject constructor(
-    application: Application
+    private val application: Application
 ) : AndroidViewModel(application) {
     @Inject lateinit var importDraft: ImportDraft
     @Inject lateinit var translator: Translator
     @Inject lateinit var library: Door43Client
 
-    private val _result = MutableLiveData<ImportDraft.Result?>()
-    val result: LiveData<ImportDraft.Result?> = _result
+    private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
+    val progress: LiveData<ProgressHelper.Progress?> = _progress
+
+    private val _importResult = MutableLiveData<ImportDraft.Result?>()
+    val importResult: LiveData<ImportDraft.Result?> = _importResult
 
     private val _draftTranslations = MutableLiveData<List<Translation>>()
     val draftTranslations: LiveData<List<Translation>> = _draftTranslations
@@ -50,9 +55,13 @@ class DraftViewModel @Inject constructor(
 
     fun importDraft(sourceContainer: ResourceContainer) {
         viewModelScope.launch {
-            _result.value = withContext(Dispatchers.IO) {
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.importing_draft)
+            )
+            _importResult.value = withContext(Dispatchers.IO) {
                 importDraft.execute(sourceContainer)
             }
+            _progress.value = null
         }
     }
 

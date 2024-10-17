@@ -451,11 +451,6 @@ class HomeActivity : BaseActivity(),
                     .replace(R.id.fragment_container, this)
                     .commit()
             }
-
-            /*val hand = Handler(Looper.getMainLooper())
-            hand.post { // delay to load list after fragment initializes
-                (fragment as TargetTranslationListFragment).reloadList()
-            }*/
         } else if (numTranslations == 0 && fragment is TargetTranslationListFragment) {
             // display welcome screen
             fragment = WelcomeFragment().apply {

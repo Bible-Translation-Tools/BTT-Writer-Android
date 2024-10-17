@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
 import androidx.fragment.app.FragmentTransaction;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -140,11 +141,22 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         viewModel.openUsedSourceTranslations();
 
         // notify user that a draft translation exists the first time activity starts
-        if(savedInstanceState == null && viewModel.draftIsAvailable() && viewModel.getTargetTranslation().numTranslated() == 0) {
-            Snackbar snack = Snackbar.make(findViewById(android.R.id.content), R.string.draft_translation_exists, Snackbar.LENGTH_LONG)
+        if(savedInstanceState == null &&
+                viewModel.draftIsAvailable() &&
+                viewModel.getTargetTranslation().numTranslated() == 0
+        ) {
+            Snackbar snack = Snackbar
+                    .make(
+                        findViewById(android.R.id.content),
+                        R.string.draft_translation_exists,
+                        Snackbar.LENGTH_LONG
+                    )
                     .setAction(R.string.preview, v -> {
-                        Intent intent = new Intent(TargetTranslationActivity.this, DraftActivity.class);
-                        intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
+                        Intent intent = new Intent(this, DraftActivity.class);
+                        intent.putExtra(
+                                DraftActivity.EXTRA_TARGET_TRANSLATION_ID,
+                                viewModel.getTargetTranslation().getId()
+                        );
                         startActivity(intent);
                     });
             ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));

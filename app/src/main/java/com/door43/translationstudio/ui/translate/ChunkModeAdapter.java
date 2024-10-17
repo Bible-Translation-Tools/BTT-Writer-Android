@@ -89,7 +89,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
     @Override
     public String getFocusedChapterSlug(int position) {
-        return filteredItems.get(position).chapterSlug;
+        if (position > 0 && position < filteredItems.size()) {
+            return filteredItems.get(position).chapterSlug;
+        }
+        return null;
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
@@ -28,7 +29,7 @@ import java.util.List;
  */
 public class FirstTabFragment extends BaseFragment implements ChooseSourceTranslationDialog.OnClickListener {
 
-    private OnEventListener mListener;
+    private OnEventListener listener;
     protected TargetTranslationViewModel viewModel;
 
     private FragmentFirstTabBinding binding;
@@ -40,6 +41,8 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
 
         Bundle args = getArguments();
         assert args != null;
+
+        setupObservers();
 
         try {
             Project p = viewModel.getProject();
@@ -84,11 +87,19 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
         return binding.getRoot();
     }
 
+    private void setupObservers() {
+        viewModel.getListItems().observe(getViewLifecycleOwner(), items -> {
+            if (!items.isEmpty() && listener != null) {
+                listener.onHasSourceTranslations();
+            }
+        });
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         try {
-            this.mListener = (OnEventListener) context;
+            this.listener = (OnEventListener) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(context + " must implement FirstTabFragment.OnEventListener");
         }
@@ -104,7 +115,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
      * user has selected to update sources
      */
     public void onUpdateSources() {
-        if(mListener != null) mListener.onUpdateSources();
+        if(listener != null) listener.onUpdateSources();
     }
 
     @Override
@@ -113,7 +124,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
     }
 
     @Override
-    public void onConfirmTabsDialog(List<String> sourceTranslationIds) {
+    public void onConfirmTabsDialog(@NonNull List<String> sourceTranslationIds) {
         String[] oldSourceTranslationIds = viewModel.getOpenSourceTranslations();
         for(String id:oldSourceTranslationIds) {
             viewModel.removeOpenSourceTranslation(id);
@@ -138,7 +149,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
             }
 
             // redirect back to previous mode
-            if(mListener != null) mListener.onHasSourceTranslations();
+            if(listener != null) listener.onHasSourceTranslations();
         }
     }
 

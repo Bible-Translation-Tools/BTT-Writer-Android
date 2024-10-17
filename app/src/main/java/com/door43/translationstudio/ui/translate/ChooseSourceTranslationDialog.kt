@@ -262,8 +262,8 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
     }
 
     interface OnClickListener {
-        fun onCancelTabsDialog(targetTranslationId: String?)
-        fun onConfirmTabsDialog(sourceTranslationIds: List<String>?)
+        fun onCancelTabsDialog(targetTranslationId: String)
+        fun onConfirmTabsDialog(sourceTranslationIds: List<String>)
         fun onUpdateSources()
     }
 

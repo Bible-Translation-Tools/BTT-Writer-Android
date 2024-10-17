@@ -105,6 +105,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
                 false
         );
 
+        setupObservers();
+
         viewModel.setSelectedResourceContainer();
 
         // TRICKY: there is a bug in Android's LinearLayoutManager
@@ -173,7 +175,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         // let child classes modify the view
         onPrepareView(binding.getRoot());
-        setupObservers();
 
         return binding.getRoot();
     }
@@ -578,7 +579,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     @Override
-    public void onConfirmTabsDialog(List<String> sourceTranslationIds) {
+    public void onConfirmTabsDialog(@NonNull List<String> sourceTranslationIds) {
         String[] oldSourceTranslationIds = viewModel.getOpenSourceTranslations();
         for (String id : oldSourceTranslationIds) {
             viewModel.removeOpenSourceTranslation(id);
@@ -586,7 +587,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         if (!sourceTranslationIds.isEmpty()) {
             setSelectedSources(sourceTranslationIds);
             String selectedSourceId = viewModel.getSelectedSourceTranslationId();
-            viewModel.setSelectedResourceContainer(selectedSourceId);
+            if (selectedSourceId != null) {
+                viewModel.setSelectedResourceContainer(selectedSourceId);
+            }
         } else {
             if (listener != null) listener.onNoSourceTranslations();
         }
@@ -637,7 +640,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public void onDestroy() {
-        viewModel.cancelGeneralJobs();
         viewModel.cancelRenderJobs();
         if(layoutManager != null) {
             // save position state

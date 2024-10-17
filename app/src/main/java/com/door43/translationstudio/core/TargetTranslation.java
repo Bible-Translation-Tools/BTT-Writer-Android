@@ -1400,12 +1400,12 @@ public class TargetTranslation {
      */
     public int numTranslated() {
         int numFiles = 0;
-        File[] chapterDirs = targetTranslationDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isDirectory() && !pathname.getName().equals(".git") && !pathname.getName().equals("manifest.json");
-            }
-        });
+        File[] chapterDirs = targetTranslationDir
+                .listFiles(pathname ->
+                    pathname.isDirectory() &&
+                    !pathname.getName().equals(".git") &&
+                    !pathname.getName().equals("manifest.json")
+                );
         if(chapterDirs != null) {
             for (File dir : chapterDirs) {
                 String[] files = dir.list();

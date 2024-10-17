@@ -10,8 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.TranslationType;
@@ -605,97 +603,36 @@ a     * @param task
     public View getView(final int position, View convertView, ViewGroup parent) {
         context = parent.getContext();
         final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        ViewHolder holder;
-        ViewBinding binding;
 
         int rowType = getItemViewType(position);
         final ViewItem item = getItem(position);
 
-        if(convertView == null) {
-            holder = new ViewHolder();
-            switch (rowType) {
-                case TYPE_ITEM_FILTER_SELECTION:
-                    binding = FragmentSelectFilterItemBinding.inflate(
-                            inflater,
-                            parent,
-                            false
-                    );
-                    FragmentSelectFilterItemBinding filterBinding =
-                            ((FragmentSelectFilterItemBinding) binding);
-                    holder.titleView = filterBinding.title;
-                    holder.imageView = filterBinding.itemIcon;
-                    break;
-                case TYPE_ITEM_SOURCE_SELECTION:
-                default:
-                    binding = FragmentSelectDownloadSourceItemBinding.inflate(
-                            inflater,
-                            parent,
-                            false
-                    );
-                    FragmentSelectDownloadSourceItemBinding sourceBinding =
-                            ((FragmentSelectDownloadSourceItemBinding) binding);
-                    holder.titleView2 = sourceBinding.title2;
-                    holder.errorView = sourceBinding.errorIcon;
-                    break;
-            }
-            holder.binding = binding;
-            binding.getRoot().setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
-        }
+        BaseViewHolder viewHolder;
 
-        holder.titleView.setTypeface(Typeface.DEFAULT, Typeface.NORMAL); // make sure this is reset to default
-        holder.titleView.setText(item.title);
-
-        if(holder.titleView2 != null) {
-            holder.titleView2.setText((item.title2 != null) ? item.title2 : "");
-        }
-
-        if(rowType == TYPE_ITEM_SOURCE_SELECTION) {
-            holder.errorView.setVisibility(item.error ? View.VISIBLE : View.GONE);
-            if(item.error) {
-                holder.errorView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                                .setTitle(R.string.download_failed)
-                                .setMessage(R.string.check_network_connection)
-                                .setPositiveButton(R.string.label_close, null);
-//                                .show();
-                        if(item.errorMessage != null) {
-                            builder.setMessage(item.errorMessage);
-                        }
-                        builder.show();
-                    }
-                });
-            }
-            if(item.downloaded) { // display with a green check
-                holder.imageView.setBackgroundResource(R.drawable.ic_done_black_24dp);
-                ViewUtil.tintViewDrawable(holder.imageView, parent.getContext().getResources().getColor(R.color.completed));
-            } else if (item.selected) { // display checked box
-                holder.imageView.setBackgroundResource(R.drawable.ic_check_box_black_24dp);
-                ViewUtil.tintViewDrawable(holder.imageView, parent.getContext().getResources().getColor(R.color.accent));
-            } else { // display unchecked box
-                holder.imageView.setBackgroundResource(R.drawable.ic_check_box_outline_blank_black_24dp);
-                ViewUtil.tintViewDrawable(holder.imageView, parent.getContext().getResources().getColor(R.color.dark_primary_text));
-            }
-        } else {
-            if(selectionType == SelectionType.book_type) {
-                holder.imageView.setImageDrawable(AppCompatResources.getDrawable(context, item.icon));
-                holder.imageView.setVisibility(View.VISIBLE);
-            } else {
-                holder.imageView.setVisibility(View.GONE);
-                // if language selection, look up font
-                Typeface typeface = typography.getBestFontForLanguage(
-                        TranslationType.SOURCE,
-                        item.sourceTranslation.language.slug,
-                        item.sourceTranslation.language.direction
+        if (convertView == null) {
+            if (rowType == TYPE_ITEM_SOURCE_SELECTION) {
+                FragmentSelectFilterItemBinding binding = FragmentSelectFilterItemBinding.inflate(
+                        inflater,
+                        parent,
+                        false
                 );
-                holder.titleView.setTypeface(typeface, Typeface.NORMAL);
+                viewHolder = new FilterViewHolder(binding);
+            } else {
+                FragmentSelectDownloadSourceItemBinding binding = FragmentSelectDownloadSourceItemBinding.inflate(
+                        inflater,
+                        parent,
+                        false
+                );
+                viewHolder = new DownloadSourceViewHolder(binding);
             }
+            viewHolder.binding.getRoot().setTag(viewHolder);
+        } else {
+            viewHolder = (BaseViewHolder) convertView.getTag();
         }
 
-        return holder.binding.getRoot();
+        viewHolder.bind(item);
+
+        return viewHolder.binding.getRoot();
     }
 
     /**
@@ -796,14 +733,6 @@ a     * @param task
             }
         }
         notifyDataSetChanged();
-    }
-
-    public static class ViewHolder {
-        public ViewBinding binding;
-        public TextView titleView;
-        public TextView titleView2;
-        public ImageView imageView;
-        public ImageView errorView;
     }
 
     public static class ViewItem {
@@ -940,5 +869,88 @@ a     * @param task
         all,
         none,
         not_empty;
+    }
+
+    private abstract static class BaseViewHolder {
+        ViewBinding binding;
+
+        public BaseViewHolder(ViewBinding binding) {
+            this.binding = binding;
+        }
+
+        public abstract void bind(ViewItem item);
+    }
+
+    private class FilterViewHolder extends BaseViewHolder {
+        private final FragmentSelectFilterItemBinding binding;
+
+        public FilterViewHolder(FragmentSelectFilterItemBinding binding) {
+            super(binding);
+            this.binding = binding;
+        }
+
+        @Override
+        public void bind(ViewItem item) {
+            // make sure this is reset to default
+            binding.title.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+            binding.title.setText(item.title);
+
+            if(selectionType == SelectionType.book_type) {
+                binding.itemIcon.setImageDrawable(AppCompatResources.getDrawable(context, item.icon));
+                binding.itemIcon.setVisibility(View.VISIBLE);
+            } else {
+                binding.itemIcon.setVisibility(View.GONE);
+                // if language selection, look up font
+                Typeface typeface = typography.getBestFontForLanguage(
+                        TranslationType.SOURCE,
+                        item.sourceTranslation.language.slug,
+                        item.sourceTranslation.language.direction
+                );
+                binding.title.setTypeface(typeface, Typeface.NORMAL);
+            }
+        }
+    }
+
+    private static class DownloadSourceViewHolder extends BaseViewHolder {
+        private final FragmentSelectDownloadSourceItemBinding binding;
+
+        public DownloadSourceViewHolder(FragmentSelectDownloadSourceItemBinding binding) {
+            super(binding);
+            this.binding = binding;
+        }
+
+        @Override
+        public void bind(ViewItem item) {
+            Context context = binding.getRoot().getContext();
+
+            // make sure this is reset to default
+            binding.title.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+            binding.title.setText(item.title);
+            binding.title2.setText((item.title2 != null) ? item.title2 : "");
+            binding.errorIcon.setVisibility(item.error ? View.VISIBLE : View.GONE);
+
+            if(item.error) {
+                binding.errorIcon.setOnClickListener(v -> {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                            .setTitle(R.string.download_failed)
+                            .setMessage(R.string.check_network_connection)
+                            .setPositiveButton(R.string.label_close, null);
+                    if(item.errorMessage != null) {
+                        builder.setMessage(item.errorMessage);
+                    }
+                    builder.show();
+                });
+            }
+            if(item.downloaded) { // display with a green check
+                binding.itemIcon.setBackgroundResource(R.drawable.ic_done_black_24dp);
+                ViewUtil.tintViewDrawable(binding.itemIcon, context.getResources().getColor(R.color.completed));
+            } else if (item.selected) { // display checked box
+                binding.itemIcon.setBackgroundResource(R.drawable.ic_check_box_black_24dp);
+                ViewUtil.tintViewDrawable(binding.itemIcon, context.getResources().getColor(R.color.accent));
+            } else { // display unchecked box
+                binding.itemIcon.setBackgroundResource(R.drawable.ic_check_box_outline_blank_black_24dp);
+                ViewUtil.tintViewDrawable(binding.itemIcon, context.getResources().getColor(R.color.dark_primary_text));
+            }
+        }
     }
 }

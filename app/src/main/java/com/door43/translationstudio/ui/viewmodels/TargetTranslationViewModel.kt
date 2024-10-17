@@ -40,7 +40,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TargetTranslationViewModel @Inject constructor(
-    private val application: Application
+    application: Application
 ) : AndroidViewModel(application) {
 
     @Inject lateinit var translator: Translator
@@ -52,7 +52,6 @@ class TargetTranslationViewModel @Inject constructor(
 
     @Inject lateinit var typography: Typography
 
-    private val generalJobs = arrayListOf<Job>()
     private val renderHelpJobs = arrayListOf<Job>()
 
     private var _targetTranslation: TargetTranslation? = null
@@ -69,11 +68,6 @@ class TargetTranslationViewModel @Inject constructor(
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
     val progress: LiveData<ProgressHelper.Progress?> = _progress
-
-    fun cancelGeneralJobs() {
-        generalJobs.forEach { it.cancel() }
-        generalJobs.clear()
-    }
 
     fun getTargetTranslation(translationID: String?): TargetTranslation? {
         _targetTranslation = translator.getTargetTranslation(translationID)
@@ -173,10 +167,12 @@ class TargetTranslationViewModel @Inject constructor(
      * If no source available, sets list items to empty list
      */
     fun setSelectedResourceContainer() {
-        getSelectedSourceTranslationId()?.let { sourceTranslationSlug ->
-            setSelectedResourceContainer(sourceTranslationSlug)
-        } ?: run {
-            _listItems.value = listOf()
+        viewModelScope.launch {
+            getSelectedSourceTranslationId()?.let { sourceTranslationSlug ->
+                setSelectedResourceContainer(sourceTranslationSlug)
+            } ?: run {
+                _listItems.value = listOf()
+            }
         }
     }
 
@@ -187,17 +183,19 @@ class TargetTranslationViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
 
-            translator.setSelectedSourceTranslation(targetTranslation.id, sourceTranslationId)
-            _resourceContainer = library.index.getTranslation(sourceTranslationId)?.let { sourceTranslation ->
-                ContainerCache.cache(
-                    library,
-                    sourceTranslation.resourceContainerSlug
-                )
+            withContext(Dispatchers.IO) {
+                translator.setSelectedSourceTranslation(targetTranslation.id, sourceTranslationId)
+                _resourceContainer = library.index.getTranslation(sourceTranslationId)?.let { sourceTranslation ->
+                    ContainerCache.cache(
+                        library,
+                        sourceTranslation.resourceContainerSlug
+                    )
+                }
             }
-            loadListItems()
 
+            loadListItems()
             _progress.value = null
-        }.also(generalJobs::add)
+        }
     }
 
     fun getClosestResourceContainer(

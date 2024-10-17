@@ -7,10 +7,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.ActivityDraftPreviewBinding
 import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.viewmodels.DraftViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.door43client.models.Translation
@@ -20,16 +20,15 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class DraftActivity : BaseActivity() {
-    @Inject
-    lateinit var translator: Translator
-    @Inject
-    lateinit var typography: Typography
+    @Inject lateinit var typography: Typography
 
     private val adapter by lazy { DraftAdapter(typography) }
     private var sourceContainer: ResourceContainer? = null
 
     private lateinit var binding: ActivityDraftPreviewBinding
     private val viewModel: DraftViewModel by viewModels()
+
+    private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +65,16 @@ class DraftActivity : BaseActivity() {
     }
 
     private fun setupObservers() {
+        viewModel.progress.observe(this) {
+            if (it != null) {
+                progressDialog?.show()
+                progressDialog?.setProgress(it.progress)
+                progressDialog?.setMessage(it.message)
+                progressDialog?.setMax(it.max)
+            } else {
+                progressDialog?.dismiss()
+            }
+        }
         viewModel.draftTranslations.observe(this) {
             it?.let { drafts ->
                 if (drafts.isEmpty()) {
@@ -75,7 +84,7 @@ class DraftActivity : BaseActivity() {
                 }
             }
         }
-        viewModel.result.observe(this) {
+        viewModel.importResult.observe(this) {
             it?.let { result ->
                 if (result.targetTranslation != null) {
                     finish()
@@ -88,6 +97,11 @@ class DraftActivity : BaseActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        progressDialog = ProgressHelper.newInstance(this, R.string.loading, false)
     }
 
     private fun onDraftsLoaded(drafts: List<Translation>) {

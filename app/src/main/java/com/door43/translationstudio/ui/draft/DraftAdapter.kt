@@ -10,6 +10,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.core.Util
 import com.door43.translationstudio.databinding.FragmentDraftListItemBinding
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
@@ -37,10 +38,13 @@ class DraftAdapter(private val typography: Typography) :
         this.draftTranslation = draftTranslation
         this.sourceLanguage = sourceLanguage
 
-        chapters.clear()
-        chapters.addAll(draftTranslation.chapters())
+        val chapters = draftTranslation.chapters()
+        sortArrayNumerically(chapters)
 
-        renderedDraftBody = arrayOfNulls(chapters.size)
+        this.chapters.clear()
+        this.chapters.addAll(chapters)
+
+        renderedDraftBody = arrayOfNulls(this.chapters.size)
         notifyDataSetChanged()
     }
 
@@ -91,7 +95,10 @@ class DraftAdapter(private val typography: Typography) :
         // render the draft chapter body
         if (renderedDraftBody[position] == null) {
             var chapterBody: String? = ""
-            for (chunk in draftTranslation?.chunks(chapterSlug) ?: arrayOf()) {
+            val chunks = draftTranslation?.chunks(chapterSlug) ?: arrayOf()
+            sortArrayNumerically(chunks)
+
+            for (chunk in chunks) {
                 chapterBody += draftTranslation!!.readChunk(chapterSlug, chunk)
             }
             // String chapterBody = getChapterBody(mDraftTranslation, chapterSlug.getId());/
@@ -185,5 +192,29 @@ class DraftAdapter(private val typography: Typography) :
         val binding: FragmentDraftListItemBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         var layoutBuildNumber: Int = -1
+    }
+
+    /**
+     * sort the array numerically
+     * @param array An array to sort
+     */
+    private fun sortArrayNumerically(array: Array<String>) {
+        // sort frames
+        array.sortWith { o1, o2 ->
+            // do numeric sort
+            val lhInt = getIdOrder(o1)
+            val rhInt = getIdOrder(o2)
+            lhInt.compareTo(rhInt)
+        }
+    }
+
+    /**
+     *
+     * @param id
+     * @return
+     */
+    private fun getIdOrder(id: String): Int {
+        // if not numeric, then will move to top of list and leave order unchanged
+        return Util.strToInt(id, -1)
     }
 }
