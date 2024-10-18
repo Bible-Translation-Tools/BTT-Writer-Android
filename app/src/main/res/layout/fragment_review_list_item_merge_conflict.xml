@@ -13,7 +13,7 @@
     android:weightSum=".765"
     android:clipChildren="false">
 
-    <include layout="@layout/fragment_review_list_item_source" />
+    <include android:id="@+id/item_source" layout="@layout/fragment_review_list_item_source" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/target_translation_card"
@@ -165,6 +165,6 @@
 
     </androidx.cardview.widget.CardView>
 
-    <include layout="@layout/fragment_review_list_item_resources" />
+    <include android:id="@+id/item_resources" layout="@layout/fragment_review_list_item_resources" />
 
 </LinearLayout>

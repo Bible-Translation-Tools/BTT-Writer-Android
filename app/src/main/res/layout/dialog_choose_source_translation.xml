@@ -5,13 +5,13 @@
     android:layout_height="match_parent">
 
     <include layout="@layout/search_bar"
-        android:id="@+id/include" />
+        android:id="@+id/search_bar" />
 
     <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/include"
+        android:layout_below="@+id/search_bar"
         android:layout_above="@+id/controlsLayout" />
 
     <LinearLayout

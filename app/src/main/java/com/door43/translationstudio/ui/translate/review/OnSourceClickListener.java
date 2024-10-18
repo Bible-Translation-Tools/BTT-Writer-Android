@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.translate.review;
 
 import com.door43.translationstudio.ui.spannables.NoteSpan;
+import com.door43.translationstudio.ui.translate.ReviewListItem;
 
 /**
  * Created by joel on 3/6/17.

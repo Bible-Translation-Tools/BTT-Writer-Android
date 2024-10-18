@@ -11,8 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <include layout="@layout/toolbar_home_sidebar" />
-        <include layout="@layout/fragment_profile_options" />
+        <include android:id="@+id/sidebar" layout="@layout/toolbar_home_sidebar" />
+        <include android:id="@+id/account" layout="@layout/fragment_profile_options" />
 
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

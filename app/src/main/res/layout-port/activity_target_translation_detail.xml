@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <include layout="@layout/search_pane" />
+        <include android:id="@+id/search_pane" layout="@layout/search_pane" />
 
         <LinearLayout
             android:id="@+id/fragment_container"
@@ -20,7 +20,7 @@
 
         </LinearLayout>
 
-        <include layout="@layout/toolbar_translator_sidebar" />
+        <include android:id="@+id/translator_sidebar" layout="@layout/toolbar_translator_sidebar" />
 
     </LinearLayout>
 
