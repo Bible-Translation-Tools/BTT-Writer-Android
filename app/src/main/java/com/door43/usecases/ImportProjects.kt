@@ -14,11 +14,14 @@ import com.door43.util.FileUtilities.moveOrCopyQuietly
 import com.door43.util.FileUtilities.safeDelete
 import com.door43.util.Zip
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 
 class ImportProjects @Inject constructor(
@@ -26,7 +29,8 @@ class ImportProjects @Inject constructor(
     private val translator: Translator,
     private val backupRC: BackupRC,
     private val directoryProvider: IDirectoryProvider,
-    private val archiveImporter: ArchiveImporter
+    private val archiveImporter: ArchiveImporter,
+    private val library: Door43Client
 ) {
     fun importProject(
         projectsFolder: File,
@@ -164,6 +168,68 @@ class ImportProjects @Inject constructor(
         return ImportUsfmResult(success, conflictingTargetTranslation)
     }
 
+    fun importSource(uri: Uri): ImportSourceResult {
+        val uuid = UUID.randomUUID().toString()
+        val tempDir = directoryProvider.createTempDir(uuid)
+        val targetDir = FileUtilities.copyDirectory(context, uri, tempDir)
+
+        targetDir?.let { dir ->
+            val externalContainer = try {
+                ResourceContainer.load(dir)
+            } catch (e: Exception) {
+                Logger.e(this::class.simpleName, "Could not import RC", e)
+                return ImportSourceResult(
+                    success = false,
+                    hasConflict = false,
+                    e.message
+                )
+            }
+
+            return try {
+                library.open(externalContainer.slug)
+                val conflictMessage = String.format(
+                    context.getString(R.string.overwrite_content),
+                    "${externalContainer.language.name} - ${externalContainer.project.name} - ${externalContainer.resource.name}"
+                )
+                ImportSourceResult(
+                    success = false,
+                    hasConflict = true,
+                    message = conflictMessage,
+                    targetDir = dir
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // no conflicts. import
+                importSource(dir)
+            }
+        }
+
+        return ImportSourceResult(
+            success = false,
+            hasConflict = false,
+            message = context.getString(R.string.not_a_source_text)
+        )
+    }
+
+    fun importSource(dir: File): ImportSourceResult {
+        return try {
+            library.importResourceContainer(dir)
+            ImportSourceResult(
+                success = true,
+                hasConflict = false
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ImportSourceResult(
+                success = false,
+                hasConflict = false,
+                e.message
+            )
+        } finally {
+            FileUtilities.deleteQuietly(dir)
+        }
+    }
+
     private fun deleteProject(file: File) {
         try {
             backupRC.backupTargetTranslation(file)
@@ -281,6 +347,13 @@ class ImportProjects @Inject constructor(
     data class ImportUsfmResult internal constructor(
         val success: Boolean,
         val conflictingTargetTranslation: TargetTranslation? = null
+    )
+
+    data class ImportSourceResult internal constructor(
+        val success: Boolean,
+        val hasConflict: Boolean,
+        val message: String? = null,
+        val targetDir: File? = null
     )
 
     /**

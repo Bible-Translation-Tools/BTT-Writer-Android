@@ -11,6 +11,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ImportUSFM
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.ImportProjects
@@ -120,15 +121,15 @@ class ImportUsfmViewModel @Inject constructor(
         return library.index().getTargetLanguage(targetLanguageId)
     }
 
-    fun checkMergeConflictExists(): Boolean {
+    fun checkMergeConflictExists(): TargetTranslation? {
         val imports = _usfm.value?.importProjects ?: listOf()
         for (file in imports) {
             val conflictingTranslation = translator.getConflictingTargetTranslation(file)
             if (conflictingTranslation != null) {
-                return true
+                return conflictingTranslation
             }
         }
-        return false
+        return null
     }
 
     fun cleanup() {

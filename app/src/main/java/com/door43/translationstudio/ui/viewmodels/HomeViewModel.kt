@@ -253,14 +253,10 @@ class HomeViewModel @Inject constructor(
             _indexDownloaded.value = withContext(Dispatchers.IO) {
                 downloadIndex.execute(object: OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
@@ -274,14 +270,10 @@ class HomeViewModel @Inject constructor(
             _updateSourceResult.value = withContext(Dispatchers.IO) {
                 updateSource.execute(message, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
@@ -295,14 +287,10 @@ class HomeViewModel @Inject constructor(
             _uploadCatalogResult.value = withContext(Dispatchers.IO) {
                 updateCatalogs.execute(message, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
@@ -318,18 +306,10 @@ class HomeViewModel @Inject constructor(
             _registeredSSHKeys.value = withContext(Dispatchers.IO) {
                 registerSSHKeys.execute(force, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(
-                                message,
-                                progress,
-                                max
-                            )
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }

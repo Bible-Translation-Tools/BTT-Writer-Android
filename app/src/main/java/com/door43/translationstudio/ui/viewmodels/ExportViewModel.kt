@@ -182,18 +182,10 @@ class ExportViewModel @Inject constructor(
             _downloadResult.value = withContext(Dispatchers.IO) {
                 val imagesDir = downloadImages.download(object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(
-                                message,
-                                progress,
-                                max
-                            )
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
                 DownloadImages.Result(imagesDir?.exists() == true, imagesDir)
@@ -214,18 +206,10 @@ class ExportViewModel @Inject constructor(
                         strategy,
                         progressListener = object : OnProgressListener {
                             override fun onProgress(progress: Int, max: Int, message: String?) {
-                                launch(Dispatchers.Main) {
-                                    _progress.value = ProgressHelper.Progress(
-                                        message,
-                                        progress,
-                                        max
-                                    )
-                                }
+                                _progress.postValue(ProgressHelper.Progress(message, progress, max))
                             }
                             override fun onIndeterminate() {
-                                launch(Dispatchers.Main) {
-                                    _progress.value = ProgressHelper.Progress()
-                                }
+                                _progress.postValue(ProgressHelper.Progress())
                             }
                         }
                     )
@@ -245,18 +229,10 @@ class ExportViewModel @Inject constructor(
                 val result = withContext(Dispatchers.IO) {
                     pushTargetTranslation.execute(targetTranslation, object : OnProgressListener {
                         override fun onProgress(progress: Int, max: Int, message: String?) {
-                            launch(Dispatchers.Main) {
-                                _progress.value = ProgressHelper.Progress(
-                                    message,
-                                    progress,
-                                    max
-                                )
-                            }
+                            _progress.postValue(ProgressHelper.Progress(message, progress, max))
                         }
                         override fun onIndeterminate() {
-                            launch(Dispatchers.Main) {
-                                _progress.value = ProgressHelper.Progress()
-                            }
+                            _progress.postValue(ProgressHelper.Progress())
                         }
                     })
                 }
@@ -274,18 +250,10 @@ class ExportViewModel @Inject constructor(
             val result = withContext(Dispatchers.IO) {
                 registerSSHKeys.execute(force, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(
-                                message,
-                                progress,
-                                max
-                            )
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
@@ -302,18 +270,10 @@ class ExportViewModel @Inject constructor(
                 )
                 _repoCreated.value = createRepository.execute(targetTranslation, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(
-                                message,
-                                progress,
-                                max
-                            )
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
                 _progress.value = null

@@ -26,14 +26,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.gogsclient.Repository
-import org.unfoldingword.gogsclient.User
 import java.io.File
 import java.security.InvalidParameterException
 import javax.inject.Inject
 
 @HiltViewModel
 class ImportViewModel @Inject constructor(
-    application: Application
+    private val application: Application
 ) : AndroidViewModel(application) {
     @Inject lateinit var profile: Profile
     @Inject lateinit var translator: Translator
@@ -62,6 +61,9 @@ class ImportViewModel @Inject constructor(
     private val _registeredSSHKeys = MutableLiveData<Boolean>()
     val registeredSSHKeys: LiveData<Boolean> = _registeredSSHKeys
 
+    private val _importSourceResult = MutableLiveData<ImportProjects.ImportSourceResult?>(null)
+    val importSourceResult: LiveData<ImportProjects.ImportSourceResult?> = _importSourceResult
+
     fun loadTargetTranslation(translationID: String) {
         translator.getTargetTranslation(translationID)?.let {
             it.setDefaultContributor(profile.nativeSpeaker)
@@ -76,14 +78,10 @@ class ImportViewModel @Inject constructor(
             val result = withContext(Dispatchers.IO) {
                 advancedGogsRepoSearch.execute(userQuery, repoQuery, limit, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
@@ -97,14 +95,10 @@ class ImportViewModel @Inject constructor(
             _cloneRepoResult.value = withContext(Dispatchers.IO) {
                 cloneRepository.execute(cloneUrl, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
@@ -117,18 +111,34 @@ class ImportViewModel @Inject constructor(
             val result = withContext(Dispatchers.IO) {
                 importProjects.importProject(path, mergeOverwrite, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
             _importFromUriResult.value = result
+            _progress.value = null
+        }
+    }
+
+    fun importSource(uri: Uri) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.import_source_text))
+            _importSourceResult.value = withContext(Dispatchers.IO) {
+                importProjects.importSource(uri)
+            }
+            _progress.value = null
+        }
+    }
+
+    fun importSource(dir: File) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.import_source_text))
+            _importSourceResult.value = withContext(Dispatchers.IO) {
+                importProjects.importSource(dir)
+            }
             _progress.value = null
         }
     }
@@ -138,14 +148,10 @@ class ImportViewModel @Inject constructor(
             val result = withContext(Dispatchers.IO) {
                 registerSSHKeys.execute(force, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }

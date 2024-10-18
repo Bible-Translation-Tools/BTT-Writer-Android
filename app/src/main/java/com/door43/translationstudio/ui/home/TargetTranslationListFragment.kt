@@ -17,6 +17,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentTargetTranslationListBinding
 import com.door43.translationstudio.ui.BaseFragment
+import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortByColumnType
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortProjectColumnType
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
@@ -35,6 +36,8 @@ class TargetTranslationListFragment : BaseFragment() {
     private var sortProjectColumn = SortProjectColumnType.BibleOrder
     private var sortByColumn = SortByColumnType.ProjectThenLanguage
 
+    private var progressDialog: ProgressHelper.ProgressDialog? = null
+
     private lateinit var adapter: TargetTranslationAdapter
     private val viewModel: HomeViewModel by activityViewModels()
 
@@ -46,7 +49,11 @@ class TargetTranslationListFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentTargetTranslationListBinding.inflate(inflater, container, false)
+        _binding = FragmentTargetTranslationListBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
         setupObservers()
 
@@ -157,7 +164,22 @@ class TargetTranslationListFragment : BaseFragment() {
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        progressDialog = ProgressHelper.newInstance(requireActivity(), R.string.loading, false)
+    }
+
     private fun setupObservers() {
+        viewModel.progress.observe(viewLifecycleOwner) {
+            if (it != null) {
+                progressDialog?.show()
+                progressDialog?.setProgress(it.progress)
+                progressDialog?.setMessage(it.message)
+                progressDialog?.setMax(it.max)
+            } else {
+                progressDialog?.dismiss()
+            }
+        }
         viewModel.translations.observe(viewLifecycleOwner) {
             it?.let { adapter.setTranslations(it) }
         }
@@ -175,6 +197,12 @@ class TargetTranslationListFragment : BaseFragment() {
         } catch (e: ClassCastException) {
             throw ClassCastException("$context must implement OnItemClickListener")
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        progressDialog?.dismiss()
+        progressDialog = null
     }
 
     override fun onSaveInstanceState(out: Bundle) {

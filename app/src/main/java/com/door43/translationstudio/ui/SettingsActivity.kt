@@ -381,7 +381,7 @@ class SettingsActivity : AppCompatActivity() {
                 when (key) {
                     KEY_PREF_BACKUP_INTERVAL -> {
                         // restart the backup service.
-                        if (BackupService.isRunning() && !initSettings) {
+                        if (BackupService.isRunning && !initSettings) {
                             val context = requireContext()
                             Logger.i("Settings", "Re-loading backup settings")
                             val backupIntent = Intent(requireContext(), BackupService::class.java)

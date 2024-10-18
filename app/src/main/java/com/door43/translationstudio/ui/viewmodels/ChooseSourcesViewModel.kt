@@ -71,17 +71,15 @@ class ChooseSourcesViewModel @Inject constructor(
     fun loadData() {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
-            val items = arrayListOf<RCItem>()
 
             withContext(Dispatchers.IO) {
+                val items = arrayListOf<RCItem>()
                 // add selected source translations
                 val sourceTranslationSlugs = getOpenSourceTranslations(targetTranslation.id)
                 for (slug in sourceTranslationSlugs) {
                     val st = library.index.getTranslation(slug)
                     if (st != null) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(st.resourceContainerSlug)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(st.resourceContainerSlug))
                         items.add(addSourceTranslation(st, true))
                     }
                 }
@@ -96,13 +94,11 @@ class ChooseSourcesViewModel @Inject constructor(
                     -1
                 )
                 for (sourceTranslation in availableTranslations) {
-                    launch(Dispatchers.Main) {
-                        _progress.value = ProgressHelper.Progress(sourceTranslation.resourceContainerSlug)
-                    }
+                    _progress.postValue(ProgressHelper.Progress(sourceTranslation.resourceContainerSlug))
                     items.add(addSourceTranslation(sourceTranslation, false))
                 }
+                _items.postValue(items)
             }
-            _items.value = items
             _progress.value = null
         }.also(jobs::add)
     }
@@ -113,14 +109,10 @@ class ChooseSourcesViewModel @Inject constructor(
             _downloadResult.value = withContext(Dispatchers.IO) {
                 downloadResourceContainer.execute(sourceTranslation, position, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }

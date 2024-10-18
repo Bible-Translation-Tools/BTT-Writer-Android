@@ -268,7 +268,8 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
      * @return
      */
     private fun checkForMergeConflict(): Boolean {
-        return viewModel.checkMergeConflictExists()
+        conflictingTargetTranslation = viewModel.checkMergeConflictExists()
+        return conflictingTargetTranslation != null
     }
 
     /**

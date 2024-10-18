@@ -35,7 +35,6 @@ import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.dialogs.Door43LoginDialog
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
-import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.WelcomeFragment.OnCreateNewTargetTranslation
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
@@ -63,7 +62,6 @@ class HomeActivity : BaseActivity(),
     private var alertShown = DialogShown.NONE
     private var targetTranslationID: String? = null
     private var updateDialog: UpdateLibraryDialog? = null
-    private var progressDialog: ProgressHelper.ProgressDialog? = null
     private var backupsRunning = false
 
     private lateinit var binding: ActivityHomeBinding
@@ -96,17 +94,6 @@ class HomeActivity : BaseActivity(),
             if (savedInstanceState != null) {
                 // use current fragment
                 fragment = supportFragmentManager.findFragmentById(fragmentContainer.id)
-            } else {
-//                if (translator.targetTranslationIDs.isNotEmpty()) {
-//                    fragment = TargetTranslationListFragment()
-//                    fragment?.setArguments(intent.extras)
-//                } else {
-//                    fragment = WelcomeFragment()
-//                    fragment?.setArguments(intent.extras)
-//                }
-//
-//                supportFragmentManager.beginTransaction().add(R.id.fragment_container, fragment!!)
-//                    .commit()
             }
 
             addTargetTranslationButton.setOnClickListener { onCreateNewTargetTranslation() }
@@ -175,12 +162,17 @@ class HomeActivity : BaseActivity(),
             }
         }
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                onBackPressedHandler()
+            }
+        })
+
         // open last project when starting the first time
         if (savedInstanceState == null) {
             val targetTranslation = viewModel.lastOpened
             if (targetTranslation != null) {
                 onItemClick(targetTranslation)
-                return
             }
         } else {
             alertShown = DialogShown.fromInt(
@@ -192,17 +184,6 @@ class HomeActivity : BaseActivity(),
                 null
             )
         }
-
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                onBackPressedHandler()
-            }
-        })
-    }
-
-    override fun onStart() {
-        super.onStart()
-        progressDialog = ProgressHelper.newInstance(this, R.string.loading, false)
     }
 
     private fun startBackupService() {
@@ -214,16 +195,6 @@ class HomeActivity : BaseActivity(),
     }
 
     private fun setupObservers() {
-        viewModel.progress.observe(this) {
-            if (it != null) {
-                progressDialog?.show()
-                progressDialog?.setProgress(it.progress)
-                progressDialog?.setMessage(it.message)
-                progressDialog?.setMax(it.max)
-            } else {
-                progressDialog?.dismiss()
-            }
-        }
         viewModel.translations.observe(this) {
             it?.let { translations ->
                 if (translations.isNotEmpty()) {
@@ -436,38 +407,42 @@ class HomeActivity : BaseActivity(),
     override fun onResume() {
         super.onResume()
 
-        viewModel.loadTranslations()
         viewModel.lastFocusTargetTranslation = null
 
         val userText = resources.getString(R.string.current_user, profile.currentUser)
         binding.currentUser.text = userText
 
         val numTranslations = viewModel.translations.value?.size ?: 0
-        if (numTranslations > 0 && fragment is WelcomeFragment) {
-            // display target translations list
-            fragment = TargetTranslationListFragment().apply {
-                setArguments(intent.extras)
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, this)
-                    .commit()
+        when {
+            numTranslations > 0 && fragment is WelcomeFragment -> {
+                // display target translations list
+                fragment = TargetTranslationListFragment().apply {
+                    setArguments(intent.extras)
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, this)
+                        .commit()
+                }
             }
-        } else if (numTranslations == 0 && fragment is TargetTranslationListFragment) {
-            // display welcome screen
-            fragment = WelcomeFragment().apply {
-                setArguments(intent.extras)
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, this)
-                    .commit()
+            numTranslations == 0 && fragment is TargetTranslationListFragment -> {
+                // display welcome screen
+                fragment = WelcomeFragment().apply {
+                    setArguments(intent.extras)
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, this)
+                        .commit()
+                }
             }
-        } else if (numTranslations > 0 && fragment is TargetTranslationListFragment) {
-            // reload list
-            (fragment as TargetTranslationListFragment).reloadList()
+            numTranslations > 0 && fragment is TargetTranslationListFragment -> {
+                // reload list
+                (fragment as TargetTranslationListFragment).reloadList()
+            }
         }
 
         if (viewModel.notifyTargetTranslationWithUpdates != null) {
             showTranslationUpdatePrompt()
         }
 
+        loadTranslations()
         restoreDialogs()
     }
 
@@ -764,7 +739,6 @@ class HomeActivity : BaseActivity(),
     }
 
     override fun onDestroy() {
-        progressDialog?.dismiss()
         val dialog = supportFragmentManager.findFragmentByTag(UpdateLibraryDialog.TAG)
         if (dialog is OnEventTalker) {
             (dialog as OnEventTalker).eventBuffer.removeOnEventListener(this)

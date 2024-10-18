@@ -26,11 +26,11 @@ class DownloadSourcesViewModel @Inject constructor(
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
 
-    private val _availableSources = MutableLiveData<GetAvailableSources.Result>()
-    val availableSources: LiveData<GetAvailableSources.Result> = _availableSources
+    private val _availableSources = MutableLiveData<GetAvailableSources.Result?>()
+    val availableSources: LiveData<GetAvailableSources.Result?> = _availableSources
 
-    private val _downloadedSources = MutableLiveData<DownloadResourceContainers.Result>()
-    val downloadedSources: LiveData<DownloadResourceContainers.Result> = _downloadedSources
+    private val _downloadedSources = MutableLiveData<DownloadResourceContainers.Result?>()
+    val downloadedSources: LiveData<DownloadResourceContainers.Result?> = _downloadedSources
 
     fun getAvailableSources(prefix: String) {
         viewModelScope.launch {
@@ -38,14 +38,10 @@ class DownloadSourcesViewModel @Inject constructor(
             _availableSources.value = withContext(Dispatchers.IO) {
                 getAvailableSources.execute(prefix, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }
@@ -59,14 +55,10 @@ class DownloadSourcesViewModel @Inject constructor(
             _downloadedSources.value = withContext(Dispatchers.IO) {
                 downloadResourceContainers.execute(selected, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress(message, progress, max)
-                        }
+                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }
                     override fun onIndeterminate() {
-                        launch(Dispatchers.Main) {
-                            _progress.value = ProgressHelper.Progress()
-                        }
+                        _progress.postValue(ProgressHelper.Progress())
                     }
                 })
             }

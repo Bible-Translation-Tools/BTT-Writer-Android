@@ -6,16 +6,13 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.registerForActivityResult
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity.RESULT_OK
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
@@ -39,10 +36,7 @@ import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
-import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -81,11 +75,7 @@ class ImportDialog : DialogFragment() {
 
         activityLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == RESULT_OK) {
-                Log.e("MAXXX", "da8w79f7a9w8f79aw87f9a87w8f")
-            }
-        }
+        ) {}
 
         openFileContent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let {
@@ -244,6 +234,36 @@ class ImportDialog : DialogFragment() {
                 (activity as? HomeActivity)?.loadTranslations()
             }
         }
+        viewModel.importSourceResult.observe(viewLifecycleOwner) {
+            it?.let { result ->
+                when {
+                    result.success -> {
+                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                            .setTitle(R.string.success)
+                            .setMessage(R.string.title_import_success)
+                            .setPositiveButton(R.string.dismiss, null)
+                            .show()
+                    }
+                    result.hasConflict -> {
+                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                            .setTitle(R.string.confirm)
+                            .setMessage(result.message)
+                            .setNegativeButton(R.string.menu_cancel, null)
+                            .setPositiveButton(R.string.confirm) { _, _ ->
+                                result.targetDir?.let(viewModel::importSource)
+                            }
+                            .show()
+                    }
+                    else -> {
+                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                            .setTitle(R.string.could_not_import)
+                            .setMessage(result.message)
+                            .setPositiveButton(R.string.dismiss, null)
+                            .show()
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -339,81 +359,17 @@ class ImportDialog : DialogFragment() {
     }
 
     /**
-     * Imports a resource container into the app
-     * TODO: this should be performed in a task for better performance
-     * @param dir
-     */
-    private fun importResourceContainer(dir: File) {
-        try {
-            library.importResourceContainer(dir)
-            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.success)
-                .setMessage(R.string.title_import_success)
-                .setPositiveButton(R.string.dismiss, null)
-                .show()
-        } catch (e: Exception) {
-            Logger.e(TAG, "Could not import RC", e)
-            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                .setTitle(R.string.could_not_import)
-                .setMessage(e.message)
-                .setPositiveButton(R.string.dismiss, null)
-                .show()
-        }
-    }
-
-    /**
      * import USFM uri
      * @param uri
      */
     private fun doUsfmImportUri(uri: Uri) {
-
-
         val intent = Intent(requireActivity(), ImportUsfmActivity::class.java)
         intent.putExtra(EXTRA_USFM_IMPORT_URI, uri.toString()) // flag that we are using Uri
-        //requireActivity().startActivity(intent)
         activityLauncher.launch(intent)
     }
 
     private fun doImportSourceText(uri: Uri) {
-        val uuid = UUID.randomUUID().toString()
-        val tempDir = File(requireContext().cacheDir, uuid)
-        context?.let {
-            FileUtilities.copyDirectory(it, uri, tempDir)?.let { dir ->
-                val externalContainer: ResourceContainer
-                try {
-                    externalContainer = ResourceContainer.load(dir)
-                } catch (e: Exception) {
-                    Logger.e(TAG, "Could not import RC", e)
-                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                        .setTitle(R.string.not_a_source_text)
-                        .setMessage(e.message)
-                        .setPositiveButton(R.string.dismiss, null)
-                        .show()
-                    return
-                }
-
-                try {
-                    library.open(externalContainer.slug)
-                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                        .setTitle(R.string.confirm)
-                        .setMessage(
-                            String.format(
-                                resources.getString(R.string.overwrite_content),
-                                externalContainer.language.name + " - " + externalContainer.project.name + " - " + externalContainer.resource.name
-                            )
-                        )
-                        .setNegativeButton(R.string.menu_cancel, null)
-                        .setPositiveButton(R.string.confirm) { _, _ -> importResourceContainer(dir) }
-                        .show()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    // no conflicts. import
-                    importResourceContainer(dir)
-                }
-
-                FileUtilities.deleteQuietly(dir)
-            }
-        }
+        viewModel.importSource(uri)
     }
 
     /**
@@ -501,7 +457,7 @@ class ImportDialog : DialogFragment() {
         dialogShown = DialogShown.SHOW_IMPORT_RESULTS
         dialogMessage = message
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-            .setTitle(R.string.import_from_sd)
+            .setTitle(R.string.import_from_storage)
             .setMessage(message)
             .setPositiveButton(R.string.dismiss) { _, _ ->
                 dialogShown = DialogShown.NONE
