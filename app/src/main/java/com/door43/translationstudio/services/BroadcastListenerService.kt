@@ -1,163 +1,159 @@
-package com.door43.translationstudio.services;
+package com.door43.translationstudio.services
 
-import android.content.Intent;
-import android.os.Binder;
-import android.os.Bundle;
-import android.os.IBinder;
-
-import org.unfoldingword.tools.logger.Logger;
-import com.door43.translationstudio.network.BroadcastListenerRunnable;
-import com.door43.translationstudio.network.Peer;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
+import android.content.Intent
+import android.os.Binder
+import android.os.IBinder
+import com.door43.translationstudio.network.BroadcastListenerRunnable
+import com.door43.translationstudio.network.BroadcastListenerRunnable.OnBroadcastListenerEventListener
+import com.door43.translationstudio.network.Peer
+import org.json.JSONException
+import org.json.JSONObject
+import org.unfoldingword.tools.logger.Logger
+import java.util.Timer
+import java.util.TimerTask
 
 /**
- * This class listens for services being broadcasted on the local network.
+ * This class listens for services being broadcast on the local network.
  * Notifications are fired whenever a service becomes or is no longer available.
  */
-public class BroadcastListenerService extends NetworkService {
-    public static final String PARAM_SERVER_TTL = "param_server_ttl";
-    public static final String PARAM_REFRESH_FREQUENCY = "param_refresh_frequency";
-    public static final String PARAM_BROADCAST_PORT = "param_broadcast_udp_port";
-    private final IBinder mBinder = new LocalBinder();
-    private Thread mBroadcastListenerThread;
-    private BroadcastListenerRunnable mBroadcastListenerRunnable;
-    private Callbacks mListener;
-    private Timer mCleanupTimer;
-    private static Boolean mIsRunning = false;
+class BroadcastListenerService : NetworkService() {
+    private val binder: IBinder = LocalBinder()
+    private var broadcastListenerThread: Thread? = null
+    private var broadcastListenerRunnable: BroadcastListenerRunnable? = null
+    private var listener: Callbacks? = null
+    private var cleanupTimer: Timer? = null
 
     /**
      * Sets whether or not the service is running
      * @param running
      */
-    protected void setRunning(Boolean running) {
-        mIsRunning = running;
+    private fun setRunning(running: Boolean) {
+        isRunning = running
     }
 
-    /**
-     * Checks if the service is currently running
-     * @return
-     */
-    public static boolean isRunning() {
-        return mIsRunning;
+    override fun onBind(intent: Intent): IBinder {
+        return binder
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mBinder;
+    fun registerCallback(callback: Callbacks?) {
+        listener = callback
     }
 
-    public void registerCallback(Callbacks callback) {
-        mListener = callback;
+    override fun onCreate() {
+        Logger.i(this.javaClass.name, "Starting broadcast listener")
+        cleanupTimer = Timer()
     }
 
-    @Override
-    public void onCreate() {
-        Logger.i(this.getClass().getName(), "Starting broadcast listener");
-        mCleanupTimer = new Timer();
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startid) {
-        if(intent != null) {
-            Bundle args = intent.getExtras();
+    override fun onStartCommand(intent: Intent?, flags: Int, startid: Int): Int {
+        if (intent != null) {
+            val args = intent.extras
             if (args != null && args.containsKey(PARAM_BROADCAST_PORT)) {
-                final int UDPport = args.getInt(PARAM_BROADCAST_PORT);
-                final int serverTTL = args.getInt(PARAM_SERVER_TTL, 10000);
-                final int refreshFrequency = args.getInt(PARAM_REFRESH_FREQUENCY, 5000);
+                val UDPPort = args.getInt(PARAM_BROADCAST_PORT)
+                val serverTTL = args.getInt(PARAM_SERVER_TTL, 10000)
+                val refreshFrequency = args.getInt(PARAM_REFRESH_FREQUENCY, 5000)
                 // listener thread
-                mBroadcastListenerRunnable = new BroadcastListenerRunnable(UDPport, new BroadcastListenerRunnable.OnBroadcastListenerEventListener() {
-                    @Override
-                    public void onError(Exception e) {
-                        Logger.e(BroadcastListenerService.class.getName(), "Broadcast listener encountered an exception", e);
-                    }
-
-                    @Override
-                    public void onMessageReceived(String message, String senderIP) {
-                        int version = -1;
-                        int port;
-                        try {
-                            JSONObject json = new JSONObject(message);
-                            version = json.getInt("version");
-                            port = json.getInt("port");
-                        } catch (JSONException e) {
-                            Logger.w(BroadcastListenerService.class.getName(), "Invalid message format " + message, e);
-                            return;
+                broadcastListenerRunnable =
+                    BroadcastListenerRunnable(UDPPort, object : OnBroadcastListenerEventListener {
+                        override fun onError(e: Exception) {
+                            Logger.e(
+                                BroadcastListenerService::class.java.name,
+                                "Broadcast listener encountered an exception",
+                                e
+                            )
                         }
 
-                        // validate protocol version
-                        if(version == BroadcastService.TS_PROTOCAL_VERSION) {
-                            Peer p = new Peer(senderIP, port, "tS", version);
-                            if(addPeer(p) && mListener != null) {
-                                mListener.onFoundServer(p);
+                        override fun onMessageReceived(message: String, senderIP: String) {
+                            val version: Int
+                            val port: Int
+                            try {
+                                val json = JSONObject(message)
+                                version = json.getInt("version")
+                                port = json.getInt("port")
+                            } catch (e: JSONException) {
+                                Logger.w(
+                                    BroadcastListenerService::class.java.name,
+                                    "Invalid message format $message",
+                                    e
+                                )
+                                return
                             }
-                        } else {
-                            Logger.w(BroadcastListenerService.class.getName(), "Unsupported tS protocal version " + version);
-                        }
-                    }
-                });
-                mBroadcastListenerThread = new Thread(mBroadcastListenerRunnable);
-                mBroadcastListenerThread.start();
-                // cleanup task
-                mCleanupTimer.scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
-                        ArrayList<Peer> connectedPeers = getPeers();
-                        for (Peer p : connectedPeers) {
-                            if (System.currentTimeMillis() - p.getLastSeenAt() > serverTTL) {
-                                removePeer(p);
-                                if(mListener != null) {
-                                    mListener.onLostServer(p);
+
+                            // validate protocol version
+                            if (version == BroadcastService.TS_PROTOCOL_VERSION) {
+                                val p = Peer(senderIP, port, "tS", version)
+                                if (addPeer(p)) {
+                                    listener?.onFoundServer(p)
                                 }
+                            } else {
+                                Logger.w(
+                                    BroadcastListenerService::class.java.name,
+                                    "Unsupported tS protocol version $version"
+                                )
+                            }
+                        }
+                    })
+                broadcastListenerThread = Thread(broadcastListenerRunnable).apply {
+                    start()
+                }
+                // cleanup task
+                cleanupTimer?.schedule(object : TimerTask() {
+                    override fun run() {
+                        val connectedPeers = peers
+                        for (p in connectedPeers) {
+                            if (System.currentTimeMillis() - p.lastSeenAt > serverTTL) {
+                                removePeer(p)
+                                listener?.onLostServer(p)
                             }
                         }
                     }
-                }, 0, refreshFrequency);
-                setRunning(true);
-                return START_STICKY;
+                }, 0, refreshFrequency.toLong())
+                setRunning(true)
+                return START_STICKY
             }
         }
-        Logger.e(this.getClass().getName(), "Broadcast listener service requires arguments");
-        stopService();
-        return START_NOT_STICKY;
+        Logger.e(this.javaClass.name, "Broadcast listener service requires arguments")
+        stopService()
+        return START_NOT_STICKY
     }
 
-    @Override
-    public void onDestroy() {
-        stopService();
+    override fun onDestroy() {
+        stopService()
     }
 
     /**
      * Stops the service
      */
-    private void stopService() {
-        if(mBroadcastListenerThread != null) {
-            mBroadcastListenerThread.interrupt();
-        }
-        if(mBroadcastListenerRunnable != null) {
-            mBroadcastListenerRunnable.stop();
-        }
-        setRunning(false);
-        Logger.i(this.getClass().getName(), "Stopping broadcast listener");
+    private fun stopService() {
+        broadcastListenerThread?.interrupt()
+        broadcastListenerRunnable?.stop()
+        setRunning(false)
+        Logger.i(this.javaClass.name, "Stopping broadcast listener")
     }
 
-    public interface Callbacks {
-        void onFoundServer(Peer server);
-        @Deprecated
-        void onLostServer(Peer server);
+    interface Callbacks {
+        fun onFoundServer(server: Peer?)
+        @Deprecated("")
+        fun onLostServer(server: Peer?)
     }
 
     /**
      * Class to retrieve instance of service
      */
-    public class LocalBinder extends Binder {
-        public BroadcastListenerService getServiceInstance() {
-            return BroadcastListenerService.this;
-        }
+    inner class LocalBinder : Binder() {
+        val serviceInstance: BroadcastListenerService
+            get() = this@BroadcastListenerService
+    }
+
+    companion object {
+        const val PARAM_SERVER_TTL: String = "param_server_ttl"
+        const val PARAM_REFRESH_FREQUENCY: String = "param_refresh_frequency"
+        const val PARAM_BROADCAST_PORT: String = "param_broadcast_udp_port"
+
+        /**
+         * Checks if the service is currently running
+         * @return
+         */
+        var isRunning: Boolean = false
+            private set
     }
 }

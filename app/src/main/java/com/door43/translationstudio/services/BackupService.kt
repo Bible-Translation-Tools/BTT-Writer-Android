@@ -43,9 +43,9 @@ class BackupService : Service(), Foreground.Listener {
     private var isPaused = false
     private var executingBackup = false
     private var foreground: Foreground? = null
-    private var handler: Handler? = null
+    private lateinit var handler: Handler
     private var runner: Runnable? = null
-    private var handlerThread: HandlerThread? = null
+    private lateinit var handlerThread: HandlerThread
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -221,14 +221,14 @@ class BackupService : Service(), Foreground.Listener {
     override fun onBecameForeground() {
         this.isPaused = false
         Log.i(TAG, "backups resumed")
-        if (runner != null) handler!!.removeCallbacks(runner!!)
+        runner?.let { handler.removeCallbacks(it) }
     }
 
     override fun onBecameBackground() {
-        runner?.let { handler?.removeCallbacks(it) }
+        runner?.let { handler.removeCallbacks(it) }
         Log.i(TAG, "backups paused")
         isPaused = true
-        handler?.postDelayed(Runnable {
+        handler.postDelayed(Runnable {
             Log.i(TAG, "performing single run before pause")
             runBackup(false)
         }.also { runner = it }, 1000)

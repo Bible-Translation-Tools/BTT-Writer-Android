@@ -38,7 +38,6 @@ import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.usecases.ImportProjects
-import com.door43.util.RSAEncryption
 import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.unfoldingword.tools.logger.Logger
@@ -202,7 +201,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
                     serverService?.offerTargetTranslation(
                         peer,
                         sourceLanguageSlug,
-                        targetTranslationId
+                        targetTranslationId!!
                     )
                 } else if (operationMode == MODE_CLIENT) {
                     // TODO: 12/1/2015 eventually provide a ui for viewing multiple different requests from this peer
@@ -339,7 +338,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
         if (operationMode == MODE_SERVER) {
             serverIntent = Intent(activity, ServerService::class.java)
             broadcastIntent = Intent(activity, BroadcastService::class.java)
-            if (!ServerService.isRunning()) {
+            if (!ServerService.isRunning) {
                 try {
                     initializeService(serverIntent)
                 } catch (e: Exception) {
@@ -378,13 +377,8 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
      */
     @Throws(Exception::class)
     private fun initializeService(intent: Intent?) {
-        val p2pKeys = viewModel.initializeP2PKeys()
+        viewModel.initializeP2PKeys()
 
-        intent?.putExtra(ServerService.PARAM_PRIVATE_KEY, p2pKeys.privateKey)
-        intent?.putExtra(
-            ServerService.PARAM_PUBLIC_KEY,
-            RSAEncryption.getPublicKeyAsString(p2pKeys.publicKey)
-        )
         intent?.putExtra(ServerService.PARAM_DEVICE_ALIAS, deviceNetworkAlias)
         Logger.i(
             this.javaClass.name, "Starting service " + intent?.component?.className
@@ -396,7 +390,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
      * Updates the peer list on the screen
      * @param peers
      */
-    fun updatePeerList(peers: ArrayList<Peer?>) {
+    fun updatePeerList(peers: ArrayList<Peer>) {
         with(binding) {
             if (peers.size == 0) {
                 // display no peer notice
@@ -443,7 +437,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
 
         // shut down services
         if (shutDownServices) {
-            if (BroadcastService.isRunning() && broadcastIntent != null) {
+            if (BroadcastService.isRunning && broadcastIntent != null) {
                 if (!requireActivity().stopService(broadcastIntent)) {
                     Logger.w(
                         this.javaClass.name,
@@ -451,7 +445,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
                     )
                 }
             }
-            if (BroadcastListenerService.isRunning() && listenerIntent != null) {
+            if (BroadcastListenerService.isRunning && listenerIntent != null) {
                 if (!requireActivity().stopService(listenerIntent)) {
                     Logger.w(
                         this.javaClass.name,
@@ -459,7 +453,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
                     )
                 }
             }
-            if (ServerService.isRunning() && serverIntent != null) {
+            if (ServerService.isRunning && serverIntent != null) {
                 if (!requireActivity().stopService(serverIntent)) {
                     Logger.w(
                         this.javaClass.name,
@@ -486,7 +480,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
 
     override fun onServerServiceReady(port: Int) {
         // begin broadcasting
-        if (!BroadcastService.isRunning()) {
+        if (!BroadcastService.isRunning) {
             broadcastIntent!!.putExtra(BroadcastService.PARAM_BROADCAST_PORT, PORT_CLIENT_UDP)
             broadcastIntent!!.putExtra(BroadcastService.PARAM_SERVICE_PORT, port)
             broadcastIntent!!.putExtra(BroadcastService.PARAM_FREQUENCY, 2000)
@@ -501,35 +495,38 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
         hand.post { updatePeerList(serverService!!.peers) }
     }
 
-    override fun onClientConnected(peer: Peer) {
-        serverService!!.acceptConnection(peer)
+    override fun onClientConnected(peer: Peer?) {
+        peer?.let { serverService?.acceptConnection(it) }
     }
 
-    override fun onClientLost(peer: Peer) {
+    override fun onClientLost(peer: Peer?) {
         val hand = Handler(Looper.getMainLooper())
-        hand.post { updatePeerList(serverService!!.peers) }
+        hand.post { updatePeerList(serverService?.peers ?: arrayListOf()) }
     }
 
-    override fun onClientChanged(peer: Peer) {
+    override fun onClientChanged(peer: Peer?) {
         val hand = Handler(Looper.getMainLooper())
-        hand.post { updatePeerList(serverService!!.peers) }
+        hand.post { updatePeerList(serverService?.peers ?: arrayListOf()) }
     }
 
-    override fun onServerServiceError(e: Throwable) {
-        Toast.makeText(activity, e.message, Toast.LENGTH_SHORT).show()
-        Logger.e(this.javaClass.name, "Server service encountered an exception: " + e.message, e)
+    override fun onServerServiceError(e: Throwable?) {
+        e?.let {
+            Toast.makeText(activity, it.message, Toast.LENGTH_SHORT).show()
+            Logger.e(this.javaClass.name, "Server service encountered an exception: " + it.message, it)
+        }
     }
 
-    override fun onFoundServer(server: Peer) {
-        clientService!!.connectToServer(server)
+    override fun onFoundServer(server: Peer?) {
+        server?.let { clientService?.connectToServer(it) }
     }
 
-    override fun onLostServer(server: Peer) {
+    @Deprecated("")
+    override fun onLostServer(server: Peer?) {
     }
 
     override fun onClientServiceReady() {
         // begin listening for servers
-        if (!BroadcastListenerService.isRunning()) {
+        if (!BroadcastListenerService.isRunning) {
             listenerIntent!!.putExtra(
                 BroadcastListenerService.PARAM_BROADCAST_PORT,
                 PORT_CLIENT_UDP
@@ -609,7 +606,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
             .setPositiveButton(R.string.dismiss, null)
             .show()
         // TODO: 12/1/2015 this is a bad hack
-        (activity as HomeActivity?)!!.loadTranslations()
+        (activity as? HomeActivity)?.loadTranslations()
     }
 
     fun showMergeConflict(targetTranslationID: String?) {

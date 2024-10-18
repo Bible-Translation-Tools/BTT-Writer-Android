@@ -1,161 +1,150 @@
-package com.door43.translationstudio.services;
+package com.door43.translationstudio.services
 
-import android.content.Intent;
-import android.os.Binder;
-import android.os.Bundle;
-import android.os.IBinder;
-
-import org.unfoldingword.tools.logger.Logger;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Timer;
-import java.util.TimerTask;
+import android.content.Intent
+import android.os.Binder
+import android.os.IBinder
+import org.json.JSONException
+import org.json.JSONObject
+import org.unfoldingword.tools.logger.Logger
+import java.io.IOException
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
+import java.net.SocketException
+import java.net.UnknownHostException
+import java.util.Timer
+import java.util.TimerTask
 
 /**
  * Broadcasts services provided by this device on the network
  */
-public class BroadcastService extends NetworkService {
-    public static final String PARAM_BROADCAST_PORT = "param_broadcast_udp_port";
-    public static final String PARAM_SERVICE_PORT = "param_service_tcp_port";
-    public static final String PARAM_FREQUENCY = "param_broadcast_frequency";
-    public static final int TS_PROTOCAL_VERSION = 2;
-    private final IBinder mBinder = new LocalBinder();
-    private DatagramSocket mSocket;
-    private Timer mTimer;
-    private static Boolean mIsRunning = false;
+class BroadcastService : NetworkService() {
+    private val binder: IBinder = LocalBinder()
+    private lateinit var socket: DatagramSocket
+    private var timer: Timer? = null
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mBinder;
+    override fun onBind(intent: Intent): IBinder {
+        return binder
     }
 
     /**
      * Sets whether or not the service is running
      * @param running
      */
-    protected void setRunning(Boolean running) {
-        mIsRunning = running;
+    private fun setRunning(running: Boolean) {
+        isRunning = running
     }
 
-    /**
-     * Checks if the service is currently running
-     * @return
-     */
-    public static boolean isRunning() {
-        return mIsRunning;
-    }
-
-    @Override
-    public void onCreate() {
-        Logger.i(this.getClass().getName(), "Starting broadcaster");
-        mTimer = new Timer();
+    override fun onCreate() {
+        Logger.i(this.javaClass.name, "Starting broadcaster")
+        timer = Timer()
         try {
-            mSocket = new DatagramSocket();
-            mSocket.setBroadcast(true);
-        } catch (SocketException e) {
+            socket = DatagramSocket().apply {
+                broadcast = true
+            }
+        } catch (e: SocketException) {
             // TODO: notify app
-            Logger.e(this.getClass().getName(), "Failed to start the broadcaster", e);
-            stopService();
-            return;
+            Logger.e(this.javaClass.name, "Failed to start the broadcaster", e)
+            stopService()
+            return
         }
     }
 
-    public int onStartCommand(Intent intent, int flags, int startid) {
-        if(intent != null) {
-            Bundle args = intent.getExtras();
+    override fun onStartCommand(intent: Intent?, flags: Int, startid: Int): Int {
+        if (intent != null) {
+            val args = intent.extras
             if (args != null) {
-                setRunning(true);
-                final int udpPort = args.getInt(PARAM_BROADCAST_PORT);
-                final int serviceTCPPort = args.getInt(PARAM_SERVICE_PORT);
-                final int broadcastFrequency = args.getInt(PARAM_FREQUENCY, 2000);
+                setRunning(true)
+                val udpPort = args.getInt(PARAM_BROADCAST_PORT)
+                val serviceTCPPort = args.getInt(PARAM_SERVICE_PORT)
+                val broadcastFrequency = args.getInt(PARAM_FREQUENCY, 2000)
 
-                JSONObject json = new JSONObject();
+                val json = JSONObject()
                 try {
-                    json.put("version", TS_PROTOCAL_VERSION);
-                    json.put("port", serviceTCPPort);
-                } catch (JSONException e) {
+                    json.put("version", TS_PROTOCOL_VERSION)
+                    json.put("port", serviceTCPPort)
+                } catch (e: JSONException) {
                     // TODO: 11/24/2015 notify app
-                    Logger.e(this.getClass().getName(), "Failed to prepare the broadcast payload", e);
-                    stopService();
-                    return START_NOT_STICKY;
+                    Logger.e(this.javaClass.name, "Failed to prepare the broadcast payload", e)
+                    stopService()
+                    return START_NOT_STICKY
                 }
 
-                String data = json.toString();
+                val data = json.toString()
 
                 // prepare packet
-                if (data.length() > 1024) {
+                if (data.length > 1024) {
                     // TODO: notify app
-                    Logger.w(this.getClass().getName(), "The broadcast data cannot be longer than 1024 bytes");
-                    stopService();
-                    return START_NOT_STICKY;
+                    Logger.w(
+                        this.javaClass.name,
+                        "The broadcast data cannot be longer than 1024 bytes"
+                    )
+                    stopService()
+                    return START_NOT_STICKY
                 }
 
-                InetAddress ipAddress;
+                val ipAddress: InetAddress
                 try {
-                    ipAddress = getBroadcastAddress();
-                } catch (UnknownHostException e) {
+                    ipAddress = broadcastAddress
+                } catch (e: UnknownHostException) {
                     // TODO: notify app
-                    Logger.e(this.getClass().getName(), "Failed to get the broadcast ip address", e);
-                    stopService();
-                    return START_NOT_STICKY;
+                    Logger.e(this.javaClass.name, "Failed to get the broadcast ip address", e)
+                    stopService()
+                    return START_NOT_STICKY
                 }
-                final DatagramPacket packet = new DatagramPacket(data.getBytes(), data.length(), ipAddress, udpPort);
+                val packet = DatagramPacket(data.toByteArray(), data.length, ipAddress, udpPort)
 
                 // schedule broadcast
-                mTimer.scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
+                timer?.schedule(object : TimerTask() {
+                    override fun run() {
                         try {
-                            mSocket.send(packet);
-                        } catch (IOException e) {
-                            Logger.e(this.getClass().getName(), "Failed to send the broadcast packet", e);
+                            socket.send(packet)
+                        } catch (e: IOException) {
+                            Logger.e(this.javaClass.name, "Failed to send the broadcast packet", e)
                         }
                     }
-                }, 0, broadcastFrequency);
-                return START_STICKY;
+                }, 0, broadcastFrequency.toLong())
+                return START_STICKY
             }
         }
-        Logger.w(this.getClass().getName(), "The broadcaster requires arguments to operate correctly");
-        stopService();
-        return START_NOT_STICKY;
+        Logger.w(this.javaClass.name, "The broadcaster requires arguments to operate correctly")
+        stopService()
+        return START_NOT_STICKY
     }
 
-    @Override
-    public void onDestroy() {
-        stopService();
+    override fun onDestroy() {
+        stopService()
     }
 
     /**
      * Stops the service
      */
-    private void stopService() {
-        if(mTimer != null) {
-            mTimer.cancel();
-        }
-        if(mSocket != null) {
-            // TODO: 11/20/2015 notify network that we are shutting down
-
-            // close
-            mSocket.close();
-        }
-        setRunning(false);
-        Logger.i(this.getClass().getName(), "Stopping broadcaster");
+    private fun stopService() {
+        timer?.cancel()
+        socket.close()
+        setRunning(false)
+        Logger.i(this.javaClass.name, "Stopping broadcaster")
     }
 
     /**
      * Class to retrieve instance of service
      */
-    public class LocalBinder extends Binder {
-        public BroadcastService getServiceInstance() {
-            return BroadcastService.this;
-        }
+    inner class LocalBinder : Binder() {
+        val serviceInstance: BroadcastService
+            get() = this@BroadcastService
+    }
+
+    companion object {
+        const val PARAM_BROADCAST_PORT: String = "param_broadcast_udp_port"
+        const val PARAM_SERVICE_PORT: String = "param_service_tcp_port"
+        const val PARAM_FREQUENCY: String = "param_broadcast_frequency"
+        const val TS_PROTOCOL_VERSION: Int = 2
+
+        /**
+         * Checks if the service is currently running
+         * @return
+         */
+        var isRunning: Boolean = false
+            private set
     }
 }

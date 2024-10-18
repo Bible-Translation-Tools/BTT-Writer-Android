@@ -317,16 +317,14 @@ class ExportViewModel @Inject constructor(
         }
     }
 
-    fun initializeP2PKeys(): P2PKeys {
+    fun initializeP2PKeys() {
         if (!directoryProvider.p2pPrivateKey.exists() || !directoryProvider.p2pPublicKey.exists()) {
             generateP2PKeys()
         }
 
-        val (privateKey, publicKey) = try {
-            Pair(
-                RSAEncryption.readPrivateKeyFromFile(directoryProvider.p2pPrivateKey),
-                RSAEncryption.readPublicKeyFromFile(directoryProvider.p2pPublicKey)
-            )
+        try {
+            RSAEncryption.readPrivateKeyFromFile(directoryProvider.p2pPrivateKey)
+            RSAEncryption.readPublicKeyFromFile(directoryProvider.p2pPublicKey)
         } catch (e: Exception) {
             // try to regenerate the keys if loading fails
             Logger.w(
@@ -335,12 +333,7 @@ class ExportViewModel @Inject constructor(
                 e
             )
             generateP2PKeys()
-            Pair(
-                RSAEncryption.readPrivateKeyFromFile(directoryProvider.p2pPrivateKey),
-                RSAEncryption.readPublicKeyFromFile(directoryProvider.p2pPublicKey)
-            )
         }
-        return P2PKeys(privateKey, publicKey)
     }
 
     fun getTargetTranslationName(translationId: String?): String {
