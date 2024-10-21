@@ -16,6 +16,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
+import kotlin.io.path.Path
 
 /**
  * This class provides some utility methods for handling files
@@ -102,6 +103,11 @@ object FileUtilities {
     fun copy(input: InputStream, output: OutputStream): Int {
         val count = copyLarge(input, output)
         return if (count > 2147483647L) -1 else count.toInt()
+    }
+
+    @JvmStatic
+    fun getFilename(path: String): String {
+        return File(path).name
     }
 
     /**

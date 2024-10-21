@@ -29,7 +29,7 @@ class ValidateProject @Inject constructor(
         val validations = arrayListOf<ValidationItem>()
 
         translator.getTargetTranslation(targetTranslationId)?.let { targetTranslation ->
-            val targetLanguage = library.index().getTargetLanguage(
+            val targetLanguage = library.index.getTargetLanguage(
                 targetTranslation.targetLanguageId
             )
 
@@ -56,7 +56,7 @@ class ValidateProject @Inject constructor(
             }
 
             val projectTitle = container.readChunk("front", "title")
-            val sourceLanguage = library.index().getSourceLanguage(container.language.slug)
+            val sourceLanguage = library.index.getSourceLanguage(container.language.slug)
             val chapters = container.chapters()
 
             // validate chapters

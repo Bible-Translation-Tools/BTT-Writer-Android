@@ -51,18 +51,15 @@ object ParseMergeConflicts {
         }
 
         // remove duplicates
-        for (i in mergeConflictItems.indices) {
-            val conflict1 = mergeConflictItems[i]
-            var j = i + 1
-            while (j < mergeConflictItems.size) {
-                val conflict2 = mergeConflictItems[j]
-                if (conflict1 == conflict2) {
-                    mergeConflictItems.removeAt(j)
-                    j-- // backup
-                }
-                j++
-            }
+        val uniqueConflictItems = hashSetOf<CharSequence>()
+        for (item in mergeConflictItems) {
+            // Add to HashSet; duplicates are ignored
+            uniqueConflictItems.add(item)
         }
+        // Clear original list
+        mergeConflictItems.clear()
+        // Add unique items back
+        mergeConflictItems.addAll(uniqueConflictItems)
 
         return mergeConflictItems
     }

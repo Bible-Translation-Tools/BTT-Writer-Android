@@ -18,7 +18,7 @@ import java.io.InputStreamReader;
  */
 
 public class Door43Client {
-    private IDirectoryProvider directoryProvider;
+    private final IDirectoryProvider directoryProvider;
 
     private final API api;
     private static String schema = null;
@@ -63,15 +63,6 @@ public class Door43Client {
      */
     public void setLogger(OnLogListener listener) {
         api.setLogger(listener);
-    }
-
-    /**
-     * Returns the read only index
-     * @return the index
-     */
-    @Deprecated
-    public Index index() {
-        return api.index();
     }
 
     /**

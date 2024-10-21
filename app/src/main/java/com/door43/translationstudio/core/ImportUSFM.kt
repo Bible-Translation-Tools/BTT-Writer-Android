@@ -5,6 +5,7 @@ import android.content.pm.PackageInfo
 import android.net.Uri
 import android.text.TextUtils
 import com.door43.OnProgressListener
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
@@ -12,11 +13,13 @@ import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.deleteQuietly
 import com.door43.util.FileUtilities.forceMkdir
 import com.door43.util.FileUtilities.getExtension
+import com.door43.util.FileUtilities.getFilename
 import com.door43.util.FileUtilities.readFileToString
 import com.door43.util.FileUtilities.readStreamToString
 import com.door43.util.FileUtilities.writeStringToFile
 import com.door43.util.Zip
 import com.door43.util.sortNumerically
+import com.door43.util.sortNumericallyComparator
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -40,6 +43,7 @@ class ImportUSFM {
     private val directoryProvider: IDirectoryProvider
     private val profile: Profile
     private val library: Door43Client
+    private val assetsProvider: AssetsProvider
     private var targetLanguage: TargetLanguage? = null
     private var progressListener: OnProgressListener? = null
 
@@ -83,6 +87,7 @@ class ImportUSFM {
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
+        assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage?,
         progressListener: OnProgressListener?
     ) {
@@ -90,6 +95,7 @@ class ImportUSFM {
         this.directoryProvider = directoryProvider
         this.profile = profile
         this.library = library
+        this.assetsProvider = assetsProvider
         this.targetLanguage = targetLanguage
         this.progressListener = progressListener
     }
@@ -104,6 +110,7 @@ class ImportUSFM {
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
+        assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         file: File,
         progressListener: OnProgressListener?
@@ -112,6 +119,7 @@ class ImportUSFM {
         directoryProvider,
         profile,
         library,
+        assetsProvider,
         targetLanguage,
         progressListener
     ) {
@@ -124,6 +132,7 @@ class ImportUSFM {
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
+        assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         uri: Uri,
         progressListener: OnProgressListener?
@@ -132,6 +141,7 @@ class ImportUSFM {
         directoryProvider,
         profile,
         library,
+        assetsProvider,
         targetLanguage,
         progressListener
     ) {
@@ -144,6 +154,7 @@ class ImportUSFM {
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
+        assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         rcPath: String,
         progressListener: OnProgressListener?
@@ -152,6 +163,7 @@ class ImportUSFM {
         directoryProvider,
         profile,
         library,
+        assetsProvider,
         targetLanguage,
         progressListener
     ) {
@@ -164,8 +176,9 @@ class ImportUSFM {
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
+        assetsProvider: AssetsProvider,
         jsonString: String?
-    ): this(context, directoryProvider, profile, library, stringToJson(jsonString))
+    ): this(context, directoryProvider, profile, library, assetsProvider, stringToJson(jsonString))
 
     @Throws(Exception::class)
     private constructor(
@@ -173,8 +186,9 @@ class ImportUSFM {
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
+        assetsProvider: AssetsProvider,
         json: JSONObject?
-    ): this(context, directoryProvider, profile, library, null, null) {
+    ): this(context, directoryProvider, profile, library, assetsProvider, null, null) {
         this.targetLanguage = TargetLanguage.fromJSON(getOptJsonObject(json!!, "TargetLanguage"))
         this.tempDir = getOptFile(json, "TempDir")
         this.projectsFolder = getOptFile(json, "TempOutput")
@@ -203,7 +217,8 @@ class ImportUSFM {
         private val context: Context,
         private val directoryProvider: IDirectoryProvider,
         private val profile: Profile,
-        private val library: Door43Client
+        private val library: Door43Client,
+        private val assetsProvider: AssetsProvider
     ) {
         private var progressListener: OnProgressListener? = null
         private var targetLanguage: TargetLanguage? = null
@@ -274,6 +289,7 @@ class ImportUSFM {
                         directoryProvider,
                         profile,
                         library,
+                        assetsProvider,
                         jsonString
                     )
                     json != null -> ImportUSFM(
@@ -281,6 +297,7 @@ class ImportUSFM {
                         directoryProvider,
                         profile,
                         library,
+                        assetsProvider,
                         json
                     )
                     targetLanguage != null && file != null -> ImportUSFM(
@@ -288,6 +305,7 @@ class ImportUSFM {
                         directoryProvider,
                         profile,
                         library,
+                        assetsProvider,
                         targetLanguage!!,
                         file!!,
                         progressListener
@@ -297,6 +315,7 @@ class ImportUSFM {
                         directoryProvider,
                         profile,
                         library,
+                        assetsProvider,
                         targetLanguage!!,
                         uri!!,
                         progressListener
@@ -306,6 +325,7 @@ class ImportUSFM {
                         directoryProvider,
                         profile,
                         library,
+                        assetsProvider,
                         targetLanguage!!,
                         rcPath!!,
                         progressListener
@@ -693,10 +713,10 @@ class ImportUSFM {
         val zip = "zip" == ext
 
         try {
-            context.assets.open(fileName).use { stream ->
+            assetsProvider.open(fileName).use { stream ->
                 if (!zip) {
                     val text = readStreamToString(stream)
-                    success = processBook(text, fileName)
+                    success = processBook(text, getFilename(fileName))
                 } else {
                     success = readZipStream(stream)
                 }
@@ -740,6 +760,9 @@ class ImportUSFM {
         promptForName: Boolean,
         useName: String?
     ): Boolean {
+        booksMissingNames as ArrayList
+        booksMissingNames.clear()
+
         currentBook = foundBooks.size
         val success = processBook(book, name, promptForName, useName)
         isProcessSuccess = success
@@ -793,10 +816,8 @@ class ImportUSFM {
                 bookName = bookShortName
             }
 
-            val versifications = library.index()
-                .getVersifications("en")
-            val markers: List<ChunkMarker> =
-                library.index().getChunkMarkers(bookShortName, versifications[0].slug)
+            val versifications = library.index.getVersifications("en")
+            val markers = library.index.getChunkMarkers(bookShortName, versifications[0].slug)
             val haveChunksList = markers.isNotEmpty()
 
             if (!haveChunksList) { // no chunk list
@@ -811,7 +832,8 @@ class ImportUSFM {
 
                 chapters.sortNumerically()
 
-                val sortedChunks = TreeMap(parsedChunks.chunks)
+                val sortedChunks = parsedChunks.chunks.toSortedMap(sortNumericallyComparator)
+                    .mapValues { (_, value) -> value.sortedWith(sortNumericallyComparator) }
 
                 chunks.clear()
                 chunks.putAll(sortedChunks)

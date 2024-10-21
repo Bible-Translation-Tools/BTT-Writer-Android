@@ -10,7 +10,6 @@ import android.view.Window
 import androidx.fragment.app.DialogFragment
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.App.Companion.context
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.DialogDoor43LoginBinding
 import com.door43.translationstudio.ui.LoginDoor43Activity
@@ -40,7 +39,7 @@ class Door43LoginDialog : DialogFragment() {
 
         with(binding) {
             registerDoor43.setOnClickListener {
-                val defaultAccountCreateUrl = context()!!.resources.getString(
+                val defaultAccountCreateUrl = requireContext().resources.getString(
                     R.string.pref_default_create_account_url
                 )
                 val accountCreateUrl = prefRepository.getDefaultPref(

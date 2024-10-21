@@ -40,7 +40,7 @@ class DraftViewModel @Inject constructor(
     fun loadDraftTranslations(targetTranslationId: String?) {
         viewModelScope.launch {
             translator.getTargetTranslation(targetTranslationId)?.let { targetTranslation ->
-                _draftTranslations.value = library.index().findTranslations(
+                _draftTranslations.value = library.index.findTranslations(
                     targetTranslation.targetLanguage.slug,
                     targetTranslation.projectId,
                     null,
@@ -76,7 +76,7 @@ class DraftViewModel @Inject constructor(
 
     fun getSourceLanguage(draftTranslation: ResourceContainer): SourceLanguage? {
         return try {
-            library.index().getSourceLanguage(
+            library.index.getSourceLanguage(
                 draftTranslation.info.getJSONObject("language").getString("slug")
             )
         } catch (e: JSONException) {

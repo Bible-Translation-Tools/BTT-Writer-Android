@@ -731,8 +731,8 @@ class TargetTranslationMigrator @Inject constructor(
      */
     private fun migrateChunkChanges(targetTranslationDir: File, projectSlug: String): Boolean {
         // TRICKY: calling the App here is bad practice, but we'll deprecate this soon anyway.
-        val p = library.index().getProject("en", projectSlug, true)
-        val resources = library.index().getResources(p.languageSlug, p.slug)
+        val p = library.index.getProject("en", projectSlug, true)
+        val resources = library.index.getResources(p.languageSlug, p.slug)
         val resourceContainer: ResourceContainer
         try {
             var resource: Resource? = null

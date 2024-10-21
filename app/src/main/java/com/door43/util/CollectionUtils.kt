@@ -2,20 +2,18 @@ package com.door43.util
 
 import com.door43.translationstudio.core.Util
 
+val sortNumericallyComparator = Comparator<String> { o1, o2 ->
+    val lhInt = getIdOrder(o1)
+    val rhInt = getIdOrder(o2)
+    lhInt.compareTo(rhInt)
+}
+
 fun Array<String>.sortNumerically() {
-    sortWith { o1, o2 ->
-        val lhInt = getIdOrder(o1)
-        val rhInt = getIdOrder(o2)
-        lhInt.compareTo(rhInt)
-    }
+    sortWith(sortNumericallyComparator)
 }
 
 fun ArrayList<String>.sortNumerically() {
-    sortWith { o1, o2 ->
-        val lhInt = getIdOrder(o1)
-        val rhInt = getIdOrder(o2)
-        lhInt.compareTo(rhInt)
-    }
+    sortWith(sortNumericallyComparator)
 }
 
 private fun getIdOrder(id: String): Int {

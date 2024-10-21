@@ -95,7 +95,7 @@ class ExportViewModel @Inject constructor(
     }
 
     fun getProject(targetTranslation: TargetTranslation): Project {
-        return library.index().getProject(
+        return library.index.getProject(
             "en",
             targetTranslation.projectId,
             true
@@ -338,7 +338,7 @@ class ExportViewModel @Inject constructor(
 
     fun getTargetTranslationName(translationId: String?): String {
         return translator.getTargetTranslation(translationId)?.let { targetTranslation ->
-            val sourceTranslation = library.index().getTranslation(targetTranslation.id)
+            val sourceTranslation = library.index.getTranslation(targetTranslation.id)
             return if (sourceTranslation != null) {
                 sourceTranslation.project.name + " - " + targetTranslation.targetLanguage.name
             } else {

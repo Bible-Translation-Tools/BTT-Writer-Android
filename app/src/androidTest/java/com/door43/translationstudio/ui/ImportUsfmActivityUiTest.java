@@ -17,20 +17,18 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.espresso.matcher.BoundedMatcher;
-import androidx.test.rule.ActivityTestRule;
 import androidx.appcompat.widget.Toolbar;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.rule.ActivityTestRule;
 
 import android.view.View;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.Profile;
-import com.door43.translationstudio.core.Translator;
 import com.door43.util.FileUtilities;
 
 
@@ -54,33 +52,30 @@ import static org.hamcrest.Matchers.not;
 @LargeTest
 public class ImportUsfmActivityUiTest {
 
-    private File mTestFile;
-    private File mTempDir;
-    private Context mTestContext;
-    private String mTargetTranslationID;
+    private File testFile;
+    private File tempDir;
+    private Context testContext;
+    private String targetTranslationID;
 
     @Rule
-    public ActivityTestRule<ImportUsfmActivity> mActivityRule = new ActivityTestRule<>(
+    public ActivityTestRule<ImportUsfmActivity> activityRule = new ActivityTestRule<>(
             ImportUsfmActivity.class,
             true,    // initialTouchMode
             false);  // don't launchActivity yet
 
     @Before
     public void setUp() {
-        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
+        testContext = InstrumentationRegistry.getInstrumentation().getContext();
         Logger.flush();
-        if(App.getProfile() == null) { // make sure this is initialized
-            App.setProfile(new Profile("testing"));
-        }
     }
 
     @After
     public void tearDown() {
         removeTranslation();
-        if(mTempDir != null) {
-            FileUtilities.deleteQuietly(mTempDir);
-            mTempDir = null;
-            mTestFile = null;
+        if(tempDir != null) {
+            FileUtilities.deleteQuietly(tempDir);
+            tempDir = null;
+            testFile = null;
         }
         finishActivity();
     }
@@ -94,7 +89,7 @@ public class ImportUsfmActivityUiTest {
         String language = "aa";
         initForImport(book, language);
         Intent intent = getIntentForTestFile(testFile);
-        mActivityRule.launchActivity(intent);
+        activityRule.launchActivity(intent);
         checkDisplayState(R.string.title_activity_import_usfm_language, true);
         onView(withText(language)).perform(click());
         boolean seen = waitWhileDisplayed(R.string.reading_usfm);
@@ -118,7 +113,7 @@ public class ImportUsfmActivityUiTest {
         String language = "aa";
         initForImport(book, language);
         Intent intent = getIntentForTestFile(testFile);
-        mActivityRule.launchActivity(intent);
+        activityRule.launchActivity(intent);
         checkDisplayState(R.string.title_activity_import_usfm_language, true);
         onView(withText(language)).perform(click());
         boolean seen = waitWhileDisplayed(R.string.reading_usfm);
@@ -148,7 +143,7 @@ public class ImportUsfmActivityUiTest {
         String language = "aa";
         initForImport(book, language);
         Intent intent = getIntentForTestFile(testFile);
-        mActivityRule.launchActivity(intent);
+        activityRule.launchActivity(intent);
         checkDisplayState(R.string.title_activity_import_usfm_language, true);
         onView(withText(language)).perform(click());
         boolean seen = waitWhileDisplayed(R.string.reading_usfm);
@@ -175,7 +170,7 @@ public class ImportUsfmActivityUiTest {
         String language = "aa";
         initForImport(book, language);
         Intent intent = getIntentForTestFile(testFile);
-        mActivityRule.launchActivity(intent);
+        activityRule.launchActivity(intent);
         checkDisplayState(R.string.title_activity_import_usfm_language, true);
 
         //when
@@ -193,7 +188,7 @@ public class ImportUsfmActivityUiTest {
      *
      */
     public void initForImport(String book, String language) {
-        mTargetTranslationID = language +"_" + book +"_text_reg";
+        targetTranslationID = language +"_" + book +"_text_reg";
         removeTranslation();
     }
 
@@ -201,10 +196,9 @@ public class ImportUsfmActivityUiTest {
      *  cleanup old imports
      */
     public void removeTranslation() {
-        if(mTargetTranslationID!=null)
-        {
-            Translator translator = App.getTranslator();
-            translator.deleteTargetTranslation(mTargetTranslationID);
+        if(targetTranslationID !=null) {
+            //Translator translator = App.getTranslator();
+            //translator.deleteTargetTranslation(targetTranslationID);
         }
     }
 
@@ -349,16 +343,16 @@ public class ImportUsfmActivityUiTest {
      */
     protected Intent getIntentForTestFile(String fileName) throws Exception {
         Intent intent = new Intent();
-        Resources testRes = mTestContext.getResources();
+        Resources testRes = testContext.getResources();
 
-        mTempDir = new File(App.context().getCacheDir(), System.currentTimeMillis() + "");
-        mTempDir.mkdirs();
+        tempDir = new File(App.context().getCacheDir(), System.currentTimeMillis() + "");
+        tempDir.mkdirs();
 
-        InputStream usfmStream = mTestContext.getAssets().open(fileName);
-        mTestFile = new File(mTempDir, "testFile.usfm");
-        FileUtilities.copyInputStreamToFile(usfmStream, mTestFile);
+        InputStream usfmStream = testContext.getAssets().open(fileName);
+        testFile = new File(tempDir, "testFile.usfm");
+        FileUtilities.copyInputStreamToFile(usfmStream, testFile);
 
-        intent.putExtra(ImportUsfmActivity.EXTRA_USFM_IMPORT_FILE, mTestFile);
+        intent.putExtra(ImportUsfmActivity.EXTRA_USFM_IMPORT_FILE, testFile);
         return intent;
     }
 
@@ -368,10 +362,9 @@ public class ImportUsfmActivityUiTest {
      */
     protected void rotateScreen() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        int orientation
-                = context.getResources().getConfiguration().orientation;
+        int orientation = context.getResources().getConfiguration().orientation;
 
-        Activity activity = mActivityRule.getActivity();
+        Activity activity = activityRule.getActivity();
         activity.setRequestedOrientation(
                 (orientation == Configuration.ORIENTATION_PORTRAIT) ?
                         ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE :
@@ -379,10 +372,10 @@ public class ImportUsfmActivityUiTest {
     }
 
     /**
-     *     finsih activity if still running
+     *     finish activity if still running
      */
     private void finishActivity() {
-        Activity activity = mActivityRule.getActivity();
+        Activity activity = activityRule.getActivity();
         if(activity != null) {
             activity.finish();
         }

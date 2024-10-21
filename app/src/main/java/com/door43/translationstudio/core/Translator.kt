@@ -255,7 +255,7 @@ class Translator (
         nativeSpeaker: NativeSpeaker?,
         draftTranslation: ResourceContainer,
     ): TargetTranslation? {
-        val targetLanguage = library.index().getTargetLanguage(draftTranslation.language.slug)
+        val targetLanguage = library.index.getTargetLanguage(draftTranslation.language.slug)
         // TRICKY: for now android only supports "regular" or "obs" "text" translations
         // TODO: we should technically check if the project contains more than one resource
         //  when determining if it needs a regular slug or not.

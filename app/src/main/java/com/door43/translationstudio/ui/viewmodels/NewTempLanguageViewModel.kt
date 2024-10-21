@@ -22,7 +22,7 @@ class NewTempLanguageViewModel @Inject constructor(
 
     fun getQuestionnaire(): QuestionnairePager? {
         // TRICKY: for now we only have one questionnaire
-        val questionnaires = library.index().questionnaires
+        val questionnaires = library.index.questionnaires
         if (questionnaires.size > 0) {
             val q = questionnaires[0]
             val questions = library.index.getQuestions(q.tdId)
@@ -54,6 +54,6 @@ class NewTempLanguageViewModel @Inject constructor(
     }
 
     fun findTargetLanguages(name: String?): List<TargetLanguage> {
-        return name?.let { library.index().findTargetLanguage(it) } ?: listOf()
+        return name?.let { library.index.findTargetLanguage(it) } ?: listOf()
     }
 }

@@ -47,7 +47,7 @@ class NewTargetTranslationModel @Inject constructor(
     val mergeTranslationResult: LiveData<MergeTargetTranslation.Result?> = _mergeTranslationResult
 
     fun getProject(targetTranslation: TargetTranslation): Project {
-        return library.index().getProject(deviceLanguageCode, targetTranslation.projectId)
+        return library.index.getProject(deviceLanguageCode, targetTranslation.projectId)
     }
 
     fun mergeTargetTranslation(
@@ -77,7 +77,7 @@ class NewTargetTranslationModel @Inject constructor(
     fun registerTempLanguage(jsonString: String?): Boolean {
         val request = jsonString?.let { languageRequestRepository.requestFromJson(it) }
         if (request != null) {
-            val questionnaire = library.index().getQuestionnaire(request.questionnaireId)
+            val questionnaire = library.index.getQuestionnaire(request.questionnaireId)
             if (questionnaire != null && languageRequestRepository.addNewLanguageRequest(request)) {
                 selectedTargetLanguage = request.tempTargetLanguage
                 createdNewLanguage = true
@@ -88,7 +88,7 @@ class NewTargetTranslationModel @Inject constructor(
     }
 
     fun getTargetLanguage(languageId: String?): TargetLanguage? {
-        return library.index().getTargetLanguage(languageId)
+        return library.index.getTargetLanguage(languageId)
     }
 
     fun getTargetTranslation(translationId: String?): TargetTranslation? {
@@ -180,6 +180,6 @@ class NewTargetTranslationModel @Inject constructor(
     }
 
     fun getCategories(categoryId: Long = 0): List<CategoryEntry> {
-        return library.index().getProjectCategories(categoryId, deviceLanguageCode, "all")
+        return library.index.getProjectCategories(categoryId, deviceLanguageCode, "all")
     }
 }

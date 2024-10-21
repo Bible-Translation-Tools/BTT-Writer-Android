@@ -74,28 +74,28 @@ public class NewLanguageActivityUiUtils {
             false);  // don't launchActivity yet
     private QuestionnairePager pager;
 
-    @Before
-    public void setUp() {
-        // Specify a valid string.
-        mStringToBetyped = "Espresso";
-        Logger.flush();
-        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
-        Door43Client library = App.getLibrary();
-        if(!App.isLibraryDeployed()) {
-            try {
-                App.deployDefaultLibrary();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        List<Questionnaire> questionnaires = App.getLibrary().index().getQuestionnaires();
-        if(questionnaires.size() > 0) {
-            Questionnaire q = questionnaires.get(0);
-            List<Question> questions = App.getLibrary().index.getQuestions(q.tdId);
-            pager = new QuestionnairePager(q);
-            pager.loadQuestions(questions);
-        }
-    }
+//    @Before
+//    public void setUp() {
+//        // Specify a valid string.
+//        mStringToBetyped = "Espresso";
+//        Logger.flush();
+//        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
+//        Door43Client library = App.getLibrary();
+//        if(!App.isLibraryDeployed()) {
+//            try {
+//                App.deployDefaultLibrary();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        List<Questionnaire> questionnaires = App.getLibrary().index.getQuestionnaires();
+//        if(questionnaires.size() > 0) {
+//            Questionnaire q = questionnaires.get(0);
+//            List<Question> questions = App.getLibrary().index.getQuestions(q.tdId);
+//            pager = new QuestionnairePager(q);
+//            pager.loadQuestions(questions);
+//        }
+//    }
 
     /**
      * get number of pages in questionnaire

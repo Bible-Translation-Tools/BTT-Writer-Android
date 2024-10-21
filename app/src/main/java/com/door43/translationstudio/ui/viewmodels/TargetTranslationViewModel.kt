@@ -88,7 +88,7 @@ class TargetTranslationViewModel @Inject constructor(
      * @return
      */
     fun draftIsAvailable(): Boolean {
-        return library.index().findTranslations(
+        return library.index.findTranslations(
             targetTranslation.targetLanguage.slug,
             targetTranslation.projectId,
             null,
@@ -309,7 +309,7 @@ class TargetTranslationViewModel @Inject constructor(
 
     fun getDefaultSourceTranslation(): String? {
         val project = getProject()
-        val resources = library.index().getResources(project.languageSlug, project.slug)
+        val resources = library.index.getResources(project.languageSlug, project.slug)
         val resourceContainer = try {
             library.open(project.languageSlug, project.slug, resources[0].slug)
         } catch (e: Exception) {
@@ -323,13 +323,13 @@ class TargetTranslationViewModel @Inject constructor(
         val tabContents = arrayListOf<ContentValues>()
         val sourceTranslationSlugs = prefRepository.getOpenSourceTranslations(targetTranslation.id)
         for (slug in sourceTranslationSlugs) {
-            val st: Translation? = library.index().getTranslation(slug)
+            val st: Translation? = library.index.getTranslation(slug)
             if (st != null) {
                 val values = ContentValues()
                 val title = st.language.name + " " + st.resource.slug.uppercase(Locale.getDefault())
                 values.put("title", title)
                 // include the resource id if there are more than one
-                if (library.index().getResources(st.language.slug, st.project.slug).size > 1) {
+                if (library.index.getResources(st.language.slug, st.project.slug).size > 1) {
                     values.put("title", title)
                 } else {
                     values.put("title", st.language.name)

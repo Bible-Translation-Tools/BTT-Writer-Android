@@ -1,14 +1,15 @@
 package com.door43.translationstudio.core
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App.Companion.context
 import com.door43.translationstudio.R
 import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.moveOrCopyQuietly
 import com.door43.util.Zip
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.tools.http.GetRequest
 import org.unfoldingword.tools.http.Request
 import java.io.File
@@ -23,6 +24,7 @@ import javax.inject.Inject
  * is ready.
  */
 class DownloadImages @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val directoryProvider: IDirectoryProvider
 ) {
     data class Result(val success: Boolean, val imagesDir: File?)
@@ -50,8 +52,8 @@ class DownloadImages @Inject constructor(
                 val tempDir = File(imagesDir, "temp")
                 tempDir.mkdirs()
 
-                val outOf = context()!!.resources.getString(R.string.out_of)
-                val unpacking = context()!!.resources.getString(R.string.unpacking)
+                val outOf = context.getString(R.string.out_of)
+                val unpacking = context.getString(R.string.unpacking)
                 listener?.onProgress(0, TOTAL_FILE_COUNT, unpacking)
                 Log.i(TAG, "unpacking: ")
 
@@ -96,8 +98,8 @@ class DownloadImages @Inject constructor(
             return false
         }
 
-        val outOf = context()!!.resources.getString(R.string.out_of)
-        val mbDownloaded = context()!!.resources.getString(R.string.mb_downloaded)
+        val outOf = context.getString(R.string.out_of)
+        val mbDownloaded = context.getString(R.string.mb_downloaded)
 
         val r = GetRequest(url)
         r.setTimeout(5000)

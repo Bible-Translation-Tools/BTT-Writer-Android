@@ -7,7 +7,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.di.Production
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ImportUSFM
 import com.door43.translationstudio.core.Profile
@@ -34,6 +36,7 @@ class ImportUsfmViewModel @Inject constructor(
     @Inject lateinit var importProjects: ImportProjects
     @Inject lateinit var translator: Translator
     @Inject lateinit var library: Door43Client
+    @Inject @Production lateinit var assetsProvider: AssetsProvider
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -48,7 +51,13 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(application, directoryProvider, profile, library)
+                ImportUSFM.Builder(
+                    application,
+                    directoryProvider,
+                    profile,
+                    library,
+                    assetsProvider
+                )
                     .fromFile(targetLanguage, file, progressListener)
                     .build()
             }
@@ -60,7 +69,13 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(application, directoryProvider, profile, library)
+                ImportUSFM.Builder(
+                    application,
+                    directoryProvider,
+                    profile,
+                    library,
+                    assetsProvider
+                )
                     .fromUri(targetLanguage, uri, progressListener)
                     .build()
             }
@@ -72,7 +87,13 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(application, directoryProvider, profile, library)
+                ImportUSFM.Builder(
+                    application,
+                    directoryProvider,
+                    profile,
+                    library,
+                    assetsProvider
+                )
                     .fromRc(targetLanguage, rcPath, progressListener)
                     .build()
             }
@@ -84,7 +105,13 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(application, directoryProvider, profile, library)
+                ImportUSFM.Builder(
+                    application,
+                    directoryProvider,
+                    profile,
+                    library,
+                    assetsProvider
+                )
                     .fromJsonString(jsonString)
                     .build()
             }
@@ -118,7 +145,7 @@ class ImportUsfmViewModel @Inject constructor(
     }
 
     fun getTargetLanguage(targetLanguageId: String): TargetLanguage? {
-        return library.index().getTargetLanguage(targetLanguageId)
+        return library.index.getTargetLanguage(targetLanguageId)
     }
 
     fun checkMergeConflictExists(): TargetTranslation? {

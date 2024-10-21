@@ -25,13 +25,13 @@ public class ImportExportTest {
     private File testsDir;
     private Door43Client library;
 
-    @Before
-    protected void setUp() throws Exception {
-        this.context = InstrumentationRegistry.getInstrumentation().getContext();
-        this.testsDir = new File(App.context().getCacheDir(), "import_export_tests");
-        this.translator = new Translator(this.context, null, new File(this.testsDir, "translator"));
-        this.library = App.getLibrary();
-    }
+//    @Before
+//    protected void setUp() throws Exception {
+//        this.context = InstrumentationRegistry.getInstrumentation().getContext();
+//        this.testsDir = new File(App.context().getCacheDir(), "import_export_tests");
+//        this.translator = new Translator(this.context, null, new File(this.testsDir, "translator"));
+//        this.library = App.getLibrary();
+//    }
 
     @Test
     public void test01ImportV2Archive() throws Exception {
