@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.App.Companion.recoverRepo
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.DownloadImages
 import com.door43.translationstudio.core.Profile
@@ -27,7 +26,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
@@ -110,21 +108,10 @@ class ExportViewModel @Inject constructor(
         translation.value?.let { targetTranslation ->
             viewModelScope.launch {
                 _progress.value = ProgressHelper.Progress()
-                var success: Boolean
-                try {
+                _exportResult.value = withContext(Dispatchers.IO) {
                     export.exportProject(targetTranslation, uri)
-                    success = true
-                } catch (e: NoHeadException) {
-                    // fix corrupt repo and try again
-                    recoverRepo(targetTranslation)
-                    export.exportProject(targetTranslation, uri)
-                    success = true
-                } catch (e: Exception) {
-                    success = false
                 }
-
                 _progress.value = null
-                _exportResult.value = ExportProjects.Result(uri, success, ExportProjects.TaskName.EXPORT_PROJECT)
             }
         }
     }
@@ -135,17 +122,12 @@ class ExportViewModel @Inject constructor(
     fun exportUSFM(uri: Uri) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.exporting))
-            var success = false
-
             translation.value?.let { targetTranslation ->
-                try {
+                _exportResult.value = withContext(Dispatchers.IO) {
                     export.exportUSFM(targetTranslation, uri)
-                    success = true
-                } catch (e: Exception) {
                 }
             }
             _progress.value = null
-            _exportResult.value = ExportProjects.Result(uri, success, ExportProjects.TaskName.EXPORT_USFM)
         }
     }
 
@@ -157,9 +139,8 @@ class ExportViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.printing))
-            var success = false
             translation.value?.let { targetTranslation ->
-                try {
+                _exportResult.value = withContext(Dispatchers.IO) {
                     export.exportPDF(
                         targetTranslation,
                         uri,
@@ -167,12 +148,9 @@ class ExportViewModel @Inject constructor(
                         includeIncompleteFrames,
                         imagesDir
                     )
-                    success = true
-                } catch (e: Exception) {
                 }
             }
             _progress.value = null
-            _exportResult.value = ExportProjects.Result(uri, success, ExportProjects.TaskName.EXPORT_PDF)
         }
     }
 

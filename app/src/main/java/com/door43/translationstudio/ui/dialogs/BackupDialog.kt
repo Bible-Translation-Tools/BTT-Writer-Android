@@ -225,8 +225,8 @@ class BackupDialog : DialogFragment() {
         }
         viewModel.exportResult.observe(this) {
             it?.let { result ->
-                when (result.taskName) {
-                    ExportProjects.TaskName.EXPORT_USFM -> {
+                when (result.exportType) {
+                    ExportProjects.ExportType.USFM -> {
                         val message = if (result.success) {
                             val format = resources.getString(R.string.export_success)
                             String.format(
@@ -239,7 +239,7 @@ class BackupDialog : DialogFragment() {
                         Logger.i(TAG, "USFM export success = " + result.success)
                         showUsfmExportResults(message)
                     }
-                    ExportProjects.TaskName.EXPORT_PROJECT -> {
+                    ExportProjects.ExportType.PROJECT -> {
                         if (result.success) {
                             showBackupResults(R.string.backup_success, result.uri)
                         } else {

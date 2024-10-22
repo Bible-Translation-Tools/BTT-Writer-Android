@@ -2,7 +2,9 @@ package com.door43.usecases
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.App.Companion.recoverRepo
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.PdfPrinter
@@ -16,13 +18,13 @@ import com.door43.translationstudio.core.Util
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.eclipse.jgit.api.errors.NoHeadException
 import org.json.JSONArray
 import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.IOException
 import java.io.PrintStream
 import java.util.Locale
 import javax.inject.Inject
@@ -49,30 +51,49 @@ class ExportProjects @Inject constructor(
      * @param targetTranslation
      * @param fileUri
      */
-    @Throws(Exception::class)
-    fun exportProject(targetTranslation: TargetTranslation, fileUri: Uri) {
-        try {
-            targetTranslation.commitSync(".", false)
-        } catch (e: Exception) {
-            // it's not the end of the world if we cannot commit.
-            e.printStackTrace()
-        }
-
-        val manifestJson = buildArchiveManifest(targetTranslation)
-        val tempDir = directoryProvider.createTempDir()
-        try {
-            val manifestFile = File(tempDir, "manifest.json")
-            manifestFile.createNewFile()
-            directoryProvider.writeStringToFile(manifestFile, manifestJson.toString())
-
-            context.contentResolver.openOutputStream(fileUri).use { out ->
-                Zip.zipToStream(
-                    arrayOf(manifestFile, targetTranslation.path), out
-                )
+    fun exportProject(
+        targetTranslation: TargetTranslation,
+        fileUri: Uri,
+        recoverBadRepo: Boolean = true
+    ): Result {
+        val success = try {
+            try {
+                targetTranslation.commitSync(".", false)
+            } catch (e: Exception) {
+                // it's not the end of the world if we cannot commit.
+                e.printStackTrace()
             }
-        } finally {
-            FileUtilities.deleteQuietly(tempDir)
+
+            val manifestJson = buildArchiveManifest(targetTranslation)
+            val tempDir = directoryProvider.createTempDir()
+            try {
+                val manifestFile = File(tempDir, "manifest.json")
+                manifestFile.createNewFile()
+                directoryProvider.writeStringToFile(manifestFile, manifestJson.toString())
+
+                context.contentResolver.openOutputStream(fileUri).use { out ->
+                    Zip.zipToStream(
+                        arrayOf(manifestFile, targetTranslation.path), out
+                    )
+                }
+            } catch (e: NoHeadException) {
+                if (recoverBadRepo) {
+                    // fix corrupt repo and try again
+                    recoverRepo(targetTranslation)
+                    return exportProject(targetTranslation, fileUri, false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                FileUtilities.deleteQuietly(tempDir)
+            }
+            true
+        } catch (e: Exception) {
+            Log.e(this::class.simpleName, "Failed to export project", e)
+            false
         }
+
+        return Result(fileUri, success, ExportType.PROJECT)
     }
 
     @Throws(Exception::class)
@@ -93,99 +114,105 @@ class ExportProjects @Inject constructor(
      * Exports a target translation as a USFM file
      * @param targetTranslation
      * @param fileUri
-     * @return output file
      */
-    @Throws(IOException::class)
-    fun exportUSFM(targetTranslation: TargetTranslation, fileUri: Uri) {
-        val tempDir = directoryProvider.createTempDir()
-        tempDir.mkdirs()
-        val chapters = targetTranslation.chapterTranslations
+    fun exportUSFM(targetTranslation: TargetTranslation, fileUri: Uri): Result {
+        val success = try {
+            val tempDir = directoryProvider.createTempDir()
+            tempDir.mkdirs()
+            val chapters = targetTranslation.chapterTranslations
 
-        val bookData = BookData.generate(targetTranslation, library)
-        val bookCode = bookData.bookCode
-        val bookTitle = bookData.bookTitle
-        val bookName = bookData.bookName
-        val languageId = bookData.languageId
-        val languageName = bookData.languageName
+            val bookData = BookData.generate(targetTranslation, library)
+            val bookCode = bookData.bookCode
+            val bookTitle = bookData.bookTitle
+            val bookName = bookData.bookName
+            val languageId = bookData.languageId
+            val languageName = bookData.languageName
 
-        val tempFile = directoryProvider.createTempFile("output", dir = tempDir)
+            val tempFile = directoryProvider.createTempFile("output", dir = tempDir)
 
-        PrintStream(tempFile).use { ps ->
-            val id =
-                "\\id $bookCode $bookTitle, $bookName, $languageId, $languageName"
-            ps.println(id)
-            val ide = "\\ide usfm"
-            ps.println(ide)
-            val h = "\\h $bookTitle"
-            ps.println(h)
-            val bookID = "\\toc1 $bookTitle"
-            ps.println(bookID)
-            val bookNameID = "\\toc2 $bookName"
-            ps.println(bookNameID)
-            val shortBookID = "\\toc3 $bookCode"
-            ps.println(shortBookID)
-            val mt = "\\mt $bookTitle"
-            ps.println(mt)
+            PrintStream(tempFile).use { ps ->
+                val id =
+                    "\\id $bookCode $bookTitle, $bookName, $languageId, $languageName"
+                ps.println(id)
+                val ide = "\\ide usfm"
+                ps.println(ide)
+                val h = "\\h $bookTitle"
+                ps.println(h)
+                val bookID = "\\toc1 $bookTitle"
+                ps.println(bookID)
+                val bookNameID = "\\toc2 $bookName"
+                ps.println(bookNameID)
+                val shortBookID = "\\toc3 $bookCode"
+                ps.println(shortBookID)
+                val mt = "\\mt $bookTitle"
+                ps.println(mt)
 
-            for (chapter in chapters) {
-                // TRICKY: the translation format doesn't matter for exporting
-                val frames = targetTranslation.getFrameTranslations(
-                    chapter.id,
-                    TranslationFormat.DEFAULT
-                )
-                if (frames.isEmpty()) continue
+                for (chapter in chapters) {
+                    // TRICKY: the translation format doesn't matter for exporting
+                    val frames = targetTranslation.getFrameTranslations(
+                        chapter.id,
+                        TranslationFormat.DEFAULT
+                    )
+                    if (frames.isEmpty()) continue
 
-                val chapterInt = Util.strToInt(chapter.id, 0)
-                if (chapterInt != 0) {
-                    ps.println("\\s5") // section marker
-                    val chapterNumber = "\\c " + chapter.id
-                    ps.println(chapterNumber)
-                }
-
-                if (chapter.title != null && chapter.title.isNotEmpty()) {
-                    val chapterTitle = "\\cl " + chapter.title
-                    ps.println(chapterTitle)
-                }
-
-                if (chapter.reference != null && chapter.reference.isNotEmpty()) {
-                    val chapterRef = "\\cd " + chapter.reference
-                    ps.println(chapterRef)
-                }
-
-                ps.println("\\p") // paragraph marker
-
-                val frameList = sortFrameTranslations(frames)
-                var startChunk = 0
-                if (frameList.isNotEmpty()) {
-                    val frame = frameList[0]
-                    val verseID =
-                        Util.strToInt(frame.id, 0)
-                    if ((verseID == 0)) {
-                        startChunk++
-                    }
-                }
-
-                for (i in startChunk until frameList.size) {
-                    val frame = frameList[i]
-                    val text = frame.body
-
-                    if (i > startChunk) {
+                    val chapterInt = Util.strToInt(chapter.id, 0)
+                    if (chapterInt != 0) {
                         ps.println("\\s5") // section marker
+                        val chapterNumber = "\\c " + chapter.id
+                        ps.println(chapterNumber)
                     }
-                    ps.print(text)
+
+                    if (chapter.title != null && chapter.title.isNotEmpty()) {
+                        val chapterTitle = "\\cl " + chapter.title
+                        ps.println(chapterTitle)
+                    }
+
+                    if (chapter.reference != null && chapter.reference.isNotEmpty()) {
+                        val chapterRef = "\\cd " + chapter.reference
+                        ps.println(chapterRef)
+                    }
+
+                    ps.println("\\p") // paragraph marker
+
+                    val frameList = sortFrameTranslations(frames)
+                    var startChunk = 0
+                    if (frameList.isNotEmpty()) {
+                        val frame = frameList[0]
+                        val verseID =
+                            Util.strToInt(frame.id, 0)
+                        if ((verseID == 0)) {
+                            startChunk++
+                        }
+                    }
+
+                    for (i in startChunk until frameList.size) {
+                        val frame = frameList[i]
+                        val text = frame.body
+
+                        if (i > startChunk) {
+                            ps.println("\\s5") // section marker
+                        }
+                        ps.print(text)
+                    }
+                }
+                context.contentResolver.openOutputStream(fileUri).use { output ->
+                    FileInputStream(tempFile).use { input ->
+                        val buffer = ByteArray(1024)
+                        var length: Int
+                        while ((input.read(buffer).also { length = it }) > 0) {
+                            output!!.write(buffer, 0, length)
+                        }
+                    }
                 }
             }
-            context.contentResolver.openOutputStream(fileUri).use { output ->
-                FileInputStream(tempFile).use { input ->
-                    val buffer = ByteArray(1024)
-                    var length: Int
-                    while ((input.read(buffer).also { length = it }) > 0) {
-                        output!!.write(buffer, 0, length)
-                    }
-                }
-            }
+            FileUtilities.deleteQuietly(tempDir)
+            true
+        } catch (e: Exception) {
+            Log.e(this::class.simpleName, "Failed to export USFM file", e)
+            false
         }
-        FileUtilities.deleteQuietly(tempDir)
+
+        return Result(fileUri, success, ExportType.USFM)
     }
 
     /**
@@ -194,39 +221,46 @@ class ExportProjects @Inject constructor(
      * @param fileUri
      * @return output file
      */
-    @Throws(IOException::class)
     fun exportPDF(
         targetTranslation: TargetTranslation,
         fileUri: Uri,
         includeImages: Boolean,
         includeIncompleteFrames: Boolean,
         imagesDir: File?
-    ) {
-        val fontPath = typography.getAssetPath(TranslationType.TARGET)
-        val fontSize = typography.getFontSize(TranslationType.TARGET)
-        val licenseFontName = context.getString(R.string.pref_default_translation_typeface)
-        val licenseFontPath = "assets/fonts/$licenseFontName"
-        val targetLanguageRtl = "rtl" == targetTranslation.targetLanguageDirection
-        val printer = PdfPrinter(
-            context, targetTranslation, targetTranslation.format, fontPath,
-            fontSize, targetLanguageRtl, licenseFontPath, imagesDir, directoryProvider,
-            library
-        )
-        printer.includeMedia(includeImages)
-        printer.includeIncomplete(includeIncompleteFrames)
-        val pdf = printer.print()
-        if (pdf.exists()) {
-            context.contentResolver.openOutputStream(fileUri).use { output ->
-                pdf.inputStream().use { input ->
-                    val buffer = ByteArray(1024)
-                    var length: Int
-                    while ((input.read(buffer).also { length = it }) > 0) {
-                        output!!.write(buffer, 0, length)
+    ): Result {
+        val success = try {
+            val fontPath = typography.getAssetPath(TranslationType.TARGET)
+            val fontSize = typography.getFontSize(TranslationType.TARGET)
+            val licenseFontName = context.getString(R.string.pref_default_translation_typeface)
+            val licenseFontPath = "assets/fonts/$licenseFontName"
+            val targetLanguageRtl = "rtl" == targetTranslation.targetLanguageDirection
+            val printer = PdfPrinter(
+                context, targetTranslation, targetTranslation.format, fontPath,
+                fontSize, targetLanguageRtl, licenseFontPath, imagesDir, directoryProvider,
+                library
+            )
+            printer.includeMedia(includeImages)
+            printer.includeIncomplete(includeIncompleteFrames)
+            val pdf = printer.print()
+            if (pdf.exists()) {
+                context.contentResolver.openOutputStream(fileUri).use { output ->
+                    pdf.inputStream().use { input ->
+                        val buffer = ByteArray(1024)
+                        var length: Int
+                        while ((input.read(buffer).also { length = it }) > 0) {
+                            output!!.write(buffer, 0, length)
+                        }
                     }
                 }
+                FileUtilities.deleteQuietly(pdf)
             }
-            FileUtilities.deleteQuietly(pdf)
+            true
+        } catch (e: Exception) {
+            Log.e(this::class.simpleName, "Failed to export PDF file", e)
+            false
         }
+
+        return Result(fileUri, success, ExportType.PDF)
     }
 
     /**
@@ -277,13 +311,13 @@ class ExportProjects @Inject constructor(
     data class Result(
         val uri: Uri,
         val success: Boolean,
-        val taskName: TaskName
+        val exportType: ExportType
     )
 
-    enum class TaskName {
-        EXPORT_PROJECT,
-        EXPORT_USFM,
-        EXPORT_PDF
+    enum class ExportType {
+        PROJECT,
+        USFM,
+        PDF
     }
 
     /**

@@ -150,8 +150,8 @@ class PrintDialog : DialogFragment() {
         }
         viewModel.exportResult.observe(this) {
             it?.let { result ->
-                when (result.taskName) {
-                    ExportProjects.TaskName.EXPORT_PDF -> {
+                when (result.exportType) {
+                    ExportProjects.ExportType.PDF -> {
                         if (result.success) {
                             val filename = FileUtilities.getUriDisplayName(
                                 requireContext(),

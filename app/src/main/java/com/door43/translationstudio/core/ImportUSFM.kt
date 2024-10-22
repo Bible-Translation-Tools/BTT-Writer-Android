@@ -32,7 +32,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.util.Locale
-import java.util.TreeMap
 import java.util.regex.Pattern
 
 /**
@@ -1651,8 +1650,7 @@ class ImportUSFM {
      */
     private fun parseChunks(markers: List<ChunkMarker>): ParsedChunks {
         val chunks: HashMap<String, List<String>> = hashMapOf()
-        var chapters: List<String> = arrayListOf()
-        var success = false
+        val chapters: List<String>
 
         for (marker in markers) {
             val chapter = marker.chapter
@@ -1677,14 +1675,9 @@ class ImportUSFM {
                 foundChapters.add(chapter)
             }
         }
-        foundChapters.sortWith { lhs, rhs ->
-            // do numeric sort
-            val lhInt = Util.strToInt(lhs, -1)
-            val rhInt = Util.strToInt(rhs, -1)
-            lhInt.compareTo(rhInt)
-        }
+        foundChapters.sortWith(sortNumericallyComparator)
         chapters = foundChapters
-        success = (chapters.isNotEmpty()) || (chunks.size > 0)
+        val success = chapters.isNotEmpty() && chunks.isNotEmpty()
 
         return ParsedChunks(chunks, chapters, success)
     }

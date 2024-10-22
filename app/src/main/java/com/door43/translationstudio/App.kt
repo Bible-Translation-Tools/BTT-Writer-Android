@@ -196,9 +196,8 @@ class App : Application() {
             Logger.w(TAG, "Recovering repository for " + t.id)
             try {
                 val gitDir = File(t.path, ".git")
-                if (backup.backupTargetTranslation(t, true)
-                    && FileUtilities.deleteQuietly(gitDir)
-                ) {
+                val backedUp = backup.backupTargetTranslation(t, true)
+                if (backedUp && FileUtilities.deleteQuietly(gitDir)) {
                     t.commitSync(".", false)
                     Logger.i(TAG, "History repaired for " + t.id)
                     return true
