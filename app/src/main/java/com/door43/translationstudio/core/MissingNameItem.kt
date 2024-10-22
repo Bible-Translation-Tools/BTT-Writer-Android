@@ -32,9 +32,9 @@ class MissingNameItem(
 
         fun generate(jsonObject: JSONObject): MissingNameItem? {
             try {
-                val description = getOpt(jsonObject, "description") as String
-                val invalidName = getOpt(jsonObject, "invalidName") as String
-                val contents = getOpt(jsonObject, "contents") as String
+                val description = getOpt(jsonObject, "description") as? String
+                val invalidName = getOpt(jsonObject, "invalidName") as? String
+                val contents = getOpt(jsonObject, "contents") as? String
                 return MissingNameItem(description, invalidName, contents)
             } catch (e: Exception) {
                 e.printStackTrace()

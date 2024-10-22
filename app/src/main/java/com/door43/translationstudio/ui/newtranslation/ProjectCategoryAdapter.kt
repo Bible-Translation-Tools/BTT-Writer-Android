@@ -53,9 +53,11 @@ class ProjectCategoryAdapter : BaseAdapter() {
             holder = convertView.tag as ViewHolder
         }
 
+        val item = getItem(position)
+
         // render view
-        holder.binding.projectName.text = getItem(position).name
-        if (getItem(position).entryType == CategoryEntry.Type.PROJECT) {
+        holder.binding.projectName.text = item.name
+        if (item.entryType == CategoryEntry.Type.PROJECT) {
             holder.binding.moreIcon.visibility = View.GONE
         } else {
             holder.binding.moreIcon.visibility = View.VISIBLE

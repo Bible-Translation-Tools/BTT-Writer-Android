@@ -68,7 +68,7 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
 
         if (findViewById<View?>(R.id.fragment_container) != null) {
             if (savedInstanceState != null) {
-                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as Searchable
+                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as? Searchable
             } else {
                 setActivityStateTo(ImportState.NeedLanguage)
             }
@@ -163,7 +163,8 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
                 message = String.format(format, description)
             }
 
-            AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+            statusDialog?.dismiss()
+            statusDialog = AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                 .setTitle(R.string.title_activity_import_usfm_language)
                 .setMessage(message)
                 .setPositiveButton(R.string.label_continue) { _, _ ->
@@ -178,6 +179,7 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
                 }
                 .setNegativeButton(R.string.menu_cancel) { _, _ -> usfmPromptForNextName() }
                 .setCancelable(true)
+                .setOnCancelListener { usfmPromptForNextName() }
                 .show()
         }
     }
@@ -214,40 +216,44 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
                 val language = languageTitle
                 val message = "$language\n$results"
 
-                val mStatusDialog =
+                val dialogBuilder =
                     AlertDialog.Builder(this@ImportUsfmActivity, R.style.AppTheme_Dialog)
 
-                mStatusDialog.setTitle(if (processSuccess) R.string.title_processing_usfm_summary else R.string.title_import_usfm_error)
+                dialogBuilder.setTitle(if (processSuccess) R.string.title_processing_usfm_summary else R.string.title_import_usfm_error)
                     .setMessage(message)
                     .setNegativeButton(R.string.menu_cancel) { _, _ -> usfmImportDone(true) }
+                    .setCancelable(true)
+                    .setOnCancelListener { usfmImportDone(true) }
 
                 if (processSuccess) { // only show continue if successful processing
                     mergeConflict = checkForMergeConflict()
 
                     if (mergeConflict) { // if merge conflict change the buttons and text
-                        mStatusDialog.setTitle(R.string.merge_conflict_title)
+                        dialogBuilder.setTitle(R.string.merge_conflict_title)
                         val warning = resources.getString(
                             R.string.import_merge_conflict_project_name,
                             conflictingTargetTranslation?.id
                         )
-                        mStatusDialog.setMessage("$message\n$warning")
+                        dialogBuilder.setMessage("$message\n$warning")
 
-                        mStatusDialog.setPositiveButton(R.string.merge_projects_label) { _, _ ->
+                        dialogBuilder.setPositiveButton(R.string.merge_projects_label) { _, _ ->
                             doUsfmImport(false)
                         }
-                        mStatusDialog.setNeutralButton(R.string.title_cancel) { _, _ ->
+                        dialogBuilder.setNeutralButton(R.string.title_cancel) { _, _ ->
                             usfmImportDone(true)
                         }
-                        mStatusDialog.setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
+                        dialogBuilder.setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
                             doUsfmImport(true)
                         }
                     } else { // no merge conflict
-                        mStatusDialog.setPositiveButton(R.string.label_continue) { _, _ ->
+                        dialogBuilder.setPositiveButton(R.string.label_continue) { _, _ ->
                             doUsfmImport(false)
                         }
                     }
                 }
-                mStatusDialog.show()
+
+                statusDialog?.dismiss()
+                statusDialog = dialogBuilder.show()
             }
         }
     }
@@ -304,7 +310,8 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
 
         currentState = ImportState.ShowingImportResults
 
-        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+        statusDialog?.dismiss()
+        statusDialog = AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             .setTitle(if (finishedSuccess) R.string.title_import_usfm_results else R.string.title_import_usfm_error)
             .setMessage(if (finishedSuccess) R.string.import_usfm_success else R.string.import_usfm_failed)
             .setPositiveButton(R.string.label_continue) { _, _ -> usfmImportDone(false) }
@@ -517,9 +524,7 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
     public override fun onSaveInstanceState(outState: Bundle) {
         shuttingDown = true
 
-        if (statusDialog != null) {
-            statusDialog!!.dismiss()
-        }
+        statusDialog?.dismiss()
         statusDialog = null
 
         val currentState = this.currentState //capture state before it is changed
