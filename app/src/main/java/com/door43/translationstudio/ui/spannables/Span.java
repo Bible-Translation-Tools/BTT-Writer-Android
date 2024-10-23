@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.spannables;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -19,6 +20,8 @@ public abstract class Span {
     private Boolean mClickable = true;
     private OnClickListener mClickListener;
     private Bundle extras;
+
+    protected Context context;
 
     /**
      * Creates a new empty span.
@@ -137,7 +140,8 @@ public abstract class Span {
      * Returns the span as a CharSequence
      * @return
      */
-    public CharSequence toCharSequence() {
+    public CharSequence toCharSequence(Context context) {
+        this.context = context;
         return render();
     }
 

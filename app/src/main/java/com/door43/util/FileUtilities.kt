@@ -5,7 +5,6 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
 import org.unfoldingword.tools.logger.Logger
-import java.io.BufferedReader
 import java.io.Closeable
 import java.io.File
 import java.io.FileFilter
@@ -14,9 +13,7 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.io.OutputStream
-import kotlin.io.path.Path
 
 /**
  * This class provides some utility methods for handling files
@@ -31,13 +28,7 @@ object FileUtilities {
     @JvmStatic
     @Throws(IOException::class)
     fun readStreamToString(stream: InputStream): String {
-        val reader = BufferedReader(InputStreamReader(stream))
-        val sb = StringBuilder()
-        var line: String?
-        while ((reader.readLine().also { line = it }) != null) {
-            sb.append(line).append("\n")
-        }
-        return sb.toString()
+        return stream.bufferedReader().use { it.readText() }
     }
 
     /**

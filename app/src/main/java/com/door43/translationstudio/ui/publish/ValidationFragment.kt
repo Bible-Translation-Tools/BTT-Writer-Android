@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.door43.translationstudio.core.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListBinding
 import com.door43.translationstudio.ui.viewmodels.ValidationViewModel
@@ -21,8 +22,10 @@ import javax.inject.Inject
 class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListener {
     @Inject
     lateinit var typography: Typography
+    @Inject
+    lateinit var renderingProvider: RenderingProvider
 
-    private val adapter by lazy { ValidationAdapter(typography) }
+    private val adapter by lazy { ValidationAdapter(typography, renderingProvider) }
 
     private var _binding: FragmentPublishValidationListBinding? = null
     private val binding get() = _binding!!

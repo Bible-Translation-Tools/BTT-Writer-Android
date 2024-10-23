@@ -163,15 +163,6 @@ class App : Application() {
                     >= Configuration.SCREENLAYOUT_SIZE_LARGE)
 
         /**
-         * Returns the main application context
-         * @return
-         */
-        @JvmStatic
-        fun context(): App {
-            return instance
-        }
-
-        /**
          * Returns the unique device id for this device
          * @return
          */

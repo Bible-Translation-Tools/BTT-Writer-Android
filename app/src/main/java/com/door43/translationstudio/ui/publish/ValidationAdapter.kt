@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.RenderingProvider
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListItemBinding
@@ -18,7 +19,8 @@ import com.door43.widget.ViewUtil
  * Created by joel on 9/20/2015.
  */
 class ValidationAdapter(
-    private val typography: Typography
+    private val typography: Typography,
+    private val renderingProvider: RenderingProvider
 ) : RecyclerView.Adapter<ValidationAdapter.ViewHolder>() {
 
     private val validations = arrayListOf<ValidationItem>()
@@ -102,7 +104,13 @@ class ValidationAdapter(
                     val renderingGroup = RenderingGroup()
                     val format = item.bodyFormat
                     if (Clickables.isClickableFormat(format)) {
-                        Clickables.setupRenderingGroup(format, renderingGroup, null, null, true)
+                        renderingProvider.setupRenderingGroup(
+                            format,
+                            renderingGroup,
+                            null,
+                            null,
+                            true
+                        )
                     } else {
                         renderingGroup.addEngine(DefaultRenderer(null))
                     }

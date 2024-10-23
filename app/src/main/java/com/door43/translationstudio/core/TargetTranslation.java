@@ -33,7 +33,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -642,13 +641,19 @@ public class TargetTranslation {
         if(frameFile.exists()) {
             try {
                 String body = FileUtilities.readFileToString(frameFile);
-                return new FrameTranslation(frameId, chapterId, body, format, isFrameFinished(chapterId + "-" + frameId));
+                return RenderingProvider.Companion.getFrameTranslation(
+                        frameId,
+                        chapterId,
+                        body,
+                        format,
+                        isFrameFinished(chapterId + "-" + frameId)
+                );
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         // give empty translation
-        return new FrameTranslation(frameId, chapterId, "", format, false);
+        return RenderingProvider.Companion.getFrameTranslation(frameId, chapterId, "", format, false);
     }
 
     /**

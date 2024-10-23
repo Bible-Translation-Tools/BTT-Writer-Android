@@ -10,7 +10,7 @@ public class ReadModeFragment extends ViewModeFragment {
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ReadModeAdapter(typography);
+        return new ReadModeAdapter(typography, renderingProvider);
     }
 
     /***

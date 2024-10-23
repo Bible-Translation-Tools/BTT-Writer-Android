@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.Frame;
+import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
@@ -50,8 +51,9 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     private static final int BOTTOM_ELEVATION = 2;
     private static final int TOP_ELEVATION = 3;
 
-    public ChunkModeAdapter(Typography typography) {
+    public ChunkModeAdapter(Typography typography, RenderingProvider renderingProvider) {
         this.typography = typography;
+        this.renderingProvider = renderingProvider;
     }
 
     @Override
@@ -503,7 +505,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                 public void onLongClick(View view, Span span, int start, int end) {
                 }
             };
-            ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(
+            ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
                     format,
                     renderingGroup,
                     null,

@@ -24,6 +24,7 @@ import org.unfoldingword.tools.logger.Logger;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.ContainerCache;
+import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.Typography;
@@ -68,6 +69,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Inject
     Typography typography;
+
+    @Inject
+    RenderingProvider renderingProvider;
 
     /**
      * Returns an instance of the adapter

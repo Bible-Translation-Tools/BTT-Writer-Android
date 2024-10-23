@@ -7,12 +7,12 @@ import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.RenderingProvider
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentDraftListItemBinding
 import com.door43.translationstudio.rendering.Clickables
-import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.ui.spannables.NoteSpan
 import com.door43.translationstudio.ui.spannables.Span
@@ -25,7 +25,10 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 /**
  * Created by blm on 1/10/2016.
  */
-class DraftAdapter(private val typography: Typography) :
+class DraftAdapter(
+    private val typography: Typography,
+    private val renderingProvider: RenderingProvider
+) :
     RecyclerView.Adapter<DraftAdapter.ViewHolder>() {
 
     private var draftTranslation: ResourceContainer? = null
@@ -127,7 +130,7 @@ class DraftAdapter(private val typography: Typography) :
                     override fun onLongClick(view: View, span: Span, start: Int, end: Int) {
                     }
                 }
-                val renderer = Clickables.setupRenderingGroup(
+                val renderer = renderingProvider.setupRenderingGroup(
                     bodyFormat,
                     sourceRendering,
                     null,
@@ -143,7 +146,7 @@ class DraftAdapter(private val typography: Typography) :
                 holder.binding.sourceTranslationHeading.visibility =
                     if (heading.isNotEmpty()) View.VISIBLE else View.GONE
             } else {
-                sourceRendering.addEngine(DefaultRenderer())
+                sourceRendering.addEngine(renderingProvider.createDefaultRenderer())
             }
             sourceRendering.init(chapterBody)
             renderedDraftBody[position] = sourceRendering.start()

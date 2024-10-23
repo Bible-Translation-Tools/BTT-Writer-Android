@@ -18,13 +18,12 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
-
-import org.unfoldingword.door43client.models.Translation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +43,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     protected int layoutBuildNumber = 0;
     protected Context context;
     protected Typography typography;
+    protected RenderingProvider renderingProvider;
 
     protected List<ListItem> items = new ArrayList<>();
     protected List<ListItem> filteredItems = new ArrayList<>();

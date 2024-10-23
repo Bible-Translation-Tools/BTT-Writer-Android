@@ -36,9 +36,9 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.FileHistory;
-import com.door43.translationstudio.core.Frame;
 import com.door43.translationstudio.core.FrameTranslation;
 import com.door43.translationstudio.core.MergeConflictsHandler;
+import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Translator;
@@ -103,15 +103,18 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     private boolean resourcesOpened;
 
     private OnRenderHelpsListener renderHelpsListener = null;
+    private RenderingProvider renderingProvider;
 
     public ReviewModeAdapter(
             boolean openResources,
             boolean enableMergeConflictsFilter,
-            Typography typography
+            Typography typography,
+            RenderingProvider renderingProvider
     ) {
         resourcesOpened = openResources;
         mergeConflictFilterOn = enableMergeConflictsFilter;
         this.typography = typography;
+        this.renderingProvider = renderingProvider;
     }
 
     @Override
@@ -1320,7 +1323,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         Matcher matcher;
         int lowVerse = -1;
         int highVerse = 999999999;
-        int[] range = Frame.getVerseRange(item.getTargetText(), item.getTargetTranslationFormat());
+        int[] range = RenderingProvider.Companion.getVerseRange(item.getTargetText(), item.getTargetTranslationFormat());
         if (range.length > 0) {
             lowVerse = range[0];
             highVerse = lowVerse;
@@ -1346,7 +1349,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         } else {
             matcher = VERSE_MARKER.matcher(item.getTargetText());
         }
-        int[] sourceVerseRange = Frame.getVerseRange(item.getSourceText(), item.getSourceTranslationFormat());
+        int[] sourceVerseRange = RenderingProvider.Companion.getVerseRange(item.getSourceText(), item.getSourceTranslationFormat());
         if (sourceVerseRange.length > 0) {
             int min = sourceVerseRange[0];
             int max = min;
@@ -1539,12 +1542,12 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     // insert the verse at the offset
                                     text = TextUtils.concat(
                                             text.subSequence(0, offset),
-                                            pin.toCharSequence(),
+                                            pin.toCharSequence(renderingProvider.getContext()),
                                             text.subSequence(offset, text.length())
                                     );
                                 } else {
                                     // place the verse back at the beginning
-                                    text = TextUtils.concat(pin.toCharSequence(), text);
+                                    text = TextUtils.concat(pin.toCharSequence(renderingProvider.getContext()), text);
                                 }
 
                                 SpannableString noHighlightText = resetHighlightColor(text);
@@ -1562,7 +1565,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                 if (!hasEntered) {
                                     // place the verse back at the beginning
                                     CharSequence text = editText.getText();
-                                    text = TextUtils.concat(pin.toCharSequence(), text);
+                                    text = TextUtils.concat(pin.toCharSequence(renderingProvider.getContext()), text);
                                     item.renderedTargetText = text;
                                     editText.setText(text);
                                     String translation =
@@ -1609,16 +1612,17 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 }
             };
 
-            ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(
+            ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
                     format,
                     renderingGroup,
                     verseClickListener,
                     noteClickListener,
                     true
             );
+
             renderer.setLinebreaksEnabled(true);
             renderer.setPopulateVerseMarkers(
-                Frame.getVerseRange(item.getSourceText(),
+                RenderingProvider.Companion.getVerseRange(item.getSourceText(),
                 item.getSourceTranslationFormat())
             );
         } else {
@@ -1833,7 +1837,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 }
             };
 
-            Clickables.setupRenderingGroup(format, renderingGroup, null, noteClickListener, false);
+            renderingProvider.setupRenderingGroup(
+                    format,
+                    renderingGroup,
+                    null,
+                    noteClickListener,
+                    false
+            );
+
             if (editable) {
                 if (!item.isComplete()) {
                     renderingGroup.setVersesEnabled(false);
@@ -2328,7 +2339,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 public void onLongClick(View view, Span span, int start, int end) {
                 }
             };
-            Clickables.setupRenderingGroup(
+            renderingProvider.setupRenderingGroup(
                     item.getSourceTranslationFormat(),
                     renderingGroup,
                     null,

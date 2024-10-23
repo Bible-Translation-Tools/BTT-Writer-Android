@@ -1,7 +1,7 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -45,15 +45,20 @@ public class USFMRenderer extends ClickableRenderingEngine {
     /**
      * Creates a new USFM rendering engine without any listeners
      */
-    public USFMRenderer() {
-
+    public USFMRenderer(Context context) {
+        this.context = context;
     }
 
     /**
      * Creates a new USFM rendering engine with some custom click listeners
      * @param verseListener
      */
-    public USFMRenderer(Span.OnClickListener verseListener, Span.OnClickListener noteListener) {
+    public USFMRenderer(
+            Context context,
+            Span.OnClickListener verseListener,
+            Span.OnClickListener noteListener
+    ) {
+        this.context = context;
         mVerseListener = verseListener;
         mNoteListener = noteListener;
     }
@@ -372,7 +377,11 @@ public class USFMRenderer extends ClickableRenderingEngine {
                     boolean foundSearch = noteText.toLowerCase().contains(mSearch);
                     note.setHighlight(foundSearch);
                 }
-                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), note.toCharSequence());
+                out = TextUtils.concat(
+                        out,
+                        in.subSequence(lastIndex, matcher.start()),
+                        note.toCharSequence(context)
+                );
             } else {
                 // failed to parse the note
                 out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
@@ -394,11 +403,6 @@ public class USFMRenderer extends ClickableRenderingEngine {
         CharSequence out = "";
 
         CharSequence insert = "";
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.JELLY_BEAN) {
-            insert = "\n"; // this is a hack to get around bug in JellyBean in rendering multiple
-            // verses on a long line.  This hack messes up the paragraph formatting,
-            // but at least JellyBean becomes usable and doesn't crash.
-        }
 
         Pattern pattern = Pattern.compile(USFMVerseSpan.PATTERN);
         Matcher matcher = pattern.matcher(in);
@@ -451,16 +455,31 @@ public class USFMRenderer extends ClickableRenderingEngine {
                         }
                         if(!invalidVerse) {
                             verse.setOnClickListener(mVerseListener);
-                            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), insert, verse.toCharSequence());
+                            out = TextUtils.concat(
+                                    out,
+                                    in.subSequence(lastIndex, matcher.start()),
+                                    insert,
+                                    verse.toCharSequence(context)
+                            );
                         } else {
                             // for now we go ahead and render invalid verse
                             verse.setOnClickListener(mVerseListener);
-                            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), insert, verse.toCharSequence());
+                            out = TextUtils.concat(
+                                    out,
+                                    in.subSequence(lastIndex, matcher.start()),
+                                    insert,
+                                    verse.toCharSequence(context)
+                            );
                         }
                     } else {
                         // for now we go ahead and render duplicate verse
                         verse.setOnClickListener(mVerseListener);
-                        out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), insert, verse.toCharSequence());
+                        out = TextUtils.concat(
+                                out,
+                                in.subSequence(lastIndex, matcher.start()),
+                                insert,
+                                verse.toCharSequence(context)
+                        );
                     }
                 } else {
                     // failed to parse the verse
@@ -486,7 +505,7 @@ public class USFMRenderer extends ClickableRenderingEngine {
                         verse = new USFMVersePinSpan(mExpectedVerseRange[0]);
                     }
                     verse.setOnClickListener(mVerseListener);
-                    out = TextUtils.concat(verse.toCharSequence(), out);
+                    out = TextUtils.concat(verse.toCharSequence(context), out);
                     mAddedMissingVerse = true;
                 }
             } else if (mExpectedVerseRange.length == 2) {
@@ -500,7 +519,7 @@ public class USFMRenderer extends ClickableRenderingEngine {
                             verse = new USFMVersePinSpan(i);
                         }
                         verse.setOnClickListener(mVerseListener);
-                        out = TextUtils.concat(verse.toCharSequence(), out);
+                        out = TextUtils.concat(verse.toCharSequence(context), out);
                         mAddedMissingVerse = true;
                     }
                 }
@@ -547,7 +566,11 @@ public class USFMRenderer extends ClickableRenderingEngine {
 
             if (mRenderParagraphs) {
                 USFMParagraphSpan span = new USFMParagraphSpan();
-                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), span.toCharSequence());
+                out = TextUtils.concat(
+                        out,
+                        in.subSequence(lastIndex, matcher.start()),
+                        span.toCharSequence(context)
+                );
             } else {
                 // just display \p marker
                 out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));

@@ -4,7 +4,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 
 /**
@@ -25,7 +24,7 @@ public class TermSpan extends Span {
         if(mSpannable == null) {
             mSpannable = super.render();
             // apply custom styles
-            mSpannable.setSpan(new ForegroundColorSpan(App.context().getResources().getColor(R.color.accent)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.accent)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         return mSpannable;
     }

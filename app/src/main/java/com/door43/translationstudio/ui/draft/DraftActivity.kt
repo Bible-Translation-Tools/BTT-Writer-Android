@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.ActivityDraftPreviewBinding
 import com.door43.translationstudio.ui.BaseActivity
@@ -21,8 +22,9 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class DraftActivity : BaseActivity() {
     @Inject lateinit var typography: Typography
+    @Inject lateinit var renderingProvider: RenderingProvider
 
-    private val adapter by lazy { DraftAdapter(typography) }
+    private val adapter by lazy { DraftAdapter(typography, renderingProvider) }
     private var sourceContainer: ResourceContainer? = null
 
     private lateinit var binding: ActivityDraftPreviewBinding

@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.databinding.FragmentReadListItemBinding;
 import com.google.android.material.tabs.TabLayout;
 import androidx.appcompat.app.AlertDialog;
@@ -30,7 +31,6 @@ import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.rendering.ClickableRenderingEngine;
 import com.door43.translationstudio.rendering.Clickables;
-import com.door43.translationstudio.rendering.DefaultRenderer;
 import com.door43.translationstudio.rendering.RenderingGroup;
 import com.door43.translationstudio.ui.spannables.NoteSpan;
 import com.door43.translationstudio.ui.spannables.Span;
@@ -56,8 +56,9 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      */
     private List<ListItem> chunks = new ArrayList<>();
 
-    public ReadModeAdapter(Typography typography) {
+    public ReadModeAdapter(Typography typography, RenderingProvider renderingProvider) {
         this.typography = typography;
+        this.renderingProvider = renderingProvider;
     }
 
     @Override
@@ -243,8 +244,13 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                     public void onLongClick(View view, Span span, int start, int end) {
                     }
                 };
-                ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(bodyFormat, sourceRendering, null, noteClickListener, true);
-
+                ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
+                        bodyFormat,
+                        sourceRendering,
+                        null,
+                        noteClickListener,
+                        true
+                );
                 // In read mode (and only in read mode), pull leading major section headings out for
                 // display above chapter headings.
                 renderer.setSuppressLeadingMajorSectionHeadings(true);
@@ -253,7 +259,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 holder.binding.sourceTranslationHeading.setVisibility(
                         heading.length() > 0 ? View.VISIBLE : View.GONE);
             } else {
-                sourceRendering.addEngine(new DefaultRenderer());
+                sourceRendering.addEngine(renderingProvider.createDefaultRenderer());
             }
             sourceRendering.init(sourceChapterBody);
             renderedSourceBody[position] = sourceRendering.start();
@@ -271,7 +277,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             RenderingGroup targetRendering = new RenderingGroup();
             if(Clickables.isClickableFormat(bodyFormat)) {
                 // TODO: add click listeners
-                ClickableRenderingEngine renderer = Clickables.setupRenderingGroup(
+                ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
                         bodyFormat,
                         targetRendering,
                         null,
@@ -280,7 +286,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 );
                 renderer.setVersesEnabled(true);
             } else {
-                targetRendering.addEngine(new DefaultRenderer());
+                targetRendering.addEngine(renderingProvider.createDefaultRenderer());
             }
             targetRendering.init(chapterBody);
             renderedTargetBody[position] = targetRendering.start();
