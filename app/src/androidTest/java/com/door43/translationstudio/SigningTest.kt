@@ -1,124 +1,146 @@
-package com.door43.translationstudio;
+package com.door43.translationstudio
 
-import android.content.Context;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.door43.util.signing.Crypto;
-import com.door43.util.signing.SigningEntity;
-import com.door43.util.signing.Status;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.InputStream;
-import java.security.PublicKey;
+import android.content.Context
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.data.AssetsProvider
+import com.door43.di.Development
+import com.door43.util.signing.Crypto
+import com.door43.util.signing.SigningEntity
+import com.door43.util.signing.Status
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.security.PublicKey
+import javax.inject.Inject
 
 /**
  * Created by joel on 2/25/2015.
  */
-public class SigningTest {
-    private PublicKey mCA;
-    private SigningEntity mVerifiedSE;
-    private byte[] mData;
-    private SigningEntity mExpiredSE;
-    private SigningEntity mErrorSE;
-    private SigningEntity mFailedSE;
-    private Context mContext;
+@HiltAndroidTest
+@RunWith(AndroidJUnit4::class)
+class SigningTest {
+    private var ca: PublicKey? = null
+    private lateinit var data: ByteArray
+    private lateinit var verifiedSE: SigningEntity
+    private lateinit var expiredSE: SigningEntity
+    private lateinit var errorSE: SigningEntity
+    private lateinit var failedSE: SigningEntity
+
+    @get:Rule(order = 0)
+    var hiltRule = HiltAndroidRule(this)
+
+    @Inject
+    @ApplicationContext
+    lateinit var appContext: Context
+
+    @Inject
+    @Development
+    lateinit var assetsProvider: AssetsProvider
 
     @Before
-    protected void setUp() throws Exception {
+    @Throws(Exception::class)
+    fun setUp() {
+        hiltRule.inject()
+        if (ca == null) {
+            val caPubKey = assetsProvider.open("certs/ca.pub")
+            ca = Crypto.loadPublicECDSAKey(caPubKey)
 
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        if(mCA == null) {
-            InputStream caPubKey = mContext.getAssets().open("certs/ca.pub");
-            mCA = Crypto.loadPublicECDSAKey(caPubKey);
+            val verifiedStream = assetsProvider.open("signing/si/verified.pem")
+            verifiedSE = SigningEntity.generateFromIdentity(ca, verifiedStream)
 
-            InputStream verifiedStream = mContext.getAssets().open("signing/si/verified.pem");
-            mVerifiedSE = SigningEntity.generateFromIdentity(mCA, verifiedStream);
+            val failedStream = assetsProvider.open("signing/si/failed.pem")
+            failedSE = SigningEntity.generateFromIdentity(ca, failedStream)
 
-            InputStream failedStream = mContext.getAssets().open("signing/si/failed.pem");
-            mFailedSE = SigningEntity.generateFromIdentity(mCA, failedStream);
+            val errorStream = assetsProvider.open("signing/si/error.pem")
+            errorSE = SigningEntity.generateFromIdentity(ca, errorStream)
 
-            InputStream errorStream = mContext.getAssets().open("signing/si/error.pem");
-            mErrorSE = SigningEntity.generateFromIdentity(mCA, errorStream);
+            val expiredStream = assetsProvider.open("signing/si/expired.pem")
+            expiredSE = SigningEntity.generateFromIdentity(ca, expiredStream)
 
-            InputStream expiredStream = mContext.getAssets().open("signing/si/expired.pem");
-            mExpiredSE = SigningEntity.generateFromIdentity(mCA, expiredStream);
-
-            InputStream dataStream = mContext.getAssets().open("signing/data.json");
-            mData = Crypto.readInputStreamToBytes(dataStream);
+            val dataStream = assetsProvider.open("signing/data.json")
+            data = Crypto.readInputStreamToBytes(dataStream)
         }
     }
 
     @Test
-    public void testLoadPublicECDSAKey() throws Exception {
-        Assert.assertNotNull(mCA);
+    @Throws(Exception::class)
+    fun testLoadPublicECDSAKey() {
+        Assert.assertNotNull(ca)
     }
 
     @Test
-    public void testLoadSigningIdentity() throws Exception {
-        Assert.assertNotNull(mVerifiedSE);
+    @Throws(Exception::class)
+    fun testLoadSigningIdentity() {
+        Assert.assertNotNull(verifiedSE)
     }
 
     @Test
-    public void testVerifySigningEntity() throws Exception {
-        Assert.assertEquals(Status.VERIFIED, mVerifiedSE.status());
-        Assert.assertEquals(Status.FAILED, mFailedSE.status());
-//        assertEquals(Status.EXPIRED, mExpiredSE.status());
+    @Throws(Exception::class)
+    fun testVerifySigningEntity() {
+        Assert.assertEquals(Status.VERIFIED, verifiedSE.status())
+        Assert.assertEquals(Status.FAILED, failedSE.status())
+        //        assertEquals(Status.EXPIRED, mExpiredSE.status());
         // TODO: we need to get an expired SI for testing.
-        Assert.assertEquals(Status.ERROR, mErrorSE.status());
+        Assert.assertEquals(Status.ERROR, errorSE.status())
     }
 
     @Test
-    public void testVerifyValidSESignatures() throws Exception {
+    @Throws(Exception::class)
+    fun testVerifyValidSESignatures() {
         // TODO: this test is broken
 //        Status verified = mVerifiedSE.verifyContent(Util.loadSig("tests/signing/sig/verified.sig"), mData);
 //        assertEquals(Status.VERIFIED, verified);
 
-        Status failed = mVerifiedSE.verifyContent(Util.loadSig(mContext, "signing/sig/failed.sig"), mData);
-        Assert.assertEquals(Status.FAILED, failed);
+        val failed =
+            verifiedSE.verifyContent(Util.loadSig(assetsProvider, "signing/sig/failed.sig"), data)
+        Assert.assertEquals(Status.FAILED, failed)
 
-        Status error = mVerifiedSE.verifyContent(Util.loadSig(mContext, "signing/sig/error.sig"), mData);
-        Assert.assertEquals(Status.ERROR, error);
+        val error =
+            verifiedSE.verifyContent(Util.loadSig(assetsProvider, "signing/sig/error.sig"), data)
+        Assert.assertEquals(Status.ERROR, error)
 
         // NOTE: signatures don't expire themselves
     }
 
-//    public void testVerifyExpiredSESignatures() throws Exception {
-//        Status verified = mExpiredSE.verifyContent(Util.loadSig("tests/signing/sig/verified.sig"), mData);
-//        assertEquals(Status.EXPIRED, verified);
-//
-//        Status failed = mExpiredSE.verifyContent(Util.loadSig("tests/signing/sig/failed.sig"), mData);
-//        assertEquals(Status.FAILED, failed);
-//
-//        Status error = mExpiredSE.verifyContent(Util.loadSig("tests/signing/sig/error.sig"), mData);
-//        assertEquals(Status.ERROR, error);
-//    }
-
+    //    public void testVerifyExpiredSESignatures() throws Exception {
+    //        Status verified = mExpiredSE.verifyContent(Util.loadSig("tests/signing/sig/verified.sig"), mData);
+    //        assertEquals(Status.EXPIRED, verified);
+    //
+    //        Status failed = mExpiredSE.verifyContent(Util.loadSig("tests/signing/sig/failed.sig"), mData);
+    //        assertEquals(Status.FAILED, failed);
+    //
+    //        Status error = mExpiredSE.verifyContent(Util.loadSig("tests/signing/sig/error.sig"), mData);
+    //        assertEquals(Status.ERROR, error);
+    //    }
     @Test
-    public void testVerifyFailedSESignatures() throws Exception {
-        Status verified = mFailedSE.verifyContent(Util.loadSig(mContext, "signing/sig/verified.sig"), mData);
-        Assert.assertEquals(Status.FAILED, verified);
+    @Throws(Exception::class)
+    fun testVerifyFailedSESignatures() {
+        val verified = failedSE.verifyContent(Util.loadSig(assetsProvider, "signing/sig/verified.sig"), data)
+        Assert.assertEquals(Status.FAILED, verified)
 
-        Status failed = mFailedSE.verifyContent(Util.loadSig(mContext, "signing/sig/failed.sig"), mData);
-        Assert.assertEquals(Status.FAILED, failed);
+        val failed = failedSE.verifyContent(Util.loadSig(assetsProvider, "signing/sig/failed.sig"), data)
+        Assert.assertEquals(Status.FAILED, failed)
 
-        Status error = mFailedSE.verifyContent(Util.loadSig(mContext, "signing/sig/error.sig"), mData);
-        Assert.assertEquals(Status.FAILED, error);
+        val error = failedSE.verifyContent(Util.loadSig(assetsProvider, "signing/sig/error.sig"), data)
+        Assert.assertEquals(Status.FAILED, error)
     }
 
     @Test
-    public void testVerifyErrorSESignatures() throws Exception {
+    @Throws(Exception::class)
+    fun testVerifyErrorSESignatures() {
         // TODO: this test is broken
 //        Status verified = mErrorSE.verifyContent(Util.loadSig("tests/signing/sig/verified.sig"), mData);
 //        assertEquals(Status.ERROR, verified);
 
-        Status failed = mErrorSE.verifyContent(Util.loadSig(mContext, "signing/sig/failed.sig"), mData);
-        Assert.assertEquals(Status.FAILED, failed);
+        val failed = errorSE.verifyContent(Util.loadSig(assetsProvider, "signing/sig/failed.sig"), data)
+        Assert.assertEquals(Status.FAILED, failed)
 
-        Status error = mErrorSE.verifyContent(Util.loadSig(mContext, "signing/sig/error.sig"), mData);
-        Assert.assertEquals(Status.ERROR, error);
+        val error = errorSE.verifyContent(Util.loadSig(assetsProvider, "signing/sig/error.sig"), data)
+        Assert.assertEquals(Status.ERROR, error)
     }
 }

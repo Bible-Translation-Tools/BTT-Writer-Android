@@ -2,11 +2,11 @@ package com.door43.translationstudio;
 
 import android.content.Context;
 
+import com.door43.data.AssetsProvider;
 import com.door43.util.FileUtilities;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,8 +25,8 @@ public class Util {
      * @return
      * @throws Exception
      */
-    public static String loadSig(Context context, String sig) throws Exception {
-        InputStream sigStream = context.getAssets().open(sig);
+    public static String loadSig(AssetsProvider assetProvider, String sig) throws Exception {
+        InputStream sigStream = assetProvider.open(sig);
         String sigJson = FileUtilities.readStreamToString(sigStream);
         JSONArray json = new JSONArray(sigJson);
         JSONObject sigObj = json.getJSONObject(0);
