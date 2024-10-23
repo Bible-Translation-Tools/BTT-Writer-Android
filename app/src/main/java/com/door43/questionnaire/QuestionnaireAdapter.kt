@@ -54,7 +54,6 @@ class QuestionnaireAdapter : RecyclerView.Adapter<QuestionnaireAdapter.ViewHolde
                 )
                 vh = BooleanViewHolder(booleanBinding)
             }
-
             else -> {
                 val stringBinding = FragmentQuestionnaireTextQuestionBinding.inflate(
                     LayoutInflater.from(parent.context), parent, false
@@ -245,12 +244,15 @@ class QuestionnaireAdapter : RecyclerView.Adapter<QuestionnaireAdapter.ViewHolde
      * @return
      */
     private fun isQuestionEnabled(question: Question?): Boolean {
-        if (question != null) {
-            return (question.dependsOn <= 0
-                    || (isAnswerAffirmative(page!!.getQuestionById(question.dependsOn))
-                    && isQuestionEnabled(page!!.getQuestionById(question.dependsOn))))
-        }
-        return false
+        return if (question != null) {
+            // Workaround for questions with cycled dependency
+            if (question.tdId == question.dependsOn) return true
+            val dependsOnAnswer = question.dependsOn > 0
+            if (dependsOnAnswer) {
+                val parentQuestion = page!!.getQuestionById(question.dependsOn)
+                !isAnswerAffirmative(parentQuestion) || isQuestionEnabled(parentQuestion)
+            } else true
+        } else false
     }
 
     /**

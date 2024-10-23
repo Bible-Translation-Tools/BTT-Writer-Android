@@ -274,7 +274,7 @@ public class MergeConflictsParseTest {
         }
     }
 
-    private void doRenderMergeConflicts( String testId) throws IOException {
+    private void doRenderMergeConflicts(String testId) throws IOException {
         for(int i = 0; i < expectedConflictCount; i++) {
             String text = doRenderMergeConflict(testId, i + 1);
             parsedText.add(text);

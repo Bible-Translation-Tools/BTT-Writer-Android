@@ -1,161 +1,191 @@
-package com.door43.translationstudio.ui.newlanguage;
+package com.door43.translationstudio.ui.newlanguage
 
-import android.content.Intent;
+import android.content.Intent
+import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
+import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.assertion.ViewAssertions
+import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.LargeTest
+import com.door43.translationstudio.R
+import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Test
+import org.junit.runner.RunWith
 
-import com.door43.translationstudio.R;
-
-import org.junit.Test;
-
-
-import static androidx.test.espresso.Espresso.onView;
-import static androidx.test.espresso.action.ViewActions.click;
-import static androidx.test.espresso.action.ViewActions.pressBack;
-import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
-import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static androidx.test.espresso.matcher.ViewMatchers.withText;
-
-import androidx.test.filters.LargeTest;
-
+@RunWith(AndroidJUnit4::class)
 @LargeTest
-public class QuestionnaireActivityUiTest extends NewLanguageActivityUiUtils {
+@HiltAndroidTest
+class QuestionnaireActivityUiTest : NewLanguageActivityUiUtils() {
 
     @Test
-    public void fillPageBoolean() throws Exception {
-
+    @Throws(Exception::class)
+    fun fillPageBoolean() {
         //given
-        int pageNum = 0;
-        boolean hideKeyboard = false;
-        boolean requiredOnly = false;
-        boolean valueForBooleans = false;
-        boolean doNext = true;
-        mActivityRule.launchActivity(new Intent());
-        verifyPageLayout(pageCount(), pageNum);
-        fillPage(pageNum, true, false, false, hideKeyboard);
-        verifyPageLayout(pageCount(), pageNum + 1);
+
+        val pageNum = 0
+        val hideKeyboard = false
+        val requiredOnly = false
+        val valueForBooleans = false
+        val doNext = true
+
+        val intent = Intent(appContext, NewTempLanguageActivity::class.java)
+        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+
+        verifyPageLayout(pageCount(), pageNum)
+        fillPage(pageNum, doNext = true, requiredOnly = false, valueForBooleans = false, hideKeyboard)
+        verifyPageLayout(pageCount(), pageNum + 1)
 
         //when
-        fillPage(pageNum + 1, doNext, requiredOnly, valueForBooleans, hideKeyboard);
+        fillPage(pageNum + 1, doNext, requiredOnly, valueForBooleans, hideKeyboard)
 
         //then
-        verifyPageLayout(pageCount(), pageNum + 2);
+        verifyPageLayout(pageCount(), pageNum + 2)
     }
 
 
     @Test
-    public void fillPageNotRequired() throws Exception {
-
+    @Throws(Exception::class)
+    fun fillPageNotRequired() {
         //given
-        int pageNum = 0;
-        boolean hideKeyboard = false;
-        boolean requiredOnly = false;
-        boolean valueForBooleans = false;
-        boolean doNext = true;
-        mActivityRule.launchActivity(new Intent());
-        verifyPageLayout(pageCount(), pageNum);
+
+        val pageNum = 0
+        val hideKeyboard = false
+        val requiredOnly = false
+        val valueForBooleans = false
+        val doNext = true
+
+        val intent = Intent(appContext, NewTempLanguageActivity::class.java)
+        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+
+        verifyPageLayout(pageCount(), pageNum)
 
         //when
-        fillPage(pageNum, doNext, requiredOnly, valueForBooleans, hideKeyboard);
+        fillPage(pageNum, doNext, requiredOnly, valueForBooleans, hideKeyboard)
 
         //then
-        int pageNumExpected = 1;
-        verifyPageLayout(pageCount(), pageNumExpected);
+        val pageNumExpected = 1
+        verifyPageLayout(pageCount(), pageNumExpected)
     }
 
 
     @Test
-    public void fillAllPagesNotRequired() throws Exception {
-
+    @Throws(Exception::class)
+    fun fillAllPagesNotRequired() {
         //given
-        int pageNum = 0;
-        int fillToPage = pageCount();
-        boolean hideKeyboard = false;
-        boolean requiredOnly = false;
-        boolean valueForBooleans = true;
-        mActivityRule.launchActivity(new Intent());
-        verifyPageLayout(pageCount(), pageNum);
+
+        val pageNum = 0
+        val fillToPage: Int = pageCount()
+        val hideKeyboard = false
+        val requiredOnly = false
+        val valueForBooleans = true
+
+        val intent = Intent(appContext, NewTempLanguageActivity::class.java)
+        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+
+        verifyPageLayout(pageCount(), pageNum)
 
         //when
-        fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false);
+        fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false)
 
         //then
-        verifyPageLayout(pageCount(), fillToPage - 1);
+        verifyPageLayout(pageCount(), fillToPage - 1)
     }
 
     @Test
-    public void fillAllPagesRequiredOnly() throws Exception {
-
+    @Throws(Exception::class)
+    fun fillAllPagesRequiredOnly() {
         //given
-        int pageNum = 0;
-        int fillToPage = pageCount();
-        boolean hideKeyboard = false;
-        boolean requiredOnly = true;
-        boolean valueForBooleans = true;
-        mActivityRule.launchActivity(new Intent());
-        verifyPageLayout(pageCount(), pageNum);
+
+        val pageNum = 0
+        val fillToPage: Int = pageCount()
+        val hideKeyboard = false
+        val requiredOnly = true
+        val valueForBooleans = true
+
+        val intent = Intent(appContext, NewTempLanguageActivity::class.java)
+        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+
+        verifyPageLayout(pageCount(), pageNum)
 
         //when
-        fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false);
+        fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false)
 
         //then
-        verifyPageLayout(pageCount(), fillToPage - 1);
+        verifyPageLayout(pageCount(), fillToPage - 1)
     }
 
     @Test
-    public void requiredAnswerContinue() throws Exception {
-
+    @Throws(Exception::class)
+    fun requiredAnswerContinue() {
         //given
-        int pageNum = 0;
-        mActivityRule.launchActivity(new Intent());
-        verifyPageLayout(pageCount(), pageNum);
+
+        val pageNum = 0
+
+        val intent = Intent(appContext, NewTempLanguageActivity::class.java)
+        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+
+        verifyPageLayout(pageCount(), pageNum)
 
         //when
-        onView(withId(R.id.next_button)).perform(click());
-        thenShouldHaveRequiredAnswerDialog();
-        onView(withText(R.string.dismiss)).perform(click());
+        Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+        thenShouldHaveRequiredAnswerDialog()
+        Espresso.onView(ViewMatchers.withText(R.string.dismiss)).perform(ViewActions.click())
 
         //then
-        verifyPageLayout(pageCount(), pageNum);
+        verifyPageLayout(pageCount(), pageNum)
     }
 
     @Test
-    public void missingAnswerContinue() throws Exception {
-
+    @Throws(Exception::class)
+    fun missingAnswerContinue() {
         //given
-        int pageNum = 0;
-        boolean hideKeyboard = true;
-        mActivityRule.launchActivity(new Intent());
-        verifyPageLayout(pageCount(), pageNum);
+
+        val pageNum = 0
+        val hideKeyboard = true
+
+        val intent = Intent(appContext, NewTempLanguageActivity::class.java)
+        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+
+        verifyPageLayout(pageCount(), pageNum)
 
         //when
-        onView(withId(R.id.next_button)).perform(click());
-        onView(withText(R.string.missing_question_answer)).check(matches(isDisplayed())); // dialog displayed
-        onView(withText(R.string.missing_question_answer)).perform(pressBack()); // dismiss
-        onView(withText(R.string.missing_question_answer)).check(doesNotExist()); // dialog dismissed
+        Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
+        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+            .perform(ViewActions.pressBack()) // dismiss
+        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+            .check(ViewAssertions.doesNotExist()) // dialog dismissed
 
         //then
-        int pageNumExpected = 0;
-        verifyPageLayout(pageCount(), pageNumExpected);
+        val pageNumExpected = 0
+        verifyPageLayout(pageCount(), pageNumExpected)
     }
 
     @Test
-    public void missingAnswerCancel() throws Exception {
-
+    @Throws(Exception::class)
+    fun missingAnswerCancel() {
         //given
-        int pageNum = 0;
-        boolean hideKeyboard = true;
-        mActivityRule.launchActivity(new Intent());
-        verifyPageLayout(pageCount(), pageNum);
+
+        val pageNum = 0
+        val hideKeyboard = true
+
+        val intent = Intent(appContext, NewTempLanguageActivity::class.java)
+        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+
+        verifyPageLayout(pageCount(), pageNum)
 
         //when
-        onView(withId(R.id.next_button)).perform(click());
-        onView(withText(R.string.missing_question_answer)).check(matches(isDisplayed())); // dialog displayed
-        onView(withText(R.string.missing_question_answer)).perform(pressBack()); // dismiss dialog
-        onView(withText(R.string.missing_question_answer)).check(doesNotExist()); // dialog dismissed
+        Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+            .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
+        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+            .perform(ViewActions.pressBack()) // dismiss dialog
+        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+            .check(ViewAssertions.doesNotExist()) // dialog dismissed
 
         //then
-        verifyPageLayout(pageCount(), pageNum);
+        verifyPageLayout(pageCount(), pageNum)
     }
-
 }

@@ -383,9 +383,6 @@ class ImportUsfmActivityUiTest {
      * force page orientation change
      */
     private fun rotateScreen(scenario: ActivityScenario<ImportUsfmActivity>) {
-        //Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        //val orientation = appContext.resources.configuration.orientation
-
         scenario.onActivity {
             if (it.requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
                 it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT

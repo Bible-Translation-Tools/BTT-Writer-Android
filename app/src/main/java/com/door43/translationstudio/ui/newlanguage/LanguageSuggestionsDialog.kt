@@ -22,7 +22,7 @@ class LanguageSuggestionsDialog : DialogFragment() {
     private var targetLanguages: List<TargetLanguage> = arrayListOf()
 
     private var _binding: DialogTargetLanguageSuggestionsBinding? = null
-    private val binding = _binding!!
+    private val binding get() = _binding!!
 
     private val viewModel: NewTempLanguageViewModel by activityViewModels()
 
