@@ -143,4 +143,10 @@ interface IDirectoryProvider {
      */
     @Throws(IOException::class)
     fun writeStringToFile(file: File, contents: String)
+
+    /**
+     * Deletes all files in all directories
+     * Should not be implemented in production code (too dangerous)
+     */
+    fun deleteAll()
 }

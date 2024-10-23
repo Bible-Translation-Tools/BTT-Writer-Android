@@ -1,4 +1,4 @@
-package com.door43.translationstudio
+package com.door43.translationstudio.di
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.door43.data.AssetsProvider

@@ -3,7 +3,6 @@ package com.door43.translationstudio.core;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.door43.translationstudio.App;
 import com.door43.usecases.ParseMergeConflicts;
 
 import org.unfoldingword.tools.taskmanager.ManagedTask;

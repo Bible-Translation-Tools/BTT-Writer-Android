@@ -13,7 +13,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.door43.data.AssetsProvider;
 import com.door43.data.IDirectoryProvider;
-import com.door43.di.Development;
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
 import com.door43.util.FileUtilities;
 
@@ -67,7 +66,6 @@ public class ImportUsfmTest {
     @Inject
     Profile profile;
     @Inject
-    @Development
     AssetsProvider assetsProvider;
 
     private JSONArray expectedBooks;
@@ -94,6 +92,7 @@ public class ImportUsfmTest {
         if (usfm != null) {
             usfm.cleanup();
         }
+        directoryProvider.deleteAll();
     }
 
     @Test

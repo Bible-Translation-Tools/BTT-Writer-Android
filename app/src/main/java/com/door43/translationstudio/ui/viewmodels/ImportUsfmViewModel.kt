@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.di.Production
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ImportUSFM
 import com.door43.translationstudio.core.Profile
@@ -36,7 +35,7 @@ class ImportUsfmViewModel @Inject constructor(
     @Inject lateinit var importProjects: ImportProjects
     @Inject lateinit var translator: Translator
     @Inject lateinit var library: Door43Client
-    @Inject @Production lateinit var assetsProvider: AssetsProvider
+    @Inject lateinit var assetsProvider: AssetsProvider
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

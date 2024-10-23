@@ -16,7 +16,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.di.Development
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities.copyInputStreamToFile
@@ -55,7 +54,6 @@ class ImportUsfmActivityUiTest {
     lateinit var translator: Translator
 
     @Inject
-    @Development
     lateinit var assetsProvider: AssetsProvider
 
     private var testFile: File? = null
@@ -83,6 +81,7 @@ class ImportUsfmActivityUiTest {
             tempDir = null
             testFile = null
         }
+        directoryProvider.deleteAll()
     }
 
     @Test

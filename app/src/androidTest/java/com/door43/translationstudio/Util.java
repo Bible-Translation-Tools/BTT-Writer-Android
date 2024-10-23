@@ -1,28 +1,22 @@
 package com.door43.translationstudio;
 
-import android.content.Context;
-
 import com.door43.data.AssetsProvider;
 import com.door43.util.FileUtilities;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
  * Created by joel on 2/25/2015.
  */
 public class Util {
     /**
-     * Utiltiy to load a signature
+     * Utility to load a signature
+     * @param assetProvider
      * @param sig
-     * @return
+     * @return Signature string from asset
      * @throws Exception
      */
     public static String loadSig(AssetsProvider assetProvider, String sig) throws Exception {
@@ -31,44 +25,5 @@ public class Util {
         JSONArray json = new JSONArray(sigJson);
         JSONObject sigObj = json.getJSONObject(0);
         return sigObj.getString("sig");
-    }
-
-    public static String readStream(InputStream is) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-
-        String line;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append('\n');
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
-    }
-
-    public static void copyStreamToCache(Context context, InputStream is, File output) throws Exception{
-        output.getParentFile().mkdirs();
-        try {
-            FileOutputStream outputStream = new FileOutputStream(output);
-            try {
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = is.read(buf)) > 0) {
-                    outputStream.write(buf, 0, len);
-                }
-            } finally {
-                outputStream.close();
-            }
-        } finally {
-            is.close();
-        }
     }
 }

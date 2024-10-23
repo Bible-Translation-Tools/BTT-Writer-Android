@@ -1,17 +1,19 @@
-package com.door43.translationstudio
+package com.door43.translationstudio.di
 
 import com.door43.data.AssetsProvider
-import com.door43.di.Development
+import com.door43.di.AssetsModule
 import dagger.Module
 import dagger.Provides
-import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.hilt.testing.TestInstallIn
 import javax.inject.Singleton
 
 @Module
-@InstallIn(SingletonComponent::class)
-object TestModule {
-    @Development
+@TestInstallIn(
+    components = [SingletonComponent::class],
+    replaces = [AssetsModule::class]
+)
+class TestAssetsModule {
     @Provides
     @Singleton
     fun provideAssetsProvider(): AssetsProvider {

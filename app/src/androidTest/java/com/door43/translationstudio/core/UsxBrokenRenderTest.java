@@ -5,12 +5,10 @@ import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.door43.data.AssetsProvider;
-import com.door43.di.Development;
 import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
 import com.door43.translationstudio.rendering.RenderingGroup;
 import com.door43.util.FileUtilities;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,7 +35,6 @@ public class UsxBrokenRenderTest {
     public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
 
     @Inject
-    @Development
     AssetsProvider assetsProvider;
     @Inject
     RenderingProvider renderingProvider;
@@ -49,10 +46,6 @@ public class UsxBrokenRenderTest {
     public void setUp() {
         Logger.flush();
         hiltRule.inject();
-    }
-
-    @After
-    public void tearDown() {
     }
 
     @Test

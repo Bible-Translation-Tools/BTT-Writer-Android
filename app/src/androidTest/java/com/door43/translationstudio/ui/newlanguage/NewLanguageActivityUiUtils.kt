@@ -18,7 +18,6 @@ import androidx.test.espresso.matcher.ViewMatchers
 import com.door43.data.IDirectoryProvider
 import com.door43.questionnaire.QuestionnaireActivity
 import com.door43.questionnaire.QuestionnairePager
-import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -29,6 +28,8 @@ import org.hamcrest.Matchers
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.junit.After
+import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
@@ -79,6 +80,11 @@ open class NewLanguageActivityUiUtils {
             pager = QuestionnairePager(q)
             pager?.loadQuestions(questions)
         }
+    }
+
+    @After
+    fun tearDown() {
+        directoryProvider.deleteAll()
     }
 
     /**

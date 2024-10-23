@@ -1,15 +1,12 @@
 package com.door43.di
 
 import android.content.Context
-import com.door43.data.AssetsProvider
-import com.door43.translationstudio.DirectoryProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.ILanguageRequestRepository
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.repositories.PreferenceRepository
 import com.door43.repositories.LanguageRequestRepository
-import com.door43.translationstudio.MainAssetsProvider
+import com.door43.repositories.PreferenceRepository
 import com.door43.translationstudio.core.ArchiveImporter
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
@@ -27,13 +24,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    @Provides
-    @Singleton
-    fun provideDirectoryProvider(
-        @ApplicationContext context: Context
-    ): IDirectoryProvider {
-        return DirectoryProvider(context)
-    }
 
     @Provides
     @Singleton
@@ -99,12 +89,5 @@ object AppModule {
             backupRC,
             library
         )
-    }
-
-    @Production
-    @Provides
-    @Singleton
-    fun provideAssetsProvider(@ApplicationContext context: Context): AssetsProvider {
-        return MainAssetsProvider(context)
     }
 }

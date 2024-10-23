@@ -12,7 +12,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-class DirectoryProvider (private val context: Context) : IDirectoryProvider {
+open class DirectoryProvider (private val context: Context) : IDirectoryProvider {
 
     companion object {
         const val TAG = "DirectoryProvider"
@@ -179,5 +179,9 @@ class DirectoryProvider (private val context: Context) : IDirectoryProvider {
         FileOutputStream(file).use { fos ->
             fos.write(contents.toByteArray())
         }
+    }
+
+    override fun deleteAll() {
+        // Should do nothing in production code
     }
 }

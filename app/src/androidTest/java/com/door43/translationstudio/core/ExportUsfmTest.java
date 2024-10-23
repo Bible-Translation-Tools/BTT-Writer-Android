@@ -14,7 +14,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.door43.data.AssetsProvider;
 import com.door43.data.IDirectoryProvider;
 import com.door43.data.IPreferenceRepository;
-import com.door43.di.Development;
 import com.door43.translationstudio.App;
 import com.door43.usecases.ExportProjects;
 import com.door43.util.FileUtilities;
@@ -69,19 +68,17 @@ public class ExportUsfmTest {
     @Inject
     ExportProjects exportProjects;
     @Inject
-    @Development
     AssetsProvider assetsProvider;
     @Inject
     IPreferenceRepository prefRepository;
 
     public static final String TAG = ExportUsfmTest.class.getSimpleName();
-    File tempFolder;
+    private File tempFolder;
     private TargetLanguage targetLanguage;
     private ImportUSFM usfm;
     private File outputFile;
     private TargetTranslation targetTranslation;
     private String errorLog;
-
 
     @Before
     public void setUp() {
@@ -102,6 +99,7 @@ public class ExportUsfmTest {
             usfm.cleanup();
         }
         FileUtilities.deleteQuietly(tempFolder);
+        directoryProvider.deleteAll();
     }
 
     @Test

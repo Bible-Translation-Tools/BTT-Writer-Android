@@ -3,7 +3,6 @@ package com.door43.translationstudio
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
-import com.door43.di.Development
 import com.door43.util.signing.Crypto
 import com.door43.util.signing.SigningEntity
 import com.door43.util.signing.Status
@@ -39,7 +38,6 @@ class SigningTest {
     lateinit var appContext: Context
 
     @Inject
-    @Development
     lateinit var assetsProvider: AssetsProvider
 
     @Before

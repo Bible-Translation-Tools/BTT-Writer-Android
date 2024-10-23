@@ -7,11 +7,9 @@ import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.door43.data.AssetsProvider;
-import com.door43.di.Development;
 import com.door43.usecases.ParseMergeConflicts;
 import com.door43.util.FileUtilities;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -41,7 +39,6 @@ public class MergeConflictsParseTest {
     public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
 
     @Inject
-    @Development
     AssetsProvider assetsProvider;
 
     public static final String TAG = MergeConflictsParseTest.class.getSimpleName();
@@ -57,10 +54,6 @@ public class MergeConflictsParseTest {
     public void setUp() {
         hiltRule.inject();
         Logger.flush();
-    }
-
-    @After
-    public void tearDown() {
     }
 
     @Test
