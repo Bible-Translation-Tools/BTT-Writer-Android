@@ -51,7 +51,7 @@ class Library implements Index {
         this.sqliteHelper = sqliteHelper;
         this.db = sqliteHelper.getWritableDatabase();
         if(this.db.getVersion() == 0) throw new IOException("Invalid database version." +
-                "You probably manually generted the database and forgot to set the " +
+                "You probably manually generated the database and forgot to set the " +
                 "\"User Version\" to " + SQLiteHelper.DATABASE_VERSION);
     }
 
@@ -778,14 +778,14 @@ class Library implements Index {
         return sourceLanguages;
     }
 
-    public TargetLanguage getTargetLanguage(String targetLangaugeSlug) {
+    public TargetLanguage getTargetLanguage(String targetLanguageSlug) {
         TargetLanguage targetLanguage = null;
         Cursor cursor = db.rawQuery("select * from (" +
                 "  select slug, name, anglicized_name, direction, region, is_gateway_language from target_language" +
                 "  union" +
                 "  select slug, name, anglicized_name, direction, region, is_gateway_language from temp_target_language" +
                 "  where approved_target_language_slug is null" +
-                ") where slug=? limit 1", new String[]{targetLangaugeSlug});
+                ") where slug=? limit 1", new String[]{targetLanguageSlug});
 
         if(cursor.moveToFirst()) {
             CursorReader reader = new CursorReader(cursor);
@@ -796,7 +796,7 @@ class Library implements Index {
             String region = reader.getString("region");
             boolean isGateWay = reader.getBoolean("is_gateway_language");
 
-            targetLanguage = new TargetLanguage(targetLangaugeSlug, name, anglicized, direction, region, isGateWay);
+            targetLanguage = new TargetLanguage(targetLanguageSlug, name, anglicized, direction, region, isGateWay);
         }
         cursor.close();
 

@@ -108,10 +108,10 @@ public interface Index {
      *
      * Note: does not include the row id. You don't need it
      *
-     * @param targetLangaugeSlug
+     * @param targetLanguageSlug
      * @return the language object or null if it does not exist
      */
-    TargetLanguage getTargetLanguage(String targetLangaugeSlug);
+    TargetLanguage getTargetLanguage(String targetLanguageSlug);
 
     /**
      * Searches for a target language by name.

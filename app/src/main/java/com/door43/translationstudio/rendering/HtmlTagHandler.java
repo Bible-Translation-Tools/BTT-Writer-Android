@@ -1,5 +1,6 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Layout;
@@ -24,13 +25,15 @@ import java.util.Vector;
  */
 public class HtmlTagHandler implements Html.TagHandler {
     public static final String TAG = "HtmlTagHandler";
+    private final Context context;
     private final Span.OnClickListener clickListener;
     private int mListItemCount = 0;
     private static final boolean DEBUG = true;
     private Vector<String> mListParents = new Vector<>();
     final HashMap<String, String> attributes = new HashMap<>();
 
-    public HtmlTagHandler(Span.OnClickListener clickListener) {
+    public HtmlTagHandler(Context context, Span.OnClickListener clickListener) {
+        this.context = context;
         this.clickListener = clickListener;
     }
 
@@ -189,7 +192,7 @@ public class HtmlTagHandler implements Html.TagHandler {
         span.setOnClickListener(this.clickListener);
 
         if(where != len) {
-            output.replace(where, len, span.toCharSequence());
+            output.replace(where, len, span.toCharSequence(context));
         }
 
         if (DEBUG) {

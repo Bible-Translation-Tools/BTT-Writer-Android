@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:paddingTop="16dp"
-    android:paddingBottom="16dp"
-    android:layout_height="match_parent">
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
     <LinearLayout
         android:orientation="horizontal"
@@ -34,7 +34,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="com.door43.translationstudio.MainApplication that is realy long so it will have ellipsize"
+        android:text="com.door43.translationstudio.MainApplication that is really long so it will have ellipsize"
         android:id="@+id/log_namespace"
         android:singleLine="true"
         android:ellipsize="end"

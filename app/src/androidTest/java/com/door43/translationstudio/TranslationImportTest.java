@@ -7,7 +7,7 @@ import org.junit.Test;
 public class TranslationImportTest {
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
 
 //        if(!App.isLoaded()) {
 //             load everything

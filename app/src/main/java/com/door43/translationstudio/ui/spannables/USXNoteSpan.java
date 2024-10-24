@@ -13,15 +13,12 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
 import android.util.Xml;
-//import android.util.Xml;
 
 import org.unfoldingword.tools.logger.Logger;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.App;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Text;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -112,14 +109,14 @@ public class USXNoteSpan extends NoteSpan {
             // apply custom styles
             if(getHumanReadable().toString().isEmpty()) {
                 int icon = mHighlight ? R.drawable.ic_description_black_24dp_highlight : R.drawable.ic_description_black_24dp;
-                Bitmap image = BitmapFactory.decodeResource(App.context().getResources(), icon);
-                BitmapDrawable background = new BitmapDrawable(App.context().getResources(), image);
+                Bitmap image = BitmapFactory.decodeResource(context.getResources(), icon);
+                BitmapDrawable background = new BitmapDrawable(context.getResources(), image);
                 background.setBounds(0, 0, background.getMinimumWidth(), background.getMinimumHeight());
                 mSpannable.setSpan(new ImageSpan(background), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else {
-                mSpannable.setSpan(new BackgroundColorSpan(App.context().getResources().getColor(R.color.footnote_yellow)), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                mSpannable.setSpan(new BackgroundColorSpan(context.getResources().getColor(R.color.footnote_yellow)), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 mSpannable.setSpan(new StyleSpan(Typeface.ITALIC), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                mSpannable.setSpan(new ForegroundColorSpan(App.context().getResources().getColor(R.color.dark_gray)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.dark_gray)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
         return mSpannable;
@@ -306,12 +303,12 @@ public class USXNoteSpan extends NoteSpan {
             if(eventType == XmlPullParser.START_TAG) {
                 parser.require(XmlPullParser.START_TAG, null, "char");
                 String charStyle = parser.getAttributeValue("", "style");
-                String charText = parser.nextText().replaceAll("(^\\s+|\\s+$)", "");
+                String charText = parser.nextText().trim();
                 if(!charText.isEmpty()) {
                     chars.add(new USXChar(charStyle, charText));
                 }
             } else if(eventType == XmlPullParser.TEXT) {
-                String text = parser.getText().replaceAll("(^\\s+|\\s+$)", "");
+                String text = parser.getText().trim();
                 if(!text.isEmpty()) {
                     chars.add(new USXChar("ft", text));
                 }

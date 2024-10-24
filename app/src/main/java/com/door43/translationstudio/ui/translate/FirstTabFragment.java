@@ -1,34 +1,27 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import org.unfoldingword.door43client.Door43Client;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
+
 import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
 
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.Translator;
+import com.door43.translationstudio.databinding.FragmentFirstTabBinding;
 import com.door43.translationstudio.ui.BaseFragment;
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
 
 import org.json.JSONException;
 
-import java.security.InvalidParameterException;
 import java.util.List;
 
 /**
@@ -36,82 +29,93 @@ import java.util.List;
  */
 public class FirstTabFragment extends BaseFragment implements ChooseSourceTranslationDialog.OnClickListener {
 
-    private Translator mTranslator;
-    private Door43Client mLibrary;
-    private OnEventListener mListener;
+    private OnEventListener listener;
+    protected TargetTranslationViewModel viewModel;
+
+    private FragmentFirstTabBinding binding;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_first_tab, container, false);
-
-        mTranslator = App.getTranslator();
-        mLibrary = App.getLibrary();
+        binding = FragmentFirstTabBinding.inflate(inflater, container, false);
+        viewModel = new ViewModelProvider(requireActivity()).get(TargetTranslationViewModel.class);
 
         Bundle args = getArguments();
-        final String targetTranslationId = args.getString(App.EXTRA_TARGET_TRANSLATION_ID, null);
-        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        if(targetTranslation == null) {
-            throw new InvalidParameterException("a valid target translation id is required");
-        }
+        assert args != null;
 
-        ImageButton newTabButton = (ImageButton) rootView.findViewById(R.id.newTabButton);
-        LinearLayout secondaryNewTabButton = (LinearLayout) rootView.findViewById(R.id.secondaryNewTabButton);
-        TextView translationTitle = (TextView) rootView.findViewById(R.id.source_translation_title);
+        setupObservers();
+
         try {
-            Project p = mLibrary.index.getProject(App.getDeviceLanguageCode(), targetTranslation.getProjectId(), true);
-            translationTitle.setText(p.name + " - " + targetTranslation.getTargetLanguageName());
+            Project p = viewModel.getProject();
+            binding.sourceTranslationTitle.setText(
+                    p.name + " - " + viewModel.getTargetTranslation().getTargetLanguageName()
+            );
         } catch (Exception e) {
-            Logger.e(FirstTabFragment.class.getSimpleName(),"Error getting resource container for '" + targetTranslationId + "'", e);
+            Logger.e(
+                FirstTabFragment.class.getSimpleName(),
+                "Error getting resource container for '" + viewModel.getTargetTranslation().getId() + "'",
+                e
+            );
         }
 
-        View.OnClickListener clickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                Fragment prev = getFragmentManager().findFragmentByTag("tabsDialog");
-                if (prev != null) {
-                    ft.remove(prev);
-                }
-                ft.addToBackStack(null);
-
-                ChooseSourceTranslationDialog dialog = new ChooseSourceTranslationDialog();
-                Bundle args = new Bundle();
-                args.putString(ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID, targetTranslationId);
-                dialog.setOnClickListener(FirstTabFragment.this);
-                dialog.setArguments(args);
-                dialog.show(ft, "tabsDialog");
+        View.OnClickListener clickListener = v -> {
+            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+            Fragment prev = getParentFragmentManager().findFragmentByTag("tabsDialog");
+            if (prev != null) {
+                ft.remove(prev);
             }
+            ft.addToBackStack(null);
+
+            ChooseSourceTranslationDialog dialog = new ChooseSourceTranslationDialog();
+            Bundle args1 = new Bundle();
+            args1.putString(ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
+            dialog.setOnClickListener(FirstTabFragment.this);
+            dialog.setArguments(args1);
+            dialog.show(ft, "tabsDialog");
         };
 
-        newTabButton.setOnClickListener(clickListener);
-        secondaryNewTabButton.setOnClickListener(clickListener);
+        binding.newTabButton.setOnClickListener(clickListener);
+        binding.secondaryNewTabButton.setOnClickListener(clickListener);
 
         // attach to tabs dialog
         if(savedInstanceState != null) {
-            ChooseSourceTranslationDialog dialog = (ChooseSourceTranslationDialog) getFragmentManager().findFragmentByTag("tabsDialog");
+            ChooseSourceTranslationDialog dialog = (ChooseSourceTranslationDialog) getParentFragmentManager().findFragmentByTag("tabsDialog");
             if(dialog != null) {
                 dialog.setOnClickListener(this);
             }
         }
 
-        return rootView;
+        return binding.getRoot();
+    }
+
+    private void setupObservers() {
+        viewModel.getListItems().observe(getViewLifecycleOwner(), items -> {
+            if (!items.isEmpty() && listener != null) {
+                listener.onHasSourceTranslations();
+            }
+        });
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
         try {
-            this.mListener = (OnEventListener) activity;
+            this.listener = (OnEventListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement FirstTabFragment.OnEventListener");
+            throw new ClassCastException(context + " must implement FirstTabFragment.OnEventListener");
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     /**
      * user has selected to update sources
      */
     public void onUpdateSources() {
-        if(mListener != null) mListener.onUpdateSources();
+        if(listener != null) listener.onUpdateSources();
     }
 
     @Override
@@ -120,26 +124,24 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
     }
 
     @Override
-    public void onConfirmTabsDialog(String targetTranslationId, List<String> sourceTranslationIds) {
-        String[] oldSourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
+    public void onConfirmTabsDialog(@NonNull List<String> sourceTranslationIds) {
+        String[] oldSourceTranslationIds = viewModel.getOpenSourceTranslations();
         for(String id:oldSourceTranslationIds) {
-            App.removeOpenSourceTranslation(targetTranslationId, id);
+            viewModel.removeOpenSourceTranslation(id);
         }
 
-        if(sourceTranslationIds.size() > 0) {
+        if(!sourceTranslationIds.isEmpty()) {
             // save open source language tabs
             for(String slug:sourceTranslationIds) {
-                Translation t = mLibrary.index().getTranslation(slug);
-                int modifiedAt = mLibrary.getResourceContainerLastModified(t.language.slug, t.project.slug, t.resource.slug);
+                Translation t = viewModel.getTranslation(slug);
+                int modifiedAt = viewModel.getResourceContainerLastModified(t);
                 try {
-                    App.addOpenSourceTranslation(targetTranslationId, slug);
-                    TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-                    if (targetTranslation != null) {
-                        try {
-                            targetTranslation.addSourceTranslation(t, modifiedAt);
-                        } catch (JSONException e) {
-                            Logger.e(this.getClass().getName(), "Failed to record source translation (" + slug + ") usage in the target translation " + targetTranslation.getId(), e);
-                        }
+                    viewModel.addOpenSourceTranslation(slug);
+                    TargetTranslation targetTranslation = viewModel.getTargetTranslation();
+                    try {
+                        targetTranslation.addSourceTranslation(t, modifiedAt);
+                    } catch (JSONException e) {
+                        Logger.e(this.getClass().getName(), "Failed to record source translation (" + slug + ") usage in the target translation " + targetTranslation.getId(), e);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -147,7 +149,7 @@ public class FirstTabFragment extends BaseFragment implements ChooseSourceTransl
             }
 
             // redirect back to previous mode
-            if(mListener != null) mListener.onHasSourceTranslations();
+            if(listener != null) listener.onHasSourceTranslations();
         }
     }
 

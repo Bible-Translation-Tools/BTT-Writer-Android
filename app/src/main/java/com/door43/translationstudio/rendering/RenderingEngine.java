@@ -1,9 +1,13 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
+
 /**
  * Created by joel on 1/26/2015.
  */
 public abstract class RenderingEngine {
+    protected Context context;
+
     private OnRenderCallback mCallback;
     private boolean mStopped = false;
     private boolean mRunning = false;

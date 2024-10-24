@@ -1,5 +1,6 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
 import android.text.TextUtils;
 
 import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
@@ -22,7 +23,12 @@ public class LinkRenderer extends RenderingEngine {
      * Creates a new link rendering engine with some custom click listeners
      * @param linkListener
      */
-    public LinkRenderer(OnPreprocessLink preprocessor, Span.OnClickListener linkListener) {
+    public LinkRenderer(
+            Context context,
+            OnPreprocessLink preprocessor,
+            Span.OnClickListener linkListener
+    ) {
+        this.context = context;
         mLinkListener = linkListener;
         preprocessCallback = preprocessor;
     }
@@ -104,7 +110,7 @@ public class LinkRenderer extends RenderingEngine {
                         String htmlLink = "<app-link href=\"" + link.getMachineReadable() + "\">" + link.getHumanReadable() + "</app-link>";
                         out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), htmlLink);
                     } else {
-                        out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), link.toCharSequence());
+                        out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), link.toCharSequence(context));
                     }
                 } else {
                     // render non-clickable link

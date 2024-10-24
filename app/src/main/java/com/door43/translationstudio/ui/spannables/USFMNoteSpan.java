@@ -14,7 +14,6 @@ import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
 
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.App;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,14 +81,14 @@ public class USFMNoteSpan extends NoteSpan {
             // apply custom styles
             if(getHumanReadable().toString().isEmpty()) {
                 int icon = mHighlight ? R.drawable.ic_description_black_24dp_highlight : R.drawable.ic_description_black_24dp;
-                Bitmap image = BitmapFactory.decodeResource(App.context().getResources(), icon);
-                BitmapDrawable background = new BitmapDrawable(App.context().getResources(), image);
+                Bitmap image = BitmapFactory.decodeResource(context.getResources(), icon);
+                BitmapDrawable background = new BitmapDrawable(context.getResources(), image);
                 background.setBounds(0, 0, background.getMinimumWidth(), background.getMinimumHeight());
                 mSpannable.setSpan(new ImageSpan(background), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else {
-                mSpannable.setSpan(new BackgroundColorSpan(App.context().getResources().getColor(R.color.footnote_yellow)), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                mSpannable.setSpan(new BackgroundColorSpan(context.getResources().getColor(R.color.footnote_yellow)), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 mSpannable.setSpan(new StyleSpan(Typeface.ITALIC), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                mSpannable.setSpan(new ForegroundColorSpan(App.context().getResources().getColor(R.color.dark_gray)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.dark_gray)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
         return mSpannable;
