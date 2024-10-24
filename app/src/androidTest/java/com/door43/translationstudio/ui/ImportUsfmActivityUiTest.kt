@@ -67,10 +67,6 @@ class ImportUsfmActivityUiTest {
     fun setUp() {
         hiltRule.inject()
         Logger.flush()
-
-        if (!library.isLibraryDeployed) {
-            directoryProvider.deployDefaultLibrary()
-        }
     }
 
     @After
@@ -81,7 +77,6 @@ class ImportUsfmActivityUiTest {
             tempDir = null
             testFile = null
         }
-        directoryProvider.deleteAll()
     }
 
     @Test

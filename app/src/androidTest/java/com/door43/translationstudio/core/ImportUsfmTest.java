@@ -81,9 +81,6 @@ public class ImportUsfmTest {
         hiltRule.inject();
 
         Logger.flush();
-        if (!library.getIsLibraryDeployed()) {
-            directoryProvider.deployDefaultLibrary();
-        }
         targetLanguage = library.index.getTargetLanguage("es");
     }
 
@@ -92,7 +89,6 @@ public class ImportUsfmTest {
         if (usfm != null) {
             usfm.cleanup();
         }
-        directoryProvider.deleteAll();
     }
 
     @Test

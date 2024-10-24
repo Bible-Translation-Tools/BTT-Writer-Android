@@ -26,13 +26,15 @@ class SearchGogsRepositories @Inject constructor(
         progressListener?.onProgress(-1, max, "Searching for repositories")
         val repositories = arrayListOf<Repository>()
 
+        val repoQuery = query.ifEmpty { "_" }
+
         val api = GogsAPI(
             prefRepository.getDefaultPref(
                 SettingsActivity.KEY_PREF_GOGS_API,
                 context.getString(R.string.pref_default_gogs_api)
             )
         )
-        val repos = api.searchRepos(query, uid, limit)
+        val repos = api.searchRepos(repoQuery, uid, limit)
 
         // fetch additional information about the repos (clone urls)
         for (repo in repos) {

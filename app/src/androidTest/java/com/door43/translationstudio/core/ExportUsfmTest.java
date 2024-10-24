@@ -87,9 +87,6 @@ public class ExportUsfmTest {
 
         hiltRule.inject();
 
-        if (!library.getIsLibraryDeployed()) {
-            directoryProvider.deployDefaultLibrary();
-        }
         targetLanguage = library.index.getTargetLanguage("aae");
     }
 
@@ -99,7 +96,6 @@ public class ExportUsfmTest {
             usfm.cleanup();
         }
         FileUtilities.deleteQuietly(tempFolder);
-        directoryProvider.deleteAll();
     }
 
     @Test

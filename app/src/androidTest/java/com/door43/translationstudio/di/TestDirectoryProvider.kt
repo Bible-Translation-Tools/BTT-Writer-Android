@@ -2,7 +2,6 @@ package com.door43.translationstudio.di
 
 import android.content.Context
 import com.door43.translationstudio.DirectoryProvider
-import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -47,17 +46,4 @@ class TestDirectoryProvider @Inject constructor(
 
     override val p2pPrivateKey: File
         get() = File(p2pKeysDir, "test_id_rsa")
-
-    override fun deleteAll() {
-        deleteLibrary()
-        FileUtilities.deleteQuietly(cacheDir)
-        FileUtilities.deleteQuietly(translationsDir)
-        FileUtilities.deleteQuietly(translationsCacheDir)
-        FileUtilities.deleteQuietly(backupsDir)
-        FileUtilities.deleteQuietly(logFile)
-        FileUtilities.deleteQuietly(publicKey)
-        FileUtilities.deleteQuietly(privateKey)
-        FileUtilities.deleteQuietly(p2pPublicKey)
-        FileUtilities.deleteQuietly(p2pPrivateKey)
-    }
 }

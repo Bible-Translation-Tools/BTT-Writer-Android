@@ -18,7 +18,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
-import java.io.IOException
 import javax.inject.Singleton
 
 @Module
@@ -41,18 +40,6 @@ object AppModule {
         @ApplicationContext context: Context
     ): IPreferenceRepository {
         return PreferenceRepository(context)
-    }
-
-    @Provides
-    fun provideLibrary(
-        @ApplicationContext context: Context,
-        directoryProvider: IDirectoryProvider
-    ): Door43Client {
-        return try {
-            Door43Client(context, directoryProvider)
-        } catch (e: IOException) {
-            throw NullPointerException("Failed to initialize the door43 client")
-        }
     }
 
     @Provides

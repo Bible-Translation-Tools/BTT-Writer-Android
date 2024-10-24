@@ -180,8 +180,4 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
             fos.write(contents.toByteArray())
         }
     }
-
-    override fun deleteAll() {
-        // Should do nothing in production code
-    }
 }

@@ -28,8 +28,6 @@ import org.hamcrest.Matchers
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.junit.After
-import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
@@ -67,10 +65,6 @@ open class NewLanguageActivityUiUtils {
         hiltRule.inject()
         Logger.flush()
 
-        if (!library.isLibraryDeployed) {
-            directoryProvider.deployDefaultLibrary()
-        }
-
         stringToBeTyped = "Espresso";
 
         val questionnaires = library.index.getQuestionnaires()
@@ -80,11 +74,6 @@ open class NewLanguageActivityUiUtils {
             pager = QuestionnairePager(q)
             pager?.loadQuestions(questions)
         }
-    }
-
-    @After
-    fun tearDown() {
-        directoryProvider.deleteAll()
     }
 
     /**
