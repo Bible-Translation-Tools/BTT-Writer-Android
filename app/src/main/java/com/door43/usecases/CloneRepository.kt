@@ -30,7 +30,7 @@ class CloneRepository @Inject constructor(
     ): Result {
         progressListener?.onProgress(-1, max, context.resources.getString(R.string.downloading))
 
-        val tempDir = directoryProvider.createTempDir(System.currentTimeMillis().toString())
+        var tempDir: File? = directoryProvider.createTempDir(System.currentTimeMillis().toString())
         var status = Status.UNKNOWN
 
         try {
@@ -52,15 +52,20 @@ class CloneRepository @Inject constructor(
                 val cause = e.cause
                 if (cause != null) {
                     val subException = cause.cause
-                    if (subException != null) {
-                        val detail = subException.message
-                        if ("Auth fail" == detail) {
+                    when {
+                        subException != null -> {
+                            val detail = subException.message
+                            if ("Auth fail" == detail) {
+                                status = Status.AUTH_FAILURE
+                            }
+                        }
+                        cause.message!!.contains("not permitted") -> {
                             status = Status.AUTH_FAILURE
                         }
-                    } else if (cause is NoRemoteRepositoryException) {
-                        status = Status.NO_REMOTE_REPO
-                    } else if (cause.message!!.contains("not permitted")) {
-                        status = Status.AUTH_FAILURE
+                        cause is NoRemoteRepositoryException -> {
+                            status = Status.NO_REMOTE_REPO
+                        }
+                        else -> status = Status.NO_REMOTE_REPO
                     }
                 }
             } catch (e: Exception) {
@@ -76,13 +81,17 @@ class CloneRepository @Inject constructor(
                 this.javaClass.name,
                 "Failed to clone the repository $cloneUrl", e
             )
-            deleteQuietly(tempDir)
+        } finally {
+            if (status != Status.SUCCESS) {
+                deleteQuietly(tempDir)
+                tempDir = null
+            }
         }
 
         return Result(status, cloneUrl, tempDir)
     }
 
-    data class Result(val status: Status, val cloneUrl: String, val cloneDir: File)
+    data class Result(val status: Status, val cloneUrl: String, val cloneDir: File?)
 
     enum class Status {
         NO_REMOTE_REPO,

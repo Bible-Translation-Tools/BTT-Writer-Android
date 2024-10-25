@@ -37,6 +37,9 @@ android {
         versionCode 18
         versionName "1.4.0"
         testInstrumentationRunner "com.door43.translationstudio.CustomTestRunner"
+
+        buildConfigField "String", "TEST_USER", "\"${System.getenv("TEST_USER") ?: ""}\""
+        buildConfigField "String", "TEST_TOKEN", "\"${System.getenv("TEST_TOKEN") ?: ""}\""
     }
     buildTypes {
         release {
@@ -78,6 +81,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 

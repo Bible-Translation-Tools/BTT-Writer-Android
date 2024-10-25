@@ -189,7 +189,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
 
                 if (result.status == CloneRepository.Status.SUCCESS) {
                     Logger.i(this.javaClass.name, "Repository cloned from ${result.cloneUrl}")
-                    val clonedDir = targetTranslationMigrator.migrate(result.cloneDir)
+                    val clonedDir = targetTranslationMigrator.migrate(result.cloneDir!!)
                     var importFailed = false
                     mergeConflicted = false
 

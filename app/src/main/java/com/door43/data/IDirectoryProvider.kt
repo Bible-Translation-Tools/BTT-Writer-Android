@@ -143,4 +143,9 @@ interface IDirectoryProvider {
      */
     @Throws(IOException::class)
     fun writeStringToFile(file: File, contents: String)
+
+    /**
+     * Clear the cache directory
+     */
+    fun clearCache()
 }

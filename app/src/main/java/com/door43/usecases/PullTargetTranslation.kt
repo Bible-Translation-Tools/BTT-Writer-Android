@@ -63,7 +63,6 @@ class PullTargetTranslation @Inject constructor(
 
             sourceURL ?: run {
                 getRepository.execute(
-                    profile.gogsUser!!,
                     targetTranslation,
                     progressListener
                 )?.sshUrl

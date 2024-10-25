@@ -40,6 +40,10 @@ class CreateRepository @Inject constructor(
                 return true
             } else {
                 val response = api.lastResponse
+                if (response.code == 409) {
+                    // Repository already exists
+                    return true
+                }
                 Logger.w(
                     this.javaClass.name,
                     "Failed to create repository " + targetTranslation.id + ". Gogs responded with " + response.code + ": " + response.data,

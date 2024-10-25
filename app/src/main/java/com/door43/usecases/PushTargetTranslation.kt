@@ -43,7 +43,7 @@ class PushTargetTranslation @Inject constructor(
         if (profile.gogsUser != null) {
             progressListener?.onProgress(-1, max, "Uploading translation")
 
-            val repository = getRepository.execute(profile.gogsUser!!, targetTranslation)
+            val repository = getRepository.execute(targetTranslation)
             try {
                 targetTranslation.commitSync()
                 val repo: Repo = targetTranslation.repo

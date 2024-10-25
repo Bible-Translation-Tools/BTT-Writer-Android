@@ -180,4 +180,10 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
             fos.write(contents.toByteArray())
         }
     }
+
+    override fun clearCache() {
+        cacheDir.listFiles()?.forEach {
+            FileUtilities.deleteQuietly(it)
+        }
+    }
 }

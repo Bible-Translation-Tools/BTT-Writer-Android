@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.core.ImportUSFM
+import com.door43.translationstudio.TestUtils.importTargetTranslation
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
@@ -17,7 +17,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.After
-import org.junit.Assert
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -84,7 +83,7 @@ class BackupRCTest {
         val backupFiles = directoryProvider.backupsDir.listFiles()
 
         assertNotNull("Backups dir should not be null", backupFiles)
-        assertTrue("Backups dir should not be empty", backupFiles.isNotEmpty())
+        assertTrue("Backups dir should not be empty", backupFiles!!.isNotEmpty())
 
         val backupFile = backupFiles.firstOrNull {
             it.name.startsWith(id) && it.name.endsWith(".tsrc")
@@ -95,7 +94,15 @@ class BackupRCTest {
     @Test
     fun backupTargetTranslationSucceeds() {
         val source = "usfm/mrk.usfm"
-        importTranslation(source)
+        importTargetTranslation(
+            library,
+            appContext,
+            directoryProvider,
+            profile,
+            assetsProvider,
+            "aae",
+            source
+        )
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
@@ -106,7 +113,7 @@ class BackupRCTest {
         val backupFiles = directoryProvider.backupsDir.listFiles()
 
         assertNotNull("Backups dir should not be null", backupFiles)
-        assertTrue("Backups dir should not be empty", backupFiles.isNotEmpty())
+        assertTrue("Backups dir should not be empty", backupFiles!!.isNotEmpty())
 
         val backupFile = backupFiles.firstOrNull {
             it.name.startsWith(id) && it.name.endsWith(TSTUDIO_EXTENSION)
@@ -117,7 +124,15 @@ class BackupRCTest {
     @Test
     fun backupTargetTranslationOrphanSucceeds() {
         val source = "usfm/mrk.usfm"
-        importTranslation(source)
+        importTargetTranslation(
+            library,
+            appContext,
+            directoryProvider,
+            profile,
+            assetsProvider,
+            "aae",
+            source
+        )
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
@@ -139,7 +154,15 @@ class BackupRCTest {
     @Test
     fun backupTargetTranslationDirSucceeds() {
         val source = "usfm/19-PSA.usfm"
-        importTranslation(source)
+        importTargetTranslation(
+            library,
+            appContext,
+            directoryProvider,
+            profile,
+            assetsProvider,
+            "aae",
+            source
+        )
 
         assertNotNull("Target translation should not be null", targetTranslationDir)
 
@@ -169,31 +192,6 @@ class BackupRCTest {
                 null
             }
         }
-    }
-
-    private fun importTranslation(path: String) {
-        //import USFM file to be used for testing
-        val usfm = ImportUSFM.Builder(
-            appContext,
-            directoryProvider,
-            profile,
-            library,
-            assetsProvider
-        )
-            .fromRc(targetLanguage, path, null)
-            .build()
-
-        assertNotNull("usfm should not be null", usfm)
-        assertNotNull("target language should not be null", targetLanguage)
-        assertTrue("import usfm test file should succeed", usfm!!.isProcessSuccess)
-        val imports = usfm.importProjects
-        Assert.assertEquals("import usfm test file should succeed", 1, imports.size.toLong())
-
-        //open import as targetTranslation
-        val projectFolder = imports[0]
-
-        targetTranslation = TargetTranslation.open(projectFolder, null)
-        targetTranslationDir = projectFolder
     }
 
     private fun deleteBackups() {

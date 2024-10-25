@@ -43,6 +43,9 @@ jobs:
       run:  echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
     - name: Test with Gradle
       run: ./gradlew test --stacktrace
+      env:
+        TEST_USER: ${{ secrets.TEST_USER }}
+        TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
     - name: Assemble with Gradle
       run: ./gradlew assembleRelease -PsignIt=true
       env:
