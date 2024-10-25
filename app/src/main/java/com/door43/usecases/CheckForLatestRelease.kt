@@ -40,8 +40,7 @@ class CheckForLatestRelease @Inject constructor(
                 val latestReleaseJson = JSONObject(latestReleaseStr)
                 if (latestReleaseJson.has("tag_name")) {
                     val tag = latestReleaseJson.getString("tag_name")
-                    val tagParts = tag.split("\\+".toRegex()).dropLastWhile { it.isEmpty() }
-                        .toTypedArray()
+                    val tagParts = tag.split("\\+".toRegex())
                     if (tagParts.size == 2) {
                         val build = tagParts[1].toInt()
                         try {
