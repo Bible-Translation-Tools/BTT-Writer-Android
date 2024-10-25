@@ -189,7 +189,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
                         resources.getColor(R.color.light_primary_text)
                     )
                     snack.show()
-                    adapter.markItemDownloaded(result.position)
+                    adapter.markItemDownloaded(viewModel.downloadItemPosition)
                 } else {
                     val snack = Snackbar.make(
                         this@ChooseSourceTranslationDialog.requireView(),

@@ -53,7 +53,7 @@ class DownloadSourcesViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _downloadedSources.value = withContext(Dispatchers.IO) {
-                downloadResourceContainers.execute(selected, object : OnProgressListener {
+                downloadResourceContainers.download(selected, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
                         _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }

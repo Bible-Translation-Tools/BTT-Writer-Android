@@ -11,16 +11,8 @@ import javax.inject.Inject
 class DownloadResourceContainers @Inject constructor(
     private val library: Door43Client
 ) {
-    private val downloadedContainers = arrayListOf<ResourceContainer>()
-    private val failedSourceDownloads = arrayListOf<String>()
-    private val failureMessages = hashMapOf<String, String>()
-    private val failedHelpsDownloads = arrayListOf<String>()
-    private val downloadedTranslations = arrayListOf<String>()
-
-    private var maxProgress = 0
 
     data class Result(
-        val success: Boolean,
         val downloadedContainers: List<ResourceContainer>,
         val downloadedTranslations: List<String>,
         val failedSourceDownloads: List<String>,
@@ -28,15 +20,107 @@ class DownloadResourceContainers @Inject constructor(
         val failureMessages: Map<String, String>
     )
 
-    fun execute(
+    data class DownloadResult(
+        val success: Boolean,
+        val containers: List<ResourceContainer>
+    )
+
+    fun download(
+        translation: Translation,
+        onProgressListener: OnProgressListener? = null
+    ): DownloadResult {
+        var success = false
+        val max = 100
+        val downloadedContainers = arrayListOf<ResourceContainer>()
+
+        onProgressListener?.onProgress(-1, max, "Downloading resource container")
+
+        try {
+            val rc = library.download(
+                translation.language.slug,
+                translation.project.slug,
+                translation.resource.slug
+            )
+            downloadedContainers.add(rc)
+            success = true
+        } catch (e: Exception) {
+            Logger.e(
+                DownloadResourceContainers::class.java.simpleName,
+                "Download source Failed: " + translation.resourceContainerSlug,
+                e
+            )
+        }
+
+        if (success) {
+            // also download helps
+            if (translation.resource.slug != "tw" && translation.resource.slug != "tn" && translation.resource.slug != "tq") {
+                // TODO: 11/2/16 only download these if there is an update
+                try {
+                    if (translation.project.slug == "obs") {
+                        onProgressListener?.onProgress(-1, max, "Downloading obs translation words")
+                        val rc = library.download(translation.language.slug, "bible-obs", "tw")
+                        downloadedContainers.add(rc)
+                    } else {
+                        onProgressListener?.onProgress(-1, max, "Downloading translation words")
+                        val rc = library.download(translation.language.slug, "bible", "tw")
+                        downloadedContainers.add(rc)
+                    }
+                } catch (e: java.lang.Exception) {
+                    Logger.e(
+                        DownloadResourceContainers::class.java.simpleName,
+                        "Download translation words Failed: " + translation.resourceContainerSlug,
+                        e
+                    )
+                }
+                try {
+                    onProgressListener?.onProgress(-1, max, "Downloading translation notes")
+                    val rc = library.download(
+                        translation.language.slug,
+                        translation.project.slug,
+                        "tn"
+                    )
+                    downloadedContainers.add(rc)
+                } catch (e: java.lang.Exception) {
+                    Logger.e(
+                        DownloadResourceContainers::class.java.simpleName,
+                        "Download translation notes Failed: " + translation.resourceContainerSlug,
+                        e
+                    )
+                }
+                try {
+                    onProgressListener?.onProgress(-1, max, "Downloading translation questions")
+                    val rc = library.download(
+                        translation.language.slug,
+                        translation.project.slug,
+                        "tq"
+                    )
+                    downloadedContainers.add(rc)
+                } catch (e: java.lang.Exception) {
+                    Logger.e(
+                        DownloadResourceContainers::class.java.simpleName,
+                        "Download translation questions Failed: " + translation.resourceContainerSlug,
+                        e
+                    )
+                }
+            }
+        }
+
+        return DownloadResult(success, downloadedContainers)
+    }
+
+    fun download(
         translationIDs: List<String>,
         progressListener: OnProgressListener? = null
     ): Result {
-        var success = true
+        val downloadedContainers = arrayListOf<ResourceContainer>()
+        val failedSourceDownloads = arrayListOf<String>()
+        val failureMessages = hashMapOf<String, String>()
+        val failedHelpsDownloads = arrayListOf<String>()
+        val downloadedTranslations = arrayListOf<String>()
         val downloadedTwBibleLanguages = HashSet<String>()
         val downloadedTwObsLanguages = HashSet<String>()
 
-        maxProgress = translationIDs.size
+        val maxProgress = translationIDs.size
 
         progressListener?.onProgress(-1, maxProgress, "")
 
@@ -93,6 +177,10 @@ class DownloadResourceContainers @Inject constructor(
                                     languageSlug,
                                     "bible-obs",
                                     "OBS Words",
+                                    maxProgress,
+                                    downloadedContainers,
+                                    failedHelpsDownloads,
+                                    failedSourceDownloads,
                                     progressListener
                                 )
                             } else {
@@ -103,6 +191,10 @@ class DownloadResourceContainers @Inject constructor(
                                     languageSlug,
                                     "bible",
                                     "Bible Words",
+                                    maxProgress,
+                                    downloadedContainers,
+                                    failedHelpsDownloads,
+                                    failedSourceDownloads,
                                     progressListener
                                 )
                             }
@@ -121,6 +213,10 @@ class DownloadResourceContainers @Inject constructor(
                             projectSlug,
                             "tn",
                             "Notes",
+                            maxProgress,
+                            downloadedContainers,
+                            failedHelpsDownloads,
+                            failedSourceDownloads,
                             progressListener
                         )
 
@@ -131,15 +227,17 @@ class DownloadResourceContainers @Inject constructor(
                             projectSlug,
                             "tq",
                             "Questions",
+                            maxProgress,
+                            downloadedContainers,
+                            failedHelpsDownloads,
+                            failedSourceDownloads,
                             progressListener
                         )
                     }
                 }
             }
 
-            if (!passSuccess) {
-                success = false
-            } else {
+            if (passSuccess) {
                 downloadedTranslations.add(resourceContainerSlug)
             }
         }
@@ -147,7 +245,6 @@ class DownloadResourceContainers @Inject constructor(
         progressListener?.onProgress(maxProgress, maxProgress, "")
 
         return Result(
-            success,
             downloadedContainers,
             downloadedTranslations,
             failedSourceDownloads,
@@ -173,6 +270,10 @@ class DownloadResourceContainers @Inject constructor(
         languageSlug: String,
         projectSlug: String,
         name: String,
+        maxProgress: Int,
+        downloadedContainers: ArrayList<ResourceContainer>,
+        failedHelpsDownloads: ArrayList<String>,
+        failedSourceDownloads: ArrayList<String>,
         progressListener: OnProgressListener?
     ): Boolean {
         var success = true
@@ -184,6 +285,10 @@ class DownloadResourceContainers @Inject constructor(
                 projectSlug,
                 "tw",
                 name,
+                maxProgress,
+                downloadedContainers,
+                failedHelpsDownloads,
+                failedSourceDownloads,
                 progressListener
             )
             if (success) {
@@ -215,6 +320,10 @@ class DownloadResourceContainers @Inject constructor(
         projectSlug: String,
         resourceSlug: String,
         name: String,
+        maxProgress: Int,
+        downloadedContainers: ArrayList<ResourceContainer>,
+        failedHelpsDownloads: ArrayList<String>,
+        failedSourceDownloads: ArrayList<String>,
         progressListener: OnProgressListener?
     ): Boolean {
         var passSuccess = true

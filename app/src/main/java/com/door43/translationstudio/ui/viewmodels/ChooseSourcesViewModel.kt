@@ -15,8 +15,8 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.RCItem
-import com.door43.usecases.DownloadResourceContainer
-import com.door43.usecases.DownloadResourceContainer.DownloadResult
+import com.door43.usecases.DownloadResourceContainers
+import com.door43.usecases.DownloadResourceContainers.DownloadResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,7 +31,7 @@ class ChooseSourcesViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    @Inject lateinit var downloadResourceContainer: DownloadResourceContainer
+    @Inject lateinit var downloadResourceContainers: DownloadResourceContainers
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var translator: Translator
     @Inject lateinit var prefRepository: IPreferenceRepository
@@ -53,6 +53,8 @@ class ChooseSourcesViewModel @Inject constructor(
 
     private val _itemResult = MutableLiveData<ItemResult?>(null)
     val itemResult: LiveData<ItemResult?> = _itemResult
+
+    var downloadItemPosition = 0
 
     data class ItemResult(val position: Int, val hasUpdates: Boolean)
 
@@ -105,9 +107,10 @@ class ChooseSourcesViewModel @Inject constructor(
 
     fun downloadResourceContainer(sourceTranslation: Translation, position: Int) {
         viewModelScope.launch {
+            downloadItemPosition = position
             _progress.value = ProgressHelper.Progress()
             _downloadResult.value = withContext(Dispatchers.IO) {
-                downloadResourceContainer.execute(sourceTranslation, position, object : OnProgressListener {
+                downloadResourceContainers.download(sourceTranslation, object : OnProgressListener {
                     override fun onProgress(progress: Int, max: Int, message: String?) {
                         _progress.postValue(ProgressHelper.Progress(message, progress, max))
                     }

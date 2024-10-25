@@ -7,7 +7,6 @@
     <FrameLayout
         android:focusableInTouchMode="true"
         android:id="@+id/filter_bar"
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingLeft="@dimen/dialog_controls_margin"
@@ -27,7 +26,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/byLanguage"
                 android:layout_weight="1"
-                android:layout_marginRight="@dimen/dialog_content_margin" />
+                android:layout_marginEnd="@dimen/dialog_content_margin" />
 
             <RadioButton
                 android:text="@string/by_book_label"
@@ -35,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/byBook"
                 android:layout_weight="1"
-                android:layout_marginLeft="@dimen/dialog_content_margin" />
+                android:layout_marginStart="@dimen/dialog_content_margin" />
         </RadioGroup>
 
     </FrameLayout>
@@ -49,7 +48,6 @@
     <FrameLayout
         android:focusableInTouchMode="true"
         android:id="@+id/search_bar"
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/filter_bar"
@@ -63,7 +61,7 @@
                 android:id="@+id/search_back_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="left|center_vertical"
+                android:layout_gravity="start|center_vertical"
                 android:paddingRight="16dp"
                 android:src="@drawable/ic_arrow_back_secondary_24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -79,7 +77,7 @@
                 android:textSize="@dimen/title"
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
-                android:paddingRight="@dimen/dialog_controls_margin"
+                android:paddingEnd="@dimen/dialog_controls_margin"
                 android:id="@+id/nav_text1" />
 
             <TextView
@@ -92,7 +90,7 @@
                 android:textSize="@dimen/title"
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
-                android:paddingRight="@dimen/dialog_controls_margin"
+                android:paddingEnd="@dimen/dialog_controls_margin"
                 android:id="@+id/nav_text2" />
 
             <TextView
@@ -105,7 +103,7 @@
                 android:textSize="@dimen/title"
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
-                android:paddingRight="@dimen/dialog_controls_margin"
+                android:paddingEnd="@dimen/dialog_controls_margin"
                 android:id="@+id/nav_text3" />
 
             <TextView
@@ -118,7 +116,7 @@
                 android:textSize="@dimen/title"
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
-                android:paddingRight="@dimen/dialog_controls_margin"
+                android:paddingEnd="@dimen/dialog_controls_margin"
                 android:id="@+id/nav_text4" />
 
             <TextView
@@ -131,7 +129,7 @@
                 android:textSize="@dimen/title"
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
-                android:paddingRight="@dimen/dialog_controls_margin"
+                android:paddingEnd="@dimen/dialog_controls_margin"
                 android:id="@+id/nav_text5" />
 
             <LinearLayout
@@ -143,7 +141,7 @@
 
                 <EditText
                     android:layout_gravity="center_vertical"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:hint="@string/search_for_language"
                     android:textStyle="italic"
@@ -163,7 +161,7 @@
             android:id="@+id/search_mag_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="right|center_vertical"
+            android:layout_gravity="end|center_vertical"
             android:src="@drawable/ic_search_secondary_24dp"/>
     </FrameLayout>
 
@@ -176,7 +174,6 @@
     <LinearLayout
         android:focusableInTouchMode="true"
         android:id="@+id/selection_bar"
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/search_bar"
@@ -192,8 +189,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/select_all"
-            android:layout_centerVertical="true"
-            android:layout_marginRight="@dimen/dialog_content_margin"
+            android:layout_marginEnd="@dimen/dialog_content_margin"
             android:gravity="center_vertical|center_horizontal" />
 
         <CheckBox
@@ -201,8 +197,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/unselect_all"
-            android:layout_toRightOf="@+id/select_all"
-            android:layout_centerVertical="true"
             android:layout_marginLeft="@dimen/dialog_content_margin"
             android:layout_marginRight="@dimen/dialog_content_margin" />
 
@@ -211,9 +205,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/download_button"
-            android:layout_toRightOf="@+id/unselect_all"
-            android:layout_centerVertical="true"
-            android:layout_marginLeft="@dimen/dialog_content_margin"
+            android:layout_marginStart="@dimen/dialog_content_margin"
             style="@style/Widget.Button.Blue" />
     </LinearLayout>
 
@@ -222,7 +214,8 @@
         android:layout_height="1px"
         android:background="@color/border_color"
         android:layout_below="@+id/selection_bar"
-        android:id="@+id/selection_bar_separator" />
+        android:id="@+id/selection_bar_separator"
+        android:orientation="horizontal" />
 
     <ListView
         android:id="@+id/list"

@@ -73,7 +73,7 @@ public class DownloadSourcesAdapter extends BaseAdapter {
     private String search = null;
     private final Map<String, String> downloadErrors = new HashMap<>();
 
-    private Typography typography;
+    private final Typography typography;
 
     public DownloadSourcesAdapter(Typography typography) {
         this.typography = typography;
@@ -137,21 +137,10 @@ a     * @param task
 
     @Override
     public int getItemViewType(int position) {
-        int type = TYPE_ITEM_FILTER_SELECTION;
-        switch (selectionType) {
-            case language:
-            case newTestament:
-            case oldTestament:
-            case other_book:
-                type = TYPE_ITEM_FILTER_SELECTION;
-                break;
-
-            case source_filtered_by_language:
-            case source_filtered_by_book:
-                type = TYPE_ITEM_SOURCE_SELECTION;
-                break;
-        }
-        return type;
+        return switch (selectionType) {
+            case source_filtered_by_language, source_filtered_by_book -> TYPE_ITEM_SOURCE_SELECTION;
+            default -> TYPE_ITEM_FILTER_SELECTION;
+        };
     }
 
     @Override
@@ -187,12 +176,10 @@ a     * @param task
             while (keySet.hasNext()) {
                 String key = (String) keySet.next();
                 Object value = jsonMessages.get(key);
-                if(value != null) {
-                    downloadErrors.put(key, value.toString());
-                }
+                downloadErrors.put(key, value.toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.w("DownloadSourcesAdapter", "Error parsing download error messages", e);
         }
     }
 
@@ -230,9 +217,9 @@ a     * @param task
         languageFilter = null;
 
         if((steps == null) // make sure we have data to sort
-            || (steps.size() <= 0)
+            || (steps.isEmpty())
             || (availableSources == null)
-            || (availableSources.size() <= 0) ){
+            || (availableSources.isEmpty()) ){
             return;
         }
 
@@ -346,21 +333,15 @@ a     * @param task
         for(int i = 0; i < bookTypeNameList.length; i++) {
             int id = bookTypeNameList[i];
             if(languageFilter != null) {
-                boolean found = false;
-                switch (id) {
-                    case R.string.old_testament_label:
-                        found = isLanguageInCategory(byLanguage, otBooks);
-                        break;
-                    case R.string.new_testament_label:
-                        found = isLanguageInCategory(byLanguage, ntBooks);
-                        break;
-                    case R.string.ta_label:
-                        found = isLanguageInCategory(byLanguage, taBooks);
-                        break;
-                    default:
-                    case R.string.other_label:
-                        found = isLanguageInCategory(byLanguage, otherBooks);
-                        break;
+                boolean found;
+                if (id == R.string.old_testament_label) {
+                    found = isLanguageInCategory(byLanguage, otBooks);
+                } else if (id == R.string.new_testament_label) {
+                    found = isLanguageInCategory(byLanguage, ntBooks);
+                } else if (id == R.string.ta_label) {
+                    found = isLanguageInCategory(byLanguage, taBooks);
+                } else {
+                    found = isLanguageInCategory(byLanguage, otherBooks);
                 }
                 if(!found) { // if category is not found, skip
                     continue;
@@ -476,18 +457,17 @@ a     * @param task
      */
     public SelectionType getCategoryForFilter(String categoryFilter) {
         int bookTypeSelected = Util.strToInt(categoryFilter, R.string.other_label);
-        switch (bookTypeSelected) {
-            case R.string.old_testament_label:
-                return SelectionType.oldTestament;
-            case R.string.new_testament_label:
-                return  SelectionType.newTestament;
-            case R.string.ta_label:
-                return SelectionType.translationAcademy;
-            default:
-            case R.string.other_label:
-                break;
+        SelectionType type;
+        if (bookTypeSelected == R.string.old_testament_label) {
+            type = SelectionType.oldTestament;
+        } else if (bookTypeSelected == R.string.new_testament_label) {
+            type = SelectionType.newTestament;
+        } else if (bookTypeSelected == R.string.ta_label) {
+            type = SelectionType.translationAcademy;
+        } else {
+            type = SelectionType.other_book;
         }
-        return SelectionType.other_book;
+        return type;
     }
 
     /**
@@ -499,21 +479,12 @@ a     * @param task
 
         //get book list for category
         SelectionType category = getCategoryForFilter(bookFilter);
-        switch(category) {
-            case oldTestament:
-                sortSet = otBooks;
-                break;
-            case newTestament:
-                sortSet = ntBooks;
-                break;
-            case translationAcademy:
-                sortSet = taBooks;
-                break;
-            case other_book:
-            default:
-                sortSet = otherBooks;
-                break;
-        }
+        sortSet = switch (category) {
+            case oldTestament -> otBooks;
+            case newTestament -> ntBooks;
+            case translationAcademy -> taBooks;
+            default -> otherBooks;
+        };
 
         for (String key : byLanguage.keySet()) {
             if(languageFilter != null) {
@@ -610,7 +581,7 @@ a     * @param task
         BaseViewHolder viewHolder;
 
         if (convertView == null) {
-            if (rowType == TYPE_ITEM_SOURCE_SELECTION) {
+            if (rowType == TYPE_ITEM_FILTER_SELECTION) {
                 FragmentSelectFilterItemBinding binding = FragmentSelectFilterItemBinding.inflate(
                         inflater,
                         parent,
