@@ -75,7 +75,7 @@ public class ExportUsfmTest {
     public static final String TAG = ExportUsfmTest.class.getSimpleName();
     private File tempFolder;
     private TargetLanguage targetLanguage;
-    private ImportUSFM usfm;
+    private ProcessUSFM usfm;
     private File outputFile;
     private TargetTranslation targetTranslation;
     private String errorLog;
@@ -281,17 +281,17 @@ public class ExportUsfmTest {
      * @param output
      */
     private void verifyBookID(String input, String output) {
-        String bookTitle = extractString(input, ImportUSFM.PATTERN_BOOK_TITLE_MARKER);
-        String bookLongName = extractString(input, ImportUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
-        String bookShortName = extractString(input, ImportUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
-        String bookTitleOut = extractString(output, ImportUSFM.PATTERN_BOOK_TITLE_MARKER);
-        String bookLongNameOut = extractString(output, ImportUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
+        String bookTitle = extractString(input, ProcessUSFM.PATTERN_BOOK_TITLE_MARKER);
+        String bookLongName = extractString(input, ProcessUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
+        String bookShortName = extractString(input, ProcessUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
+        String bookTitleOut = extractString(output, ProcessUSFM.PATTERN_BOOK_TITLE_MARKER);
+        String bookLongNameOut = extractString(output, ProcessUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
         String bookShortNameOut = extractString(output,
-                ImportUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
+                ProcessUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
 
-        String bookID = extractString(input, ImportUSFM.ID_TAG_MARKER);
+        String bookID = extractString(input, ProcessUSFM.ID_TAG_MARKER);
         String[] bookIdParts = bookID.split(" ");
-        String bookIDOut = extractString(output, ImportUSFM.ID_TAG_MARKER);
+        String bookIDOut = extractString(output, ProcessUSFM.ID_TAG_MARKER);
         String[] bookIdOutParts = bookIDOut.split(" ");
 
         assertEquals("Input and output book titles (\\toc1) should equal",
@@ -386,7 +386,7 @@ public class ExportUsfmTest {
         InputStream usfmStream = assetsProvider.open("usfm/" + source);
         String usfmInputText = FileUtilities.readStreamToString(usfmStream);
 
-        Matcher inputMatcher = ImportUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
+        Matcher inputMatcher = ProcessUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
 
         int lastInputChapterStart = -1;
         String chapterIn = "";
@@ -447,8 +447,8 @@ public class ExportUsfmTest {
 
         verifyBookID(usfmInputText, usfmOutputText);
 
-        Matcher inputMatcher = ImportUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
-        Matcher outputMatcher = ImportUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmOutputText);
+        Matcher inputMatcher = ProcessUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
+        Matcher outputMatcher = ProcessUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmOutputText);
 
         int lastInputChapterStart = -1;
         int lastOutputChapterStart = -1;
@@ -502,8 +502,8 @@ public class ExportUsfmTest {
      * @param outputChapter
      */
     private void compareVersesInChapter(int chapter, String inputChapter, String outputChapter) {
-        Matcher inputVerseMatcher = ImportUSFM.PATTERN_USFM_VERSE_SPAN.matcher(inputChapter);
-        Matcher outputVerseMatcher = ImportUSFM.PATTERN_USFM_VERSE_SPAN.matcher(outputChapter);
+        Matcher inputVerseMatcher = ProcessUSFM.PATTERN_USFM_VERSE_SPAN.matcher(inputChapter);
+        Matcher outputVerseMatcher = ProcessUSFM.PATTERN_USFM_VERSE_SPAN.matcher(outputChapter);
         int lastInputVerseStart = -1;
         int lastOutputVerseStart = -1;
         String verseIn = "";
@@ -634,7 +634,7 @@ public class ExportUsfmTest {
      */
     private void importTestTranslation(String source) {
         //import USFM file to be used for testing
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,

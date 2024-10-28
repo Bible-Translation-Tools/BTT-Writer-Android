@@ -37,7 +37,7 @@ import java.util.regex.Pattern
 /**
  * For processing USFM input file or zip files into importable package.
  */
-class ImportUSFM {
+class ProcessUSFM {
     private var context: Context
     private val directoryProvider: IDirectoryProvider
     private val profile: Profile
@@ -280,10 +280,10 @@ class ImportUSFM {
             return this
         }
 
-        fun build(): ImportUSFM? {
+        fun build(): ProcessUSFM? {
             return try {
                 when {
-                    jsonString != null -> ImportUSFM(
+                    jsonString != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
@@ -291,7 +291,7 @@ class ImportUSFM {
                         assetsProvider,
                         jsonString
                     )
-                    json != null -> ImportUSFM(
+                    json != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
@@ -299,7 +299,7 @@ class ImportUSFM {
                         assetsProvider,
                         json
                     )
-                    targetLanguage != null && file != null -> ImportUSFM(
+                    targetLanguage != null && file != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
@@ -309,7 +309,7 @@ class ImportUSFM {
                         file!!,
                         progressListener
                     )
-                    targetLanguage != null && uri != null -> ImportUSFM(
+                    targetLanguage != null && uri != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
@@ -319,7 +319,7 @@ class ImportUSFM {
                         uri!!,
                         progressListener
                     )
-                    targetLanguage != null && rcPath != null -> ImportUSFM(
+                    targetLanguage != null && rcPath != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
@@ -333,7 +333,7 @@ class ImportUSFM {
                 }
             } catch (e: Exception) {
                 Logger.w(
-                    ImportUSFM::class.java.name,
+                    ProcessUSFM::class.java.name,
                     "Failed to build ImportUSFM instance", e
                 )
                 null
@@ -1698,7 +1698,7 @@ class ImportUSFM {
     }
 
     companion object {
-        val TAG: String = ImportUSFM::class.java.simpleName
+        val TAG: String = ProcessUSFM::class.java.simpleName
         private const val CHAPTER_TITLE_MARKER: String = "\\\\cl\\s([^\\n]*)"
         val PATTERN_CHAPTER_TITLE_MARKER: Pattern = Pattern.compile(CHAPTER_TITLE_MARKER)
         private const val CHAPTER_SUB_TITLE_MARKER: String = "\\\\cl\\s([^\\n]*)"

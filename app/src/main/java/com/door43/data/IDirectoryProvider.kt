@@ -148,4 +148,9 @@ interface IDirectoryProvider {
      * Clear the cache directory
      */
     fun clearCache()
+
+    /**
+     * Deletes all translations
+     */
+    fun deleteTranslations()
 }

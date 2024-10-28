@@ -70,7 +70,7 @@ public class ImportUsfmTest {
 
     private JSONArray expectedBooks;
     private TargetLanguage targetLanguage;
-    private ImportUSFM usfm;
+    private ProcessUSFM usfm;
     private HashMap<String, List<String>> chunks;
     private String[] chapters;
 
@@ -101,7 +101,7 @@ public class ImportUsfmTest {
         boolean expectAllVerses = true;
         int expectedVerseCount = 678;
 
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -137,7 +137,7 @@ public class ImportUsfmTest {
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
 
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -167,7 +167,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 678;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -197,7 +197,7 @@ public class ImportUsfmTest {
         boolean expectSuccess = true;
         boolean expectAllVerses = false;
         int expectedVerseCount = 2461;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -225,7 +225,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectSuccess = false;
         boolean expectAllVerses = true;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -253,7 +253,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 45;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -282,7 +282,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -311,7 +311,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = false;
         int expectedVerseCount = 677;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -340,7 +340,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 633;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -369,7 +369,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -398,7 +398,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 0;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -427,7 +427,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 74;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -456,7 +456,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 74;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -484,7 +484,7 @@ public class ImportUsfmTest {
         boolean expectSuccess = false;
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -512,7 +512,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 81;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -541,7 +541,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = true;
         int expectedVerseCount = 104;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -570,7 +570,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 104;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -599,7 +599,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = true;
         int expectedVerseCount = 104;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -628,7 +628,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = true;
         boolean expectAllVerses = false;
         int expectedVerseCount = 25;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,
@@ -657,7 +657,7 @@ public class ImportUsfmTest {
         boolean expectNoEmptyChunks = false;
         boolean expectAllVerses = false;
         int expectedVerseCount = 6;
-        usfm = new ImportUSFM.Builder(
+        usfm = new ProcessUSFM.Builder(
                 appContext,
                 directoryProvider,
                 profile,

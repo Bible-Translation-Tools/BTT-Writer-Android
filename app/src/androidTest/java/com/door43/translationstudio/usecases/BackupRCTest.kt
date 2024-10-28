@@ -6,7 +6,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.TestUtils.importTargetTranslation
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.ZIP_EXTENSION
 import com.door43.usecases.BackupRC
@@ -47,11 +47,10 @@ class BackupRCTest {
     @Inject lateinit var importProjects: ImportProjects
     @Inject lateinit var profile: Profile
     @Inject lateinit var assetsProvider: AssetsProvider
+    @Inject lateinit var translator: Translator
 
     private var tempDir: File? = null
     private lateinit var targetLanguage: TargetLanguage
-    private var targetTranslation: TargetTranslation? = null
-    private var targetTranslationDir: File? = null
 
     @Before
     fun setUp() {
@@ -65,10 +64,12 @@ class BackupRCTest {
     fun tearDown() {
         FileUtilities.deleteQuietly(tempDir)
         deleteBackups()
+        directoryProvider.clearCache()
+        directoryProvider.deleteTranslations()
     }
 
     @Test
-    fun backupResourceContainerSucceeds() {
+    fun testBackupResourceContainer() {
         val source = "source/fa_jud_nmv.zip"
         val rcTranslation = importSourceTranslation(source)
 
@@ -92,14 +93,16 @@ class BackupRCTest {
     }
 
     @Test
-    fun backupTargetTranslationSucceeds() {
+    fun testBackupTargetTranslation() {
         val source = "usfm/mrk.usfm"
-        importTargetTranslation(
+        val targetTranslation = importTargetTranslation(
             library,
             appContext,
             directoryProvider,
             profile,
             assetsProvider,
+            importProjects,
+            translator,
             "aae",
             source
         )
@@ -109,7 +112,7 @@ class BackupRCTest {
         val backedUp = backupRC.backupTargetTranslation(targetTranslation, false)
         assertTrue("Backup should succeed", backedUp)
 
-        val id = generateTranslationId()
+        val id = targetTranslation!!.id
         val backupFiles = directoryProvider.backupsDir.listFiles()
 
         assertNotNull("Backups dir should not be null", backupFiles)
@@ -122,14 +125,16 @@ class BackupRCTest {
     }
 
     @Test
-    fun backupTargetTranslationOrphanSucceeds() {
+    fun testBackupTargetTranslationOrphan() {
         val source = "usfm/mrk.usfm"
-        importTargetTranslation(
+        val targetTranslation = importTargetTranslation(
             library,
             appContext,
             directoryProvider,
             profile,
             assetsProvider,
+            importProjects,
+            translator,
             "aae",
             source
         )
@@ -139,7 +144,7 @@ class BackupRCTest {
         val backedUp = backupRC.backupTargetTranslation(targetTranslation, true)
         assertTrue("Backup should succeed", backedUp)
 
-        val id = generateTranslationId()
+        val id = targetTranslation!!.id
         val backupFiles = directoryProvider.backupsDir.listFiles()
 
         assertNotNull("Backups dir should not be null", backupFiles)
@@ -152,21 +157,23 @@ class BackupRCTest {
     }
 
     @Test
-    fun backupTargetTranslationDirSucceeds() {
+    fun testBackupTargetTranslationDir() {
         val source = "usfm/19-PSA.usfm"
-        importTargetTranslation(
+        val targetTranslation = importTargetTranslation(
             library,
             appContext,
             directoryProvider,
             profile,
             assetsProvider,
+            importProjects,
+            translator,
             "aae",
             source
         )
 
-        assertNotNull("Target translation should not be null", targetTranslationDir)
+        assertNotNull("Target translation should not be null", targetTranslation)
 
-        val backedUp = backupRC.backupTargetTranslation(targetTranslationDir!!)
+        val backedUp = backupRC.backupTargetTranslation(targetTranslation!!.path)
 
         assertTrue("Backup should succeed", backedUp)
     }
@@ -201,13 +208,5 @@ class BackupRCTest {
                 FileUtilities.safeDelete(file)
             }
         }
-    }
-
-    private fun generateTranslationId(): String {
-        val lang = targetTranslation?.targetLanguage?.slug ?: "_"
-        val book = targetTranslation?.projectId ?: "_"
-        val type = targetTranslation?.translationType?.id ?: "_"
-        val resource = targetTranslation?.resourceSlug ?: "_"
-        return "${lang}_${book}_${type}_${resource}"
     }
 }

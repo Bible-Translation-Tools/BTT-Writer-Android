@@ -3,13 +3,15 @@ package com.door43.translationstudio
 import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.core.ImportUSFM
+import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.Translator
+import com.door43.usecases.ImportProjects
 import com.door43.usecases.SearchGogsUsers
 import com.door43.util.FileUtilities.readStreamToString
 import org.json.JSONArray
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.unfoldingword.door43client.Door43Client
@@ -51,11 +53,13 @@ object TestUtils {
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         assetsProvider: AssetsProvider,
+        importProjects: ImportProjects,
+        translator: Translator,
         langCode: String,
         path: String
     ): TargetTranslation? {
         val targetLanguage = library.index.getTargetLanguage(langCode)
-        val usfm = ImportUSFM.Builder(
+        val usfm = ProcessUSFM.Builder(
             appContext,
             directoryProvider,
             profile,
@@ -69,12 +73,17 @@ object TestUtils {
         assertNotNull("target language should not be null", targetLanguage)
         assertTrue("import usfm test file should succeed", usfm!!.isProcessSuccess)
         val imports = usfm.importProjects
-        Assert.assertEquals("import usfm test file should succeed", 1, imports.size.toLong())
+        assertEquals("import usfm test file should succeed", 1, imports.size.toLong())
 
         //open import as targetTranslation
         val projectFolder = imports[0]
 
-        return TargetTranslation.open(projectFolder, null)
+        val result = importProjects.importProject(projectFolder, true)
+
+        assertNotNull("Import result should not be null", result)
+        assertNotNull("importedSlug should not be null", result?.importedSlug)
+
+        return translator.getTargetTranslation(result!!.importedSlug)
     }
 
     fun loginGogsUser(

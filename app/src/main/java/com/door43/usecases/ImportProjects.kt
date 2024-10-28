@@ -33,11 +33,11 @@ class ImportProjects @Inject constructor(
     private val library: Door43Client
 ) {
     fun importProject(
-        projectsFolder: File,
+        project: File,
         overwrite: Boolean = false
     ): ImportResults? {
         return try {
-            importArchive(projectsFolder, overwrite)
+            importArchive(project, overwrite)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -67,7 +67,8 @@ class ImportProjects @Inject constructor(
                     it?.let { input ->
                         Logger.i(this::class.java.simpleName, "Importing from uri: $filename")
 
-                        val importResults = importArchive(input, overwrite)
+                        val archiveDir = unzipFromStream(input)
+                        val importResults = importArchive(archiveDir, overwrite)
                         importedSlug = importResults.importedSlug
                         alreadyExists = importResults.alreadyExists
                         success = importResults.isSuccess
@@ -240,23 +241,28 @@ class ImportProjects @Inject constructor(
     }
 
     @Throws(Exception::class)
-    private fun importArchive(file: File?, overwrite: Boolean = false): ImportResults {
-        FileInputStream(file).use { input ->
-            return importArchive(input, overwrite)
+    private fun importArchive(file: File, overwrite: Boolean = false): ImportResults {
+        return when {
+            file.isDirectory -> importArchiveDir(file, overwrite)
+            else -> importArchiveFile(file, overwrite)
         }
     }
 
     @Throws(Exception::class)
-    private fun importArchive(inputStream: InputStream, overwrite: Boolean = false): ImportResults {
-        val archiveDir = File(directoryProvider.cacheDir, System.currentTimeMillis().toString() + "")
+    private fun importArchiveFile(archiveFile: File, overwrite: Boolean = false): ImportResults {
+        return FileInputStream(archiveFile).use {
+            val archiveDir = unzipFromStream(it)
+            importArchiveDir(archiveDir, overwrite)
+        }
+    }
+
+    @Throws(Exception::class)
+    private fun importArchiveDir(dir: File, overwrite: Boolean = false): ImportResults {
         var importedSlug: String? = null
         var mergeConflict = false
         var alreadyExists = false
         try {
-            archiveDir.mkdirs()
-            Zip.unzipFromStream(inputStream, archiveDir)
-
-            val targetTranslationDirs = archiveImporter.importArchive(archiveDir)
+            val targetTranslationDirs = archiveImporter.importArchive(dir)
             for (newDir in targetTranslationDirs) {
                 val newTargetTranslation = TargetTranslation.open(newDir) {
                     // Try to backup and delete corrupt project
@@ -306,8 +312,8 @@ class ImportProjects @Inject constructor(
                         }
                     } else {
                         // import new translation
-                        FileUtilities.safeDelete(localDir) // in case local was an invalid target translation
-                        FileUtilities.moveOrCopyQuietly(newDir, localDir)
+                        safeDelete(localDir) // in case local was an invalid target translation
+                        moveOrCopyQuietly(newDir, localDir)
                     }
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
                     TargetTranslation.updateGenerator(context, TargetTranslation.open(localDir) {
@@ -326,10 +332,21 @@ class ImportProjects @Inject constructor(
         } catch (e: Exception) {
             throw e
         } finally {
-            FileUtilities.deleteQuietly(archiveDir)
+            FileUtilities.deleteQuietly(dir)
         }
 
         return ImportResults(importedSlug, mergeConflict, alreadyExists)
+    }
+
+    @Throws(Exception::class)
+    private fun unzipFromStream(input: InputStream): File {
+        val dir = File(
+            directoryProvider.cacheDir,
+            System.currentTimeMillis().toString() + ""
+        )
+        dir.mkdirs()
+        Zip.unzipFromStream(input, dir)
+        return dir
     }
 
     data class ImportResults internal constructor(

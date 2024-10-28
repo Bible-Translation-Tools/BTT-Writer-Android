@@ -8,7 +8,9 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.TestUtils.importTargetTranslation
 import com.door43.translationstudio.TestUtils.loginGogsUser
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.Translator
 import com.door43.usecases.CreateRepository
+import com.door43.usecases.ImportProjects
 import com.door43.usecases.SearchGogsUsers
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -39,6 +41,8 @@ class CreateRepositoryTest {
     @Inject lateinit var assetsProvider: AssetsProvider
     @Inject lateinit var createRepository: CreateRepository
     @Inject lateinit var searchGogsUsers: SearchGogsUsers
+    @Inject lateinit var importProjects: ImportProjects
+    @Inject lateinit var translator: Translator
 
     @Before
     fun setUp() {
@@ -57,6 +61,8 @@ class CreateRepositoryTest {
             directoryProvider,
             profile,
             assetsProvider,
+            importProjects,
+            translator,
             "aae",
             source
         )
@@ -79,6 +85,8 @@ class CreateRepositoryTest {
             directoryProvider,
             profile,
             assetsProvider,
+            importProjects,
+            translator,
             "aae",
             source
         )

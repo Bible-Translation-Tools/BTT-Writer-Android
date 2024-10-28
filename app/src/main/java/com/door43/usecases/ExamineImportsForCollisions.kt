@@ -28,23 +28,23 @@ class ExamineImportsForCollisions @Inject constructor(
         val success: Boolean,
         val alreadyPresent: Boolean,
         val projectsFound: String?,
-        val projectsFolder: File?
+        val projectFile: File?
     )
 
     fun execute(contentUri: Uri): Result {
         var success = false
         var alreadyPresent = false
         var projectsFound: String? = null
-        var projectsFolder: File? = null
+        var projectFile: File? = null
 
         try {
             context.contentResolver.openInputStream(contentUri).use { input ->
                 if (input != null) {
-                    projectsFolder = directoryProvider.createTempFile(
+                    projectFile = directoryProvider.createTempFile(
                         "targettranslation",
                         "." + Translator.TSTUDIO_EXTENSION
                     )
-                    projectsFolder!!.outputStream().use { output ->
+                    projectFile!!.outputStream().use { output ->
                         input.copyTo(output)
                         success = true
                     }
@@ -55,7 +55,7 @@ class ExamineImportsForCollisions @Inject constructor(
                         migrator,
                         library
                     ).fromFile(
-                        projectsFolder!!,
+                        projectFile!!,
                         deviceLanguageCode
                     ).build()
 
@@ -86,11 +86,11 @@ class ExamineImportsForCollisions @Inject constructor(
             success,
             alreadyPresent,
             projectsFound,
-            projectsFolder
+            projectFile
         )
     }
 }
 
 fun Result.cleanup() {
-    projectsFolder?.let { deleteQuietly(it) }
+    projectFile?.let { deleteQuietly(it) }
 }

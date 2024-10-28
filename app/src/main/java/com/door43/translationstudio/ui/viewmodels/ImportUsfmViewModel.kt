@@ -10,7 +10,7 @@ import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.ImportUSFM
+import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
@@ -40,8 +40,8 @@ class ImportUsfmViewModel @Inject constructor(
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
 
-    private val _usfm = MutableLiveData<ImportUSFM?>()
-    val usfm: LiveData<ImportUSFM?> = _usfm
+    private val _usfm = MutableLiveData<ProcessUSFM?>()
+    val usfm: LiveData<ProcessUSFM?> = _usfm
 
     private val _importResult = MutableLiveData<ImportProjects.ImportUsfmResult?>()
     val importResult: LiveData<ImportProjects.ImportUsfmResult?> = _importResult
@@ -50,7 +50,7 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(
+                ProcessUSFM.Builder(
                     application,
                     directoryProvider,
                     profile,
@@ -68,7 +68,7 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(
+                ProcessUSFM.Builder(
                     application,
                     directoryProvider,
                     profile,
@@ -86,7 +86,7 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(
+                ProcessUSFM.Builder(
                     application,
                     directoryProvider,
                     profile,
@@ -104,7 +104,7 @@ class ImportUsfmViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_usfm))
             _usfm.value = withContext(Dispatchers.IO) {
-                ImportUSFM.Builder(
+                ProcessUSFM.Builder(
                     application,
                     directoryProvider,
                     profile,

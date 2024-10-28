@@ -22,6 +22,8 @@ class ArchiveImporter @Inject constructor(
      */
     @Throws(Exception::class)
     fun importArchive(expandedArchiveDir: File): List<File> {
+        val validTargetTranslations = arrayListOf<File>()
+
         // retrieve target translations from archive
         val manifestFile = File(expandedArchiveDir, "manifest.json")
         val targetTranslationDirs: List<File>
@@ -32,7 +34,7 @@ class ArchiveImporter @Inject constructor(
                 targetTranslationDirs = when (packageVersion) {
                     1 -> v1(manifestJson, expandedArchiveDir) // just to keep the switch pretty
                     2 -> v2(manifestJson, expandedArchiveDir)
-                    else -> listOf()
+                    else -> listOf(expandedArchiveDir)
                 }
             } else {
                 targetTranslationDirs = v1(manifestJson, expandedArchiveDir)
@@ -42,7 +44,6 @@ class ArchiveImporter @Inject constructor(
         }
 
         // migrate target translations
-        val validTargetTranslations = arrayListOf<File>()
         for (dir in targetTranslationDirs) {
             val migratedDir = migrator.migrate(dir)
             if (migratedDir != null) {

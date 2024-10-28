@@ -29,6 +29,8 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
+import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.databinding.DialogBackupBinding
 import com.door43.translationstudio.ui.ProfileActivity
 import com.door43.translationstudio.ui.SettingsActivity
@@ -83,8 +85,11 @@ class BackupDialog : DialogFragment() {
         ) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
                 result.data?.data?.let { uri ->
-                    requireContext().contentResolver.getType(uri)?.let { mimeType ->
-                        saveFile(uri, mimeType)
+                    val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
+                    when {
+                        filename.contains(USFM_EXTENSION) -> viewModel.exportUSFM(uri)
+                        filename.contains(TSTUDIO_EXTENSION) -> viewModel.exportProject(uri)
+                        else -> notifyBackupFailed(targetTranslation)
                     }
                 }
             }
@@ -401,7 +406,7 @@ class BackupDialog : DialogFragment() {
      * display confirmation prompt before USFM export (also allow entry of filename
      */
     private fun showExportProjectPrompt() {
-        val filename = targetTranslation.id + "." + Translator.TSTUDIO_EXTENSION
+        val filename = targetTranslation.id + "." + TSTUDIO_EXTENSION
         showExportPathPrompt(filename, EXPORT_TSTUDIO_MIME_TYPE)
     }
 
@@ -415,13 +420,6 @@ class BackupDialog : DialogFragment() {
         intent.setType(mimeType)
         intent.putExtra(Intent.EXTRA_TITLE, defaultFileName)
         activityResultLauncher.launch(intent)
-    }
-
-    private fun saveFile(targetUri: Uri, mimeType: String) {
-        when (mimeType) {
-            EXPORT_TSTUDIO_MIME_TYPE -> viewModel.exportProject(targetUri)
-            EXPORT_USFM_MIME_TYPE -> viewModel.exportUSFM(targetUri)
-        }
     }
 
     /**

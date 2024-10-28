@@ -186,4 +186,8 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
             FileUtilities.deleteQuietly(it)
         }
     }
+
+    override fun deleteTranslations() {
+        // Do nothing in production code
+    }
 }

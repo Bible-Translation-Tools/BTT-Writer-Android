@@ -625,7 +625,7 @@ class HomeActivity : BaseActivity(),
      */
     private fun doArchiveImport(overwrite: Boolean) {
         viewModel.examineImportsResult.value?.let { result ->
-            result.projectsFolder?.let {
+            result.projectFile?.let {
                 viewModel.importProjects(it, overwrite)
             }
         }
