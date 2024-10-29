@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.TestUtils.importTargetTranslation
+import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -44,8 +44,7 @@ class ExportProjectsTest {
     var hiltRule = HiltAndroidRule(this)
 
     @Inject
-    @ApplicationContext
-    lateinit var appContext: Context
+    @ApplicationContext lateinit var appContext: Context
     @Inject lateinit var exportProjects: ExportProjects
     @Inject lateinit var assetsProvider: AssetsProvider
     @Inject lateinit var directoryProvider: IDirectoryProvider
@@ -63,7 +62,7 @@ class ExportProjectsTest {
         Logger.flush()
 
         targetLanguage = library.index.getTargetLanguage("aa")
-        targetTranslation = importTargetTranslation(
+        targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,

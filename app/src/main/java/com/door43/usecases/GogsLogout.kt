@@ -34,8 +34,8 @@ class GogsLogout @Inject constructor(
             SettingsActivity.KEY_PREF_GOGS_API,
             context.resources.getString(R.string.pref_default_gogs_api)
         )
-        val requester: RequestAPI = OkHttpRequest(apiUrl)
-        val tokenId: Int = getTokenId(user, requester, tokenName)
+        val requester = OkHttpRequest(apiUrl)
+        val tokenId = getTokenId(user, requester, tokenName)
         if (tokenId < 0) {
             return
         }

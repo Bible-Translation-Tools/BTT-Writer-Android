@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.TestUtils.importTargetTranslation
+import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
 import com.door43.usecases.ExamineImportsForCollisions
@@ -100,7 +100,7 @@ class ExamineImportsForCollisionsTest {
     @Test
     fun testCollisionOnExistentProject() {
         val importSrc = "usfm/mrk.usfm"
-        importTargetTranslation(
+        TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,

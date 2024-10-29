@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.TestUtils.importTargetTranslation
+import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
@@ -95,7 +95,7 @@ class BackupRCTest {
     @Test
     fun testBackupTargetTranslation() {
         val source = "usfm/mrk.usfm"
-        val targetTranslation = importTargetTranslation(
+        val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,
@@ -127,7 +127,7 @@ class BackupRCTest {
     @Test
     fun testBackupTargetTranslationOrphan() {
         val source = "usfm/mrk.usfm"
-        val targetTranslation = importTargetTranslation(
+        val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,
@@ -159,7 +159,7 @@ class BackupRCTest {
     @Test
     fun testBackupTargetTranslationDir() {
         val source = "usfm/19-PSA.usfm"
-        val targetTranslation = importTargetTranslation(
+        val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,

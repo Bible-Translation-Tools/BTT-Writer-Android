@@ -26,7 +26,7 @@ class GogsLogin @Inject constructor(
     fun execute(
         username: String,
         password: String,
-        fullName: String?
+        fullName: String? = null
     ): LoginResult {
         val apiUrl = prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_GOGS_API,
@@ -80,7 +80,7 @@ class GogsLogin @Inject constructor(
     }
 
     @SuppressLint("HardwareIds")
-    fun getTokenStub(): String {
+    private fun getTokenStub(): String {
         val defaultTokenName = context.resources.getString(R.string.gogs_token_name)
         val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         var nickname = Settings.Secure.getString(context.contentResolver, "bluetooth_name")

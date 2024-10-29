@@ -5,8 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.TestUtils.importTargetTranslation
-import com.door43.translationstudio.TestUtils.loginGogsUser
+import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
 import com.door43.usecases.CreateRepository
@@ -60,7 +59,7 @@ class CreateRepositoryTest {
     @Test
     fun createRepositoryWithAuthenticationSucceeds() {
         val source = "usfm/mrk.usfm"
-        val targetTranslation = importTargetTranslation(
+        val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,
@@ -74,7 +73,7 @@ class CreateRepositoryTest {
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
-        loginGogsUser(profile, searchGogsUsers)
+        TestUtils.loginGogsUser(profile, searchGogsUsers)
 
         val created = createRepository.execute(targetTranslation!!)
 
@@ -84,7 +83,7 @@ class CreateRepositoryTest {
     @Test
     fun createRepositoryWithoutAuthenticationFails() {
         val source = "usfm/mrk.usfm"
-        val targetTranslation = importTargetTranslation(
+        val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,

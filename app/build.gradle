@@ -39,6 +39,7 @@ android {
         testInstrumentationRunner "com.door43.translationstudio.CustomTestRunner"
 
         buildConfigField "String", "TEST_USER", "\"${System.getenv("TEST_USER") ?: ""}\""
+        buildConfigField "String", "TEST_PASS", "\"${System.getenv("TEST_PASS") ?: ""}\""
         buildConfigField "String", "TEST_TOKEN", "\"${System.getenv("TEST_TOKEN") ?: ""}\""
     }
     buildTypes {
@@ -66,6 +67,7 @@ android {
     packagingOptions {
         resources {
             merges += ['plugin.properties']
+            excludes += "/META-INF/*"
         }
     }
     lint {
@@ -181,6 +183,11 @@ dependencies {
 
     //    androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
     testImplementation 'junit:junit:4.13.2'
+
+    testImplementation "io.mockk:mockk-android:1.13.13"
+    testImplementation "io.mockk:mockk-agent:1.13.13"
+    androidTestImplementation "io.mockk:mockk-android:1.13.13"
+    androidTestImplementation "io.mockk:mockk-agent:1.13.13"
 }
 
 kapt {

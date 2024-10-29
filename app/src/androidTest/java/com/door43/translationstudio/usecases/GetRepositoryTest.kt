@@ -4,8 +4,7 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.TestUtils.importTargetTranslation
-import com.door43.translationstudio.TestUtils.loginGogsUser
+import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
 import com.door43.usecases.GetRepository
@@ -58,7 +57,7 @@ class GetRepositoryTest {
     @Test
     fun getRepositorySucceeds() {
         val source = "usfm/mrk.usfm"
-        val targetTranslation = importTargetTranslation(
+        val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
             directoryProvider,
@@ -72,7 +71,7 @@ class GetRepositoryTest {
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
-        loginGogsUser(profile, searchGogsUsers)
+        TestUtils.loginGogsUser(profile, searchGogsUsers)
 
         val repo = getRepository.execute(targetTranslation!!)
 
