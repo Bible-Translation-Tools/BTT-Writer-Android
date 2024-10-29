@@ -12,7 +12,6 @@ class GetAvailableSources @Inject constructor(
     private val library: Door43Client
 ) {
     data class Result(
-        val success: Boolean,
         val sources: List<Translation>,
         val byLanguage: Map<String, List<Int>>,
         val otBooks: Map<String, List<Int>>,
@@ -23,7 +22,6 @@ class GetAvailableSources @Inject constructor(
 
     fun execute(prefix: String, progressListener: OnProgressListener? = null): Result {
         val max = 100
-        var success = false
 
         val ntBookList = BibleCodes.getNtBooks()
         val otBookList = BibleCodes.getOtBooks()
@@ -109,10 +107,7 @@ class GetAvailableSources @Inject constructor(
             }
         }
 
-        success = true
-
         return Result(
-            success,
             sources,
             byLanguage,
             otBooks,
