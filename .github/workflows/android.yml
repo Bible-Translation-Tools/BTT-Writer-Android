@@ -17,13 +17,6 @@ jobs:
         distribution: 'zulu'
         cache: gradle
 
-    - name: Set up Android SDK
-      uses: android-actions/setup-android@v2
-      with:
-        api-level: 30
-        build-tools: 30.0.3
-        target: android-30
-
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Decrypt secret key file
@@ -50,18 +43,6 @@ jobs:
       run:  echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
     - name: Test with Gradle
       run: ./gradlew test --stacktrace
-
-    - name: Start emulator
-      run: |
-        echo "Setting up AVD"
-        sudo $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --force
-        echo "Starting AVD"
-        nohup $ANDROID_HOME/emulator/emulator -avd test -no-snapshot-load -no-window -no-audio &
-        adb wait-for-device
-        adb shell input keyevent 82
-
-    - name: Run Connected Android Tests with Gradle
-      run: ./gradlew cAT --stacktrace
       env:
         TEST_USER: ${{ secrets.TEST_USER }}
         TEST_PASS: ${{ secrets.TEST_PASS }}
@@ -100,3 +81,26 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: false
         files: release/*.*
+
+  connected-tests:
+
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'zulu'
+          cache: 'gradle'
+
+      - name: Run connected tests
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          script: ./gradlew connectedCheck
