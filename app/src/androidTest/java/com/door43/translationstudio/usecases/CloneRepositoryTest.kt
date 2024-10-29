@@ -46,12 +46,8 @@ class CloneRepositoryTest {
     fun cloneRepositorySuccessfully() {
         val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/en_ulb.git"
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
 
         val result = cloneRepository.execute(cloneUrl, progressListener)
@@ -75,12 +71,8 @@ class CloneRepositoryTest {
         val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/non_existing_repo.git"
 
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
 
         val result = cloneRepository.execute(cloneUrl, progressListener)

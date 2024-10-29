@@ -36,12 +36,8 @@ class AdvancedGogsRepoSearchTest {
         val user = "mxaln"
 
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
         val repos = advancedGogsRepoSearch.execute(user, "", 5, progressListener)
 

@@ -7,7 +7,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.OnProgressListener
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
@@ -76,14 +75,19 @@ class ImportViewModel @Inject constructor(
     fun searchRepositories(userQuery: String, repoQuery: String, limit: Int) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                advancedGogsRepoSearch.execute(userQuery, repoQuery, limit, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                advancedGogsRepoSearch.execute(
+                    userQuery,
+                    repoQuery,
+                    limit
+                ) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _repositories.value = result.map(::mapRepository)
             _progress.value = null
@@ -93,14 +97,15 @@ class ImportViewModel @Inject constructor(
     fun cloneRepository(cloneUrl: String) {
         viewModelScope.launch {
             _cloneRepoResult.value = withContext(Dispatchers.IO) {
-                cloneRepository.execute(cloneUrl, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                cloneRepository.execute(cloneUrl) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _progress.value = null
         }
@@ -109,14 +114,15 @@ class ImportViewModel @Inject constructor(
     fun importProjectFromUri(path: Uri, mergeOverwrite: Boolean) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                importProjects.importProject(path, mergeOverwrite, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                importProjects.importProject(path, mergeOverwrite) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _importFromUriResult.value = result
             _progress.value = null
@@ -146,14 +152,15 @@ class ImportViewModel @Inject constructor(
     fun registerSSHKeys(force: Boolean) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                registerSSHKeys.execute(force) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _registeredSSHKeys.value = result
             _progress.value = null

@@ -1,13 +1,11 @@
 package com.door43.translationstudio.usecases
 
-import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.usecases.GetAvailableSources
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -35,12 +33,8 @@ class GetAvailableSourcesTest {
     fun testAvailableResources() {
         val prefixMessage = "test_prefix"
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
 
         val result = getAvailableSources.execute(prefixMessage, progressListener)

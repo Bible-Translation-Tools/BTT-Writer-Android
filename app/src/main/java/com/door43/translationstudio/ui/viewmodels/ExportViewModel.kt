@@ -6,7 +6,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
@@ -158,14 +157,11 @@ class ExportViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.downloading_images))
             _downloadResult.value = withContext(Dispatchers.IO) {
-                val imagesDir = downloadImages.download(object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                val imagesDir = downloadImages.download { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(message, progress, max)
+                    )
+                }
                 DownloadImages.Result(imagesDir?.exists() == true, imagesDir)
             }
             _progress.value = null
@@ -182,15 +178,16 @@ class ExportViewModel @Inject constructor(
                     pullTargetTranslation.execute(
                         targetTranslation,
                         strategy,
-                        progressListener = object : OnProgressListener {
-                            override fun onProgress(progress: Int, max: Int, message: String?) {
-                                _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                            }
-                            override fun onIndeterminate() {
-                                _progress.postValue(ProgressHelper.Progress())
-                            }
-                        }
-                    )
+                        null
+                    ) { progress, max, message ->
+                        _progress.postValue(
+                            ProgressHelper.Progress(
+                                message,
+                                progress,
+                                max
+                            )
+                        )
+                    }
                 }
                 _pullTranslationResult.value = result
                 _progress.value = null
@@ -205,14 +202,15 @@ class ExportViewModel @Inject constructor(
                     application.getString(R.string.uploading)
                 )
                 val result = withContext(Dispatchers.IO) {
-                    pushTargetTranslation.execute(targetTranslation, object : OnProgressListener {
-                        override fun onProgress(progress: Int, max: Int, message: String?) {
-                            _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                        }
-                        override fun onIndeterminate() {
-                            _progress.postValue(ProgressHelper.Progress())
-                        }
-                    })
+                    pushTargetTranslation.execute(targetTranslation) { progress, max, message ->
+                        _progress.postValue(
+                            ProgressHelper.Progress(
+                                message,
+                                progress,
+                                max
+                            )
+                        )
+                    }
                 }
                 _pushTranslationResult.value = result
                 _progress.value = null
@@ -226,14 +224,15 @@ class ExportViewModel @Inject constructor(
                 application.getString(R.string.registering_keys)
             )
             val result = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                registerSSHKeys.execute(force) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _registeredSSHKeys.value = result
             _progress.value = null
@@ -246,14 +245,16 @@ class ExportViewModel @Inject constructor(
                 _progress.value = ProgressHelper.Progress(
                     application.getString(R.string.creating_repository)
                 )
-                _repoCreated.value = createRepository.execute(targetTranslation, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                _repoCreated.value =
+                    createRepository.execute(targetTranslation) { progress, max, message ->
+                        _progress.postValue(
+                            ProgressHelper.Progress(
+                                message,
+                                progress,
+                                max
+                            )
+                        )
+                }
                 _progress.value = null
             }
         }

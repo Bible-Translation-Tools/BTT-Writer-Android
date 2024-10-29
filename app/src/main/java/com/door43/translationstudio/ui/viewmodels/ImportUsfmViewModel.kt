@@ -163,12 +163,7 @@ class ImportUsfmViewModel @Inject constructor(
         _usfm.value = null
     }
 
-    private val progressListener = object : OnProgressListener {
-        override fun onProgress(progress: Int, max: Int, message: String?) {
-            _progress.postValue(ProgressHelper.Progress(message, progress, max))
-        }
-        override fun onIndeterminate() {
-            _progress.postValue(ProgressHelper.Progress())
-        }
+    private val progressListener = OnProgressListener { progress, max, message ->
+        _progress.postValue(ProgressHelper.Progress(message, progress, max))
     }
 }

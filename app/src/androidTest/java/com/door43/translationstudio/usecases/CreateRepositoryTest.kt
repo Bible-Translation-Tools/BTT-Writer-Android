@@ -99,12 +99,8 @@ class CreateRepositoryTest {
         assertNotNull("Target translation should not be null", targetTranslation)
 
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
         val created = createRepository.execute(targetTranslation!!, progressListener)
 

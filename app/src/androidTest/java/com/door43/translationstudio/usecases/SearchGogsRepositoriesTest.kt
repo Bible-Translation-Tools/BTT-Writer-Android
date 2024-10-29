@@ -44,12 +44,8 @@ class SearchGogsRepositoriesTest {
         assertEquals(gogsUser?.username, user)
 
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
         val repos = searchGogsRepositories.execute(gogsUser!!.id, "", 3, progressListener)
 

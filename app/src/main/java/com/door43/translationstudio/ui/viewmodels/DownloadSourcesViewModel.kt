@@ -5,7 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.OnProgressListener
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.DownloadResourceContainers
 import com.door43.usecases.GetAvailableSources
@@ -36,14 +35,15 @@ class DownloadSourcesViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _availableSources.value = withContext(Dispatchers.IO) {
-                getAvailableSources.execute(prefix, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                getAvailableSources.execute(prefix) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _progress.value = null
         }
@@ -53,14 +53,15 @@ class DownloadSourcesViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _downloadedSources.value = withContext(Dispatchers.IO) {
-                downloadResourceContainers.download(selected, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                downloadResourceContainers.download(selected) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _progress.value = null
         }

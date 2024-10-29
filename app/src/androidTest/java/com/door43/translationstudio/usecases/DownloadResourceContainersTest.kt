@@ -46,12 +46,8 @@ class DownloadResourceContainersTest {
         assertNotNull("Translation should not be null", translation)
 
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
 
         val result = downloadResourceContainers.download(translation, progressListener)
@@ -70,12 +66,8 @@ class DownloadResourceContainersTest {
         val translationIds = listOf("en_gen_ulb", "id_gen_ayt")
 
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
 
         val result = downloadResourceContainers.download(translationIds, progressListener)

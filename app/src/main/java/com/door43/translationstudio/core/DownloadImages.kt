@@ -118,9 +118,7 @@ class DownloadImages @Inject constructor(
                     // Log.i(TAG,  "Download progress - " + progress + "out of " + max);
                 }
             }
-
             override fun onIndeterminate() {
-                listener?.onIndeterminate()
             }
         })
 

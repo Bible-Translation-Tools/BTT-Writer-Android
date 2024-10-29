@@ -6,7 +6,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
@@ -251,14 +250,15 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _indexDownloaded.value = withContext(Dispatchers.IO) {
-                downloadIndex.execute(object: OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                downloadIndex.execute { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _progress.value = null
         }
@@ -268,14 +268,15 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _updateSourceResult.value = withContext(Dispatchers.IO) {
-                updateSource.execute(message, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                updateSource.execute(message) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _progress.value = null
         }
@@ -285,14 +286,15 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _uploadCatalogResult.value = withContext(Dispatchers.IO) {
-                updateCatalogs.execute(message, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                updateCatalogs.execute(message) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _progress.value = null
         }
@@ -304,14 +306,15 @@ class HomeViewModel @Inject constructor(
                 application.getString(R.string.registering_keys)
             )
             _registeredSSHKeys.value = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force, object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                registerSSHKeys.execute(force) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _progress.value = null
         }

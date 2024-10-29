@@ -1,16 +1,12 @@
 package com.door43
 
-interface OnProgressListener {
+fun interface OnProgressListener {
     /**
-     * Publish the progress on an operation between 0 and max
-     * @param progress
+     * Publish the progress
+     * @param progress Current value. When progress set to less than 0, it will be indeterminate
+     * @param max Max value
+     * @param message Message to display
      * @return
      */
     fun onProgress(progress: Int, max: Int, message: String?)
-
-    /**
-     * Identifies the current task as not quantifiable
-     * @return
-     */
-    fun onIndeterminate()
 }

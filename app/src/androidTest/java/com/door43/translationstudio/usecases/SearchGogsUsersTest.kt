@@ -36,12 +36,8 @@ class SearchGogsUsersTest {
     fun searchParticularUser() {
         val user = "mXaln"
         var progressMessage: String? = null
-        val progressListener = object : OnProgressListener {
-            override fun onProgress(progress: Int, max: Int, message: String?) {
-                progressMessage = message
-            }
-            override fun onIndeterminate() {
-            }
+        val progressListener = OnProgressListener { _, _, message ->
+            progressMessage = message
         }
 
         val gogsUser = searchGogsUsers.execute(user, 1, progressListener).singleOrNull()

@@ -5,7 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
@@ -41,14 +40,15 @@ class SplashScreenViewModel @Inject constructor(
                 application.getString(R.string.updating_app)
             )
             withContext(Dispatchers.IO) {
-                updateApp.execute(object : OnProgressListener {
-                    override fun onProgress(progress: Int, max: Int, message: String?) {
-                        _progress.postValue(ProgressHelper.Progress(message, progress, max))
-                    }
-                    override fun onIndeterminate() {
-                        _progress.postValue(ProgressHelper.Progress())
-                    }
-                })
+                updateApp.execute { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
             }
             _updateFinished.value = true
             _progress.value = null
