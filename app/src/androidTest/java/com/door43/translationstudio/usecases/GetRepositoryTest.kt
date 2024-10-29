@@ -14,6 +14,7 @@ import com.door43.usecases.SearchGogsUsers
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -46,8 +47,12 @@ class GetRepositoryTest {
     fun setUp() {
         hiltRule.inject()
         Logger.flush()
+    }
 
+    @After
+    fun tearDown() {
         directoryProvider.clearCache()
+        directoryProvider.deleteTranslations()
     }
 
     @Test

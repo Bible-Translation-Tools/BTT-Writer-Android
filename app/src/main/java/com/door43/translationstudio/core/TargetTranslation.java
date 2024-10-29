@@ -1340,9 +1340,8 @@ public class TargetTranslation {
     /**
      * Returns the commit hash of the repo HEAD
      * @return
-     * @throws Exception
      */
-    public String getCommitHash() throws Exception {
+    public String getCommitHash() {
         String tag = null;
         try {
             RevCommit commit = getGitHead(getRepo());

@@ -496,6 +496,8 @@ class Translator (
     }
 
     companion object {
+        val TAG: String = Translator::class.java.name
+
         const val OPEN_SOURCE_TRANSLATIONS = "open_source_translations_"
         const val LAST_VIEW_MODE = "last_view_mode_"
         const val LAST_FOCUS_CHAPTER = "last_focus_chapter_"
@@ -511,10 +513,10 @@ class Translator (
 
         private const val TSTUDIO_PACKAGE_VERSION = 2
         private const val GENERATOR_NAME = "ts-android"
-        const val TSTUDIO_EXTENSION: String = "tstudio"
-        const val ZIP_EXTENSION: String = "zip"
-        const val USFM_EXTENSION: String = "usfm"
-        val TAG: String = Translator::class.java.name
+        const val TSTUDIO_EXTENSION = "tstudio"
+        const val ZIP_EXTENSION = "zip"
+        const val USFM_EXTENSION = "usfm"
+        const val PDF_EXTENSION = "pdf"
 
         /**
          * Compiles all the editable text back into source that could be either USX or USFM.  It replaces

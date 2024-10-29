@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App.Companion.recoverRepo
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.PdfPrinter
@@ -16,9 +15,10 @@ import com.door43.translationstudio.core.Translator.Companion.ZIP_EXTENSION
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.Util
 import com.door43.util.FileUtilities
+import com.door43.util.RepoUtils
 import com.door43.util.Zip
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.eclipse.jgit.api.errors.NoHeadException
+import org.eclipse.jgit.errors.TransportException
 import org.json.JSONArray
 import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
@@ -56,41 +56,33 @@ class ExportProjects @Inject constructor(
         fileUri: Uri,
         recoverBadRepo: Boolean = true
     ): Result {
-        val success = try {
-            try {
-                targetTranslation.commitSync(".", false)
-            } catch (e: Exception) {
-                // it's not the end of the world if we cannot commit.
-                e.printStackTrace()
-            }
+        var success = false
+        val tempDir = directoryProvider.createTempDir()
+        try {
+            targetTranslation.commitSync(".", false)
 
             val manifestJson = buildArchiveManifest(targetTranslation)
-            val tempDir = directoryProvider.createTempDir()
-            try {
-                val manifestFile = File(tempDir, "manifest.json")
-                manifestFile.createNewFile()
-                directoryProvider.writeStringToFile(manifestFile, manifestJson.toString())
+            val manifestFile = File(tempDir, "manifest.json")
+            manifestFile.createNewFile()
+            directoryProvider.writeStringToFile(manifestFile, manifestJson.toString())
 
-                context.contentResolver.openOutputStream(fileUri).use { out ->
-                    Zip.zipToStream(
-                        arrayOf(manifestFile, targetTranslation.path), out
-                    )
-                }
-            } catch (e: NoHeadException) {
-                if (recoverBadRepo) {
-                    // fix corrupt repo and try again
-                    recoverRepo(targetTranslation)
-                    return exportProject(targetTranslation, fileUri, false)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                FileUtilities.deleteQuietly(tempDir)
+            context.contentResolver.openOutputStream(fileUri).use { out ->
+                Zip.zipToStream(
+                    arrayOf(manifestFile, targetTranslation.path), out
+                )
             }
-            true
+            success = true
+        } catch (e: TransportException) {
+            if (recoverBadRepo) {
+                // fix corrupt repo and try again
+                RepoUtils.recover(targetTranslation)
+                return exportProject(targetTranslation, fileUri, false)
+            }
+            success = true
         } catch (e: Exception) {
             Log.e(this::class.simpleName, "Failed to export project", e)
-            false
+        } finally {
+            FileUtilities.deleteQuietly(tempDir)
         }
 
         return Result(fileUri, success, ExportType.PROJECT)
@@ -131,8 +123,7 @@ class ExportProjects @Inject constructor(
             val tempFile = directoryProvider.createTempFile("output", dir = tempDir)
 
             PrintStream(tempFile).use { ps ->
-                val id =
-                    "\\id $bookCode $bookTitle, $bookName, $languageId, $languageName"
+                val id = "\\id $bookCode $bookTitle, $bookName, $languageId, $languageName"
                 ps.println(id)
                 val ide = "\\ide usfm"
                 ps.println(ide)

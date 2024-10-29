@@ -16,7 +16,6 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
-import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.FileUtilities
 import org.unfoldingword.tools.foreground.Foreground
@@ -173,30 +172,6 @@ class App : Application() {
                 instance.contentResolver,
                 Settings.Secure.ANDROID_ID
             )
-        }
-
-        /**
-         * Attempts to recover from a corrupt git history.
-         *
-         * @param t the translation to repair
-         * @return
-         */
-        @JvmStatic
-        fun recoverRepo(t: TargetTranslation?): Boolean {
-            if (t == null) return false
-            Logger.w(TAG, "Recovering repository for " + t.id)
-            try {
-                val gitDir = File(t.path, ".git")
-                val backedUp = backup.backupTargetTranslation(t, true)
-                if (backedUp && FileUtilities.deleteQuietly(gitDir)) {
-                    t.commitSync(".", false)
-                    Logger.i(TAG, "History repaired for " + t.id)
-                    return true
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            return false
         }
 
         @JvmStatic

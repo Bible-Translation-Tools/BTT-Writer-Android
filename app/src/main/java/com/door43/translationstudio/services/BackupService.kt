@@ -13,12 +13,12 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.App.Companion.recoverRepo
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.usecases.BackupRC
+import com.door43.util.RepoUtils
 import dagger.hilt.android.AndroidEntryPoint
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.unfoldingword.tools.foreground.Foreground
@@ -34,9 +34,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class BackupService : Service(), Foreground.Listener {
     @Inject lateinit var translator: Translator
-
     @Inject lateinit var backupRC: BackupRC
-
     @Inject lateinit var prefRepository: IPreferenceRepository
 
     private val sTimer = Timer()
@@ -144,7 +142,7 @@ class BackupService : Service(), Foreground.Listener {
             } catch (e: Exception) {
                 if (e is JGitInternalException) {
                     Logger.w(TAG, "History corrupt in " + t.id + ". Repairing...", e)
-                    recoverRepo(t)
+                    RepoUtils.recover(t)
                 } else {
                     Logger.w(TAG, "Could not commit changes to " + t.id, e)
                 }
