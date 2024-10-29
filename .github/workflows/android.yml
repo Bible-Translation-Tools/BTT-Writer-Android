@@ -17,6 +17,13 @@ jobs:
         distribution: 'zulu'
         cache: gradle
 
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        api-level: 34
+        build-tools: 34.0.3
+        target: android-34
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Decrypt secret key file
@@ -43,6 +50,16 @@ jobs:
       run:  echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
     - name: Test with Gradle
       run: ./gradlew test --stacktrace
+
+    - name: Start emulator
+      run: |
+        echo "Setting up AVD"
+        sudo $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test -k "system-images;android-34;google_apis;x86_64" --force
+        echo "Starting AVD"
+        nohup $ANDROID_HOME/emulator/emulator -avd test -no-snapshot-load -no-window -no-audio &
+        adb wait-for-device
+        adb shell input keyevent 82
+
     - name: Run Connected Android Tests with Gradle
       run: ./gradlew cAT --stacktrace
       env:
