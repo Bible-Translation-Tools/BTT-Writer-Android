@@ -104,10 +104,6 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
-          cores: 4
-          ram-size: 12288M
-          heap-size: 512M
-          emulator-options: -no-boot-anim
           script: ./gradlew connectedCheck --no-build-cache --no-daemon --stacktrace
         env:
           TEST_USER: ${{ secrets.TEST_USER }}
