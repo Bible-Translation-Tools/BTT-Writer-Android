@@ -107,7 +107,7 @@ jobs:
           cores: 4
           ram-size: 12288M
           heap-size: 512M
-          emulator-options: -gpu host -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-boot-anim
           script: ./gradlew connectedCheck --no-build-cache --no-daemon --stacktrace
         env:
           TEST_USER: ${{ secrets.TEST_USER }}
