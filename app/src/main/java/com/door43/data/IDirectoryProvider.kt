@@ -152,5 +152,5 @@ interface IDirectoryProvider {
     /**
      * Deletes all translations
      */
-    fun deleteTranslations()
+    fun deleteTranslations() {}
 }

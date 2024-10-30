@@ -10,6 +10,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,7 +37,10 @@ class DownloadResourceContainersTest {
     fun setUp() {
         hiltRule.inject()
         Logger.flush()
+    }
 
+    @After
+    fun tearDown() {
         directoryProvider.clearCache()
     }
 

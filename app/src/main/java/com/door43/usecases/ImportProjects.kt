@@ -39,7 +39,7 @@ class ImportProjects @Inject constructor(
         return try {
             importArchive(project, overwrite)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e(this::class.java.simpleName, "Exception Importing from project file", e)
             null
         }
     }

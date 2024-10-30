@@ -143,6 +143,9 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
     override fun deployDefaultLibrary() {
         Logger.i(TAG, "Deploying the default library to " + containersDir.parentFile)
 
+        // delete old database first
+        FileUtilities.deleteQuietly(databaseFile)
+
         // copy index
         context.assets.open("index.sqlite").use { inputStream ->
             FileOutputStream(databaseFile).use { outputStream ->
@@ -156,9 +159,9 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
 
         // Delete old journal to avoid corrupt database errors
         val shmFile = File(databaseFile.absolutePath + "-shm")
-        if (shmFile.exists()) { shmFile.delete() }
+        if (shmFile.exists()) { FileUtilities.deleteQuietly(shmFile) }
         val walFile = File(databaseFile.absolutePath + "-wal")
-        if (walFile.exists()) { walFile.delete() }
+        if (walFile.exists()) { FileUtilities.deleteQuietly(walFile) }
 
         // extract resource containers
         containersDir.mkdirs()
@@ -191,9 +194,5 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
         cacheDir.listFiles()?.forEach {
             FileUtilities.deleteQuietly(it)
         }
-    }
-
-    override fun deleteTranslations() {
-        // Do nothing in production code
     }
 }
