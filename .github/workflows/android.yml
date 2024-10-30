@@ -43,10 +43,6 @@ jobs:
       run:  echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
     - name: Test with Gradle
       run: ./gradlew test --stacktrace
-      env:
-        TEST_USER: ${{ secrets.TEST_USER }}
-        TEST_PASS: ${{ secrets.TEST_PASS }}
-        TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
     - name: Assemble with Gradle
       run: ./gradlew assembleRelease -PsignIt=true
       env:
@@ -102,3 +98,8 @@ jobs:
         with:
           api-level: 34
           script: ./gradlew connectedCheck
+          arch: arm64-v8a
+        env:
+          TEST_USER: ${{ secrets.TEST_USER }}
+          TEST_PASS: ${{ secrets.TEST_PASS }}
+          TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
