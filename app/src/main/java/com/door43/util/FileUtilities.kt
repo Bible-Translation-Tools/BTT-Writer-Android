@@ -402,12 +402,26 @@ object FileUtilities {
     }
 
     @JvmStatic
-    fun getUriDisplayName(context: Context, uri: Uri?): String {
-        context.contentResolver.query(uri!!, null, null, null, null).use { returnCursor ->
-            checkNotNull(returnCursor)
-            val nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            returnCursor.moveToFirst()
-            return returnCursor.getString(nameIndex)
+    fun getUriDisplayName(context: Context, uri: Uri): String {
+        val defaultName = "unnamed.file"
+
+        return when (uri.scheme) {
+            "content" -> {
+                context.contentResolver.query(
+                    uri,
+                    null,
+                    null,
+                    null,
+                    null
+                ).use { returnCursor ->
+                    return returnCursor?.getColumnIndex(OpenableColumns.DISPLAY_NAME)?.let { nameIndex ->
+                        returnCursor.moveToFirst()
+                        returnCursor.getString(nameIndex)
+                    } ?: defaultName
+                }
+            }
+            "file" -> uri.lastPathSegment ?: defaultName
+            else -> defaultName
         }
     }
 }

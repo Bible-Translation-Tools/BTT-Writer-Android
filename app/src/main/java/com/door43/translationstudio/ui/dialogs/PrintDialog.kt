@@ -155,7 +155,7 @@ class PrintDialog : DialogFragment() {
                         if (result.success) {
                             val filename = FileUtilities.getUriDisplayName(
                                 requireContext(),
-                                destinationFilename
+                                destinationFilename!!
                             )
                             val message = requireContext().resources.getString(R.string.print_success, filename)
                             AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)

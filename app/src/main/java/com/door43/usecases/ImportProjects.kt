@@ -195,7 +195,7 @@ class ImportProjects @Inject constructor(
                 ImportSourceResult(
                     success = false,
                     hasConflict = true,
-                    message = conflictMessage,
+                    error = conflictMessage,
                     targetDir = dir
                 )
             } catch (e: Exception) {
@@ -208,7 +208,7 @@ class ImportProjects @Inject constructor(
         return ImportSourceResult(
             success = false,
             hasConflict = false,
-            message = context.getString(R.string.not_a_source_text)
+            error = context.getString(R.string.not_a_source_text)
         )
     }
 
@@ -220,7 +220,7 @@ class ImportProjects @Inject constructor(
                 hasConflict = false
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e(this::class.simpleName, "Could not import RC", e)
             ImportSourceResult(
                 success = false,
                 hasConflict = false,
@@ -342,7 +342,7 @@ class ImportProjects @Inject constructor(
     private fun unzipFromStream(input: InputStream): File {
         val dir = File(
             directoryProvider.cacheDir,
-            System.currentTimeMillis().toString() + ""
+            System.currentTimeMillis().toString()
         )
         dir.mkdirs()
         Zip.unzipFromStream(input, dir)
@@ -369,7 +369,7 @@ class ImportProjects @Inject constructor(
     data class ImportSourceResult internal constructor(
         val success: Boolean,
         val hasConflict: Boolean,
-        val message: String? = null,
+        val error: String? = null,
         val targetDir: File? = null
     )
 

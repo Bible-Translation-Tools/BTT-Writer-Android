@@ -247,7 +247,7 @@ class ImportDialog : DialogFragment() {
                     result.hasConflict -> {
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                             .setTitle(R.string.confirm)
-                            .setMessage(result.message)
+                            .setMessage(result.error)
                             .setNegativeButton(R.string.menu_cancel, null)
                             .setPositiveButton(R.string.confirm) { _, _ ->
                                 result.targetDir?.let(viewModel::importSource)
@@ -257,7 +257,7 @@ class ImportDialog : DialogFragment() {
                     else -> {
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                             .setTitle(R.string.could_not_import)
-                            .setMessage(result.message)
+                            .setMessage(result.error)
                             .setPositiveButton(R.string.dismiss, null)
                             .show()
                     }
