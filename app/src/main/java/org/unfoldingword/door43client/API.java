@@ -72,7 +72,7 @@ class API {
         DatabaseContext databaseContext = new DatabaseContext(context, databasePath.getParentFile(), dbExt);
         String dbName = databasePath.getName().replaceFirst("\\.[^\\.]+$", "");
         synchronized (this) {
-            if (this.sqLiteHelper == null) {
+            if (sqLiteHelper == null) {
                 sqLiteHelper = new SQLiteHelper(databaseContext, schema, dbName);
             }
         }
@@ -84,9 +84,9 @@ class API {
      * e.g. closing the db, etc.
      */
     public void tearDown() {
-        if(this.sqLiteHelper != null) {
-            this.sqLiteHelper.close();
-            this.sqLiteHelper = null;
+        if(sqLiteHelper != null) {
+            sqLiteHelper.close();
+            sqLiteHelper = null;
         }
     }
 

@@ -154,6 +154,12 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
             }
         }
 
+        // Delete old journal to avoid corrupt database errors
+        val shmFile = File(databaseFile.absolutePath + "-shm")
+        if (shmFile.exists()) { shmFile.delete() }
+        val walFile = File(databaseFile.absolutePath + "-wal")
+        if (walFile.exists()) { walFile.delete() }
+
         // extract resource containers
         containersDir.mkdirs()
         Zip.unzipFromStream(context.assets.open("containers.zip"), containersDir)
