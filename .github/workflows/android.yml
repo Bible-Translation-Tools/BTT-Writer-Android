@@ -105,6 +105,7 @@ jobs:
           api-level: 34
           script: ./gradlew connectedCheck
           arch: x86_64
+          ram-size: 4096M
         env:
           TEST_USER: ${{ secrets.TEST_USER }}
           TEST_PASS: ${{ secrets.TEST_PASS }}
