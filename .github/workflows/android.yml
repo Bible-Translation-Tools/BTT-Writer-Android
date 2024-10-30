@@ -82,6 +82,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [ 22, 28, 30, 34 ]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -102,13 +107,22 @@ jobs:
       - name: Run connected tests
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
-          api-level: 34
-          script: ./gradlew connectedCheck
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
           arch: x86_64
           cores: 4
           ram-size: 8192M
           heap-size: 512M
+          emulator-options: -gpu auto -noaudio -no-boot-anim -camera-back none -no-snapshot-load
+          script: ./gradlew connectedCheck --no-build-cache --no-daemon --stacktrace
         env:
           TEST_USER: ${{ secrets.TEST_USER }}
           TEST_PASS: ${{ secrets.TEST_PASS }}
           TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
+
+      - name: Upload results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: instrumentation-test-results ${{ matrix.api-level }}
+          path: ./**/build/reports/androidTests/connected/**
