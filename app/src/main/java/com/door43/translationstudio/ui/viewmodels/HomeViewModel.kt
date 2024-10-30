@@ -220,7 +220,7 @@ class HomeViewModel @Inject constructor(
 
     fun examineImportsForCollisions(contentUri: Uri) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            _examineImportsResult.value = withContext(Dispatchers.IO) {
                 examineImportsForCollisions.execute(contentUri)
             }
         }
