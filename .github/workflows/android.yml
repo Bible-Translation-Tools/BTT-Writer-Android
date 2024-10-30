@@ -84,8 +84,7 @@ jobs:
 
   connected-tests:
 
-    runs-on: ubuntu-latest
-    timeout-minutes: 300
+    runs-on: macos-latest
 
     steps:
       - name: Checkout
@@ -102,6 +101,4 @@ jobs:
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: google_apis
-          arch: x86_64
           script: ./gradlew connectedCheck
