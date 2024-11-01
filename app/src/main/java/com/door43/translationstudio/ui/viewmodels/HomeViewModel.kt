@@ -177,14 +177,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _exportedApp.value = withContext(Dispatchers.IO) {
                 val pInfo = application.packageManager.getPackageInfo(application.packageName, 0)
-                val apkFile = File(pInfo.applicationInfo.publicSourceDir)
-                val exportFile = File(
-                    directoryProvider.sharingDir, pInfo.applicationInfo.loadLabel(
-                        application.packageManager
-                    ).toString() + "_" + pInfo.versionName + ".apk"
-                )
-                FileUtilities.copyFile(apkFile, exportFile)
-                exportFile
+                pInfo.applicationInfo?.let { info ->
+                    val apkFile = File(info.publicSourceDir)
+                    val exportFile = File(
+                        directoryProvider.sharingDir, info.loadLabel(
+                            application.packageManager
+                        ).toString() + "_" + pInfo.versionName + ".apk"
+                    )
+                    FileUtilities.copyFile(apkFile, exportFile)
+                    exportFile
+                }
             }
         }
     }

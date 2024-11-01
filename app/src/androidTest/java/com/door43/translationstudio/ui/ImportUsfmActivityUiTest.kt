@@ -14,6 +14,9 @@ import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiSelector
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
@@ -67,6 +70,8 @@ class ImportUsfmActivityUiTest {
     fun setUp() {
         hiltRule.inject()
         Logger.flush()
+
+        dismissANRSystemDialog()
     }
 
     @After
@@ -185,6 +190,7 @@ class ImportUsfmActivityUiTest {
         //then
         matchSummaryDialog(R.string.title_import_usfm_error, book, false)
         rotateScreen(scenario)
+
         matchSummaryDialog(R.string.title_import_usfm_error, book, false)
         rotateScreen(scenario)
     }
@@ -278,13 +284,6 @@ class ImportUsfmActivityUiTest {
 
     private fun thenShouldHaveDialogTitle(title: Int) {
         val titleStr = appContext.resources.getString(title)
-        //        for(int i = 0; i < 40; i++) { // wait until displayed
-//            try {
-//                onView(withId(R.id.dialog_title)).check(matches(withText(titleStr)));
-//                break;
-//            } catch (Exception e) {
-//            }
-//        }
         Espresso.onView(withText(titleStr))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
     }
@@ -359,7 +358,10 @@ class ImportUsfmActivityUiTest {
     fun getIntentForTestFile(fileName: String): Intent {
         val intent = Intent(appContext, ImportUsfmActivity::class.java)
 
-        tempDir = File(directoryProvider.cacheDir, System.currentTimeMillis().toString() + "").apply {
+        tempDir = File(
+            directoryProvider.cacheDir,
+            System.currentTimeMillis().toString()
+        ).apply {
             mkdirs()
         }
 
@@ -444,6 +446,20 @@ class ImportUsfmActivityUiTest {
                     textMatcher.describeTo(description)
                 }
             }
+        }
+    }
+
+    fun dismissANRSystemDialog() {
+        val device = UiDevice.getInstance(getInstrumentation())
+        // If running the device in English Locale
+        var waitButton = device.findObject(UiSelector().textContains("wait"))
+        if (waitButton.exists()) {
+            waitButton.click()
+        }
+        // If running the device in Japanese Locale
+        waitButton = device.findObject(UiSelector().textContains("待機"))
+        if (waitButton.exists()) {
+            waitButton.click()
         }
     }
 }
