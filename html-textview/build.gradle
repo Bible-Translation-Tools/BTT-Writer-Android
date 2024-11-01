@@ -4,9 +4,9 @@ apply plugin: 'org.jetbrains.kotlin.android'
 android {
 
     defaultConfig {
-        compileSdk 34
+        compileSdk 35
         minSdk 22
-        targetSdk 34
+        targetSdk 35
     }
 
     namespace 'org.sufficientlysecure.htmltextview'
@@ -25,5 +25,5 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-ktx:1.15.0'
 }

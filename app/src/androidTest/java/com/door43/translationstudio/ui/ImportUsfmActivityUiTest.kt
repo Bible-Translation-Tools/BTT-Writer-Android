@@ -98,13 +98,15 @@ class ImportUsfmActivityUiTest {
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        waitWhileDisplayed(R.string.reading_usfm)
+        //waitWhileDisplayed(R.string.reading_usfm)
 
         //when
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_import_usfm_error, book, false)
         rotateScreen(scenario)
 
         //then
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_import_usfm_error, book, false)
         rotateScreen(scenario)
     }
@@ -123,20 +125,26 @@ class ImportUsfmActivityUiTest {
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        waitWhileDisplayed(R.string.reading_usfm)
+        //waitWhileDisplayed(R.string.reading_usfm)
+
+        Espresso.onIdle()
         thenShouldShowMissingBookNameDialog()
         rotateScreen(scenario)
 
         //when
+        Espresso.onIdle()
         thenShouldShowMissingBookNameDialog()
         Espresso.onView(withText(R.string.label_continue)).perform(ViewActions.click())
         clickOnViewText("bible-nt")
         clickOnViewText("Mark")
 
         //then
-        waitWhileDisplayed(R.string.reading_usfm)
+        //waitWhileDisplayed(R.string.reading_usfm)
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
-        //rotateScreen(scenario)
+
+        rotateScreen(scenario)
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
     }
 
@@ -154,18 +162,24 @@ class ImportUsfmActivityUiTest {
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        waitWhileDisplayed(R.string.reading_usfm)
+        //waitWhileDisplayed(R.string.reading_usfm)
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
+
         rotateScreen(scenario)
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
 
         //when
         Espresso.onView(withText(R.string.label_continue)).perform(ViewActions.click())
 
         //then
-        waitWhileDisplayed(R.string.importing_usfm)
+        //waitWhileDisplayed(R.string.importing_usfm)
+        Espresso.onIdle()
         matchImportResultsDialog(true)
+
         rotateScreen(scenario)
+        Espresso.onIdle()
         matchImportResultsDialog(true)
     }
 
@@ -185,12 +199,14 @@ class ImportUsfmActivityUiTest {
 
         //when
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        waitWhileDisplayed(R.string.reading_usfm)
+        //waitWhileDisplayed(R.string.reading_usfm)
 
         //then
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_import_usfm_error, book, false)
         rotateScreen(scenario)
 
+        Espresso.onIdle()
         matchSummaryDialog(R.string.title_import_usfm_error, book, false)
         rotateScreen(scenario)
     }
