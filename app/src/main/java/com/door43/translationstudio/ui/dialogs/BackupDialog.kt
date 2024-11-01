@@ -18,6 +18,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -43,6 +44,8 @@ import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.door43client.Door43Client
@@ -71,7 +74,8 @@ class BackupDialog : DialogFragment() {
     private val viewModel: ExportViewModel by viewModels()
 
     private lateinit var targetTranslation: TargetTranslation
-    private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+    private lateinit var exportTranslationLauncher: ActivityResultLauncher<Intent>
+    private lateinit var exportUSFMLauncher: ActivityResultLauncher<Intent>
 
     private var _binding: DialogBackupBinding? = null
     private val binding get() = _binding!!
@@ -80,28 +84,45 @@ class BackupDialog : DialogFragment() {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.setCanceledOnTouchOutside(true)
 
-        activityResultLauncher = registerForActivityResult(
+        exportTranslationLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
-                    when {
-                        filename.contains(USFM_EXTENSION) -> viewModel.exportUSFM(uri)
-                        filename.contains(TSTUDIO_EXTENSION) -> viewModel.exportProject(uri)
-                        else -> notifyBackupFailed(targetTranslation)
-                    }
+            val uri = result.data?.data
+            if (result.resultCode == Activity.RESULT_OK && uri != null) {
+                if (validateUriExtension(uri, TSTUDIO_EXTENSION)) {
+                    viewModel.exportProject(uri)
+                } else {
+                    notifyBackupFailed(targetTranslation)
+                }
+            }
+        }
+
+        exportUSFMLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            val uri = result.data?.data
+            if (result.resultCode == Activity.RESULT_OK && uri != null) {
+                if (validateUriExtension(uri, USFM_EXTENSION)) {
+                    viewModel.exportUSFM(uri)
+                } else {
+                    notifyBackupFailed(targetTranslation)
                 }
             }
         }
 
         progressDialog = ProgressHelper.newInstance(
-            requireContext(),
+            parentFragmentManager,
             R.string.backup_to_sd,
             false
         )
 
         return dialog
+    }
+
+    private fun validateUriExtension(uri: Uri, extension: String): Boolean {
+        val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
+        val filenameRegex = Regex(".*\\.$extension(\\s\\(\\d+\\))?$")
+        return filename.matches(filenameRegex)
     }
 
     override fun onCreateView(
@@ -270,7 +291,9 @@ class BackupDialog : DialogFragment() {
                             this.javaClass.name,
                             "Changes on the server were synced with " + targetTranslation.id
                         )
-                        viewModel.pushTargetTranslation()
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            viewModel.pushTargetTranslation()
+                        }
                     }
                     PullTargetTranslation.Status.AUTH_FAILURE -> {
                         Logger.i(this.javaClass.name, "Authentication failed")
@@ -304,7 +327,9 @@ class BackupDialog : DialogFragment() {
                                         this.javaClass.name,
                                         "Changes on the server were synced with " + targetTranslation.id
                                     )
-                                    viewModel.pushTargetTranslation()
+                                    lifecycleScope.launch(Dispatchers.Main) {
+                                        viewModel.pushTargetTranslation()
+                                    }
                                 }
 
                                 override fun onMergeConflict(targetTranslationId: String) {
@@ -419,7 +444,14 @@ class BackupDialog : DialogFragment() {
         intent.addCategory(Intent.CATEGORY_OPENABLE)
         intent.setType(mimeType)
         intent.putExtra(Intent.EXTRA_TITLE, defaultFileName)
-        activityResultLauncher.launch(intent)
+        intent.putExtra(
+            Intent.EXTRA_MIME_TYPES,
+            arrayOf(mimeType, EXPORT_GENERIC_MIME)
+        )
+        when (mimeType) {
+            EXPORT_TSTUDIO_MIME_TYPE -> exportTranslationLauncher.launch(intent)
+            EXPORT_USFM_MIME_TYPE -> exportUSFMLauncher.launch(intent)
+        }
     }
 
     /**
@@ -438,6 +470,7 @@ class BackupDialog : DialogFragment() {
             }
             .setOnDismissListener {
                 mDialogShown = DialogShown.NONE
+                viewModel.clearResults()
             }
             .show()
     }
@@ -449,7 +482,7 @@ class BackupDialog : DialogFragment() {
 
     private fun showDeviceNetworkAliasDialog() {
         if (App.isNetworkAvailable) {
-            if (App.deviceNetworkAlias == null) {
+            if (App.deviceNetworkAlias.isEmpty()) {
                 showDeviceNetworkAliasDialogSub()
             } else {
                 showP2PDialog()
@@ -488,6 +521,7 @@ class BackupDialog : DialogFragment() {
             .setNeutralButton(R.string.dismiss) { _, _ ->
                 mDialogShown = DialogShown.NONE
             }
+            .setOnDismissListener { viewModel.clearResults() }
             .show()
     }
 
@@ -556,9 +590,7 @@ class BackupDialog : DialogFragment() {
                     url.toString()
                 )
             )
-            .setNegativeButton(R.string.dismiss) { _, _ ->
-                mDialogShown = DialogShown.NONE
-            }
+            .setNegativeButton(R.string.dismiss, null)
             .setPositiveButton(R.string.view_online) { _, _ ->
                 startActivity(
                     Intent(
@@ -579,11 +611,18 @@ class BackupDialog : DialogFragment() {
                             )
                         )
                     }
-                    .setNeutralButton(R.string.dismiss) { _, _ ->
+                    .setNeutralButton(R.string.dismiss, null)
+                    .setOnDismissListener {
+                        viewModel.clearResults()
                         mDialogShown = DialogShown.NONE
                     }
                     .show()
-            }.show()
+            }
+            .setOnDismissListener {
+                viewModel.clearResults()
+                mDialogShown = DialogShown.NONE
+            }
+            .show()
     }
 
     /**
@@ -610,7 +649,9 @@ class BackupDialog : DialogFragment() {
                 mDialogShown = DialogShown.NONE
                 resetToMasterBackup(targetTranslation)
                 this@BackupDialog.dismiss()
-            }.show()
+            }
+            .setOnDismissListener { viewModel.clearResults() }
+            .show()
     }
 
     /**
@@ -682,7 +723,9 @@ class BackupDialog : DialogFragment() {
             .setNeutralButton(R.string.menu_bug) { _, _ ->
                 mDialogShown = DialogShown.NONE
                 showFeedbackDialog(targetTranslation)
-            }.show()
+            }
+            .setOnDismissListener { viewModel.clearResults() }
+            .show()
     }
 
     private fun showFeedbackDialog(targetTranslation: TargetTranslation) {
@@ -713,7 +756,9 @@ class BackupDialog : DialogFragment() {
                 mDialogShown = DialogShown.NONE
                 resetToMasterBackup(targetTranslation)
                 this@BackupDialog.dismiss()
-            }.show()
+            }
+            .setOnDismissListener { viewModel.clearResults() }
+            .show()
     }
 
     private fun resetToMasterBackup(targetTranslation: TargetTranslation): Boolean {
@@ -800,6 +845,7 @@ class BackupDialog : DialogFragment() {
         private const val STATE_DO_MERGE: String = "state_do_merge"
         private const val STATE_ACCESS_FILE: String = "state_access_file"
         private const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
+        private const val EXPORT_GENERIC_MIME = "application/octet-stream"
         private const val EXPORT_TSTUDIO_MIME_TYPE: String = "application/tstudio"
         private const val EXPORT_USFM_MIME_TYPE: String = "text/usfm"
     }

@@ -10,7 +10,6 @@ import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.ActivityCrashReporterBinding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.dialogs.ProgressHelper.newInstance
 import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel
 import org.unfoldingword.tools.logger.Logger
 
@@ -52,7 +51,11 @@ class CrashReporterActivity : BaseActivity() {
 
     override fun onStart() {
         super.onStart()
-        progressDialog = newInstance(this, R.string.loading, false)
+        progressDialog = ProgressHelper.newInstance(
+            supportFragmentManager,
+            R.string.loading,
+            false
+        )
     }
 
     private fun setupObservers() {

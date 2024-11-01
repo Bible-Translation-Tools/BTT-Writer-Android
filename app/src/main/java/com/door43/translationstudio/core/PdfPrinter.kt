@@ -734,8 +734,7 @@ class PdfPrinter(
             return FoundHtml(token.substring(0, token.length - 1), pos, end + 1, "")
         }
 
-        val parts = token.split(" ".toRegex()).dropLastWhile { it.isEmpty() }
-            .toTypedArray() // ignore attributes
+        val parts = token.split(" ".toRegex()) // ignore attributes
         val endToken = "</" + parts[0] + ">"
         val finish = text.indexOf(endToken, end + 1)
         if (finish < 0) { // if end token not found, then stop at next

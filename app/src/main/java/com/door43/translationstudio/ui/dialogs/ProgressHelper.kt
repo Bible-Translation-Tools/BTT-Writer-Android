@@ -1,15 +1,16 @@
 package com.door43.translationstudio.ui.dialogs
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.view.LayoutInflater
+import android.app.Dialog
+import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import com.door43.translationstudio.databinding.FragmentProgressDialogBinding
 
 object ProgressHelper {
 
-    private var dialog: AlertDialog? = null
     private var max = 100
 
     data class Progress(
@@ -18,70 +19,127 @@ object ProgressHelper {
         val max: Int = ProgressHelper.max
     )
 
-    class ProgressDialog(private val binding: FragmentProgressDialogBinding) {
+    class ProgressDialog(
+        private val fragmentManager: FragmentManager,
+        private val title: Int,
+        private val cancelable: Boolean
+    ) {
+        private val fragment: ProgressFragment?
+            get() = fragmentManager.findFragmentByTag(TAG) as? ProgressFragment
+
         fun show() {
-            if (dialog?.isShowing == false) {
-                dialog?.show()
+            if (fragment == null) {
+                val fragment = ProgressFragment.newInstance(title, cancelable)
+                fragment.show(fragmentManager, TAG)
             }
         }
 
         fun dismiss() {
-            if (dialog?.isShowing == true) {
-                dialog?.dismiss()
-            }
-        }
-
-        fun isShowing(): Boolean {
-            return dialog?.isShowing == true
+            fragment?.dismiss()
         }
 
         fun setMessage(message: String?) {
-            binding.message.text = message
+            fragment?.setMessage(message)
         }
 
         @SuppressLint("SetTextI18n")
         fun setProgress(progress: Int) {
-            with(binding) {
-                val percent = (progress / max.toFloat() * 100).toInt()
+            fragment?.setProgress(progress)
+        }
 
-                progressPercent.text = "$percent%"
-                progressNumber.text = "$progress/$max"
+        fun setMax(value: Int) {
+            max = value
+            fragment?.setMax(value)
+        }
 
-                progressBar.progress = progress
-                progressBar.isIndeterminate = progress < 0
+        private companion object {
+            const val TAG = "progress_dialog"
+        }
+    }
 
-                if (progressBar.isIndeterminate) {
-                    progressPercent.visibility = View.GONE
-                    progressNumber.visibility = View.GONE
-                } else {
-                    progressPercent.visibility = View.VISIBLE
-                    progressNumber.visibility = View.VISIBLE
+    @JvmStatic
+    fun newInstance(
+        fragmentManager: FragmentManager,
+        title: Int,
+        cancelable: Boolean
+    ): ProgressDialog {
+        return ProgressDialog(fragmentManager, title, cancelable)
+    }
+
+    class ProgressFragment: DialogFragment() {
+        private var _binding: FragmentProgressDialogBinding? = null
+
+        companion object {
+            fun newInstance(
+                title: Int,
+                cancelable: Boolean
+            ): ProgressFragment {
+                val fragment = ProgressFragment()
+                val args = Bundle()
+                args.putInt("title", title)
+                args.putBoolean("cancelable", cancelable)
+                fragment.arguments = args
+                return fragment
+            }
+        }
+
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            val builder = AlertDialog.Builder(requireActivity())
+            _binding = FragmentProgressDialogBinding.inflate(layoutInflater)
+            builder.setView(_binding!!.root)
+
+            val title = arguments?.getInt("title") ?: 0
+            val cancelable = arguments?.getBoolean("cancelable") ?: true
+
+            return builder.create().apply {
+                setTitle(title)
+                setCancelable(cancelable)
+                setCanceledOnTouchOutside(cancelable)
+
+                _binding?.let { binding ->
+                    with(binding) {
+                        progressBar.isIndeterminate = true
+                        progressNumber.visibility = View.GONE
+                        progressPercent.visibility = View.GONE
+                    }
+                }
+            }
+        }
+
+        fun setMessage(message: String?) {
+            _binding?.message?.text = message
+        }
+
+        @SuppressLint("SetTextI18n")
+        fun setProgress(progress: Int) {
+            _binding?.let { binding ->
+                with(binding) {
+                    val percent = (progress / max.toFloat() * 100).toInt()
+
+                    progressPercent.text = "$percent%"
+                    progressNumber.text = "$progress/$max"
+
+                    progressBar.progress = progress
+                    progressBar.isIndeterminate = progress < 0
+
+                    if (progressBar.isIndeterminate) {
+                        progressPercent.visibility = View.GONE
+                        progressNumber.visibility = View.GONE
+                    } else {
+                        progressPercent.visibility = View.VISIBLE
+                        progressNumber.visibility = View.VISIBLE
+                    }
                 }
             }
         }
 
         fun setMax(value: Int) {
-            max = value
-            binding.progressBar.max = value
-        }
-    }
-
-    @JvmStatic
-    fun newInstance(context: Context, title: Int, cancelable: Boolean): ProgressDialog {
-        val builder = AlertDialog.Builder(context)
-        val binding = FragmentProgressDialogBinding.inflate(LayoutInflater.from(context))
-        builder.setView(binding.root)
-
-        dialog = builder.create().apply {
-            setTitle(title)
-            setCancelable(cancelable)
-            setCanceledOnTouchOutside(cancelable)
-            binding.progressBar.isIndeterminate = true
-
-            binding.progressNumber.visibility = View.GONE
-            binding.progressPercent.visibility = View.GONE
+            _binding?.progressBar?.max = value
         }
 
-        return ProgressDialog(binding)
+        override fun onDestroyView() {
+            super.onDestroyView()
+            _binding = null
+        }
     }
 }

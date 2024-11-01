@@ -203,7 +203,7 @@ open class NewLanguageActivityUiUtils {
     fun thenShouldHaveNewLanguageDialog() {
         Assert.assertNotNull(Espresso.onView(ViewMatchers.withText(R.string.title_activity_language_selector)))
         val prompt = appContext.resources.getString(R.string.new_language_confirmation)
-        val promptParts = prompt.split("\"".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val promptParts = prompt.split("\"".toRegex())
         Assert.assertNotNull(Espresso.onView(ViewMatchers.withText(promptParts[0])))
     }
 

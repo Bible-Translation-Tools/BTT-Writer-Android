@@ -460,7 +460,7 @@ class ProcessUSFM {
      */
     private fun getCleanedBookName(format: String, bookName: String?): String {
         var cleaned = bookName
-        val parts = bookName!!.split("%3A".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val parts = bookName!!.split("%3A".toRegex())
         if (parts.size == 2) { //look for URI prefix
             cleaned = "SD_CARD/" + parts[1]
         }
@@ -867,7 +867,7 @@ class ProcessUSFM {
         return if (pos >= 0) {
             name.substring(pos + tempSrc.toString().length + 1)
         } else { // otherwise we use just file name
-            val parts = name.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val parts = name.split("/".toRegex())
             if (parts.isNotEmpty()) {
                 parts[parts.size - 1]
             }
@@ -881,7 +881,7 @@ class ProcessUSFM {
 
         val idString = extractString(book, ID_TAG_MARKER)
         if (null != idString) {
-            val tags = idString.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val tags = idString.split(" ".toRegex())
             if (tags.isNotEmpty()) {
                 bookShortName = tags[0]
             }
@@ -1384,7 +1384,7 @@ class ProcessUSFM {
             val currentVerse = verse.toInt()
             verseRange = intArrayOf(currentVerse, 0)
         } catch (e: NumberFormatException) { // might be a range in format 12-13
-            val range = verse.split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val range = verse.split("-".toRegex())
             if (range.size < 2) {
                 verseRange = null
             } else {

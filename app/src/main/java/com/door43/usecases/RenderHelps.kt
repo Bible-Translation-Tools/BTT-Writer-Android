@@ -181,7 +181,7 @@ class RenderHelps @Inject constructor(
             if (helpText.trim().isEmpty()) continue
 
             // split help title and body
-            val parts = helpText.trim().split("\n".toRegex(), limit = 2).toTypedArray()
+            val parts = helpText.trim().split("\n".toRegex(), limit = 2)
             var title = parts[0].trim()
             var body = if (parts.size > 1) parts[1].trim() else null
 

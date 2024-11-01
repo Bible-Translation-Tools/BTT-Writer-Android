@@ -32,8 +32,6 @@ import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.security.InvalidParameterException
-import java.security.PrivateKey
-import java.security.PublicKey
 import java.util.Locale
 import javax.inject.Inject
 
@@ -198,10 +196,9 @@ class ExportViewModel @Inject constructor(
     fun pushTargetTranslation() {
         viewModelScope.launch {
             translation.value?.let { targetTranslation ->
-                _progress.value = ProgressHelper.Progress(
-                    application.getString(R.string.uploading)
-                )
-                val result = withContext(Dispatchers.IO) {
+                _progress.value = ProgressHelper.Progress(application.getString(R.string.uploading))
+                _pullTranslationResult.value = null
+                _pushTranslationResult.value = withContext(Dispatchers.IO) {
                     pushTargetTranslation.execute(targetTranslation) { progress, max, message ->
                         _progress.postValue(
                             ProgressHelper.Progress(
@@ -212,8 +209,7 @@ class ExportViewModel @Inject constructor(
                         )
                     }
                 }
-                _pushTranslationResult.value = result
-                _progress.value = null
+                _progress.postValue(null)
             }
         }
     }
@@ -363,12 +359,11 @@ class ExportViewModel @Inject constructor(
     fun clearResults() {
         _exportResult.value = null
         _downloadResult.value = null
+        _pushTranslationResult.value = null
     }
 
     companion object {
         const val TAG = "BackupViewModel"
     }
-
-    data class P2PKeys(val privateKey: PrivateKey, val publicKey: PublicKey)
 
 }

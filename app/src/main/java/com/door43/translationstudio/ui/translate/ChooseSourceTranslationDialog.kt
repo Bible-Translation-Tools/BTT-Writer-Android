@@ -67,7 +67,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
         }
 
         progressDialog = ProgressHelper.newInstance(
-            requireContext(),
+            parentFragmentManager,
             R.string.loading_sources,
             false
         )

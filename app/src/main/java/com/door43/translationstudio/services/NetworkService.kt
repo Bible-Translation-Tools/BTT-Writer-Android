@@ -182,7 +182,7 @@ abstract class NetworkService : Service() {
     fun decryptMessage(privateKey: PrivateKey?, message: String?): String? {
         // extract encryption key
         try {
-            val pieces = message?.split("\\-key\\-".toRegex()) ?: listOf()
+            val pieces = message?.split("-key-".toRegex()) ?: listOf()
             if (pieces.size == 2) {
                 // decode key
                 val data = Base64.decode(pieces[0].toByteArray(), Base64.NO_WRAP)
@@ -244,9 +244,7 @@ abstract class NetworkService : Service() {
             val timeout = 1000
 
             // trim down to just the subnet
-            val pieces =
-                subnet.trim { it <= ' ' }.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()
+            val pieces = subnet.trim().split("\\.".toRegex())
             if (pieces.size == 4) {
                 subnet = pieces[0] + "." + pieces[1] + "." + pieces[2]
             } else if (pieces.size != 3) {

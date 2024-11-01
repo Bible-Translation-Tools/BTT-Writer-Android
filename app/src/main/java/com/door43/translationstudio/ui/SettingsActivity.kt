@@ -98,7 +98,7 @@ class SettingsActivity : AppCompatActivity() {
             initSettings = true
 
             progressDialog = ProgressHelper.newInstance(
-                requireContext(),
+                parentFragmentManager,
                 R.string.loading,
                 false
             )

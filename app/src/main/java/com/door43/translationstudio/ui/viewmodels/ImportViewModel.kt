@@ -57,8 +57,8 @@ class ImportViewModel @Inject constructor(
     private val _importFromUriResult = MutableLiveData<ImportProjects.ImportUriResult?>(null)
     val importFromUriResult: LiveData<ImportProjects.ImportUriResult?> = _importFromUriResult
 
-    private val _registeredSSHKeys = MutableLiveData<Boolean>()
-    val registeredSSHKeys: LiveData<Boolean> = _registeredSSHKeys
+    private val _registeredSSHKeys = MutableLiveData<Boolean?>()
+    val registeredSSHKeys: LiveData<Boolean?> = _registeredSSHKeys
 
     private val _importSourceResult = MutableLiveData<ImportProjects.ImportSourceResult?>(null)
     val importSourceResult: LiveData<ImportProjects.ImportSourceResult?> = _importSourceResult
@@ -74,6 +74,9 @@ class ImportViewModel @Inject constructor(
 
     fun searchRepositories(userQuery: String, repoQuery: String, limit: Int) {
         viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.searching_repositories)
+            )
             val result = withContext(Dispatchers.IO) {
                 advancedGogsRepoSearch.execute(
                     userQuery,
@@ -96,6 +99,9 @@ class ImportViewModel @Inject constructor(
 
     fun cloneRepository(cloneUrl: String) {
         viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.cloning_repository)
+            )
             _cloneRepoResult.value = withContext(Dispatchers.IO) {
                 cloneRepository.execute(cloneUrl) { progress, max, message ->
                     _progress.postValue(
@@ -113,6 +119,7 @@ class ImportViewModel @Inject constructor(
 
     fun importProjectFromUri(path: Uri, mergeOverwrite: Boolean) {
         viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.import_source_text))
             val result = withContext(Dispatchers.IO) {
                 importProjects.importProject(path, mergeOverwrite) { progress, max, message ->
                     _progress.postValue(
@@ -176,13 +183,8 @@ class ImportViewModel @Inject constructor(
         }
     }
 
-    fun clearResults() {
-        _cloneRepoResult.value = null
-        _importFromUriResult.value = null
-    }
-
     fun mapRepository(repository: Repository): RepositoryItem {
-        val repoName = repository.fullName.split("/".toRegex()).dropLastWhile { it.isEmpty() }
+        val repoName = repository.fullName.split("/".toRegex())
         var projectName = ""
         var languageName = ""
         var code = "en" // default font language if language is not found
@@ -242,5 +244,17 @@ class ImportViewModel @Inject constructor(
             repository.isPrivate,
             notSupportedID
         ) { repository.toJSON() }
+    }
+
+    fun clearResults() {
+        _registeredSSHKeys.value = null
+    }
+
+    fun clearCloneResult() {
+        _cloneRepoResult.value = null
+    }
+
+    fun clearImportUruResult() {
+        _importFromUriResult.value = null
     }
 }

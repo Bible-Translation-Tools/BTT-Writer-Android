@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.home
 
+import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
@@ -21,8 +22,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
-import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.ImportUsfmActivity.Companion.EXTRA_USFM_IMPORT_URI
@@ -60,14 +59,15 @@ class ImportDialog : DialogFragment() {
     private var importUri: Uri? = null
     private var mergeSelection: MergeOptions? = MergeOptions.NONE
     private var mergeConflicted = false
+    private val dialogs = arrayListOf<AlertDialog>()
 
-    private lateinit var openFileContent: ActivityResultLauncher<Array<String>>
+    private lateinit var openTranslationContent: ActivityResultLauncher<Intent>
+    private lateinit var openUSFMContent: ActivityResultLauncher<Intent>
     private lateinit var openDirectory: ActivityResultLauncher<Uri?>
+    private lateinit var activityLauncher: ActivityResultLauncher<Intent>
 
     private var _binding: DialogImportBinding? = null
     private val binding get() = _binding!!
-
-    private lateinit var activityLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
@@ -77,13 +77,30 @@ class ImportDialog : DialogFragment() {
             ActivityResultContracts.StartActivityForResult()
         ) {}
 
-        openFileContent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let {
+        openTranslationContent = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { response ->
+            val uri = response.data?.data
+            if (response.resultCode == Activity.RESULT_OK && uri != null) {
                 val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
-                when {
-                    filename.endsWith(USFM_EXTENSION) -> importLocal(uri, IMPORT_USFM_MIME)
-                    filename.endsWith(TSTUDIO_EXTENSION) -> importLocal(uri, IMPORT_TRANSLATION_MIME)
-                    else -> showImportResults(R.string.invalid_file, filename)
+                if (filename.endsWith(Translator.TSTUDIO_EXTENSION)) {
+                    importLocal(uri, IMPORT_TRANSLATION_MIME)
+                } else {
+                    showImportResults(R.string.invalid_file, filename)
+                }
+            }
+        }
+
+        openUSFMContent = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { response ->
+            val uri = response.data?.data
+            if (response.resultCode == Activity.RESULT_OK && uri != null) {
+                val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
+                if (filename.endsWith(Translator.USFM_EXTENSION)) {
+                    importLocal(uri, IMPORT_USFM_MIME)
+                } else {
+                    showImportResults(R.string.invalid_file, filename)
                 }
             }
         }
@@ -106,7 +123,7 @@ class ImportDialog : DialogFragment() {
         _binding = DialogImportBinding.inflate(inflater, container, false)
 
         progressDialog = ProgressHelper.newInstance(
-            requireContext(),
+            parentFragmentManager,
             R.string.label_import,
             false
         )
@@ -166,12 +183,12 @@ class ImportDialog : DialogFragment() {
 
             importTargetTranslation.setOnClickListener {
                 mergeSelection = MergeOptions.NONE
-                onImportFile()
+                onImportTranslation()
             }
 
             importUsfm.setOnClickListener {
                 mergeSelection = MergeOptions.NONE
-                onImportFile()
+                onImportUSFM()
             }
 
             importFromDevice.setOnClickListener {
@@ -234,7 +251,7 @@ class ImportDialog : DialogFragment() {
                 (activity as? HomeActivity)?.loadTranslations()
             }
         }
-        viewModel.importSourceResult.observe(viewLifecycleOwner) {
+        viewModel.importSourceResult.observe(this) {
             it?.let { result ->
                 when {
                     result.success -> {
@@ -243,6 +260,7 @@ class ImportDialog : DialogFragment() {
                             .setMessage(R.string.title_import_success)
                             .setPositiveButton(R.string.dismiss, null)
                             .show()
+                            .also(dialogs::add)
                     }
                     result.hasConflict -> {
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
@@ -253,6 +271,7 @@ class ImportDialog : DialogFragment() {
                                 result.targetDir?.let(viewModel::importSource)
                             }
                             .show()
+                            .also(dialogs::add)
                     }
                     else -> {
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
@@ -260,6 +279,7 @@ class ImportDialog : DialogFragment() {
                             .setMessage(result.error)
                             .setPositiveButton(R.string.dismiss, null)
                             .show()
+                            .also(dialogs::add)
                     }
                 }
             }
@@ -280,10 +300,26 @@ class ImportDialog : DialogFragment() {
         }
     }
 
-    private fun onImportFile() {
-        // SAF doesn't allow to select file with custom extensions that are created by other apps
-        // So we use all types to filter .usfm and .tstudio files later
-        openFileContent.launch(arrayOf("*/*"))
+    private fun onImportTranslation() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf(IMPORT_TRANSLATION_MIME, IMPORT_GENERIC_MIME)
+            )
+        }
+        openTranslationContent.launch(intent)
+    }
+
+    private fun onImportUSFM() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf(IMPORT_USFM_MIME, IMPORT_GENERIC_MIME)
+            )
+        }
+        openUSFMContent.launch(intent)
     }
 
     private fun importLocal(fileUri: Uri, mimeType: String) {
@@ -294,7 +330,7 @@ class ImportDialog : DialogFragment() {
             }
             IMPORT_USFM_MIME -> {
                 importUri = fileUri
-                doUsfmImportUri(fileUri)
+                doUSFMImportUri(fileUri)
             }
             else -> Logger.e(TAG, "Unsupported import mime type: $mimeType")
         }
@@ -362,7 +398,7 @@ class ImportDialog : DialogFragment() {
      * import USFM uri
      * @param uri
      */
-    private fun doUsfmImportUri(uri: Uri) {
+    private fun doUSFMImportUri(uri: Uri) {
         val intent = Intent(requireActivity(), ImportUsfmActivity::class.java)
         intent.putExtra(EXTRA_USFM_IMPORT_URI, uri.toString()) // flag that we are using Uri
         activityLauncher.launch(intent)
@@ -386,31 +422,40 @@ class ImportDialog : DialogFragment() {
                 R.string.import_project_already_exists
             }
         val message = requireActivity().getString(messageID, targetTranslationID)
+
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.merge_conflict_title)
             .setMessage(message)
             .setPositiveButton(R.string.merge_projects_label) { _, _ ->
-                dialogShown = DialogShown.NONE
                 mergeSelection = MergeOptions.OVERWRITE
                 if (mergeConflicted) {
                     doManualMerge()
                 } else {
                     showImportResults(R.string.title_import_success, null)
                 }
+                viewModel.clearImportUruResult()
+                dismiss()
             }
-            .setNeutralButton(R.string.title_cancel) { dialog, _ ->
-                dialogShown = DialogShown.NONE
+            .setNeutralButton(R.string.title_cancel) { _, _ ->
                 resetToMasterBackup()
-                dialog.dismiss()
+                viewModel.clearImportUruResult()
+                dismiss()
             }
             .setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
-                dialogShown = DialogShown.NONE
                 resetToMasterBackup()
 
                 // re-import with overwrite
                 mergeSelection = MergeOptions.OVERWRITE
                 doProjectImport(importUri!!)
-            }.show()
+                viewModel.clearImportUruResult()
+                dismiss()
+            }
+            .setOnDismissListener {
+                dialogShown = DialogShown.NONE
+                viewModel.clearResults()
+            }
+            .show()
+            .also(dialogs::add)
     }
 
     /**
@@ -463,6 +508,7 @@ class ImportDialog : DialogFragment() {
                 dialogShown = DialogShown.NONE
             }
             .show()
+            .also(dialogs::add)
     }
 
     override fun onSaveInstanceState(out: Bundle) {
@@ -482,6 +528,8 @@ class ImportDialog : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        dialogs.forEach { it.dismiss() }
+        dialogs.clear()
     }
 
     /**
@@ -527,9 +575,9 @@ class ImportDialog : DialogFragment() {
     companion object {
         const val TAG: String = "importDialog"
 
+        private const val IMPORT_GENERIC_MIME = "application/octet-stream"
         private const val IMPORT_TRANSLATION_MIME = "application/tstudio"
         private const val IMPORT_USFM_MIME = "text/usfm"
-        private const val IMPORT_RCONTAINER_ACTION = "import_rcontainer"
         private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
         private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
         private const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"

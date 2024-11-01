@@ -104,12 +104,8 @@ class ProjectCategoryAdapter : BaseAdapter() {
                         )
                     }
                     if (!match) {
-                        val categoryComponents =
-                            category.slug.split("-".toRegex()).dropLastWhile { it.isEmpty() }
-                                .toTypedArray()
-                        val titleComponents =
-                            category.name.split(" ".toRegex()).dropLastWhile { it.isEmpty() }
-                                .toTypedArray()
+                        val categoryComponents = category.slug.split("-".toRegex())
+                        val titleComponents = category.name.split(" ".toRegex())
                         if (category.name.lowercase(Locale.getDefault()).startsWith(
                                 charSequence.toString().lowercase(
                                     Locale.getDefault()

@@ -73,7 +73,7 @@ class PrintDialog : DialogFragment() {
             }
         }
         progressDialog = ProgressHelper.newInstance(
-            requireContext(),
+            parentFragmentManager,
             R.string.printing,
             false
         )

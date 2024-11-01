@@ -19,6 +19,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.restart
 import com.door43.translationstudio.R
@@ -44,6 +45,7 @@ import com.door43.usecases.PullTargetTranslation
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.tools.eventbuffer.EventBuffer
 import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
@@ -251,6 +253,7 @@ class HomeActivity : BaseActivity(),
                         .setTitle(R.string.check_for_updates)
                         .setMessage(R.string.have_latest_app_update)
                         .setPositiveButton(R.string.label_ok, null)
+                        .setOnDismissListener { viewModel.clearResults() }
                         .show()
                 } else { // have newer
                     promptUserToDownloadLatestVersion(
@@ -300,6 +303,7 @@ class HomeActivity : BaseActivity(),
                         .setTitle(R.string.success)
                         .setMessage(R.string.success_translation_update)
                         .setPositiveButton(R.string.dismiss, null)
+                        .setOnDismissListener { viewModel.clearResults() }
                         .show()
                 } else if (status == PullTargetTranslation.Status.AUTH_FAILURE) {
                     // regenerate ssh keys
@@ -321,6 +325,7 @@ class HomeActivity : BaseActivity(),
                             )
                             translationViewRequestLauncher.launch(intent)
                         }
+                        .setOnDismissListener { viewModel.clearResults() }
                         .show()
                 } else {
                     notifyTranslationUpdateFailed()
@@ -344,7 +349,8 @@ class HomeActivity : BaseActivity(),
                 if (success) {
                     showUpdateResultDialog(
                         message = resources.getString(R.string.download_index_success),
-                        onConfirm = ::restart
+                        onConfirm = ::restart,
+                        onDismiss = ::restart
                     )
                 } else {
                     showUpdateResultDialog(
@@ -632,14 +638,16 @@ class HomeActivity : BaseActivity(),
     }
 
     fun onBackPressedHandler() {
-        // display confirmation before closing the app
-        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-            .setMessage(R.string.exit_confirmation)
-            .setPositiveButton(
-                R.string.yes
-            ) { _, _ -> finishAffinity() }
-            .setNegativeButton(R.string.no, null)
-            .show()
+        lifecycleScope.launch {
+            // display confirmation before closing the app
+            AlertDialog.Builder(this@HomeActivity, R.style.AppTheme_Dialog)
+                .setMessage(R.string.exit_confirmation)
+                .setPositiveButton(
+                    R.string.yes
+                ) { _, _ -> finishAffinity() }
+                .setNegativeButton(R.string.no, null)
+                .show()
+        }
     }
 
     /**
@@ -863,7 +871,8 @@ class HomeActivity : BaseActivity(),
     private fun showUpdateResultDialog(
         titleId: Int = R.string.update_success,
         message: String = resources.getString(R.string.update_success),
-        onConfirm: () -> Unit = {}
+        onConfirm: () -> Unit = {},
+        onDismiss: () -> Unit = {}
     ) {
         val dialog = AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             .setTitle(titleId)
@@ -872,6 +881,10 @@ class HomeActivity : BaseActivity(),
                 R.string.dismiss
             ) { _, _ ->
                 onConfirm()
+            }
+            .setOnDismissListener {
+                viewModel.clearResults()
+                onDismiss()
             }
 
         dialog.show()

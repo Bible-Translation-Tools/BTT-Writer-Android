@@ -31,7 +31,6 @@ import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions.Companion.
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.usecases.CloneRepository
-import com.door43.util.FileUtilities.deleteQuietly
 import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.json.JSONObject
@@ -61,9 +60,11 @@ open class ImportFromDoor43Dialog : DialogFragment() {
     private var dialogShown: DialogShown = DialogShown.NONE
 
     private val adapter by lazy { TranslationRepositoryAdapter(typography) }
-    private var mCloneHtmlUrl: String? = null
+    private var cloneHtmlUrl: String? = null
     private var mergeSelection = MergeOptions.NONE
     private var mergeConflicted = false
+
+    private val dialogs = arrayListOf<AlertDialog>()
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
@@ -79,14 +80,13 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         _binding = DialogImportFromDoor43Binding.inflate(inflater, container, false)
 
         progressDialog = ProgressHelper.newInstance(
-            requireContext(),
+            parentFragmentManager,
             R.string.label_import,
             false
         )
 
         with(binding) {
             dismissButton.setOnClickListener {
-                // TODO stop search repo task
                 dismiss()
             }
 
@@ -113,6 +113,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                         val projectName = adapter.getProjectName(position)
                         val message =
                             requireActivity().getString(R.string.import_warning, projectName)
+
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                             .setTitle(R.string.import_from_door43)
                             .setMessage(message)
@@ -121,6 +122,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                             }
                             .setNegativeButton(R.string.title_cancel, null)
                             .show()
+                            .also(dialogs::add)
                     }
                 }
             }
@@ -134,7 +136,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                     DialogShown.NONE.value
                 )
             )
-            mCloneHtmlUrl = savedInstanceState.getString(STATE_CLONE_URL, null)
+            cloneHtmlUrl = savedInstanceState.getString(STATE_CLONE_URL, null)
             mergeConflicted = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT, false)
             mergeSelection =
                 fromInt(savedInstanceState.getInt(STATE_MERGE_SELECTION, MergeOptions.NONE.value))
@@ -188,15 +190,17 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                 var alreadyExisted = false
 
                 if (result.status == CloneRepository.Status.SUCCESS) {
-                    Logger.i(this.javaClass.name, "Repository cloned from ${result.cloneUrl}")
                     val clonedDir = targetTranslationMigrator.migrate(result.cloneDir!!)
+
+                    Logger.i(this.javaClass.name, "Repository cloned from $clonedDir")
+
                     var importFailed = false
                     mergeConflicted = false
 
                     if (clonedDir != null) {
                         TargetTranslation.open(result.cloneDir) {
                             // Try to backup and delete corrupt project
-                            viewModel.backupAndDeleteTranslation(result.cloneDir)
+                            viewModel.backupAndDeleteTranslation(clonedDir)
                         }?.let { tempTargetTranslation ->
                             val existingTargetTranslation = translator.getTargetTranslation(
                                 tempTargetTranslation.id
@@ -209,7 +213,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                                 try {
                                     val success = existingTargetTranslation!!.merge(result.cloneDir) {
                                         // Try to backup and delete corrupt project
-                                        viewModel.backupAndDeleteTranslation(result.cloneDir)
+                                        viewModel.backupAndDeleteTranslation(clonedDir)
                                     }
                                     if (!success) {
                                         if (MergeConflictsHandler.isTranslationMergeConflicted(
@@ -252,8 +256,6 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                         }
                     }
 
-                    deleteQuietly(result.cloneDir)
-
                     if (!importFailed && !alreadyExisted) {
                         (activity as? HomeActivity)?.loadTranslations()
                         showImportSuccess()
@@ -288,12 +290,9 @@ open class ImportFromDoor43Dialog : DialogFragment() {
      * @param position
      */
     private fun doImportProject(position: Int) {
-        val repo = adapter?.getItem(position)
-        val repoName = repo?.repoName?.replace("/", "-")
-        if (repo != null && repoName != null) {
-            mCloneHtmlUrl = repo.url
-            cloneRepository(MergeOptions.NONE)
-        }
+        val repo = adapter.getItem(position)
+        cloneHtmlUrl = repo.url
+        cloneRepository(MergeOptions.NONE)
     }
 
     /**
@@ -301,7 +300,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
      */
     private fun cloneRepository(mergeSelection: MergeOptions) {
         this.mergeSelection = mergeSelection
-        mCloneHtmlUrl?.let { viewModel.cloneRepository(it) }
+        cloneHtmlUrl?.let { viewModel.cloneRepository(it) }
     }
 
     /**
@@ -347,10 +346,14 @@ open class ImportFromDoor43Dialog : DialogFragment() {
             .setTitle(R.string.import_from_door43)
             .setMessage(R.string.title_import_success)
             .setPositiveButton(R.string.dismiss) { _, _ ->
-                dialogShown = DialogShown.NONE
                 dismiss()
             }
+            .setOnDismissListener {
+                dialogShown = DialogShown.NONE
+                viewModel.clearResults()
+            }
             .show()
+            .also(dialogs::add)
     }
 
     /**
@@ -360,33 +363,43 @@ open class ImportFromDoor43Dialog : DialogFragment() {
     private fun showMergeOverwritePrompt(targetTranslation: TargetTranslation?) {
         dialogShown = DialogShown.MERGE_CONFLICT
         this.targetTranslation = targetTranslation
+
         val messageID = if (mergeConflicted) {
             R.string.import_merge_conflict_project_name
         } else {
             R.string.import_project_already_exists
         }
         val message = requireActivity().getString(messageID, targetTranslation?.id)
+
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.merge_conflict_title)
             .setMessage(message)
             .setPositiveButton(R.string.merge_projects_label) { _, _ ->
-                dialogShown = DialogShown.NONE
                 if (mergeConflicted) {
                     doManualMerge()
                 } else {
                     showImportSuccess()
                 }
+                viewModel.clearCloneResult()
+                dismiss()
             }
             .setNeutralButton(R.string.title_cancel) { dialog, _ ->
-                dialogShown = DialogShown.NONE
                 resetToMasterBackup()
+                viewModel.clearCloneResult()
                 dialog.dismiss()
             }
             .setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
-                dialogShown = DialogShown.NONE
                 resetToMasterBackup() // restore and now overwrite
                 cloneRepository(MergeOptions.OVERWRITE)
-            }.show()
+                viewModel.clearCloneResult()
+                dismiss()
+            }
+            .setOnDismissListener {
+                dialogShown = DialogShown.NONE
+                viewModel.clearResults()
+            }
+            .show()
+            .also(dialogs::add)
     }
 
     /**
@@ -416,13 +429,17 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.error).setMessage(R.string.auth_failure_retry)
             .setPositiveButton(R.string.yes) { _, _ ->
-                dialogShown = DialogShown.NONE
                 viewModel.registerSSHKeys(true)
             }
             .setNegativeButton(R.string.no) { _, _ ->
-                dialogShown = DialogShown.NONE
                 notifyImportFailed()
-            }.show()
+            }
+            .setOnDismissListener {
+                dialogShown = DialogShown.NONE
+                viewModel.clearResults()
+            }
+            .show()
+            .also(dialogs::add)
     }
 
     private fun notifyImportFailed() {
@@ -430,10 +447,13 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.error)
             .setMessage(R.string.restore_failed)
-            .setPositiveButton(R.string.dismiss) { _, _ ->
+            .setPositiveButton(R.string.dismiss, null)
+            .setOnDismissListener {
                 dialogShown = DialogShown.NONE
+                viewModel.clearResults()
             }
             .show()
+            .also(dialogs::add)
     }
 
     override fun onSaveInstanceState(out: Bundle) {
@@ -445,7 +465,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         out.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
         out.putInt(STATE_MERGE_SELECTION, mergeSelection.value)
         out.putBoolean(STATE_MERGE_CONFLICT, mergeConflicted)
-        out.putString(STATE_CLONE_URL, mCloneHtmlUrl)
+        out.putString(STATE_CLONE_URL, cloneHtmlUrl)
         out.putString(STATE_TARGET_TRANSLATION, targetTranslation?.id)
 
         super.onSaveInstanceState(out)
@@ -454,7 +474,8 @@ open class ImportFromDoor43Dialog : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        viewModel.clearResults()
+        dialogs.forEach { it.dismiss() }
+        dialogs.clear()
     }
 
     /**

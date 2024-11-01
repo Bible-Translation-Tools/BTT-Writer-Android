@@ -111,7 +111,7 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
     override fun onStart() {
         super.onStart()
         progressDialog = ProgressHelper.newInstance(
-            this,
+            supportFragmentManager,
             R.string.pref_title_developer_tools,
             false
         )

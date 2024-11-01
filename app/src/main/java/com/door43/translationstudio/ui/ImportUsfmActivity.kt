@@ -81,7 +81,11 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
 
     override fun onStart() {
         super.onStart()
-        progressDialog = ProgressHelper.newInstance(this, R.string.importing_usfm, false)
+        progressDialog = ProgressHelper.newInstance(
+            supportFragmentManager,
+            R.string.importing_usfm,
+            false
+        )
     }
 
     private fun setupObservers() {

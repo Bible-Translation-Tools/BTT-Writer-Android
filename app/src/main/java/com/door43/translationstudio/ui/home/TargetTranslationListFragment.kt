@@ -166,7 +166,11 @@ class TargetTranslationListFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        progressDialog = ProgressHelper.newInstance(requireActivity(), R.string.loading, false)
+        progressDialog = ProgressHelper.newInstance(
+            parentFragmentManager,
+            R.string.loading,
+            false
+        )
     }
 
     private fun setupObservers() {

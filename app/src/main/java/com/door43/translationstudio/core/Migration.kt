@@ -21,7 +21,7 @@ object Migration {
         if (slug == null) return null
         if (slug.contains("_")) return slug
 
-        val pieces = slug.split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val pieces = slug.split("-".toRegex())
         if (pieces.size < 3) return slug // cannot process
 
         val project = pieces[0]

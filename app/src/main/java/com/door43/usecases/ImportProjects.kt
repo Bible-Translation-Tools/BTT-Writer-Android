@@ -172,44 +172,36 @@ class ImportProjects @Inject constructor(
     fun importSource(uri: Uri): ImportSourceResult {
         val uuid = UUID.randomUUID().toString()
         val tempDir = directoryProvider.createTempDir(uuid)
-        val targetDir = FileUtilities.copyDirectory(context, uri, tempDir)
+        FileUtilities.copyDirectory(context, uri, tempDir)
 
-        targetDir?.let { dir ->
-            val externalContainer = try {
-                ResourceContainer.load(dir)
-            } catch (e: Exception) {
-                Logger.e(this::class.simpleName, "Could not import RC", e)
-                return ImportSourceResult(
-                    success = false,
-                    hasConflict = false,
-                    e.message
-                )
-            }
-
-            return try {
-                library.open(externalContainer.slug)
-                val conflictMessage = String.format(
-                    context.getString(R.string.overwrite_content),
-                    "${externalContainer.language.name} - ${externalContainer.project.name} - ${externalContainer.resource.name}"
-                )
-                ImportSourceResult(
-                    success = false,
-                    hasConflict = true,
-                    error = conflictMessage,
-                    targetDir = dir
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
-                // no conflicts. import
-                importSource(dir)
-            }
+        val externalContainer = try {
+            ResourceContainer.load(tempDir)
+        } catch (e: Exception) {
+            Logger.e(this::class.simpleName, "Could not import RC", e)
+            return ImportSourceResult(
+                success = false,
+                hasConflict = false,
+                e.message
+            )
         }
 
-        return ImportSourceResult(
-            success = false,
-            hasConflict = false,
-            error = context.getString(R.string.not_a_source_text)
-        )
+        return try {
+            library.open(externalContainer.slug)
+            val conflictMessage = String.format(
+                context.getString(R.string.overwrite_content),
+                "${externalContainer.language.name} - ${externalContainer.project.name} - ${externalContainer.resource.name}"
+            )
+            ImportSourceResult(
+                success = false,
+                hasConflict = true,
+                error = conflictMessage,
+                targetDir = tempDir
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // no conflicts. import
+            importSource(tempDir)
+        }
     }
 
     fun importSource(dir: File): ImportSourceResult {

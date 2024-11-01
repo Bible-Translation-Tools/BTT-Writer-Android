@@ -103,7 +103,11 @@ class DraftActivity : BaseActivity() {
 
     override fun onStart() {
         super.onStart()
-        progressDialog = ProgressHelper.newInstance(this, R.string.loading, false)
+        progressDialog = ProgressHelper.newInstance(
+            supportFragmentManager,
+            R.string.loading,
+            false
+        )
     }
 
     private fun onDraftsLoaded(drafts: List<Translation>) {

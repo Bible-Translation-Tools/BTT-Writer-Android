@@ -104,7 +104,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         chunkSlug = args.getString(Translator.EXTRA_FRAME_ID, null);
 
         progressDialog = ProgressHelper.newInstance(
-                requireContext(),
+                getParentFragmentManager(),
                 R.string.loading_sources,
                 false
         );

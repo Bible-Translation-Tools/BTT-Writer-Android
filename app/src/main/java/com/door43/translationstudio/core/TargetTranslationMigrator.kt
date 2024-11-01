@@ -471,12 +471,11 @@ class TargetTranslationMigrator @Inject constructor(
                     val key = keys.next()
                     val oldObj = oldSourceTranslationsJson.getJSONObject(key)
                     val sourceTranslation = JSONObject()
-                    val parts = key.split("-".toRegex(), limit = 2).toTypedArray()
+                    val parts = key.split("-".toRegex(), limit = 2)
                     if (parts.size == 2) {
                         val languageResourceId = parts[1]
                         val pieces =
-                            languageResourceId.split("-".toRegex()).dropLastWhile { it.isEmpty() }
-                                .toTypedArray()
+                            languageResourceId.split("-".toRegex())
                         if (pieces.isNotEmpty()) {
                             val resId = pieces[pieces.size - 1]
                             sourceTranslation.put("resource_id", resId)
@@ -793,7 +792,7 @@ class TargetTranslationMigrator @Inject constructor(
         for (frameFile in frameFiles!!) {
             val frameFileName = frameFile.name
             val parts =
-                frameFileName.split(".txt".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                frameFileName.split(".txt".toRegex())
             val frameId = parts[0]
             val chunkText = resourceContainer.readChunk(chapterId, frameId)
             var frameBody = ""

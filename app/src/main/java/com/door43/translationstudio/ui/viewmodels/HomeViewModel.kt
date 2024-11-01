@@ -343,5 +343,8 @@ class HomeViewModel @Inject constructor(
 
     fun clearResults() {
         _loggedOut.value = null
+        _uploadCatalogResult.value = null
+        _latestRelease.value = null
+        _pullTranslationResult.value = null
     }
 }

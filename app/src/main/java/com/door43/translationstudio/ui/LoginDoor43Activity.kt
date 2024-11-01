@@ -31,7 +31,11 @@ class LoginDoor43Activity : AppCompatActivity() {
         binding = ActivityLoginDoor43Binding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        progressDialog = ProgressHelper.newInstance(this, R.string.logging_in, false)
+        progressDialog = ProgressHelper.newInstance(
+            supportFragmentManager,
+            R.string.logging_in,
+            false
+        )
 
         with(binding) {
             account.cancelButton.setOnClickListener { finish() }

@@ -1,8 +1,10 @@
 package com.door43.util
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.core.net.toFile
 import androidx.documentfile.provider.DocumentFile
 import org.unfoldingword.tools.logger.Logger
 import java.io.Closeable
@@ -281,18 +283,22 @@ object FileUtilities {
     /**
      * Copies directory uri to a new directory
      */
-    fun copyDirectory(context: Context, sourceDir: Uri, destDir: File): File? {
-        val rootDocumentFile = DocumentFile.fromTreeUri(context, sourceDir) ?: return null
-
-        if (!destDir.exists()) {
-            destDir.mkdirs()
+    fun copyDirectory(context: Context, sourceDir: Uri, destDir: File) {
+        when (sourceDir.scheme) {
+            ContentResolver.SCHEME_CONTENT -> {
+                val rootDocumentFile = DocumentFile.fromTreeUri(context, sourceDir)
+                if (rootDocumentFile != null && rootDocumentFile.isDirectory) {
+                    rootDocumentFile.listFiles().forEach { file ->
+                        copyFile(context, file, destDir)
+                    }
+                }
+            }
+            ContentResolver.SCHEME_FILE -> {
+                if (sourceDir.toFile().isDirectory) {
+                    copyDirectory(File(sourceDir.path!!), destDir, null)
+                }
+            }
         }
-
-        rootDocumentFile.listFiles().forEach { file ->
-            copyFile(context, file, destDir)
-        }
-
-        return destDir
     }
 
     fun copyFile(context: Context, file: DocumentFile, targetDir: File) {

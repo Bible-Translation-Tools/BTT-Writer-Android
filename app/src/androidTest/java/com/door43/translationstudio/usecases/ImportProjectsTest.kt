@@ -1,5 +1,6 @@
 package com.door43.translationstudio.usecases
 
+import android.content.Context
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
@@ -9,6 +10,7 @@ import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.usecases.ImportProjects
 import com.door43.util.Zip
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
@@ -32,6 +34,7 @@ class ImportProjectsTest {
     @get:Rule(order = 0)
     var hiltRule = HiltAndroidRule(this)
 
+    @Inject @ApplicationContext lateinit var appContext: Context
     @Inject lateinit var importProjects: ImportProjects
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var assetsProvider: AssetsProvider
@@ -208,10 +211,67 @@ class ImportProjectsTest {
     }
 
     @Test
+    fun testImportSourceTextFromUriDir() {
+        val sourceDir = getSourceDir()
+        val sourceDirUri = Uri.fromFile(sourceDir)
+
+        assertTrue("Source dir should exist", sourceDir.exists())
+        assertTrue("Source dir should be a directory", sourceDir.isDirectory)
+        assertTrue(
+            "Source dir should have files",
+            sourceDir.listFiles()?.isNotEmpty() ?: false
+        )
+
+        val result = importProjects.importSource(sourceDirUri)
+
+        assertTrue("Import should be successful", result.success)
+        assertFalse("There should be no merge conflict", result.hasConflict)
+        assertNull("Message should be null", result.error)
+        assertNull("Target dir should be null", result.targetDir)
+
+        // Import again
+        val sourceDir2 = getSourceDir()
+        val sourceDir2Uri = Uri.fromFile(sourceDir2)
+        val result2 = importProjects.importSource(sourceDir2Uri)
+
+        assertFalse("Import should not be successful", result2.success)
+        assertTrue("There should be merge conflict", result2.hasConflict)
+        assertNotNull("Error should not be null", result2.error)
+        assertNotNull("Target dir should not be null", result2.targetDir)
+
+        val sourceFiles = sourceDir2.listFiles()?.map { it.name }?.sorted() ?: emptyList()
+        val targetFiles = result2.targetDir?.listFiles()?.map { it.name }?.sorted() ?: emptyList()
+
+        assertTrue("Source files should exist", sourceFiles.isNotEmpty())
+        assertTrue("Target files should exist", targetFiles.isNotEmpty())
+        assertEquals("Source files should match target files", sourceFiles, targetFiles)
+
+        // Overwrite source from result target dir
+        val result3 = importProjects.importSource(result2.targetDir!!)
+        assertTrue("Import should be successful", result3.success)
+        assertFalse("There should be no merge conflict", result3.hasConflict)
+        assertNull("Message should be null", result3.error)
+        assertNull("Target dir should be null", result3.targetDir)
+    }
+
+    @Test
     fun testImportSourceTextFromZipShouldFail() {
         val sourceFile = getSourceFile()
 
         val result = importProjects.importSource(sourceFile)
+
+        assertFalse("Import should not be successful", result.success)
+        assertFalse("There should be no merge conflict", result.hasConflict)
+        assertNotNull("Message should not be null", result.error)
+        assertNull("Target dir should be null", result.targetDir)
+    }
+
+    @Test
+    fun testImportSourceTextFromUriFileShouldFail() {
+        val sourceFile = getSourceFile()
+        val sourceFileUri = Uri.fromFile(sourceFile)
+
+        val result = importProjects.importSource(sourceFileUri)
 
         assertFalse("Import should not be successful", result.success)
         assertFalse("There should be no merge conflict", result.hasConflict)
