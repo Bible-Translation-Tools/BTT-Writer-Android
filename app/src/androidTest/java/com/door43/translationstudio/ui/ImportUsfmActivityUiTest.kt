@@ -6,9 +6,12 @@ import android.content.pm.ActivityInfo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
-import androidx.test.espresso.action.ViewActions
-import androidx.test.espresso.assertion.ViewAssertions
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -25,6 +28,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Matchers
+import org.hamcrest.Matchers.containsString
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -94,7 +98,7 @@ class ImportUsfmActivityUiTest {
         scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
-        Espresso.onView(withText(language)).perform(ViewActions.click())
+        onView(withText(language)).perform(click())
 
         //when
         matchSummaryDialog(R.string.title_import_usfm_error, book)
@@ -121,14 +125,14 @@ class ImportUsfmActivityUiTest {
         scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
-        Espresso.onView(withText(language)).perform(ViewActions.click())
+        onView(withText(language)).perform(click())
 
         thenShouldShowMissingBookNameDialog()
         rotateScreen(scenario)
 
         //when
         thenShouldShowMissingBookNameDialog()
-        Espresso.onView(withText(R.string.label_continue)).perform(ViewActions.click())
+        onView(withText(R.string.label_continue)).inRoot(isDialog()).perform(click())
         clickOnViewText("bible-nt")
         clickOnViewText("Mark")
 
@@ -155,14 +159,14 @@ class ImportUsfmActivityUiTest {
         scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
-        Espresso.onView(withText(language)).perform(ViewActions.click())
+        onView(withText(language)).perform(click())
         matchSummaryDialog(R.string.title_processing_usfm_summary, book)
 
         rotateScreen(scenario)
         matchSummaryDialog(R.string.title_processing_usfm_summary, book)
 
         //when
-        Espresso.onView(withText(R.string.label_continue)).perform(ViewActions.click())
+        onView(withText(R.string.label_continue)).inRoot(isDialog()).perform(click())
 
         //then
         matchImportResultsDialog(true)
@@ -189,7 +193,7 @@ class ImportUsfmActivityUiTest {
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
 
         //when
-        Espresso.onView(withText(language)).perform(ViewActions.click())
+        onView(withText(language)).perform(click())
 
         //then
         matchSummaryDialog(R.string.title_import_usfm_error, book)
@@ -238,15 +242,13 @@ class ImportUsfmActivityUiTest {
     private fun clickOnViewText(matchText: String?) {
         for (i in 0..19) { // wait until dialog is displayed
             try {
-                Espresso.onView(withText(matchText))
-                    .check(ViewAssertions.matches(withText(matchText)))
+                onView(withText(matchText)).check(matches(withText(matchText)))
                 break
             } catch (_: Exception) {
             }
         }
-        Espresso.onView(withText(matchText))
-            .check(ViewAssertions.matches(withText(matchText)))
-        Espresso.onView(withText(matchText)).perform(ViewActions.click())
+        onView(withText(matchText)).check(matches(withText(matchText)))
+        onView(withText(matchText)).perform(click())
     }
 
     /**
@@ -257,17 +259,18 @@ class ImportUsfmActivityUiTest {
         val matchTitle = if (success) R.string.title_import_usfm_results else R.string.title_import_usfm_error
         val matchText = if (success) R.string.import_usfm_success else R.string.import_usfm_failed
         thenShouldHaveDialogTitle(matchTitle)
-        Espresso.onView((withText(matchText)))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+        onView((withText(matchText)))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
     }
 
     /**
      * check if dialog content shows no errors
      */
     private fun checkForImportErrors(title: Int) {
-        val dialogTitle = appContext.resources.getString(title)
-        Espresso.onView(withText(dialogTitle))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+        onView(withText(title))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
     }
 
     /**
@@ -277,8 +280,9 @@ class ImportUsfmActivityUiTest {
     private fun shouldHaveFoundBook(book: String) {
         val format = appContext.resources.getString(R.string.found_book)
         val matchText = String.format(format, book)
-        Espresso.onView(withText(Matchers.containsString(matchText)))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog open
+        onView(withText(containsString(matchText)))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed())) // dialog open
     }
 
     private fun thenShouldShowMissingBookNameDialog() {
@@ -286,9 +290,9 @@ class ImportUsfmActivityUiTest {
     }
 
     private fun thenShouldHaveDialogTitle(title: Int) {
-        val titleStr = appContext.resources.getString(title)
-        Espresso.onView(withText(titleStr))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
+        onView(withText(title))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed())) // dialog displayed
     }
 
     /**
@@ -312,7 +316,7 @@ class ImportUsfmActivityUiTest {
         if (!displayed) {
             displayState = Matchers.not(displayState)
         }
-        interaction.check(ViewAssertions.matches(displayState))
+        interaction.check(matches(displayState))
     }
 
     /**

@@ -88,7 +88,7 @@ class GogsLoginLogoutTest {
         assertNotNull("Token should not be null", result.user!!.token)
         assertTrue(
             "Token name should contain build model",
-            result.user!!.token.name.contains(Build.MODEL)
+            result.user!!.token.name.contains(Build.MODEL.lowercase())
         )
 
         return result.user!!
