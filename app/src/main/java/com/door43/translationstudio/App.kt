@@ -168,10 +168,7 @@ class App : Application() {
         @SuppressLint("HardwareIds")
         @JvmStatic
         fun udid(): String {
-            return Settings.Secure.getString(
-                instance.contentResolver,
-                Settings.Secure.ANDROID_ID
-            )
+            return Build.MODEL.lowercase()
         }
 
         @JvmStatic

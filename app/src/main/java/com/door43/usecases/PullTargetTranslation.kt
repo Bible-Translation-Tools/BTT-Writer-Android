@@ -66,9 +66,11 @@ class PullTargetTranslation @Inject constructor(
                     targetTranslation,
                     progressListener
                 )?.sshUrl
-            }?.let {
-                return pull(repo, it, targetTranslation, mergeStrategy)
+            }?.let { remoteUrl ->
+                return pull(repo, remoteUrl, targetTranslation, mergeStrategy)
             }
+        } else {
+            return Result(Status.AUTH_FAILURE, context.getString(R.string.auth_failure_retry))
         }
 
         return Result(Status.UNKNOWN, null)
@@ -96,7 +98,7 @@ class PullTargetTranslation @Inject constructor(
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy
     ): Result {
-        var status: Status = Status.UNKNOWN
+        var status = Status.UNKNOWN
         val git: Git
         try {
             repo.deleteRemote("origin")
@@ -106,7 +108,7 @@ class PullTargetTranslation @Inject constructor(
             return Result(status, null)
         }
 
-        var conflicts: Map<String, Array<IntArray>> = HashMap()
+        val conflicts: Map<String, Array<IntArray>>
         var localManifest = Manifest.generate(targetTranslation.path)
 
         // TODO: we might want to get some progress feedback for the user

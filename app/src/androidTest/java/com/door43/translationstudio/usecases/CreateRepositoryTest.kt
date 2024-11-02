@@ -73,7 +73,7 @@ class CreateRepositoryTest {
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
-        TestUtils.loginGogsUser(profile, searchGogsUsers)
+        TestUtils.loginGogsUserWithToken(profile, searchGogsUsers)
 
         val created = createRepository.execute(targetTranslation!!)
 

@@ -2,7 +2,7 @@ package com.door43.translationstudio.core
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.provider.Settings
+import android.os.Build
 import com.door43.questionnaire.QuestionnairePager
 import com.door43.util.FileUtilities
 import com.door43.util.Security
@@ -202,10 +202,7 @@ class NewLanguageRequest private constructor(
             app: String,
             requester: String
         ): Builder {
-            val udid = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ANDROID_ID
-            )
+            val udid = Build.MODEL.lowercase()
             val time = System.currentTimeMillis()
             val uniqueString = udid + time
             val hash = Security.sha1(uniqueString)

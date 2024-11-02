@@ -15,6 +15,12 @@ class MergeTargetTranslation @Inject constructor(
         val sourceTranslation: TargetTranslation
     )
 
+    enum class Status {
+        SUCCESS,
+        MERGE_CONFLICTS,
+        MERGE_ERROR
+    }
+
     fun execute(
         destinationTranslation: TargetTranslation,
         sourceTranslation: TargetTranslation,
@@ -50,11 +56,5 @@ class MergeTargetTranslation @Inject constructor(
         }
 
         return Result(success, status, destinationTranslation, sourceTranslation)
-    }
-
-    enum class Status {
-        SUCCESS,
-        MERGE_CONFLICTS,
-        MERGE_ERROR
     }
 }

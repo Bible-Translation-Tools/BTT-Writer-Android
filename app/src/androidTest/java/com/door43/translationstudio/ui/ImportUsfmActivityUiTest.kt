@@ -3,13 +3,11 @@ package com.door43.translationstudio.ui
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
-import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
-import androidx.test.espresso.matcher.BoundedMatcher
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -26,8 +24,6 @@ import com.door43.util.FileUtilities.deleteQuietly
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import org.hamcrest.Description
-import org.hamcrest.Matcher
 import org.hamcrest.Matchers
 import org.junit.After
 import org.junit.Before
@@ -95,20 +91,20 @@ class ImportUsfmActivityUiTest {
         val intent = getIntentForTestFile(testFile)
 
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
+        scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        //waitWhileDisplayed(R.string.reading_usfm)
 
         //when
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_import_usfm_error, book, false)
+        matchSummaryDialog(R.string.title_import_usfm_error, book)
         rotateScreen(scenario)
 
         //then
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_import_usfm_error, book, false)
+        matchSummaryDialog(R.string.title_import_usfm_error, book)
         rotateScreen(scenario)
+
+        scenario.close()
     }
 
     @Test
@@ -122,30 +118,27 @@ class ImportUsfmActivityUiTest {
         val intent = getIntentForTestFile(testFile)
 
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
+        scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        //waitWhileDisplayed(R.string.reading_usfm)
 
-        Espresso.onIdle()
         thenShouldShowMissingBookNameDialog()
         rotateScreen(scenario)
 
         //when
-        Espresso.onIdle()
         thenShouldShowMissingBookNameDialog()
         Espresso.onView(withText(R.string.label_continue)).perform(ViewActions.click())
         clickOnViewText("bible-nt")
         clickOnViewText("Mark")
 
         //then
-        //waitWhileDisplayed(R.string.reading_usfm)
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
+        matchSummaryDialog(R.string.title_processing_usfm_summary, book)
 
         rotateScreen(scenario)
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
+        matchSummaryDialog(R.string.title_processing_usfm_summary, book)
+
+        scenario.close()
     }
 
     @Test
@@ -159,28 +152,25 @@ class ImportUsfmActivityUiTest {
         val intent = getIntentForTestFile(testFile)
 
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
+        scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        //waitWhileDisplayed(R.string.reading_usfm)
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
+        matchSummaryDialog(R.string.title_processing_usfm_summary, book)
 
         rotateScreen(scenario)
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, true)
+        matchSummaryDialog(R.string.title_processing_usfm_summary, book)
 
         //when
         Espresso.onView(withText(R.string.label_continue)).perform(ViewActions.click())
 
         //then
-        //waitWhileDisplayed(R.string.importing_usfm)
-        Espresso.onIdle()
         matchImportResultsDialog(true)
 
         rotateScreen(scenario)
-        Espresso.onIdle()
         matchImportResultsDialog(true)
+
+        scenario.close()
     }
 
     @Test
@@ -194,21 +184,21 @@ class ImportUsfmActivityUiTest {
         val intent = getIntentForTestFile(testFile)
 
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
+        scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkDisplayState(R.string.title_activity_import_usfm_language, true)
 
         //when
         Espresso.onView(withText(language)).perform(ViewActions.click())
-        //waitWhileDisplayed(R.string.reading_usfm)
 
         //then
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_import_usfm_error, book, false)
+        matchSummaryDialog(R.string.title_import_usfm_error, book)
         rotateScreen(scenario)
 
-        Espresso.onIdle()
-        matchSummaryDialog(R.string.title_import_usfm_error, book, false)
+        matchSummaryDialog(R.string.title_import_usfm_error, book)
         rotateScreen(scenario)
+
+        scenario.close()
     }
 
     /**
@@ -232,14 +222,13 @@ class ImportUsfmActivityUiTest {
      * match expected values on summary dialog
      * @param title
      * @param book
-     * @param noErrors
      */
-    private fun matchSummaryDialog(title: Int, book: String?, noErrors: Boolean) {
+    private fun matchSummaryDialog(title: Int, book: String?) {
         thenShouldHaveDialogTitle(title)
         if (book != null) {
             shouldHaveFoundBook(book)
         }
-        checkForImportErrors(noErrors, title)
+        checkForImportErrors(title)
     }
 
     /**
@@ -252,7 +241,7 @@ class ImportUsfmActivityUiTest {
                 Espresso.onView(withText(matchText))
                     .check(ViewAssertions.matches(withText(matchText)))
                 break
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
         }
         Espresso.onView(withText(matchText))
@@ -265,8 +254,7 @@ class ImportUsfmActivityUiTest {
      * @param success
      */
     private fun matchImportResultsDialog(success: Boolean) {
-        val matchTitle =
-            if (success) R.string.title_import_usfm_results else R.string.title_import_usfm_error
+        val matchTitle = if (success) R.string.title_import_usfm_results else R.string.title_import_usfm_error
         val matchText = if (success) R.string.import_usfm_success else R.string.import_usfm_failed
         thenShouldHaveDialogTitle(matchTitle)
         Espresso.onView((withText(matchText)))
@@ -275,9 +263,8 @@ class ImportUsfmActivityUiTest {
 
     /**
      * check if dialog content shows no errors
-     * @param noErrors
      */
-    private fun checkForImportErrors(noErrors: Boolean, title: Int) {
+    private fun checkForImportErrors(title: Int) {
         val dialogTitle = appContext.resources.getString(title)
         Espresso.onView(withText(dialogTitle))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
@@ -302,42 +289,6 @@ class ImportUsfmActivityUiTest {
         val titleStr = appContext.resources.getString(title)
         Espresso.onView(withText(titleStr))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
-    }
-
-    /**
-     * since progress dialog is async, then we idle while it is shown
-     * @param resource
-     * @return
-     */
-    private fun waitWhileDisplayed(resource: Int): Boolean {
-        val text = appContext.resources.getString(resource)
-        return waitWhileDisplayed(text)
-    }
-
-    /**
-     * since progress dialog is async, then we idle while it is shown
-     * @param text
-     * @return
-     */
-    private fun waitWhileDisplayed(text: String): Boolean {
-        var done = false
-        var viewSeen = false
-        val maxCount = 1000 // sanity limit
-        var i = 0
-        while ((i < maxCount) && !done) {
-            try {
-                Espresso.onView(withText(text))
-                    .check(ViewAssertions.matches(ViewMatchers.isCompletelyDisplayed()))
-                viewSeen = true
-            } catch (e: Exception) {
-                done = true
-            }
-            i++
-        }
-        if (!done) {
-            val msg = "Max count reached"
-        }
-        return viewSeen
     }
 
     /**
@@ -371,7 +322,7 @@ class ImportUsfmActivityUiTest {
      * @throws Exception
      */
     @Throws(Exception::class)
-    fun getIntentForTestFile(fileName: String): Intent {
+    private fun getIntentForTestFile(fileName: String): Intent {
         val intent = Intent(appContext, ImportUsfmActivity::class.java)
 
         tempDir = File(
@@ -404,68 +355,7 @@ class ImportUsfmActivityUiTest {
         }
     }
 
-    /**
-     * get interaction for toolbar with title
-     * @param resource
-     * @return
-     */
-    private fun matchToolbarTitle(resource: Int): ViewInteraction {
-        val title = appContext.resources.getString(resource)
-        return matchToolbarTitle(title)
-    }
-
-    companion object {
-        /**
-         * get interaction for toolbar with title
-         * @param title
-         * @return
-         */
-        private fun matchToolbarTitle(
-            title: CharSequence
-        ): ViewInteraction {
-            return Espresso.onView(
-                Matchers.allOf(
-                    ViewMatchers.isAssignableFrom(
-                        Toolbar::class.java
-                    )
-                )
-            )
-                .check(ViewAssertions.matches(withToolbarTitle(Matchers.`is`(title))))
-        }
-
-        /**
-         * get interaction for toolbar with title
-         * @param title
-         * @return
-         */
-        private fun notMatchToolbarTitle(
-            title: CharSequence
-        ): ViewInteraction {
-            return Espresso.onView(ViewMatchers.isAssignableFrom(Toolbar::class.java))
-                .check(ViewAssertions.matches(Matchers.not(withToolbarTitle(Matchers.`is`(title)))))
-        }
-
-        /**
-         * match toolbar
-         * @param textMatcher
-         * @return
-         */
-        private fun withToolbarTitle(
-            textMatcher: Matcher<CharSequence>
-        ): Matcher<Any> {
-            return object : BoundedMatcher<Any, Toolbar>(Toolbar::class.java) {
-                public override fun matchesSafely(toolbar: Toolbar): Boolean {
-                    return textMatcher.matches(toolbar.title)
-                }
-                override fun describeTo(description: Description) {
-                    description.appendText("with toolbar title: ")
-                    textMatcher.describeTo(description)
-                }
-            }
-        }
-    }
-
-    fun dismissANRSystemDialog() {
+    private fun dismissANRSystemDialog() {
         val device = UiDevice.getInstance(getInstrumentation())
         // If running the device in English Locale
         var waitButton = device.findObject(UiSelector().textContains("wait"))

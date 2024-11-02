@@ -3,7 +3,6 @@ package com.door43.usecases
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
-import android.provider.Settings
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -82,11 +81,8 @@ class GogsLogin @Inject constructor(
     @SuppressLint("HardwareIds")
     private fun getTokenStub(): String {
         val defaultTokenName = context.resources.getString(R.string.gogs_token_name)
-        val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        var nickname = Settings.Secure.getString(context.contentResolver, "bluetooth_name")
-        if (nickname == null || nickname.isEmpty()) {
-            nickname = Build.MODEL
-        }
+        val androidId = Build.DEVICE.lowercase()
+        val nickname = Build.MODEL.lowercase()
         val tokenSuffix = String.format("%s_%s__%s", Build.MANUFACTURER, nickname, androidId)
         return defaultTokenName + "__" + tokenSuffix
     }

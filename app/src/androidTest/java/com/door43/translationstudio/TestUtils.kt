@@ -86,7 +86,7 @@ object TestUtils {
         return translator.getTargetTranslation(result!!.importedSlug)
     }
 
-    fun loginGogsUser(
+    fun loginGogsUserWithToken(
         profile: Profile,
         searchGogsUsers: SearchGogsUsers
     ) {

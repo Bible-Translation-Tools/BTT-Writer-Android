@@ -1,6 +1,6 @@
 package com.door43.translationstudio.usecases
 
-import android.provider.Settings
+import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.core.Profile
@@ -8,8 +8,6 @@ import com.door43.usecases.GogsLogin
 import com.door43.usecases.GogsLogout
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import io.mockk.every
-import io.mockk.mockkStatic
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
@@ -38,9 +36,6 @@ class GogsLoginLogoutTest {
     fun setUp() {
         hiltRule.inject()
         Logger.flush()
-
-        mockkStatic(Settings.Secure::class)
-        every { Settings.Secure.getString(any(), any()) } returns "mock_android_id"
     }
 
     @Test
@@ -92,8 +87,8 @@ class GogsLoginLogoutTest {
         assertEquals(BuildConfig.TEST_USER, result.user!!.username)
         assertNotNull("Token should not be null", result.user!!.token)
         assertTrue(
-            "Token name should contain mock android id",
-            result.user!!.token.name.contains("mock_android_id")
+            "Token name should contain build model",
+            result.user!!.token.name.contains(Build.MODEL)
         )
 
         return result.user!!

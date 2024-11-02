@@ -71,7 +71,7 @@ class GetRepositoryTest {
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
-        TestUtils.loginGogsUser(profile, searchGogsUsers)
+        TestUtils.loginGogsUserWithToken(profile, searchGogsUsers)
 
         val repo = getRepository.execute(targetTranslation!!)
 

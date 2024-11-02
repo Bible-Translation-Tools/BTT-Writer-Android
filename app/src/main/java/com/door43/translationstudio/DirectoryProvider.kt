@@ -162,6 +162,8 @@ open class DirectoryProvider (private val context: Context) : IDirectoryProvider
         if (shmFile.exists()) { FileUtilities.deleteQuietly(shmFile) }
         val walFile = File(databaseFile.absolutePath + "-wal")
         if (walFile.exists()) { FileUtilities.deleteQuietly(walFile) }
+        val journalFile = File(databaseFile.absolutePath + "-journal")
+        if (journalFile.exists()) { FileUtilities.deleteQuietly(journalFile) }
 
         // extract resource containers
         containersDir.mkdirs()

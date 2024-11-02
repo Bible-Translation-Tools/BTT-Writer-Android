@@ -209,7 +209,11 @@ class HomeViewModel @Inject constructor(
         // Gets an existing source project or default if none selected
         if (existingSources.isNotEmpty()) {
             val lastSource = existingSources[existingSources.size - 1]
-            project = library.index.getTranslation(lastSource).project
+            project = library.index.getTranslation(lastSource)?.project ?: library.index.getProject(
+                targetTranslation.targetLanguageName,
+                targetTranslation.projectId,
+                true
+            )
         } else {
             project = library.index.getProject(
                 targetTranslation.targetLanguageName,
