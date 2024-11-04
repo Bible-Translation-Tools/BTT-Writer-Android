@@ -51,6 +51,8 @@ class PushTargetTranslation @Inject constructor(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        } else {
+            return Result(Status.AUTH_FAILURE, null)
         }
 
         return Result(Status.UNKNOWN, null)

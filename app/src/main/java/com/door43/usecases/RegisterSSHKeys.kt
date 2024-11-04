@@ -41,7 +41,7 @@ class RegisterSSHKeys @Inject constructor(
             if (!directoryProvider.hasSSHKeys() || force) {
                 directoryProvider.generateSSHKeys()
             }
-            var keyString: String? = null
+            val keyString: String?
             try {
                 keyString = readFileToString(directoryProvider.publicKey).trim()
             } catch (e: IOException) {
