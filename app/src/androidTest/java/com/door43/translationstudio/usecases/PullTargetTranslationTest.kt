@@ -5,11 +5,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.R
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.PullTargetTranslation
@@ -29,6 +33,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.gogsclient.GogsAPI
+import org.unfoldingword.gogsclient.Repository
+import org.unfoldingword.gogsclient.User
 import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
@@ -52,6 +59,7 @@ class PullTargetTranslationTest {
     @Inject lateinit var searchGogsUsers: SearchGogsUsers
     @Inject lateinit var gogsLogin: GogsLogin
     @Inject lateinit var registerSSHKeys: RegisterSSHKeys
+    @Inject lateinit var prefRepo: IPreferenceRepository
 
     @Before
     fun setUp() {
@@ -68,11 +76,14 @@ class PullTargetTranslationTest {
 
     @Test
     fun testPullTargetTranslationAuthorizedNewRepo() {
-        val targetTranslation = importTargetTranslation("aa")
+        val targetTranslation = importTargetTranslation("fr")
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
         loginGogsUser()
+
+        // Should first delete remote repo if it exists
+        deleteRepo(targetTranslation!!, profile.gogsUser!!)
 
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, _, message ->
@@ -80,7 +91,7 @@ class PullTargetTranslationTest {
         }
 
         val result = pullTargetTranslation.execute(
-            targetTranslation!!,
+            targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
             progressListener
@@ -177,5 +188,16 @@ class PullTargetTranslationTest {
         val registered = registerSSHKeys.execute(true)
 
         assertTrue("SSH keys should be registered", registered)
+    }
+
+    private fun deleteRepo(targetTranslation: TargetTranslation, user: User) {
+        val api = GogsAPI(
+            prefRepo.getDefaultPref(
+                SettingsActivity.KEY_PREF_GOGS_API,
+                appContext.resources.getString(R.string.pref_default_gogs_api)
+            )
+        )
+        val templateRepo = Repository(targetTranslation.id, "", false)
+        api.deleteRepo(templateRepo, user)
     }
 }
