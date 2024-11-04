@@ -3,10 +3,13 @@ package com.door43.translationstudio
 import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
 import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.SearchGogsUsers
 import com.door43.util.FileUtilities.readStreamToString
@@ -15,7 +18,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.gogsclient.GogsAPI
+import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.gogsclient.Token
+import org.unfoldingword.gogsclient.User
 
 /**
  * Created by joel on 2/25/2015.
@@ -102,5 +108,21 @@ object TestUtils {
         assertNotNull("User should not be null", user)
 
         profile.gogsUser = user
+    }
+
+    fun deleteRepo(
+        context: Context,
+        prefRepo: IPreferenceRepository,
+        targetTranslation: TargetTranslation,
+        user: User
+    ) {
+        val api = GogsAPI(
+            prefRepo.getDefaultPref(
+                SettingsActivity.KEY_PREF_GOGS_API,
+                context.resources.getString(R.string.pref_default_gogs_api)
+            )
+        )
+        val templateRepo = Repository(targetTranslation.id, "", false)
+        api.deleteRepo(templateRepo, user)
     }
 }

@@ -93,7 +93,7 @@ class PushTargetTranslationTest {
         val result = pushTargetTranslation.execute(targetTranslation!!, progressListener)
 
         assertEquals(
-            "Push should fail",
+            "Push should fail, because remote exists but not synced with local",
             PushTargetTranslation.Status.REJECTED_NON_FAST_FORWARD,
             result.status
         )
