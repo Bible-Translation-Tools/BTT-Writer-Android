@@ -11,7 +11,7 @@ import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import java.util.Locale
 
-class PreferenceRepository (private val context: Context) : IPreferenceRepository {
+open class PreferenceRepository (private val context: Context) : IPreferenceRepository {
 
     private companion object {
         const val PREFERENCES_NAME = "com.door43.translationstudio.general"
@@ -44,10 +44,10 @@ class PreferenceRepository (private val context: Context) : IPreferenceRepositor
      * Returns an instance of the user preferences.
      * This is just the default shared preferences
      */
-    private val defaultPrefs: SharedPreferences
+    protected open val defaultPrefs: SharedPreferences
         get() = PreferenceManager.getDefaultSharedPreferences(context)
 
-    private val privatePrefs
+    protected open val privatePrefs: SharedPreferences
         get() = context.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
 
     override fun <T> getDefaultPref(key: String, type: Class<T>): T? {

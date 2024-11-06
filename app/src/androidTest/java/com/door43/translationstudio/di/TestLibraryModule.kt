@@ -8,6 +8,7 @@ import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
+import io.mockk.spyk
 import org.unfoldingword.door43client.Door43Client
 import javax.inject.Singleton
 
@@ -24,6 +25,6 @@ class TestLibraryModule {
         directoryProvider: IDirectoryProvider,
     ): Door43Client {
         directoryProvider.deployDefaultLibrary()
-        return Door43Client(context, directoryProvider)
+        return spyk(Door43Client(context, directoryProvider))
     }
 }

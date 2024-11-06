@@ -6,7 +6,6 @@ import com.door43.data.ILanguageRequestRepository
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.repositories.LanguageRequestRepository
-import com.door43.repositories.PreferenceRepository
 import com.door43.translationstudio.core.ArchiveImporter
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
@@ -32,14 +31,6 @@ object AppModule {
         library: Door43Client
     ): ILanguageRequestRepository {
         return LanguageRequestRepository(context, directoryProvider, library)
-    }
-
-    @Provides
-    @Singleton
-    fun providePreferenceRepository(
-        @ApplicationContext context: Context
-    ): IPreferenceRepository {
-        return PreferenceRepository(context)
     }
 
     @Provides
