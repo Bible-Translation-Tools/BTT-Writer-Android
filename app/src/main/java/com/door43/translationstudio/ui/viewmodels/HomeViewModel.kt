@@ -292,7 +292,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _uploadCatalogResult.value = withContext(Dispatchers.IO) {
-                updateCatalogs.execute(message) { progress, max, message ->
+                updateCatalogs.execute(true, message) { progress, max, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,

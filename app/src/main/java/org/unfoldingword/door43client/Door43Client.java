@@ -91,11 +91,12 @@ public class Door43Client {
 
     /**
      * Indexes the supplementary catalogs
+     * @param force
      * @param listener
      * @throws Exception
      */
-    public void updateCatalogs(OnProgressListener listener) throws Exception {
-        api.updateCatalogs(listener);
+    public void updateCatalogs(Boolean force, OnProgressListener listener) throws Exception {
+        api.updateCatalogs(force, listener);
     }
 
     public void updateLanguageUrl(String url) throws Exception {

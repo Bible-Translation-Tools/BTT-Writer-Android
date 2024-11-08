@@ -1,0 +1,46 @@
+[
+  {
+    "checking_questions": "{server}/luk/es/questions.json",
+    "chunks": "{server}/luk/es/chunks.json",
+    "date_modified": "{datetime}",
+    "name": "Unlocked Dynamic Bible",
+    "notes": "{server}/notes.json",
+    "slug": "udb",
+    "source": "{server}/luk/es/source.json",
+    "status": {
+      "checking_entity": "unknown",
+      "checking_level": "3",
+      "comments": null,
+      "contributors": "User 1, User 2",
+      "publish_date": "{date}",
+      "source_text": "udb",
+      "source_text_version": "11",
+      "version": "11.1"
+    },
+    "terms": "{server}/luk/es/words.json",
+    "tw_cat": "{server}/luk/es/tw_cat.json",
+    "usfm": "{server}/luk/es/luk.usfm"
+  },
+  {
+    "checking_questions": "{server}/luk/es/questions.json",
+    "chunks": "{server}/luk/es/chunks.json",
+    "date_modified": "{datetime}",
+    "name": "Espa\u00f1ol Latino Americano ULB",
+    "notes": "/notes.json",
+    "slug": "ulb",
+    "source": "{server}/luk/es/source.json",
+    "status": {
+      "checking_entity": "Checking group",
+      "checking_level": "3",
+      "comments": null,
+      "contributors": "User 1, User 2",
+      "publish_date": "{date}",
+      "source_text": "asv",
+      "source_text_version": "1",
+      "version": "1.9"
+    },
+    "terms": "{server}/luk/es/words.json",
+    "tw_cat": "{server}/luk/es/tw_cat.json",
+    "usfm": "{server}/luk/es/luk.usfm"
+  }
+]

@@ -1,0 +1,187 @@
+{
+  "languages": [
+    {
+      "language_data": {
+        "ln": 0,
+        "cc": 2
+      },
+      "questionnaire_id": 2,
+      "name": "Spanish",
+      "questions": [
+        {
+          "sort": 1,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What do you call your language?",
+          "id": 0
+        },
+        {
+          "sort": 2,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "Do you have other names for your language?",
+          "id": 1
+        },
+        {
+          "sort": 3,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What country is your language located in?",
+          "id": 2
+        },
+        {
+          "sort": 4,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What do you call your own people?",
+          "id": 3
+        },
+        {
+          "sort": 5,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What is the estimated number of speakers of this language?",
+          "id": 4
+        },
+        {
+          "sort": 6,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What do the other people call your language?",
+          "id": 5
+        },
+        {
+          "sort": 7,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What is the name of your village, town or city?",
+          "id": 6
+        },
+        {
+          "sort": 8,
+          "depends_on": 6,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What are the names of the surrounding sub-district, district and/or province?",
+          "id": 7
+        },
+        {
+          "sort": 9,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What language is your language most like?",
+          "id": 8
+        },
+        {
+          "sort": 10,
+          "depends_on": 8,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "On a scale of 1 (not very similar) to 10 (very similar), how similar is your language to this other language?",
+          "id": 9
+        },
+        {
+          "sort": 11,
+          "depends_on": null,
+          "help": "",
+          "input_type": "boolean",
+          "required": true,
+          "text": "Is there Scripture available that people understand?",
+          "id": 10
+        },
+        {
+          "sort": 12,
+          "depends_on": 11,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "If yes, indicate the portion available and the language.",
+          "id": 11
+        },
+        {
+          "sort": 13,
+          "depends_on": 11,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "Which languages are used in church services?",
+          "id": 12
+        },
+        {
+          "sort": 14,
+          "depends_on": 11,
+          "help": "",
+          "input_type": "boolean",
+          "required": true,
+          "text": "Is the sermon translated into your language?",
+          "id": 13
+        },
+        {
+          "sort": 15,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "What translation format would the group prefer?",
+          "id": 14
+        },
+        {
+          "sort": 16,
+          "depends_on": 15,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "If written, what alphabet would you prefer to use for your language?",
+          "id": 15
+        },
+        {
+          "sort": 17,
+          "depends_on": null,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "Is there a local church engaged with your language group?",
+          "id": 16
+        },
+        {
+          "sort": 18,
+          "depends_on": 16,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "List any regional, national or expat Christian NGOs active in your area.",
+          "id": 17
+        },
+        {
+          "sort": 19,
+          "depends_on": 16,
+          "help": "",
+          "input_type": "string",
+          "required": true,
+          "text": "Test questionnaire question",
+          "id": 18
+        }
+      ],
+      "slug": "es",
+      "dir": "ltr"
+    }
+  ]
+}

@@ -45,7 +45,7 @@ class UpdateSource @Inject constructor(
 
         for (t in availableTranslationsAll) {
             if (++count % 16 == 0) {
-                progressListener?.onProgress(count,maxProgress, message)
+                progressListener?.onProgress(count, maxProgress, message)
             }
 
             val id = t.resourceContainerSlug
@@ -65,9 +65,7 @@ class UpdateSource @Inject constructor(
                 context.resources.getString(R.string.pref_default_media_server)
             )
             val rootApiUrl = server + context.resources.getString(R.string.root_catalog_api)
-            library.updateSources(
-                rootApiUrl
-            ) { tag, max, complete ->
+            library.updateSources(rootApiUrl) { tag, max, complete ->
                 maxProgress = max.toInt()
                 val details = "$message $tag"
                 progressListener?.onProgress(complete.toInt(), max.toInt(), details)

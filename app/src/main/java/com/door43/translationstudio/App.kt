@@ -168,7 +168,7 @@ class App : Application() {
         @SuppressLint("HardwareIds")
         @JvmStatic
         fun udid(): String {
-            return Build.MODEL.lowercase()
+            return Build.MODEL.lowercase().replace(" ", "_")
         }
 
         @JvmStatic

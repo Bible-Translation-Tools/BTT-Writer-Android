@@ -17,7 +17,7 @@ class UpdateAll @Inject constructor(
 ) {
     data class Result(val success: Boolean)
 
-    fun execute(progressListener: OnProgressListener? = null): Result {
+    fun execute(updateCatalogs: Boolean, progressListener: OnProgressListener? = null): Result {
         var maxProgress = 100
         var success = false
         var overallSuccess = true
@@ -48,7 +48,7 @@ class UpdateAll @Inject constructor(
         progressListener?.onProgress(-1, 100, "")
 
         try {
-            library.updateCatalogs { tag, max, complete ->
+            library.updateCatalogs(updateCatalogs) { tag, max, complete ->
                 maxProgress = max.toInt()
                 progressListener?.onProgress(complete.toInt(), maxProgress, tag)
                 true

@@ -160,12 +160,15 @@ class API {
 
     /**
      * Updates all the global catalogs
-     * @param listener
-     * @throws Exception
+     * @param force Should we update/insert catalogs
+     * @param listener Progress Listener
+     * @throws Exception Any exception
      */
-    public void updateCatalogs(OnProgressListener listener) throws Exception {
-        // inject missing global catalogs
-        LegacyTools.injectGlobalCatalogs(library, globalCatalogHost);
+    public void updateCatalogs(Boolean force, OnProgressListener listener) throws Exception {
+        if (force) {
+            // inject missing global catalogs
+            LegacyTools.injectGlobalCatalogs(library, globalCatalogHost);
+        }
         List<Catalog> catalogs = library.getCatalogs();
         for(Catalog c:catalogs) {
             updateCatalog(c, listener);

@@ -1,0 +1,24 @@
+[
+  {
+    "checking_questions": "{server}/mat/test/questions.json",
+    "chunks": "{server}/mat/test/chunks.json",
+    "date_modified": "{datetime}",
+    "name": "Test Unlocked Literal Bible",
+    "notes": "{server}/mat/test/notes.json",
+    "slug": "tst",
+    "source": "{server}/mat/test/source.json",
+    "status": {
+      "checking_entity": "Unknown",
+      "checking_level": "3",
+      "comments": null,
+      "contributors": "User 1, User 2",
+      "publish_date": "{date}",
+      "source_text": "ulb",
+      "source_text_version": "9",
+      "version": "12.2"
+    },
+    "terms": "{server}/mat/test/words.json",
+    "tw_cat": "{server}/mat/test/tw_cat.json",
+    "usfm": "{server}/mat/test/mat.usfm"
+  }
+]

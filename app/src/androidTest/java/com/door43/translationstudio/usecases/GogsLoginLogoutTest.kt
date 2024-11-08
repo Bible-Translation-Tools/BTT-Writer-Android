@@ -2,6 +2,7 @@ package com.door43.translationstudio.usecases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.translationstudio.App
 import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.core.Profile
 import com.door43.usecases.GogsLogin
@@ -88,7 +89,7 @@ class GogsLoginLogoutTest {
         assertNotNull("Token should not be null", result.user!!.token)
         assertTrue(
             "Token name should contain build model",
-            result.user!!.token.name.contains(Build.MODEL.lowercase())
+            result.user!!.token.name.contains(App.udid())
         )
 
         return result.user!!

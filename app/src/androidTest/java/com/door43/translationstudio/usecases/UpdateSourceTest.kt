@@ -1,17 +1,19 @@
 package com.door43.translationstudio.usecases
 
+import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
+import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
-import com.door43.usecases.UpdateAll
+import com.door43.usecases.UpdateSource
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
-import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -24,21 +26,22 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Catalog
 import org.unfoldingword.tools.logger.Logger
 import java.text.SimpleDateFormat
 import javax.inject.Inject
 
+
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
-class UpdateAllTest {
+class UpdateSourceTest {
 
     @get:Rule(order = 0)
     var hiltRule = HiltAndroidRule(this)
 
-    @Inject lateinit var updateAll: UpdateAll
+    @Inject @ApplicationContext lateinit var context: Context
     @Inject lateinit var library: Door43Client
     @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var updateSource: UpdateSource
     @Inject lateinit var prefRepository: IPreferenceRepository
     @Inject lateinit var assetsProvider: AssetsProvider
 
@@ -65,10 +68,6 @@ class UpdateAllTest {
                     request.path == "/luk" -> successResponse.setBody(createResponse("luk"))
                     request.path == "/luk_es" -> successResponse.setBody(createResponse("luk_es"))
                     request.path == "/luk_tpi" -> successResponse.setBody(createResponse("luk_tpi"))
-                    request.path == "/langnames.json" -> successResponse.setBody(createResponse("langnames"))
-                    request.path == "/questionnaire.json" -> successResponse.setBody(createResponse("questionnaire"))
-                    request.path == "/temp-langs.json" -> successResponse.setBody(createResponse("temp_langs"))
-                    request.path == "/approved-langs.json" -> successResponse.setBody(createResponse("approved_temp_langs"))
                     isCatalog -> successResponse.setBody(createResponse("catalog"))
                     else -> notFoundResponse
                 }
@@ -80,6 +79,7 @@ class UpdateAllTest {
     @After
     fun tearDown() {
         server.shutdown()
+        directoryProvider.clearCache()
     }
 
     companion object {
@@ -94,20 +94,34 @@ class UpdateAllTest {
     }
 
     @Test
-    fun testUpdateAll() {
+    fun testUpdateSource() {
         val url = server.url("/test")
         prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MEDIA_SERVER, url.toString())
 
-        prepareCatalogs()
+        val message = context.resources.getString(R.string.updating_sources)
+        val result = updateSource.execute(message)
 
-        val result = updateAll.execute(false)
+        assertTrue("Update source succeeded", result.success)
+        assertEquals("Added 1 source", 1, result.addedCount)
+        assertEquals("Updated 6 sources", 6, result.updatedCount)
 
-        assertTrue("UpdateAll should succeed", result.success)
+        val sourceLanguages = library.index.getSourceLanguages()
+
+        assertNotNull(
+            "Test Source language should be added",
+            sourceLanguages.singleOrNull { it.slug == "test" && it.name == "Test Language" }
+        )
+        assertNotNull(
+            "Spanish source language should exist",
+            sourceLanguages.singleOrNull { it.slug == "es-419" && it.name == "Espa\u00f1ol (Latin American Spanish)" }
+        )
+        assertNotNull(
+            "Tok Pisin source language should exist",
+            sourceLanguages.singleOrNull { it.slug == "tpi" && it.name == "Tok Pisin" }
+        )
 
         verifyTestProject()
         verifyLukProject()
-        verifyTargetLanguages()
-        verifyQuestionnaire()
     }
 
     private fun verifyTestProject() {
@@ -213,71 +227,6 @@ class UpdateAllTest {
             "es-419",
             project?.languageSlug
         )
-    }
-
-    private fun verifyTargetLanguages() {
-        val targetLanguages = library.index.targetLanguages
-        assertEquals("There should be 4 target languages", 4, targetLanguages.size)
-
-        val aaLang = targetLanguages.singleOrNull { it.slug == "aa" }
-        assertNotNull("Afar language should not be null", aaLang)
-        assertEquals("Afar language slug should match", "aa", aaLang?.slug)
-        assertEquals("Afar language name should match", "Qafar af New", aaLang?.name)
-        assertEquals("Afar language anglicized name should match", "Afar New", aaLang?.anglicizedName)
-
-        val test2Lang = targetLanguages.singleOrNull { it.slug == "test2" }
-        assertNotNull("Test 2 language should not be null", test2Lang)
-        assertEquals("Test 2 language slug should match", "test2", test2Lang?.slug)
-        assertEquals("Test 2 language name should match", "Test 2", test2Lang?.name)
-        assertEquals("Test 2 language anglicized name should match", "Test 2 Ang", test2Lang?.anglicizedName)
-
-        val temp1Language = targetLanguages.singleOrNull { it.slug == "qaa-x-111111" }
-        assertNotNull("Temp language 1 should not be null", temp1Language)
-        assertEquals("Temp language slug should match", "qaa-x-111111", temp1Language?.slug)
-        assertEquals("Temp language name should match", "Test Temp 1", temp1Language?.name)
-
-        val temp2Language = targetLanguages.singleOrNull { it.slug == "qaa-x-222222" }
-        assertNull("Temp language 2 should be null", temp2Language)
-
-        val temp2LanguageApproved = library.index.getApprovedTargetLanguage("qaa-x-222222")
-        assertEquals("Temp language slug should match", "ifk-x-yattuca", temp2LanguageApproved?.slug)
-        assertEquals("Temp language name should match", "Yattuca", temp2LanguageApproved?.name)
-    }
-
-    private fun verifyQuestionnaire() {
-        val questionnaires = library.index.questionnaires
-        assertTrue("Questionnaires should not be empty", questionnaires.isNotEmpty())
-
-        val questionnaire = questionnaires.singleOrNull { it.tdId == 2L }
-        assertNotNull("Questionnaire should not be null", questionnaire)
-        assertEquals("es", questionnaire?.languageSlug)
-        assertEquals("Spanish", questionnaire?.languageName)
-
-        val questions = library.index.getQuestions(2L)
-        assertEquals("Question count should match", 19, questions.size)
-        assertEquals("Test questionnaire question", questions.singleOrNull { it.sort == 19 }?.text)
-    }
-
-    private fun prepareCatalogs() {
-        val langCatalogUrl = server.url("/langnames.json").toString()
-        val langCatalog = Catalog("langnames", langCatalogUrl, 0)
-        library.index.addCatalog(langCatalog)
-        createResponse("langnames")
-
-        val questionnaireCatalogUrl = server.url("/questionnaire.json").toString()
-        val questionnaireCatalog = Catalog("new-language-questions", questionnaireCatalogUrl, 0)
-        library.index.addCatalog(questionnaireCatalog)
-        createResponse("questionnaire")
-
-        val tempLangsCatalogUrl = server.url("/temp-langs.json").toString()
-        val tempLangsCatalog = Catalog("temp-langnames", tempLangsCatalogUrl, 0)
-        library.index.addCatalog(tempLangsCatalog)
-        createResponse("temp_langs")
-
-        val approvedLangsCatalogUrl = server.url("/approved-langs.json").toString()
-        val approvedLangsCatalog = Catalog("approved-temp-langnames", approvedLangsCatalogUrl, 0)
-        library.index.addCatalog(approvedLangsCatalog)
-        createResponse("approved_temp_langs")
     }
 
     private fun createResponse(id: String): String {

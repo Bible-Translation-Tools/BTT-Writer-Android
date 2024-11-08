@@ -10,7 +10,11 @@ class UpdateCatalogs @Inject constructor(
 ) {
     data class Result(val success: Boolean, val addedCount: Int)
 
-    fun execute(message: String, progressListener: OnProgressListener? = null): Result {
+    fun execute(
+        updateCatalogs: Boolean,
+        message: String,
+        progressListener: OnProgressListener? = null
+    ): Result {
         var addedCount = 0
         var success = false
         var maxProgress = 100
@@ -26,11 +30,11 @@ class UpdateCatalogs @Inject constructor(
         Logger.i(this.javaClass.simpleName, "Initial target languages count: " + targetLanguages.size)
         Logger.i(
             this.javaClass.simpleName,
-            "Unigue target languages slug count: " + initialLanguages.size
+            "Unique target languages slug count: " + initialLanguages.size
         )
 
         try {
-            library.updateCatalogs { tag, max, complete ->
+            library.updateCatalogs(updateCatalogs) { tag, max, complete ->
                 maxProgress = max.toInt()
                 val details = "$message $tag"
                 progressListener?.onProgress(complete.toInt(), max.toInt(), details)

@@ -1,0 +1,51 @@
+[
+    {
+        "alt": [
+            "Adal",
+            "Afaraf",
+            "Afar Af",
+            "Baadu (Ba'adu)",
+            "Danakil",
+            "Denkel",
+            "Qafar"
+        ],
+        "ang": "Afar New",
+        "cc": [
+            "ET"
+        ],
+        "gw": false,
+        "hc": "ET",
+        "lc": "aa",
+        "ld": "ltr",
+        "ln": "Qafar af New",
+        "lr": "East Africa",
+        "pk": 1
+    },
+    {
+        "alt": [],
+        "ang": "Test 2 Ang",
+        "cc": [
+            "NG"
+        ],
+        "gw": false,
+        "hc": "NG",
+        "lc": "test2",
+        "ld": "ltr",
+        "ln": "Test 2",
+        "lr": "Test Region",
+        "pk": 1
+    },
+    {
+        "gw": false,
+        "cc": [
+            "ID"
+        ],
+        "ld": "ltr",
+        "ang": "",
+        "lr": "Asia",
+        "lc": "ifk-x-yattuca",
+        "ln": "Yattuca",
+        "pk": 395,
+        "alt": []
+    }
+]
