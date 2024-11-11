@@ -59,9 +59,13 @@ android {
             testProguardFile('proguard-rules.pro')
         }
         applicationVariants.all { variant ->
-            if(variant.buildType.name == "release") {
+            if (variant.buildType.name == "release") {
                 variant.outputs.all {
                     outputFileName = "release.apk"
+                }
+            } else if (variant.buildType.name == "debug") {
+                variant.mergeResources.doLast {
+                    copyDebugGithubToken()
                 }
             }
         }
@@ -195,4 +199,19 @@ kapt {
 
 hilt {
     enableAggregatingTask = true
+}
+
+def copyDebugGithubToken() {
+    def sourceFile = file("src/androidTest/assets/dummy_strings_private_app_pref.xml")
+    def destinationFile = file("src/main/res/values/dummy_strings_private_app_pref.xml")
+
+    destinationFile.parentFile.mkdirs()
+
+    if (sourceFile.exists()) {
+        copy {
+            from sourceFile
+            into destinationFile.parentFile
+        }
+        println "dummy_strings_private_app_pref.xml copied to res/values for Debug build"
+    }
 }

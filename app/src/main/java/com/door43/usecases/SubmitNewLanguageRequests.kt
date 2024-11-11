@@ -4,6 +4,7 @@ import android.content.Context
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.ILanguageRequestRepository
+import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.translationstudio.core.Translator
@@ -23,7 +24,8 @@ import javax.inject.Inject
 
 class SubmitNewLanguageRequests @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val languageRequestRepository: ILanguageRequestRepository,
+    languageRequestRepository: ILanguageRequestRepository,
+    private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider,
     private val translator: Translator
 ) {
@@ -51,7 +53,7 @@ class SubmitNewLanguageRequests @Inject constructor(
 
             try {
                 // TODO: eventually we'll be able to get the server url from the db
-                val url = URL(context.resources.getString(R.string.questionnaire_api))
+                val url = URL(prefRepository.getQuestionnaireApi())
                 val conn = url.openConnection() as HttpURLConnection
                 conn.setRequestProperty("Content-Type", "application/json")
                 conn.readTimeout = 10000 // 10 seconds

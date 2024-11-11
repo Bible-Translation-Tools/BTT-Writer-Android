@@ -10,14 +10,17 @@ class TestPreferenceRepository(
     @ApplicationContext private val context: Context
 ) : PreferenceRepository(context) {
 
+    override val defaultPreferencesName = "test_default_prefs"
+    override val privatePreferencesName = "test_private_prefs"
+
+    override val githubBugReportRepoUrl = "/issues"
+    override val githubRepoApiUrl = "/repo_api"
+    override val questionnaireApiUrl = "/questionnaire/"
+    override val rootCatalogApiUrl = "/catalog.json"
+
     override val defaultPrefs: SharedPreferences
-        get() = context.getSharedPreferences(DEFAULT_PREFERENCES_NAME, MODE_PRIVATE)
+        get() = context.getSharedPreferences(defaultPreferencesName, MODE_PRIVATE)
 
     override val privatePrefs: SharedPreferences
-        get() = context.getSharedPreferences(PRIVATE_PREFERENCES_NAME, MODE_PRIVATE)
-
-    private companion object {
-        const val DEFAULT_PREFERENCES_NAME = "test_default_prefs"
-        const val PRIVATE_PREFERENCES_NAME = "test_private_prefs"
-    }
+        get() = context.getSharedPreferences(privatePreferencesName, MODE_PRIVATE)
 }

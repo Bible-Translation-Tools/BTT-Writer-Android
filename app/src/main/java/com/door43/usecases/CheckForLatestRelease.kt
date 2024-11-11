@@ -2,7 +2,7 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.pm.PackageManager
-import com.door43.translationstudio.R
+import com.door43.data.IPreferenceRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONException
 import org.json.JSONObject
@@ -14,14 +14,15 @@ import java.net.URL
 import javax.inject.Inject
 
 class CheckForLatestRelease @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val prefRepository: IPreferenceRepository
 ) {
     data class Result(val release: Release?)
 
     fun execute(): Result {
         var latestRelease: Release? = null
 
-        val githubApiUrl = context.resources.getString(R.string.github_repo_api)
+        val githubApiUrl = prefRepository.getGithubRepoApi()
         val url = "$githubApiUrl/releases/latest"
         var latestReleaseStr: String?
         try {

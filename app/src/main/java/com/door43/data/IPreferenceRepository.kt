@@ -1,10 +1,24 @@
 package com.door43.data
 
-import androidx.annotation.StringRes
 import com.door43.translationstudio.core.TranslationViewMode
-import kotlin.reflect.KClass
 
 interface IPreferenceRepository {
+    val defaultPreferencesName get() = "default_prefs"
+    val privatePreferencesName get() = "com.door43.translationstudio.general"
+    val lastViewMode get() = "last_view_mode_"
+    val lastFocusChapter get() = "last_focus_chapter_"
+    val lastFocusFrame get() = "last_focus_frame_"
+    val openSourceTranslations get() = "open_source_translations_"
+    val selectedSourceTranslation get() = "selected_source_translation_"
+    val lastCheckedServerForUpdates get() = "last_checked_server_for_updates"
+    val lastTranslation get() = "last_translation"
+
+    // default values
+    val githubBugReportRepoUrl get() = "https://api.github.com/repos/Bible-Translation-Tools/BTT-Writer-Android/issues"
+    val githubRepoApiUrl get() = "https://api.github.com/repos/Bible-Translation-Tools/BTT-Writer-Android"
+    val questionnaireApiUrl get() = "http://td-demo.unfoldingword.org/api/questionnaire/"
+    val rootCatalogApiUrl get() = "/ts/txt/2/catalog.json"
+
     /**
      * Returns and sets the last focused target translation
      * @return
@@ -134,6 +148,16 @@ interface IPreferenceRepository {
      * @param sourceTranslationId if null the selection will be unset
      */
     fun setSelectedSourceTranslation(targetTranslationId: String, sourceTranslationId: String?)
+
+    // GET DEFAULT PREFERENCES
+
+    fun getGithubBugReportRepo(): String
+
+    fun getGithubRepoApi(): String
+
+    fun getQuestionnaireApi(): String
+
+    fun getRootCatalogApi(): String
 }
 
 inline fun <reified T> IPreferenceRepository.getDefaultPref(key: String) =

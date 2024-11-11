@@ -64,7 +64,7 @@ class UpdateSource @Inject constructor(
                 SettingsActivity.KEY_PREF_MEDIA_SERVER,
                 context.resources.getString(R.string.pref_default_media_server)
             )
-            val rootApiUrl = server + context.resources.getString(R.string.root_catalog_api)
+            val rootApiUrl = server + prefRepository.getRootCatalogApi()
             library.updateSources(rootApiUrl) { tag, max, complete ->
                 maxProgress = max.toInt()
                 val details = "$message $tag"

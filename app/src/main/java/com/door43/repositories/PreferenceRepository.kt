@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getPrivatePref
 import com.door43.data.setPrivatePref
 import com.door43.translationstudio.core.Migration
 import com.door43.translationstudio.core.TranslationViewMode
@@ -13,30 +14,19 @@ import java.util.Locale
 
 open class PreferenceRepository (private val context: Context) : IPreferenceRepository {
 
-    private companion object {
-        const val PREFERENCES_NAME = "com.door43.translationstudio.general"
-        const val LAST_VIEW_MODE = "last_view_mode_"
-        const val LAST_FOCUS_CHAPTER = "last_focus_chapter_"
-        const val LAST_FOCUS_FRAME = "last_focus_frame_"
-        const val OPEN_SOURCE_TRANSLATIONS = "open_source_translations_"
-        const val SELECTED_SOURCE_TRANSLATION = "selected_source_translation_"
-        const val LAST_CHECKED_SERVER_FOR_UPDATES = "last_checked_server_for_updates"
-        const val LAST_TRANSLATION = "last_translation"
-    }
-
     override var lastFocusTargetTranslation: String?
-        get() = privatePrefs.getString(LAST_TRANSLATION, null)
+        get() = privatePrefs.getString(lastTranslation, null)
         set(targetTranslationId) {
             val editor = privatePrefs.edit()
-            editor.putString(LAST_TRANSLATION, targetTranslationId)
+            editor.putString(lastTranslation, targetTranslationId)
             editor.apply()
         }
 
     override var lastCheckedForUpdates: Long
-        get() = privatePrefs.getLong(LAST_CHECKED_SERVER_FOR_UPDATES, 0L)
+        get() = privatePrefs.getLong(lastCheckedServerForUpdates, 0L)
         set(timeMillis) {
             val editor = privatePrefs.edit()
-            editor.putLong(LAST_CHECKED_SERVER_FOR_UPDATES, timeMillis)
+            editor.putLong(lastCheckedServerForUpdates, timeMillis)
             editor.apply()
         }
 
@@ -48,7 +38,7 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
         get() = PreferenceManager.getDefaultSharedPreferences(context)
 
     protected open val privatePrefs: SharedPreferences
-        get() = context.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
+        get() = context.getSharedPreferences(privatePreferencesName, MODE_PRIVATE)
 
     override fun <T> getDefaultPref(key: String, type: Class<T>): T? {
         return getPref(key, type, defaultPrefs)
@@ -131,18 +121,18 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
 
     override fun clearTargetTranslationSettings(targetTranslationId: String) {
         val editor = privatePrefs.edit()
-        editor.remove(SELECTED_SOURCE_TRANSLATION + targetTranslationId)
-        editor.remove(OPEN_SOURCE_TRANSLATIONS + targetTranslationId)
-        editor.remove(LAST_FOCUS_FRAME + targetTranslationId)
-        editor.remove(LAST_FOCUS_CHAPTER + targetTranslationId)
-        editor.remove(LAST_VIEW_MODE + targetTranslationId)
+        editor.remove(selectedSourceTranslation + targetTranslationId)
+        editor.remove(openSourceTranslations + targetTranslationId)
+        editor.remove(lastFocusFrame + targetTranslationId)
+        editor.remove(lastFocusChapter + targetTranslationId)
+        editor.remove(lastViewMode + targetTranslationId)
         editor.apply()
     }
 
     override fun getLastViewMode(targetTranslationId: String): TranslationViewMode {
         try {
             val modeName = privatePrefs.getString(
-                LAST_VIEW_MODE + targetTranslationId,
+                lastViewMode + targetTranslationId,
                 TranslationViewMode.READ.name
             )
             return TranslationViewMode.valueOf(modeName!!.uppercase(Locale.getDefault()))
@@ -154,7 +144,7 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
     override fun setLastViewMode(targetTranslationId: String, viewMode: TranslationViewMode) {
         val editor = privatePrefs.edit()
         editor.putString(
-            LAST_VIEW_MODE + targetTranslationId,
+            lastViewMode + targetTranslationId,
             viewMode.name.uppercase(Locale.getDefault())
         )
         editor.apply()
@@ -162,23 +152,23 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
 
     override fun setLastFocus(targetTranslationId: String, chapterId: String?, frameId: String?) {
         val editor = privatePrefs.edit()
-        editor.putString(LAST_FOCUS_CHAPTER + targetTranslationId, chapterId)
-        editor.putString(LAST_FOCUS_FRAME + targetTranslationId, frameId)
+        editor.putString(lastFocusChapter + targetTranslationId, chapterId)
+        editor.putString(lastFocusFrame + targetTranslationId, frameId)
         editor.apply()
         lastFocusTargetTranslation = targetTranslationId
     }
 
     override fun getLastFocusChapterId(targetTranslationId: String): String? {
-        return privatePrefs.getString(LAST_FOCUS_CHAPTER + targetTranslationId, null)
+        return privatePrefs.getString(lastFocusChapter + targetTranslationId, null)
     }
 
     override fun getLastFocusFrameId(targetTranslationId: String): String? {
-        return privatePrefs.getString(LAST_FOCUS_FRAME + targetTranslationId, null)
+        return privatePrefs.getString(lastFocusFrame + targetTranslationId, null)
     }
 
     override fun getOpenSourceTranslations(targetTranslationId: String): Array<String> {
         val idSet = privatePrefs.getString(
-            OPEN_SOURCE_TRANSLATIONS + targetTranslationId,
+            openSourceTranslations + targetTranslationId,
             ""
         )?.trim()
 
@@ -208,7 +198,7 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
             }
         }
         newIdSet += sourceTranslationId
-        editor.putString(OPEN_SOURCE_TRANSLATIONS + targetTranslationId, newIdSet)
+        editor.putString(openSourceTranslations + targetTranslationId, newIdSet)
         editor.apply()
     }
 
@@ -237,7 +227,7 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
 
     override fun getSelectedSourceTranslationId(targetTranslationId: String): String? {
         var selectedSourceTranslationId = privatePrefs.getString(
-            SELECTED_SOURCE_TRANSLATION + targetTranslationId,
+            selectedSourceTranslation + targetTranslationId,
             null
         )
 
@@ -259,12 +249,28 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
         val editor = privatePrefs.edit()
         if (!sourceTranslationId.isNullOrEmpty()) {
             editor.putString(
-                SELECTED_SOURCE_TRANSLATION + targetTranslationId,
+                selectedSourceTranslation + targetTranslationId,
                 Migration.migrateSourceTranslationSlug(sourceTranslationId)
             )
         } else {
-            editor.remove(SELECTED_SOURCE_TRANSLATION + targetTranslationId)
+            editor.remove(selectedSourceTranslation + targetTranslationId)
         }
         editor.apply()
+    }
+
+    override fun getGithubBugReportRepo(): String {
+        return getPrivatePref("github_bug_report_repo", githubBugReportRepoUrl)
+    }
+
+    override fun getGithubRepoApi(): String {
+        return getPrivatePref("github_repo_api", githubRepoApiUrl)
+    }
+
+    override fun getQuestionnaireApi(): String {
+        return getPrivatePref("questionnaire_api", questionnaireApiUrl)
+    }
+
+    override fun getRootCatalogApi(): String {
+        return getPrivatePref("root_catalog_api", rootCatalogApiUrl)
     }
 }
