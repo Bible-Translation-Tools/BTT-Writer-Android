@@ -64,8 +64,8 @@ android {
                     outputFileName = "release.apk"
                 }
             } else if (variant.buildType.name == "debug") {
-                variant.mergeResources.doLast {
-                    copyDebugGithubToken()
+                variant.mergeResourcesProvider.configure { mergeTask ->
+                    mergeTask.dependsOn tasks.named("copyDebugGithubToken")
                 }
             }
         }
@@ -201,17 +201,20 @@ hilt {
     enableAggregatingTask = true
 }
 
-def copyDebugGithubToken() {
-    def sourceFile = file("src/androidTest/assets/dummy_strings_private_app_pref.xml")
-    def destinationFile = file("src/main/res/values/dummy_strings_private_app_pref.xml")
+tasks.register("copyDebugGithubToken") {
+    doLast {
+        def sourceFile = file("src/androidTest/assets/dummy_strings_private_app_pref.xml")
+        def destinationFile = file("src/androidTest/res/values/dummy_strings_private_app_pref.xml")
 
-    destinationFile.parentFile.mkdirs()
+        destinationFile.parentFile.mkdirs()
 
-    if (sourceFile.exists()) {
-        copy {
-            from sourceFile
-            into destinationFile.parentFile
+        if (sourceFile.exists()) {
+            destinationFile.withOutputStream { out ->
+                sourceFile.withInputStream { inStream ->
+                    out << inStream
+                }
+            }
+            println "$destinationFile copied for Debug build"
         }
-        println "dummy_strings_private_app_pref.xml copied to res/values for Debug build"
     }
 }

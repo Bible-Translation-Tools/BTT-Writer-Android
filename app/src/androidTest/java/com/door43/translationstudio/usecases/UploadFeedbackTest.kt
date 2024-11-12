@@ -1,12 +1,11 @@
 package com.door43.translationstudio.usecases
 
-import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.usecases.UploadFeedback
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every
@@ -31,7 +30,7 @@ class UploadFeedbackTest {
     @get:Rule(order = 0)
     var hiltRule = HiltAndroidRule(this)
 
-    @Inject @ApplicationContext lateinit var context: Context
+    private val context = InstrumentationRegistry.getInstrumentation().context
     @Inject lateinit var assetsProvider: AssetsProvider
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var prefRepository: IPreferenceRepository
@@ -78,9 +77,11 @@ class UploadFeedbackTest {
         val uploadFeedback = UploadFeedback(context, prefRepoMock)
         val notes = "This is a test note"
         val uploaded = uploadFeedback.execute(notes)
-        val request = server.takeRequest().body.readString(Charsets.UTF_8)
 
         assertTrue("Feedback should be uploaded", uploaded)
+
+        val request = server.takeRequest().body.readString(Charsets.UTF_8)
+
         assertTrue(
             "Upload request body contains message",
             request.contains(notes)
