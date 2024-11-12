@@ -35,7 +35,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import javax.inject.Inject
 
@@ -69,7 +68,6 @@ class ImportUsfmActivityUiTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
 
         dismissANRSystemDialog()
     }

@@ -42,7 +42,6 @@ class ImportProjectsTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
     }
 
     @After

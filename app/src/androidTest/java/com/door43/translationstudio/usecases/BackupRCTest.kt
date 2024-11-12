@@ -27,7 +27,6 @@ import org.junit.runner.RunWith
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import javax.inject.Inject
 
@@ -55,7 +54,6 @@ class BackupRCTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
 
         targetLanguage = library.index.getTargetLanguage("aae")
     }

@@ -3,8 +3,10 @@ package com.door43.translationstudio.usecases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.BuildConfig
+import com.door43.data.IPreferenceRepository
+import com.door43.data.setDefaultPref
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.RegisterSSHKeys
 import com.door43.util.FileUtilities
@@ -13,12 +15,16 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.unfoldingword.tools.logger.Logger
+import org.unfoldingword.gogsclient.User
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -32,12 +38,31 @@ class RegisterSSHKeysTest {
     @Inject lateinit var gogsLogin: GogsLogin
     @Inject lateinit var profile: Profile
     @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var prefRepository: IPreferenceRepository
+
+    private val server = MockWebServer()
 
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
         deleteSSHKeys()
+
+        prefRepository.setDefaultPref(
+            SettingsActivity.KEY_PREF_GOGS_API,
+            server.url("/api").toString()
+        )
+
+        val dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                return when (request.path) {
+                    "/api/users/test/keys" -> createResponse("get_keys")
+                    "/api/user/keys/test_key" -> createResponse("delete_key")
+                    "/api/user/keys" -> createResponse("create_key")
+                    else -> createResponse("not_found")
+                }
+            }
+        }
+        server.dispatcher = dispatcher
     }
 
     @Test
@@ -92,14 +117,8 @@ class RegisterSSHKeysTest {
     }
 
     private fun loginGogsUser() {
-        val login = gogsLogin.execute(
-            BuildConfig.TEST_USER,
-            BuildConfig.TEST_PASS
-        )
-
-        assertNotNull(login.user)
-
-        profile.gogsUser = login.user
+        val user = User("test", "test")
+        profile.gogsUser = user
     }
 
     private fun deleteSSHKeys() {
@@ -108,6 +127,37 @@ class RegisterSSHKeysTest {
             for (file in keysDir) {
                 FileUtilities.deleteQuietly(file)
             }
+        }
+    }
+
+    private fun createResponse(requestId: String): MockResponse {
+        return when (requestId) {
+            "get_keys" -> {
+                val body = """
+                [
+                    {
+                        "title": "test_title_1",
+                        "key": "test_key_1"
+                    },
+                    {
+                        "title": "test_title_2",
+                        "key": "test_key_2"
+                    }
+                ]
+                """.trimIndent()
+                MockResponse().setBody(body).setResponseCode(200)
+            }
+            "delete_key" -> MockResponse().setResponseCode(204)
+            "create_key" -> {
+                val body = """
+                {
+                    "title": "test_title_1",
+                    "key": "test_key_1"
+                }
+                """.trimIndent()
+                MockResponse().setBody(body).setResponseCode(201)
+            }
+            else -> MockResponse().setResponseCode(404)
         }
     }
 }

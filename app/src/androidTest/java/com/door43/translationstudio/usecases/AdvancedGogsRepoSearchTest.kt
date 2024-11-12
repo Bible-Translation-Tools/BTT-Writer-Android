@@ -5,6 +5,7 @@ import com.door43.OnProgressListener
 import com.door43.usecases.AdvancedGogsRepoSearch
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,7 +13,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -25,15 +25,16 @@ class AdvancedGogsRepoSearchTest {
     @Inject
     lateinit var advancedGogsRepoSearch: AdvancedGogsRepoSearch
 
+    private val server = MockWebServer()
+
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
     }
 
     @Test
     fun searchReposByUser() {
-        val user = "mxaln"
+        val user = "test"
 
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, _, message ->

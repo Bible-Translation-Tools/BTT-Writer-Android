@@ -34,7 +34,6 @@ import org.junit.Rule
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Question
 import org.unfoldingword.door43client.models.Questionnaire
-import org.unfoldingword.tools.logger.Logger
 import java.lang.reflect.Field
 import javax.inject.Inject
 
@@ -63,7 +62,6 @@ open class NewLanguageActivityUiUtils {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
 
         stringToBeTyped = "Espresso";
 

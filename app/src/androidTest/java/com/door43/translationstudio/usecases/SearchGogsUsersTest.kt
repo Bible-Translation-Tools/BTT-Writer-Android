@@ -2,18 +2,22 @@ package com.door43.translationstudio.usecases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
+import com.door43.data.IPreferenceRepository
+import com.door43.data.setDefaultPref
+import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.SearchGogsUsers
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -23,54 +27,102 @@ class SearchGogsUsersTest {
     @get:Rule(order = 0)
     var hiltRule = HiltAndroidRule(this)
 
-    @Inject
-    lateinit var searchGogsUsers: SearchGogsUsers
+    @Inject lateinit var prefRepository: IPreferenceRepository
+    @Inject lateinit var searchGogsUsers: SearchGogsUsers
+
+    private val server = MockWebServer()
 
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
+        server.start()
+
+        prefRepository.setDefaultPref(
+            SettingsActivity.KEY_PREF_GOGS_API,
+            server.url("/search").toString()
+        )
+    }
+
+    @After
+    fun tearDown() {
+        server.shutdown()
     }
 
     @Test
     fun searchParticularUser() {
-        val user = "mXaln"
+        val user = "test"
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, _, message ->
             progressMessage = message
         }
 
+        val successResponse = """
+            {
+                "data": [
+                    {
+                        "id": 222,
+                        "full_name": "Test",
+                        "email": "test@noreply.example.org",
+                        "username": "test"
+                    }
+                ],
+                "ok": true
+            }
+        """.trimIndent()
+        server.enqueue(MockResponse().setBody(successResponse).setResponseCode(200))
+
         val gogsUser = searchGogsUsers.execute(user, 1, progressListener).singleOrNull()
 
-        assertNotNull(gogsUser)
-        assertEquals(gogsUser?.username, user)
-        assertFalse(progressMessage.isNullOrEmpty())
+        assertNotNull("Gogs user should not be null", gogsUser)
+        assertEquals("Ids should match", gogsUser?.id, 222)
+        assertEquals("Usernames should match", gogsUser?.username, user)
+        assertTrue("Progress message should not be empty", !progressMessage.isNullOrEmpty())
     }
 
     @Test
     fun searchMultipleUsersByQuery() {
-        val userQuery = "dan"
+        val successResponse = """
+            {
+                "data": [
+                    {
+                        "id": 222,
+                        "full_name": "Test",
+                        "email": "test@noreply.example.org",
+                        "username": "test"
+                    },
+                    {
+                        "id": 333,
+                        "full_name": "Test 2",
+                        "email": "test2@noreply.example.org",
+                        "username": "test2"
+                    }
+                ],
+                "ok": true
+            }
+        """.trimIndent()
+        server.enqueue(MockResponse().setBody(successResponse).setResponseCode(200))
+
+        val userQuery = "test"
         val gogsUsers = searchGogsUsers.execute(userQuery, 3)
 
-        assertTrue(gogsUsers.isNotEmpty())
+        assertTrue("Gogs users should not be empty", gogsUsers.isNotEmpty())
+
+        val expectedUsers = gogsUsers.filter { it.username.contains(userQuery) }
+        assertEquals("Number of users should match", expectedUsers.size, gogsUsers.size)
     }
 
     @Test
     fun searchNonExistentUsers() {
+        val successResponse = """
+            {
+                "data": [],
+                "ok": true
+            }
+        """.trimIndent()
+        server.enqueue(MockResponse().setBody(successResponse).setResponseCode(200))
+
         val userQuery = "non-existent-user"
         val gogsUsers = searchGogsUsers.execute(userQuery, 3)
-        assertTrue(gogsUsers.isEmpty())
-    }
-
-    @Test
-    fun searchUsersLimitedToOne() {
-//        val userQuery = "dan"
-//        val gogsUsers = searchGogsUsers.execute(userQuery, 1)
-//        assertTrue(gogsUsers.isNotEmpty())
-//        assertEquals(1, gogsUsers.size)
-
-        // TODO Skip the test for now, because api doesn't limit the number of results
-
-        assertTrue(true)
+        assertTrue("Gogs users should be empty", gogsUsers.isEmpty())
     }
 }

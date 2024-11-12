@@ -59,7 +59,6 @@ class ExportProjectsTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
 
         targetLanguage = library.index.getTargetLanguage("aa")
         targetTranslation = TestUtils.importTargetTranslation(

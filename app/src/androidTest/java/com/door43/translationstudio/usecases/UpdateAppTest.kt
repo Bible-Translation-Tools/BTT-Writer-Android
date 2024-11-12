@@ -17,7 +17,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -35,7 +34,6 @@ class UpdateAppTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
 
         directoryProvider.deleteLibrary()
         prefRepository.setPrivatePref("last_version_code", 0)

@@ -24,7 +24,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Catalog
-import org.unfoldingword.tools.logger.Logger
 import java.text.SimpleDateFormat
 import javax.inject.Inject
 
@@ -46,7 +45,6 @@ class UpdateCatalogsTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
 
         _directoryProvider = directoryProvider
 

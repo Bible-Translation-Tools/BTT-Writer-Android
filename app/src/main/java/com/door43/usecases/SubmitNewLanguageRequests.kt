@@ -69,7 +69,6 @@ class SubmitNewLanguageRequests @Inject constructor(
                 dos.close()
 
                 // read response
-                val responseCode = conn.responseCode
                 val inputStream = conn.inputStream
                 val bis = BufferedInputStream(inputStream)
                 val baos = ByteArrayOutputStream()

@@ -15,7 +15,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import javax.inject.Inject
 
@@ -34,7 +33,6 @@ class CloneRepositoryTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
     }
 
     @After

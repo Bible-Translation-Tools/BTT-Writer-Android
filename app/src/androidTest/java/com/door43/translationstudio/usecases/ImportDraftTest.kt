@@ -14,7 +14,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -32,7 +31,6 @@ class ImportDraftTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
     }
 
     @After

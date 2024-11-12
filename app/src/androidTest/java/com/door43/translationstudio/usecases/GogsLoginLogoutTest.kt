@@ -19,7 +19,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.unfoldingword.gogsclient.User
-import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 @HiltAndroidTest
@@ -36,7 +35,6 @@ class GogsLoginLogoutTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        Logger.flush()
     }
 
     @Test
