@@ -63,8 +63,6 @@ class ValidateProject @Inject constructor(
             var lastValidChapterIndex = -1
             val chapterValidations = arrayListOf<ValidationItem>()
 
-            val projectTranslation = targetTranslation.projectTranslation
-
             chapters.sortNumerically()
             for (i in chapters.indices) {
                 val chapterSlug = chapters[i]
@@ -139,20 +137,18 @@ class ValidateProject @Inject constructor(
                     )
                     val chunkText = container.readChunk(chapterSlug, chunkSlug)
                     // TODO: also validate the checking questions
-                    if (lastValidFrameIndex == -1 &&
-                        (frameTranslation.isFinished || chunkText.isEmpty())
-                    ) {
+                    val finishedOrEmpty = frameTranslation.isFinished || chunkText.isEmpty()
+                    val mergeConflicted = MergeConflictsHandler.isMergeConflicted(frameTranslation.body)
+                    val isLastChunk = j == chunks.size - 1
+
+                    if (lastValidFrameIndex == -1 && finishedOrEmpty) {
                         // start new valid range
                         lastValidFrameIndex = j
-                    } else if (MergeConflictsHandler.isMergeConflicted(frameTranslation.body) ||
-                        !(frameTranslation.isFinished || chunkText.isEmpty()) ||
-                        (frameTranslation.isFinished || chunkText.isEmpty()) &&
-                        (j == chunks.size - 1)
-                    ) {
+                    } else if (mergeConflicted || !finishedOrEmpty || isLastChunk) {
                         // close valid range
                         if (lastValidFrameIndex > -1) {
                             var previousFrameIndex = j - 1
-                            if (frameTranslation.isFinished || chunkText.isEmpty()) {
+                            if (finishedOrEmpty) {
                                 previousFrameIndex = j
                             }
                             if (lastValidFrameIndex < previousFrameIndex) {
@@ -179,7 +175,6 @@ class ValidateProject @Inject constructor(
                                     )
                                 )
                             } else {
-                                val lastValidFrame = chunks[lastValidFrameIndex]
                                 val lastValidText = container.readChunk(
                                     chapterSlug,
                                     chunks[lastValidFrameIndex]
@@ -205,7 +200,7 @@ class ValidateProject @Inject constructor(
                         }
 
                         // add invalid frame
-                        if (!(frameTranslation.isFinished || chunkText.isEmpty())) {
+                        if (!finishedOrEmpty) {
                             chapterIsValid = false
                             val formattedChapter = StringUtilities.formatNumber(chapterSlug)
                             var frameTitle = "$projectTitle $formattedChapter"

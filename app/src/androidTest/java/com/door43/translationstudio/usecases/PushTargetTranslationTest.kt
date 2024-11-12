@@ -40,29 +40,17 @@ class PushTargetTranslationTest {
     @get:Rule(order = 0)
     var hiltRule = HiltAndroidRule(this)
 
-    @Inject
-    @ApplicationContext
-    lateinit var appContext: Context
-    @Inject
-    lateinit var importProjects: ImportProjects
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
-    @Inject
-    lateinit var assetsProvider: AssetsProvider
-    @Inject
-    lateinit var library: Door43Client
-    @Inject
-    lateinit var translator: Translator
-    @Inject
-    lateinit var profile: Profile
-    @Inject
-    lateinit var registerSSHKeys: RegisterSSHKeys
-    @Inject
-    lateinit var gogsLogin: GogsLogin
-    @Inject
-    lateinit var pushTargetTranslation: PushTargetTranslation
-    @Inject
-    lateinit var pullTargetTranslation: PullTargetTranslation
+    @Inject @ApplicationContext lateinit var appContext: Context
+    @Inject lateinit var importProjects: ImportProjects
+    @Inject lateinit var directoryProvider: IDirectoryProvider
+    @Inject lateinit var assetsProvider: AssetsProvider
+    @Inject lateinit var library: Door43Client
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var profile: Profile
+    @Inject lateinit var registerSSHKeys: RegisterSSHKeys
+    @Inject lateinit var gogsLogin: GogsLogin
+    @Inject lateinit var pushTargetTranslation: PushTargetTranslation
+    @Inject lateinit var pullTargetTranslation: PullTargetTranslation
 
     @Before
     fun setUp() {
