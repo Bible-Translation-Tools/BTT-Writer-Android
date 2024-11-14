@@ -130,10 +130,6 @@ class BackupRC @Inject constructor(
      * @return
      */
     private fun getCommitHash(details: ArchiveDetails?): String {
-        return if (details == null || details.targetTranslationDetails.isEmpty()) {
-            "" // will not match existing commit hash
-        } else {
-            details.targetTranslationDetails[0].commitHash
-        }
+        return details?.targetTranslationDetails?.firstOrNull()?.commitHash ?: ""
     }
 }

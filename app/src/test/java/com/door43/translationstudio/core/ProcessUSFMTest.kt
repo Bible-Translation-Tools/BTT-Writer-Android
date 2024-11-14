@@ -8,6 +8,7 @@ import android.content.res.Resources
 import android.net.Uri
 import android.text.TextUtils
 import com.door43.OnProgressListener
+import com.door43.TestUtils
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import io.mockk.MockKAnnotations
@@ -33,11 +34,9 @@ import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.ChunkMarker
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Versification
-import org.unfoldingword.resourcecontainer.Language
 
 import java.io.File
 import java.io.InputStream
-import java.net.URL
 
 
 class ProcessUSFMTest {
@@ -86,7 +85,7 @@ class ProcessUSFMTest {
 
         // Use reflection to modify property that is final
         // because mockk can't do that
-        setPropertyReflection(Door43Client::class.java, library, "index", index)
+        TestUtils.setPropertyReflection(library, "index", index)
 
         val str1 = slot<String>()
         val str2 = slot<String>()
@@ -153,11 +152,11 @@ class ProcessUSFMTest {
     @Test fun `test successful file processing`() {
         every { mockFile.name }.returns("mrk.usfm")
         every { FileUtilities.readFileToString(mockFile) }.returns(
-            getResource(mockFile.name)?.readText() ?: ""
+            TestUtils.getResource(mockFile.name)?.readText() ?: ""
         )
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -184,10 +183,10 @@ class ProcessUSFMTest {
         every { contentResolver.openInputStream(mockUri) }.returns(inputStream)
         every { inputStream.close() } just Runs
         every { FileUtilities.readStreamToString(any()) }
-            .returns(getResource("mrk.usfm")?.readText() ?: "")
+            .returns(TestUtils.getResource("mrk.usfm")?.readText() ?: "")
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -216,10 +215,10 @@ class ProcessUSFMTest {
         every { assetsProvider.open(rcPath) }.returns(inputStream)
         every { inputStream.close() } just Runs
         every { FileUtilities.readStreamToString(any()) }
-            .returns(getResource("mrk.usfm")?.readText() ?: "")
+            .returns(TestUtils.getResource("mrk.usfm")?.readText() ?: "")
         every { FileUtilities.getFilename(rcPath) }.returns("mrk.usfm")
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
         mockChunkMarkers()
 
         val processUSFM = ProcessUSFM.Builder(
@@ -245,11 +244,11 @@ class ProcessUSFMTest {
     @Test fun `test book with single chapter fails`() {
         every { mockFile.name }.returns("mrk.usfm")
         every { FileUtilities.readFileToString(mockFile) }.returns(
-            getResource("mrk-single-chapter.usfm")?.readText() ?: ""
+            TestUtils.getResource("mrk-single-chapter.usfm")?.readText() ?: ""
         )
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -279,11 +278,11 @@ class ProcessUSFMTest {
     @Test fun `test book with missing verse fails`() {
         every { mockFile.name }.returns("mrk.usfm")
         every { FileUtilities.readFileToString(mockFile) }.returns(
-            getResource("mrk-missing-verse.usfm")?.readText() ?: ""
+            TestUtils.getResource("mrk-missing-verse.usfm")?.readText() ?: ""
         )
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -312,11 +311,11 @@ class ProcessUSFMTest {
     @Test fun `test book with missing verse range fails`() {
         every { mockFile.name }.returns("mrk.usfm")
         every { FileUtilities.readFileToString(mockFile) }.returns(
-            getResource("mrk-missing-range.usfm")?.readText() ?: ""
+            TestUtils.getResource("mrk-missing-range.usfm")?.readText() ?: ""
         )
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -345,11 +344,11 @@ class ProcessUSFMTest {
     @Test fun `test book with extra verse fails`() {
         every { mockFile.name }.returns("mrk.usfm")
         every { FileUtilities.readFileToString(mockFile) }.returns(
-            getResource("mrk-extra-verse.usfm")?.readText() ?: ""
+            TestUtils.getResource("mrk-extra-verse.usfm")?.readText() ?: ""
         )
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -378,11 +377,11 @@ class ProcessUSFMTest {
     @Test fun `test processing bad usfm file fails`() {
         every { mockFile.name }.returns("mrk.usfm")
         every { FileUtilities.readFileToString(mockFile) }.returns(
-            getResource("mrk-bad-file.usfm")?.readText() ?: ""
+            TestUtils.getResource("mrk-bad-file.usfm")?.readText() ?: ""
         )
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -426,11 +425,11 @@ class ProcessUSFMTest {
     @Test fun `test processing usfm file without header`() {
         every { mockFile.name }.returns("mrk.usfm")
         every { FileUtilities.readFileToString(mockFile) }.returns(
-            getResource("mrk-no-header.usfm")?.readText() ?: ""
+            TestUtils.getResource("mrk-no-header.usfm")?.readText() ?: ""
         )
         mockChunkMarkers()
 
-        setPropertyReflection(Language::class.java, targetLanguage, "slug", "aa")
+        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -569,28 +568,6 @@ class ProcessUSFMTest {
                 ]
             }
         """.trimIndent()
-    }
-
-    /**
-     * Sets a property of an object using reflection
-     * @param cls the class of the object
-     * @param obj the object
-     * @param fieldName the name of the field
-     * @param value the value to set
-     */
-    private fun setPropertyReflection(
-        cls: Class<*>,
-        obj: Any,
-        fieldName: String,
-        value: Any
-    ) {
-        val field = cls.getDeclaredField(fieldName)
-        field.isAccessible = true
-        field.set(obj, value)
-    }
-
-    private fun getResource(name: String): URL? {
-        return this.javaClass.classLoader?.getResource(name)
     }
 
     private fun mockChunkMarkers() {
