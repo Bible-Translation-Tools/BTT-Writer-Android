@@ -113,7 +113,7 @@ class SearchGogsRepositoriesTest {
     fun searchReposByRepoName() {
         val repo1Response = """
             {
-                "id": 222,
+                "id": 111,ß
                 "name": "aa_gen_text_reg",
                 "html_url": "http://example.com/aa_gen_text_reg",
                 "clone_url": "http://example.com/aa_gen_text_reg.git",

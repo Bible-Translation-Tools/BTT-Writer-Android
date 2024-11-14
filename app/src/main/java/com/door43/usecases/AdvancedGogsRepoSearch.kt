@@ -33,7 +33,7 @@ class AdvancedGogsRepoSearch @Inject constructor(
             for (user in users) {
                 // search by repo
                 repositories.addAll(
-                    searchGogsRepositories.execute(user.id, repoNameQuery, limit)
+                    searchGogsRepositories.execute(user.id, repoNameQuery, limit, progressListener)
                 )
             }
         } else {
