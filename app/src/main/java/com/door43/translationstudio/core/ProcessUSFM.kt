@@ -10,13 +10,6 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
-import com.door43.util.FileUtilities.deleteQuietly
-import com.door43.util.FileUtilities.forceMkdir
-import com.door43.util.FileUtilities.getExtension
-import com.door43.util.FileUtilities.getFilename
-import com.door43.util.FileUtilities.readFileToString
-import com.door43.util.FileUtilities.readStreamToString
-import com.door43.util.FileUtilities.writeStringToFile
 import com.door43.util.Zip
 import com.door43.util.sortNumerically
 import com.door43.util.sortNumericallyComparator
@@ -441,33 +434,16 @@ class ProcessUSFM {
             val format = context.resources.getString(R.string.found_book)
             for (i in 0..currentBook) {
                 val bookName = foundBooks[i]
-                val bookNameCleaned = getCleanedBookName(format, bookName)
+                val bookNameFormatted = String.format(format, bookName)
                 var errors = errors[i]
                 if (errors.isEmpty()) {
                     errors = context.resources.getString(R.string.no_error)
                 }
-                val currentResults = "\n ${(i + 1)} - $bookNameCleaned \n $errors"
+                val currentResults = "\n ${(i + 1)} - $bookNameFormatted \n $errors"
                 results = results + currentResults + "\n"
             }
             return results
         }
-
-    /**
-     * cleanup uri escape characters
-     * @param format
-     * @param bookName
-     * @return
-     */
-    private fun getCleanedBookName(format: String, bookName: String?): String {
-        var cleaned = bookName
-        val parts = bookName!!.split("%3A".toRegex())
-        if (parts.size == 2) { //look for URI prefix
-            cleaned = "SD_CARD/" + parts[1]
-        }
-        cleaned = Uri.decode(cleaned)
-
-        return String.format(format, cleaned)
-    }
 
     /**
      * set book name
@@ -680,12 +656,12 @@ class ProcessUSFM {
         val path = FileUtilities.getUriDisplayName(context, uri)
 
         try {
-            val ext = getExtension(path)
+            val ext = FileUtilities.getExtension(path)
             val zip = "zip".equals(ext, ignoreCase = true)
 
             context.contentResolver.openInputStream(uri)?.use { stream ->
                 if (!zip) {
-                    val text = readStreamToString(stream)
+                    val text = FileUtilities.readStreamToString(stream)
                     success = processBook(text, path)
                 } else {
                     success = readZipStream(stream)
@@ -708,14 +684,14 @@ class ProcessUSFM {
     private fun readResourceFile(fileName: String) {
         var success: Boolean
         updateStatus(R.string.initializing_import)
-        val ext = getExtension(fileName).lowercase(Locale.getDefault())
+        val ext = FileUtilities.getExtension(fileName).lowercase(Locale.getDefault())
         val zip = "zip" == ext
 
         try {
             assetsProvider.open(fileName).use { stream ->
                 if (!zip) {
-                    val text = readStreamToString(stream)
-                    success = processBook(text, getFilename(fileName))
+                    val text = FileUtilities.readStreamToString(stream)
+                    success = processBook(text, FileUtilities.getFilename(fileName))
                 } else {
                     success = readZipStream(stream)
                 }
@@ -743,11 +719,11 @@ class ProcessUSFM {
     private fun processBook(file: File): Boolean {
         var success: Boolean
         try {
-            val book = readFileToString(file)
-            success = processBook(book, file.toString())
+            val book = FileUtilities.readFileToString(file)
+            success = processBook(book, file.name)
         } catch (e: Exception) {
             Logger.e(TAG, "error reading book $file", e)
-            addError(R.string.error_reading_file, file.toString())
+            addError(R.string.error_reading_file, file.name)
             success = false
         }
         return success
@@ -761,6 +737,8 @@ class ProcessUSFM {
     ): Boolean {
         booksMissingNames as ArrayList
         booksMissingNames.clear()
+        errors.clear()
+        foundBooks.clear()
 
         currentBook = foundBooks.size
         val success = processBook(book, name, promptForName, useName)
@@ -1328,11 +1306,10 @@ class ProcessUSFM {
             if (start != 0) { // text before first verse is not a concern
                 var delta = foundVerseCount - (end - start)
                 if (section.isEmpty()) {
-                    val format =
-                        context.resources.getString(R.string.could_not_find_verses_in_chapter)
+                    val format = context.resources.getString(R.string.could_not_find_verses_in_chapter)
                     val msg = String.format(format, start, end - 1, chapter)
                     addWarning(msg)
-                } else if ((end != END_MARKER) && (delta != 0)) {
+                } else if (end != END_MARKER && delta != 0) {
                     val format: String
                     if (delta < 0) {
                         delta = -delta
@@ -1409,9 +1386,9 @@ class ProcessUSFM {
         val chapterFolder = File(projectFolder, chapter)
         try {
             val cleanChunk = removePattern(section)
-            forceMkdir(chapterFolder)
+            FileUtilities.forceMkdir(chapterFolder)
             val output = File(chapterFolder, "$fileName.txt")
-            writeStringToFile(output, cleanChunk)
+            FileUtilities.writeStringToFile(output, cleanChunk)
             return true
         } catch (e: Exception) {
             Logger.e(TAG, "error parsing chapter ${this.chapter}", e)
@@ -1604,7 +1581,7 @@ class ProcessUSFM {
      * cleanup working directory
      */
     fun cleanup() {
-        deleteQuietly(tempDir)
+        FileUtilities.deleteQuietly(tempDir)
     }
 
     /**
