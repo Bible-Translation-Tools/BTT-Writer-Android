@@ -92,9 +92,5 @@ class CheckForLatestRelease @Inject constructor(
         val downloadUrl: String,
         val downloadSize: Int,
         val build: Int
-    ) : Serializable {
-        companion object {
-            private const val SERIAL_VERSION_UID: Long = 1000000
-        }
-    }
+    ) : Serializable
 }

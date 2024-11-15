@@ -5,14 +5,16 @@ import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import io.mockk.MockKAnnotations
-import io.mockk.Runs
+import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import io.mockk.verify
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -32,11 +34,16 @@ class SearchGogsRepositoriesTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any(), any()) } just Runs
+        every { progressListener.onProgress(any(), any(), any()) } just runs
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }
             .returns(apiUrl)
         every { context.getString(R.string.pref_default_gogs_api) }
             .returns(apiUrl)
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test

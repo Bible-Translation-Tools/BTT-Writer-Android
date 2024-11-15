@@ -68,8 +68,6 @@ class CloneRepository @Inject constructor(
                         else -> status = Status.NO_REMOTE_REPO
                     }
                 }
-            } catch (e: Exception) {
-                Logger.e(this.javaClass.name, e.message, e)
             } catch (e: OutOfMemoryError) {
                 Logger.e(this.javaClass.name, e.message, e)
                 status = Status.OUT_OF_MEMORY

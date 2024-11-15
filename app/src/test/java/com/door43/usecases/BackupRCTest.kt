@@ -8,15 +8,17 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
-import io.mockk.Runs
+import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
+import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Before
@@ -60,7 +62,7 @@ class BackupRCTest {
         mockkStatic(FileUtilities::class)
 
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
-        every { FileUtilities.copyFile(any(), any()) } just Runs
+        every { FileUtilities.copyFile(any(), any()) } just runs
 
         every { directoryProvider.backupsDir }.returns(File("/backups"))
         every { profile.nativeSpeaker }.returns(mockk())
@@ -68,6 +70,11 @@ class BackupRCTest {
         TestUtils.setPropertyReflection(translation, "language", language)
         TestUtils.setPropertyReflection(translation, "project", project)
         TestUtils.setPropertyReflection(translation, "resource", resource)
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -84,7 +91,7 @@ class BackupRCTest {
                 "mrk",
                 "nmv"
             )
-        } just Runs
+        } just runs
 
         val backupFile = backupRC.backupResourceContainer(translation)
 
@@ -145,7 +152,7 @@ class BackupRCTest {
                 null
             )
         }.returns(tempFile)
-        every { targetTranslation.setDefaultContributor(any()) } just Runs
+        every { targetTranslation.setDefaultContributor(any()) } just runs
         every { exportProjects.exportProject(targetTranslation, tempFile) }.returns(mockk())
 
         val success = backupRC.backupTargetTranslation(targetTranslation, false)
@@ -176,7 +183,7 @@ class BackupRCTest {
         every { targetTranslation.id }.returns("aa_mrk_text_reg")
         every { targetTranslation.commitHash }.returns("abcdefghijklmnopqrstuvwxyz")
         every { directoryProvider.createTempFile(any(), any(), null) }.returns(tempFile)
-        every { targetTranslation.setDefaultContributor(any()) } just Runs
+        every { targetTranslation.setDefaultContributor(any()) } just runs
         every { exportProjects.exportProject(targetTranslation, tempFile) }.returns(mockk())
 
         val success = backupRC.backupTargetTranslation(targetTranslation, true)
@@ -201,7 +208,7 @@ class BackupRCTest {
         every { tempFile.isFile }.returns(true)
 
         every { directoryProvider.createTempFile(any(), any(), null) }.returns(tempFile)
-        every { exportProjects.exportProject(projectDir, tempFile) } just Runs
+        every { exportProjects.exportProject(projectDir, tempFile) } just runs
 
         val success = backupRC.backupTargetTranslation(projectDir)
 

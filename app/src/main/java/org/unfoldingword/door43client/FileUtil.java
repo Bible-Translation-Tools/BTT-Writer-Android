@@ -12,9 +12,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+
+import kotlin.text.Charsets;
 
 /**
  * Created by joel on 9/1/16.
@@ -28,7 +29,7 @@ class FileUtil {
      * @throws IOException
      */
     public static String readStreamToString(InputStream is) throws IOException {
-        return IOUtils.toString(is, StandardCharsets.UTF_8);
+        return IOUtils.toString(is, Charsets.UTF_8);
     }
 
     /**

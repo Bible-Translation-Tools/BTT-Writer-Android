@@ -2,13 +2,15 @@ package com.door43.usecases
 
 import com.door43.OnProgressListener
 import io.mockk.MockKAnnotations
-import io.mockk.Runs
+import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.unmockkAll
 import io.mockk.verify
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -26,8 +28,13 @@ class AdvancedGogsRepoSearchTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any(), any()) } just Runs
-        every { submitNewLanguageRequests.execute(progressListener) } just Runs
+        every { progressListener.onProgress(any(), any(), any()) } just runs
+        every { submitNewLanguageRequests.execute(progressListener) } just runs
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test

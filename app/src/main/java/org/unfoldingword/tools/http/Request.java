@@ -242,8 +242,6 @@ public abstract class Request {
 
             }
             publishProgress(responseSize, bytesRead);
-        } catch (Exception e) {
-            throw e;
         } finally {
             if(in != null) in.close();
             out.close();

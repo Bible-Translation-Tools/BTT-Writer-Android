@@ -19,13 +19,15 @@ import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import com.door43.translationstudio.R
 import com.door43.util.FileUtilities
-import io.mockk.Runs
+import io.mockk.runs
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkAll
 import io.mockk.verify
 import org.json.JSONObject
+import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
@@ -77,7 +79,7 @@ class ProcessUSFMTest {
         mockStringResources()
 
         every { directoryProvider.cacheDir } returns File("/cache")
-        every { progressListener.onProgress(any(), any(), any()) } just Runs
+        every { progressListener.onProgress(any(), any(), any()) } just runs
 
         every { index.getVersifications("en") } returns listOf(
             Versification("en", "English")
@@ -92,11 +94,16 @@ class ProcessUSFMTest {
         every { TextUtils.concat(capture(str1), capture(str2)) }
             .answers { "${str1.captured} ${str2.captured}" }
 
-        every { FileUtilities.forceMkdir(any()) } just Runs
-        every { FileUtilities.writeStringToFile(any(), any()) } just Runs
+        every { FileUtilities.forceMkdir(any()) } just runs
+        every { FileUtilities.writeStringToFile(any(), any()) } just runs
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
 
         every { profile.nativeSpeaker }.returns(NativeSpeaker("tester"))
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test fun `test Builder creation from JSON string`() {
@@ -181,7 +188,7 @@ class ProcessUSFMTest {
         val inputStream: InputStream = mockk()
         every { FileUtilities.getUriDisplayName(context, mockUri) }.returns("mrk.usfm")
         every { contentResolver.openInputStream(mockUri) }.returns(inputStream)
-        every { inputStream.close() } just Runs
+        every { inputStream.close() } just runs
         every { FileUtilities.readStreamToString(any()) }
             .returns(TestUtils.getResource("mrk.usfm")?.readText() ?: "")
         mockChunkMarkers()
@@ -213,7 +220,7 @@ class ProcessUSFMTest {
         val rcPath = "/rc/mrk.usfm"
         val inputStream: InputStream = mockk()
         every { assetsProvider.open(rcPath) }.returns(inputStream)
-        every { inputStream.close() } just Runs
+        every { inputStream.close() } just runs
         every { FileUtilities.readStreamToString(any()) }
             .returns(TestUtils.getResource("mrk.usfm")?.readText() ?: "")
         every { FileUtilities.getFilename(rcPath) }.returns("mrk.usfm")
