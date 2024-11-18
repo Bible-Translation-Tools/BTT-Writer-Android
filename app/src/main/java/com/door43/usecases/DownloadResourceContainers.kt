@@ -206,7 +206,7 @@ class DownloadResourceContainers @Inject constructor(
                             e.printStackTrace()
                         }
 
-                        passSuccess = passSuccess && downloadHelps(
+                        passSuccess = passSuccess and downloadHelps(
                             index,
                             resourceContainerSlug,
                             languageSlug,
@@ -220,7 +220,7 @@ class DownloadResourceContainers @Inject constructor(
                             progressListener
                         )
 
-                        passSuccess = passSuccess && downloadHelps(
+                        passSuccess = passSuccess and downloadHelps(
                             index,
                             resourceContainerSlug,
                             languageSlug,
@@ -328,7 +328,7 @@ class DownloadResourceContainers @Inject constructor(
     ): Boolean {
         var passSuccess = true
         try {
-            // check if notes present before trying to download
+            // check if helps present before trying to download
             val helps = library.index.findTranslations(
                 languageSlug,
                 projectSlug,

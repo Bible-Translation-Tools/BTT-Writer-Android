@@ -22,6 +22,7 @@ class DownloadLatestRelease @Inject constructor(
                     Uri.parse("market://details?id=$appPackageName")
                 )
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+
                 context.startActivity(intent)
             } catch (e: ActivityNotFoundException) {
                 val intent = Intent(
