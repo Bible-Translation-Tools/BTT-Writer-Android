@@ -737,7 +737,7 @@ public class TargetTranslation {
      * @param translatedText
      */
     private void saveFrameTranslation(FrameTranslation frameTranslation, String translatedText) throws IOException {
-        File frameFile = getFrameFile(frameTranslation.getChapterId(), frameTranslation.getId());
+        File frameFile = getFrameFile(frameTranslation.getChapterId(), frameTranslation.id);
         if(translatedText.isEmpty()) {
             frameFile.delete();
         } else {
@@ -754,7 +754,7 @@ public class TargetTranslation {
      * @throws IOException
      */
     private void saveChapterReferenceTranslation(ChapterTranslation chapterTranslation, String translatedText) throws IOException {
-        File chapterReferenceFile = getChapterReferenceFile(chapterTranslation.getId());
+        File chapterReferenceFile = getChapterReferenceFile(chapterTranslation.id);
         if(translatedText.isEmpty()) {
             chapterReferenceFile.delete();
         } else {
@@ -771,7 +771,7 @@ public class TargetTranslation {
      * @throws IOException
      */
     private void saveChapterTitleTranslation(ChapterTranslation chapterTranslation, String translatedText) throws IOException {
-        File chapterTitleFile = getChapterTitleFile(chapterTranslation.getId());
+        File chapterTitleFile = getChapterTitleFile(chapterTranslation.id);
         if(translatedText.isEmpty()) {
             chapterTitleFile.delete();
         } else {
@@ -1462,7 +1462,7 @@ public class TargetTranslation {
 
     public FileHistory getFrameHistory(FrameTranslation frameTranslation) {
         try {
-            return new FileHistory(getRepo(), getFrameFile(frameTranslation.getChapterId(), frameTranslation.getId()));
+            return new FileHistory(getRepo(), getFrameFile(frameTranslation.getChapterId(), frameTranslation.id));
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -1471,7 +1471,7 @@ public class TargetTranslation {
 
     public FileHistory getChapterTitleHistory(ChapterTranslation chapterTranslation) {
         try {
-            return new FileHistory(getRepo(), getChapterTitleFile(chapterTranslation.getId()));
+            return new FileHistory(getRepo(), getChapterTitleFile(chapterTranslation.id));
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -1480,7 +1480,7 @@ public class TargetTranslation {
 
     public FileHistory getChapterReferenceHistory(ChapterTranslation chapterTranslation) {
         try {
-            return new FileHistory(getRepo(), getChapterReferenceFile(chapterTranslation.getId()));
+            return new FileHistory(getRepo(), getChapterReferenceFile(chapterTranslation.id));
         } catch (Exception e) {
             e.printStackTrace();
             return null;

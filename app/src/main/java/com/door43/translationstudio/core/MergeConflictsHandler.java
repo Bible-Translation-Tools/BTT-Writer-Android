@@ -97,7 +97,7 @@ public class MergeConflictsHandler {
                 return true;
             }
 
-            FrameTranslation[] frames = targetTranslation.getFrameTranslations(ct.getId(), TranslationFormat.DEFAULT);
+            FrameTranslation[] frames = targetTranslation.getFrameTranslations(ct.id, TranslationFormat.DEFAULT);
             for (FrameTranslation frame : frames) {
                 if (isMergeConflicted(frame.body)) {
                     return true;

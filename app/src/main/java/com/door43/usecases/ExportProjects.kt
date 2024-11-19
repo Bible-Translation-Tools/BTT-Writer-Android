@@ -108,8 +108,9 @@ class ExportProjects @Inject constructor(
      * @param fileUri
      */
     fun exportUSFM(targetTranslation: TargetTranslation, fileUri: Uri): Result {
+        val tempDir = directoryProvider.createTempDir()
+
         val success = try {
-            val tempDir = directoryProvider.createTempDir()
             tempDir.mkdirs()
             val chapters = targetTranslation.chapterTranslations
 
@@ -196,11 +197,12 @@ class ExportProjects @Inject constructor(
                     }
                 }
             }
-            FileUtilities.deleteQuietly(tempDir)
             true
         } catch (e: Exception) {
             Log.e(this::class.simpleName, "Failed to export USFM file", e)
             false
+        } finally {
+            FileUtilities.deleteQuietly(tempDir)
         }
 
         return Result(fileUri, success, ExportType.USFM)

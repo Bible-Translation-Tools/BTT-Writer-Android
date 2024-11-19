@@ -88,8 +88,7 @@ class PdfPrinter(
 
         targetLanguageFontSize = fontSize / RATIO_OF_SP_TO_PT
 
-        baseFont =
-            BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+        baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
         titleFont = Font(baseFont, targetLanguageFontSize * 2.5f, Font.BOLD)
         chapterFont = Font(baseFont, targetLanguageFontSize * 2)
         bodyFont = Font(baseFont, targetLanguageFontSize)
