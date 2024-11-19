@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import com.door43.data.IPreferenceRepository
@@ -79,7 +78,6 @@ class GogsLogin @Inject constructor(
         return LoginResult(user)
     }
 
-    @SuppressLint("HardwareIds")
     private fun getTokenStub(): String {
         val defaultTokenName = context.resources.getString(R.string.gogs_token_name)
         val androidId = Build.DEVICE.lowercase()

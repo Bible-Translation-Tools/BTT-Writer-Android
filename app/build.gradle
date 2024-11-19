@@ -39,10 +39,6 @@ android {
 
         testInstrumentationRunner "com.door43.translationstudio.CustomTestRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
-
-        buildConfigField "String", "TEST_USER", "\"${System.getenv("TEST_USER") ?: ""}\""
-        buildConfigField "String", "TEST_PASS", "\"${System.getenv("TEST_PASS") ?: ""}\""
-        buildConfigField "String", "TEST_TOKEN", "\"${System.getenv("TEST_TOKEN") ?: ""}\""
     }
     buildTypes {
         release {
