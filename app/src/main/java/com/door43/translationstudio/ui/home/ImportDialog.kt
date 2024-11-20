@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.home
 
-import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
@@ -61,8 +60,8 @@ class ImportDialog : DialogFragment() {
     private var mergeConflicted = false
     private val dialogs = arrayListOf<AlertDialog>()
 
-    private lateinit var openTranslationContent: ActivityResultLauncher<Intent>
-    private lateinit var openUSFMContent: ActivityResultLauncher<Intent>
+    private lateinit var openTranslationContent: ActivityResultLauncher<String>
+    private lateinit var openUSFMContent: ActivityResultLauncher<String>
     private lateinit var openDirectory: ActivityResultLauncher<Uri?>
     private lateinit var activityLauncher: ActivityResultLauncher<Intent>
 
@@ -78,12 +77,13 @@ class ImportDialog : DialogFragment() {
         ) {}
 
         openTranslationContent = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { response ->
-            val uri = response.data?.data
-            if (response.resultCode == Activity.RESULT_OK && uri != null) {
+            ActivityResultContracts.GetContent()
+        ) { uri ->
+            if (uri != null) {
                 val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
-                if (filename.endsWith(Translator.TSTUDIO_EXTENSION)) {
+                val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
+                val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
+                if (isTstudio || isZip) {
                     importLocal(uri, IMPORT_TRANSLATION_MIME)
                 } else {
                     showImportResults(R.string.invalid_file, filename)
@@ -92,12 +92,14 @@ class ImportDialog : DialogFragment() {
         }
 
         openUSFMContent = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { response ->
-            val uri = response.data?.data
-            if (response.resultCode == Activity.RESULT_OK && uri != null) {
+            ActivityResultContracts.GetContent()
+        ) { uri ->
+            if (uri != null) {
                 val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
-                if (filename.endsWith(Translator.USFM_EXTENSION)) {
+                val isUsfm = filename.contains(Translator.USFM_EXTENSION, ignoreCase = true)
+                val isTxt = filename.contains(Translator.TXT_EXTENSION, ignoreCase = true)
+                val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
+                if (isUsfm || isTxt || isZip) {
                     importLocal(uri, IMPORT_USFM_MIME)
                 } else {
                     showImportResults(R.string.invalid_file, filename)
@@ -301,25 +303,11 @@ class ImportDialog : DialogFragment() {
     }
 
     private fun onImportTranslation() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            type = "*/*"
-            putExtra(
-                Intent.EXTRA_MIME_TYPES,
-                arrayOf(IMPORT_TRANSLATION_MIME, IMPORT_GENERIC_MIME)
-            )
-        }
-        openTranslationContent.launch(intent)
+        openTranslationContent.launch("*/*")
     }
 
     private fun onImportUSFM() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            type = "*/*"
-            putExtra(
-                Intent.EXTRA_MIME_TYPES,
-                arrayOf(IMPORT_USFM_MIME, IMPORT_GENERIC_MIME)
-            )
-        }
-        openUSFMContent.launch(intent)
+        openUSFMContent.launch("*/*")
     }
 
     private fun importLocal(fileUri: Uri, mimeType: String) {
@@ -575,7 +563,6 @@ class ImportDialog : DialogFragment() {
     companion object {
         const val TAG: String = "importDialog"
 
-        private const val IMPORT_GENERIC_MIME = "application/octet-stream"
         private const val IMPORT_TRANSLATION_MIME = "application/tstudio"
         private const val IMPORT_USFM_MIME = "text/usfm"
         private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"

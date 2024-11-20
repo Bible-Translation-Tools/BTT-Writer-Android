@@ -22,6 +22,7 @@ import com.door43.util.FileUtilities
 import io.mockk.runs
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkAll

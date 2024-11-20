@@ -516,6 +516,7 @@ class Translator (
         const val TSTUDIO_EXTENSION = "tstudio"
         const val ZIP_EXTENSION = "zip"
         const val USFM_EXTENSION = "usfm"
+        const val TXT_EXTENSION = "usfm"
         const val PDF_EXTENSION = "pdf"
 
         /**

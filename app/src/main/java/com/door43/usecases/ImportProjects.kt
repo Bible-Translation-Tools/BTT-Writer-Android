@@ -58,8 +58,11 @@ class ImportProjects @Inject constructor(
 
         val filename = FileUtilities.getUriDisplayName(context, projectUri)
         var importedSlug: String? = null
-        val validExtension = FileUtilities.getExtension(filename)
-            .lowercase(Locale.getDefault()) == Translator.TSTUDIO_EXTENSION
+
+        val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
+        val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
+
+        val validExtension = isTstudio || isZip
 
         if (validExtension) {
             try {

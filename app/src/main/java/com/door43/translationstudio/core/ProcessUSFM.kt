@@ -8,6 +8,8 @@ import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Translator.Companion.TXT_EXTENSION
+import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
@@ -585,9 +587,9 @@ class ProcessUSFM {
 
         try {
             Zip.unzipFromStream(stream, tempSrc)
-            tempSrc?.listFiles()?.forEach {
-                addFilesInFolder(it)
-            }
+
+            addFilesInFolder(tempSrc)
+
             Logger.i(TAG, "found files: " + TextUtils.join("\n", sourceFiles))
 
             currentBook = 0
@@ -1587,36 +1589,35 @@ class ProcessUSFM {
     /**
      * add file and files in sub-folders to list of files to process
      *
-     * @param usfm
-     * @return
+     * @param folder
      */
-    private fun addFilesInFolder(usfm: File): Boolean {
-        Logger.i(TAG, "processing folder: $usfm")
+    private fun addFilesInFolder(folder: File?) {
+        Logger.i(TAG, "processing folder: $folder")
 
-        if (usfm.isDirectory) {
-            val subFiles = usfm.listFiles()
-            if (subFiles != null) {
-                for (subFile in subFiles) {
-                    addFilesInFolder(subFile)
-                }
-                Logger.i(TAG, "found files: $subFiles")
+        // Checking if file extension contains supported extension instead of endsWith
+        // Because android can create files adding (1), (2), etc endings to file extensions
+        // So the file name could be "file.usfm (1)"
+        val files = folder?.walk()
+            ?.filter {
+                val isUSFM = it.extension.contains(USFM_EXTENSION, ignoreCase = true)
+                val isTXT = it.extension.contains(TXT_EXTENSION, ignoreCase = true)
+                it.isFile && (isUSFM || isTXT)
             }
-        } else {
-            addFile(usfm)
+            ?.toList()
+
+        files?.forEach {
+            addFile(it)
         }
-        return true
     }
 
     /**
      * add file to list of files to process
      *
      * @param usfm
-     * @return
      */
-    private fun addFile(usfm: File): Boolean {
+    private fun addFile(usfm: File) {
         Logger.i(TAG, "processing file: $usfm")
         sourceFiles.add(usfm)
-        return true
     }
 
     /**

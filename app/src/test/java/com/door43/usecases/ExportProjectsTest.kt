@@ -124,6 +124,7 @@ class ExportProjectsTest {
     @After
     fun tearDown() {
         unmockkAll()
+        tempDir.delete()
     }
 
     @Test

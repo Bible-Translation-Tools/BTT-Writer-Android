@@ -283,6 +283,7 @@ object FileUtilities {
     /**
      * Copies directory uri to a new directory
      */
+    @JvmStatic
     fun copyDirectory(context: Context, sourceDir: Uri, destDir: File) {
         when (sourceDir.scheme) {
             ContentResolver.SCHEME_CONTENT -> {
@@ -301,6 +302,7 @@ object FileUtilities {
         }
     }
 
+    @JvmStatic
     fun copyFile(context: Context, file: DocumentFile, targetDir: File) {
         if (file.isDirectory) {
             // Create a corresponding directory in the cache
@@ -383,6 +385,7 @@ object FileUtilities {
      * closes the closable without throwing an exception
      * @param closable
      */
+    @JvmStatic
     fun closeQuietly(closable: Closeable) {
         try {
             closable.close()
