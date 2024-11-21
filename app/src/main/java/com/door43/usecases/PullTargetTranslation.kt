@@ -105,7 +105,7 @@ class PullTargetTranslation @Inject constructor(
             repo.setRemote("origin", remote)
             git = repo.git
         } catch (e: IOException) {
-            return Result(status, null)
+            return Result(status, e.message)
         }
 
         val conflicts: Map<String, Array<IntArray>>
@@ -162,7 +162,7 @@ class PullTargetTranslation @Inject constructor(
             } else {
                 status = Status.UP_TO_DATE
             }
-            return Result(status, "message")
+            return Result(status, "Pulled Successfully!")
         } catch (e: TransportException) {
             Logger.e(this.javaClass.name, e.message, e)
             val cause = e.cause
@@ -178,16 +178,16 @@ class PullTargetTranslation @Inject constructor(
                 }
             }
             return Result(status, null)
+        } catch (e: OutOfMemoryError) {
+            Logger.e(this.javaClass.name, e.message, e)
+            status = Status.OUT_OF_MEMORY
+            return Result(status, null)
         } catch (e: Exception) {
             val cause = e.cause
             if (cause is NoRemoteRepositoryException) {
                 status = Status.NO_REMOTE_REPO
             }
             Logger.e(this.javaClass.name, e.message, e)
-            return Result(status, null)
-        } catch (e: OutOfMemoryError) {
-            Logger.e(this.javaClass.name, e.message, e)
-            status = Status.OUT_OF_MEMORY
             return Result(status, null)
         } catch (e: Throwable) {
             Logger.e(this.javaClass.name, e.message, e)

@@ -43,7 +43,7 @@ class PushTargetTranslation @Inject constructor(
         if (profile.gogsUser != null) {
             progressListener?.onProgress(-1, max, "Uploading translation")
 
-            val repository = getRepository.execute(targetTranslation)
+            val repository = getRepository.execute(targetTranslation, progressListener)
             try {
                 targetTranslation.commitSync()
                 val repo: Repo = targetTranslation.repo
@@ -66,8 +66,8 @@ class PushTargetTranslation @Inject constructor(
             repo.deleteRemote("origin")
             repo.setRemote("origin", remote)
             git = repo.git
-        } catch (e1: IOException) {
-            return Result(status, null)
+        } catch (e: IOException) {
+            return Result(status, e.message)
         }
 
         val spec = RefSpec("refs/heads/master")
@@ -136,12 +136,12 @@ class PushTargetTranslation @Inject constructor(
                 }
             }
             return Result(status, null)
-        } catch (e: java.lang.Exception) {
-            Logger.e(this.javaClass.name, e.message, e)
-            return Result(status, null)
         } catch (e: OutOfMemoryError) {
             Logger.e(this.javaClass.name, e.message, e)
             status = Status.OUT_OF_MEMORY
+            return Result(status, null)
+        } catch (e: java.lang.Exception) {
+            Logger.e(this.javaClass.name, e.message, e)
             return Result(status, null)
         } catch (e: Throwable) {
             Logger.e(this.javaClass.name, e.message, e)

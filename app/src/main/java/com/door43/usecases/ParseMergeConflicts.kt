@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import android.text.TextUtils
 import com.door43.translationstudio.core.MergeConflictsHandler
 import org.unfoldingword.tools.logger.Logger
 import java.util.regex.Pattern
@@ -98,11 +97,10 @@ object ParseMergeConflicts {
                 if (headTexts.size <= i) {
                     headTexts.add("")
                 }
-                headTexts[i] = TextUtils.concat(
-                    headTexts[i],
-                    searchText.subSequence(startPos, matcher.start()),
-                    middles[i]
-                )
+                val head = headTexts[i]
+                val content = searchText.subSequence(startPos, matcher.start())
+                val middle = middles[i]
+                headTexts[i] = "$head$content$middle"
             }
 
             text = matcher.group(2)
@@ -118,11 +116,10 @@ object ParseMergeConflicts {
                     if (mTailText.size <= i) {
                         mTailText.add("")
                     }
-                    mTailText[i] = TextUtils.concat(
-                        mTailText[i],
-                        searchText.subSequence(startPos, matcher.start()),
-                        middles[i]
-                    )
+                    val tail = mTailText[i]
+                    val content = searchText.subSequence(startPos, matcher.start())
+                    val middle = middles[i]
+                    mTailText[i] = "$tail$content$middle"
                 }
             }
 
@@ -133,12 +130,12 @@ object ParseMergeConflicts {
         val endText = searchText.subSequence(startPos, searchText.length)
 
         for (i in headTexts.indices) {
-            val headText = TextUtils.concat(headTexts[i], endText)
+            val headText = "${headTexts[i]}$endText"
             mergeConflictItems.add(headText)
         }
 
         for (i in mTailText.indices) {
-            val tailText = TextUtils.concat(mTailText[i], endText)
+            val tailText = "${mTailText[i]}$endText"
             mergeConflictItems.add(tailText)
         }
 

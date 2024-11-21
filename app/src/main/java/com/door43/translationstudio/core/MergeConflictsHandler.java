@@ -52,7 +52,7 @@ public class MergeConflictsHandler {
      * @return
      */
     static public boolean isMergeConflicted(CharSequence text) {
-        if ((text != null) && (text.length() > 0)) {
+        if (text != null && text.length() > 0) {
             Matcher matcher = mergeConflictPatternHead.matcher(text);
             return matcher.find();
         }
