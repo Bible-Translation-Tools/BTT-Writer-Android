@@ -9,7 +9,7 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.SettingsActivity
-import com.door43.util.FileUtilities.readFileToString
+import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.PublicKey
@@ -43,7 +43,7 @@ class RegisterSSHKeys @Inject constructor(
             }
             val keyString: String?
             try {
-                keyString = readFileToString(directoryProvider.publicKey).trim()
+                keyString = FileUtilities.readFileToString(directoryProvider.publicKey).trim()
             } catch (e: IOException) {
                 e.printStackTrace()
                 Logger.e(this.javaClass.name, "Failed to retrieve the public key", e)
