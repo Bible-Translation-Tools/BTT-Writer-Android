@@ -175,8 +175,6 @@ class RenderHelps @Inject constructor(
 
         // split up multiple helps
         val helpTextArray = rawText.split("#".toRegex())
-            .dropLastWhile { it.isEmpty() }
-            .toTypedArray()
         for (helpText in helpTextArray) {
             if (helpText.trim().isEmpty()) continue
 

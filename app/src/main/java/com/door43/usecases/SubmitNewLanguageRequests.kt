@@ -8,7 +8,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.translationstudio.core.Translator
-import com.door43.util.FileUtilities.writeStringToFile
+import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
 import org.unfoldingword.tools.logger.Logger
@@ -132,7 +132,7 @@ class SubmitNewLanguageRequests @Inject constructor(
             "new_languages/" + request.tempLanguageCode + ".json"
         )
         request.toJson()?.let { json ->
-            writeStringToFile(requestFile, json)
+            FileUtilities.writeStringToFile(requestFile, json)
         }
 
         // updated affected target translations

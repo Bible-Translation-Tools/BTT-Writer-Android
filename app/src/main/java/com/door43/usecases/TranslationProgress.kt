@@ -71,9 +71,7 @@ class TranslationProgress @Inject constructor(
      * @param targetTranslation the target translation to match against
      * @return a matching source translation or null
      */
-    private fun getSourceTranslation(
-        targetTranslation: TargetTranslation
-    ): Translation? {
+    private fun getSourceTranslation(targetTranslation: TargetTranslation): Translation? {
         val selectedSourceId = translator.getSelectedSourceTranslationId(targetTranslation.id)
 
         return library.index.findTranslations(
