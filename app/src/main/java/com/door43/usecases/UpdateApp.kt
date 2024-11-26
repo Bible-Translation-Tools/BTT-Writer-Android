@@ -16,13 +16,9 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.SettingsActivity
-import com.door43.util.FileUtilities.copyDirectory
-import com.door43.util.FileUtilities.copyFile
-import com.door43.util.FileUtilities.deleteQuietly
-import com.door43.util.FileUtilities.moveOrCopyQuietly
+import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
@@ -72,9 +68,11 @@ class UpdateApp @Inject constructor(
 
         if (updateLibrary) {
             // preserve manually imported source translations
-            val translations: List<Translation> = library.index.getImportedTranslations()
+            val translations = library.index.getImportedTranslations()
             val backupFiles = arrayListOf<File>()
-            if (translations.isNotEmpty()) Logger.i("UpdateAppTask", "Backing up imported RCs")
+            if (translations.isNotEmpty()) {
+                Logger.i("UpdateAppTask", "Backing up imported RCs")
+            }
             for (t in translations) {
                 try {
                     backupFiles.add(backupRC.backupResourceContainer(t))
@@ -104,7 +102,7 @@ class UpdateApp @Inject constructor(
                     } catch (importE: java.lang.Exception) {
                         Logger.e("UpdateAppTask", "Failed to restore RC from $f")
                     }
-                    deleteQuietly(opened)
+                    FileUtilities.deleteQuietly(opened)
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -238,9 +236,9 @@ class UpdateApp @Inject constructor(
                 val newFile = File(translationsDir, file.name)
                 try {
                     if (file.isDirectory) {
-                        copyDirectory(file, newFile, null)
+                        FileUtilities.copyDirectory(file, newFile, null)
                     } else {
-                        copyFile(file, newFile)
+                        FileUtilities.copyFile(file, newFile)
                     }
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -250,7 +248,7 @@ class UpdateApp @Inject constructor(
             }
             // remove old files if there were no errors
             if (!errors) {
-                deleteQuietly(legacyTranslationsDir)
+                FileUtilities.deleteQuietly(legacyTranslationsDir)
             }
         }
     }
@@ -271,33 +269,33 @@ class UpdateApp @Inject constructor(
         val newProfileDir = File(directoryProvider.internalAppDir, "profiles/profile")
         newProfileDir.parentFile?.mkdirs()
         if (oldProfileDir.exists()) {
-            deleteQuietly(newProfileDir)
-            moveOrCopyQuietly(oldProfileDir, newProfileDir)
+            FileUtilities.deleteQuietly(newProfileDir)
+            FileUtilities.moveOrCopyQuietly(oldProfileDir, newProfileDir)
         }
         if (oldTranslationsDir.exists() && !oldTranslationsDir.list().isNullOrEmpty()) {
-            deleteQuietly(newTranslationsDir)
-            moveOrCopyQuietly(oldTranslationsDir, newTranslationsDir)
+            FileUtilities.deleteQuietly(newTranslationsDir)
+            FileUtilities.moveOrCopyQuietly(oldTranslationsDir, newTranslationsDir)
         } else if (oldTranslationsDir.exists()) {
-            deleteQuietly(oldTranslationsDir)
+            FileUtilities.deleteQuietly(oldTranslationsDir)
         }
 
         // remove old source
         val oldSourceDir = File(directoryProvider.internalAppDir, "assets")
         val oldTempSourceDir = File(directoryProvider.cacheDir, "assets")
         val oldIndexDir = File(directoryProvider.cacheDir, "index")
-        deleteQuietly(oldSourceDir)
-        deleteQuietly(oldTempSourceDir)
-        deleteQuietly(oldIndexDir)
+        FileUtilities.deleteQuietly(oldSourceDir)
+        FileUtilities.deleteQuietly(oldTempSourceDir)
+        FileUtilities.deleteQuietly(oldIndexDir)
 
         // remove old caches
         val oldP2PDir = File(context.externalCacheDir, "transferred")
         val oldExportDir = File(directoryProvider.cacheDir, "exported")
         val oldImportDir = File(directoryProvider.cacheDir, "imported")
         val oldSharingDir = File(directoryProvider.cacheDir, "sharing")
-        deleteQuietly(oldP2PDir)
-        deleteQuietly(oldExportDir)
-        deleteQuietly(oldImportDir)
-        deleteQuietly(oldSharingDir)
+        FileUtilities.deleteQuietly(oldP2PDir)
+        FileUtilities.deleteQuietly(oldExportDir)
+        FileUtilities.deleteQuietly(oldImportDir)
+        FileUtilities.deleteQuietly(oldSharingDir)
 
         // clear old logs and crash reports
         Logger.flush()
@@ -327,7 +325,7 @@ class UpdateApp @Inject constructor(
 
         var fontName = prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
-            context.resources.getString(R.string.pref_default_translation_typeface)
+            context.getString(R.string.pref_default_translation_typeface)
         )
         if (oldDefault.equals(fontName, ignoreCase = true)) {
             prefRepository.setDefaultPref(
@@ -338,7 +336,7 @@ class UpdateApp @Inject constructor(
 
         fontName = prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_SOURCE_TYPEFACE,
-            context.resources.getString(R.string.pref_default_translation_typeface)
+            context.getString(R.string.pref_default_translation_typeface)
         )
         if (oldDefault.equals(fontName, ignoreCase = true)) {
             prefRepository.setDefaultPref(
