@@ -712,7 +712,7 @@ public class ImportUsfmTest {
                               boolean noEmptyChunks, boolean expectAllVerses,
                               int expectedVerseCount) throws JSONException {
         String results = usfm.getResultsString();
-        assertTrue("results text should not be empty", !results.isEmpty());
+        assertFalse("results text should not be empty", results.isEmpty());
         assertEquals("results", expected, success);
         assertEquals("results", expected, usfm.isProcessSuccess());
         String[] resultLines = results.split("\n");
@@ -815,7 +815,7 @@ public class ImportUsfmTest {
                         break;
                     }
 
-                    pos = resultsLine.indexOf("No errors Found");
+                    pos = resultsLine.indexOf("No errors found");
                     if (pos >= 0) {
                         noErrorsFound = true;
                         break;

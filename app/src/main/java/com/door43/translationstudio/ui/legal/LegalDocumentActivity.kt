@@ -1,44 +1,35 @@
-package com.door43.translationstudio.ui.legal;
+package com.door43.translationstudio.ui.legal
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
-import android.content.DialogInterface;
-import android.os.Bundle;
+import android.os.Bundle
+import com.door43.translationstudio.ui.BaseActivity
 
-import com.door43.translationstudio.ui.BaseActivity;
+class LegalDocumentActivity : BaseActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-public class LegalDocumentActivity extends BaseActivity {
-
-    public static final String ARG_RESOURCE = "arg_resource_id";
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        Bundle args = getIntent().getExtras();
-        int resourceId = 0;
-        if(args != null) {
-            resourceId = args.getInt(ARG_RESOURCE, 0);
+        val args = intent.extras
+        var resourceId = 0
+        if (args != null) {
+            resourceId = args.getInt(ARG_RESOURCE, 0)
         }
-        if(resourceId == 0) {
-            finish();
-            return;
+        if (resourceId == 0) {
+            finish()
+            return
         }
 
-        LegalDocumentDialog dialog = new LegalDocumentDialog();
-        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                finish();
-            }
-        });
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag("dialog");
+        val dialog = LegalDocumentDialog()
+        dialog.setOnDismissListener { finish() }
+        val ft = supportFragmentManager.beginTransaction()
+        val prev = supportFragmentManager.findFragmentByTag("dialog")
         if (prev != null) {
-            ft.remove(prev);
+            ft.remove(prev)
         }
-        ft.addToBackStack(null);
-        dialog.setArguments(getIntent().getExtras());
-        dialog.show(ft, "dialog");
+        ft.addToBackStack(null)
+        dialog.arguments = intent.extras
+        dialog.show(ft, "dialog")
+    }
+
+    companion object {
+        const val ARG_RESOURCE: String = "arg_resource_id"
     }
 }
