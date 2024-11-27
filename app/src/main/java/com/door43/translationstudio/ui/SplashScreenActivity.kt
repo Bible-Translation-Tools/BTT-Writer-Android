@@ -8,6 +8,7 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.ActivitySplashBinding
 import com.door43.translationstudio.ui.viewmodels.SplashScreenViewModel
+import com.door43.util.RuntimeWrapper
 import org.unfoldingword.tools.logger.Logger
 
 /**
@@ -35,8 +36,8 @@ class SplashScreenActivity : BaseActivity() {
         // check minimum requirements
         val checkHardware = viewModel.checkHardware()
         if (checkHardware && !started) {
-            val numProcessors = Runtime.getRuntime().availableProcessors()
-            val maxMem = Runtime.getRuntime().maxMemory()
+            val numProcessors = RuntimeWrapper.availableProcessors()
+            val maxMem = RuntimeWrapper.maxMemory()
 
             if (numProcessors < App.MINIMUM_NUMBER_OF_PROCESSORS || maxMem < App.MINIMUM_REQUIRED_RAM) {
                 silentStart = false

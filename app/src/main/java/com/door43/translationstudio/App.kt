@@ -30,6 +30,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.usecases.BackupRC
+import com.door43.util.RuntimeWrapper
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -269,7 +270,7 @@ class App : Application() {
             if (intent != null) {
                 instance.startActivity(Intent.makeRestartActivityTask(intent.component))
                 Process.killProcess(Process.myPid())
-                Runtime.getRuntime().exit(0)
+                RuntimeWrapper.exit(0)
             }
         }
 

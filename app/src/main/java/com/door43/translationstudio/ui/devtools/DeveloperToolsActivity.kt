@@ -18,6 +18,7 @@ import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel
 import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel.Companion.GB
 import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel.Companion.KB
 import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel.Companion.MB
+import com.door43.util.RuntimeWrapper
 import com.door43.util.StringUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
@@ -159,9 +160,9 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
     override fun onCheckSystemResources() {
         val am = getSystemService(ACTIVITY_SERVICE) as ActivityManager
         var message = "System Resources:\n"
-        val numProcessors = Runtime.getRuntime().availableProcessors()
+        val numProcessors = RuntimeWrapper.availableProcessors()
         message += "Number of processors: $numProcessors (${App.MINIMUM_NUMBER_OF_PROCESSORS} required)\n"
-        val maxMem = Runtime.getRuntime().maxMemory()
+        val maxMem = RuntimeWrapper.maxMemory()
         val maxMemStr = getFormattedSize(maxMem)
         val minReqRamStr = getFormattedSize(App.MINIMUM_REQUIRED_RAM)
         message += "JVM max memory: $maxMemStr ($minReqRamStr required)\n"

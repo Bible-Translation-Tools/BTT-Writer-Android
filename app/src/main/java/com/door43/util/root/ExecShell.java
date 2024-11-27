@@ -2,6 +2,8 @@ package com.door43.util.root;
 
 import android.util.Log;
 
+import com.door43.util.RuntimeWrapper;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
@@ -32,7 +34,7 @@ public class ExecShell {
         ArrayList<String> fullResponse = new ArrayList<String>();
         Process localProcess = null;
         try {
-            localProcess = Runtime.getRuntime().exec(shellCmd.command);
+            localProcess = RuntimeWrapper.INSTANCE.exec(shellCmd.command);
         } catch (Exception e) {
             return null;
         }

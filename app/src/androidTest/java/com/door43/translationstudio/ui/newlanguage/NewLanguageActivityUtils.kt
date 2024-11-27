@@ -19,6 +19,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.questionnaire.QuestionnaireActivity
 import com.door43.questionnaire.QuestionnairePager
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.UiTestUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import org.hamcrest.CoreMatchers
@@ -80,19 +81,6 @@ open class NewLanguageActivityUtils {
      */
     fun pageCount(): Int {
         return pager?.size() ?: 0
-    }
-
-    /**
-     * force page orientation change
-     */
-    private fun rotateScreen(scenario: ActivityScenario<NewTempLanguageActivity>) {
-        scenario.onActivity {
-            if (it.requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
-                it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            } else {
-                it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            }
-        }
     }
 
     /**
@@ -232,7 +220,7 @@ open class NewLanguageActivityUtils {
 
         for (i in 0 until pageCount - 1) {
             fillPage(i, false, requiredOnly, valueForBooleans, hideKeyboard)
-            rotateScreen(scenario)
+            UiTestUtils.rotateScreen(scenario)
             verifyPageLayout(pageCount, i)
 
             Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
