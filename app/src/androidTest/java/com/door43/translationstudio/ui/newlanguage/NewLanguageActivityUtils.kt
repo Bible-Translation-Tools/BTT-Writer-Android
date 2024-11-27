@@ -40,7 +40,7 @@ import javax.inject.Inject
 /**
  * shared methods for QuestionnaireActivity UI testing
  */
-open class NewLanguageActivityUiUtils {
+open class NewLanguageActivityUtils {
     private var resultCode: Field? = null
     private var resultData: Field? = null
     private var pager: QuestionnairePager? = null
@@ -562,7 +562,7 @@ open class NewLanguageActivityUiUtils {
     }
 
     companion object {
-        val TAG: String = NewLanguageActivityUiUtils::class.java.simpleName
+        val TAG: String = NewLanguageActivityUtils::class.java.simpleName
 
         /**
          * get interaction for toolbar with title

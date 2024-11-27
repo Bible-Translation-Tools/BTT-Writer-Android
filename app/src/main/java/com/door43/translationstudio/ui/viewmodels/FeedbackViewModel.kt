@@ -25,8 +25,8 @@ class FeedbackViewModel @Inject constructor(
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> = _loading
 
-    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result>()
-    val latestRelease: LiveData<CheckForLatestRelease.Result> = _latestRelease
+    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result?>()
+    val latestRelease: MutableLiveData<CheckForLatestRelease.Result?> = _latestRelease
 
     private val _success = MutableLiveData<Boolean?>()
     val success: LiveData<Boolean?> = _success

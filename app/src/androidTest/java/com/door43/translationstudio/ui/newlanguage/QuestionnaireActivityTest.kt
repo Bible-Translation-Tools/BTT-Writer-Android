@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @LargeTest
 @HiltAndroidTest
-class QuestionnaireActivityUiTest : NewLanguageActivityUiUtils() {
+class QuestionnaireActivityTest : NewLanguageActivityUtils() {
 
     @Test
     @Throws(Exception::class)

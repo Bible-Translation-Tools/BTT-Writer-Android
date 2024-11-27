@@ -41,7 +41,7 @@ import javax.inject.Inject
 @RunWith(AndroidJUnit4::class)
 @LargeTest
 @HiltAndroidTest
-class ImportUsfmActivityUiTest {
+class ImportUsfmActivityTest {
     @Inject
     @ApplicationContext
     lateinit var appContext: Context

@@ -74,7 +74,7 @@ class UploadFeedbackTest {
             directoryProvider.logFile.length() > 0
         )
 
-        val uploadFeedback = UploadFeedback(context, prefRepoMock)
+        val uploadFeedback = UploadFeedback(context, prefRepoMock, directoryProvider)
         val notes = "This is a test note"
         val uploaded = uploadFeedback.execute(notes)
 
@@ -121,7 +121,7 @@ class UploadFeedbackTest {
             directoryProvider.logFile.length() > 0
         )
 
-        val uploadFeedback = UploadFeedback(context, prefRepoMock)
+        val uploadFeedback = UploadFeedback(context, prefRepoMock, directoryProvider)
         val notes = "This is a test note"
         val uploaded = uploadFeedback.execute(notes)
 
