@@ -105,8 +105,8 @@ class UpdateSource @Inject constructor(
                             t.project.slug,
                             t.resource.slug
                         )
-                        val previousUpdate = previouslyUpdated[id]
-                        if (lastModifiedOnServer > previousUpdate!!) {
+                        val previousUpdate = previouslyUpdated[id]!!
+                        if (lastModifiedOnServer > previousUpdate) {
                             updatedCount++ // update times have changed
                         }
                     } catch (e: java.lang.Exception) {

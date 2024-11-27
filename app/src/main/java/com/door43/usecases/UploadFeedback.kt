@@ -1,6 +1,7 @@
 package com.door43.usecases
 
 import android.content.Context
+import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -12,14 +13,15 @@ import javax.inject.Inject
 
 class UploadFeedback @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val prefRepository: IPreferenceRepository
+    private val prefRepository: IPreferenceRepository,
+    private val directoryProvider: IDirectoryProvider
 ) {
     /**
      * Returns true if the upload was successful
      */
     fun execute(notes: String): Boolean {
         var responseCode = -1
-        val logFile = Logger.getLogFile()
+        val logFile = directoryProvider.logFile
 
         // TRICKY: make sure the github_oauth2 token has been set
         val githubTokenIdentifier = context.resources.getIdentifier(
