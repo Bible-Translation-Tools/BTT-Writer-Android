@@ -2,18 +2,24 @@ package com.door43.translationstudio.ui
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import android.view.View
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
 import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
+import org.hamcrest.Matcher
 import org.hamcrest.Matchers.containsStringIgnoringCase
+
 
 object UiTestUtils {
 
@@ -85,6 +91,23 @@ object UiTestUtils {
         val interaction = onView(withText(containsStringIgnoringCase(text)))
             .inRoot(isDialog())
         checkState(interaction, displayed)
+    }
+
+    /**
+     * Sets a delay to lock ui
+     */
+    fun waitFor(delay: Long): ViewAction {
+        return object : ViewAction {
+            override fun getConstraints(): Matcher<View> {
+                return ViewMatchers.isRoot()
+            }
+            override fun getDescription(): String {
+                return "wait for " + delay + "milliseconds"
+            }
+            override fun perform(uiController: UiController, view: View?) {
+                uiController.loopMainThreadForAtLeast(delay)
+            }
+        }
     }
 
     private fun checkState(interaction: ViewInteraction, displayed: Boolean) {

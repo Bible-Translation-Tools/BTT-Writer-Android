@@ -5,7 +5,7 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:paddingBottom="@dimen/activity_vertical_margin"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:textColor="@color/dark_primary_text"
             android:textSize="@dimen/headline"
-            android:text="Server Account"/>
+            android:text="@string/server_account"/>
 
 
         <androidx.cardview.widget.CardView
@@ -35,7 +35,7 @@
                 android:background="@color/card_background_color">
                 <EditText
                     android:id="@+id/username"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:singleLine="true"
@@ -65,7 +65,7 @@
                 android:background="@color/card_background_color">
                 <EditText
                     android:id="@+id/password"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:singleLine="true"
@@ -84,7 +84,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_vertical|right">
+            android:gravity="center_vertical|end">
 
             <Button
                 android:id="@+id/cancel_button"
@@ -93,7 +93,7 @@
                 android:layout_gravity="center_horizontal"
                 style="@style/Widget.Button.White"
                 android:text="@string/title_cancel"
-                android:layout_marginRight="@dimen/dialog_controls_margin" />
+                android:layout_marginEnd="@dimen/dialog_controls_margin" />
 
             <Button
                 android:id="@+id/ok_button"
@@ -102,8 +102,8 @@
                 android:layout_gravity="center_horizontal"
                 style="@style/Widget.Button.Blue"
                 android:text="@string/label_continue"
-                android:layout_marginRight="@dimen/card_margin"
-                android:layout_marginLeft="@dimen/dialog_controls_margin" />
+                android:layout_marginEnd="@dimen/card_margin"
+                android:layout_marginStart="@dimen/dialog_controls_margin" />
         </LinearLayout>
     </LinearLayout>
 

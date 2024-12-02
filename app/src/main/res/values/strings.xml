@@ -366,6 +366,8 @@
     <string name="email">Email Address</string>
     <string name="phone">Phone Number</string>
     <string name="profile">Profile</string>
+    <string name="create_account_title">Please create or login to your account.</string>
+    <string name="names_will_be_public">Names will be publicly available</string>
     <string name="default_translator">Default translator name</string>
     <string name="project_title_complex">Project: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <!-- A warning shown, when publishing, indicating that names/pseudonyms (but not email or phone number) are published in the catealog -->
@@ -726,6 +728,7 @@ Do you want to enable SD card access?  If so then:
     <string name="registration_failed">Your account could not be created.</string>
     <string name="title_door43_account_required">Server Account Required</string>
     <string name="door43_account_required">You must connect to a server account first.</string>
+    <string name="server_account">Server Account</string>
     <string name="login_doo43">Login with Server Account</string>
     <string name="register_door43">Create new Server Account</string>
     <string name="create_offline_profile">Create offline Account</string>

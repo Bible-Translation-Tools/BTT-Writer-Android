@@ -185,6 +185,7 @@ dependencies {
 
     testImplementation 'junit:junit:4.13.2'
     androidTestUtil 'androidx.test:orchestrator:1.5.1'
+    androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
 
     // Mockk
     testImplementation "io.mockk:mockk:1.13.13"
