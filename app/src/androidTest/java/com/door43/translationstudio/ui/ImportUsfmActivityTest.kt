@@ -85,7 +85,7 @@ class ImportUsfmActivityTest {
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
         scenario.moveToState(Lifecycle.State.RESUMED)
 
-        UiTestUtils.checkTextState(R.string.title_activity_import_usfm_language, true)
+        UiTestUtils.checkText(R.string.title_activity_import_usfm_language, true)
         onView(withText(language)).perform(click())
 
         //when
@@ -112,7 +112,7 @@ class ImportUsfmActivityTest {
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
         scenario.moveToState(Lifecycle.State.RESUMED)
 
-        UiTestUtils.checkTextState(R.string.title_activity_import_usfm_language, true)
+        UiTestUtils.checkText(R.string.title_activity_import_usfm_language, true)
         onView(withText(language)).perform(click())
 
         thenShouldShowMissingBookNameDialog()
@@ -146,7 +146,7 @@ class ImportUsfmActivityTest {
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
         scenario.moveToState(Lifecycle.State.RESUMED)
 
-        UiTestUtils.checkTextState(R.string.title_activity_import_usfm_language, true)
+        UiTestUtils.checkText(R.string.title_activity_import_usfm_language, true)
         onView(withText(language)).perform(click())
         matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
 
@@ -178,7 +178,7 @@ class ImportUsfmActivityTest {
         val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
         scenario.moveToState(Lifecycle.State.RESUMED)
 
-        UiTestUtils.checkTextState(R.string.title_activity_import_usfm_language, true)
+        UiTestUtils.checkText(R.string.title_activity_import_usfm_language, true)
 
         //when
         onView(withText(language)).perform(click())
@@ -217,7 +217,7 @@ class ImportUsfmActivityTest {
      * @param error
      */
     private fun matchSummaryDialog(title: Int, book: String?, error: Boolean) {
-        UiTestUtils.checkDialogTextState(title, true)
+        UiTestUtils.checkDialogText(title, true)
         if (book != null) {
             shouldHaveFoundBook(book)
         }
@@ -247,8 +247,8 @@ class ImportUsfmActivityTest {
     private fun matchImportResultsDialog(success: Boolean = true) {
         val matchTitle = if (success) R.string.title_import_usfm_results else R.string.title_import_usfm_error
         val matchText = if (success) R.string.import_usfm_success else R.string.import_usfm_failed
-        UiTestUtils.checkDialogTextState(matchTitle, true)
-        UiTestUtils.checkDialogTextState(matchText, true)
+        UiTestUtils.checkDialogText(matchTitle, true)
+        UiTestUtils.checkDialogText(matchText, true)
     }
 
     /**
@@ -256,7 +256,7 @@ class ImportUsfmActivityTest {
      */
     private fun checkForImportErrors(displayed: Boolean) {
         val noErrors = appContext.getString(R.string.no_error)
-        UiTestUtils.checkDialogContainsTextState(noErrors, !displayed)
+        UiTestUtils.checkDialogContainsText(noErrors, !displayed)
     }
 
     /**
@@ -266,13 +266,13 @@ class ImportUsfmActivityTest {
     private fun shouldHaveFoundBook(book: String) {
         val format = appContext.resources.getString(R.string.found_book)
         val matchText = String.format(format, book)
-        UiTestUtils.checkDialogContainsTextState(matchText, true)
+        UiTestUtils.checkDialogContainsText(matchText, true)
     }
 
     private fun thenShouldShowMissingBookNameDialog() {
         val format = appContext.getString(R.string.missing_book_name_prompt)
         val message = String.format(format, testFile?.name)
-        UiTestUtils.checkDialogContainsTextState(message, true)
+        UiTestUtils.checkDialogContainsText(message, true)
     }
 
     /**

@@ -88,7 +88,7 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(false)
 
-        UiTestUtils.checkTextState(R.string.server_account, true)
+        UiTestUtils.checkText(R.string.server_account, true)
         onView(withId(R.id.username)).check(matches(isDisplayed()))
         onView(withId(R.id.password)).check(matches(isDisplayed()))
 
@@ -99,9 +99,9 @@ class ProfileActivityTest {
         // Implicitly set a delay to wait for progress dialog to close
         onView(isRoot()).perform(UiTestUtils.waitFor(1000))
 
-        UiTestUtils.checkDialogTextState(R.string.double_check_credentials, true)
+        UiTestUtils.checkDialogText(R.string.double_check_credentials, true)
         onView(withText(R.string.label_ok)).perform(click())
-        UiTestUtils.checkDialogTextState(R.string.double_check_credentials, false)
+        UiTestUtils.checkDialogText(R.string.double_check_credentials, false)
 
         scenario.close()
     }
@@ -118,7 +118,7 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(false)
 
-        UiTestUtils.checkTextState(R.string.server_account, true)
+        UiTestUtils.checkText(R.string.server_account, true)
         onView(withId(R.id.username)).check(matches(isDisplayed()))
         onView(withId(R.id.password)).check(matches(isDisplayed()))
 
@@ -129,9 +129,9 @@ class ProfileActivityTest {
         // Implicitly set a delay to wait for progress dialog to close
         onView(isRoot()).perform(UiTestUtils.waitFor(1000))
 
-        UiTestUtils.checkDialogTextState(R.string.internet_not_available, true)
+        UiTestUtils.checkDialogText(R.string.internet_not_available, true)
         onView(withText(R.string.label_ok)).perform(click())
-        UiTestUtils.checkDialogTextState(R.string.internet_not_available, false)
+        UiTestUtils.checkDialogText(R.string.internet_not_available, false)
 
         scenario.close()
     }
@@ -146,16 +146,16 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(false)
 
-        UiTestUtils.checkTextState(R.string.names_will_be_public, true)
+        UiTestUtils.checkText(R.string.names_will_be_public, true)
         onView(withId(R.id.full_name)).check(matches(isDisplayed()))
 
         onView(withId(R.id.ok_button)).perform(click())
 
-        UiTestUtils.checkTextState(R.string.complete_required_fields, true)
+        UiTestUtils.checkText(R.string.complete_required_fields, true)
 
         onView(withId(R.id.full_name)).perform(typeText("TestUser"))
         onView(withId(R.id.ok_button)).perform(click())
-        UiTestUtils.checkDialogTextState(R.string.publishing_privacy_notice, true)
+        UiTestUtils.checkDialogText(R.string.publishing_privacy_notice, true)
         onView(withText(R.string.label_continue)).perform(click())
         onView(withId(R.id.accept_terms_btn)).perform(click())
 
@@ -178,9 +178,9 @@ class ProfileActivityTest {
     }
 
     private fun testMainViewsInPlace(displayed: Boolean) {
-        UiTestUtils.checkTextState(R.string.create_account_title, displayed)
-        UiTestUtils.checkTextState(R.string.login_doo43, displayed)
-        UiTestUtils.checkTextState(R.string.register_door43, displayed)
-        UiTestUtils.checkTextState(R.string.create_offline_profile, displayed)
+        UiTestUtils.checkText(R.string.create_account_title, displayed)
+        UiTestUtils.checkText(R.string.login_doo43, displayed)
+        UiTestUtils.checkText(R.string.register_door43, displayed)
+        UiTestUtils.checkText(R.string.create_offline_profile, displayed)
     }
 }

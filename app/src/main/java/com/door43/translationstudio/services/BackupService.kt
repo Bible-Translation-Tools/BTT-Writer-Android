@@ -72,7 +72,7 @@ class BackupService : Service(), Foreground.Listener {
         super.onDestroy()
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startid: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startid: Int): Int {
         val backupIntervalMinutes = prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_BACKUP_INTERVAL,
             resources.getString(R.string.pref_default_backup_interval)

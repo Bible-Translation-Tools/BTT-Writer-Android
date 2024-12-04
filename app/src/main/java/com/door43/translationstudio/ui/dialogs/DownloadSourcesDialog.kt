@@ -73,7 +73,7 @@ class DownloadSourcesDialog : DialogFragment() {
         viewModel.getAvailableSources(resources.getString(R.string.loading_sources))
 
         progressDialog = ProgressHelper.newInstance(
-            parentFragmentManager,
+            childFragmentManager,
             R.string.loading_sources,
             false
         )

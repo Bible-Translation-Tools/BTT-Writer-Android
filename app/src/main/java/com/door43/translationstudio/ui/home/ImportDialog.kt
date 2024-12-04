@@ -125,7 +125,7 @@ class ImportDialog : DialogFragment() {
         _binding = DialogImportBinding.inflate(inflater, container, false)
 
         progressDialog = ProgressHelper.newInstance(
-            parentFragmentManager,
+            childFragmentManager,
             R.string.label_import,
             false
         )

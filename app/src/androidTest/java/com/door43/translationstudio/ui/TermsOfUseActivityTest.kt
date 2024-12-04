@@ -107,7 +107,7 @@ class TermsOfUseActivityTest {
 
         onView(withText(R.string.view_license_agreement)).perform(click())
 
-        UiTestUtils.checkTextState(R.string.label_close, true)
+        UiTestUtils.checkText(R.string.label_close, true)
         onView(withId(R.id.license_text)).check(matches(isDisplayed()))
 
         scenario.close()
@@ -121,7 +121,7 @@ class TermsOfUseActivityTest {
 
         onView(withText(R.string.view_translation_guidelines)).perform(click())
 
-        UiTestUtils.checkTextState(R.string.label_close, true)
+        UiTestUtils.checkText(R.string.label_close, true)
         onView(withId(R.id.license_text)).check(matches(isDisplayed()))
 
         scenario.close()
@@ -135,17 +135,17 @@ class TermsOfUseActivityTest {
 
         onView(withText(R.string.view_statement_of_faith)).perform(click())
 
-        UiTestUtils.checkTextState(R.string.label_close, true)
+        UiTestUtils.checkText(R.string.label_close, true)
         onView(withId(R.id.license_text)).check(matches(isDisplayed()))
 
         scenario.close()
     }
 
     private fun testMainViewsInPlace(displayed: Boolean) {
-        UiTestUtils.checkTextState(R.string.terms_title, displayed)
-        UiTestUtils.checkTextState(R.string.terms, displayed)
-        UiTestUtils.checkTextState(R.string.view_license_agreement, displayed)
-        UiTestUtils.checkTextState(R.string.view_translation_guidelines, displayed)
-        UiTestUtils.checkTextState(R.string.view_statement_of_faith, displayed)
+        UiTestUtils.checkText(R.string.terms_title, displayed)
+        UiTestUtils.checkText(R.string.terms, displayed)
+        UiTestUtils.checkText(R.string.view_license_agreement, displayed)
+        UiTestUtils.checkText(R.string.view_translation_guidelines, displayed)
+        UiTestUtils.checkText(R.string.view_statement_of_faith, displayed)
     }
 }

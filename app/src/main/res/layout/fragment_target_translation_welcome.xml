@@ -29,16 +29,13 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical">
 
-
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:text="@string/translations_welcome"
                         android:layout_weight="1"
                         android:textColor="@color/dark_primary_text"
                         android:textAppearance="@style/TextAppearance.AppCompat.Title" />
-
-
                 </LinearLayout>
 
 
@@ -47,7 +44,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start a new translation"
+                android:text="@string/start_new_translation"
                 android:elevation="2dp"
                 android:translationZ="6dp"
                 style="@style/Widget.Button.Blue"

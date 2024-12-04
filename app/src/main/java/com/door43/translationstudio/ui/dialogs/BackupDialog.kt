@@ -59,9 +59,9 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class BackupDialog : DialogFragment() {
     private var settingDeviceAlias = false
-    private var mDialogShown = DialogShown.NONE
-    private var mAccessFile: String? = null
-    private var mDialogMessage: String? = null
+    private var dialogShown = DialogShown.NONE
+    private var dialogMessage: String? = null
+    private var accessFile: String? = null
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
@@ -110,12 +110,6 @@ class BackupDialog : DialogFragment() {
             }
         }
 
-        progressDialog = ProgressHelper.newInstance(
-            parentFragmentManager,
-            R.string.backup_to_sd,
-            false
-        )
-
         return dialog
     }
 
@@ -133,6 +127,12 @@ class BackupDialog : DialogFragment() {
         dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
         _binding = DialogBackupBinding.inflate(inflater, container, false)
 
+        progressDialog = ProgressHelper.newInstance(
+            childFragmentManager,
+            R.string.backup_to_sd,
+            false
+        )
+
         // get target translation to backup
         val args = arguments
         if (args != null && args.containsKey(ARG_TARGET_TRANSLATION_ID)) {
@@ -147,14 +147,14 @@ class BackupDialog : DialogFragment() {
         if (savedInstanceState != null) {
             // check if returning from device alias dialog
             settingDeviceAlias = savedInstanceState.getBoolean(STATE_SETTING_DEVICE_ALIAS, false)
-            mDialogShown = DialogShown.fromInt(
+            dialogShown = DialogShown.fromInt(
                 savedInstanceState.getInt(
                     STATE_DIALOG_SHOWN,
                     DialogShown.NONE.value
                 )
             )
-            mAccessFile = savedInstanceState.getString(STATE_ACCESS_FILE, null)
-            mDialogMessage = savedInstanceState.getString(STATE_DIALOG_MESSAGE, null)
+            accessFile = savedInstanceState.getString(STATE_ACCESS_FILE, null)
+            dialogMessage = savedInstanceState.getString(STATE_DIALOG_MESSAGE, null)
             restoreDialogs()
         }
 
@@ -220,15 +220,9 @@ class BackupDialog : DialogFragment() {
         val hand = Handler(Looper.getMainLooper())
         // wait for backup dialog to be drawn before showing popups
         hand.post {
-            when (mDialogShown) {
-                DialogShown.PUSH_REJECTED -> showPushRejection(targetTranslation)
-                DialogShown.AUTH_FAILURE -> showAuthFailure()
+            when (dialogShown) {
                 DialogShown.BACKUP_FAILED -> showUploadFailedDialog(targetTranslation)
                 DialogShown.NO_INTERNET -> showNoInternetDialog()
-                DialogShown.SHOW_BACKUP_RESULTS -> showBackupResults(mDialogMessage)
-                DialogShown.SHOW_PUSH_SUCCESS -> showPushSuccess(mDialogMessage)
-                DialogShown.MERGE_CONFLICT -> showMergeConflict(targetTranslation)
-                DialogShown.EXPORT_TO_USFM_RESULTS -> showUsfmExportResults(mDialogMessage)
                 DialogShown.NONE -> {}
             }
         }
@@ -275,7 +269,6 @@ class BackupDialog : DialogFragment() {
                     }
                     else -> {}
                 }
-                viewModel.clearResults()
             }
         }
         viewModel.pullTranslationResult.observe(this) {
@@ -292,6 +285,7 @@ class BackupDialog : DialogFragment() {
                             "Changes on the server were synced with " + targetTranslation.id
                         )
                         lifecycleScope.launch(Dispatchers.Main) {
+                            clearResults()
                             viewModel.pushTargetTranslation()
                         }
                     }
@@ -328,18 +322,16 @@ class BackupDialog : DialogFragment() {
                                         "Changes on the server were synced with " + targetTranslation.id
                                     )
                                     lifecycleScope.launch(Dispatchers.Main) {
+                                        clearResults()
                                         viewModel.pushTargetTranslation()
                                     }
                                 }
-
                                 override fun onMergeConflict(targetTranslationId: String) {
                                     showMergeConflict(targetTranslation)
                                 }
                             })
                     }
-                    else -> {
-                        notifyBackupFailed(targetTranslation)
-                    }
+                    else -> notifyBackupFailed(targetTranslation)
                 }
             }
         }
@@ -459,19 +451,11 @@ class BackupDialog : DialogFragment() {
      * @param message
      */
     private fun showUsfmExportResults(message: String?) {
-        mDialogShown = DialogShown.EXPORT_TO_USFM_RESULTS
-        mDialogMessage = message
-
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.title_export_usfm)
             .setMessage(message)
-            .setPositiveButton(R.string.dismiss) { _, _ ->
-                mDialogShown = DialogShown.NONE
-            }
-            .setOnDismissListener {
-                mDialogShown = DialogShown.NONE
-                viewModel.clearResults()
-            }
+            .setPositiveButton(R.string.dismiss, null)
+            .setOnDismissListener { clearResults() }
             .show()
     }
 
@@ -513,15 +497,11 @@ class BackupDialog : DialogFragment() {
     }
 
     private fun showBackupResults(message: String?) {
-        mDialogShown = DialogShown.SHOW_BACKUP_RESULTS
-        mDialogMessage = message
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.backup_to_sd)
             .setMessage(message)
-            .setNeutralButton(R.string.dismiss) { _, _ ->
-                mDialogShown = DialogShown.NONE
-            }
-            .setOnDismissListener { viewModel.clearResults() }
+            .setNeutralButton(R.string.dismiss, null)
+            .setOnDismissListener { clearResults() }
             .show()
     }
 
@@ -573,8 +553,6 @@ class BackupDialog : DialogFragment() {
     }
 
     private fun showPushSuccess(message: String?) {
-        mDialogShown = DialogShown.SHOW_PUSH_SUCCESS
-        mDialogMessage = message
         val apiURL = prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_READER_SERVER,
             resources.getString(R.string.pref_default_reader_server)
@@ -613,14 +591,12 @@ class BackupDialog : DialogFragment() {
                     }
                     .setNeutralButton(R.string.dismiss, null)
                     .setOnDismissListener {
-                        viewModel.clearResults()
-                        mDialogShown = DialogShown.NONE
+                        clearResults()
                     }
                     .show()
             }
             .setOnDismissListener {
-                viewModel.clearResults()
-                mDialogShown = DialogShown.NONE
+                clearResults()
             }
             .show()
     }
@@ -630,8 +606,6 @@ class BackupDialog : DialogFragment() {
      * @param targetTranslation
      */
     private fun showMergeConflict(targetTranslation: TargetTranslation?) {
-        mDialogShown = DialogShown.MERGE_CONFLICT
-
         val projectID = targetTranslation!!.projectId
         val message = String.format(
             resources.getString(R.string.merge_request),
@@ -642,15 +616,14 @@ class BackupDialog : DialogFragment() {
             .setTitle(R.string.change_detected)
             .setMessage(message)
             .setPositiveButton(R.string.yes) { _, _ ->
-                mDialogShown = DialogShown.NONE
                 doManualMerge()
             }
             .setNegativeButton(R.string.no) { _, _ ->
-                mDialogShown = DialogShown.NONE
                 resetToMasterBackup(targetTranslation)
+                dismiss()
                 this@BackupDialog.dismiss()
             }
-            .setOnDismissListener { viewModel.clearResults() }
+            .setOnDismissListener { clearResults() }
             .show()
     }
 
@@ -698,13 +671,12 @@ class BackupDialog : DialogFragment() {
      * show internet not available dialog
      */
     private fun showNoInternetDialog() {
-        mDialogShown = DialogShown.NO_INTERNET
+        dialogShown = DialogShown.NO_INTERNET
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_failed)
             .setMessage(R.string.internet_not_available)
-            .setPositiveButton(R.string.label_ok) { _, _ ->
-                mDialogShown = DialogShown.NONE
-            }
+            .setPositiveButton(R.string.label_ok, null)
+            .setOnDismissListener { clearResults() }
             .show()
     }
 
@@ -713,18 +685,15 @@ class BackupDialog : DialogFragment() {
      * @param targetTranslation
      */
     private fun showUploadFailedDialog(targetTranslation: TargetTranslation) {
-        mDialogShown = DialogShown.BACKUP_FAILED
+        dialogShown = DialogShown.BACKUP_FAILED
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.backup)
             .setMessage(R.string.upload_failed)
-            .setPositiveButton(R.string.dismiss) { _, _ ->
-                mDialogShown = DialogShown.NONE
-            }
+            .setPositiveButton(R.string.dismiss, null)
             .setNeutralButton(R.string.menu_bug) { _, _ ->
-                mDialogShown = DialogShown.NONE
                 showFeedbackDialog(targetTranslation)
             }
-            .setOnDismissListener { viewModel.clearResults() }
+            .setOnDismissListener { clearResults() }
             .show()
     }
 
@@ -743,21 +712,17 @@ class BackupDialog : DialogFragment() {
     }
 
     private fun showPushRejection(targetTranslation: TargetTranslation) {
-        mDialogShown = DialogShown.PUSH_REJECTED
-
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_failed)
             .setMessage(R.string.push_rejected)
             .setPositiveButton(R.string.yes) { _, _ ->
-                mDialogShown = DialogShown.NONE
                 doManualMerge()
             }
             .setNegativeButton(R.string.no) { _, _ ->
-                mDialogShown = DialogShown.NONE
                 resetToMasterBackup(targetTranslation)
                 this@BackupDialog.dismiss()
             }
-            .setOnDismissListener { viewModel.clearResults() }
+            .setOnDismissListener { clearResults() }
             .show()
     }
 
@@ -776,30 +741,31 @@ class BackupDialog : DialogFragment() {
     }
 
     private fun showAuthFailure() {
-        mDialogShown = DialogShown.AUTH_FAILURE
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_failed)
             .setMessage(R.string.auth_failure_retry)
             .setPositiveButton(R.string.yes) { _, _ ->
-                mDialogShown = DialogShown.NONE
                 viewModel.registerSSHKeys(true)
             }
             .setNegativeButton(R.string.no) { _, _ ->
-                mDialogShown = DialogShown.NONE
                 notifyBackupFailed(targetTranslation)
-            }.show()
+            }
+            .setOnDismissListener {
+                clearResults()
+            }
+            .show()
     }
 
     override fun onSaveInstanceState(out: Bundle) {
         // remember if the device alias dialog is open
         out.putBoolean(STATE_SETTING_DEVICE_ALIAS, settingDeviceAlias)
-        out.putInt(STATE_DO_MERGE, mDialogShown.value)
-        if (mAccessFile != null) {
-            out.putString(STATE_ACCESS_FILE, mAccessFile)
+        out.putInt(STATE_DO_MERGE, dialogShown.value)
+        if (accessFile != null) {
+            out.putString(STATE_ACCESS_FILE, accessFile)
         }
-        out.putInt(STATE_DIALOG_SHOWN, mDialogShown.value)
-        if (mDialogMessage != null) {
-            out.putString(STATE_DIALOG_MESSAGE, mDialogMessage)
+        out.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
+        if (dialogMessage != null) {
+            out.putString(STATE_DIALOG_MESSAGE, dialogMessage)
         }
 
         super.onSaveInstanceState(out)
@@ -810,19 +776,19 @@ class BackupDialog : DialogFragment() {
         _binding = null
     }
 
+    private fun clearResults() {
+        dialogShown = DialogShown.NONE
+        dialogMessage = null
+        viewModel.clearResults()
+    }
+
     /**
      * for keeping track which dialog is being shown for orientation changes (not for DialogFragments)
      */
     enum class DialogShown(val value: Int) {
         NONE(0),
-        PUSH_REJECTED(1),
-        AUTH_FAILURE(2),
-        BACKUP_FAILED(3),
-        SHOW_BACKUP_RESULTS(5),
-        SHOW_PUSH_SUCCESS(6),
-        MERGE_CONFLICT(7),
-        EXPORT_TO_USFM_RESULTS(9),
-        NO_INTERNET(10);
+        BACKUP_FAILED(1),
+        NO_INTERNET(2);
 
         companion object {
             fun fromInt(i: Int): DialogShown {

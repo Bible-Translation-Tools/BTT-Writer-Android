@@ -167,7 +167,7 @@ class TargetTranslationListFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         progressDialog = ProgressHelper.newInstance(
-            parentFragmentManager,
+            childFragmentManager,
             R.string.loading,
             false
         )
@@ -205,7 +205,6 @@ class TargetTranslationListFragment : BaseFragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        progressDialog?.dismiss()
         progressDialog = null
     }
 

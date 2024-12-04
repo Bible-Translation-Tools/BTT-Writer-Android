@@ -53,7 +53,7 @@ object UiTestUtils {
      * @param resource
      * @param displayed
      */
-    fun checkTextState(resource: Int, displayed: Boolean) {
+    fun checkText(resource: Int, displayed: Boolean) {
         val interaction = onView(withText(resource))
         checkState(interaction, displayed)
     }
@@ -63,17 +63,17 @@ object UiTestUtils {
      * @param text
      * @param displayed
      */
-    fun checkTextState(text: String, displayed: Boolean) {
+    fun checkText(text: String, displayed: Boolean) {
         val interaction = onView(withText(text))
         checkState(interaction, displayed)
     }
 
-    fun checkContainsTextState(text: String, displayed: Boolean) {
+    fun checkContainsText(text: String, displayed: Boolean) {
         val interaction = onView(withText(containsStringIgnoringCase(text)))
         checkState(interaction, displayed)
     }
 
-    fun checkDialogTextState(resource: Int, displayed: Boolean) {
+    fun checkDialogText(resource: Int, displayed: Boolean) {
         val interaction = onView(withText(resource))
         if (displayed) {
             interaction.inRoot(isDialog())
@@ -81,13 +81,13 @@ object UiTestUtils {
         checkState(interaction, displayed)
     }
 
-    fun checkDialogTextState(text: String, displayed: Boolean) {
+    fun checkDialogText(text: String, displayed: Boolean) {
         val interaction = onView(withText(text))
             .inRoot(isDialog())
         checkState(interaction, displayed)
     }
 
-    fun checkDialogContainsTextState(text: String, displayed: Boolean) {
+    fun checkDialogContainsText(text: String, displayed: Boolean) {
         val interaction = onView(withText(containsStringIgnoringCase(text)))
             .inRoot(isDialog())
         checkState(interaction, displayed)

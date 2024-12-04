@@ -130,7 +130,7 @@ class HomeActivity : BaseActivity(),
                         true
                     }
                     R.id.action_log_out -> {
-                        doLogout()
+                        viewModel.logout()
                         true
                     }
                     R.id.action_settings -> {
@@ -206,7 +206,8 @@ class HomeActivity : BaseActivity(),
                     fragment = WelcomeFragment()
                     fragment?.setArguments(intent.extras)
                 }
-                supportFragmentManager.beginTransaction().add(R.id.fragment_container, fragment!!)
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment!!)
                     .commit()
             }
         }

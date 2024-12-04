@@ -60,18 +60,18 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="right|end"
+        android:gravity="end"
         android:padding="@dimen/dialog_controls_margin">
 
         <Button
             android:id="@+id/cancel_button"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
+            android:layout_marginStart="@dimen/dialog_controls_margin"
             android:text="@string/menu_cancel"
             style="@style/Widget.Alert.Button"/>
 
         <Button
             android:id="@+id/print_button"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
+            android:layout_marginStart="@dimen/dialog_controls_margin"
             android:text="@string/print"
             style="@style/Widget.Alert.Button"/>
     </LinearLayout>

@@ -71,8 +71,8 @@ class ExportViewModel @Inject constructor(
     private val _pushTranslationResult = MutableLiveData<PushTargetTranslation.Result?>(null)
     val pushTranslationResult: LiveData<PushTargetTranslation.Result?> = _pushTranslationResult
 
-    private val _registeredSSHKeys = MutableLiveData<Boolean>()
-    val registeredSSHKeys: LiveData<Boolean> = _registeredSSHKeys
+    private val _registeredSSHKeys = MutableLiveData<Boolean?>()
+    val registeredSSHKeys: LiveData<Boolean?> = _registeredSSHKeys
 
     private val _repoCreated = MutableLiveData<Boolean>()
     val repoCreated: LiveData<Boolean> = _repoCreated
@@ -156,9 +156,7 @@ class ExportViewModel @Inject constructor(
             _progress.value = ProgressHelper.Progress(application.getString(R.string.downloading_images))
             _downloadResult.value = withContext(Dispatchers.IO) {
                 val imagesDir = downloadImages.download { progress, max, message ->
-                    _progress.postValue(
-                        ProgressHelper.Progress(message, progress, max)
-                    )
+                    _progress.postValue(ProgressHelper.Progress(message, progress, max))
                 }
                 DownloadImages.Result(imagesDir?.exists() == true, imagesDir)
             }
@@ -172,7 +170,7 @@ class ExportViewModel @Inject constructor(
                 _progress.value = ProgressHelper.Progress(
                     application.getString(R.string.uploading)
                 )
-                val result = withContext(Dispatchers.IO) {
+                _pullTranslationResult.value = withContext(Dispatchers.IO) {
                     pullTargetTranslation.execute(
                         targetTranslation,
                         strategy,
@@ -187,7 +185,6 @@ class ExportViewModel @Inject constructor(
                         )
                     }
                 }
-                _pullTranslationResult.value = result
                 _progress.value = null
             }
         }
@@ -209,7 +206,7 @@ class ExportViewModel @Inject constructor(
                         )
                     }
                 }
-                _progress.postValue(null)
+                _progress.value = null
             }
         }
     }
@@ -219,7 +216,7 @@ class ExportViewModel @Inject constructor(
             _progress.value = ProgressHelper.Progress(
                 application.getString(R.string.registering_keys)
             )
-            val result = withContext(Dispatchers.IO) {
+            _registeredSSHKeys.value = withContext(Dispatchers.IO) {
                 registerSSHKeys.execute(force) { progress, max, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
@@ -230,7 +227,6 @@ class ExportViewModel @Inject constructor(
                     )
                 }
             }
-            _registeredSSHKeys.value = result
             _progress.value = null
         }
     }
@@ -275,9 +271,9 @@ class ExportViewModel @Inject constructor(
         viewModelScope.launch {
             translation.value?.let { translation ->
                 _progress.value = ProgressHelper.Progress(application.getString(R.string.exporting))
-                val filename = translation.id + "." + Translator.TSTUDIO_EXTENSION
-                val exportFile = File(directoryProvider.sharingDir, filename)
                 try {
+                    val filename = translation.id + "." + Translator.TSTUDIO_EXTENSION
+                    val exportFile = File(directoryProvider.sharingDir, filename)
                     export.exportProject(translation, exportFile)
                     _exportedToApp.value = exportFile
                 } catch (e: Exception) {
@@ -360,6 +356,7 @@ class ExportViewModel @Inject constructor(
         _exportResult.value = null
         _downloadResult.value = null
         _pushTranslationResult.value = null
+        _pullTranslationResult.value = null
     }
 
     companion object {

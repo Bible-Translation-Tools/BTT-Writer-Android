@@ -72,11 +72,6 @@ class PrintDialog : DialogFragment() {
                 startPdfPrinting()
             }
         }
-        progressDialog = ProgressHelper.newInstance(
-            parentFragmentManager,
-            R.string.printing,
-            false
-        )
         return super.onCreateDialog(savedInstanceState)
     }
 
@@ -93,6 +88,12 @@ class PrintDialog : DialogFragment() {
     ): View {
         dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
         _binding = DialogPrintBinding.inflate(inflater, container, false)
+
+        progressDialog = ProgressHelper.newInstance(
+            childFragmentManager,
+            R.string.printing,
+            false
+        )
 
         val args = arguments
         if (args != null && args.containsKey(BackupDialog.ARG_TARGET_TRANSLATION_ID)) {

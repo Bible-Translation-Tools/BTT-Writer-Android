@@ -104,7 +104,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         chunkSlug = args.getString(Translator.EXTRA_FRAME_ID, null);
 
         progressDialog = ProgressHelper.newInstance(
-                getParentFragmentManager(),
+                getChildFragmentManager(),
                 R.string.loading_sources,
                 false
         );
@@ -658,7 +658,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         super.onDestroyView();
         binding = null;
         if (progressDialog != null) {
-            progressDialog.dismiss();
             progressDialog = null;
         }
     }

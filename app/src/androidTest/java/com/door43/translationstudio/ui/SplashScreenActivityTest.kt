@@ -56,12 +56,12 @@ class SplashScreenActivityTest {
 
         val scenario = ActivityScenario.launch(SplashScreenActivity::class.java)
 
-        UiTestUtils.checkDialogTextState(R.string.slow_device, true)
+        UiTestUtils.checkDialogText(R.string.slow_device, true)
         onView(withText(R.string.label_continue)).perform(click())
 
-        UiTestUtils.checkDialogTextState(R.string.slow_device, false)
-        UiTestUtils.checkTextState(R.string.welcome, true)
-        UiTestUtils.checkTextState(R.string.updating_app, true)
+        UiTestUtils.checkDialogText(R.string.slow_device, false)
+        UiTestUtils.checkText(R.string.welcome, true)
+        UiTestUtils.checkText(R.string.updating_app, true)
 
         scenario.close()
     }
@@ -75,9 +75,9 @@ class SplashScreenActivityTest {
 
         val scenario = ActivityScenario.launch(SplashScreenActivity::class.java)
 
-        UiTestUtils.checkDialogTextState(R.string.slow_device, false)
-        UiTestUtils.checkTextState(R.string.welcome, true)
-        UiTestUtils.checkTextState(R.string.updating_app, true)
+        UiTestUtils.checkDialogText(R.string.slow_device, false)
+        UiTestUtils.checkText(R.string.welcome, true)
+        UiTestUtils.checkText(R.string.updating_app, true)
 
         scenario.close()
     }

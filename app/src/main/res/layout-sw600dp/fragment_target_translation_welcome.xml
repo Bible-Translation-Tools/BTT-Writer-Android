@@ -45,7 +45,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start a new translation"
+                android:text="@string/start_new_translation"
                 android:elevation="2dp"
                 android:translationZ="6dp"
                 style="@style/Widget.Button.Blue"

@@ -994,4 +994,5 @@ Do you want to enable SD card access?  If so then:
     <string name="import_project_already_exists">This project (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) already exists locally. How would you like to proceed?</string>
     <string name="searching_repositories">Searching repositories</string>
     <string name="cloning_repository">Cloning repository</string>
+    <string name="start_new_translation">Start a new translation</string>
 </resources>

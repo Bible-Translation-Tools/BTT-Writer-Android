@@ -43,7 +43,7 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentContributorsBinding.inflate(inflater, container, false)
 
         val args = requireArguments()

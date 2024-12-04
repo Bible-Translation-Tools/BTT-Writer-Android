@@ -67,7 +67,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
         }
 
         progressDialog = ProgressHelper.newInstance(
-            parentFragmentManager,
+            childFragmentManager,
             R.string.loading_sources,
             false
         )
@@ -270,7 +270,6 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        progressDialog?.dismiss()
         progressDialog = null
         viewModel.clearResults()
     }

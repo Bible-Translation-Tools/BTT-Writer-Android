@@ -30,12 +30,12 @@ object ProgressHelper {
         fun show() {
             if (fragment == null) {
                 val fragment = ProgressFragment.newInstance(title, cancelable)
-                fragment.show(fragmentManager, TAG)
+                fragment.showNow(fragmentManager, TAG)
             }
         }
 
         fun dismiss() {
-            fragment?.dismiss()
+            fragment?.dismissNow()
         }
 
         fun setMessage(message: String?) {
@@ -67,7 +67,7 @@ object ProgressHelper {
     }
 
     class ProgressFragment: DialogFragment() {
-        private var _binding: FragmentProgressDialogBinding? = null
+        private var binding: FragmentProgressDialogBinding? = null
 
         companion object {
             fun newInstance(
@@ -85,8 +85,8 @@ object ProgressHelper {
 
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val builder = AlertDialog.Builder(requireActivity())
-            _binding = FragmentProgressDialogBinding.inflate(layoutInflater)
-            builder.setView(_binding!!.root)
+            binding = FragmentProgressDialogBinding.inflate(layoutInflater)
+            builder.setView(binding!!.root)
 
             val title = arguments?.getInt("title") ?: 0
             val cancelable = arguments?.getBoolean("cancelable") ?: true
@@ -96,7 +96,7 @@ object ProgressHelper {
                 setCancelable(cancelable)
                 setCanceledOnTouchOutside(cancelable)
 
-                _binding?.let { binding ->
+                binding?.let { binding ->
                     with(binding) {
                         progressBar.isIndeterminate = true
                         progressNumber.visibility = View.GONE
@@ -107,12 +107,12 @@ object ProgressHelper {
         }
 
         fun setMessage(message: String?) {
-            _binding?.message?.text = message
+            binding?.message?.text = message
         }
 
         @SuppressLint("SetTextI18n")
         fun setProgress(progress: Int) {
-            _binding?.let { binding ->
+            binding?.let { binding ->
                 with(binding) {
                     val percent = (progress / max.toFloat() * 100).toInt()
 
@@ -134,12 +134,12 @@ object ProgressHelper {
         }
 
         fun setMax(value: Int) {
-            _binding?.progressBar?.max = value
+            binding?.progressBar?.max = value
         }
 
         override fun onDestroyView() {
             super.onDestroyView()
-            _binding = null
+            binding = null
         }
     }
 }

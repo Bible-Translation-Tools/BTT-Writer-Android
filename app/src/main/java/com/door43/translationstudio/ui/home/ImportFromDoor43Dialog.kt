@@ -80,7 +80,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         _binding = DialogImportFromDoor43Binding.inflate(inflater, container, false)
 
         progressDialog = ProgressHelper.newInstance(
-            parentFragmentManager,
+            childFragmentManager,
             R.string.label_import,
             false
         )
@@ -160,7 +160,6 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         }
 
         setupObservers()
-
         restoreDialogs()
         return binding.root
     }
@@ -258,6 +257,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
 
                     if (!importFailed && !alreadyExisted) {
                         (activity as? HomeActivity)?.loadTranslations()
+                        viewModel.clearCloneResult()
                         showImportSuccess()
                     }
                 } else if (result.status == CloneRepository.Status.AUTH_FAILURE) {
