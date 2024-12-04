@@ -105,8 +105,9 @@ jobs:
           api-level: 34
           arch: x86_64
           ram-size: 8192M
-          profile: pixel_6
-          script: ./gradlew connectedCheck --stacktrace
+          profile: pixel_6_pro
+          target: google_apis
+          script: ./gradlew connectedCheck --no-build-cache --no-daemon --stacktrace
 
       - name: Upload results
         if: ${{ always() }}
