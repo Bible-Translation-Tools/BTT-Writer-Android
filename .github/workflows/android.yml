@@ -100,12 +100,13 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Run connected tests
-        uses: ReactiveCircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           ram-size: 8192M
-          script: ./gradlew connectedCheck --no-build-cache --no-daemon --stacktrace
+          profile: Pixel 3XL
+          script: ./gradlew connectedCheck --stacktrace
 
       - name: Upload results
         if: ${{ always() }}
