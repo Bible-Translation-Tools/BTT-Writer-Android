@@ -12,7 +12,7 @@ import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import androidx.test.uiautomator.UiDevice
@@ -112,7 +112,7 @@ object UiTestUtils {
 
     private fun checkState(interaction: ViewInteraction, displayed: Boolean) {
         val displayState = if (displayed) {
-            matches(isDisplayed())
+            matches(isCompletelyDisplayed())
         } else {
             doesNotExist()
         }

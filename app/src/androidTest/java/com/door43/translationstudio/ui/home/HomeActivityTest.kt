@@ -182,7 +182,6 @@ class HomeActivityTest {
         createTargetTranslation()
 
         onView(withId(R.id.infoButton)).perform(click())
-
         onView(withId(R.id.publish_button)).perform(click())
 
         intended(hasComponent(PublishActivity::class.java.name))
