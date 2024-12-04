@@ -2,13 +2,13 @@ package com.door43.translationstudio.ui.newlanguage
 
 import android.content.Intent
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,6 +41,8 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
 
         //then
         verifyPageLayout(pageCount(), pageNum + 2)
+
+        scenario.close()
     }
 
 
@@ -66,6 +68,8 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         //then
         val pageNumExpected = 1
         verifyPageLayout(pageCount(), pageNumExpected)
+
+        scenario.close()
     }
 
 
@@ -90,6 +94,8 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
 
         //then
         verifyPageLayout(pageCount(), fillToPage - 1)
+
+        scenario.close()
     }
 
     @Test
@@ -113,6 +119,8 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
 
         //then
         verifyPageLayout(pageCount(), fillToPage - 1)
+
+        scenario.close()
     }
 
     @Test
@@ -128,12 +136,14 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         verifyPageLayout(pageCount(), pageNum)
 
         //when
-        Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+        onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
         thenShouldHaveRequiredAnswerDialog()
-        Espresso.onView(ViewMatchers.withText(R.string.dismiss)).perform(ViewActions.click())
+        onWaitForView(ViewMatchers.withText(R.string.dismiss)).perform(ViewActions.click())
 
         //then
         verifyPageLayout(pageCount(), pageNum)
+
+        scenario.close()
     }
 
     @Test
@@ -150,17 +160,19 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         verifyPageLayout(pageCount(), pageNum)
 
         //when
-        Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
-        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+        onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
-        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
             .perform(ViewActions.pressBack()) // dismiss
-        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
             .check(ViewAssertions.doesNotExist()) // dialog dismissed
 
         //then
         val pageNumExpected = 0
         verifyPageLayout(pageCount(), pageNumExpected)
+
+        scenario.close()
     }
 
     @Test
@@ -177,15 +189,17 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         verifyPageLayout(pageCount(), pageNum)
 
         //when
-        Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
-        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+        onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
             .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
-        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
             .perform(ViewActions.pressBack()) // dismiss dialog
-        Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
             .check(ViewAssertions.doesNotExist()) // dialog dismissed
 
         //then
         verifyPageLayout(pageCount(), pageNum)
+
+        scenario.close()
     }
 }

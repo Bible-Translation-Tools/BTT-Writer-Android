@@ -3,12 +3,10 @@ package com.door43.translationstudio.ui.newlanguage
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.util.Log
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso
 import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
@@ -19,7 +17,8 @@ import com.door43.data.IDirectoryProvider
 import com.door43.questionnaire.QuestionnaireActivity
 import com.door43.questionnaire.QuestionnairePager
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.UiTestUtils
+import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
+import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import org.hamcrest.CoreMatchers
@@ -179,7 +178,7 @@ open class NewLanguageActivityUtils {
      * verify that missing required answer dialog is displayed
      */
     fun thenShouldHaveRequiredAnswerDialog() {
-        val vi = Espresso.onView(ViewMatchers.withText(R.string.missing_question_answer))
+        val vi = onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
         vi.check(ViewAssertions.matches(ViewMatchers.withText(R.string.missing_question_answer)))
     }
 
@@ -187,18 +186,18 @@ open class NewLanguageActivityUtils {
      * verify that missing non-required answer dialog is displayed
      */
     fun thenShouldHaveNewLanguageDialog() {
-        Assert.assertNotNull(Espresso.onView(ViewMatchers.withText(R.string.title_activity_language_selector)))
+        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(R.string.title_activity_language_selector)))
         val prompt = appContext.resources.getString(R.string.new_language_confirmation)
         val promptParts = prompt.split("\"".toRegex())
-        Assert.assertNotNull(Espresso.onView(ViewMatchers.withText(promptParts[0])))
+        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(promptParts[0])))
     }
 
     /**
      * verify that missing non-required answer dialog is displayed
      */
     fun thenShouldHaveMissingAnswerDialog() {
-        Assert.assertNotNull(Espresso.onView(ViewMatchers.withText(R.string.answers_missing_title)))
-        Assert.assertNotNull(Espresso.onView(ViewMatchers.withText(R.string.answers_missing_continue)))
+        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(R.string.answers_missing_title)))
+        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(R.string.answers_missing_continue)))
     }
 
     /**
@@ -220,17 +219,17 @@ open class NewLanguageActivityUtils {
 
         for (i in 0 until pageCount - 1) {
             fillPage(i, false, requiredOnly, valueForBooleans, hideKeyboard)
-            UiTestUtils.rotateScreen(scenario)
+            rotateScreen(scenario)
             verifyPageLayout(pageCount, i)
 
-            Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+            onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
             verifyPageLayout(pageCount, i + 1)
         }
 
         fillPage(pageCount - 1, false, requiredOnly, valueForBooleans, hideKeyboard)
 
         if (doDone) {
-            Espresso.onView(ViewMatchers.withId(R.id.done_button)).perform(ViewActions.click())
+            onWaitForView(ViewMatchers.withId(R.id.done_button)).perform(ViewActions.click())
         }
     }
 
@@ -258,7 +257,7 @@ open class NewLanguageActivityUtils {
         fillPage(pageCount - 1, false, requiredOnly, valueForBooleans, hideKeyboard)
 
         if (doDone) {
-            Espresso.onView(ViewMatchers.withId(R.id.done_button)).perform(ViewActions.click())
+            onWaitForView(ViewMatchers.withId(R.id.done_button)).perform(ViewActions.click())
         }
     }
 
@@ -326,7 +325,7 @@ open class NewLanguageActivityUtils {
         }
 
         if (doNext) {
-            Espresso.onView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+            onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
         }
     }
 
@@ -357,13 +356,13 @@ open class NewLanguageActivityUtils {
     private fun verifyAnswer(pageNum: Int, questionNum: Int, text: String?) {
         val question = pager?.getPage(pageNum)!!.getQuestion(questionNum)
         val questionText = question!!.text
-        val interaction = Espresso.onView(
+        val interaction = onWaitForView(
             Matchers.allOf(
                 ViewMatchers.withId(R.id.edit_text),
                 ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
             )
         )
-        Espresso.onView(ViewMatchers.withId(R.id.recycler_view))
+        onWaitForView(ViewMatchers.withId(R.id.recycler_view))
             .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(questionNum))
         interaction.check(ViewAssertions.matches(ViewMatchers.withText(text)))
     }
@@ -384,13 +383,13 @@ open class NewLanguageActivityUtils {
         verifyAnswer(pageNum, questionNum, "")
         val question = pager?.getPage(pageNum)!!.getQuestion(questionNum)
         val questionText = question!!.text
-        val interaction = Espresso.onView(
+        val interaction = onWaitForView(
             Matchers.allOf(
                 ViewMatchers.withId(R.id.edit_text),
                 ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
             )
         )
-        Espresso.onView(ViewMatchers.withId(R.id.recycler_view))
+        onWaitForView(ViewMatchers.withId(R.id.recycler_view))
             .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(questionNum))
         interaction.perform(ViewActions.typeText(newText))
         interaction.check(ViewAssertions.matches(ViewMatchers.withHint(question.help))) // doesn't seem to work on second question
@@ -414,7 +413,7 @@ open class NewLanguageActivityUtils {
             ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
         )
 
-        val interaction = Espresso.onView(
+        val interaction = onWaitForView(
             Matchers.allOf(
                 ViewMatchers.withId(resource),
                 ViewMatchers.withParent(parent)
@@ -457,11 +456,11 @@ open class NewLanguageActivityUtils {
             ViewMatchers.withClassName(CoreMatchers.endsWith("RadioGroup")),
             ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
         )
-        Espresso.onView(ViewMatchers.withId(R.id.recycler_view))
+        onWaitForView(ViewMatchers.withId(R.id.recycler_view))
             .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(questionNum))
         val resource = if (value) R.id.radio_button_yes else R.id.radio_button_no
         val oppositeResource = if (!value) R.id.radio_button_yes else R.id.radio_button_no
-        val interaction = Espresso.onView(
+        val interaction = onWaitForView(
             Matchers.allOf(
                 ViewMatchers.withId(resource),
                 ViewMatchers.withParent(parent)
@@ -469,7 +468,7 @@ open class NewLanguageActivityUtils {
         )
         interaction.perform(ViewActions.click())
         interaction.check(ViewAssertions.matches(ViewMatchers.isChecked()))
-        Espresso.onView(
+        onWaitForView(
             Matchers.allOf(
                 ViewMatchers.withId(oppositeResource),
                 ViewMatchers.withParent(parent)
@@ -529,22 +528,22 @@ open class NewLanguageActivityUtils {
      */
     private fun verifyNavButtonSettings(pageCount: Int, pageNum: Int) {
         if (pageNum == 0) {
-            Espresso.onView(ViewMatchers.withId(R.id.previous_button))
+            onWaitForView(ViewMatchers.withId(R.id.previous_button))
                 .check(ViewAssertions.matches(Matchers.not(ViewMatchers.isDisplayed())))
         } else {
-            Espresso.onView(ViewMatchers.withId(R.id.previous_button))
+            onWaitForView(ViewMatchers.withId(R.id.previous_button))
                 .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
         }
 
         if (pageNum < pageCount - 1) {
-            Espresso.onView(ViewMatchers.withId(R.id.next_button))
+            onWaitForView(ViewMatchers.withId(R.id.next_button))
                 .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-            Espresso.onView(ViewMatchers.withId(R.id.done_button))
+            onWaitForView(ViewMatchers.withId(R.id.done_button))
                 .check(ViewAssertions.matches(Matchers.not(ViewMatchers.isDisplayed())))
         } else {
-            Espresso.onView(ViewMatchers.withId(R.id.done_button))
+            onWaitForView(ViewMatchers.withId(R.id.done_button))
                 .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-            Espresso.onView(ViewMatchers.withId(R.id.next_button))
+            onWaitForView(ViewMatchers.withId(R.id.next_button))
                 .check(ViewAssertions.matches(Matchers.not(ViewMatchers.isDisplayed())))
         }
     }
@@ -560,7 +559,7 @@ open class NewLanguageActivityUtils {
         private fun matchToolbarTitle(
             title: CharSequence
         ): ViewInteraction {
-            return Espresso.onView(ViewMatchers.isAssignableFrom(Toolbar::class.java))
+            return onWaitForView(ViewMatchers.isAssignableFrom(Toolbar::class.java))
                 .check(ViewAssertions.matches(withToolbarTitle(Matchers.`is`(title))))
         }
 
@@ -572,7 +571,7 @@ open class NewLanguageActivityUtils {
         private fun notMatchToolbarTitle(
             title: CharSequence
         ): ViewInteraction {
-            return Espresso.onView(ViewMatchers.isAssignableFrom(Toolbar::class.java))
+            return onWaitForView(ViewMatchers.isAssignableFrom(Toolbar::class.java))
                 .check(ViewAssertions.matches(Matchers.not(withToolbarTitle(Matchers.`is`(title)))))
         }
 

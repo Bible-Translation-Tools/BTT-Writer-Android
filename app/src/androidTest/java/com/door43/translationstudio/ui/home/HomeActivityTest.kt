@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.home
 import android.app.Instrumentation
 import androidx.core.content.FileProvider
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -12,14 +11,17 @@ import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.Intents.intending
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.SettingsActivity
-import com.door43.translationstudio.ui.UiTestUtils
+import com.door43.translationstudio.ui.UiTestUtils.checkContainsText
+import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
+import com.door43.translationstudio.ui.UiTestUtils.checkText
+import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
+import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import com.door43.translationstudio.ui.publish.PublishActivity
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -66,7 +68,7 @@ class HomeActivityTest {
 
         testMainViewsInPlace(true)
 
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         scenario.close()
     }
@@ -76,16 +78,16 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, false)
-        UiTestUtils.checkText(R.string.Project, true)
-        UiTestUtils.checkText(R.string.language, true)
-        UiTestUtils.checkText(R.string.progress, true)
-        UiTestUtils.checkText("Mark", true)
+        checkText(R.string.translations_welcome, false)
+        checkText(R.string.Project, true)
+        checkText(R.string.language, true)
+        checkText(R.string.progress, true)
+        checkText("Mark", true)
 
         scenario.close()
     }
@@ -95,17 +97,17 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
-        onView(withId(R.id.infoButton)).perform(click())
+        onWaitForView(withId(R.id.infoButton)).perform(click())
 
-        UiTestUtils.checkDialogText("Mark", true)
-        UiTestUtils.checkDialogText(R.string.Project, true)
-        UiTestUtils.checkDialogText(R.string.target_language, true)
-        UiTestUtils.checkDialogText(R.string.progress, true)
-        UiTestUtils.checkDialogText(R.string.contributors, true)
+        checkDialogText("Mark", true)
+        checkDialogText(R.string.Project, true)
+        checkDialogText(R.string.target_language, true)
+        checkDialogText(R.string.progress, true)
+        checkDialogText(R.string.contributors, true)
 
         scenario.close()
     }
@@ -115,20 +117,20 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
-        onView(withId(R.id.infoButton)).perform(click())
+        onWaitForView(withId(R.id.infoButton)).perform(click())
 
-        onView(withId(R.id.backup_button)).perform(click())
-        UiTestUtils.checkDialogText(R.string.title_upload_export, true)
-        UiTestUtils.checkDialogText(R.string.backup_to_door43, true)
-        UiTestUtils.checkDialogText(R.string.export_to_usfm, true)
-        UiTestUtils.checkDialogText(R.string.export_to_pdf, true)
-        UiTestUtils.checkDialogText(R.string.backup_to_sd, true)
-        UiTestUtils.checkDialogText(R.string.backup_to_friend, true)
-        UiTestUtils.checkDialogText(R.string.backup_to_app, true)
+        onWaitForView(withId(R.id.backup_button)).perform(click())
+        checkDialogText(R.string.title_upload_export, true)
+        checkDialogText(R.string.backup_to_door43, true)
+        checkDialogText(R.string.export_to_usfm, true)
+        checkDialogText(R.string.export_to_pdf, true)
+        checkDialogText(R.string.backup_to_sd, true)
+        checkDialogText(R.string.backup_to_friend, true)
+        checkDialogText(R.string.backup_to_app, true)
 
         scenario.close()
     }
@@ -138,15 +140,15 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
-        onView(withId(R.id.infoButton)).perform(click())
+        onWaitForView(withId(R.id.infoButton)).perform(click())
 
-        onView(withId(R.id.print_button)).perform(click())
-        UiTestUtils.checkDialogText(R.string.include_incomplete_frames, true)
-        onView(withId(R.id.print_button)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.print_button)).perform(click())
+        checkDialogText(R.string.include_incomplete_frames, true)
+        onWaitForView(withId(R.id.print_button)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -156,14 +158,14 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
-        onView(withId(R.id.infoButton)).perform(click())
+        onWaitForView(withId(R.id.infoButton)).perform(click())
 
-        onView(withId(R.id.delete_button)).perform(click())
-        UiTestUtils.checkDialogText(R.string.confirm_delete_target_translation, true)
+        onWaitForView(withId(R.id.delete_button)).perform(click())
+        checkDialogText(R.string.confirm_delete_target_translation, true)
 
         scenario.close()
     }
@@ -177,12 +179,12 @@ class HomeActivityTest {
         )
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
-        onView(withId(R.id.infoButton)).perform(click())
-        onView(withId(R.id.publish_button)).perform(click())
+        onWaitForView(withId(R.id.infoButton)).perform(click())
+        onWaitForView(withId(R.id.publish_button)).perform(click())
 
         intended(hasComponent(PublishActivity::class.java.name))
 
@@ -194,19 +196,19 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
-        onView(withId(R.id.infoButton)).perform(click())
+        onWaitForView(withId(R.id.infoButton)).perform(click())
 
-        onView(withId(R.id.translators)).perform(click())
-        UiTestUtils.checkDialogText(R.string.names_will_be_public, true)
-        UiTestUtils.checkDialogText("TestUser", true)
-        UiTestUtils.checkDialogText(R.string.add_contributor, true)
+        onWaitForView(withId(R.id.translators)).perform(click())
+        checkDialogText(R.string.names_will_be_public, true)
+        checkDialogText("TestUser", true)
+        checkDialogText(R.string.add_contributor, true)
 
-        onView(withId(R.id.name)).check(matches(isDisplayed()))
-        onView(withId(R.id.edit_button)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.name)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.edit_button)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -216,18 +218,18 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         createTargetTranslation()
 
-        onView(withId(R.id.infoButton)).perform(click())
+        onWaitForView(withId(R.id.infoButton)).perform(click())
 
-        onView(withId(R.id.change_language)).perform(click())
+        onWaitForView(withId(R.id.change_language)).perform(click())
         testMainViewsInPlace(false)
 
-        UiTestUtils.checkText(R.string.title_activity_new_target_translation, true)
+        checkText(R.string.title_activity_new_target_translation, true)
 
-        onView(withText("aab")).perform(click())
+        onWaitForView(withText("aab")).perform(click())
 
         testMainViewsInPlace(true)
 
@@ -239,16 +241,16 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
-        onView(withId(R.id.action_more)).perform(click())
+        onWaitForView(withId(R.id.action_more)).perform(click())
 
-        UiTestUtils.checkText(R.string.menu_update, true)
-        UiTestUtils.checkText(R.string.label_import_options, true)
-        UiTestUtils.checkText(R.string.feedback, true)
-        UiTestUtils.checkText(R.string.share_apk, true)
-        UiTestUtils.checkText(R.string.log_out, true)
-        UiTestUtils.checkText(R.string.action_settings, true)
+        checkText(R.string.menu_update, true)
+        checkText(R.string.label_import_options, true)
+        checkText(R.string.feedback, true)
+        checkText(R.string.share_apk, true)
+        checkText(R.string.log_out, true)
+        checkText(R.string.action_settings, true)
 
         scenario.close()
     }
@@ -258,17 +260,17 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
-        onView(withId(R.id.action_more)).perform(click())
-        onView(withText(R.string.menu_update)).perform(click())
+        onWaitForView(withId(R.id.action_more)).perform(click())
+        onWaitForView(withText(R.string.menu_update)).perform(click())
 
-        UiTestUtils.checkDialogText(R.string.update_options, true)
-        UiTestUtils.checkDialogText(R.string.update_source, true)
-        UiTestUtils.checkDialogText(R.string.download_index, true)
-        UiTestUtils.checkDialogText(R.string.download_sources, true)
-        UiTestUtils.checkDialogText(R.string.update_languages, true)
-        UiTestUtils.checkDialogText(R.string.check_app_update, true)
+        checkDialogText(R.string.update_options, true)
+        checkDialogText(R.string.update_source, true)
+        checkDialogText(R.string.download_index, true)
+        checkDialogText(R.string.download_sources, true)
+        checkDialogText(R.string.update_languages, true)
+        checkDialogText(R.string.check_app_update, true)
 
         scenario.close()
     }
@@ -278,22 +280,22 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
-        onView(withId(R.id.action_more)).perform(click())
-        onView(withText(R.string.label_import_options)).perform(click())
+        onWaitForView(withId(R.id.action_more)).perform(click())
+        onWaitForView(withText(R.string.label_import_options)).perform(click())
 
-        UiTestUtils.checkDialogText(R.string.import_from_door43, true)
-        UiTestUtils.checkDialogText(R.string.import_project_file, true)
-        UiTestUtils.checkDialogText(R.string.import_usfm_file, true)
-        UiTestUtils.checkDialogText(R.string.import_source_text, true)
-        UiTestUtils.checkDialogText(R.string.import_from_device, true)
+        checkDialogText(R.string.import_from_door43, true)
+        checkDialogText(R.string.import_project_file, true)
+        checkDialogText(R.string.import_usfm_file, true)
+        checkDialogText(R.string.import_source_text, true)
+        checkDialogText(R.string.import_from_device, true)
 
-        onView(withId(R.id.import_from_door43)).perform(click())
-        onView(withId(R.id.search_button)).check(matches(isDisplayed()))
-        onView(withId(R.id.username)).check(matches(isDisplayed()))
-        onView(withId(R.id.translation_id)).check(matches(isDisplayed()))
-        onView(withId(R.id.list)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.import_from_door43)).perform(click())
+        onWaitForView(withId(R.id.search_button)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.username)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.translation_id)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.list)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -303,12 +305,12 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
-        onView(withId(R.id.action_more)).perform(click())
-        onView(withText(R.string.feedback)).perform(click())
+        onWaitForView(withId(R.id.action_more)).perform(click())
+        onWaitForView(withText(R.string.feedback)).perform(click())
 
-        UiTestUtils.checkDialogText(R.string.requires_internet, true)
+        checkDialogText(R.string.requires_internet, true)
 
         scenario.close()
     }
@@ -318,14 +320,12 @@ class HomeActivityTest {
         val scenario = ActivityScenario.launch(HomeActivity::class.java)
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
         assertNotNull(profile.fullName)
 
-        onView(withId(R.id.action_more)).perform(click())
-        onView(withText(R.string.log_out)).perform(click())
-
-        onView(isRoot()).perform(UiTestUtils.waitFor(1000))
+        onWaitForView(withId(R.id.action_more)).perform(click())
+        onWaitForView(withText(R.string.log_out)).perform(click())
 
         assertNull(profile.fullName)
 
@@ -341,10 +341,10 @@ class HomeActivityTest {
         )
 
         testMainViewsInPlace(true)
-        UiTestUtils.checkText(R.string.translations_welcome, true)
+        checkText(R.string.translations_welcome, true)
 
-        onView(withId(R.id.action_more)).perform(click())
-        onView(withText(R.string.action_settings)).perform(click())
+        onWaitForView(withId(R.id.action_more)).perform(click())
+        onWaitForView(withText(R.string.action_settings)).perform(click())
 
         intended(hasComponent(SettingsActivity::class.java.name))
 
@@ -352,17 +352,17 @@ class HomeActivityTest {
     }
 
     private fun testMainViewsInPlace(displayed: Boolean) {
-        UiTestUtils.checkContainsText("TestUser", displayed)
-        UiTestUtils.checkText(R.string.log_out, displayed)
-        UiTestUtils.checkText(R.string.title_activity_target_translations, displayed)
+        checkContainsText("TestUser", displayed)
+        checkText(R.string.log_out, displayed)
+        checkText(R.string.title_activity_target_translations, displayed)
     }
 
     private fun createTargetTranslation() {
-        onView(withId(R.id.addTargetTranslationButton)).perform(click())
-        onView(withText("aaa")).perform(click())
-        onView(withText("bible-nt")).perform(click())
-        onView(withText("Mark")).perform(click())
+        onWaitForView(withId(R.id.addTargetTranslationButton)).perform(click())
+        onWaitForView(withText("aaa")).perform(click())
+        onWaitForView(withText("bible-nt")).perform(click())
+        onWaitForView(withText("Mark")).perform(click())
         pressBack()
-        onView(isRoot()).perform(UiTestUtils.waitFor(1000))
+        waitFor(1000)
     }
 }

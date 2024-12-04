@@ -9,15 +9,19 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.Intents.intended
+import androidx.test.espresso.intent.Intents.intending
 import androidx.test.espresso.intent.matcher.IntentMatchers
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
+import com.door43.translationstudio.ui.UiTestUtils.checkText
+import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -53,9 +57,8 @@ class ProfileActivityTest {
         Intents.init()
         mockkObject(App)
 
-
         // Stub all browser intents to prevent actual launching
-        Intents.intending(IntentMatchers.hasAction(Intent.ACTION_VIEW))
+        intending(IntentMatchers.hasAction(Intent.ACTION_VIEW))
             .respondWith(Instrumentation.ActivityResult(0, null))
     }
 
@@ -71,7 +74,7 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.title_cancel)).perform(click())
+        onWaitForView(withText(R.string.title_cancel)).perform(click())
 
         scenario.close()
     }
@@ -84,24 +87,19 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.login_doo43)).perform(click())
+        onWaitForView(withText(R.string.login_doo43)).perform(click())
 
         testMainViewsInPlace(false)
 
-        UiTestUtils.checkText(R.string.server_account, true)
-        onView(withId(R.id.username)).check(matches(isDisplayed()))
-        onView(withId(R.id.password)).check(matches(isDisplayed()))
+        checkText(R.string.server_account, true)
+        onWaitForView(withId(R.id.username)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.password)).check(matches(isDisplayed()))
 
-        onView(withId(R.id.ok_button)).perform(click())
+        onWaitForView(withId(R.id.ok_button)).perform(click())
 
-        //UiTestUtils.checkDialogTextState(R.string.logging_in, true)
-
-        // Implicitly set a delay to wait for progress dialog to close
-        onView(isRoot()).perform(UiTestUtils.waitFor(1000))
-
-        UiTestUtils.checkDialogText(R.string.double_check_credentials, true)
-        onView(withText(R.string.label_ok)).perform(click())
-        UiTestUtils.checkDialogText(R.string.double_check_credentials, false)
+        checkDialogText(R.string.double_check_credentials, true)
+        onWaitForView(withText(R.string.label_ok)).perform(click())
+        checkDialogText(R.string.double_check_credentials, false)
 
         scenario.close()
     }
@@ -114,24 +112,19 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.login_doo43)).perform(click())
+        onWaitForView(withText(R.string.login_doo43)).perform(click())
 
         testMainViewsInPlace(false)
 
-        UiTestUtils.checkText(R.string.server_account, true)
-        onView(withId(R.id.username)).check(matches(isDisplayed()))
-        onView(withId(R.id.password)).check(matches(isDisplayed()))
+        checkText(R.string.server_account, true)
+        onWaitForView(withId(R.id.username)).check(matches(isDisplayed()))
+        onWaitForView(withId(R.id.password)).check(matches(isDisplayed()))
 
-        onView(withId(R.id.ok_button)).perform(click())
+        onWaitForView(withId(R.id.ok_button)).perform(click())
 
-        //UiTestUtils.checkDialogTextState(R.string.logging_in, true)
-
-        // Implicitly set a delay to wait for progress dialog to close
-        onView(isRoot()).perform(UiTestUtils.waitFor(1000))
-
-        UiTestUtils.checkDialogText(R.string.internet_not_available, true)
-        onView(withText(R.string.label_ok)).perform(click())
-        UiTestUtils.checkDialogText(R.string.internet_not_available, false)
+        checkDialogText(R.string.internet_not_available, true)
+        onWaitForView(withText(R.string.label_ok)).perform(click())
+        checkDialogText(R.string.internet_not_available, false)
 
         scenario.close()
     }
@@ -142,22 +135,22 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.create_offline_profile)).perform(click())
+        onWaitForView(withText(R.string.create_offline_profile)).perform(click())
 
         testMainViewsInPlace(false)
 
-        UiTestUtils.checkText(R.string.names_will_be_public, true)
-        onView(withId(R.id.full_name)).check(matches(isDisplayed()))
+        checkText(R.string.names_will_be_public, true)
+        onWaitForView(withId(R.id.full_name)).check(matches(isDisplayed()))
 
-        onView(withId(R.id.ok_button)).perform(click())
+        onWaitForView(withId(R.id.ok_button)).perform(click())
 
-        UiTestUtils.checkText(R.string.complete_required_fields, true)
+        checkText(R.string.complete_required_fields, true)
 
         onView(withId(R.id.full_name)).perform(typeText("TestUser"))
-        onView(withId(R.id.ok_button)).perform(click())
-        UiTestUtils.checkDialogText(R.string.publishing_privacy_notice, true)
-        onView(withText(R.string.label_continue)).perform(click())
-        onView(withId(R.id.accept_terms_btn)).perform(click())
+        onWaitForView(withId(R.id.ok_button)).perform(click())
+        checkDialogText(R.string.publishing_privacy_notice, true)
+        onWaitForView(withText(R.string.label_continue)).perform(click())
+        onWaitForView(withId(R.id.accept_terms_btn)).perform(click())
 
         assertEquals("TestUser", profile.fullName)
 
@@ -170,17 +163,17 @@ class ProfileActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.register_door43)).perform(click())
+        onWaitForView(withText(R.string.register_door43)).perform(click())
 
-        Intents.intended(IntentMatchers.hasAction(Intent.ACTION_VIEW))
+        intended(IntentMatchers.hasAction(Intent.ACTION_VIEW))
 
         scenario.close()
     }
 
     private fun testMainViewsInPlace(displayed: Boolean) {
-        UiTestUtils.checkText(R.string.create_account_title, displayed)
-        UiTestUtils.checkText(R.string.login_doo43, displayed)
-        UiTestUtils.checkText(R.string.register_door43, displayed)
-        UiTestUtils.checkText(R.string.create_offline_profile, displayed)
+        checkText(R.string.create_account_title, displayed)
+        checkText(R.string.login_doo43, displayed)
+        checkText(R.string.register_door43, displayed)
+        checkText(R.string.create_offline_profile, displayed)
     }
 }

@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -12,6 +11,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.ui.UiTestUtils.checkText
+import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -52,7 +53,7 @@ class TermsOfUseActivityTest {
         val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
 
         testMainViewsInPlace(true)
-        onView(withText(R.string.license_accept)).perform(click())
+        onWaitForView(withText(R.string.license_accept)).perform(click())
         testMainViewsInPlace(false)
 
         val termsVersion = appContext.resources.getInteger(R.integer.terms_of_use_version)
@@ -68,7 +69,7 @@ class TermsOfUseActivityTest {
         val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
 
         testMainViewsInPlace(true)
-        onView(withText(R.string.license_deny)).perform(click())
+        onWaitForView(withText(R.string.license_deny)).perform(click())
         testMainViewsInPlace(false)
 
         assertFalse(profile.loggedIn)
@@ -105,10 +106,10 @@ class TermsOfUseActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.view_license_agreement)).perform(click())
+        onWaitForView(withText(R.string.view_license_agreement)).perform(click())
 
-        UiTestUtils.checkText(R.string.label_close, true)
-        onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+        checkText(R.string.label_close, true)
+        onWaitForView(withId(R.id.license_text)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -119,10 +120,10 @@ class TermsOfUseActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.view_translation_guidelines)).perform(click())
+        onWaitForView(withText(R.string.view_translation_guidelines)).perform(click())
 
-        UiTestUtils.checkText(R.string.label_close, true)
-        onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+        checkText(R.string.label_close, true)
+        onWaitForView(withId(R.id.license_text)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -133,19 +134,19 @@ class TermsOfUseActivityTest {
 
         testMainViewsInPlace(true)
 
-        onView(withText(R.string.view_statement_of_faith)).perform(click())
+        onWaitForView(withText(R.string.view_statement_of_faith)).perform(click())
 
-        UiTestUtils.checkText(R.string.label_close, true)
-        onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+        checkText(R.string.label_close, true)
+        onWaitForView(withId(R.id.license_text)).check(matches(isDisplayed()))
 
         scenario.close()
     }
 
     private fun testMainViewsInPlace(displayed: Boolean) {
-        UiTestUtils.checkText(R.string.terms_title, displayed)
-        UiTestUtils.checkText(R.string.terms, displayed)
-        UiTestUtils.checkText(R.string.view_license_agreement, displayed)
-        UiTestUtils.checkText(R.string.view_translation_guidelines, displayed)
-        UiTestUtils.checkText(R.string.view_statement_of_faith, displayed)
+        checkText(R.string.terms_title, displayed)
+        checkText(R.string.terms, displayed)
+        checkText(R.string.view_license_agreement, displayed)
+        checkText(R.string.view_translation_guidelines, displayed)
+        checkText(R.string.view_statement_of_faith, displayed)
     }
 }

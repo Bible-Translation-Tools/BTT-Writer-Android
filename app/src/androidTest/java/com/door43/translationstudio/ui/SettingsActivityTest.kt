@@ -8,6 +8,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.UiTestUtils.checkText
+import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
@@ -33,14 +35,14 @@ class SettingsActivityTest {
 
         testTopViewsInPlace(true)
 
-        onView(withText(R.string.content_server)).perform(click())
+        onWaitForView(withText(R.string.content_server)).perform(click())
 
-        UiTestUtils.checkText("WACS", true)
-        UiTestUtils.checkText("DCS", true)
+        checkText("WACS", true)
+        checkText("DCS", true)
 
-        onView(withText(R.string.title_cancel)).perform(click())
+        onWaitForView(withText(R.string.title_cancel)).perform(click())
 
-        onView(withId(R.id.recycler_view)).perform(swipeUp())
+        onWaitForView(withId(R.id.recycler_view)).perform(swipeUp())
 
         testBottomViewsInPlace(true)
 
@@ -48,15 +50,15 @@ class SettingsActivityTest {
     }
 
     private fun testTopViewsInPlace(displayed: Boolean) {
-        UiTestUtils.checkText(R.string.device_name, displayed)
-        UiTestUtils.checkText(R.string.pref_title_color_theme, displayed)
-        UiTestUtils.checkText(R.string.pref_title_source_typeface, displayed)
-        UiTestUtils.checkText(R.string.pref_title_translation_typeface, displayed)
-        UiTestUtils.checkText(R.string.content_server, displayed)
+        checkText(R.string.device_name, displayed)
+        checkText(R.string.pref_title_color_theme, displayed)
+        checkText(R.string.pref_title_source_typeface, displayed)
+        checkText(R.string.pref_title_translation_typeface, displayed)
+        checkText(R.string.content_server, displayed)
     }
 
     private fun testBottomViewsInPlace(displayed: Boolean) {
-        UiTestUtils.checkText(R.string.view_statement_of_faith, displayed)
-        UiTestUtils.checkText(R.string.pref_title_check_hardware_requirements, displayed)
+        checkText(R.string.view_statement_of_faith, displayed)
+        checkText(R.string.pref_title_check_hardware_requirements, displayed)
     }
 }
