@@ -100,7 +100,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Install and Record FFMPEG
-      - uses: federicocarboni/setup-ffmpeg@v3
+        uses: federicocarboni/setup-ffmpeg@v3
         run: ffmpeg -f avfoundation -i 0 -t 240 video-recording.mov &
 
       - name: Run connected tests
