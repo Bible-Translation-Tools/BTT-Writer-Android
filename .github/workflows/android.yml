@@ -99,10 +99,6 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Install and Record FFMPEG
-        uses: federicocarboni/setup-ffmpeg@v3
-      - run: ffmpeg -f x11grab -i :0.0 -t 240 -vf format=yuv420p video-recording.mp4 &
-
       - name: Run connected tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -112,12 +108,6 @@ jobs:
           profile: pixel_6_pro
           target: google_apis
           script: ./gradlew connectedCheck --no-build-cache --no-daemon --stacktrace
-
-      - name: Upload Video Recording
-        uses: actions/upload-artifact@v4
-        with:
-          name: out
-          path: out.mov
 
       - name: Upload results
         if: ${{ always() }}
