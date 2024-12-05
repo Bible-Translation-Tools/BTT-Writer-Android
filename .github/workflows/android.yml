@@ -101,7 +101,7 @@ jobs:
 
       - name: Install and Record FFMPEG
         uses: federicocarboni/setup-ffmpeg@v3
-        run: ffmpeg -f avfoundation -i 0 -t 240 video-recording.mov &
+      - run: ffmpeg -f avfoundation -i 0 -t 240 video-recording.mov &
 
       - name: Run connected tests
         uses: reactivecircus/android-emulator-runner@v2
