@@ -2,13 +2,18 @@ package com.door43.translationstudio.ui.newlanguage
 
 import android.content.Intent
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.action.ViewActions
-import androidx.test.espresso.assertion.ViewAssertions
-import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.pressBack
+import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
+import com.door43.translationstudio.ui.tryPerform
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,19 +35,17 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         val doNext = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
-        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+        ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
+            verifyPageLayout(pageCount(), pageNum)
+            fillPage(pageNum, doNext = true, requiredOnly = false, valueForBooleans = false, hideKeyboard)
+            verifyPageLayout(pageCount(), pageNum + 1)
 
-        verifyPageLayout(pageCount(), pageNum)
-        fillPage(pageNum, doNext = true, requiredOnly = false, valueForBooleans = false, hideKeyboard)
-        verifyPageLayout(pageCount(), pageNum + 1)
+            //when
+            fillPage(pageNum + 1, doNext, requiredOnly, valueForBooleans, hideKeyboard)
 
-        //when
-        fillPage(pageNum + 1, doNext, requiredOnly, valueForBooleans, hideKeyboard)
-
-        //then
-        verifyPageLayout(pageCount(), pageNum + 2)
-
-        scenario.close()
+            //then
+            verifyPageLayout(pageCount(), pageNum + 2)
+        }
     }
 
 
@@ -58,18 +61,16 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         val doNext = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
-        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+        ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
+            verifyPageLayout(pageCount(), pageNum)
 
-        verifyPageLayout(pageCount(), pageNum)
+            //when
+            fillPage(pageNum, doNext, requiredOnly, valueForBooleans, hideKeyboard)
 
-        //when
-        fillPage(pageNum, doNext, requiredOnly, valueForBooleans, hideKeyboard)
-
-        //then
-        val pageNumExpected = 1
-        verifyPageLayout(pageCount(), pageNumExpected)
-
-        scenario.close()
+            //then
+            val pageNumExpected = 1
+            verifyPageLayout(pageCount(), pageNumExpected)
+        }
     }
 
 
@@ -79,23 +80,21 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         //given
 
         val pageNum = 0
-        val fillToPage: Int = pageCount()
+        val fillToPage = pageCount()
         val hideKeyboard = false
         val requiredOnly = false
         val valueForBooleans = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
-        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+        ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
+            verifyPageLayout(pageCount(), pageNum)
 
-        verifyPageLayout(pageCount(), pageNum)
+            //when
+            fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false)
 
-        //when
-        fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false)
-
-        //then
-        verifyPageLayout(pageCount(), fillToPage - 1)
-
-        scenario.close()
+            //then
+            verifyPageLayout(pageCount(), fillToPage - 1)
+        }
     }
 
     @Test
@@ -110,17 +109,15 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         val valueForBooleans = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
-        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+        ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
+            verifyPageLayout(pageCount(), pageNum)
 
-        verifyPageLayout(pageCount(), pageNum)
+            //when
+            fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false)
 
-        //when
-        fillUpToPage(fillToPage, hideKeyboard, requiredOnly, valueForBooleans, false)
-
-        //then
-        verifyPageLayout(pageCount(), fillToPage - 1)
-
-        scenario.close()
+            //then
+            verifyPageLayout(pageCount(), fillToPage - 1)
+        }
     }
 
     @Test
@@ -131,19 +128,17 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         val pageNum = 0
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
-        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+        ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
+            verifyPageLayout(pageCount(), pageNum)
 
-        verifyPageLayout(pageCount(), pageNum)
+            //when
+            onView(withId(R.id.next_button)).tryPerform(click())
+            thenShouldHaveRequiredAnswerDialog()
+            onView(withText(R.string.dismiss)).tryPerform(click())
 
-        //when
-        onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
-        thenShouldHaveRequiredAnswerDialog()
-        onWaitForView(ViewMatchers.withText(R.string.dismiss)).perform(ViewActions.click())
-
-        //then
-        verifyPageLayout(pageCount(), pageNum)
-
-        scenario.close()
+            //then
+            verifyPageLayout(pageCount(), pageNum)
+        }
     }
 
     @Test
@@ -155,24 +150,22 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         val hideKeyboard = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
-        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+        ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
+            verifyPageLayout(pageCount(), pageNum)
 
-        verifyPageLayout(pageCount(), pageNum)
+            //when
+            onView(withId(R.id.next_button)).tryPerform(click())
+            onView(withText(R.string.missing_question_answer))
+                .check(matches(isDisplayed())) // dialog displayed
+            onView(withText(R.string.missing_question_answer))
+                .tryPerform(pressBack()) // dismiss
+            onView(withText(R.string.missing_question_answer))
+                .check(doesNotExist()) // dialog dismissed
 
-        //when
-        onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
-        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
-        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
-            .perform(ViewActions.pressBack()) // dismiss
-        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
-            .check(ViewAssertions.doesNotExist()) // dialog dismissed
-
-        //then
-        val pageNumExpected = 0
-        verifyPageLayout(pageCount(), pageNumExpected)
-
-        scenario.close()
+            //then
+            val pageNumExpected = 0
+            verifyPageLayout(pageCount(), pageNumExpected)
+        }
     }
 
     @Test
@@ -184,22 +177,20 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         val hideKeyboard = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
-        val scenario = ActivityScenario.launch<NewTempLanguageActivity>(intent)
+        ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
+            verifyPageLayout(pageCount(), pageNum)
 
-        verifyPageLayout(pageCount(), pageNum)
+            //when
+            onView(withId(R.id.next_button)).tryPerform(click())
+            onView(withText(R.string.missing_question_answer))
+                .check(matches(isDisplayed())) // dialog displayed
+            onView(withText(R.string.missing_question_answer))
+                .tryPerform(pressBack()) // dismiss dialog
+            onView(withText(R.string.missing_question_answer))
+                .check(doesNotExist()) // dialog dismissed
 
-        //when
-        onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
-        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed())) // dialog displayed
-        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
-            .perform(ViewActions.pressBack()) // dismiss dialog
-        onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
-            .check(ViewAssertions.doesNotExist()) // dialog dismissed
-
-        //then
-        verifyPageLayout(pageCount(), pageNum)
-
-        scenario.close()
+            //then
+            verifyPageLayout(pageCount(), pageNum)
+        }
     }
 }

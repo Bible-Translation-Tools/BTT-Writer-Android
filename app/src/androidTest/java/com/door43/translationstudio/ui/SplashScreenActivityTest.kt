@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui
 
 import android.content.Context
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -9,7 +10,6 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
-import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import com.door43.util.RuntimeWrapper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -59,7 +59,7 @@ class SplashScreenActivityTest {
         val scenario = ActivityScenario.launch(SplashScreenActivity::class.java)
 
         checkDialogText(R.string.slow_device, true)
-        onWaitForView(withText(R.string.label_continue)).perform(click())
+        onView(withText(R.string.label_continue)).tryPerform(click())
 
         checkDialogText(R.string.slow_device, false)
 

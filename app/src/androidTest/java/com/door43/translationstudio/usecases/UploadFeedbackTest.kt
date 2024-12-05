@@ -1,5 +1,6 @@
 package com.door43.translationstudio.usecases
 
+import android.provider.Settings
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.door43.data.AssetsProvider
@@ -9,6 +10,7 @@ import com.door43.usecases.UploadFeedback
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every
+import io.mockk.mockkStatic
 import io.mockk.spyk
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
@@ -52,6 +54,9 @@ class UploadFeedbackTest {
         } answers {
             server.url("/issues").toString()
         }
+
+        mockkStatic(Settings.Secure::class)
+        every { Settings.Secure.getString(any(), any()) }.returns("test")
     }
 
     @After

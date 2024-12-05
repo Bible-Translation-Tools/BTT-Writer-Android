@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
@@ -17,7 +18,6 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
-import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
 import com.door43.util.FileUtilities.copyInputStreamToFile
 import com.door43.util.FileUtilities.deleteQuietly
@@ -90,7 +90,7 @@ class ImportUsfmActivityTest {
         scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkText(R.string.title_activity_import_usfm_language, true)
-        onWaitForView(withText(language)).perform(click())
+        onView(withText(language)).tryPerform(click())
 
         //when
         matchSummaryDialog(R.string.title_import_usfm_error, book, true)
@@ -117,14 +117,14 @@ class ImportUsfmActivityTest {
         scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkText(R.string.title_activity_import_usfm_language, true)
-        onWaitForView(withText(language)).perform(click())
+        onView(withText(language)).tryPerform(click())
 
         thenShouldShowMissingBookNameDialog()
         rotateScreen(scenario)
 
         //when
         thenShouldShowMissingBookNameDialog()
-        onWaitForView(withText(R.string.label_continue)).inRoot(isDialog()).perform(click())
+        onView(withText(R.string.label_continue)).inRoot(isDialog()).tryPerform(click())
         clickOnViewText("bible-nt")
         clickOnViewText("Mark")
 
@@ -151,14 +151,14 @@ class ImportUsfmActivityTest {
         scenario.moveToState(Lifecycle.State.RESUMED)
 
         checkText(R.string.title_activity_import_usfm_language, true)
-        onWaitForView(withText(language)).perform(click())
+        onView(withText(language)).tryPerform(click())
         matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
 
         rotateScreen(scenario)
         matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
 
         //when
-        onWaitForView(withText(R.string.label_continue)).inRoot(isDialog()).perform(click())
+        onView(withText(R.string.label_continue)).inRoot(isDialog()).tryPerform(click())
 
         //then
         matchImportResultsDialog()
@@ -185,7 +185,7 @@ class ImportUsfmActivityTest {
         checkText(R.string.title_activity_import_usfm_language, true)
 
         //when
-        onWaitForView(withText(language)).perform(click())
+        onView(withText(language)).tryPerform(click())
 
         //then
         matchSummaryDialog(R.string.title_import_usfm_error, book, true)
@@ -233,9 +233,9 @@ class ImportUsfmActivityTest {
      * @param matchText
      */
     private fun clickOnViewText(matchText: String?) {
-        onWaitForView(withText(matchText)).check(matches(withText(matchText)))
-        onWaitForView(withText(matchText)).check(matches(withText(matchText)))
-        onWaitForView(withText(matchText)).perform(click())
+        onView(withText(matchText)).check(matches(withText(matchText)))
+        onView(withText(matchText)).check(matches(withText(matchText)))
+        onView(withText(matchText)).tryPerform(click())
     }
 
     /**

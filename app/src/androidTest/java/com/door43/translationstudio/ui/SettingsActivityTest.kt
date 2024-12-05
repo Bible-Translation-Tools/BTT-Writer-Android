@@ -9,7 +9,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.UiTestUtils.checkText
-import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
@@ -35,14 +34,14 @@ class SettingsActivityTest {
 
         testTopViewsInPlace(true)
 
-        onWaitForView(withText(R.string.content_server)).perform(click())
+        onView(withText(R.string.content_server)).tryPerform(click())
 
         checkText("WACS", true)
         checkText("DCS", true)
 
-        onWaitForView(withText(R.string.title_cancel)).perform(click())
+        onView(withText(R.string.title_cancel)).tryPerform(click())
 
-        onWaitForView(withId(R.id.recycler_view)).perform(swipeUp())
+        onView(withId(R.id.recycler_view)).tryPerform(swipeUp())
 
         testBottomViewsInPlace(true)
 

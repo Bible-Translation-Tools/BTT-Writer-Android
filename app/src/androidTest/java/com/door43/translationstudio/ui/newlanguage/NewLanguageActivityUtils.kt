@@ -7,24 +7,37 @@ import android.util.Log
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewInteraction
-import androidx.test.espresso.action.ViewActions
-import androidx.test.espresso.assertion.ViewAssertions
-import androidx.test.espresso.contrib.RecyclerViewActions
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
+import androidx.test.espresso.action.ViewActions.typeText
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions.scrollToPosition
 import androidx.test.espresso.matcher.BoundedMatcher
-import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.espresso.matcher.ViewMatchers.hasSibling
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
+import androidx.test.espresso.matcher.ViewMatchers.isChecked
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withClassName
+import androidx.test.espresso.matcher.ViewMatchers.withHint
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withParent
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import com.door43.data.IDirectoryProvider
 import com.door43.questionnaire.QuestionnaireActivity
 import com.door43.questionnaire.QuestionnairePager
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
+import com.door43.translationstudio.ui.tryCheck
+import com.door43.translationstudio.ui.tryPerform
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers
+import org.hamcrest.Matchers.allOf
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -178,26 +191,26 @@ open class NewLanguageActivityUtils {
      * verify that missing required answer dialog is displayed
      */
     fun thenShouldHaveRequiredAnswerDialog() {
-        val vi = onWaitForView(ViewMatchers.withText(R.string.missing_question_answer))
-        vi.check(ViewAssertions.matches(ViewMatchers.withText(R.string.missing_question_answer)))
+        val vi = onView(withText(R.string.missing_question_answer))
+        vi.check(matches(withText(R.string.missing_question_answer)))
     }
 
     /**
      * verify that missing non-required answer dialog is displayed
      */
     fun thenShouldHaveNewLanguageDialog() {
-        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(R.string.title_activity_language_selector)))
+        Assert.assertNotNull(onView(withText(R.string.title_activity_language_selector)))
         val prompt = appContext.resources.getString(R.string.new_language_confirmation)
         val promptParts = prompt.split("\"".toRegex())
-        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(promptParts[0])))
+        Assert.assertNotNull(onView(withText(promptParts[0])))
     }
 
     /**
      * verify that missing non-required answer dialog is displayed
      */
     fun thenShouldHaveMissingAnswerDialog() {
-        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(R.string.answers_missing_title)))
-        Assert.assertNotNull(onWaitForView(ViewMatchers.withText(R.string.answers_missing_continue)))
+        Assert.assertNotNull(onView(withText(R.string.answers_missing_title)))
+        Assert.assertNotNull(onView(withText(R.string.answers_missing_continue)))
     }
 
     /**
@@ -222,14 +235,14 @@ open class NewLanguageActivityUtils {
             rotateScreen(scenario)
             verifyPageLayout(pageCount, i)
 
-            onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+            onView(withId(R.id.next_button)).tryPerform(click())
             verifyPageLayout(pageCount, i + 1)
         }
 
         fillPage(pageCount - 1, false, requiredOnly, valueForBooleans, hideKeyboard)
 
         if (doDone) {
-            onWaitForView(ViewMatchers.withId(R.id.done_button)).perform(ViewActions.click())
+            onView(withId(R.id.done_button)).tryPerform(click())
         }
     }
 
@@ -257,7 +270,7 @@ open class NewLanguageActivityUtils {
         fillPage(pageCount - 1, false, requiredOnly, valueForBooleans, hideKeyboard)
 
         if (doDone) {
-            onWaitForView(ViewMatchers.withId(R.id.done_button)).perform(ViewActions.click())
+            onView(withId(R.id.done_button)).tryPerform(click())
         }
     }
 
@@ -301,15 +314,13 @@ open class NewLanguageActivityUtils {
         valueForBooleans: Boolean,
         hideKeyboard: Boolean
     ) {
-        val questions = pager?.getPage(pageNum)!!
-            .getQuestions()
+        val questions = pager?.getPage(pageNum)!!.getQuestions()
 
         for (i in questions.indices) {
             val question = questions[i]
             if (question.isRequired || !requiredOnly) {
                 if (question.inputType == Question.InputType.Boolean) {
-                    val value = valueForBooleans
-                    setBoolean(pageNum, i, value)
+                    setBoolean(pageNum, i, valueForBooleans)
                 } else {
                     val text = generateAnswerForQuestion(question.tdId)
                     addEditText(pageNum, i, text, hideKeyboard)
@@ -325,7 +336,7 @@ open class NewLanguageActivityUtils {
         }
 
         if (doNext) {
-            onWaitForView(ViewMatchers.withId(R.id.next_button)).perform(ViewActions.click())
+            onView(withId(R.id.next_button)).tryPerform(click())
         }
     }
 
@@ -356,15 +367,15 @@ open class NewLanguageActivityUtils {
     private fun verifyAnswer(pageNum: Int, questionNum: Int, text: String?) {
         val question = pager?.getPage(pageNum)!!.getQuestion(questionNum)
         val questionText = question!!.text
-        val interaction = onWaitForView(
-            Matchers.allOf(
-                ViewMatchers.withId(R.id.edit_text),
-                ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
+        val interaction = onView(
+            allOf(
+                withId(R.id.edit_text),
+                hasSibling(withText(questionText))
             )
         )
-        onWaitForView(ViewMatchers.withId(R.id.recycler_view))
-            .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(questionNum))
-        interaction.check(ViewAssertions.matches(ViewMatchers.withText(text)))
+        onView(withId(R.id.recycler_view))
+            .tryPerform(scrollToPosition<RecyclerView.ViewHolder>(questionNum))
+        interaction.check(matches(withText(text)))
     }
 
     /**
@@ -383,20 +394,20 @@ open class NewLanguageActivityUtils {
         verifyAnswer(pageNum, questionNum, "")
         val question = pager?.getPage(pageNum)!!.getQuestion(questionNum)
         val questionText = question!!.text
-        val interaction = onWaitForView(
-            Matchers.allOf(
-                ViewMatchers.withId(R.id.edit_text),
-                ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
+        val interaction = onView(
+            allOf(
+                withId(R.id.edit_text),
+                hasSibling(withText(questionText))
             )
         )
-        onWaitForView(ViewMatchers.withId(R.id.recycler_view))
-            .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(questionNum))
-        interaction.perform(ViewActions.typeText(newText))
-        interaction.check(ViewAssertions.matches(ViewMatchers.withHint(question.help))) // doesn't seem to work on second question
+        onView(withId(R.id.recycler_view))
+            .tryPerform(scrollToPosition<RecyclerView.ViewHolder>(questionNum))
+        interaction.tryPerform(typeText(newText))
+        interaction.tryCheck(matches(withHint(question.help))) // doesn't seem to work on second question
         if (hideKeyboard) {
-            interaction.perform(ViewActions.closeSoftKeyboard())
+            interaction.tryPerform(closeSoftKeyboard())
         }
-        interaction.check(ViewAssertions.matches(ViewMatchers.withText(newText)))
+        interaction.tryCheck(matches(withText(newText)))
     }
 
     /**
@@ -408,21 +419,21 @@ open class NewLanguageActivityUtils {
      */
     private fun verifyButton(pageNum: Int, questionNum: Int, resource: Int, isChecked: Boolean) {
         val questionText = pager?.getPage(pageNum)!!.getQuestion(questionNum)!!.text
-        val parent = Matchers.allOf(
-            ViewMatchers.withClassName(CoreMatchers.endsWith("RadioGroup")),
-            ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
+        val parent = allOf(
+            withClassName(CoreMatchers.endsWith("RadioGroup")),
+            hasSibling(withText(questionText))
         )
 
-        val interaction = onWaitForView(
-            Matchers.allOf(
-                ViewMatchers.withId(resource),
-                ViewMatchers.withParent(parent)
+        val interaction = onView(
+            allOf(
+                withId(resource),
+                withParent(parent)
             )
         )
         if (isChecked) {
-            interaction.check(ViewAssertions.matches(ViewMatchers.isChecked()))
+            interaction.check(matches(isChecked()))
         } else {
-            interaction.check(ViewAssertions.matches(Matchers.not(ViewMatchers.isChecked())))
+            interaction.check(matches(Matchers.not(isChecked())))
         }
     }
 
@@ -452,28 +463,28 @@ open class NewLanguageActivityUtils {
     private fun setBoolean(pageNum: Int, questionNum: Int, value: Boolean) {
         verifyButtons(pageNum, questionNum, yesChecked = false, noChecked = false) // should not be set yet
         val questionText = pager?.getPage(pageNum)?.getQuestion(questionNum)?.text
-        val parent = Matchers.allOf(
-            ViewMatchers.withClassName(CoreMatchers.endsWith("RadioGroup")),
-            ViewMatchers.hasSibling(ViewMatchers.withText(questionText))
+        val parent = allOf(
+            withClassName(CoreMatchers.endsWith("RadioGroup")),
+            hasSibling(withText(questionText))
         )
-        onWaitForView(ViewMatchers.withId(R.id.recycler_view))
-            .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(questionNum))
+        onView(withId(R.id.recycler_view))
+            .tryPerform(scrollToPosition<RecyclerView.ViewHolder>(questionNum))
         val resource = if (value) R.id.radio_button_yes else R.id.radio_button_no
         val oppositeResource = if (!value) R.id.radio_button_yes else R.id.radio_button_no
-        val interaction = onWaitForView(
-            Matchers.allOf(
-                ViewMatchers.withId(resource),
-                ViewMatchers.withParent(parent)
+        val interaction = onView(
+            allOf(
+                withId(resource),
+                withParent(parent)
             )
         )
-        interaction.perform(ViewActions.click())
-        interaction.check(ViewAssertions.matches(ViewMatchers.isChecked()))
-        onWaitForView(
-            Matchers.allOf(
-                ViewMatchers.withId(oppositeResource),
-                ViewMatchers.withParent(parent)
+        interaction.tryPerform(click())
+        interaction.check(matches(isChecked()))
+        onView(
+            allOf(
+                withId(oppositeResource),
+                withParent(parent)
             )
-        ).check(ViewAssertions.matches(Matchers.not(ViewMatchers.isChecked())))
+        ).check(matches(Matchers.not(isChecked())))
     }
 
     /**
@@ -528,23 +539,23 @@ open class NewLanguageActivityUtils {
      */
     private fun verifyNavButtonSettings(pageCount: Int, pageNum: Int) {
         if (pageNum == 0) {
-            onWaitForView(ViewMatchers.withId(R.id.previous_button))
-                .check(ViewAssertions.matches(Matchers.not(ViewMatchers.isDisplayed())))
+            onView(withId(R.id.previous_button))
+                .check(matches(Matchers.not(isDisplayed())))
         } else {
-            onWaitForView(ViewMatchers.withId(R.id.previous_button))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+            onView(withId(R.id.previous_button))
+                .check(matches(isDisplayed()))
         }
 
         if (pageNum < pageCount - 1) {
-            onWaitForView(ViewMatchers.withId(R.id.next_button))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-            onWaitForView(ViewMatchers.withId(R.id.done_button))
-                .check(ViewAssertions.matches(Matchers.not(ViewMatchers.isDisplayed())))
+            onView(withId(R.id.next_button))
+                .check(matches(isDisplayed()))
+            onView(withId(R.id.done_button))
+                .check(matches(Matchers.not(isDisplayed())))
         } else {
-            onWaitForView(ViewMatchers.withId(R.id.done_button))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-            onWaitForView(ViewMatchers.withId(R.id.next_button))
-                .check(ViewAssertions.matches(Matchers.not(ViewMatchers.isDisplayed())))
+            onView(withId(R.id.done_button))
+                .check(matches(isDisplayed()))
+            onView(withId(R.id.next_button))
+                .check(matches(Matchers.not(isDisplayed())))
         }
     }
 
@@ -559,8 +570,8 @@ open class NewLanguageActivityUtils {
         private fun matchToolbarTitle(
             title: CharSequence
         ): ViewInteraction {
-            return onWaitForView(ViewMatchers.isAssignableFrom(Toolbar::class.java))
-                .check(ViewAssertions.matches(withToolbarTitle(Matchers.`is`(title))))
+            return onView(isAssignableFrom(Toolbar::class.java))
+                .check(matches(withToolbarTitle(Matchers.`is`(title))))
         }
 
         /**
@@ -571,8 +582,8 @@ open class NewLanguageActivityUtils {
         private fun notMatchToolbarTitle(
             title: CharSequence
         ): ViewInteraction {
-            return onWaitForView(ViewMatchers.isAssignableFrom(Toolbar::class.java))
-                .check(ViewAssertions.matches(Matchers.not(withToolbarTitle(Matchers.`is`(title)))))
+            return onView(isAssignableFrom(Toolbar::class.java))
+                .check(matches(Matchers.not(withToolbarTitle(Matchers.`is`(title)))))
         }
 
         /**

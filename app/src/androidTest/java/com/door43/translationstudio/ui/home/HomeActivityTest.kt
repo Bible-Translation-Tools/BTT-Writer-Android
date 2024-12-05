@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.home
 import android.app.Instrumentation
 import androidx.core.content.FileProvider
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -20,8 +21,8 @@ import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.UiTestUtils.checkContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
-import com.door43.translationstudio.ui.UiTestUtils.onWaitForView
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
+import com.door43.translationstudio.ui.tryPerform
 import com.door43.translationstudio.ui.publish.PublishActivity
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -101,7 +102,7 @@ class HomeActivityTest {
 
         createTargetTranslation()
 
-        onWaitForView(withId(R.id.infoButton)).perform(click())
+        onView(withId(R.id.infoButton)).tryPerform(click())
 
         checkDialogText("Mark", true)
         checkDialogText(R.string.Project, true)
@@ -121,9 +122,9 @@ class HomeActivityTest {
 
         createTargetTranslation()
 
-        onWaitForView(withId(R.id.infoButton)).perform(click())
+        onView(withId(R.id.infoButton)).tryPerform(click())
 
-        onWaitForView(withId(R.id.backup_button)).perform(click())
+        onView(withId(R.id.backup_button)).tryPerform(click())
         checkDialogText(R.string.title_upload_export, true)
         checkDialogText(R.string.backup_to_door43, true)
         checkDialogText(R.string.export_to_usfm, true)
@@ -144,11 +145,11 @@ class HomeActivityTest {
 
         createTargetTranslation()
 
-        onWaitForView(withId(R.id.infoButton)).perform(click())
+        onView(withId(R.id.infoButton)).tryPerform(click())
 
-        onWaitForView(withId(R.id.print_button)).perform(click())
+        onView(withId(R.id.print_button)).tryPerform(click())
         checkDialogText(R.string.include_incomplete_frames, true)
-        onWaitForView(withId(R.id.print_button)).check(matches(isDisplayed()))
+        onView(withId(R.id.print_button)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -162,9 +163,9 @@ class HomeActivityTest {
 
         createTargetTranslation()
 
-        onWaitForView(withId(R.id.infoButton)).perform(click())
+        onView(withId(R.id.infoButton)).tryPerform(click())
 
-        onWaitForView(withId(R.id.delete_button)).perform(click())
+        onView(withId(R.id.delete_button)).tryPerform(click())
         checkDialogText(R.string.confirm_delete_target_translation, true)
 
         scenario.close()
@@ -183,8 +184,8 @@ class HomeActivityTest {
 
         createTargetTranslation()
 
-        onWaitForView(withId(R.id.infoButton)).perform(click())
-        onWaitForView(withId(R.id.publish_button)).perform(click())
+        onView(withId(R.id.infoButton)).tryPerform(click())
+        onView(withId(R.id.publish_button)).tryPerform(click())
 
         intended(hasComponent(PublishActivity::class.java.name))
 
@@ -200,15 +201,15 @@ class HomeActivityTest {
 
         createTargetTranslation()
 
-        onWaitForView(withId(R.id.infoButton)).perform(click())
+        onView(withId(R.id.infoButton)).tryPerform(click())
 
-        onWaitForView(withId(R.id.translators)).perform(click())
+        onView(withId(R.id.translators)).tryPerform(click())
         checkDialogText(R.string.names_will_be_public, true)
         checkDialogText("TestUser", true)
         checkDialogText(R.string.add_contributor, true)
 
-        onWaitForView(withId(R.id.name)).check(matches(isDisplayed()))
-        onWaitForView(withId(R.id.edit_button)).check(matches(isDisplayed()))
+        onView(withId(R.id.name)).check(matches(isDisplayed()))
+        onView(withId(R.id.edit_button)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -222,14 +223,14 @@ class HomeActivityTest {
 
         createTargetTranslation()
 
-        onWaitForView(withId(R.id.infoButton)).perform(click())
+        onView(withId(R.id.infoButton)).tryPerform(click())
 
-        onWaitForView(withId(R.id.change_language)).perform(click())
+        onView(withId(R.id.change_language)).tryPerform(click())
         testMainViewsInPlace(false)
 
         checkText(R.string.title_activity_new_target_translation, true)
 
-        onWaitForView(withText("aab")).perform(click())
+        onView(withText("aab")).tryPerform(click())
 
         testMainViewsInPlace(true)
 
@@ -243,7 +244,7 @@ class HomeActivityTest {
         testMainViewsInPlace(true)
         checkText(R.string.translations_welcome, true)
 
-        onWaitForView(withId(R.id.action_more)).perform(click())
+        onView(withId(R.id.action_more)).tryPerform(click())
 
         checkText(R.string.menu_update, true)
         checkText(R.string.label_import_options, true)
@@ -262,8 +263,8 @@ class HomeActivityTest {
         testMainViewsInPlace(true)
         checkText(R.string.translations_welcome, true)
 
-        onWaitForView(withId(R.id.action_more)).perform(click())
-        onWaitForView(withText(R.string.menu_update)).perform(click())
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.menu_update)).tryPerform(click())
 
         checkDialogText(R.string.update_options, true)
         checkDialogText(R.string.update_source, true)
@@ -282,8 +283,8 @@ class HomeActivityTest {
         testMainViewsInPlace(true)
         checkText(R.string.translations_welcome, true)
 
-        onWaitForView(withId(R.id.action_more)).perform(click())
-        onWaitForView(withText(R.string.label_import_options)).perform(click())
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.label_import_options)).tryPerform(click())
 
         checkDialogText(R.string.import_from_door43, true)
         checkDialogText(R.string.import_project_file, true)
@@ -291,11 +292,11 @@ class HomeActivityTest {
         checkDialogText(R.string.import_source_text, true)
         checkDialogText(R.string.import_from_device, true)
 
-        onWaitForView(withId(R.id.import_from_door43)).perform(click())
-        onWaitForView(withId(R.id.search_button)).check(matches(isDisplayed()))
-        onWaitForView(withId(R.id.username)).check(matches(isDisplayed()))
-        onWaitForView(withId(R.id.translation_id)).check(matches(isDisplayed()))
-        onWaitForView(withId(R.id.list)).check(matches(isDisplayed()))
+        onView(withId(R.id.import_from_door43)).tryPerform(click())
+        onView(withId(R.id.search_button)).check(matches(isDisplayed()))
+        onView(withId(R.id.username)).check(matches(isDisplayed()))
+        onView(withId(R.id.translation_id)).check(matches(isDisplayed()))
+        onView(withId(R.id.list)).check(matches(isDisplayed()))
 
         scenario.close()
     }
@@ -307,8 +308,8 @@ class HomeActivityTest {
         testMainViewsInPlace(true)
         checkText(R.string.translations_welcome, true)
 
-        onWaitForView(withId(R.id.action_more)).perform(click())
-        onWaitForView(withText(R.string.feedback)).perform(click())
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.feedback)).tryPerform(click())
 
         checkDialogText(R.string.requires_internet, true)
 
@@ -324,8 +325,8 @@ class HomeActivityTest {
 
         assertNotNull(profile.fullName)
 
-        onWaitForView(withId(R.id.action_more)).perform(click())
-        onWaitForView(withText(R.string.log_out)).perform(click())
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.log_out)).tryPerform(click())
 
         assertNull(profile.fullName)
 
@@ -343,8 +344,8 @@ class HomeActivityTest {
         testMainViewsInPlace(true)
         checkText(R.string.translations_welcome, true)
 
-        onWaitForView(withId(R.id.action_more)).perform(click())
-        onWaitForView(withText(R.string.action_settings)).perform(click())
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.action_settings)).tryPerform(click())
 
         intended(hasComponent(SettingsActivity::class.java.name))
 
@@ -358,10 +359,10 @@ class HomeActivityTest {
     }
 
     private fun createTargetTranslation() {
-        onWaitForView(withId(R.id.addTargetTranslationButton)).perform(click())
-        onWaitForView(withText("aaa")).perform(click())
-        onWaitForView(withText("bible-nt")).perform(click())
-        onWaitForView(withText("Mark")).perform(click())
+        onView(withId(R.id.addTargetTranslationButton)).tryPerform(click())
+        onView(withText("aaa")).tryPerform(click())
+        onView(withText("bible-nt")).tryPerform(click())
+        onView(withText("Mark")).tryPerform(click())
         pressBack()
         waitFor(1000)
     }
