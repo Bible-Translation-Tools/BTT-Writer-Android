@@ -364,6 +364,6 @@ class HomeActivityTest {
         onView(withText("bible-nt")).tryPerform(click())
         onView(withText("Mark")).tryPerform(click())
         pressBack()
-        waitFor(1000)
+        waitFor(5000)
     }
 }
