@@ -63,7 +63,6 @@ class ImportUsfmActivityTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        UiTestUtils.dismissANRSystemDialog()
     }
 
     @After
