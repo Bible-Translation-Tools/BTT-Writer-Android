@@ -68,23 +68,23 @@ class ProfileActivityTest {
     }
 
     @Test
-    fun testProfileActivityCancel() {
+    fun testCancel() {
         ActivityScenario.launch(ProfileActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             onView(withText(R.string.title_cancel)).tryPerform(click())
         }
     }
 
     @Test
-    fun testProfileActivityLoginWithServerHasInternet() {
+    fun testLoginWithServerHasInternet() {
         every { App.isNetworkAvailable }.returns(true)
 
         ActivityScenario.launch(ProfileActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
 
             onView(withText(R.string.login_doo43)).tryPerform(click())
 
-            testMainViewsInPlace(false)
+            verifyMainViewsInPlace(false)
 
             checkText(R.string.server_account, true)
             onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
@@ -99,15 +99,15 @@ class ProfileActivityTest {
     }
 
     @Test
-    fun testProfileActivityLoginWithServerNoInternet() {
+    fun testLoginWithServerNoInternet() {
         every { App.isNetworkAvailable }.returns(false)
 
         ActivityScenario.launch(ProfileActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
 
             onView(withText(R.string.login_doo43)).tryPerform(click())
 
-            testMainViewsInPlace(false)
+            verifyMainViewsInPlace(false)
 
             checkText(R.string.server_account, true)
             onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
@@ -122,13 +122,13 @@ class ProfileActivityTest {
     }
 
     @Test
-    fun testProfileActivityCreateLocalAccount() {
+    fun testCreateLocalAccount() {
         ActivityScenario.launch(ProfileActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
 
             onView(withText(R.string.create_offline_profile)).tryPerform(click())
 
-            testMainViewsInPlace(false)
+            verifyMainViewsInPlace(false)
 
             checkText(R.string.names_will_be_public, true)
             onView(withId(R.id.full_name)).tryCheck(matches(isDisplayed()))
@@ -148,15 +148,15 @@ class ProfileActivityTest {
     }
 
     @Test
-    fun testProfileActivityCreateServerAccount() {
+    fun testCreateServerAccount() {
         ActivityScenario.launch(ProfileActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             onView(withText(R.string.register_door43)).tryPerform(click())
             intended(hasAction(Intent.ACTION_VIEW))
         }
     }
 
-    private fun testMainViewsInPlace(displayed: Boolean) {
+    private fun verifyMainViewsInPlace(displayed: Boolean) {
         checkText(R.string.create_account_title, displayed)
         checkText(R.string.login_doo43, displayed)
         checkText(R.string.register_door43, displayed)

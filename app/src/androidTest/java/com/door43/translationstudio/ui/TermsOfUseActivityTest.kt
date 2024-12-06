@@ -47,13 +47,13 @@ class TermsOfUseActivityTest {
     }
 
     @Test
-    fun testTermsOfUseActivityAgreed() {
+    fun testAgreed() {
         assertEquals(0, profile.termsOfUseLastAccepted)
 
         ActivityScenario.launch(TermsOfUseActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             onView(withText(R.string.license_accept)).tryPerform(click())
-            testMainViewsInPlace(false)
+            verifyMainViewsInPlace(false)
 
             val termsVersion = appContext.resources.getInteger(R.integer.terms_of_use_version)
             assertEquals(termsVersion, profile.termsOfUseLastAccepted)
@@ -61,11 +61,11 @@ class TermsOfUseActivityTest {
     }
 
     @Test
-    fun testTermsOfUseActivityDenied() {
+    fun testDenied() {
         assertTrue(profile.loggedIn)
 
         ActivityScenario.launch(TermsOfUseActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             onView(withText(R.string.license_deny)).tryPerform(click())
 
             assertFalse(profile.loggedIn)
@@ -73,7 +73,7 @@ class TermsOfUseActivityTest {
     }
 
     @Test
-    fun testTermsOfUseActivityProfileLoggedOut() {
+    fun testProfileLoggedOut() {
         profile.fullName = null
 
         ActivityScenario.launch(TermsOfUseActivity::class.java).use { scenario ->
@@ -82,19 +82,19 @@ class TermsOfUseActivityTest {
     }
 
     @Test
-    fun testTermsOfUseActivityAlreadyAccepted() {
+    fun testAlreadyAccepted() {
         val termsVersion = appContext.resources.getInteger(R.integer.terms_of_use_version)
         profile.termsOfUseLastAccepted = termsVersion
 
         ActivityScenario.launch(TermsOfUseActivity::class.java).use {
-            testMainViewsInPlace(false)
+            verifyMainViewsInPlace(false)
         }
     }
 
     @Test
-    fun testTermsOfUseActivityShowLicenceDialog() {
+    fun testShowLicenceDialog() {
         ActivityScenario.launch(TermsOfUseActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
 
             onView(withText(R.string.view_license_agreement)).tryPerform(click())
 
@@ -104,9 +104,9 @@ class TermsOfUseActivityTest {
     }
 
     @Test
-    fun testTermsOfUseActivityShowGuidesDialog() {
+    fun testShowGuidesDialog() {
         ActivityScenario.launch(TermsOfUseActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
 
             onView(withText(R.string.view_translation_guidelines)).tryPerform(click())
 
@@ -116,9 +116,9 @@ class TermsOfUseActivityTest {
     }
 
     @Test
-    fun testTermsOfUseActivityShowStatementOfFaithDialog() {
+    fun testShowStatementOfFaithDialog() {
         ActivityScenario.launch(TermsOfUseActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
 
             onView(withText(R.string.view_statement_of_faith)).tryPerform(click())
 
@@ -127,7 +127,7 @@ class TermsOfUseActivityTest {
         }
     }
 
-    private fun testMainViewsInPlace(displayed: Boolean) {
+    private fun verifyMainViewsInPlace(displayed: Boolean) {
         checkText(R.string.terms_title, displayed)
         checkText(R.string.terms, displayed)
         checkText(R.string.view_license_agreement, displayed)

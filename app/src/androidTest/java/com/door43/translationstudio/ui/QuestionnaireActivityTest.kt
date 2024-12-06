@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.newlanguage
+package com.door43.translationstudio.ui
 
 import android.content.Intent
 import androidx.test.core.app.ActivityScenario
@@ -13,8 +13,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.tryCheck
-import com.door43.translationstudio.ui.tryPerform
+import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith

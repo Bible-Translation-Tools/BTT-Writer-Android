@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.newlanguage
+package com.door43.translationstudio.ui
 
 import android.app.Activity
 import android.content.Context
@@ -29,8 +29,7 @@ import com.door43.questionnaire.QuestionnaireActivity
 import com.door43.questionnaire.QuestionnairePager
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
-import com.door43.translationstudio.ui.tryCheck
-import com.door43.translationstudio.ui.tryPerform
+import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import org.hamcrest.CoreMatchers

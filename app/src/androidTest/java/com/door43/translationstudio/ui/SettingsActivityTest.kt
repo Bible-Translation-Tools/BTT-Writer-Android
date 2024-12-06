@@ -29,9 +29,9 @@ class SettingsActivityTest {
     }
 
     @Test
-    fun testSettingsActivityShowContentServerAndScroll() {
+    fun testShowContentServerAndScroll() {
         ActivityScenario.launch(SettingsActivity::class.java).use {
-            testTopViewsInPlace(true)
+            verifyTopViewsInPlace(true)
 
             onView(withText(R.string.content_server)).tryPerform(click())
 
@@ -42,11 +42,11 @@ class SettingsActivityTest {
 
             onView(withId(R.id.recycler_view)).tryPerform(swipeUp())
 
-            testBottomViewsInPlace(true)
+            verifyBottomViewsInPlace(true)
         }
     }
 
-    private fun testTopViewsInPlace(displayed: Boolean) {
+    private fun verifyTopViewsInPlace(displayed: Boolean) {
         checkText(R.string.device_name, displayed)
         checkText(R.string.pref_title_color_theme, displayed)
         checkText(R.string.pref_title_source_typeface, displayed)
@@ -54,7 +54,7 @@ class SettingsActivityTest {
         checkText(R.string.content_server, displayed)
     }
 
-    private fun testBottomViewsInPlace(displayed: Boolean) {
+    private fun verifyBottomViewsInPlace(displayed: Boolean) {
         checkText(R.string.view_statement_of_faith, displayed)
         checkText(R.string.pref_title_check_hardware_requirements, displayed)
     }

@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui
 
 import android.app.Instrumentation
 import androidx.core.content.FileProvider
@@ -17,14 +17,12 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.UiTestUtils.checkContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
-import com.door43.translationstudio.ui.tryPerform
+import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
-import com.door43.translationstudio.ui.tryCheck
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.mockkStatic
@@ -65,17 +63,17 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityNoTranslations() {
+    fun testNoTranslations() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
         }
     }
 
     @Test
-    fun testHomeActivityCreateTranslation() {
+    fun testCreateTranslation() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -88,9 +86,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityShowTranslationInfo() {
+    fun testShowTranslationInfo() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -106,9 +104,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityShowBackupDialog() {
+    fun testShowBackupDialog() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -127,9 +125,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityShowPrintDialog() {
+    fun testShowPrintDialog() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -143,9 +141,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityShowDeleteDialog() {
+    fun testShowDeleteDialog() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -158,13 +156,13 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityPublishTranslation() {
+    fun testPublishTranslation() {
         ActivityScenario.launch(HomeActivity::class.java).use {
             intending(hasComponent(PublishActivity::class.java.name)).respondWith(
                 Instrumentation.ActivityResult(0, null)
             )
 
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -177,9 +175,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityShowContributorsDialog() {
+    fun testShowContributorsDialog() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -197,9 +195,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityUpdateLanguage() {
+    fun testUpdateLanguage() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             createTargetTranslation()
@@ -207,20 +205,20 @@ class HomeActivityTest {
             onView(withId(R.id.infoButton)).tryPerform(click())
 
             onView(withId(R.id.change_language)).tryPerform(click())
-            testMainViewsInPlace(false)
+            verifyMainViewsInPlace(false)
 
             checkText(R.string.title_activity_new_target_translation, true)
 
             onView(withText("aab")).tryPerform(click())
 
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
         }
     }
 
     @Test
-    fun testHomeActivityOptionMenu() {
+    fun testOptionMenu() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             onView(withId(R.id.action_more)).tryPerform(click())
@@ -235,9 +233,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityUpdateDialog() {
+    fun testUpdateDialog() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             onView(withId(R.id.action_more)).tryPerform(click())
@@ -253,9 +251,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityImportDialog() {
+    fun testImportDialog() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             onView(withId(R.id.action_more)).tryPerform(click())
@@ -276,9 +274,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityFeedbackDialog() {
+    fun testFeedbackDialog() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             onView(withId(R.id.action_more)).tryPerform(click())
@@ -289,9 +287,9 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityLogout() {
+    fun testLogout() {
         ActivityScenario.launch(HomeActivity::class.java).use {
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             assertNotNull(profile.fullName)
@@ -304,13 +302,13 @@ class HomeActivityTest {
     }
 
     @Test
-    fun testHomeActivityOpenSettings() {
+    fun testOpenSettings() {
         ActivityScenario.launch(HomeActivity::class.java).use {
             intending(hasComponent(SettingsActivity::class.java.name)).respondWith(
                 Instrumentation.ActivityResult(0, null)
             )
 
-            testMainViewsInPlace(true)
+            verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
             onView(withId(R.id.action_more)).tryPerform(click())
@@ -320,7 +318,7 @@ class HomeActivityTest {
         }
     }
 
-    private fun testMainViewsInPlace(displayed: Boolean) {
+    private fun verifyMainViewsInPlace(displayed: Boolean) {
         checkContainsText("TestUser", displayed)
         checkText(R.string.title_activity_target_translations, displayed)
     }
