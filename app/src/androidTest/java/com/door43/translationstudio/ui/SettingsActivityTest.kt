@@ -30,22 +30,20 @@ class SettingsActivityTest {
 
     @Test
     fun testSettingsActivityShowContentServerAndScroll() {
-        val scenario = ActivityScenario.launch(SettingsActivity::class.java)
+        ActivityScenario.launch(SettingsActivity::class.java).use {
+            testTopViewsInPlace(true)
 
-        testTopViewsInPlace(true)
+            onView(withText(R.string.content_server)).tryPerform(click())
 
-        onView(withText(R.string.content_server)).tryPerform(click())
+            checkText("WACS", true)
+            checkText("DCS", true)
 
-        checkText("WACS", true)
-        checkText("DCS", true)
+            onView(withText(R.string.title_cancel)).tryPerform(click())
 
-        onView(withText(R.string.title_cancel)).tryPerform(click())
+            onView(withId(R.id.recycler_view)).tryPerform(swipeUp())
 
-        onView(withId(R.id.recycler_view)).tryPerform(swipeUp())
-
-        testBottomViewsInPlace(true)
-
-        scenario.close()
+            testBottomViewsInPlace(true)
+        }
     }
 
     private fun testTopViewsInPlace(displayed: Boolean) {

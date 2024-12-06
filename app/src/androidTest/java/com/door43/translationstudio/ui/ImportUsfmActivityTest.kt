@@ -85,21 +85,20 @@ class ImportUsfmActivityTest {
         initForImport(book, language)
         val intent = getIntentForTestFile(testFile)
 
-        val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
-        scenario.moveToState(Lifecycle.State.RESUMED)
+        ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
+            scenario.moveToState(Lifecycle.State.RESUMED)
 
-        checkText(R.string.title_activity_import_usfm_language, true)
-        onView(withText(language)).tryPerform(click())
+            checkText(R.string.title_activity_import_usfm_language, true)
+            onView(withText(language)).tryPerform(click())
 
-        //when
-        matchSummaryDialog(R.string.title_import_usfm_error, book, true)
-        rotateScreen(scenario)
+            //when
+            matchSummaryDialog(R.string.title_import_usfm_error, book, true)
+            rotateScreen(scenario)
 
-        //then
-        matchSummaryDialog(R.string.title_import_usfm_error, book, true)
-        rotateScreen(scenario)
-
-        scenario.close()
+            //then
+            matchSummaryDialog(R.string.title_import_usfm_error, book, true)
+            rotateScreen(scenario)
+        }
     }
 
     @Test
@@ -112,28 +111,27 @@ class ImportUsfmActivityTest {
         initForImport(book, language)
         val intent = getIntentForTestFile(testFile)
 
-        val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
-        scenario.moveToState(Lifecycle.State.RESUMED)
+        ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
+            scenario.moveToState(Lifecycle.State.RESUMED)
 
-        checkText(R.string.title_activity_import_usfm_language, true)
-        onView(withText(language)).tryPerform(click())
+            checkText(R.string.title_activity_import_usfm_language, true)
+            onView(withText(language)).tryPerform(click())
 
-        thenShouldShowMissingBookNameDialog()
-        rotateScreen(scenario)
+            thenShouldShowMissingBookNameDialog()
+            rotateScreen(scenario)
 
-        //when
-        thenShouldShowMissingBookNameDialog()
-        onView(withText(R.string.label_continue)).inRoot(isDialog()).tryPerform(click())
-        clickOnViewText("bible-nt")
-        clickOnViewText("Mark")
+            //when
+            thenShouldShowMissingBookNameDialog()
+            onView(withText(R.string.label_continue)).inRoot(isDialog()).tryPerform(click())
+            clickOnViewText("bible-nt")
+            clickOnViewText("Mark")
 
-        //then
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
+            //then
+            matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
 
-        rotateScreen(scenario)
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
-
-        scenario.close()
+            rotateScreen(scenario)
+            matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
+        }
     }
 
     @Test
@@ -146,26 +144,25 @@ class ImportUsfmActivityTest {
         initForImport(book, language)
         val intent = getIntentForTestFile(testFile)
 
-        val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
-        scenario.moveToState(Lifecycle.State.RESUMED)
+        ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
+            scenario.moveToState(Lifecycle.State.RESUMED)
 
-        checkText(R.string.title_activity_import_usfm_language, true)
-        onView(withText(language)).tryPerform(click())
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
+            checkText(R.string.title_activity_import_usfm_language, true)
+            onView(withText(language)).tryPerform(click())
+            matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
 
-        rotateScreen(scenario)
-        matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
+            rotateScreen(scenario)
+            matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
 
-        //when
-        onView(withText(R.string.label_continue)).inRoot(isDialog()).tryPerform(click())
+            //when
+            onView(withText(R.string.label_continue)).inRoot(isDialog()).tryPerform(click())
 
-        //then
-        matchImportResultsDialog()
+            //then
+            matchImportResultsDialog()
 
-        rotateScreen(scenario)
-        matchImportResultsDialog()
-
-        scenario.close()
+            rotateScreen(scenario)
+            matchImportResultsDialog()
+        }
     }
 
     @Test
@@ -178,22 +175,21 @@ class ImportUsfmActivityTest {
         initForImport(book, language)
         val intent = getIntentForTestFile(testFile)
 
-        val scenario = ActivityScenario.launch<ImportUsfmActivity>(intent)
-        scenario.moveToState(Lifecycle.State.RESUMED)
+        ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
+            scenario.moveToState(Lifecycle.State.RESUMED)
 
-        checkText(R.string.title_activity_import_usfm_language, true)
+            checkText(R.string.title_activity_import_usfm_language, true)
 
-        //when
-        onView(withText(language)).tryPerform(click())
+            //when
+            onView(withText(language)).tryPerform(click())
 
-        //then
-        matchSummaryDialog(R.string.title_import_usfm_error, book, true)
-        rotateScreen(scenario)
+            //then
+            matchSummaryDialog(R.string.title_import_usfm_error, book, true)
+            rotateScreen(scenario)
 
-        matchSummaryDialog(R.string.title_import_usfm_error, book, true)
-        rotateScreen(scenario)
-
-        scenario.close()
+            matchSummaryDialog(R.string.title_import_usfm_error, book, true)
+            rotateScreen(scenario)
+        }
     }
 
     /**

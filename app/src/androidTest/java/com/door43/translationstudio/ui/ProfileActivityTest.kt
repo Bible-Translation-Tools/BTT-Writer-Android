@@ -69,104 +69,91 @@ class ProfileActivityTest {
 
     @Test
     fun testProfileActivityCancel() {
-        val scenario = ActivityScenario.launch(ProfileActivity::class.java)
-
-        testMainViewsInPlace(true)
-
-        onView(withText(R.string.title_cancel)).tryPerform(click())
-
-        scenario.close()
+        ActivityScenario.launch(ProfileActivity::class.java).use {
+            testMainViewsInPlace(true)
+            onView(withText(R.string.title_cancel)).tryPerform(click())
+        }
     }
 
     @Test
     fun testProfileActivityLoginWithServerHasInternet() {
         every { App.isNetworkAvailable }.returns(true)
 
-        val scenario = ActivityScenario.launch(ProfileActivity::class.java)
+        ActivityScenario.launch(ProfileActivity::class.java).use {
+            testMainViewsInPlace(true)
 
-        testMainViewsInPlace(true)
+            onView(withText(R.string.login_doo43)).tryPerform(click())
 
-        onView(withText(R.string.login_doo43)).tryPerform(click())
+            testMainViewsInPlace(false)
 
-        testMainViewsInPlace(false)
+            checkText(R.string.server_account, true)
+            onView(withId(R.id.username)).check(matches(isDisplayed()))
+            onView(withId(R.id.password)).check(matches(isDisplayed()))
 
-        checkText(R.string.server_account, true)
-        onView(withId(R.id.username)).check(matches(isDisplayed()))
-        onView(withId(R.id.password)).check(matches(isDisplayed()))
+            onView(withId(R.id.ok_button)).tryPerform(click())
 
-        onView(withId(R.id.ok_button)).tryPerform(click())
-
-        checkDialogText(R.string.double_check_credentials, true)
-        onView(withText(R.string.label_ok)).tryPerform(click())
-        checkDialogText(R.string.double_check_credentials, false)
-
-        scenario.close()
+            checkDialogText(R.string.double_check_credentials, true)
+            onView(withText(R.string.label_ok)).tryPerform(click())
+            checkDialogText(R.string.double_check_credentials, false)
+        }
     }
 
     @Test
     fun testProfileActivityLoginWithServerNoInternet() {
         every { App.isNetworkAvailable }.returns(false)
 
-        val scenario = ActivityScenario.launch(ProfileActivity::class.java)
+        ActivityScenario.launch(ProfileActivity::class.java).use {
+            testMainViewsInPlace(true)
 
-        testMainViewsInPlace(true)
+            onView(withText(R.string.login_doo43)).tryPerform(click())
 
-        onView(withText(R.string.login_doo43)).tryPerform(click())
+            testMainViewsInPlace(false)
 
-        testMainViewsInPlace(false)
+            checkText(R.string.server_account, true)
+            onView(withId(R.id.username)).check(matches(isDisplayed()))
+            onView(withId(R.id.password)).check(matches(isDisplayed()))
 
-        checkText(R.string.server_account, true)
-        onView(withId(R.id.username)).check(matches(isDisplayed()))
-        onView(withId(R.id.password)).check(matches(isDisplayed()))
+            onView(withId(R.id.ok_button)).tryPerform(click())
 
-        onView(withId(R.id.ok_button)).tryPerform(click())
-
-        checkDialogText(R.string.internet_not_available, true)
-        onView(withText(R.string.label_ok)).tryPerform(click())
-        checkDialogText(R.string.internet_not_available, false)
-
-        scenario.close()
+            checkDialogText(R.string.internet_not_available, true)
+            onView(withText(R.string.label_ok)).tryPerform(click())
+            checkDialogText(R.string.internet_not_available, false)
+        }
     }
 
     @Test
     fun testProfileActivityCreateLocalAccount() {
-        val scenario = ActivityScenario.launch(ProfileActivity::class.java)
+        ActivityScenario.launch(ProfileActivity::class.java).use {
+            testMainViewsInPlace(true)
 
-        testMainViewsInPlace(true)
+            onView(withText(R.string.create_offline_profile)).tryPerform(click())
 
-        onView(withText(R.string.create_offline_profile)).tryPerform(click())
+            testMainViewsInPlace(false)
 
-        testMainViewsInPlace(false)
+            checkText(R.string.names_will_be_public, true)
+            onView(withId(R.id.full_name)).check(matches(isDisplayed()))
 
-        checkText(R.string.names_will_be_public, true)
-        onView(withId(R.id.full_name)).check(matches(isDisplayed()))
+            onView(withId(R.id.ok_button)).tryPerform(click())
 
-        onView(withId(R.id.ok_button)).tryPerform(click())
+            checkText(R.string.complete_required_fields, true)
 
-        checkText(R.string.complete_required_fields, true)
+            onView(withId(R.id.full_name)).tryPerform(typeText("TestUser"))
+            onView(withId(R.id.ok_button)).tryPerform(click())
+            checkDialogText(R.string.publishing_privacy_notice, true)
+            onView(withText(R.string.label_continue)).tryPerform(click())
+            onView(withId(R.id.accept_terms_btn)).tryPerform(click())
 
-        onView(withId(R.id.full_name)).tryPerform(typeText("TestUser"))
-        onView(withId(R.id.ok_button)).tryPerform(click())
-        checkDialogText(R.string.publishing_privacy_notice, true)
-        onView(withText(R.string.label_continue)).tryPerform(click())
-        onView(withId(R.id.accept_terms_btn)).tryPerform(click())
-
-        assertEquals("TestUser", profile.fullName)
-
-        scenario.close()
+            assertEquals("TestUser", profile.fullName)
+        }
     }
 
     @Test
     fun testProfileActivityCreateServerAccount() {
-        val scenario = ActivityScenario.launch(ProfileActivity::class.java)
-
-        testMainViewsInPlace(true)
-
-        onView(withText(R.string.register_door43)).tryPerform(click())
-
-        intended(hasAction(Intent.ACTION_VIEW))
-
-        scenario.close()
+        ActivityScenario.launch(ProfileActivity::class.java).use {
+            testMainViewsInPlace(true)
+            onView(withText(R.string.register_door43)).tryPerform(click())
+            intended(hasAction(Intent.ACTION_VIEW))
+        }
     }
 
     private fun testMainViewsInPlace(displayed: Boolean) {

@@ -2,54 +2,42 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_gravity="center"
-        android:gravity="center"
         android:layout_height="wrap_content"
-        android:weightSum="1">
+        android:gravity="center"
+        android:layout_gravity="center">
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_weight=".7"
-            android:layout_width="0dp"
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center">
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="wrap_content"
+            android:layout_margin="@dimen/card_margin">
+            <LinearLayout
+                style="@style/Widget.CardContent.Horizontal"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/card_margin">
-                <LinearLayout
-                    style="@style/Widget.CardContent.Horizontal"
-                    android:layout_width="match_parent"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
+                    android:text="@string/translations_welcome"
+                    android:textColor="@color/dark_primary_text"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
+            </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/translations_welcome"
-                        android:layout_weight="1"
-                        android:textColor="@color/dark_primary_text"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+        </androidx.cardview.widget.CardView>
 
-
-                </LinearLayout>
-
-
-            </androidx.cardview.widget.CardView>
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/start_new_translation"
-                android:elevation="2dp"
-                android:translationZ="6dp"
-                style="@style/Widget.Button.Blue"
-                android:id="@+id/extraAddTargetTranslationButton" />
-        </LinearLayout>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/start_new_translation"
+            android:elevation="2dp"
+            android:translationZ="6dp"
+            style="@style/Widget.Button.Blue"
+            android:id="@+id/extraAddTargetTranslationButton" />
     </LinearLayout>
 </ScrollView>

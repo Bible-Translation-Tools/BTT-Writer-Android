@@ -14,7 +14,8 @@ fun ViewInteraction.tryCheck(
     for (i in 1..retries) {
         try {
             return this.check(viewAssert)
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+        }
     }
     return this.check(viewAssert)
 }

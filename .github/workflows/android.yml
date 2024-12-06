@@ -106,7 +106,7 @@ jobs:
           arch: x86_64
           ram-size: 8192M
           heap-size: 512M
-          profile: pixel_6_pro
+          profile: pixel_tablet
           target: google_apis
           script: ./gradlew connectedCheck --stacktrace
 

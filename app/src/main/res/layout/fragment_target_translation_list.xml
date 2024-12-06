@@ -57,8 +57,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="1px"
                     android:background="@color/border_color"/>
-
-
             </LinearLayout>
 
             <LinearLayout
@@ -91,8 +89,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="1px"
                     android:background="@color/border_color"/>
-
-
             </LinearLayout>
 
         </RelativeLayout>
@@ -102,14 +98,13 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/list_item_height"
             android:gravity="center"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
+            android:layout_marginHorizontal="16dp"
             android:weightSum="2">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingStart="40dp"
+                android:paddingHorizontal="20dp"
                 android:layout_weight="1"
                 android:text="@string/Project"
                 android:textColor="@color/dark_secondary_text"/>
@@ -118,14 +113,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginStart="50dp"
+                android:layout_marginStart="25dp"
                 android:gravity="end|center_vertical"
                 android:layout_weight="1">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingStart="66dp"
+                    android:paddingHorizontal="33dp"
                     android:text="@string/language"
                     android:textColor="@color/dark_secondary_text"/>
 
@@ -133,7 +128,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:gravity="end"
-                    android:paddingEnd="36dp"
+                    android:paddingHorizontal="18dp"
                     android:layout_weight="1"
                     android:text="@string/progress"
                     android:textColor="@color/dark_secondary_text"/>

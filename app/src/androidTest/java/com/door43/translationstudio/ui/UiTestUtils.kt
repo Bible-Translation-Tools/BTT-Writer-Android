@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo
 import android.view.View
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.ViewInteraction
@@ -19,6 +20,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.containsStringIgnoringCase
+import org.hamcrest.Matchers.not
 
 
 object UiTestUtils {
@@ -112,7 +114,13 @@ object UiTestUtils {
         if (displayed) {
             interaction.tryCheck(matches(isDisplayed()))
         } else {
-            interaction.check(doesNotExist())
+            // Check if the view is still part of hierarchy and not visible
+            try {
+                interaction.check(matches(not(isDisplayed())))
+            } catch (_: NoMatchingViewException) {
+                // Check if it's not part of hierarchy
+                interaction.check(doesNotExist())
+            }
         }
     }
 }

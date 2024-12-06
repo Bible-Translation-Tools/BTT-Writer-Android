@@ -50,41 +50,35 @@ class TermsOfUseActivityTest {
     fun testTermsOfUseActivityAgreed() {
         assertEquals(0, profile.termsOfUseLastAccepted)
 
-        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
+        ActivityScenario.launch(TermsOfUseActivity::class.java).use {
+            testMainViewsInPlace(true)
+            onView(withText(R.string.license_accept)).tryPerform(click())
+            testMainViewsInPlace(false)
 
-        testMainViewsInPlace(true)
-        onView(withText(R.string.license_accept)).tryPerform(click())
-        testMainViewsInPlace(false)
-
-        val termsVersion = appContext.resources.getInteger(R.integer.terms_of_use_version)
-        assertEquals(termsVersion, profile.termsOfUseLastAccepted)
-
-        scenario.close()
+            val termsVersion = appContext.resources.getInteger(R.integer.terms_of_use_version)
+            assertEquals(termsVersion, profile.termsOfUseLastAccepted)
+        }
     }
 
     @Test
     fun testTermsOfUseActivityDenied() {
         assertTrue(profile.loggedIn)
 
-        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
+        ActivityScenario.launch(TermsOfUseActivity::class.java).use {
+            testMainViewsInPlace(true)
+            onView(withText(R.string.license_deny)).tryPerform(click())
 
-        testMainViewsInPlace(true)
-        onView(withText(R.string.license_deny)).tryPerform(click())
-
-        assertFalse(profile.loggedIn)
-
-        scenario.close()
+            assertFalse(profile.loggedIn)
+        }
     }
 
     @Test
     fun testTermsOfUseActivityProfileLoggedOut() {
         profile.fullName = null
 
-        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
-
-        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-
-        scenario.close()
+        ActivityScenario.launch(TermsOfUseActivity::class.java).use { scenario ->
+            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        }
     }
 
     @Test
@@ -92,53 +86,45 @@ class TermsOfUseActivityTest {
         val termsVersion = appContext.resources.getInteger(R.integer.terms_of_use_version)
         profile.termsOfUseLastAccepted = termsVersion
 
-        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
-
-        testMainViewsInPlace(false)
-
-        scenario.close()
+        ActivityScenario.launch(TermsOfUseActivity::class.java).use {
+            testMainViewsInPlace(false)
+        }
     }
 
     @Test
     fun testTermsOfUseActivityShowLicenceDialog() {
-        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
+        ActivityScenario.launch(TermsOfUseActivity::class.java).use {
+            testMainViewsInPlace(true)
 
-        testMainViewsInPlace(true)
+            onView(withText(R.string.view_license_agreement)).tryPerform(click())
 
-        onView(withText(R.string.view_license_agreement)).tryPerform(click())
-
-        checkText(R.string.label_close, true)
-        onView(withId(R.id.license_text)).check(matches(isDisplayed()))
-
-        scenario.close()
+            checkText(R.string.label_close, true)
+            onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+        }
     }
 
     @Test
     fun testTermsOfUseActivityShowGuidesDialog() {
-        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
+        ActivityScenario.launch(TermsOfUseActivity::class.java).use {
+            testMainViewsInPlace(true)
 
-        testMainViewsInPlace(true)
+            onView(withText(R.string.view_translation_guidelines)).tryPerform(click())
 
-        onView(withText(R.string.view_translation_guidelines)).tryPerform(click())
-
-        checkText(R.string.label_close, true)
-        onView(withId(R.id.license_text)).check(matches(isDisplayed()))
-
-        scenario.close()
+            checkText(R.string.label_close, true)
+            onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+        }
     }
 
     @Test
     fun testTermsOfUseActivityShowStatementOfFaithDialog() {
-        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
+        ActivityScenario.launch(TermsOfUseActivity::class.java).use {
+            testMainViewsInPlace(true)
 
-        testMainViewsInPlace(true)
+            onView(withText(R.string.view_statement_of_faith)).tryPerform(click())
 
-        onView(withText(R.string.view_statement_of_faith)).tryPerform(click())
-
-        checkText(R.string.label_close, true)
-        onView(withId(R.id.license_text)).check(matches(isDisplayed()))
-
-        scenario.close()
+            checkText(R.string.label_close, true)
+            onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+        }
     }
 
     private fun testMainViewsInPlace(displayed: Boolean) {

@@ -147,7 +147,6 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         //given
 
         val pageNum = 0
-        val hideKeyboard = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
         ActivityScenario.launch<NewTempLanguageActivity>(intent).use {
@@ -174,7 +173,6 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
         //given
 
         val pageNum = 0
-        val hideKeyboard = true
 
         val intent = Intent(appContext, NewTempLanguageActivity::class.java)
         ActivityScenario.launch<NewTempLanguageActivity>(intent).use {

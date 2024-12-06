@@ -56,14 +56,12 @@ class SplashScreenActivityTest {
         every { RuntimeWrapper.maxMemory() }
             .returns(App.MINIMUM_REQUIRED_RAM - 100)
 
-        val scenario = ActivityScenario.launch(SplashScreenActivity::class.java)
+        ActivityScenario.launch(SplashScreenActivity::class.java).use {
+            checkDialogText(R.string.slow_device, true)
+            onView(withText(R.string.label_continue)).tryPerform(click())
 
-        checkDialogText(R.string.slow_device, true)
-        onView(withText(R.string.label_continue)).tryPerform(click())
-
-        checkDialogText(R.string.slow_device, false)
-
-        scenario.close()
+            checkDialogText(R.string.slow_device, false)
+        }
     }
 
     @Test
@@ -73,12 +71,10 @@ class SplashScreenActivityTest {
         every { RuntimeWrapper.maxMemory() }
             .returns(App.MINIMUM_REQUIRED_RAM + 100)
 
-        val scenario = ActivityScenario.launch(SplashScreenActivity::class.java)
-
-        checkDialogText(R.string.slow_device, false)
-        checkText(R.string.welcome, true)
-        checkText(R.string.updating_app, true)
-
-        scenario.close()
+        ActivityScenario.launch(SplashScreenActivity::class.java).use {
+            checkDialogText(R.string.slow_device, false)
+            checkText(R.string.welcome, true)
+            checkText(R.string.updating_app, true)
+        }
     }
 }
