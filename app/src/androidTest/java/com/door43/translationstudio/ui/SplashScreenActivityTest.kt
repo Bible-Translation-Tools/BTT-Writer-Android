@@ -60,6 +60,7 @@ class SplashScreenActivityTest {
             checkDialogText(R.string.slow_device, true)
             onView(withText(R.string.label_continue)).tryPerform(click())
 
+            checkText(R.string.welcome, true)
             checkDialogText(R.string.slow_device, false)
         }
     }
@@ -72,9 +73,9 @@ class SplashScreenActivityTest {
             .returns(App.MINIMUM_REQUIRED_RAM + 100)
 
         ActivityScenario.launch(SplashScreenActivity::class.java).use {
-            checkDialogText(R.string.slow_device, false)
             checkText(R.string.welcome, true)
             checkText(R.string.updating_app, true)
+            checkDialogText(R.string.slow_device, false)
         }
     }
 }
