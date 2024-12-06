@@ -192,7 +192,7 @@ open class NewLanguageActivityUtils {
      */
     fun thenShouldHaveRequiredAnswerDialog() {
         val vi = onView(withText(R.string.missing_question_answer))
-        vi.check(matches(withText(R.string.missing_question_answer)))
+        vi.tryCheck(matches(withText(R.string.missing_question_answer)))
     }
 
     /**
@@ -375,7 +375,7 @@ open class NewLanguageActivityUtils {
         )
         onView(withId(R.id.recycler_view))
             .tryPerform(scrollToPosition<RecyclerView.ViewHolder>(questionNum))
-        interaction.check(matches(withText(text)))
+        interaction.tryCheck(matches(withText(text)))
     }
 
     /**
@@ -431,9 +431,9 @@ open class NewLanguageActivityUtils {
             )
         )
         if (isChecked) {
-            interaction.check(matches(isChecked()))
+            interaction.tryCheck(matches(isChecked()))
         } else {
-            interaction.check(matches(Matchers.not(isChecked())))
+            interaction.tryCheck(matches(Matchers.not(isChecked())))
         }
     }
 
@@ -478,13 +478,13 @@ open class NewLanguageActivityUtils {
             )
         )
         interaction.tryPerform(click())
-        interaction.check(matches(isChecked()))
+        interaction.tryCheck(matches(isChecked()))
         onView(
             allOf(
                 withId(oppositeResource),
                 withParent(parent)
             )
-        ).check(matches(Matchers.not(isChecked())))
+        ).tryCheck(matches(Matchers.not(isChecked())))
     }
 
     /**
@@ -540,22 +540,22 @@ open class NewLanguageActivityUtils {
     private fun verifyNavButtonSettings(pageCount: Int, pageNum: Int) {
         if (pageNum == 0) {
             onView(withId(R.id.previous_button))
-                .check(matches(Matchers.not(isDisplayed())))
+                .tryCheck(matches(Matchers.not(isDisplayed())))
         } else {
             onView(withId(R.id.previous_button))
-                .check(matches(isDisplayed()))
+                .tryCheck(matches(isDisplayed()))
         }
 
         if (pageNum < pageCount - 1) {
             onView(withId(R.id.next_button))
-                .check(matches(isDisplayed()))
+                .tryCheck(matches(isDisplayed()))
             onView(withId(R.id.done_button))
-                .check(matches(Matchers.not(isDisplayed())))
+                .tryCheck(matches(Matchers.not(isDisplayed())))
         } else {
             onView(withId(R.id.done_button))
-                .check(matches(isDisplayed()))
+                .tryCheck(matches(isDisplayed()))
             onView(withId(R.id.next_button))
-                .check(matches(Matchers.not(isDisplayed())))
+                .tryCheck(matches(Matchers.not(isDisplayed())))
         }
     }
 
@@ -571,7 +571,7 @@ open class NewLanguageActivityUtils {
             title: CharSequence
         ): ViewInteraction {
             return onView(isAssignableFrom(Toolbar::class.java))
-                .check(matches(withToolbarTitle(Matchers.`is`(title))))
+                .tryCheck(matches(withToolbarTitle(Matchers.`is`(title))))
         }
 
         /**
@@ -583,7 +583,7 @@ open class NewLanguageActivityUtils {
             title: CharSequence
         ): ViewInteraction {
             return onView(isAssignableFrom(Toolbar::class.java))
-                .check(matches(Matchers.not(withToolbarTitle(Matchers.`is`(title)))))
+                .tryCheck(matches(Matchers.not(withToolbarTitle(Matchers.`is`(title)))))
         }
 
         /**

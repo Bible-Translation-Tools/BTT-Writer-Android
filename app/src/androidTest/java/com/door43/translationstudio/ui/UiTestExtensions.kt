@@ -5,7 +5,9 @@ import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.ViewInteraction
 
 /**
- * Tries the number of [retries] to do [ViewInteraction.check] assertion
+ * Tries the number of [retries] to [ViewInteraction.check] assertion
+ * @param viewAssert The assertion to check
+ * @param retries The number of retries
  */
 fun ViewInteraction.tryCheck(
     viewAssert: ViewAssertion,
@@ -21,7 +23,9 @@ fun ViewInteraction.tryCheck(
 }
 
 /**
- * Tries the number of [retries] to do [ViewInteraction.perform] action
+ * Tries the number of [retries] to [ViewInteraction.perform] the action
+ * @param viewActions The actions to perform
+ * @param retries The number of retries
  */
 fun ViewInteraction.tryPerform(
     vararg viewActions: ViewAction,

@@ -87,8 +87,8 @@ class ProfileActivityTest {
             testMainViewsInPlace(false)
 
             checkText(R.string.server_account, true)
-            onView(withId(R.id.username)).check(matches(isDisplayed()))
-            onView(withId(R.id.password)).check(matches(isDisplayed()))
+            onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
+            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
 
             onView(withId(R.id.ok_button)).tryPerform(click())
 
@@ -110,8 +110,8 @@ class ProfileActivityTest {
             testMainViewsInPlace(false)
 
             checkText(R.string.server_account, true)
-            onView(withId(R.id.username)).check(matches(isDisplayed()))
-            onView(withId(R.id.password)).check(matches(isDisplayed()))
+            onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
+            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
 
             onView(withId(R.id.ok_button)).tryPerform(click())
 
@@ -131,7 +131,7 @@ class ProfileActivityTest {
             testMainViewsInPlace(false)
 
             checkText(R.string.names_will_be_public, true)
-            onView(withId(R.id.full_name)).check(matches(isDisplayed()))
+            onView(withId(R.id.full_name)).tryCheck(matches(isDisplayed()))
 
             onView(withId(R.id.ok_button)).tryPerform(click())
 

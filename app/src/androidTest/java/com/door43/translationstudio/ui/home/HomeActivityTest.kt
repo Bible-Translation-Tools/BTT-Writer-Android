@@ -6,7 +6,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
@@ -25,6 +24,7 @@ import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import com.door43.translationstudio.ui.tryPerform
 import com.door43.translationstudio.ui.publish.PublishActivity
+import com.door43.translationstudio.ui.tryCheck
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.mockkStatic
@@ -138,7 +138,7 @@ class HomeActivityTest {
 
             onView(withId(R.id.print_button)).tryPerform(click())
             checkDialogText(R.string.include_incomplete_frames, true)
-            onView(withId(R.id.print_button)).check(matches(isDisplayed()))
+            onView(withId(R.id.print_button)).tryCheck(matches(isDisplayed()))
         }
     }
 
@@ -191,8 +191,8 @@ class HomeActivityTest {
             checkDialogText("TestUser", true)
             checkDialogText(R.string.add_contributor, true)
 
-            onView(withId(R.id.name)).check(matches(isDisplayed()))
-            onView(withId(R.id.edit_button)).check(matches(isDisplayed()))
+            onView(withId(R.id.name)).tryCheck(matches(isDisplayed()))
+            onView(withId(R.id.edit_button)).tryCheck(matches(isDisplayed()))
         }
     }
 
@@ -268,10 +268,10 @@ class HomeActivityTest {
             checkDialogText(R.string.import_from_device, true)
 
             onView(withId(R.id.import_from_door43)).tryPerform(click())
-            onView(withId(R.id.search_button)).check(matches(isDisplayed()))
-            onView(withId(R.id.username)).check(matches(isDisplayed()))
-            onView(withId(R.id.translation_id)).check(matches(isDisplayed()))
-            onView(withId(R.id.list)).check(matches(isDisplayed()))
+            onView(withId(R.id.search_button)).tryCheck(matches(isDisplayed()))
+            onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
+            onView(withId(R.id.translation_id)).tryCheck(matches(isDisplayed()))
+            onView(withId(R.id.list)).tryCheck(matches(isDisplayed()))
         }
     }
 

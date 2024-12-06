@@ -99,7 +99,7 @@ class TermsOfUseActivityTest {
             onView(withText(R.string.view_license_agreement)).tryPerform(click())
 
             checkText(R.string.label_close, true)
-            onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+            onView(withId(R.id.license_text)).tryCheck(matches(isDisplayed()))
         }
     }
 
@@ -111,7 +111,7 @@ class TermsOfUseActivityTest {
             onView(withText(R.string.view_translation_guidelines)).tryPerform(click())
 
             checkText(R.string.label_close, true)
-            onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+            onView(withId(R.id.license_text)).tryCheck(matches(isDisplayed()))
         }
     }
 
@@ -123,7 +123,7 @@ class TermsOfUseActivityTest {
             onView(withText(R.string.view_statement_of_faith)).tryPerform(click())
 
             checkText(R.string.label_close, true)
-            onView(withId(R.id.license_text)).check(matches(isDisplayed()))
+            onView(withId(R.id.license_text)).tryCheck(matches(isDisplayed()))
         }
     }
 

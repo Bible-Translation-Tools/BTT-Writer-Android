@@ -228,8 +228,8 @@ class ImportUsfmActivityTest {
      * @param matchText
      */
     private fun clickOnViewText(matchText: String?) {
-        onView(withText(matchText)).check(matches(withText(matchText)))
-        onView(withText(matchText)).check(matches(withText(matchText)))
+        onView(withText(matchText)).tryCheck(matches(withText(matchText)))
+        onView(withText(matchText)).tryCheck(matches(withText(matchText)))
         onView(withText(matchText)).tryPerform(click())
     }
 

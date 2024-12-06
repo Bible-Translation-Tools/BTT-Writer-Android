@@ -13,6 +13,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.tryCheck
 import com.door43.translationstudio.ui.tryPerform
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
@@ -155,11 +156,11 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
             //when
             onView(withId(R.id.next_button)).tryPerform(click())
             onView(withText(R.string.missing_question_answer))
-                .check(matches(isDisplayed())) // dialog displayed
+                .tryCheck(matches(isDisplayed())) // dialog displayed
             onView(withText(R.string.missing_question_answer))
                 .tryPerform(pressBack()) // dismiss
             onView(withText(R.string.missing_question_answer))
-                .check(doesNotExist()) // dialog dismissed
+                .tryCheck(doesNotExist()) // dialog dismissed
 
             //then
             val pageNumExpected = 0
@@ -181,11 +182,11 @@ class QuestionnaireActivityTest : NewLanguageActivityUtils() {
             //when
             onView(withId(R.id.next_button)).tryPerform(click())
             onView(withText(R.string.missing_question_answer))
-                .check(matches(isDisplayed())) // dialog displayed
+                .tryCheck(matches(isDisplayed())) // dialog displayed
             onView(withText(R.string.missing_question_answer))
                 .tryPerform(pressBack()) // dismiss dialog
             onView(withText(R.string.missing_question_answer))
-                .check(doesNotExist()) // dialog dismissed
+                .tryCheck(doesNotExist()) // dialog dismissed
 
             //then
             verifyPageLayout(pageCount(), pageNum)
