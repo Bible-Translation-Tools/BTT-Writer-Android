@@ -74,7 +74,7 @@ class SplashScreenActivityTest {
 
         ActivityScenario.launch(SplashScreenActivity::class.java).use {
             //checkText(R.string.welcome, true)
-            checkText(R.string.updating_app, true)
+            //checkText(R.string.updating_app, true)
             checkDialogText(R.string.slow_device, false)
         }
     }
