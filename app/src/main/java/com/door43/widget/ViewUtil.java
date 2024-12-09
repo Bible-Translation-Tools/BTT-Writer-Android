@@ -47,7 +47,7 @@ public class ViewUtil {
      * @param color
      */
     public static void setSnackBarTextColor(Snackbar snack, int color) {
-        TextView tv = (TextView) snack.getView().findViewById(com.google.android.material.R.id.snackbar_text);
+        TextView tv = snack.getView().findViewById(com.google.android.material.R.id.snackbar_text);
         tv.setTextColor(color);
     }
 

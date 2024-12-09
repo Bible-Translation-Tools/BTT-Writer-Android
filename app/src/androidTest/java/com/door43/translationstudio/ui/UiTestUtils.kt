@@ -2,6 +2,8 @@ package com.door43.translationstudio.ui
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import android.os.SystemClock
+import android.view.MotionEvent
 import android.view.View
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
@@ -122,5 +124,58 @@ object UiTestUtils {
                 interaction.check(doesNotExist())
             }
         }
+    }
+
+    fun clickItemWithId(id: Int): ViewAction {
+        return object : ViewAction {
+            override fun getConstraints(): Matcher<View>? {
+                return null
+            }
+            override fun getDescription(): String {
+                return "Click on a child view with specified id."
+            }
+            override fun perform(uiController: UiController, view: View) {
+                val v: View = view.findViewById(id)
+                if (!v.performClick()) performTouchEvent(v)
+            }
+        }
+    }
+
+    /**
+     * Simulate a touch event at the center of a view.
+     */
+    private fun performTouchEvent(view: View) {
+        // Create an ACTION_DOWN MotionEvent
+        val downTime = SystemClock.uptimeMillis()
+        val eventTime = SystemClock.uptimeMillis()
+        val x = view.width / 2f // X coordinate - center of the view
+        val y = view.height / 2f // Y coordinate - center of the view
+        val metaState = 0
+
+        val motionEventDown = MotionEvent.obtain(
+            downTime,
+            eventTime,
+            MotionEvent.ACTION_DOWN,
+            x,
+            y,
+            metaState
+        )
+
+        val motionEventUp = MotionEvent.obtain(
+            downTime,
+            eventTime + 100,  // Simulate a slight delay for an up event
+            MotionEvent.ACTION_UP,
+            x,
+            y,
+            metaState
+        )
+
+        // Dispatch the events to the view
+        view.dispatchTouchEvent(motionEventDown)
+        view.dispatchTouchEvent(motionEventUp)
+
+        // Recycle the MotionEvent objects
+        motionEventDown.recycle()
+        motionEventUp.recycle()
     }
 }

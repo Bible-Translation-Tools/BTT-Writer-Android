@@ -749,16 +749,20 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     markChunkCompleted(item, item.target.getFormat());
                                     item.target.commit();
                                 } catch (Exception e) {
-                                    Logger.e(TAG,
-                                            "Failed to commit translation of " + item.target.getId(), e);
-
+                                    Logger.e(
+                                            TAG,
+                                            "Failed to commit translation of " + item.target.getId(),
+                                            e
+                                    );
                                     Snackbar snack = Snackbar.make(
-                                            holder.itemView.getRootView().findViewById(android.R.id.content),
+                                            holder.binding.getRoot(),
                                             e.getMessage(),
                                             Snackbar.LENGTH_LONG
                                     );
-                                    ViewUtil.setSnackBarTextColor(snack,
-                                            context.getResources().getColor(R.color.light_primary_text));
+                                    ViewUtil.setSnackBarTextColor(
+                                            snack,
+                                            context.getResources().getColor(R.color.light_primary_text)
+                                    );
                                     snack.show();
                                 }
 
@@ -1466,7 +1470,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 @Override
                 public void onClick(View view, Span span, int start, int end) {
                     Snackbar snack = Snackbar.make(
-                            view.getRootView().findViewById(android.R.id.content),
+                            holder.binding.getRoot(),
                             R.string.long_click_to_drag,
                             Snackbar.LENGTH_SHORT
                     );

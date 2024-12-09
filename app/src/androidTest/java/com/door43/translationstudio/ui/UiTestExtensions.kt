@@ -1,5 +1,7 @@
 package com.door43.translationstudio.ui
 
+import android.util.Log
+import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.ViewInteraction
@@ -16,7 +18,8 @@ fun ViewInteraction.tryCheck(
     for (i in 1..retries) {
         try {
             return this.check(viewAssert)
-        } catch (_: Throwable) {
+        } catch (e: NoMatchingViewException) {
+            Log.e("tryCheck", "Error checking assertion: $e")
         }
     }
     return this.check(viewAssert)
@@ -34,7 +37,9 @@ fun ViewInteraction.tryPerform(
     for (i in 1..retries) {
         try {
             return this.perform(*viewActions)
-        } catch (_: Throwable) {}
+        } catch (e: NoMatchingViewException) {
+            Log.e("tryPerform", "Error performing action: $e")
+        }
     }
     return this.perform(*viewActions)
 }

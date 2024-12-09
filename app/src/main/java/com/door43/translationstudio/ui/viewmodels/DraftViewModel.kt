@@ -48,7 +48,7 @@ class DraftViewModel @Inject constructor(
                     null,
                     0,
                     -1
-                )
+                ).filter { it.resource.slug != "udb" }
             }
         }
     }

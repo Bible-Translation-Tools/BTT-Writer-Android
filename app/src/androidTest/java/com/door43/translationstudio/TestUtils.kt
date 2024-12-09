@@ -20,6 +20,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.gogsclient.User
+import java.lang.reflect.Field
 
 /**
  * Created by joel on 2/25/2015.
@@ -39,6 +40,34 @@ object TestUtils {
         val json = JSONArray(sigJson)
         val sigObj = json.getJSONObject(0)
         return sigObj.getString("sig")
+    }
+
+    /**
+     * Sets a property of an object using reflection
+     * @param obj the source object
+     * @param fieldName the name of the field
+     * @param value the value to set
+     */
+    fun setPropertyReflection(obj: Any, fieldName: String, value: Any) {
+        val cls = obj::class.java
+        val field = findField(cls, fieldName)
+        field?.isAccessible = true
+        field?.set(obj, value)
+    }
+
+    /**
+     * Finds a field in a class hierarchy
+     */
+    private fun findField(cls: Class<*>, fieldName: String): Field? {
+        var field: Field? = null
+        try {
+            field = cls.getDeclaredField(fieldName)
+        } catch (e: NoSuchFieldException) {
+            if (cls.superclass != null) {
+                field = findField(cls.superclass, fieldName)
+            }
+        }
+        return field
     }
 
     /**
@@ -87,6 +116,26 @@ object TestUtils {
         assertNotNull("Import result should not be null", result)
         assertNotNull("importedSlug should not be null", result?.importedSlug)
 
+        return translator.getTargetTranslation(result!!.importedSlug)
+    }
+
+    fun importTargetTranslation(
+        importProjects: ImportProjects,
+        translator: Translator,
+        assetsProvider: AssetsProvider,
+        directoryProvider: IDirectoryProvider,
+        path: String
+    ): TargetTranslation? {
+        val projectFile = directoryProvider.createTempFile("project", ".tstudio")
+        assetsProvider.open(path).use { stream ->
+            projectFile.outputStream().use { out ->
+                stream.copyTo(out)
+            }
+        }
+        assertTrue("Project file should exist", projectFile.exists())
+        assertTrue("Project file should not be empty", projectFile.length() > 0)
+
+        val result = importProjects.importProject(projectFile, true)
         return translator.getTargetTranslation(result!!.importedSlug)
     }
 
