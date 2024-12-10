@@ -427,7 +427,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                     publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
                     publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION);
                     startActivity(publishIntent);
-                    // TRICKY: we may move back and forth between the publisher and translation activites
+                    // TRICKY: we may move back and forth between the publisher and translation activities
                     // so we finish to avoid filling the stack.
                     finish();
                     return true;

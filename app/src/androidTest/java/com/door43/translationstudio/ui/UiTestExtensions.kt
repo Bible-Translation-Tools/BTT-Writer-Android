@@ -27,19 +27,19 @@ fun ViewInteraction.tryCheck(
 
 /**
  * Tries the number of [retries] to [ViewInteraction.perform] the action
- * @param viewActions The actions to perform
+ * @param viewAction The action to perform
  * @param retries The number of retries
  */
 fun ViewInteraction.tryPerform(
-    vararg viewActions: ViewAction,
+    viewAction: ViewAction,
     retries: Int = 5
 ): ViewInteraction {
     for (i in 1..retries) {
         try {
-            return this.perform(*viewActions)
+            return this.perform(viewAction)
         } catch (e: NoMatchingViewException) {
             Log.e("tryPerform", "Error performing action: $e")
         }
     }
-    return this.perform(*viewActions)
+    return this.perform(viewAction)
 }

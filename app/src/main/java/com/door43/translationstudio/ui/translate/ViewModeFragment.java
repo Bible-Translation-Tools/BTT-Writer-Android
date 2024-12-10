@@ -115,10 +115,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         // TRICKY: there is a bug in Android's LinearLayoutManager
         layoutManager = new WrapContentLinearLayoutManager(getActivity());
-        binding.recyclerView.setLayoutManager(layoutManager);
-        binding.recyclerView.setItemAnimator(new DefaultItemAnimator());
-        binding.recyclerView.setAdapter(adapter);
-        binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.translationCards.setLayoutManager(layoutManager);
+        binding.translationCards.setItemAnimator(new DefaultItemAnimator());
+        binding.translationCards.setAdapter(adapter);
+        binding.translationCards.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 fingerScroll = true;
@@ -316,9 +316,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected int findViewHolderAdapterPosition(float x, float y) {
-        View view = binding.recyclerView.findChildViewUnder(x, y);
+        View view = binding.translationCards.findChildViewUnder(x, y);
         if (view != null) {
-            return binding.recyclerView.getChildAdapterPosition(view);
+            return binding.translationCards.getChildAdapterPosition(view);
         } else {
             return 0;
         }
@@ -330,7 +330,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected RecyclerView.ViewHolder getViewHolderForAdapterPosition(int position) {
-        return binding.recyclerView.findViewHolderForAdapterPosition(position);
+        return binding.translationCards.findViewHolderForAdapterPosition(position);
     }
 
     /**
@@ -340,7 +340,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     protected RecyclerView.ViewHolder getViewHolderSample() {
         if(layoutManager != null) {
             int position = getCurrentPosition();
-            return binding.recyclerView.findViewHolderForLayoutPosition(position);
+            return binding.translationCards.findViewHolderForLayoutPosition(position);
         } else {
             return null;
         }
@@ -367,7 +367,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     @Override
     public RecyclerView.ViewHolder getVisibleViewHolder(int position) {
         if(layoutManager != null) {
-            return binding.recyclerView.findViewHolderForAdapterPosition(position);
+            return binding.translationCards.findViewHolderForAdapterPosition(position);
         }
         return null;
     }
@@ -495,7 +495,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         fingerScroll = false;
         Log.d(TAG, "onScrollProgressUpdate: scrollProgress=" + scrollProgress + ", percent=" + percent);
         if(percent == 0) {
-            binding.recyclerView.scrollToPosition(scrollProgress);
+            binding.translationCards.scrollToPosition(scrollProgress);
         } else {
             fineScrollToPosition(scrollProgress, percent);
         }
@@ -509,14 +509,14 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      */
     private void fineScrollToPosition(int position, int percent) {
 
-        binding.recyclerView.scrollToPosition(position); // do coarse adjustment
+        binding.translationCards.scrollToPosition(position); // do coarse adjustment
 
-        View visibleChild = binding.recyclerView.getChildAt(0);
+        View visibleChild = binding.translationCards.getChildAt(0);
         if (visibleChild == null) {
             return;
         }
 
-        RecyclerView.ViewHolder holder = binding.recyclerView.getChildViewHolder(visibleChild);
+        RecyclerView.ViewHolder holder = binding.translationCards.getChildViewHolder(visibleChild);
         if(holder == null) {
             return;
         }
@@ -524,7 +524,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         int itemHeight = holder.itemView.getHeight();
         int offset = (int) (percent * itemHeight / 100);
 
-        LinearLayoutManager layoutManager = (LinearLayoutManager) binding.recyclerView.getLayoutManager();
+        LinearLayoutManager layoutManager = (LinearLayoutManager) binding.translationCards.getLayoutManager();
         if (layoutManager != null) {
             layoutManager.scrollToPositionWithOffset(position, -offset);
         }

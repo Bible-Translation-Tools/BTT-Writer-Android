@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.NoMatchingViewException
@@ -14,15 +15,19 @@ import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
+import org.hamcrest.Description
 import org.hamcrest.Matcher
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsStringIgnoringCase
 import org.hamcrest.Matchers.not
+import org.hamcrest.TypeSafeMatcher
 
 
 object UiTestUtils {
@@ -177,5 +182,54 @@ object UiTestUtils {
         // Recycle the MotionEvent objects
         motionEventDown.recycle()
         motionEventUp.recycle()
+    }
+
+    /**
+     * Check if the recyclerView's child is displayed or not
+     * @param parentMatcher - parent matcher
+     * @param childMatcher - child matcher. If you want a set of matchers for this child,
+     * combine them with Matcher.allOf(). For example:
+     * allOf(
+     *    withId(R.id.child_id),
+     *    isChecked()
+     * );
+     */
+    fun checkRecyclerViewChild(
+        parentMatcher: Matcher<View>,
+        childMatcher: Matcher<View>,
+        position: Int,
+        displayed: Boolean
+    ) {
+        val interaction = onView(
+            allOf(
+                childMatcher,
+                isDescendantOfA(nthChildOf(parentMatcher, position)),
+            )
+        )
+        if (displayed) {
+            interaction.tryCheck(matches(isDisplayed()))
+        } else {
+            try {
+                interaction.check(matches(not(isDisplayed())))
+            } catch (_: NoMatchingViewException) {
+                // Check if it's not part of hierarchy
+                interaction.check(doesNotExist())
+            }
+        }
+    }
+
+    private fun nthChildOf(parentMatcher: Matcher<View>, childPosition: Int): Matcher<View> {
+        return object : TypeSafeMatcher<View>() {
+            override fun describeTo(description: Description) {
+                description.appendText("Nth child of parent")
+                parentMatcher.describeTo(description)
+            }
+            override fun matchesSafely(view: View): Boolean {
+                val parent = view.parent
+                return parent is RecyclerView &&
+                        parentMatcher.matches(parent) &&
+                        parent.getChildAdapterPosition(view) == childPosition
+            }
+        }
     }
 }
