@@ -49,14 +49,13 @@ import com.door43.usecases.ImportProjects
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import io.mockk.MockKAnnotations
-import io.mockk.unmockkAll
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -78,18 +77,23 @@ class TargetTranslationActivityTest {
     @Inject lateinit var assetsProvider: AssetsProvider
     @Inject lateinit var translator: Translator
 
+    companion object {
+        @JvmStatic
+        @BeforeClass
+        fun setupClass() {
+            Looper.prepare()
+        }
+    }
+
     @Before
     fun setUp() {
         hiltRule.inject()
-        MockKAnnotations.init(this)
-        Looper.prepare()
     }
 
     @After
     fun tearDown() {
         directoryProvider.clearCache()
         directoryProvider.deleteTranslations()
-        unmockkAll()
     }
 
     @Test
