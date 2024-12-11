@@ -1572,8 +1572,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     text = TextUtils.concat(pin.toCharSequence(renderingProvider.getContext()), text);
                                     item.renderedTargetText = text;
                                     editText.setText(text);
-                                    String translation =
-                                            Translator.compileTranslation(editText.getText());
+                                    String translation = Translator.compileTranslation(editText.getText());
                                     item.target.applyFrameTranslation(frameTranslation, translation);
                                 }
                                 triggerNotifyItemChanged(position);

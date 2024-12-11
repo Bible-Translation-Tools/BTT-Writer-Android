@@ -54,7 +54,12 @@ class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
         // identify calling activity
         callingActivity = args.getInt(EXTRA_CALLING_ACTIVITY, 0)
         if (callingActivity == 0) {
-            throw InvalidParameterException("you must specify the calling activity")
+            Logger.e(
+                PublishActivity::class.java.simpleName,
+                "you must specify the calling activity"
+            )
+            finish()
+            return
         }
 
         // stage indicators
@@ -242,7 +247,7 @@ class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
     }
 
     /**
-     * show which fragment is selected by changeing background color
+     * show which fragment is selected by changing background color
      * @param button
      * @param selected
      */

@@ -11,6 +11,7 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
+import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -28,6 +29,7 @@ import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsStringIgnoringCase
 import org.hamcrest.Matchers.not
 import org.hamcrest.TypeSafeMatcher
+import org.junit.Assert.assertEquals
 
 
 object UiTestUtils {
@@ -216,6 +218,16 @@ object UiTestUtils {
                 interaction.check(doesNotExist())
             }
         }
+    }
+
+    fun checkRecyclerViewHasItemsCount(recyclerViewMatcher: Matcher<View>, count: Int) {
+        val assertion = ViewAssertion { view, noViewFoundException ->
+            if (noViewFoundException != null) { throw noViewFoundException; }
+            val recyclerView = view as RecyclerView
+            val adapter = recyclerView.adapter
+            assertEquals(adapter!!.itemCount, count)
+        }
+        onView(recyclerViewMatcher).tryCheck(assertion)
     }
 
     private fun nthChildOf(parentMatcher: Matcher<View>, childPosition: Int): Matcher<View> {

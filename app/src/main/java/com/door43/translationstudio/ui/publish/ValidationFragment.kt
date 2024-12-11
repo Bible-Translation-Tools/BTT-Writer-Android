@@ -52,12 +52,12 @@ class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListe
         with (binding) {
             adapter.setOnClickListener(this@ValidationFragment)
 
-            recyclerView.layoutManager = LinearLayoutManager(activity)
-            recyclerView.itemAnimator = DefaultItemAnimator()
-            recyclerView.adapter = adapter
+            validationItems.layoutManager = LinearLayoutManager(activity)
+            validationItems.itemAnimator = DefaultItemAnimator()
+            validationItems.adapter = adapter
 
             // display loading view
-            recyclerView.visibility = View.GONE
+            validationItems.visibility = View.GONE
             loadingLayout.visibility = View.VISIBLE
         }
 
@@ -72,7 +72,7 @@ class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListe
         viewModel.validations.observe(viewLifecycleOwner) {
             it?.let { validations ->
                 adapter.setValidations(validations)
-                binding.recyclerView.visibility = View.VISIBLE
+                binding.validationItems.visibility = View.VISIBLE
                 binding.loadingLayout.visibility = View.GONE
                 // TODO: animate
             }

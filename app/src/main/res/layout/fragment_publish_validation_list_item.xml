@@ -15,9 +15,9 @@
             android:id="@+id/stacked_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/stacked_card_thin_margin"
+            android:layout_marginStart="@dimen/stacked_card_thin_margin"
             android:layout_marginTop="@dimen/stacked_card_thin_margin"
-            android:layout_marginRight="@dimen/card_margin"
+            android:layout_marginEnd="@dimen/card_margin"
             android:layout_marginBottom="@dimen/card_margin"/>
 
         <androidx.cardview.widget.CardView
@@ -25,9 +25,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             card_view:cardElevation="3dp"
-            android:layout_marginLeft="@dimen/card_margin"
+            android:layout_marginStart="@dimen/card_margin"
             android:layout_marginTop="@dimen/card_margin"
-            android:layout_marginRight="@dimen/stacked_card_thin_margin"
+            android:layout_marginEnd="@dimen/stacked_card_thin_margin"
             android:layout_marginBottom="@dimen/stacked_card_thin_margin">
 
             <LinearLayout
@@ -42,8 +42,9 @@
                     android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
+
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:textSize="@dimen/title"
@@ -60,6 +61,7 @@
                         android:textSize="@dimen/button"
                         android:id="@+id/review_button"
                         android:elevation="2dp" />
+
                     <ImageView
                         android:id="@+id/icon"
                         android:layout_width="wrap_content"
@@ -88,7 +90,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/card_margin"
-        android:gravity="right">
+        android:gravity="end">
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -98,6 +100,6 @@
             android:textSize="@dimen/button"
             android:id="@+id/next_button"
             android:elevation="2dp"
-            android:layout_marginRight="@dimen/dialog_content_margin" />
+            android:layout_marginEnd="@dimen/dialog_content_margin" />
     </LinearLayout>
 </LinearLayout>
