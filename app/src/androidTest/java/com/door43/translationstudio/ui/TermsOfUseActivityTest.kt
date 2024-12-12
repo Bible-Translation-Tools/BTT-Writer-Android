@@ -76,9 +76,9 @@ class TermsOfUseActivityTest {
     fun testProfileLoggedOut() {
         profile.fullName = null
 
-        ActivityScenario.launch(TermsOfUseActivity::class.java).use { scenario ->
-            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
+        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test

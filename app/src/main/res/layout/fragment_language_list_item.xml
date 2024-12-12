@@ -14,12 +14,12 @@
         android:textColor="@color/dark_primary_text" />
 
     <TextView android:id="@+id/languageCode"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="en"
         android:textColor="@color/dark_secondary_text"
         android:layout_weight="1"
         android:textSize="@dimen/body"
-        android:gravity="right"/>
+        android:gravity="end"/>
 
 </LinearLayout>

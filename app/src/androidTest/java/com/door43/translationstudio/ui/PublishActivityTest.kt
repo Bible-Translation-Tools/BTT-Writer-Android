@@ -24,7 +24,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Translator.Companion.EXTRA_TARGET_TRANSLATION_ID
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkRecyclerViewChild
-import com.door43.translationstudio.ui.UiTestUtils.checkRecyclerViewHasItemsCount
+import com.door43.translationstudio.ui.UiTestUtils.checkListViewHasItemsCount
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.clickItemWithId
 import com.door43.translationstudio.ui.publish.PublishActivity
@@ -76,9 +76,9 @@ class PublishActivityTest {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, "1")
         intent.putExtra(EXTRA_CALLING_ACTIVITY, ACTIVITY_HOME)
 
-        ActivityScenario.launch<PublishActivity>(intent).use { scenario ->
-            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        val scenario = ActivityScenario.launch<PublishActivity>(intent)
+        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test
@@ -87,9 +87,9 @@ class PublishActivityTest {
         val intent = Intent(context, PublishActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<PublishActivity>(intent).use { scenario ->
-            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        val scenario = ActivityScenario.launch<PublishActivity>(intent)
+        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test
@@ -105,7 +105,7 @@ class PublishActivityTest {
             checkText(R.string.menu_upload_export, true)
 
             // 16th item is the "next" button
-            checkRecyclerViewHasItemsCount(withId(R.id.validation_items), 16)
+            checkListViewHasItemsCount(withId(R.id.validation_items), 16)
         }
     }
 
@@ -116,12 +116,12 @@ class PublishActivityTest {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_CALLING_ACTIVITY, ACTIVITY_HOME)
 
-        ActivityScenario.launch<PublishActivity>(intent).use { scenario ->
-            onView(withId(R.id.validation_items)).tryPerform(
-                actionOnItemAtPosition<ViewHolder>(4, clickItemWithId(R.id.review_button))
-            )
-            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        val scenario = ActivityScenario.launch<PublishActivity>(intent)
+        onView(withId(R.id.validation_items)).tryPerform(
+            actionOnItemAtPosition<ViewHolder>(4, clickItemWithId(R.id.review_button))
+        )
+        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test
@@ -139,7 +139,7 @@ class PublishActivityTest {
             checkText(R.string.menu_upload_export, true)
 
             checkRecyclerViewChild(withId(R.id.validation_items), withId(R.id.review_button), 1, false)
-            checkRecyclerViewHasItemsCount(withId(R.id.validation_items), 15)
+            checkListViewHasItemsCount(withId(R.id.validation_items), 15)
 
             val titleWarnings = context.getString(R.string.has_warnings, "Jude")
             checkText(titleWarnings, false)
@@ -164,7 +164,7 @@ class PublishActivityTest {
 
             checkRecyclerViewChild(withId(R.id.validation_items), withId(R.id.review_button), 1, true)
             checkRecyclerViewChild(withId(R.id.validation_items), withId(R.id.review_button), 4, false)
-            checkRecyclerViewHasItemsCount(withId(R.id.validation_items), 15)
+            checkListViewHasItemsCount(withId(R.id.validation_items), 15)
 
             val bookTitleWarnings = context.getString(R.string.has_warnings, "Jude")
             checkText(bookTitleWarnings, true)
@@ -195,7 +195,7 @@ class PublishActivityTest {
             checkText(R.string.menu_upload_export, true)
 
             checkRecyclerViewChild(withId(R.id.validation_items), withText(containsString("Jude")), 0, true)
-            checkRecyclerViewHasItemsCount(withId(R.id.validation_items), 2)
+            checkListViewHasItemsCount(withId(R.id.validation_items), 2)
 
             val bookWarnings = context.getString(R.string.has_warnings, "Jude")
             checkText(bookWarnings, false)
@@ -273,7 +273,7 @@ class PublishActivityTest {
             checkText(R.string.menu_upload_export, true)
 
             checkRecyclerViewChild(withId(R.id.validation_items), withId(R.id.review_button), 4, false)
-            checkRecyclerViewHasItemsCount(withId(R.id.validation_items), 16)
+            checkListViewHasItemsCount(withId(R.id.validation_items), 16)
         }
     }
 

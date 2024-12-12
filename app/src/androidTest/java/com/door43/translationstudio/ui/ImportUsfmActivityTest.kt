@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui
 
 import android.content.Context
 import android.content.Intent
-import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -86,8 +85,6 @@ class ImportUsfmActivityTest {
         val intent = getIntentForTestFile(testFile)
 
         ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
-            scenario.moveToState(Lifecycle.State.RESUMED)
-
             checkText(R.string.title_activity_import_usfm_language, true)
             onView(withText(language)).tryPerform(click())
 
@@ -112,8 +109,6 @@ class ImportUsfmActivityTest {
         val intent = getIntentForTestFile(testFile)
 
         ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
-            scenario.moveToState(Lifecycle.State.RESUMED)
-
             checkText(R.string.title_activity_import_usfm_language, true)
             onView(withText(language)).tryPerform(click())
 
@@ -145,8 +140,6 @@ class ImportUsfmActivityTest {
         val intent = getIntentForTestFile(testFile)
 
         ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
-            scenario.moveToState(Lifecycle.State.RESUMED)
-
             checkText(R.string.title_activity_import_usfm_language, true)
             onView(withText(language)).tryPerform(click())
             matchSummaryDialog(R.string.title_processing_usfm_summary, book, false)
@@ -176,8 +169,6 @@ class ImportUsfmActivityTest {
         val intent = getIntentForTestFile(testFile)
 
         ActivityScenario.launch<ImportUsfmActivity>(intent).use { scenario ->
-            scenario.moveToState(Lifecycle.State.RESUMED)
-
             checkText(R.string.title_activity_import_usfm_language, true)
 
             //when

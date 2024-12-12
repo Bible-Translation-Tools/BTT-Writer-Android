@@ -42,8 +42,8 @@ class TargetLanguageListFragment : BaseFragment(), Searchable {
                 ) ?: arrayOf()
                 adapter.setDisabledLanguages(disabledLanguages.toList())
             }
-            list.adapter = adapter
-            list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+            languages.adapter = adapter
+            languages.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
                 if (!adapter.isItemDisabled(position)) {
                     listener?.onItemClick(adapter.getItem(position))
                 }

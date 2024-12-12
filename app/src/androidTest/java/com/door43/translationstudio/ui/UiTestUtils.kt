@@ -5,6 +5,8 @@ import android.content.pm.ActivityInfo
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
+import android.widget.ListView
+import androidx.core.view.get
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
@@ -220,27 +222,42 @@ object UiTestUtils {
         }
     }
 
-    fun checkRecyclerViewHasItemsCount(recyclerViewMatcher: Matcher<View>, count: Int) {
+    /**
+     * Check if the listView's has [count] number of items
+     * @param listViewMatcher - list-view-like matcher
+     * @param count - number of items
+     */
+    fun checkListViewHasItemsCount(listViewMatcher: Matcher<View>, count: Int) {
         val assertion = ViewAssertion { view, noViewFoundException ->
-            if (noViewFoundException != null) { throw noViewFoundException; }
-            val recyclerView = view as RecyclerView
-            val adapter = recyclerView.adapter
-            assertEquals(adapter!!.itemCount, count)
+            if (noViewFoundException != null) {
+                throw noViewFoundException
+            }
+            when (view) {
+                is RecyclerView -> {
+                    assertEquals(view.adapter?.itemCount, count)
+                }
+                is ListView -> {
+                    assertEquals(view.adapter?.count, count)
+                }
+                else -> throw Exception("Parent is not supported")
+            }
         }
-        onView(recyclerViewMatcher).tryCheck(assertion)
+        onView(listViewMatcher).tryCheck(assertion)
     }
 
     private fun nthChildOf(parentMatcher: Matcher<View>, childPosition: Int): Matcher<View> {
         return object : TypeSafeMatcher<View>() {
             override fun describeTo(description: Description) {
-                description.appendText("Nth child of parent")
+                description.appendText("nth child of parent")
                 parentMatcher.describeTo(description)
             }
             override fun matchesSafely(view: View): Boolean {
                 val parent = view.parent
-                return parent is RecyclerView &&
-                        parentMatcher.matches(parent) &&
-                        parent.getChildAdapterPosition(view) == childPosition
+                return parentMatcher.matches(parent) && when (parent) {
+                    is RecyclerView -> parent.getChildAdapterPosition(view) == childPosition
+                    is ListView -> parent[childPosition] == view
+                    else -> false
+                }
             }
         }
     }

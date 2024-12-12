@@ -101,9 +101,9 @@ class TargetTranslationActivityTest {
         val intent = Intent(context, TargetTranslationActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, "1")
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use { scenario ->
-            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        val  scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test
@@ -452,12 +452,12 @@ class TargetTranslationActivityTest {
         val intent = Intent(context, TargetTranslationActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use { scenario ->
-            onView(withId(R.id.action_more)).tryPerform(click())
-            onView(withText(R.string.action_translations)).tryPerform(click())
+        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.action_translations)).tryPerform(click())
 
-            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test
@@ -467,12 +467,12 @@ class TargetTranslationActivityTest {
         val intent = Intent(context, TargetTranslationActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use { scenario ->
-            onView(withId(R.id.action_more)).tryPerform(click())
-            onView(withText(R.string.title_review)).tryPerform(click())
+        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.title_review)).tryPerform(click())
 
-            assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        assertEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test
@@ -534,13 +534,13 @@ class TargetTranslationActivityTest {
         val intent = Intent(context, TargetTranslationActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use { scenario ->
-            onView(withId(R.id.action_more)).tryPerform(click())
-            onView(withText(R.string.action_settings)).tryPerform(click())
+        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        onView(withId(R.id.action_more)).tryPerform(click())
+        onView(withText(R.string.action_settings)).tryPerform(click())
 
-            // Going to Settings doesn't finish current activity
-            assertNotEquals(Lifecycle.State.DESTROYED, scenario.state)
-        }
+        // Going to Settings doesn't finish current activity
+        assertNotEquals(Lifecycle.State.DESTROYED, scenario.state)
+        scenario.close()
     }
 
     @Test

@@ -322,8 +322,7 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
             // SourceLanguage sourceLanguage = App.getLibrary().getPreferredSourceLanguage(projectId, App.getDeviceLanguageCode()); // get project name
             // TODO: 3/2/2016 eventually the format will be specified in the project
 
-            val format =
-                if (projectId == "obs") TranslationFormat.MARKDOWN else TranslationFormat.USFM
+            val format = if (projectId == "obs") TranslationFormat.MARKDOWN else TranslationFormat.USFM
             val targetTranslation = viewModel.createTargetTranslation(
                 projectId,
                 ResourceType.TEXT,
