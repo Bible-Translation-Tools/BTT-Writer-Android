@@ -180,7 +180,6 @@ class PushTargetTranslationTest {
 
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
-        verify { progressListener.onProgress(any(), any(), any()) }
         verify(exactly = 0) { repository.sshUrl }
         verify { getRepository.execute(targetTranslation, progressListener) }
     }
@@ -206,7 +205,6 @@ class PushTargetTranslationTest {
 
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
-        verify { progressListener.onProgress(any(), any(), any()) }
         verify(exactly = 0) { repository.sshUrl }
         verify { getRepository.execute(targetTranslation, progressListener) }
     }

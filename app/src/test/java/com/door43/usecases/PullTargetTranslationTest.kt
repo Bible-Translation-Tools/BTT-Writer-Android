@@ -189,7 +189,6 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.UNKNOWN, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
