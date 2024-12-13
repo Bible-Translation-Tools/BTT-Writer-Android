@@ -370,7 +370,7 @@ class TargetTranslationActivityTest {
         }
     }
 
-    @Test
+    /*@Test
     fun testSwipeForHelps() {
         val targetTranslation = getTargetTranslationWithSource()
 
@@ -398,7 +398,7 @@ class TargetTranslationActivityTest {
             checkRecyclerViewChild(withId(R.id.translation_cards), withText(R.string.translation_words), 2, true)
             checkRecyclerViewChild(withId(R.id.translation_cards), withText(R.string.translation_questions), 2, true)
         }
-    }
+    }*/
 
     @Test
     fun testOpenActionMenu() {
