@@ -56,7 +56,7 @@ class DraftViewModel @Inject constructor(
     fun importDraft(sourceContainer: ResourceContainer) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(
-                application.getString(R.string.importing_draft)
+                application.getString(R.string.please_wait)
             )
             _importResult.value = withContext(Dispatchers.IO) {
                 importDraft.execute(sourceContainer)

@@ -101,9 +101,9 @@ class TargetTranslationActivityTest {
         val intent = Intent(context, TargetTranslationActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, "1")
 
-        val  scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test
@@ -456,8 +456,8 @@ class TargetTranslationActivityTest {
         onView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.action_translations)).tryPerform(click())
 
+        Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test
@@ -471,8 +471,8 @@ class TargetTranslationActivityTest {
         onView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.title_review)).tryPerform(click())
 
+        Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test
@@ -539,8 +539,8 @@ class TargetTranslationActivityTest {
         onView(withText(R.string.action_settings)).tryPerform(click())
 
         // Going to Settings doesn't finish current activity
+        Thread.sleep(3000)
         assertNotEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test

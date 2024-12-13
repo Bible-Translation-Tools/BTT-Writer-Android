@@ -141,6 +141,7 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
                         .setTitle(R.string.success)
                         .setMessage("The SSH keys have been regenerated")
                         .setNeutralButton(R.string.dismiss, null)
+                        .show()
                 }
             }
         }
@@ -192,7 +193,7 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
         Logger.i(TAG, "system resources check:\n$message")
 
         AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-            .setTitle("System Resources Check")
+            .setTitle(getString(R.string.system_resources_check))
             .setMessage(message)
             .setCancelable(false)
             .setNegativeButton(R.string.label_close, null)
@@ -202,7 +203,7 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
     override fun onDeleteLibrary() {
         val snack = Snackbar.make(
             findViewById(android.R.id.content),
-            "The library content was deleted",
+            getString(R.string.library_was_deleted),
             Snackbar.LENGTH_LONG
         )
         ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))

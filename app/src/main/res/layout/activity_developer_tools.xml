@@ -5,7 +5,6 @@
     android:background="@color/background_color"
     tools:context=".ui.devtools.DeveloperToolsActivity">
 
-
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
@@ -19,26 +18,32 @@
             android:paddingBottom="10dp"
             android:layout_height="wrap_content">
 
-            <TextView android:text="version" android:layout_width="wrap_content"
-                android:textSize="@dimen/title"
-                android:layout_weight="1"
-                android:textColor="@color/dark_secondary_text"
+            <TextView
                 android:id="@+id/appVersionText"
-                android:layout_height="wrap_content" />
-
-            <TextView android:text="build" android:layout_width="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:textSize="@dimen/title"
                 android:layout_weight="1"
                 android:textColor="@color/dark_secondary_text"
+                android:text="version" />
+
+            <TextView
                 android:id="@+id/appBuildNumberText"
-                android:layout_height="wrap_content" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/title"
+                android:layout_weight="1"
+                android:text="build"
+                android:textColor="@color/dark_secondary_text" />
         </LinearLayout>
 
-        <TextView android:text="udid" android:layout_width="wrap_content"
-            android:textSize="@dimen/title"
+        <TextView
             android:id="@+id/deviceUDIDText"
-            android:textColor="@color/dark_secondary_text"
-            android:layout_height="wrap_content" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/title"
+            android:text="udid"
+            android:textColor="@color/dark_secondary_text" />
     </LinearLayout>
 
     <ListView

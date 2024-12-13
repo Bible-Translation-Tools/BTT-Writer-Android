@@ -47,8 +47,6 @@ class PullTargetTranslation @Inject constructor(
         submitNewLanguageRequests.execute(progressListener)
 
         if (profile.gogsUser != null) {
-            progressListener?.onProgress(-1, max,"Downloading updates")
-
             try {
                 targetTranslation.commitSync()
             } catch (e: java.lang.Exception) {
@@ -67,7 +65,7 @@ class PullTargetTranslation @Inject constructor(
                     progressListener
                 )?.sshUrl
             }?.let { remoteUrl ->
-                return pull(repo, remoteUrl, targetTranslation, mergeStrategy)
+                return pull(repo, remoteUrl, targetTranslation, mergeStrategy, progressListener)
             }
         } else {
             return Result(Status.AUTH_FAILURE, context.getString(R.string.auth_failure_retry))
@@ -96,8 +94,11 @@ class PullTargetTranslation @Inject constructor(
         repo: Repo,
         remote: String,
         targetTranslation: TargetTranslation,
-        mergeStrategy: MergeStrategy
+        mergeStrategy: MergeStrategy,
+        progressListener: OnProgressListener?
     ): Result {
+        progressListener?.onProgress(-1, max,"Downloading updates")
+
         var status = Status.UNKNOWN
         val git: Git
         try {

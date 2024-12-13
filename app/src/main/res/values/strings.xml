@@ -995,4 +995,21 @@ Do you want to enable SD card access?  If so then:
     <string name="searching_repositories">Searching repositories</string>
     <string name="cloning_repository">Cloning repository</string>
     <string name="start_new_translation">Start a new translation</string>
+    <string name="regenerate_ssh_keys">Regenerate SSH keys</string>
+    <string name="regenerate_ssh_keys_hint">Discards and regenerates the ssh keys used for git</string>
+    <string name="read_debug_log">Read debugging log</string>
+    <string name="read_debug_log_hint">View the error logs that have been generated on this device.</string>
+    <string name="simulate_crash">Simulate crash</string>
+    <string name="check_system_resources">Check system resources</string>
+    <string name="check_system_resources_hint">Check for minimum system resources.</string>
+    <string name="delete_library">Delete Library</string>
+    <string name="delete_library_hint">Deletes the entire library database so it can be rebuilt from scratch</string>
+    <string name="recreate_keys">Regenerating keys</string>
+    <string name="deleting_library">Deleting library</string>
+    <string name="reading_logs">Reading logs</string>
+    <string name="simulating_crash">Simulating crash</string>
+    <string name="no_logs">There are no logs</string>
+    <string name="system_resources_check">System Resources Check</string>
+    <string name="library_was_deleted">The library content was deleted</string>
+    <string name="source_draft_translation_not_found">Source text for this draft translation not found.</string>
 </resources>

@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.DialogErrorLogBinding
 import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel
 import org.unfoldingword.tools.logger.Logger
@@ -69,14 +70,19 @@ class ErrorLogDialog : DialogFragment() {
         return binding.root
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     private fun setupObservers() {
-        viewModel.logs.observe(viewLifecycleOwner) {
+        viewModel.logs.observe(this) {
             it?.let { logs ->
                 if (logs.isNotEmpty()) {
                     adapter.setItems(logs)
                 } else {
                     dismiss()
-                    val toast = Toast.makeText(requireActivity(), "There are no logs", Toast.LENGTH_LONG)
+                    val toast = Toast.makeText(requireActivity(), getString(R.string.no_logs), Toast.LENGTH_LONG)
                     toast.setGravity(Gravity.TOP, 0, 0)
                     toast.show()
                 }

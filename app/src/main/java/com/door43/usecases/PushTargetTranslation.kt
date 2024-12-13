@@ -41,13 +41,11 @@ class PushTargetTranslation @Inject constructor(
         progressListener: OnProgressListener? = null
     ): Result {
         if (profile.gogsUser != null) {
-            progressListener?.onProgress(-1, max, "Uploading translation")
-
             val repository = getRepository.execute(targetTranslation, progressListener)
             try {
                 targetTranslation.commitSync()
                 val repo: Repo = targetTranslation.repo
-                return push(repo, repository!!.sshUrl)
+                return push(repo, repository!!.sshUrl, progressListener)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -59,7 +57,9 @@ class PushTargetTranslation @Inject constructor(
     }
 
     @Throws(JGitInternalException::class)
-    private fun push(repo: Repo, remote: String): Result {
+    private fun push(repo: Repo, remote: String, progressListener: OnProgressListener?): Result {
+        progressListener?.onProgress(-1, max, "Uploading translation")
+
         var status = Status.UNKNOWN
         val git: Git
         try {

@@ -18,6 +18,7 @@ import com.door43.translationstudio.ui.UiTestUtils.checkDialogContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
+import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import com.door43.util.FileUtilities.copyInputStreamToFile
 import com.door43.util.FileUtilities.deleteQuietly
 import dagger.hilt.android.qualifiers.ApplicationContext

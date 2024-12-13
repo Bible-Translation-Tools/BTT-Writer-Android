@@ -248,13 +248,11 @@ class ImportViewModel @Inject constructor(
 
     fun clearResults() {
         _registeredSSHKeys.value = null
+        _importFromUriResult.value = null
+        _importSourceResult.value = null
     }
 
     fun clearCloneResult() {
         _cloneRepoResult.value = null
-    }
-
-    fun clearImportUruResult() {
-        _importFromUriResult.value = null
     }
 }

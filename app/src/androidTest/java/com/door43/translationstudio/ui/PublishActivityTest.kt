@@ -77,8 +77,8 @@ class PublishActivityTest {
         intent.putExtra(EXTRA_CALLING_ACTIVITY, ACTIVITY_HOME)
 
         val scenario = ActivityScenario.launch<PublishActivity>(intent)
+        Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test
@@ -88,8 +88,8 @@ class PublishActivityTest {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         val scenario = ActivityScenario.launch<PublishActivity>(intent)
+        Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test
@@ -120,8 +120,8 @@ class PublishActivityTest {
         onView(withId(R.id.validation_items)).tryPerform(
             actionOnItemAtPosition<ViewHolder>(4, clickItemWithId(R.id.review_button))
         )
+        Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test

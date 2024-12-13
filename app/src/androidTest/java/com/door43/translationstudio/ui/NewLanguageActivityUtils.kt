@@ -236,6 +236,7 @@ open class NewLanguageActivityUtils {
 
             onView(withId(R.id.next_button)).tryPerform(click())
             verifyPageLayout(pageCount, i + 1)
+            rotateScreen(scenario)
         }
 
         fillPage(pageCount - 1, false, requiredOnly, valueForBooleans, hideKeyboard)

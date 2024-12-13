@@ -26,6 +26,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogImportFromDoor43Binding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.ui.home.ImportDialog.DialogShown
 import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions
 import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions.Companion.fromInt
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
@@ -57,7 +58,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
 
     private var targetTranslation: TargetTranslation? = null
     private var repositories = arrayListOf<RepositoryItem>()
-    private var dialogShown: DialogShown = DialogShown.NONE
+    private var dialogShown = DialogShown.NONE
 
     private val adapter by lazy { TranslationRepositoryAdapter(typography) }
     private var cloneHtmlUrl: String? = null
@@ -476,6 +477,11 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         _binding = null
         dialogs.forEach { it.dismiss() }
         dialogs.clear()
+    }
+
+    private fun clearResults() {
+        dialogShown = DialogShown.NONE
+        viewModel.clearResults()
     }
 
     /**

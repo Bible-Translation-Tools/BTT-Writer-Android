@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.draft
 
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -105,7 +106,7 @@ class DraftActivity : BaseActivity() {
         super.onStart()
         progressDialog = ProgressHelper.newInstance(
             supportFragmentManager,
-            R.string.loading,
+            R.string.importing_draft,
             false
         )
     }
@@ -117,7 +118,9 @@ class DraftActivity : BaseActivity() {
 
         sourceContainer = viewModel.getResourceContainer(draftTranslation.resourceContainerSlug)
         if (sourceContainer == null) {
+            Toast.makeText(this, getString(R.string.source_draft_translation_not_found), Toast.LENGTH_LONG).show()
             finish()
+            return
         }
 
         val sourceLanguage = viewModel.getSourceLanguage(sourceContainer!!)

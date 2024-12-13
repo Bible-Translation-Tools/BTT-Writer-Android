@@ -93,7 +93,7 @@ class DeveloperViewModel @Inject constructor(
 
     fun readErrorLog() {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress("Reading logs")
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_logs))
             _logs.value = Logger.getLogEntries()
             _progress.value = null
         }
@@ -101,8 +101,8 @@ class DeveloperViewModel @Inject constructor(
 
     private fun getGenerateSSHKeysItem(): ToolItem {
         return ToolItem(
-            "Regenerate SSH keys",
-            "Discards and regenerates the ssh keys used for git",
+            application.getString(R.string.regenerate_ssh_keys),
+            application.getString(R.string.regenerate_ssh_keys_hint),
             R.drawable.ic_security_secondary_24dp,
             action = ::generateSSHKeys
         )
@@ -110,8 +110,8 @@ class DeveloperViewModel @Inject constructor(
 
     private fun readLogItem(): ToolItem {
         return ToolItem(
-            "Read debugging log",
-            "View the error logs that have been generated on this device.",
+            application.getString(R.string.read_debug_log),
+            application.getString(R.string.read_debug_log_hint),
             R.drawable.ic_description_secondary_24dp
         ) {
             listener?.onReadLog()
@@ -120,18 +120,18 @@ class DeveloperViewModel @Inject constructor(
 
     private fun simulateCrashItem(): ToolItem {
         return ToolItem(
-            "Simulate crash",
+            application.getString(R.string.simulate_crash),
             "",
             R.drawable.ic_warning_secondary_24dp
         ) {
-            throw IllegalStateException("Simulating crash")
+            throw IllegalStateException(application.getString(R.string.simulating_crash))
         }
     }
 
     private fun checkSystemResourcesItem(): ToolItem {
         return ToolItem(
-            "Check system resources",
-            "Check for minimum system resources.",
+            application.getString(R.string.check_system_resources),
+            application.getString(R.string.check_system_resources_hint),
             R.drawable.ic_description_secondary_24dp
         ) {
             listener?.onCheckSystemResources()
@@ -140,8 +140,8 @@ class DeveloperViewModel @Inject constructor(
 
     private fun deleteLibraryItem(): ToolItem {
         return ToolItem(
-            "Delete Library",
-            "Deletes the entire library database so it can be rebuilt from scratch",
+            application.getString(R.string.delete_library),
+            application.getString(R.string.delete_library_hint),
             R.drawable.ic_delete_dark_secondary_24dp
         ) {
             deleteLibrary()
@@ -150,7 +150,7 @@ class DeveloperViewModel @Inject constructor(
 
     private fun generateSSHKeys() {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress("Regenerating keys")
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.recreate_keys))
             directoryProvider.generateSSHKeys()
             _keysRegenerated.value = true
             _progress.value = null
@@ -159,7 +159,7 @@ class DeveloperViewModel @Inject constructor(
 
     private fun deleteLibrary() {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress("Deleting library")
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.deleting_library))
             withContext(Dispatchers.IO) {
                 try {
                     library.tearDown()

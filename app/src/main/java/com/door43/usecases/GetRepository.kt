@@ -27,13 +27,18 @@ class GetRepository @Inject constructor(
 
         // Create repository
         // If it exists, will do nothing
-        createRepository.execute(translation)
+        createRepository.execute(translation, progressListener)
 
         // Search for repository
         // There could be more than one repo, which name can contain requested repo name.
         // For example: en_ulb_mat_txt, custom_en_ulb_mat_text, en_ulb_mat_text_l3, etc.
         // Setting limit to 100 should be enough to cover most of the cases.
-        val repositories = searchRepository.execute(profile.gogsUser!!.id, translation.id, 100)
+        val repositories = searchRepository.execute(
+            profile.gogsUser!!.id,
+            translation.id,
+            100,
+            progressListener
+        )
 
         if (repositories.isNotEmpty()) {
             for (repo in repositories) {

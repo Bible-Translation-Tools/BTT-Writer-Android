@@ -3,6 +3,8 @@ package com.door43.translationstudio.ui.dialogs
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -27,29 +29,45 @@ object ProgressHelper {
         private val fragment: ProgressFragment?
             get() = fragmentManager.findFragmentByTag(TAG) as? ProgressFragment
 
+        private val handler = Handler(Looper.getMainLooper())
+
         fun show() {
-            if (fragment == null) {
-                val fragment = ProgressFragment.newInstance(title, cancelable)
-                fragment.showNow(fragmentManager, TAG)
+            handler.post {
+                if (fragment == null) {
+                    if (!fragmentManager.isDestroyed) {
+                        val ft = fragmentManager.beginTransaction()
+                        val fragment = ProgressFragment.newInstance(title, cancelable)
+                        ft.add(fragment, TAG)
+                        ft.commitNow()
+                    }
+                }
             }
         }
 
         fun dismiss() {
-            fragment?.dismissNow()
+            handler.post {
+                if (!fragmentManager.isDestroyed) {
+                    fragment?.let {
+                        val ft = fragmentManager.beginTransaction()
+                        ft.remove(it)
+                        ft.commitNow()
+                    }
+                }
+            }
         }
 
         fun setMessage(message: String?) {
-            fragment?.setMessage(message)
+            handler.post { fragment?.setMessage(message) }
         }
 
         @SuppressLint("SetTextI18n")
         fun setProgress(progress: Int) {
-            fragment?.setProgress(progress)
+            handler.post { fragment?.setProgress(progress) }
         }
 
         fun setMax(value: Int) {
             max = value
-            fragment?.setMax(value)
+            handler.post { fragment?.setMax(value) }
         }
 
         private companion object {

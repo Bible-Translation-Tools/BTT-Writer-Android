@@ -60,7 +60,7 @@ class ImportUsfmViewModel @Inject constructor(
                     .fromFile(targetLanguage, file, progressListener)
                     .build()
             }
-            _progress.value = null
+            _progress.postValue(null)
         }
     }
 
@@ -78,7 +78,7 @@ class ImportUsfmViewModel @Inject constructor(
                     .fromUri(targetLanguage, uri, progressListener)
                     .build()
             }
-            _progress.value = null
+            _progress.postValue(null)
         }
     }
 
@@ -96,7 +96,7 @@ class ImportUsfmViewModel @Inject constructor(
                     .fromRc(targetLanguage, rcPath, progressListener)
                     .build()
             }
-            _progress.value = null
+            _progress.postValue(null)
         }
     }
 
@@ -129,7 +129,7 @@ class ImportUsfmViewModel @Inject constructor(
                 usfm.processText(book, name, promptForName, useName)
                 _usfm.value = usfm
             }
-            _progress.value = null
+            _progress.postValue(null)
         }
     }
 

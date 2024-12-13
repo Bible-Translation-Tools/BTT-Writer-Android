@@ -13,6 +13,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.UiTestUtils.checkText
+import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -77,8 +78,8 @@ class TermsOfUseActivityTest {
         profile.fullName = null
 
         val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
+        Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
-        scenario.close()
     }
 
     @Test

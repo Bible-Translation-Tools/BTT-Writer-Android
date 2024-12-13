@@ -261,6 +261,7 @@ class ImportDialog : DialogFragment() {
                             .setTitle(R.string.success)
                             .setMessage(R.string.title_import_success)
                             .setPositiveButton(R.string.dismiss, null)
+                            .setOnDismissListener { clearResults() }
                             .show()
                             .also(dialogs::add)
                     }
@@ -272,6 +273,7 @@ class ImportDialog : DialogFragment() {
                             .setPositiveButton(R.string.confirm) { _, _ ->
                                 result.targetDir?.let(viewModel::importSource)
                             }
+                            .setOnDismissListener { clearResults() }
                             .show()
                             .also(dialogs::add)
                     }
@@ -280,6 +282,7 @@ class ImportDialog : DialogFragment() {
                             .setTitle(R.string.could_not_import)
                             .setMessage(result.error)
                             .setPositiveButton(R.string.dismiss, null)
+                            .setOnDismissListener { clearResults() }
                             .show()
                             .also(dialogs::add)
                     }
@@ -421,12 +424,10 @@ class ImportDialog : DialogFragment() {
                 } else {
                     showImportResults(R.string.title_import_success, null)
                 }
-                viewModel.clearImportUruResult()
                 dismiss()
             }
             .setNeutralButton(R.string.title_cancel) { _, _ ->
                 resetToMasterBackup()
-                viewModel.clearImportUruResult()
                 dismiss()
             }
             .setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
@@ -435,13 +436,9 @@ class ImportDialog : DialogFragment() {
                 // re-import with overwrite
                 mergeSelection = MergeOptions.OVERWRITE
                 doProjectImport(importUri!!)
-                viewModel.clearImportUruResult()
                 dismiss()
             }
-            .setOnDismissListener {
-                dialogShown = DialogShown.NONE
-                viewModel.clearResults()
-            }
+            .setOnDismissListener { clearResults() }
             .show()
             .also(dialogs::add)
     }
@@ -492,9 +489,8 @@ class ImportDialog : DialogFragment() {
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.import_from_storage)
             .setMessage(message)
-            .setPositiveButton(R.string.dismiss) { _, _ ->
-                dialogShown = DialogShown.NONE
-            }
+            .setPositiveButton(R.string.dismiss, null)
+            .setOnDismissListener { clearResults() }
             .show()
             .also(dialogs::add)
     }
@@ -518,6 +514,12 @@ class ImportDialog : DialogFragment() {
         _binding = null
         dialogs.forEach { it.dismiss() }
         dialogs.clear()
+    }
+
+    private fun clearResults() {
+        dialogShown = DialogShown.NONE
+        dialogMessage = null
+        viewModel.clearResults()
     }
 
     /**
