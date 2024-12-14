@@ -234,7 +234,7 @@ tasks.register("copyDebugGithubToken") {
 tasks.register('uiTests', Exec) {
     commandLine "../gradlew",
             "connectedAndroidTest",
-            "-Pandroid.testInstrumentationRunnerArguments.annotation=androidx.test.filters.MediumTest"
+            "-Pandroid.testInstrumentationRunnerArguments.annotation=com.door43.translationstudio.UITest"
 }
 
 tasks.register('integrationTests', Exec) {

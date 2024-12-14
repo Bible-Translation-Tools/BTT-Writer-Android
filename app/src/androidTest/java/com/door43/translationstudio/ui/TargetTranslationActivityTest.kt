@@ -273,7 +273,7 @@ class TargetTranslationActivityTest {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use { scenario ->
+        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
@@ -310,7 +310,7 @@ class TargetTranslationActivityTest {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use { scenario ->
+        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
