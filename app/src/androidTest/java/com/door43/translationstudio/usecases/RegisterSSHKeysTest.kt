@@ -5,6 +5,7 @@ import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
+import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.GogsLogin
@@ -29,6 +30,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class RegisterSSHKeysTest {
 
     @get:Rule(order = 0)

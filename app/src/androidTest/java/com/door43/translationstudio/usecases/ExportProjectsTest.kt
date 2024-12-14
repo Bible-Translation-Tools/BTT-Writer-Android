@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
@@ -38,6 +39,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class ExportProjectsTest {
 
     @get:Rule(order = 0)

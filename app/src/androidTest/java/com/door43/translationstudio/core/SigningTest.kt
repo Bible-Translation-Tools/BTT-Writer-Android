@@ -1,8 +1,9 @@
-package com.door43.translationstudio
+package com.door43.translationstudio.core
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
+import com.door43.translationstudio.TestUtils
 import com.door43.util.signing.Crypto
 import com.door43.util.signing.SigningEntity
 import com.door43.util.signing.Status
@@ -118,13 +119,25 @@ class SigningTest {
     @Test
     @Throws(Exception::class)
     fun testVerifyFailedSESignatures() {
-        val verified = failedSE.verifyContent(TestUtils.loadSig(assetsProvider, "signing/sig/verified.sig"), data)
+        val verified = failedSE.verifyContent(
+            TestUtils.loadSig(
+                assetsProvider,
+                "signing/sig/verified.sig"
+            ), data)
         Assert.assertEquals(Status.FAILED, verified)
 
-        val failed = failedSE.verifyContent(TestUtils.loadSig(assetsProvider, "signing/sig/failed.sig"), data)
+        val failed = failedSE.verifyContent(
+            TestUtils.loadSig(
+                assetsProvider,
+                "signing/sig/failed.sig"
+            ), data)
         Assert.assertEquals(Status.FAILED, failed)
 
-        val error = failedSE.verifyContent(TestUtils.loadSig(assetsProvider, "signing/sig/error.sig"), data)
+        val error = failedSE.verifyContent(
+            TestUtils.loadSig(
+                assetsProvider,
+                "signing/sig/error.sig"
+            ), data)
         Assert.assertEquals(Status.FAILED, error)
     }
 
@@ -135,10 +148,18 @@ class SigningTest {
 //        Status verified = mErrorSE.verifyContent(Util.loadSig("tests/signing/sig/verified.sig"), mData);
 //        assertEquals(Status.ERROR, verified);
 
-        val failed = errorSE.verifyContent(TestUtils.loadSig(assetsProvider, "signing/sig/failed.sig"), data)
+        val failed = errorSE.verifyContent(
+            TestUtils.loadSig(
+                assetsProvider,
+                "signing/sig/failed.sig"
+            ), data)
         Assert.assertEquals(Status.FAILED, failed)
 
-        val error = errorSE.verifyContent(TestUtils.loadSig(assetsProvider, "signing/sig/error.sig"), data)
+        val error = errorSE.verifyContent(
+            TestUtils.loadSig(
+                assetsProvider,
+                "signing/sig/error.sig"
+            ), data)
         Assert.assertEquals(Status.ERROR, error)
     }
 }

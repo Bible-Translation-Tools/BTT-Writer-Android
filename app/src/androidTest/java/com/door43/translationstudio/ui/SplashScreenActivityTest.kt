@@ -8,6 +8,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
+import com.door43.translationstudio.UITest
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.util.RuntimeWrapper
@@ -27,6 +28,7 @@ import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
+@UITest
 class SplashScreenActivityTest {
 
     @Inject

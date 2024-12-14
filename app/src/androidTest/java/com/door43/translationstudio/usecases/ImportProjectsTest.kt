@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.usecases.ImportProjects
@@ -29,6 +30,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class ImportProjectsTest {
 
     @get:Rule(order = 0)

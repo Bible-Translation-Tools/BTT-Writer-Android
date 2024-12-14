@@ -6,6 +6,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
+import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.UpdateSource
@@ -32,6 +33,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class UpdateSourceTest {
 
     @get:Rule(order = 0)

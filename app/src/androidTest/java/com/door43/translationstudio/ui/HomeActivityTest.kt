@@ -16,6 +16,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.R
+import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.UiTestUtils.checkContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
@@ -38,6 +39,7 @@ import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
+@UITest
 class HomeActivityTest {
 
     @get:Rule

@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
+import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.SearchGogsRepositories
 import com.door43.usecases.SearchGogsUsers
@@ -23,6 +24,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class SearchGogsRepositoriesTest {
 
     @get:Rule(order = 0)

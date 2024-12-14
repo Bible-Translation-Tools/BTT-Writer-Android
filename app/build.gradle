@@ -37,6 +37,7 @@ android {
         versionCode 19
         versionName "1.4.0"
 
+        testBuildType "verify"
         testInstrumentationRunner "com.door43.translationstudio.CustomTestRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
     }
@@ -54,12 +55,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             testProguardFile('proguard-rules.pro')
         }
+        verify {
+            initWith debug
+            applicationIdSuffix = ".test"
+        }
         applicationVariants.all { variant ->
             if (variant.buildType.name == "release") {
                 variant.outputs.all {
                     outputFileName = "release.apk"
                 }
-            } else if (variant.buildType.name == "debug") {
+            } else {
                 variant.mergeResourcesProvider.configure { mergeTask ->
                     mergeTask.dependsOn tasks.named("copyDebugGithubToken")
                 }
@@ -175,7 +180,7 @@ dependencies {
     androidTestImplementation 'androidx.appcompat:appcompat:1.7.0'
     androidTestImplementation 'androidx.legacy:legacy-support-v4:1.0.0'
     androidTestImplementation 'com.google.android.material:material:1.12.0'
-    androidTestAnnotationProcessor 'androidx.annotation:annotation:1.9.1'
+    kapt 'androidx.annotation:annotation:1.9.1'
     androidTestImplementation 'org.hamcrest:hamcrest:3.0'
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test:rules:1.6.1'
@@ -224,4 +229,16 @@ tasks.register("copyDebugGithubToken") {
             println "$destinationFile copied for Debug build"
         }
     }
+}
+
+tasks.register('uiTests', Exec) {
+    commandLine "../gradlew",
+            "connectedAndroidTest",
+            "-Pandroid.testInstrumentationRunnerArguments.annotation=androidx.test.filters.MediumTest"
+}
+
+tasks.register('integrationTests', Exec) {
+    commandLine "../gradlew",
+            "connectedAndroidTest",
+            "-Pandroid.testInstrumentationRunnerArguments.annotation=com.door43.translationstudio.IntegrationTest"
 }

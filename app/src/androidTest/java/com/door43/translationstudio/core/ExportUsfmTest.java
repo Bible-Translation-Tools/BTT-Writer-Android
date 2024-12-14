@@ -15,6 +15,7 @@ import com.door43.data.AssetsProvider;
 import com.door43.data.IDirectoryProvider;
 import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.App;
+import com.door43.translationstudio.IntegrationTest;
 import com.door43.usecases.ExportProjects;
 import com.door43.util.FileUtilities;
 import com.door43.util.Zip;
@@ -51,6 +52,7 @@ import dagger.hilt.android.testing.HiltAndroidTest;
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
+@IntegrationTest
 public class ExportUsfmTest {
 
     @Rule

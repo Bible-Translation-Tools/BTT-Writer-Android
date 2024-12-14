@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.door43.data.AssetsProvider;
+import com.door43.translationstudio.IntegrationTest;
 import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
 import com.door43.translationstudio.rendering.RenderingGroup;
 import com.door43.util.FileUtilities;
@@ -29,6 +30,7 @@ import dagger.hilt.android.testing.HiltAndroidTest;
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
+@IntegrationTest
 public class UsxBrokenRenderTest {
 
     @Rule

@@ -18,6 +18,8 @@ android {
     buildTypes {
         applicationVariants {
         }
+        verify {
+        }
     }
     kotlinOptions {
         jvmTarget = '17'

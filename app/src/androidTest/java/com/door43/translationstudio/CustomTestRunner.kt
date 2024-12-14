@@ -1,16 +1,17 @@
-package com.door43.translationstudio;
+package com.door43.translationstudio
 
-import android.app.Application;
-import android.content.Context;
+import android.app.Application
+import android.content.Context
+import androidx.test.runner.AndroidJUnitRunner
+import dagger.hilt.android.testing.HiltTestApplication
 
-import androidx.test.runner.AndroidJUnitRunner;
-
-import dagger.hilt.android.testing.HiltTestApplication;
-
-public final class CustomTestRunner extends AndroidJUnitRunner {
-    @Override
-    public Application newApplication(ClassLoader cl, String className, Context context)
-            throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        return super.newApplication(cl, HiltTestApplication.class.getName(), context);
+class CustomTestRunner : AndroidJUnitRunner() {
+    @Throws(
+        InstantiationException::class,
+        IllegalAccessException::class,
+        ClassNotFoundException::class
+    )
+    override fun newApplication(cl: ClassLoader, className: String, context: Context): Application {
+        return super.newApplication(cl, HiltTestApplication::class.java.name, context)
     }
 }

@@ -15,6 +15,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.TestUtils
+import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.Profile
@@ -46,6 +47,7 @@ import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
+@UITest
 class PublishActivityTest {
 
     @Inject @ApplicationContext lateinit var context: Context

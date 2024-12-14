@@ -25,10 +25,12 @@ import androidx.test.espresso.matcher.ViewMatchers.withHint
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.LargeTest
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.TestUtils
+import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
@@ -64,6 +66,8 @@ import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
+@LargeTest
+@UITest
 class TargetTranslationActivityTest {
 
     @get:Rule
@@ -370,7 +374,7 @@ class TargetTranslationActivityTest {
         }
     }
 
-    /*@Test
+    @Test
     fun testSwipeForHelps() {
         val targetTranslation = getTargetTranslationWithSource()
 
@@ -398,7 +402,7 @@ class TargetTranslationActivityTest {
             checkRecyclerViewChild(withId(R.id.translation_cards), withText(R.string.translation_words), 2, true)
             checkRecyclerViewChild(withId(R.id.translation_cards), withText(R.string.translation_questions), 2, true)
         }
-    }*/
+    }
 
     @Test
     fun testOpenActionMenu() {

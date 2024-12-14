@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App
+import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.TestUtils.getTokenStub
 import com.door43.translationstudio.core.Profile
@@ -30,6 +31,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class GogsLoginLogoutTest {
 
     @get:Rule(order = 0)

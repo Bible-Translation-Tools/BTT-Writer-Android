@@ -6,6 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.IntegrationTest
 import com.door43.usecases.UploadCrashReport
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -27,6 +28,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class UploadCrashReportTest {
 
     @get:Rule(order = 0)

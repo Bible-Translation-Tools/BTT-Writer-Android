@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.R
 import com.door43.usecases.UpdateCatalogs
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,6 +30,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class UpdateCatalogsTest {
 
     @get:Rule(order = 0)

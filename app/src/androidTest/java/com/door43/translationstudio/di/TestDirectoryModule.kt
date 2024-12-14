@@ -3,6 +3,7 @@ package com.door43.translationstudio.di
 import android.content.Context
 import com.door43.data.IDirectoryProvider
 import com.door43.di.DirectoryModule
+import com.door43.translationstudio.DirectoryProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,6 +22,6 @@ object TestDirectoryModule {
     fun provideDirectoryProvider(
         @ApplicationContext context: Context
     ): IDirectoryProvider {
-        return TestDirectoryProvider(context)
+        return DirectoryProvider(context)
     }
 }

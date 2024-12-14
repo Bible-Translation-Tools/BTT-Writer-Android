@@ -13,6 +13,7 @@ import androidx.test.filters.LargeTest
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
+import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
@@ -36,6 +37,7 @@ import javax.inject.Inject
 @RunWith(AndroidJUnit4::class)
 @LargeTest
 @HiltAndroidTest
+@UITest
 class ImportUsfmActivityTest {
     @Inject
     @ApplicationContext

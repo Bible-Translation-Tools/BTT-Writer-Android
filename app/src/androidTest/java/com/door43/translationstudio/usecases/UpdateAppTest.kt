@@ -7,6 +7,7 @@ import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setPrivatePref
+import com.door43.translationstudio.IntegrationTest
 import com.door43.usecases.UpdateApp
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -21,6 +22,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class UpdateAppTest {
 
     @get:Rule(order = 0)

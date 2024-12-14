@@ -2,6 +2,7 @@ package com.door43.translationstudio.usecases
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.translationstudio.IntegrationTest
 import com.door43.usecases.CheckForLatestRelease
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -17,6 +18,7 @@ import javax.inject.Inject
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
+@IntegrationTest
 class CheckForLatestReleaseTest {
 
     @get:Rule(order = 0)

@@ -23,6 +23,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
 import com.door43.translationstudio.TestUtils
+import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
@@ -51,6 +52,7 @@ import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
+@UITest
 class NewTargetTranslationActivityTest {
 
     @ApplicationContext @Inject lateinit var context: Context

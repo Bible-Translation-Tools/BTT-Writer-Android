@@ -108,7 +108,7 @@ jobs:
           heap-size: 512M
           profile: pixel_c
           target: google_apis
-          script: ./gradlew connectedCheck --stacktrace
+          script: ./gradlew integrationTests --stacktrace
 
       - name: Upload results
         if: ${{ always() }}
