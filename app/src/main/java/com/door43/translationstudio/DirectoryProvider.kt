@@ -12,7 +12,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-open class DirectoryProvider (private val context: Context) : IDirectoryProvider {
+class DirectoryProvider (private val context: Context) : IDirectoryProvider {
 
     companion object {
         const val TAG = "DirectoryProvider"

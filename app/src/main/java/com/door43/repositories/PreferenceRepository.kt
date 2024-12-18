@@ -12,7 +12,7 @@ import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import java.util.Locale
 
-open class PreferenceRepository (private val context: Context) : IPreferenceRepository {
+class PreferenceRepository (private val context: Context) : IPreferenceRepository {
 
     override var lastFocusTargetTranslation: String?
         get() = privatePrefs.getString(lastTranslation, null)
@@ -34,10 +34,10 @@ open class PreferenceRepository (private val context: Context) : IPreferenceRepo
      * Returns an instance of the user preferences.
      * This is just the default shared preferences
      */
-    protected open val defaultPrefs: SharedPreferences
+    private val defaultPrefs: SharedPreferences
         get() = PreferenceManager.getDefaultSharedPreferences(context)
 
-    protected open val privatePrefs: SharedPreferences
+    private val privatePrefs: SharedPreferences
         get() = context.getSharedPreferences(privatePreferencesName, MODE_PRIVATE)
 
     override fun <T> getDefaultPref(key: String, type: Class<T>): T? {
