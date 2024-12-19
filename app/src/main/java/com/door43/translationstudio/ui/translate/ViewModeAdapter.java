@@ -22,6 +22,7 @@ import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
+import com.door43.translationstudio.databinding.RemovableTabBinding;
 import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
@@ -417,21 +418,19 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     }
 
     public View createRemovableTabLayout(final OnViewModeListener listener, String tag, String title) {
-        View root = LayoutInflater.from(context).inflate(R.layout.removable_tab, null);
-        TextView tabText = root.findViewById(R.id.tab);
-        tabText.setText(title);
+        RemovableTabBinding binding = RemovableTabBinding.inflate(LayoutInflater.from(context));
 
-        Button closeBtn = root.findViewById(R.id.close);
-        closeBtn.setTag(tag);
+        binding.tab.setText(title);
+        binding.close.setTag(tag);
 
-        closeBtn.setOnClickListener(view -> {
+        binding.close.setOnClickListener(view -> {
             final String sourceTranslationId = (String) view.getTag();
             if (listener != null) {
                 listener.onSourceRemoveButtonClicked(sourceTranslationId);
             }
         });
 
-        return root;
+        return binding.getRoot();
     }
 
     /**

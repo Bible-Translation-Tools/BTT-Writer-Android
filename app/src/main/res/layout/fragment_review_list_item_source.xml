@@ -27,21 +27,21 @@
         android:padding="0dp"
         android:gravity="top">
 
-        <FrameLayout
+        <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp"
             android:layout_marginBottom="@dimen/dialog_controls_margin"
-            android:layout_marginLeft="@dimen/card_margin"
-            android:layout_marginRight="@dimen/card_margin"
+            android:layout_marginHorizontal="@dimen/card_margin"
             android:padding="0dp">
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/source_translation_tabs"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="@dimen/card_tab_icon_width"
+                android:layout_weight="1"
+                android:layout_marginEnd="10dp"
                 android:layout_gravity="top"
                 app:tabSelectedTextColor="@color/dark_primary_text"
                 app:tabTextColor="@color/dark_disabled_text"
@@ -51,11 +51,11 @@
                 android:id="@+id/new_tab_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right|center"
+                android:layout_gravity="end|center"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_tab_edit_secondary_24dp"
                 android:padding="@dimen/dialog_controls_margin" />
-        </FrameLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:visibility="gone"

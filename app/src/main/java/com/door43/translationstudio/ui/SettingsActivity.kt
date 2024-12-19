@@ -6,6 +6,9 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -92,6 +95,16 @@ class SettingsActivity : AppCompatActivity() {
             override fun compare(strA: String, strB: String): Int {
                 return strA.compareTo(strB, ignoreCase = true)
             }
+        }
+
+        override fun onCreateView(
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
+        ): View {
+            val view = super.onCreateView(inflater, container, savedInstanceState)
+            view.fitsSystemWindows = true
+            return view
         }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
