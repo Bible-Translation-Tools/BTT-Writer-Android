@@ -17,6 +17,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -77,6 +78,7 @@ class SettingsActivity : AppCompatActivity() {
 
         @Inject lateinit var directoryProvider: IDirectoryProvider
         @Inject lateinit var prefRepository: IPreferenceRepository
+        @Inject lateinit var assetsProvider: AssetsProvider
 
         var progressDialog: ProgressHelper.ProgressDialog? = null
         private val viewModel: SettingsViewModel by viewModels()
@@ -125,12 +127,11 @@ class SettingsActivity : AppCompatActivity() {
 
             setPreferenceSummaryFromValue(KEY_PREF_COLOR_THEME)
 
-            val am = resources.assets
             var fileList: Array<String>? = null
             val entries = ArrayList<String>()
             val entryValues = ArrayList<String>()
             try {
-                fileList = am.list("fonts")
+                fileList = assetsProvider.list("fonts")
             } catch (e: IOException) {
                 Logger.e(this.javaClass.name, "failed to load font assets", e)
             }

@@ -1,6 +1,7 @@
 package com.door43.translationstudio
 
 import android.content.Context
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.udid
 import com.door43.util.FileUtilities
@@ -12,7 +13,10 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-class DirectoryProvider (private val context: Context) : IDirectoryProvider {
+class DirectoryProvider (
+    private val context: Context,
+    private val assetsProvider: AssetsProvider
+) : IDirectoryProvider {
 
     companion object {
         const val TAG = "DirectoryProvider"
@@ -124,7 +128,7 @@ class DirectoryProvider (private val context: Context) : IDirectoryProvider {
         if (!cacheFile.exists()) {
             cacheFile.parentFile?.mkdirs()
             try {
-                context.assets.open(path).use { inputStream ->
+                assetsProvider.open(path).use { inputStream ->
                     FileOutputStream(cacheFile).use { outputStream ->
                         val buf = ByteArray(1024)
                         var len: Int
@@ -147,7 +151,7 @@ class DirectoryProvider (private val context: Context) : IDirectoryProvider {
         FileUtilities.deleteQuietly(databaseFile)
 
         // copy index
-        context.assets.open("index.sqlite").use { inputStream ->
+        assetsProvider.open("index.sqlite").use { inputStream ->
             FileOutputStream(databaseFile).use { outputStream ->
                 val buf = ByteArray(1024)
                 var len: Int
@@ -167,7 +171,7 @@ class DirectoryProvider (private val context: Context) : IDirectoryProvider {
 
         // extract resource containers
         containersDir.mkdirs()
-        Zip.unzipFromStream(context.assets.open("containers.zip"), containersDir)
+        Zip.unzipFromStream(assetsProvider.open("containers.zip"), containersDir)
     }
 
     override fun deleteLibrary() {

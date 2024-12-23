@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Typeface
 import android.util.TypedValue
 import android.widget.TextView
+import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -17,7 +18,8 @@ import javax.inject.Inject
  */
 class Typography @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val prefRepository: IPreferenceRepository
+    private val prefRepository: IPreferenceRepository,
+    private val assetsProvider: AssetsProvider
 ) {
     // If you would override font used in tabs and language lists for a specific language code
     // just add a language code and the font to the default configuration.
@@ -222,7 +224,7 @@ class Typography @Inject constructor(
 
         var typeface = Typeface.DEFAULT
         try {
-            typeface = Typeface.createFromAsset(context.assets, "fonts/$fontName")
+            typeface = Typeface.createFromAsset(assetsProvider.manager, "fonts/$fontName")
         } catch (e: Exception) {
             e.printStackTrace()
         }

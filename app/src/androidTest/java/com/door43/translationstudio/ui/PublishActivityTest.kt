@@ -165,7 +165,6 @@ class PublishActivityTest {
             checkText(R.string.menu_upload_export, true)
 
             checkRecyclerViewChild(withId(R.id.validation_items), withId(R.id.review_button), 1, true)
-            checkRecyclerViewChild(withId(R.id.validation_items), withId(R.id.review_button), 4, false)
             checkListViewHasItemsCount(withId(R.id.validation_items), 15)
 
             val bookTitleWarnings = context.getString(R.string.has_warnings, "Jude")

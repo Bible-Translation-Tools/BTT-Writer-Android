@@ -1,6 +1,7 @@
 package com.door43.di
 
 import android.content.Context
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.DirectoryProvider
 import dagger.Module
@@ -16,8 +17,9 @@ object DirectoryModule {
     @Provides
     @Singleton
     fun provideDirectoryProvider(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        assetsProvider: AssetsProvider
     ): IDirectoryProvider {
-        return DirectoryProvider(context)
+        return DirectoryProvider(context, assetsProvider)
     }
 }

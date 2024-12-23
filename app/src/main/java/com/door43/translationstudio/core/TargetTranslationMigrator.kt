@@ -1,6 +1,7 @@
 package com.door43.translationstudio.core
 
 import android.content.Context
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.ILanguageRequestRepository
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
@@ -33,7 +34,8 @@ class TargetTranslationMigrator @Inject constructor(
     @ApplicationContext private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val languageRequestRepository: ILanguageRequestRepository,
-    private val library: Door43Client
+    private val library: Door43Client,
+    private val assetProvider: AssetsProvider
 ) {
 
     companion object {
@@ -347,8 +349,7 @@ class TargetTranslationMigrator @Inject constructor(
         val licenseFile = File(path, "LICENSE.md")
         if (!licenseFile.exists()) {
             try {
-                val am = context.assets
-                am.open("LICENSE.md").use { input ->
+                assetProvider.open("LICENSE.md").use { input ->
                     copyInputStreamToFile(input, licenseFile)
                 }
             } catch (e: Exception) {
