@@ -63,7 +63,6 @@ import com.door43.translationstudio.ui.translate.review.SearchSubject;
 import com.door43.usecases.ParseMergeConflicts;
 import com.door43.util.ColorUtil;
 import com.door43.widget.ViewUtil;
-import com.google.android.material.snackbar.Snackbar;
 
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.unfoldingword.resourcecontainer.Link;
@@ -85,7 +84,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     public interface OnItemActionListener {
-        void onMarkerClick();
+        void onShowToast(String message);
+        void onShowToast(int resId);
     }
 
     public static final int HIGHLIGHT_COLOR = Color.YELLOW;
@@ -754,23 +754,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     markChunkCompleted(item, item.target.getFormat());
                                     item.target.commit();
                                 } catch (Exception e) {
-                                    Logger.e(
-                                            TAG,
-                                            "Failed to commit translation of " + item.target.getId(),
-                                            e
-                                    );
-                                    Snackbar snack = Snackbar.make(
-                                            holder.binding.getRoot(),
-                                            e.getMessage(),
-                                            Snackbar.LENGTH_LONG
-                                    );
-                                    ViewUtil.setSnackBarTextColor(
-                                            snack,
-                                            context.getResources().getColor(R.color.light_primary_text)
-                                    );
-                                    snack.show();
+                                    Logger.e(TAG, "Failed to commit translation of " + item.target.getId(), e);
+                                    itemActionListener.onShowToast(e.getMessage());
                                 }
-
                                 triggerNotifyDataSetChanged();
                             })
                             .setNegativeButton(R.string.title_cancel, (dialog, which) -> {
@@ -1474,7 +1460,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             Span.OnClickListener verseClickListener = new Span.OnClickListener() {
                 @Override
                 public void onClick(View view, Span span, int start, int end) {
-                    itemActionListener.onMarkerClick();
+                    itemActionListener.onShowToast(R.string.long_click_to_drag);
                 }
 
                 @SuppressLint("SetTextI18n")

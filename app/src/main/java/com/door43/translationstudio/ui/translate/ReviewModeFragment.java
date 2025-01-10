@@ -857,10 +857,19 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     }
 
     @Override
-    public void onMarkerClick() {
+    public void onShowToast(String message) {
+        showToast(message);
+    }
+
+    @Override
+    public void onShowToast(int message) {
+        showToast(getString(message));
+    }
+
+    private void showToast(String message) {
         Snackbar snack = Snackbar.make(
                 requireActivity().findViewById(android.R.id.content),
-                R.string.long_click_to_drag,
+                message,
                 Snackbar.LENGTH_SHORT
         );
         ViewUtil.setSnackBarTextColor(
