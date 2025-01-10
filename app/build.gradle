@@ -34,7 +34,7 @@ android {
         minSdk 22
         compileSdk 35
         targetSdk 35
-        versionCode 19
+        versionCode 20
         versionName "1.4.0"
 
         testBuildType "verify"
@@ -186,11 +186,11 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.6.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
     androidTestImplementation('androidx.test.espresso:espresso-contrib:3.6.1')
+    androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
     androidTestImplementation "androidx.test.uiautomator:uiautomator:2.3.0"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestUtil 'androidx.test:orchestrator:1.5.1'
-    androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
 
     // Mockk
     testImplementation "io.mockk:mockk:1.13.13"

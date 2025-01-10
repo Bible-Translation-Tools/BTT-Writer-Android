@@ -41,6 +41,8 @@ import com.door43.translationstudio.ui.spannables.Span;
 import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan;
 import com.door43.translationstudio.ui.translate.review.ReviewHolder;
 import com.door43.util.StringUtilities;
+import com.door43.widget.ViewUtil;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.markdownj.MarkdownProcessor;
 import org.sufficientlysecure.htmltextview.LocalLinkMovementMethod;
@@ -60,7 +62,8 @@ import java.util.regex.Pattern;
 /**
  * Created by joel on 9/8/2015.
  */
-public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener {
+public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener,
+        ReviewModeAdapter.OnItemActionListener {
 
     private static final String STATE_RESOURCES_OPEN = "state_resources_open";
     private static final String STATE_RESOURCES_DRAWER_OPEN = "state_resources_drawer_open";
@@ -119,7 +122,11 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                 }
             }
         }
-        ((ReviewModeAdapter) getAdapter()).setOnRenderHelpsListener(this);
+
+        ReviewModeAdapter adapter = (ReviewModeAdapter) getAdapter();
+        adapter.setOnRenderHelpsListener(this);
+        adapter.setOnItemActionListener(this);
+
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
@@ -847,6 +854,20 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     @Override
     public void onRenderHelps(ListItem item) {
         viewModel.renderHelps(item);
+    }
+
+    @Override
+    public void onMarkerClick() {
+        Snackbar snack = Snackbar.make(
+                requireActivity().findViewById(android.R.id.content),
+                R.string.long_click_to_drag,
+                Snackbar.LENGTH_SHORT
+        );
+        ViewUtil.setSnackBarTextColor(
+                snack,
+                requireActivity().getResources().getColor(R.color.light_primary_text)
+        );
+        snack.show();
     }
 
     /**

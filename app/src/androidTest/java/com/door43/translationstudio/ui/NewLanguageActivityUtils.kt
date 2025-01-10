@@ -75,7 +75,7 @@ open class NewLanguageActivityUtils {
     fun setUp() {
         hiltRule.inject()
 
-        stringToBeTyped = "Espresso";
+        stringToBeTyped = "Espresso"
 
         val questionnaires = library.index.getQuestionnaires()
         if (questionnaires.isNotEmpty()) {

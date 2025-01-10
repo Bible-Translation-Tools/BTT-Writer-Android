@@ -84,6 +84,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         void onRenderHelps(ListItem item);
     }
 
+    public interface OnItemActionListener {
+        void onMarkerClick();
+    }
+
     public static final int HIGHLIGHT_COLOR = Color.YELLOW;
     private static final int VIEW_TYPE_NORMAL = 0;
     private static final int VIEW_TYPE_CONFLICT = 1;
@@ -103,6 +107,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     private boolean resourcesOpened;
 
     private OnRenderHelpsListener renderHelpsListener = null;
+    private OnItemActionListener itemActionListener = null;
     private RenderingProvider renderingProvider;
 
     public ReviewModeAdapter(
@@ -1469,17 +1474,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             Span.OnClickListener verseClickListener = new Span.OnClickListener() {
                 @Override
                 public void onClick(View view, Span span, int start, int end) {
-                    Snackbar snack = Snackbar.make(
-                            holder.binding.getRoot(),
-                            R.string.long_click_to_drag,
-                            Snackbar.LENGTH_SHORT
-                    );
-                    ViewUtil.setSnackBarTextColor(
-                            snack,
-                            context.getResources().getColor(R.color.light_primary_text)
-                    );
-                    snack.show();
-                    ((EditText) view).setSelection(((EditText) view).getText().length());
+                    itemActionListener.onMarkerClick();
                 }
 
                 @SuppressLint("SetTextI18n")
@@ -2317,7 +2312,11 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     public void setOnRenderHelpsListener(OnRenderHelpsListener listener) {
-            this.renderHelpsListener = listener;
+        this.renderHelpsListener = listener;
+    }
+
+    public void setOnItemActionListener(OnItemActionListener listener) {
+        this.itemActionListener = listener;
     }
 
     /**
