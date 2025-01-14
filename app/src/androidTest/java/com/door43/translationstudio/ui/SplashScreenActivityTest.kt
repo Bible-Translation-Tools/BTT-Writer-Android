@@ -10,7 +10,6 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
-import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.util.RuntimeWrapper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -62,7 +61,6 @@ class SplashScreenActivityTest {
             checkDialogText(R.string.slow_device, true)
             onView(withText(R.string.label_continue)).tryPerform(click())
 
-            //checkText(R.string.welcome, true)
             checkDialogText(R.string.slow_device, false)
         }
     }
@@ -75,9 +73,20 @@ class SplashScreenActivityTest {
             .returns(App.MINIMUM_REQUIRED_RAM + 100)
 
         ActivityScenario.launch(SplashScreenActivity::class.java).use {
-            //checkText(R.string.welcome, true)
-            //checkText(R.string.updating_app, true)
             checkDialogText(R.string.slow_device, false)
+        }
+    }
+
+    @Test
+    fun testMigrateAppShowDialog() {
+        every { RuntimeWrapper.availableProcessors() }
+            .returns(App.MINIMUM_NUMBER_OF_PROCESSORS.toInt() + 1)
+        every { RuntimeWrapper.maxMemory() }
+            .returns(App.MINIMUM_REQUIRED_RAM + 100)
+
+        ActivityScenario.launch(SplashScreenActivity::class.java).use {
+            checkDialogText(R.string.migrate_from_old_app, true)
+            checkDialogText(R.string.migrate_from_old_app_description, true)
         }
     }
 }
