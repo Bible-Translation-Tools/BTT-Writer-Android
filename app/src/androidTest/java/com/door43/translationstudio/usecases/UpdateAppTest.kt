@@ -7,11 +7,14 @@ import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setPrivatePref
+import com.door43.translationstudio.App
 import com.door43.translationstudio.IntegrationTest
 import com.door43.usecases.UpdateApp
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import io.mockk.justRun
+import io.mockk.mockkObject
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import org.junit.Before
@@ -39,6 +42,9 @@ class UpdateAppTest {
 
         directoryProvider.deleteLibrary()
         prefRepository.setPrivatePref("last_version_code", 0)
+
+        mockkObject(App)
+        justRun { App.restart() }
     }
 
     @Test

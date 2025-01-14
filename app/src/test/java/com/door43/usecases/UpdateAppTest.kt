@@ -13,6 +13,7 @@ import com.door43.data.getDefaultPref
 import com.door43.data.getPrivatePref
 import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
+import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
@@ -23,12 +24,13 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
+import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
-import org.hamcrest.Condition.Step
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -60,8 +62,8 @@ class UpdateAppTest {
     var tempDir: TemporaryFolder = TemporaryFolder()
 
     @Before
-        fun setup() {
-            MockKAnnotations.init(this)
+    fun setup() {
+        MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
         every { context.packageName }.returns("org.example.writer")
@@ -125,6 +127,9 @@ class UpdateAppTest {
 
         mockkStatic(PreferenceManager::class)
         every { PreferenceManager.setDefaultValues(any(), any(), any()) }.just(runs)
+
+        mockkObject(App)
+        justRun { App.restart() }
     }
 
     @After
@@ -228,7 +233,7 @@ class UpdateAppTest {
     fun `test update app, update target translations`() {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
-        every { library.isLibraryDeployed }.returns(false)
+        every { library.isLibraryDeployed }.returns(true)
 
         val targetTranslationDir = File(translator.path, "aa_mrk_text_ulb")
         targetTranslationDir.mkdirs()
@@ -253,8 +258,13 @@ class UpdateAppTest {
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
-        verifyUpdateLibrary()
         verifyNoSourceTranslations()
+
+        verify { prefRepository.getDefaultPref(
+            SettingsActivity.KEY_PREF_LANGUAGES_URL,
+            any<String>()
+        ) }
+        verify { library.updateLanguageUrl(any()) }
 
         verify { translator.path }
         verify { migrator.migrate(targetTranslationDir) }
@@ -266,7 +276,7 @@ class UpdateAppTest {
     fun `test update app, upgrade build numbers`() {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
-        every { library.isLibraryDeployed }.returns(false)
+        every { library.isLibraryDeployed }.returns(true)
 
         val targetTranslation: TargetTranslation = mockk {
             every { id }.returns("aa_mrk_text_ulb")
@@ -285,7 +295,6 @@ class UpdateAppTest {
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
-        verifyUpdateLibrary()
         verifyNoSourceTranslations()
 
         verify { TargetTranslation.updateGenerator(any(), targetTranslation) }
@@ -521,12 +530,6 @@ class UpdateAppTest {
     private fun verifyCommonStuff() {
         verify { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
         verify { packageManager.getPackageInfo(any<String>(), 0) }
-        verify { library.updateLanguageUrl(any()) }
-        verify { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_LANGUAGES_URL,
-            any<String>()
-        ) }
-        verify { library.updateLanguageUrl(any()) }
     }
 
     private fun verifyUpdateLibrary(called: Boolean = true) {

@@ -91,7 +91,7 @@ class ImportProjectsTest {
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
 
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
-        every { context.getString(R.string.reading_usfm) }.returns("Reading USFM")
+        every { context.getString(R.string.importing_file) }.returns("Importing file")
 
         mockkStatic(MergeConflictsHandler::class)
         mockkStatic(ResourceContainer::class)
@@ -423,13 +423,13 @@ class ImportProjectsTest {
         assertEquals(localTranslation, result.conflictingTargetTranslation)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Reading USFM")
+            progressListener.onProgress(any(), any(), "Importing file")
             progressListener.onProgress(0, any(), project1.name)
             progressListener.onProgress(12, any(), project1.name)
             progressListener.onProgress(50, any(), project2.name)
             progressListener.onProgress(62, any(), project2.name)
             progressListener.onProgress(75, any(), project2.name)
-            progressListener.onProgress(100, any(), "")
+            progressListener.onProgress(100, any(), "Completed!")
         }
 
         verify { translator.getConflictingTargetTranslation(any()) }
@@ -467,11 +467,11 @@ class ImportProjectsTest {
         assertEquals(localTranslation, result.conflictingTargetTranslation)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Reading USFM")
+            progressListener.onProgress(any(), any(), "Importing file")
             progressListener.onProgress(0, any(), project.name)
             progressListener.onProgress(25, any(), project.name)
             progressListener.onProgress(50, any(), project.name)
-            progressListener.onProgress(100, any(), "")
+            progressListener.onProgress(100, any(), "Completed!")
         }
 
         verify { translator.getConflictingTargetTranslation(any()) }
