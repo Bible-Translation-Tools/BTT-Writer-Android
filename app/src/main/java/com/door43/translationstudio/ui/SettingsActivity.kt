@@ -3,12 +3,15 @@ package com.door43.translationstudio.ui
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -83,6 +86,8 @@ class SettingsActivity : AppCompatActivity() {
         var progressDialog: ProgressHelper.ProgressDialog? = null
         private val viewModel: SettingsViewModel by viewModels()
 
+        private lateinit var openDirectory: ActivityResultLauncher<Uri?>
+
         private var initSettings = true
         private var _delegate: AppCompatDelegate? = null
         private val delegate: AppCompatDelegate
@@ -106,6 +111,13 @@ class SettingsActivity : AppCompatActivity() {
         ): View {
             val view = super.onCreateView(inflater, container, savedInstanceState)
             view.fitsSystemWindows = true
+
+            openDirectory = registerForActivityResult(
+                ActivityResultContracts.OpenDocumentTree()
+            ) {
+                it?.let(viewModel::migrateOldAppData)
+            }
+
             return view
         }
 
@@ -224,6 +236,12 @@ class SettingsActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
 
+            val migrateOldApp: Preference? = findPreference(KEY_PREF_MIGRATE_OLD_APP)
+            migrateOldApp?.setOnPreferenceClickListener {
+                openDirectory.launch(null)
+                true
+            }
+
             initSettings = false
         }
 
@@ -252,6 +270,15 @@ class SettingsActivity : AppCompatActivity() {
                                 .show()
                         }
                     }
+                }
+            }
+            viewModel.migrationFinished.observe(this) {
+                if (it == true) {
+                    AlertDialog.Builder(requireContext(), R.style.AppTheme_Dialog)
+                        .setTitle(R.string.migrate_from_old_app)
+                        .setMessage(R.string.migrating_complete)
+                        .setPositiveButton(R.string.label_ok, null)
+                        .show()
                 }
             }
             viewModel.loggedOut.observe(this) {
@@ -387,9 +414,12 @@ class SettingsActivity : AppCompatActivity() {
             key: String?
         ) {
             // Ignore preferences which values are booleans
-            if (key == KEY_PREF_ALWAYS_SHARE || key == KEY_PREF_CHECK_HARDWARE) {
-                return
-            }
+            val ignored = arrayListOf(
+                KEY_PREF_ALWAYS_SHARE,
+                KEY_PREF_CHECK_HARDWARE,
+                KEY_PREF_MIGRATE_OLD_APP
+            )
+            if (key in ignored) return
 
             sharedPreferences?.getString(key, "")?.let { value ->
                 when (key) {
@@ -486,5 +516,7 @@ class SettingsActivity : AppCompatActivity() {
         const val KEY_PREF_STATEMENT_OF_FAITH = "statement_of_faith"
         const val KEY_PREF_TRANSLATION_GUIDELINES = "translation_guidelines"
         const val KEY_PREF_SOFTWARE_LICENSES = "software_licenses"
+
+        const val KEY_PREF_MIGRATE_OLD_APP = "migrate_old_app"
     }
 }

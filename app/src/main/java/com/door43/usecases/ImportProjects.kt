@@ -106,7 +106,7 @@ class ImportProjects @Inject constructor(
         overwrite: Boolean,
         progressListener: OnProgressListener? = null
     ): ImportUsfmResult {
-        progressListener?.onProgress(-1, 100, context.getString(R.string.reading_usfm))
+        progressListener?.onProgress(-1, 100, context.getString(R.string.importing_file))
 
         val max = 100
         var count = 0
@@ -163,7 +163,7 @@ class ImportProjects @Inject constructor(
                 }
             }
 
-            progressListener?.onProgress(max, max, "")
+            progressListener?.onProgress(max, max, "Completed!")
         } catch (e: Exception) {
             Logger.e(this::class.simpleName, "Failed to import folder $projects", e)
             success = false

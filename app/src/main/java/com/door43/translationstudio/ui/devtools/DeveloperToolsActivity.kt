@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.devtools
 
 import android.app.ActivityManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +12,7 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.udid
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.ActivityDeveloperToolsBinding
+import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.dialogs.ErrorLogDialog
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
@@ -208,6 +210,11 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
         )
         ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
         snack.show()
+
+        val backupIntent = Intent(this, BackupService::class.java)
+        stopService(backupIntent)
+
+        App.restart()
     }
 
     /**

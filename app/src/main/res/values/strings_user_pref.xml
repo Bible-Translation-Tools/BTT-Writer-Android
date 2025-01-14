@@ -77,6 +77,9 @@
     <!-- Section heading for Advanced settings -->
     <string name="pref_header_advanced">Advanced</string>
     <!-- Tools within the app to assist developers -->
+    <string name="pref_title_migrate_old_app">Migrate from old app</string>
+    <string name="pref_description_migrate_old_app">Migrate translations from the old app data folder</string>
+    <!-- Tools within the app to assist developers -->
     <string name="pref_title_developer_tools">Developer Tools</string>
     <!-- The minimum serverity of logged messages within the app -->
     <string name="pref_title_logging_level">Logging Level</string>

@@ -60,8 +60,8 @@ class UpdateAppTest {
     var tempDir: TemporaryFolder = TemporaryFolder()
 
     @Before
-    fun setup() {
-        MockKAnnotations.init(this)
+        fun setup() {
+            MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
         every { context.packageName }.returns("org.example.writer")

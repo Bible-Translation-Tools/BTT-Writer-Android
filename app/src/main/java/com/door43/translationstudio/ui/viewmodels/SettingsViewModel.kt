@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -13,6 +14,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.GogsLogout
+import com.door43.usecases.MigrateTranslations
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,6 +33,7 @@ class SettingsViewModel @Inject constructor(
     @Inject lateinit var library: Door43Client
     @Inject lateinit var profile: Profile
     @Inject lateinit var logout: GogsLogout
+    @Inject lateinit var migrateTranslations: MigrateTranslations
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -44,6 +47,9 @@ class SettingsViewModel @Inject constructor(
     private val _loggedOut = MutableLiveData<Boolean?>()
     val loggedOut: LiveData<Boolean?> get() = _loggedOut
 
+    private val _migrationFinished = MutableLiveData(false)
+    val migrationFinished: LiveData<Boolean> = _migrationFinished
+
     fun checkForLatestRelease() {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(
@@ -53,6 +59,27 @@ class SettingsViewModel @Inject constructor(
                 checkForLatestRelease.execute()
             }
             _progress.value = null
+        }
+    }
+
+    fun migrateOldAppData(appDataFolder: Uri) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(
+                application.getString(R.string.migrating_translations)
+            )
+            withContext(Dispatchers.IO) {
+                migrateTranslations.execute(appDataFolder) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
+            }
+            _progress.value = null
+            _migrationFinished.value = true
         }
     }
 

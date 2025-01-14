@@ -302,6 +302,41 @@ object FileUtilities {
         }
     }
 
+    /**
+     * Copies directory uri that is equals to dirName to a new directory
+     * @param context App context
+     * @param sourceDir Directory uri
+     * @param destDir Destination directory
+     * @param dirName Filter to directory name
+     */
+    @JvmStatic
+    fun copyDirectory(context: Context, sourceDir: Uri, destDir: File, dirName: String) {
+        when (sourceDir.scheme) {
+            ContentResolver.SCHEME_CONTENT -> {
+                val rootDocumentFile = DocumentFile.fromTreeUri(context, sourceDir)
+                if (rootDocumentFile != null && rootDocumentFile.isDirectory) {
+                    rootDocumentFile.listFiles().forEach { file ->
+                        if (file.name == dirName) {
+                            file.listFiles().forEach { subFile ->
+                                copyFile(context, subFile, destDir)
+                            }
+                        }
+                    }
+                }
+            }
+            ContentResolver.SCHEME_FILE -> {
+                val rootDir = sourceDir.toFile()
+                if (rootDir.isDirectory) {
+                    rootDir.listFiles()?.forEach { file ->
+                        if (file.isDirectory && file.name == dirName) {
+                            copyDirectory(file, destDir, null)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @JvmStatic
     fun copyFile(context: Context, file: DocumentFile, targetDir: File) {
         if (file.isDirectory) {

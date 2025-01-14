@@ -11,6 +11,7 @@ import com.door43.data.getDefaultPref
 import com.door43.data.getPrivatePref
 import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
+import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
@@ -107,6 +108,9 @@ class UpdateApp @Inject constructor(
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }
+
+            App.restart()
+            return
         }
 
         updateTargetTranslations()

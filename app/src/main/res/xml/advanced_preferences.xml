@@ -4,12 +4,21 @@
 
     <PreferenceCategory android:title="@string/pref_header_advanced">
 
+        <Preference
+            android:key="migrate_old_app"
+            android:title="@string/pref_title_migrate_old_app"
+            android:summary="@string/pref_description_migrate_old_app"
+            android:defaultValue="true"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="false">
+        </Preference>
+
         <CheckBoxPreference
             android:key="check_hardware_requirements"
             android:title="@string/pref_title_check_hardware_requirements"
             android:summary="@string/pref_description_check_hardware_requirements"
             android:defaultValue="true"
-            app:allowDividerAbove="false"
+            app:allowDividerAbove="true"
             app:allowDividerBelow="true"/>
 
         <ListPreference
