@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.AdapterView
-import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
@@ -26,7 +25,6 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogImportFromDoor43Binding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.home.ImportDialog.DialogShown
 import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions
 import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions.Companion.fromInt
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
@@ -46,7 +44,7 @@ import kotlin.math.min
  * Created by joel on 5/10/16.
  */
 @AndroidEntryPoint
-open class ImportFromDoor43Dialog : DialogFragment() {
+class ImportFromDoor43Dialog : DialogFragment() {
     @Inject lateinit var translator: Translator
     @Inject lateinit var profile: Profile
     @Inject lateinit var directoryProvider: IDirectoryProvider
@@ -105,26 +103,23 @@ open class ImportFromDoor43Dialog : DialogFragment() {
                 viewModel.searchRepositories(userQuery, repoQuery, 50)
             }
 
-            (root.findViewById<View>(R.id.list) as? ListView)?.let { list ->
-                list.adapter = adapter
-                list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-                    if (adapter.isSupported(position)) {
-                        doImportProject(position)
-                    } else {
-                        val projectName = adapter.getProjectName(position)
-                        val message =
-                            requireActivity().getString(R.string.import_warning, projectName)
+            list.adapter = adapter
+            list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                if (adapter.isSupported(position)) {
+                    doImportProject(position)
+                } else {
+                    val projectName = adapter.getProjectName(position)
+                    val message = requireActivity().getString(R.string.import_warning, projectName)
 
-                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.import_from_door43)
-                            .setMessage(message)
-                            .setPositiveButton(R.string.label_import) { _, _ ->
-                                doImportProject(position)
-                            }
-                            .setNegativeButton(R.string.title_cancel, null)
-                            .show()
-                            .also(dialogs::add)
-                    }
+                    AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                        .setTitle(R.string.import_from_door43)
+                        .setMessage(message)
+                        .setPositiveButton(R.string.label_import) { _, _ ->
+                            doImportProject(position)
+                        }
+                        .setNegativeButton(R.string.title_cancel, null)
+                        .show()
+                        .also(dialogs::add)
                 }
             }
         }
@@ -139,8 +134,7 @@ open class ImportFromDoor43Dialog : DialogFragment() {
             )
             cloneHtmlUrl = savedInstanceState.getString(STATE_CLONE_URL, null)
             mergeConflicted = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT, false)
-            mergeSelection =
-                fromInt(savedInstanceState.getInt(STATE_MERGE_SELECTION, MergeOptions.NONE.value))
+            mergeSelection = fromInt(savedInstanceState.getInt(STATE_MERGE_SELECTION, MergeOptions.NONE.value))
             val targetTranslationId = savedInstanceState.getString(STATE_TARGET_TRANSLATION, null)
             targetTranslationId?.let { viewModel.loadTargetTranslation(it) }
 
@@ -477,11 +471,6 @@ open class ImportFromDoor43Dialog : DialogFragment() {
         _binding = null
         dialogs.forEach { it.dismiss() }
         dialogs.clear()
-    }
-
-    private fun clearResults() {
-        dialogShown = DialogShown.NONE
-        viewModel.clearResults()
     }
 
     /**

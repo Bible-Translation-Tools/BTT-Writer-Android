@@ -1012,9 +1012,12 @@ Do you want to enable SD card access?  If so then:
     <string name="system_resources_check">System Resources Check</string>
     <string name="library_was_deleted">The library content was deleted</string>
     <string name="source_draft_translation_not_found">Source text for this draft translation not found.</string>
-    <string name="migrate_from_old_app">Migrate from old app</string>
+    <string name="migrate_from_old_app">Migrate from Old App</string>
     <string name="migrate_from_old_app_description">Would you like to migrate from the old app data? You can do that later in Settings.</string>
     <string name="migrating_translations">Migrating translations</string>
     <string name="migrating_complete">Migration complete!</string>
     <string name="copying_file">Copying file: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
+    <string name="import_from_backup">Import from Backup</string>
+    <string name="filename">File name</string>
+    <string name="date_modified">Modified at</string>
 </resources>

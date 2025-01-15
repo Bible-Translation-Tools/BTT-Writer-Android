@@ -36,7 +36,6 @@ import com.door43.util.TTFAnalyzer
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import java.util.Arrays
 import javax.inject.Inject
 
 /**
@@ -132,48 +131,21 @@ class SettingsActivity : AppCompatActivity() {
 
             setupObservers()
 
-            val preferenceScreen = preferenceManager.createPreferenceScreen(requireContext())
+            preferenceManager.createPreferenceScreen(requireContext())
 
             // Add 'general' preferences.
             addPreferencesFromResource(R.xml.general_preferences)
 
             setPreferenceSummaryFromValue(KEY_PREF_COLOR_THEME)
 
-            var fileList: Array<String>? = null
-            val entries = ArrayList<String>()
-            val entryValues = ArrayList<String>()
-            try {
-                fileList = assetsProvider.list("fonts")
-            } catch (e: IOException) {
-                Logger.e(this.javaClass.name, "failed to load font assets", e)
-            }
-            if (fileList != null) {
-                Arrays.sort(fileList, CaseInsensitiveComparator())
-                for (i in fileList.indices) {
-                    val typeface = directoryProvider.getAssetAsFile("fonts/" + fileList[i])
-                    if (typeface != null) {
-                        val analyzer = TTFAnalyzer()
-                        var fontname: String? = ""
-                        fontname = analyzer.getTtfFontName(typeface.absolutePath)
-                        if (fontname == null) {
-                            fontname = typeface.name.substring(0, typeface.name.lastIndexOf("."))
-                        }
-                        entries.add(fontname)
-                        entryValues.add(fileList[i])
-                    }
-                }
-            }
-
             val pref = findPreference(KEY_PREF_TRANSLATION_TYPEFACE) as? ListPreference
-            pref?.entries = entries.toTypedArray<CharSequence>()
-            pref?.entryValues = entryValues.toTypedArray<CharSequence>()
+            setInfoTypefaceItems(pref)
             setPreferenceSummaryFromValue(KEY_PREF_TRANSLATION_TYPEFACE)
 
             setPreferenceSummaryFromValue(KEY_PREF_TRANSLATION_TYPEFACE_SIZE)
 
             val fontSourcePref = findPreference(KEY_PREF_SOURCE_TYPEFACE) as? ListPreference
-            fontSourcePref?.entries = entries.toTypedArray<CharSequence>()
-            fontSourcePref?.entryValues = entryValues.toTypedArray<CharSequence>()
+            setInfoTypefaceItems(fontSourcePref)
             setPreferenceSummaryFromValue(KEY_PREF_SOURCE_TYPEFACE)
 
             setPreferenceSummaryFromValue(KEY_PREF_SOURCE_TYPEFACE_SIZE)
@@ -284,6 +256,35 @@ class SettingsActivity : AppCompatActivity() {
             viewModel.loggedOut.observe(this) {
                 if (it == true) doLogout()
             }
+        }
+
+        private fun setInfoTypefaceItems(pref: ListPreference?) {
+            val fileList = arrayListOf<String>()
+            val entries = arrayListOf<String>()
+            val entryValues = arrayListOf<String>()
+            try {
+                assetsProvider.list("fonts")?.let {
+                    fileList.addAll(it.asList())
+                }
+            } catch (e: IOException) {
+                Logger.e(this.javaClass.name, "failed to load font assets", e)
+            }
+            fileList.sortWith(CaseInsensitiveComparator())
+            for (i in fileList.indices) {
+                val typeface = directoryProvider.getAssetAsFile("fonts/" + fileList[i])
+                if (typeface != null) {
+                    val analyzer = TTFAnalyzer()
+                    var fontName: String?
+                    fontName = analyzer.getTtfFontName(typeface.absolutePath)
+                    if (fontName == null) {
+                        fontName = typeface.name.substring(0, typeface.name.lastIndexOf("."))
+                    }
+                    entries.add(fontName)
+                    entryValues.add(fileList[i])
+                }
+            }
+            pref?.entries = entries.toTypedArray<CharSequence>()
+            pref?.entryValues = entryValues.toTypedArray<CharSequence>()
         }
 
         /**
@@ -505,8 +506,6 @@ class SettingsActivity : AppCompatActivity() {
         const val KEY_PREF_LOGGING_LEVEL = "logging_level"
         const val KEY_PREF_BACKUP_INTERVAL = "backup_interval"
         const val KEY_PREF_DEVICE_ALIAS = "device_name"
-        const val KEY_SDCARD_ACCESS_URI = "internal_uri_extsdcard"
-        const val KEY_SDCARD_ACCESS_FLAGS = "internal_flags_extsdcard"
         const val KEY_PREF_GOGS_API = "gogs_api"
         const val KEY_PREF_CHECK_HARDWARE = "check_hardware_requirements"
 

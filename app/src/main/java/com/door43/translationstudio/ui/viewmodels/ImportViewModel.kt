@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
@@ -41,6 +42,7 @@ class ImportViewModel @Inject constructor(
     @Inject lateinit var importProjects: ImportProjects
     @Inject lateinit var backupRC: BackupRC
     @Inject lateinit var library: Door43Client
+    @Inject lateinit var directoryProvider: IDirectoryProvider
 
     private val _translation = MutableLiveData<TargetTranslation?>(null)
     val translation: LiveData<TargetTranslation?> = _translation
@@ -62,6 +64,9 @@ class ImportViewModel @Inject constructor(
 
     private val _importSourceResult = MutableLiveData<ImportProjects.ImportSourceResult?>(null)
     val importSourceResult: LiveData<ImportProjects.ImportSourceResult?> = _importSourceResult
+
+    private val _backupRestoreResult = MutableLiveData<ImportProjects.ImportUriResult?>(null)
+    val backupRestoreResult: MutableLiveData<ImportProjects.ImportUriResult?> = _backupRestoreResult
 
     fun loadTargetTranslation(translationID: String) {
         translator.getTargetTranslation(translationID)?.let {
@@ -244,6 +249,39 @@ class ImportViewModel @Inject constructor(
             repository.isPrivate,
             notSupportedID
         ) { repository.toJSON() }
+    }
+
+    fun getBackupTranslations(): List<File> {
+        return directoryProvider
+            .backupsDir
+            .listFiles()
+            ?.asList()
+            ?.filter { it.length() > 0 }
+            ?: listOf()
+    }
+
+    fun restoreFromBackup(backup: File) {
+        val uri = Uri.fromFile(backup)
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(
+                application.resources.getString(R.string.importing_file)
+            )
+            _importFromUriResult.value = withContext(Dispatchers.IO) {
+                importProjects.importProject(
+                    uri,
+                    false
+                ) { progress, max, message ->
+                    _progress.postValue(
+                        ProgressHelper.Progress(
+                            message,
+                            progress,
+                            max
+                        )
+                    )
+                }
+            }
+            _progress.value = null
+        }
     }
 
     fun clearResults() {

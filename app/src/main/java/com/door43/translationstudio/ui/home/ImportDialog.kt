@@ -35,6 +35,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
 import javax.inject.Inject
 
 /**
@@ -193,6 +194,12 @@ class ImportDialog : DialogFragment() {
                 onImportUSFM()
             }
 
+            importBackup.setOnClickListener {
+                val dialog = ImportFromBackupDialog()
+                dialog.setOnItemSelected(::onBackupFileSelected)
+                showDialogFragment(dialog, ImportFromBackupDialog.TAG)
+            }
+
             importFromDevice.setOnClickListener {
                 mergeSelection = MergeOptions.NONE
                 // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
@@ -291,6 +298,10 @@ class ImportDialog : DialogFragment() {
         }
     }
 
+    private fun onBackupFileSelected(backup: File) {
+        viewModel.restoreFromBackup(backup)
+    }
+
     /**
      * restore the dialogs that were displayed before rotation
      */
@@ -302,6 +313,9 @@ class ImportDialog : DialogFragment() {
                 DialogShown.MERGE_CONFLICT -> showMergeOverwritePrompt(targetTranslationID)
                 DialogShown.NONE -> {}
             }
+            val importBackupDialog = parentFragmentManager
+                .findFragmentByTag(ImportFromBackupDialog.TAG) as? ImportFromBackupDialog
+            importBackupDialog?.setOnItemSelected(::onBackupFileSelected)
         }
     }
 

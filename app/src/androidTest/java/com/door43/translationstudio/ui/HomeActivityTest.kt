@@ -265,6 +265,7 @@ class HomeActivityTest {
             checkDialogText(R.string.import_project_file, true)
             checkDialogText(R.string.import_usfm_file, true)
             checkDialogText(R.string.import_source_text, true)
+            checkDialogText(R.string.import_from_backup, true)
             checkDialogText(R.string.import_from_device, true)
 
             onView(withId(R.id.import_from_door43)).tryPerform(click())
@@ -272,6 +273,21 @@ class HomeActivityTest {
             onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
             onView(withId(R.id.translation_id)).tryCheck(matches(isDisplayed()))
             onView(withId(R.id.list)).tryCheck(matches(isDisplayed()))
+        }
+    }
+
+    @Test
+    fun testImportBackupDialog() {
+        ActivityScenario.launch(HomeActivity::class.java).use {
+            verifyMainViewsInPlace(true)
+            checkText(R.string.translations_welcome, true)
+
+            onView(withId(R.id.action_more)).tryPerform(click())
+            onView(withText(R.string.label_import_options)).tryPerform(click())
+
+            onView(withId(R.id.import_backup)).tryPerform(click())
+            checkDialogText(R.string.import_from_backup, true)
+            onView(withId(R.id.backup_items)).tryCheck(matches(isDisplayed()))
         }
     }
 
