@@ -1017,7 +1017,7 @@ Do you want to enable SD card access?  If so then:
     <string name="migrating_translations">Migrating translations</string>
     <string name="migrating_complete">Migration complete!</string>
     <string name="copying_file">Copying file: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
-    <string name="import_from_backup">Import from Backup</string>
+    <string name="import_from_backup">Import from Backups</string>
     <string name="filename">File name</string>
     <string name="date_modified">Modified at</string>
 </resources>
