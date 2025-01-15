@@ -1504,15 +1504,16 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                             EditText editText = ((EditText) view);
                             if (event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
                                 // delete old span
-                                int[] spanRange = (int[]) event.getLocalState();
-                                if ((spanRange != null) && (spanRange.length >= 2)) {
-                                    CharSequence in = editText.getText();
-                                    if ((spanRange[0] < in.length()) && spanRange[1] < in.length()) {
-                                        CharSequence out = TextUtils.concat(
-                                                in.subSequence(0, spanRange[0]),
-                                                in.subSequence(spanRange[1], in.length())
-                                        );
-                                        editText.setText(out);
+                                if (event.getLocalState() instanceof int[] spanRange) {
+                                    if (spanRange.length >= 2) {
+                                        CharSequence in = editText.getText();
+                                        if ((spanRange[0] < in.length()) && spanRange[1] < in.length()) {
+                                            CharSequence out = TextUtils.concat(
+                                                    in.subSequence(0, spanRange[0]),
+                                                    in.subSequence(spanRange[1], in.length())
+                                            );
+                                            editText.setText(out);
+                                        }
                                     }
                                 }
                             } else if (event.getAction() == DragEvent.ACTION_DROP) {
