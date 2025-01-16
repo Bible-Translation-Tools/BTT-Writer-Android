@@ -411,80 +411,36 @@ public class USFMRenderer extends ClickableRenderingEngine {
         while(matcher.find()) {
             if(isStopped()) return in;
             if(mRenderVerses) {
-                Span verse;
+                USFMVerseSpan verse;
                 if(mVerseListener == null) {
                     verse = new USFMVerseSpan(matcher.group(1));
                 } else {
                     verse = new USFMVersePinSpan(matcher.group(1));
+                    verse.setOnClickListener(mVerseListener);
                 }
 
-                if (verse != null) {
-                    // record found verses
-                    int startVerse = ((USFMVerseSpan)verse).getStartVerseNumber();
-                    int endVerse = ((USFMVerseSpan)verse).getEndVerseNumber();
-                    boolean alreadyRendered = false;
-                    if(endVerse > startVerse) {
-                        // range of verses
-                        for(int i = startVerse; i <= endVerse; i ++) {
-                            if(!foundVerses.contains(i)) {
-                                foundVerses.add(i);
-                            } else {
-                                alreadyRendered = true;
-                            }
+                // record found verses
+                int startVerse = verse.getStartVerseNumber();
+                int endVerse = verse.getEndVerseNumber();
+                if(endVerse > startVerse) {
+                    // range of verses
+                    for(int i = startVerse; i <= endVerse; i ++) {
+                        if(!foundVerses.contains(i)) {
+                            foundVerses.add(i);
                         }
-                    } else {
-                        if(!foundVerses.contains(startVerse)) {
-                            foundVerses.add(startVerse);
-                        } else {
-                            alreadyRendered = true;
-                        }
-                    }
-                    // render verses not already found
-                    if(!alreadyRendered) {
-                        // exclude verses not within the range
-                        boolean invalidVerse = false;
-                        if(mExpectedVerseRange.length > 0) {
-                            int minVerse = mExpectedVerseRange[0];
-                            int maxVerse = (mExpectedVerseRange.length > 1) ? mExpectedVerseRange[1] : 0;
-                            if(maxVerse == 0) maxVerse = minVerse;
-
-                            int verseNumStart = ((USFMVerseSpan) verse).getStartVerseNumber();
-                            int verseNumEnd = ((USFMVerseSpan) verse).getEndVerseNumber();
-                            if(verseNumEnd == 0) verseNumEnd = verseNumStart;
-                            invalidVerse = verseNumStart < minVerse || verseNumStart > maxVerse || verseNumEnd < minVerse || verseNumEnd > maxVerse;
-                        }
-                        if(!invalidVerse) {
-                            verse.setOnClickListener(mVerseListener);
-                            out = TextUtils.concat(
-                                    out,
-                                    in.subSequence(lastIndex, matcher.start()),
-                                    insert,
-                                    verse.toCharSequence(context)
-                            );
-                        } else {
-                            // for now we go ahead and render invalid verse
-                            verse.setOnClickListener(mVerseListener);
-                            out = TextUtils.concat(
-                                    out,
-                                    in.subSequence(lastIndex, matcher.start()),
-                                    insert,
-                                    verse.toCharSequence(context)
-                            );
-                        }
-                    } else {
-                        // for now we go ahead and render duplicate verse
-                        verse.setOnClickListener(mVerseListener);
-                        out = TextUtils.concat(
-                                out,
-                                in.subSequence(lastIndex, matcher.start()),
-                                insert,
-                                verse.toCharSequence(context)
-                        );
                     }
                 } else {
-                    // failed to parse the verse
-                    out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
+                    if(!foundVerses.contains(startVerse)) {
+                        foundVerses.add(startVerse);
+                    }
                 }
+                // render verses not already found
+                out = TextUtils.concat(
+                        out,
+                        in.subSequence(lastIndex, matcher.start()),
+                        insert,
+                        verse.toCharSequence(context)
+                );
             } else {
                 // just display USFM for verse
                 out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
@@ -503,8 +459,8 @@ public class USFMRenderer extends ClickableRenderingEngine {
                         verse = new USFMVerseSpan(mExpectedVerseRange[0]);
                     } else {
                         verse = new USFMVersePinSpan(mExpectedVerseRange[0]);
+                        verse.setOnClickListener(mVerseListener);
                     }
-                    verse.setOnClickListener(mVerseListener);
                     out = TextUtils.concat(verse.toCharSequence(context), out);
                     mAddedMissingVerse = true;
                 }
@@ -517,8 +473,8 @@ public class USFMRenderer extends ClickableRenderingEngine {
                             verse = new USFMVerseSpan(i);
                         } else {
                             verse = new USFMVersePinSpan(i);
+                            verse.setOnClickListener(mVerseListener);
                         }
-                        verse.setOnClickListener(mVerseListener);
                         out = TextUtils.concat(verse.toCharSequence(context), out);
                         mAddedMissingVerse = true;
                     }

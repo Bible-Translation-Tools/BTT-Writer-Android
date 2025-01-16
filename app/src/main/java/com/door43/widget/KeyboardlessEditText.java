@@ -23,15 +23,12 @@ package com.door43.widget;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.os.Build;
-import androidx.annotation.RequiresApi;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import androidx.appcompat.widget.AppCompatEditText;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -40,47 +37,35 @@ import java.lang.reflect.Method;
  * This is the same as a native EditText, except that no soft keyboard
  * will appear when user clicks on widget. All other normal operations
  * still work.
- *
  * To use in XML, add a widget for <my.package.name>.KeyboardlessEditText
  * To use in Java, use one of the three constructors in this class
  */
-public class KeyboardlessEditText extends EditText {
+public class KeyboardlessEditText extends AppCompatEditText {
 
     private static final Method mShowSoftInputOnFocus = getMethod(
-            EditText.class, "setShowSoftInputOnFocus", boolean.class);
+            AppCompatEditText.class, "setShowSoftInputOnFocus", boolean.class);
 
-    private OnClickListener mOnClickListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            setCursorVisible(true);
-        }
-    };
+    private final OnClickListener mOnClickListener = v -> setCursorVisible(true);
 
-    private OnLongClickListener mOnLongClickListener = new OnLongClickListener() {
-        @Override
-        public boolean onLongClick(View v) {
-            setCursorVisible(true);
-            return false;
-        }
+    private final OnLongClickListener mOnLongClickListener = v -> {
+        setCursorVisible(true);
+        return false;
     };
 
     public KeyboardlessEditText(Context context) {
         super(context);
+        initialize();
     }
 
     public KeyboardlessEditText(Context context, AttributeSet attrs) {
         super(context, attrs);
+        initialize();
     }
 
     public KeyboardlessEditText(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        initialize();
     }
-
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public KeyboardlessEditText(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
-
 
     private void initialize() {
         synchronized (this) {
@@ -93,7 +78,7 @@ public class KeyboardlessEditText extends EditText {
         setOnClickListener(mOnClickListener);
         setOnLongClickListener(mOnLongClickListener);
 
-//      setShowSoftInputOnFocus(false); // This is a hidden method in TextView.
+        setShowSoftInputOnFocus(false); // This is a hidden method in TextView.
         reflexSetShowSoftInputOnFocus(false); // Workaround.
 
         // Ensure that cursor is at the end of the input box when initialized. Without this, the
@@ -150,10 +135,12 @@ public class KeyboardlessEditText extends EditText {
 //        throw new RuntimeException("Method not found " + methodName);
     }
 
-    /** Returns results if available, otherwise returns null. */
-    public static Object invokeMethod(Method method, Object receiver, Object... args) {
+    /**
+     * Returns results if available, otherwise returns null.
+     */
+    public static void invokeMethod(Method method, Object receiver, Object... args) {
         try {
-            return method.invoke(receiver, args);
+            method.invoke(receiver, args);
         } catch (IllegalArgumentException e) {
             Log.e("Safe invoke fail", "Invalid args", e);
         } catch (IllegalAccessException e) {
@@ -162,7 +149,6 @@ public class KeyboardlessEditText extends EditText {
             Log.e("Safe invoke fail", "Invalid target", e);
         }
 
-        return null;
     }
 
 }

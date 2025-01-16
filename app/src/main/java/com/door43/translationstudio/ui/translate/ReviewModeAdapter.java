@@ -1476,19 +1476,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     LayoutInflater inflater = (LayoutInflater) context.getSystemService(
                             Context.LAYOUT_INFLATER_SERVICE
                     );
-                    FragmentVerseMarkerBinding markerBinding =
-                            FragmentVerseMarkerBinding.inflate(inflater);
+                    FragmentVerseMarkerBinding markerBinding = FragmentVerseMarkerBinding.inflate(inflater);
 
                     if (pin.getEndVerseNumber() > 0) {
-                        markerBinding.verse.setText(
-                                pin.getStartVerseNumber() + "-" + pin.getEndVerseNumber()
-                        );
+                        markerBinding.verse.setText(pin.getStartVerseNumber() + "-" + pin.getEndVerseNumber());
                     } else {
                         markerBinding.verse.setText(pin.getStartVerseNumber() + "");
                     }
                     Bitmap shadow = ViewUtil.convertToBitmap(markerBinding.getRoot());
-                    View.DragShadowBuilder myShadow =
-                            CustomDragShadowBuilder.fromBitmap(context, shadow);
+                    View.DragShadowBuilder myShadow = CustomDragShadowBuilder.fromBitmap(context, shadow);
 
                     int[] spanRange = {start, end};
                     view.startDrag(dragData,  // the data to be dragged
@@ -1500,27 +1496,22 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         private boolean hasEntered = false;
 
                         @Override
-                        public boolean onDrag(View v, DragEvent event) {
-                            EditText editText = ((EditText) view);
-                            if (event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+                        public boolean onDrag(View v, DragEvent e) {
+                            EditText editText = ((EditText) v);
+                            if (e.getAction() == DragEvent.ACTION_DRAG_STARTED) {
                                 // delete old span
-                                if (event.getLocalState() instanceof int[] spanRange) {
-                                    if (spanRange.length >= 2) {
-                                        CharSequence in = editText.getText();
-                                        if ((spanRange[0] < in.length()) && spanRange[1] < in.length()) {
-                                            CharSequence out = TextUtils.concat(
-                                                    in.subSequence(0, spanRange[0]),
-                                                    in.subSequence(spanRange[1], in.length())
-                                            );
-                                            editText.setText(out);
-                                        }
+                                if (e.getLocalState() instanceof int[] spanRange && spanRange.length >= 2) {
+                                    CharSequence in = editText.getText();
+                                    if (spanRange[0] < in.length() && spanRange[1] < in.length()) {
+                                        CharSequence out = TextUtils.concat(
+                                                in.subSequence(0, spanRange[0]),
+                                                in.subSequence(spanRange[1], in.length())
+                                        );
+                                        editText.setText(out);
                                     }
                                 }
-                            } else if (event.getAction() == DragEvent.ACTION_DROP) {
-                                int offset = editText.getOffsetForPosition(
-                                        event.getX(),
-                                        event.getY()
-                                );
+                            } else if (e.getAction() == DragEvent.ACTION_DROP) {
+                                int offset = editText.getOffsetForPosition(e.getX(), e.getY());
                                 CharSequence text = editText.getText();
                                 offset = closestSpotForVerseMarker(offset, text);
 
@@ -1528,49 +1519,57 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                     // insert the verse at the offset
                                     text = TextUtils.concat(
                                             text.subSequence(0, offset),
-                                            pin.toCharSequence(renderingProvider.getContext()),
+                                            pin.toCharSequence(context),
                                             text.subSequence(offset, text.length())
                                     );
                                 } else {
                                     // place the verse back at the beginning
-                                    text = TextUtils.concat(pin.toCharSequence(renderingProvider.getContext()), text);
+                                    text = TextUtils.concat(pin.toCharSequence(context), text);
                                 }
 
                                 SpannableString noHighlightText = resetHighlightColor(text);
-                                item.renderedTargetText = noHighlightText;
                                 editText.setText(noHighlightText);
 
                                 String translation = Translator.compileTranslation(editText.getText());
                                 item.target.applyFrameTranslation(frameTranslation, translation);
                                 item.setTargetText(translation);
-                            } else if (event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
-                                view.setOnDragListener(null);
+                                item.renderedTargetText = renderTargetText(
+                                        translation,
+                                        item.getTargetTranslationFormat(),
+                                        frameTranslation,
+                                        holder,
+                                        item
+                                );
+                            } else if (e.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+                                v.setOnDragListener(null);
                                 editText.setSelection(editText.getSelectionEnd());
                                 // reset verse if dragged off the view
                                 // TODO: 10/5/2015 perhaps we should confirm with the user?
                                 if (!hasEntered) {
                                     // place the verse back at the beginning
                                     CharSequence text = editText.getText();
-                                    text = TextUtils.concat(pin.toCharSequence(renderingProvider.getContext()), text);
-                                    item.renderedTargetText = text;
+                                    text = TextUtils.concat(pin.toCharSequence(context), text);
                                     editText.setText(text);
                                     String translation = Translator.compileTranslation(editText.getText());
                                     item.target.applyFrameTranslation(frameTranslation, translation);
+                                    item.renderedTargetText = renderTargetText(
+                                            translation,
+                                            item.getTargetTranslationFormat(),
+                                            frameTranslation,
+                                            holder,
+                                            item
+                                    );
                                 }
-                                triggerNotifyItemChanged(position);
-                            } else if (event.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
+                                triggerNotifyDataSetChanged();
+                            } else if (e.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
                                 hasEntered = true;
-                            } else if (event.getAction() == DragEvent.ACTION_DRAG_EXITED) {
+                            } else if (e.getAction() == DragEvent.ACTION_DRAG_EXITED) {
                                 hasEntered = false;
                                 editText.setSelection(editText.getSelectionEnd());
-                                SpannableString noHighlightText =
-                                resetHighlightColor(editText.getText());
+                                SpannableString noHighlightText = resetHighlightColor(editText.getText());
                                 editText.setText(noHighlightText);
-                            } else if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
-                                int offset = editText.getOffsetForPosition(
-                                        event.getX(),
-                                        event.getY()
-                                );
+                            } else if (e.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
+                                int offset = editText.getOffsetForPosition(e.getX(), e.getY());
                                 if (offset >= 0 && offset < editText.getText().length() - 1) {
                                     CharSequence txt = editText.getText();
                                     SpannableString str = highlightWordAt(offset, txt);
@@ -1668,10 +1667,23 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     private SpannableString resetHighlightColor(CharSequence text) {
         SpannableString noHighlightText = new SpannableString(text);
-        noHighlightText.setSpan(new BackgroundColorSpan(Color.TRANSPARENT), 0, text.length(),
-         Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        noHighlightText.setSpan(new ForegroundColorSpan(ColorUtil.getColor(context,
-         R.color.dark_primary_text)), 0, text.length(), 0);
+        BackgroundColorSpan background = new BackgroundColorSpan(Color.TRANSPARENT);
+        ForegroundColorSpan foreground = new ForegroundColorSpan(
+            ColorUtil.getColor(context, R.color.dark_primary_text)
+        );
+
+        noHighlightText.setSpan(
+            background,
+            0,
+            text.length(),
+            Spanned.SPAN_INCLUSIVE_INCLUSIVE
+        );
+        noHighlightText.setSpan(
+                foreground,
+                0,
+                text.length(),
+                0
+        );
         return noHighlightText;
     }
 

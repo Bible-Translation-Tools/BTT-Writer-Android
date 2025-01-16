@@ -130,6 +130,7 @@
                 android:background="@null"
                 android:layout_margin="@dimen/card_margin"
                 android:padding="0dp"
+                android:cursorVisible="false"
                 android:textColor="@color/dark_primary_text" />
 
             <com.door43.widget.LinedEditText
