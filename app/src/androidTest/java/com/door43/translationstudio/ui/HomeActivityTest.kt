@@ -245,6 +245,7 @@ class HomeActivityTest {
 
             checkDialogText(R.string.update_options, true)
             checkDialogText(R.string.update_source, true)
+            checkDialogText(R.string.import_index, true)
             checkDialogText(R.string.download_index, true)
             checkDialogText(R.string.download_sources, true)
             checkDialogText(R.string.update_languages, true)

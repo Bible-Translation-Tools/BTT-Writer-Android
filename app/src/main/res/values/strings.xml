@@ -890,6 +890,7 @@ Do you want to enable SD card access?  If so then:
     <string name="update_languages">Update List of Available Target Languages</string>
     <string name="update_source">Update List of Available Source Texts</string>
     <string name="download_index">Download New index.sqlite</string>
+    <string name="import_index">Import index.sqlite from File</string>
     <string name="update_all">Update All</string>
     <string name="time_very_slow">Takes awhile</string>
     <string name="time_slow">May take many minutes (or longer)</string>
@@ -919,6 +920,8 @@ Do you want to enable SD card access?  If so then:
     <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
     <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
     <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
+    <string name="importing_index">Importing index.sqlite file. Please wait...</string>
+    <string name="import_index_failed">Failed to import index.sqlite file. Check if the file is correct.</string>
     <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
     <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
     <string name="available_online">Available Online</string>

@@ -53,6 +53,11 @@ class UpdateLibraryDialog : DialogFragment(), OnEventTalker {
                     this@UpdateLibraryDialog, EVENT_UPDATE_SOURCE, null
                 )
             }
+            importIndex.setOnClickListener {
+                eventBuffer.write(
+                    this@UpdateLibraryDialog, EVENT_IMPORT_INDEX, null
+                )
+            }
             downloadIndex.setOnClickListener {
                 eventBuffer.write(
                     this@UpdateLibraryDialog, EVENT_DOWNLOAD_INDEX, null
@@ -91,6 +96,7 @@ class UpdateLibraryDialog : DialogFragment(), OnEventTalker {
         const val EVENT_SELECT_DOWNLOAD_SOURCES: Int = 4
         const val EVENT_UPDATE_APP: Int = 5
         const val EVENT_DOWNLOAD_INDEX: Int = 6
+        const val EVENT_IMPORT_INDEX: Int = 7
         const val TAG: String = "update-library-dialog"
     }
 }

@@ -1,6 +1,7 @@
 package com.door43.usecases
 
 import android.content.Context
+import android.net.Uri
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
@@ -19,7 +20,7 @@ class DownloadIndex @Inject constructor(
     private val prefRepository: IPreferenceRepository,
     private val library: Door43Client
 ) {
-    fun execute(progressListener: OnProgressListener? = null): Boolean {
+    fun download(progressListener: OnProgressListener? = null): Boolean {
         var connection: HttpURLConnection? = null
         val message = context.resources.getString(R.string.downloading_index)
 
@@ -60,6 +61,27 @@ class DownloadIndex @Inject constructor(
             false
         } finally {
             connection?.disconnect()
+        }
+    }
+
+    fun import(index: Uri): Boolean {
+        return try {
+            library.tearDown()
+
+            context.contentResolver.openInputStream(index)?.use { input ->
+                directoryProvider.databaseFile.outputStream().use { output ->
+                    val data = ByteArray(4096)
+                    var total = 0
+                    var count: Int
+                    while ((input.read(data).also { count = it }) != -1) {
+                        total += count
+                        output.write(data, 0, count)
+                    }
+                }
+                true
+            } ?: false
+        } catch (e: Exception) {
+            false
         }
     }
 }

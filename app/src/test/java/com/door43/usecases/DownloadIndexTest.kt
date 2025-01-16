@@ -1,7 +1,9 @@
 package com.door43.usecases
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Resources
+import android.net.Uri
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
@@ -10,6 +12,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
+import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -21,7 +24,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.unfoldingword.door43client.Door43Client
 import java.io.File
 
@@ -33,6 +38,9 @@ class DownloadIndexTest {
     @MockK private lateinit var library: Door43Client
     @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var resources: Resources
+    @MockK private lateinit var contentResolver: ContentResolver
+
+    @get:Rule var tempFolder = TemporaryFolder()
 
     private val server = MockWebServer()
     private val indexUrl = server.url("/index.sqlite").toString()
@@ -63,6 +71,7 @@ class DownloadIndexTest {
     @After
     fun tearDown() {
         unmockkAll()
+        tempFolder.delete()
     }
 
     @Test
@@ -70,7 +79,7 @@ class DownloadIndexTest {
         server.enqueue(createDownloadResponse())
 
         val success = DownloadIndex(context, directoryProvider, prefRepository, library)
-            .execute(progressListener)
+            .download(progressListener)
 
         assertTrue(success)
         assertEquals("1234567890", directoryProvider.databaseFile.readText())
@@ -88,7 +97,7 @@ class DownloadIndexTest {
         every { library.tearDown() }.throws(Exception("An error occurred"))
 
         val success = DownloadIndex(context, directoryProvider, prefRepository, library)
-            .execute(progressListener)
+            .download(progressListener)
 
         assertFalse(success)
 
@@ -102,13 +111,34 @@ class DownloadIndexTest {
         server.enqueue(MockResponse().setResponseCode(500))
 
         val success = DownloadIndex(context, directoryProvider, prefRepository, library)
-            .execute(progressListener)
+            .download(progressListener)
 
         assertFalse(success)
 
         verify { progressListener.onProgress(any(), any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
         verify { library.tearDown() }
+    }
+
+    @Test
+    fun `test import index successful`() {
+        val uri: Uri = mockk()
+        val indexFile = tempFolder.newFile().apply {
+            writeText("1234567890")
+        }
+
+        every { context.contentResolver }.returns(contentResolver)
+        every { contentResolver.openInputStream(any()) }
+            .returns(indexFile.inputStream())
+
+        val success = DownloadIndex(context, directoryProvider, prefRepository, library)
+            .import(uri)
+
+        assertTrue(success)
+        assertEquals("1234567890", directoryProvider.databaseFile.readText())
+
+        verify { library.tearDown() }
+        verify { directoryProvider.databaseFile }
     }
 
     private fun createDownloadResponse(): MockResponse {

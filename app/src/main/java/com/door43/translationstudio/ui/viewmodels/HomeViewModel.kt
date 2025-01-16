@@ -29,6 +29,7 @@ import com.door43.usecases.cleanup
 import com.door43.util.FileUtilities
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.merge.MergeStrategy
@@ -256,7 +257,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _indexDownloaded.value = withContext(Dispatchers.IO) {
-                downloadIndex.execute { progress, max, message ->
+                downloadIndex.download { progress, max, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
@@ -265,6 +266,17 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 }
+            }
+            _progress.value = null
+        }
+    }
+
+    fun importIndex(index: Uri) {
+        viewModelScope.launch {
+            _progress.value = ProgressHelper.Progress(application.getString(R.string.importing_index))
+            _indexDownloaded.value = withContext(Dispatchers.IO) {
+                delay(1000) // necessary delay to show progress bar
+                downloadIndex.import(index)
             }
             _progress.value = null
         }
