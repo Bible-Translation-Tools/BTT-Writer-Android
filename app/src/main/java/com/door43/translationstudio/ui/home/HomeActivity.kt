@@ -20,8 +20,8 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
-import com.door43.translationstudio.App.Companion.restart
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictListener
@@ -369,11 +369,7 @@ class HomeActivity : BaseActivity(),
         viewModel.indexDownloaded.observe(this) {
             it?.let { success ->
                 if (success) {
-                    showUpdateResultDialog(
-                        message = resources.getString(R.string.download_index_success),
-                        onConfirm = ::restart,
-                        onDismiss = ::restart
-                    )
+                    App.restart()
                 } else {
                     showUpdateResultDialog(
                         R.string.error,

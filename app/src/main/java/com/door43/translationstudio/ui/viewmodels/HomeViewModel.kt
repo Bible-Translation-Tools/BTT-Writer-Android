@@ -275,9 +275,10 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.importing_index))
             _indexDownloaded.value = withContext(Dispatchers.IO) {
-                delay(1000) // necessary delay to show progress bar
+                delay(2000) // necessary delay to show progress bar
                 downloadIndex.import(index)
             }
+            delay(500)
             _progress.value = null
         }
     }

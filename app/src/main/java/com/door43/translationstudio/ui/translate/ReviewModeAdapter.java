@@ -32,6 +32,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.door43.translationstudio.R;
@@ -554,6 +555,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     return true;
                 });
                 ViewUtil.makeLinksClickable(holder.binding.getTargetBody());
+                holder.binding.getTargetBody().setEnabled(!item.isDisabled);
             }
         }
 
@@ -1450,7 +1452,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             final ReviewHolder holder,
             final ReviewListItem item
     ) {
-        int position = filteredItems.indexOf(item);
         RenderingGroup renderingGroup = new RenderingGroup();
         boolean enableSearch = searchText != null &&
                 searchSubject != null &&
@@ -1466,6 +1467,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void onLongClick(final View view, Span span, int start, int end) {
+                    toggleDisableItems(true, item);
+
                     ClipData dragData = ClipData.newPlainText(
                             item.chapterSlug + "-" + item.chunkSlug,
                             span.getMachineReadable()
@@ -1560,7 +1563,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                             item
                                     );
                                 }
-                                triggerNotifyDataSetChanged();
+                                toggleDisableItems(false, null);
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
                                 hasEntered = true;
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_EXITED) {
@@ -2443,5 +2446,18 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         if (!zeroItemsFound) {
             checkIfAtSearchLimits();
         }
+    }
+
+    /**
+     * Disable/Enable items
+     * @param disable - disable or enable
+     * @param itemToExclude - item to exclude from disabling/enabling
+     */
+    private void toggleDisableItems(Boolean disable, @Nullable ListItem itemToExclude) {
+        for (ListItem i: filteredItems) {
+            if (itemToExclude == i) continue;
+            i.isDisabled = disable;
+        }
+        triggerNotifyDataSetChanged();
     }
 }

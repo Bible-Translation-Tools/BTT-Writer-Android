@@ -45,10 +45,10 @@ public class KeyboardlessEditText extends AppCompatEditText {
     private static final Method mShowSoftInputOnFocus = getMethod(
             AppCompatEditText.class, "setShowSoftInputOnFocus", boolean.class);
 
-    private final OnClickListener mOnClickListener = v -> setCursorVisible(true);
+    private final OnClickListener mOnClickListener = v -> setCursorVisible(false);
 
     private final OnLongClickListener mOnLongClickListener = v -> {
-        setCursorVisible(true);
+        setCursorVisible(false);
         return false;
     };
 
@@ -148,7 +148,5 @@ public class KeyboardlessEditText extends AppCompatEditText {
         } catch (InvocationTargetException e) {
             Log.e("Safe invoke fail", "Invalid target", e);
         }
-
     }
-
 }

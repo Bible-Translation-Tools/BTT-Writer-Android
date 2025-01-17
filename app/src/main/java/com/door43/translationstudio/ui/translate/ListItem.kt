@@ -24,6 +24,7 @@ abstract class ListItem(
     @JvmField var renderedSourceText: CharSequence? = null
     @JvmField var renderedTargetText: CharSequence? = null
     @JvmField var isEditing: Boolean = false
+    @JvmField var isDisabled: Boolean = false
 
     val sourceText: String
         get() = getSourceText(chapterSlug, chunkSlug)

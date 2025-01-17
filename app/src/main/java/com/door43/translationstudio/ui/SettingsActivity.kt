@@ -111,9 +111,7 @@ class SettingsActivity : AppCompatActivity() {
             val view = super.onCreateView(inflater, container, savedInstanceState)
             view.fitsSystemWindows = true
 
-            openDirectory = registerForActivityResult(
-                ActivityResultContracts.OpenDocumentTree()
-            ) {
+            openDirectory = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
                 it?.let(viewModel::migrateOldAppData)
             }
 
