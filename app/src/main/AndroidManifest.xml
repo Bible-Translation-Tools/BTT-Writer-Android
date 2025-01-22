@@ -176,6 +176,7 @@
             android:launchMode="singleTop"
             android:label="@string/title_activity_import_usfm_language">
         </activity>
+        <activity android:name=".ui.home.ImportIndexActivity" />
     </application>
 
 </manifest>

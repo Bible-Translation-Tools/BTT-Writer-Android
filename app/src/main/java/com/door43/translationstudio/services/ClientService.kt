@@ -403,7 +403,9 @@ class ClientService : NetworkService() {
             try {
                 val serverAddress = InetAddress.getByName(server.ipAddress)
                 connection = Connection(Socket(serverAddress, server.port)).apply {
-                    setOnCloseListener { Thread.currentThread().interrupt() }
+                    setOnCloseListener {
+                        Thread.currentThread().interrupt()
+                    }
                 }
                 // we store references to all connections so we can access them later
                 if (!serverConnections.containsKey(connection!!.ipAddress)) {

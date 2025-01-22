@@ -168,7 +168,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
 
         setupObservers()
 
-        adapter = PeerAdapter(activity)
+        adapter = PeerAdapter()
 
         with(binding) {
             if (operationMode == MODE_CLIENT) {
@@ -198,11 +198,14 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
                             sourceLanguageSlug = p.languageSlug
                         }
                     }
-                    serverService?.offerTargetTranslation(
-                        peer,
-                        sourceLanguageSlug,
-                        targetTranslationId!!
-                    )
+
+                    Thread {
+                        serverService?.offerTargetTranslation(
+                            peer,
+                            sourceLanguageSlug,
+                            targetTranslationId!!
+                        )
+                    }.start()
                 } else if (operationMode == MODE_CLIENT) {
                     // TODO: 12/1/2015 eventually provide a ui for viewing multiple different requests from this peer
                     // display request user
@@ -230,10 +233,12 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
                                         .setPositiveButton(R.string.label_import) { dialog, which ->
                                             peer.dismissRequest(request)
                                             adapter.notifyDataSetChanged()
-                                            clientService!!.requestTargetTranslation(
-                                                peer,
-                                                targetTranslationSlug
-                                            )
+                                            Thread {
+                                                clientService!!.requestTargetTranslation(
+                                                    peer,
+                                                    targetTranslationSlug
+                                                )
+                                            }.start()
                                             dialog.dismiss()
                                         }
                                         .setNegativeButton(R.string.dismiss) { dialog, _ ->
@@ -391,6 +396,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
      * @param peers
      */
     fun updatePeerList(peers: ArrayList<Peer>) {
+        if (_binding == null) return
         with(binding) {
             if (peers.size == 0) {
                 // display no peer notice
@@ -511,7 +517,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
 
     override fun onServerServiceError(e: Throwable?) {
         e?.let {
-            Toast.makeText(activity, it.message, Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireActivity(), it.message ?: "An error occurred.", Toast.LENGTH_SHORT).show()
             Logger.e(this.javaClass.name, "Server service encountered an exception: " + it.message, it)
         }
     }

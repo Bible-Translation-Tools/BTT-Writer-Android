@@ -15,7 +15,6 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.TranslationItem
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
-import com.door43.usecases.DownloadIndex
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.ExamineImportsForCollisions
 import com.door43.usecases.GogsLogout
@@ -29,7 +28,6 @@ import com.door43.usecases.cleanup
 import com.door43.util.FileUtilities
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.merge.MergeStrategy
@@ -51,7 +49,6 @@ class HomeViewModel @Inject constructor(
     @Inject lateinit var examineImportsForCollisions: ExamineImportsForCollisions
     @Inject lateinit var importProjects: ImportProjects
     @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
-    @Inject lateinit var downloadIndex: DownloadIndex
     @Inject lateinit var updateSource: UpdateSource
     @Inject lateinit var updateCatalogs: UpdateCatalogs
     @Inject lateinit var registerSSHKeys: RegisterSSHKeys
@@ -93,9 +90,6 @@ class HomeViewModel @Inject constructor(
     private val _uploadCatalogResult = MutableLiveData<UpdateCatalogs.Result?>()
     val uploadCatalogResult: LiveData<UpdateCatalogs.Result?> = _uploadCatalogResult
 
-    private val _indexDownloaded = MutableLiveData<Boolean?>()
-    val indexDownloaded: LiveData<Boolean?> = _indexDownloaded
-
     private val _translationProgress = MutableLiveData<Double?>()
     val translationProgress: LiveData<Double?> = _translationProgress
 
@@ -128,11 +122,8 @@ class HomeViewModel @Inject constructor(
 
     fun loadTranslations() {
         viewModelScope.launch {
-            _translations.value = withContext(Dispatchers.IO) {
-                translator.targetTranslations.map {
-                    val progress = calculateProgress.execute(it)
-                    TranslationItem(it, progress, ::getProject)
-                }
+            _translations.value = translator.targetTranslations.map {
+                TranslationItem(it, calculateProgress.execute(it), ::getProject)
             }
         }
     }
@@ -249,36 +240,6 @@ class HomeViewModel @Inject constructor(
             _latestRelease.value = withContext(Dispatchers.IO) {
                 checkForLatestRelease.execute()
             }
-            _progress.value = null
-        }
-    }
-
-    fun downloadIndex() {
-        viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress()
-            _indexDownloaded.value = withContext(Dispatchers.IO) {
-                downloadIndex.download { progress, max, message ->
-                    _progress.postValue(
-                        ProgressHelper.Progress(
-                            message,
-                            progress,
-                            max
-                        )
-                    )
-                }
-            }
-            _progress.value = null
-        }
-    }
-
-    fun importIndex(index: Uri) {
-        viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress(application.getString(R.string.importing_index))
-            _indexDownloaded.value = withContext(Dispatchers.IO) {
-                delay(2000) // necessary delay to show progress bar
-                downloadIndex.import(index)
-            }
-            delay(500)
             _progress.value = null
         }
     }

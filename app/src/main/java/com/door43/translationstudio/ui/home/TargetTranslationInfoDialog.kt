@@ -47,6 +47,7 @@ class TargetTranslationInfoDialog : DialogFragment() {
 
     private lateinit var changeTargetLanguageLauncher: ActivityResultLauncher<Intent>
 
+    @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

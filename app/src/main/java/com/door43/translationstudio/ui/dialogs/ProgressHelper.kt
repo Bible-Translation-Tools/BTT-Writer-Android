@@ -132,18 +132,18 @@ object ProgressHelper {
         fun setProgress(progress: Int) {
             binding?.let { binding ->
                 with(binding) {
-                    val percent = (progress / max.toFloat() * 100).toInt()
-
-                    progressPercent.text = "$percent%"
-                    progressNumber.text = "$progress/$max"
-
-                    progressBar.progress = progress
                     progressBar.isIndeterminate = progress < 0
 
                     if (progressBar.isIndeterminate) {
                         progressPercent.visibility = View.GONE
                         progressNumber.visibility = View.GONE
                     } else {
+                        val percent = (progress / max.toFloat() * 100).toInt()
+
+                        progressPercent.text = "$percent%"
+                        progressNumber.text = "$progress/$max"
+
+                        progressBar.progress = progress
                         progressPercent.visibility = View.VISIBLE
                         progressNumber.visibility = View.VISIBLE
                     }

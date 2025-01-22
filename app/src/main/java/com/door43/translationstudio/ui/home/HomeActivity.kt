@@ -20,7 +20,6 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -42,7 +41,6 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.PullTargetTranslation
-import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -71,7 +69,6 @@ class HomeActivity : BaseActivity(),
 
     private lateinit var newTranslationLauncher: ActivityResultLauncher<Intent>
     private lateinit var translationViewRequestLauncher: ActivityResultLauncher<Intent>
-    private lateinit var openIndexContent: ActivityResultLauncher<String>
 
     private val viewModel: HomeViewModel by viewModels()
 
@@ -93,24 +90,6 @@ class HomeActivity : BaseActivity(),
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
             onTranslationViewRequest(result)
-        }
-
-        openIndexContent = registerForActivityResult(
-            ActivityResultContracts.GetContent()
-        ) { uri ->
-            if (uri != null) {
-                val filename = FileUtilities.getUriDisplayName(this, uri)
-                val isSqlite = filename.contains(".sqlite", ignoreCase = true)
-                if (isSqlite) {
-                    viewModel.importIndex(uri)
-                } else {
-                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.error)
-                        .setMessage(R.string.import_index_failed)
-                        .setPositiveButton(R.string.label_ok, null)
-                        .show()
-                }
-            }
         }
 
         with(binding) {
@@ -363,18 +342,6 @@ class HomeActivity : BaseActivity(),
                     downloadTargetTranslationUpdates()
                 } else {
                     notifyTranslationUpdateFailed()
-                }
-            }
-        }
-        viewModel.indexDownloaded.observe(this) {
-            it?.let { success ->
-                if (success) {
-                    App.restart()
-                } else {
-                    showUpdateResultDialog(
-                        R.string.error,
-                        resources.getString(R.string.options_update_failed)
-                    )
                 }
             }
         }
@@ -730,7 +697,6 @@ class HomeActivity : BaseActivity(),
     override fun onItemClick(item: TranslationItem) {
         // validate project and target language
 
-        val project = item.project
         val language = item.translation.targetLanguage
 
         if (language == null) {
@@ -798,10 +764,16 @@ class HomeActivity : BaseActivity(),
                     viewModel.updateSource(resources.getString(R.string.updating_sources))
                 }
                 UpdateLibraryDialog.EVENT_DOWNLOAD_INDEX -> {
-                    viewModel.downloadIndex()
+                    val intent = Intent(this, ImportIndexActivity::class.java)
+                    intent.putExtra(ImportIndexActivity.IMPORT_ACTION, ImportIndexActivity.DOWNLOAD_INDEX)
+                    startActivity(intent)
+                    finishAffinity()
                 }
                 UpdateLibraryDialog.EVENT_IMPORT_INDEX -> {
-                    openIndexContent.launch("*/*")
+                    val intent = Intent(this, ImportIndexActivity::class.java)
+                    intent.putExtra(ImportIndexActivity.IMPORT_ACTION, ImportIndexActivity.IMPORT_INDEX)
+                    startActivity(intent)
+                    finishAffinity()
                 }
                 UpdateLibraryDialog.EVENT_UPDATE_APP -> {
                     viewModel.checkForLatestRelease()

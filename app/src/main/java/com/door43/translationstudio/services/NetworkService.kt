@@ -125,7 +125,7 @@ abstract class NetworkService : Service() {
      * @return
      */
     fun openReadSocket(peer: Peer, port: Int, listener: OnSocketEventListener) {
-        val t = Thread {
+        Thread {
             try {
                 val serverAddress = InetAddress.getByName(peer.ipAddress)
                 val socket = Socket(serverAddress, port)
@@ -136,8 +136,7 @@ abstract class NetworkService : Service() {
             } catch (e: IOException) {
                 Thread.currentThread().interrupt()
             }
-        }
-        t.start()
+        }.start()
     }
 
     /**
