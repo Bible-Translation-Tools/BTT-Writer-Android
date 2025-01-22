@@ -41,7 +41,7 @@ class LoginDoor43Activity : AppCompatActivity() {
             account.cancelButton.setOnClickListener { finish() }
             account.okButton.setOnClickListener {
                 closeKeyboard(this@LoginDoor43Activity)
-                val username = account.username.text.toString()
+                val username = account.username.text.toString().trim()
                 val password = account.password.text.toString()
                 val fullName = profile.fullName
 
