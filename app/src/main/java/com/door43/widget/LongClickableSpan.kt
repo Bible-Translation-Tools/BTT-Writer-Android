@@ -1,20 +1,18 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.text.TextPaint;
-import android.text.style.ClickableSpan;
-import android.view.View;
+import android.text.TextPaint
+import android.text.style.ClickableSpan
+import android.view.View
 
 /**
  * This class is the same as URLSpan except it does not underline the text
  */
-public abstract class LongClickableSpan extends android.text.style.ClickableSpan {
-
-    @Override
-    public void updateDrawState(TextPaint ds) {
-        ds.setUnderlineText(false);
+abstract class LongClickableSpan : ClickableSpan() {
+    override fun updateDrawState(ds: TextPaint) {
+        ds.isUnderlineText = false
     }
 
-    public abstract void onLongClick(View view);
+    abstract fun onLongClick(view: View)
 
-    public abstract void onClick(View view);
+    abstract override fun onClick(view: View)
 }

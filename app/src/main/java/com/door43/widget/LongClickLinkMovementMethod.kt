@@ -1,87 +1,104 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.text.Layout;
-import android.text.Selection;
-import android.text.Spannable;
-import android.text.method.LinkMovementMethod;
-import android.text.method.MovementMethod;
-import android.view.MotionEvent;
-import android.widget.TextView;
+import android.text.Selection
+import android.text.Spannable
+import android.text.method.LinkMovementMethod
+import android.text.method.MovementMethod
+import android.view.MotionEvent
+import android.widget.TextView
+import androidx.core.text.getSpans
+import kotlin.math.roundToInt
 
-public class LongClickLinkMovementMethod extends LinkMovementMethod {
+class LongClickLinkMovementMethod private constructor(): LinkMovementMethod() {
+    private var lastClickTime = 0L
+    private var mLongPressRunnable: Runnable? = null
 
-    private Long lastClickTime = 0l;
-    private int lastX = 0;
-    private int lastY = 0;
-    private final int LONG_CLICK_DELAY = 400;
-    private Runnable mLongPressRunnable;
+    override fun onTouchEvent(
+        widget: TextView,
+        buffer: Spannable,
+        event: MotionEvent
+    ): Boolean {
+        val action = event.action
 
-    @Override
-    public boolean onTouchEvent(final TextView widget, Spannable buffer,
-                                MotionEvent event) {
-        int action = event.getAction();
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_DOWN) {
+            var x = event.x
+            var y = event.y
 
-        if (action == MotionEvent.ACTION_UP ||
-                action == MotionEvent.ACTION_DOWN) {
-            int x = (int) event.getX();
-            int y = (int) event.getY();
-            lastX = x;
-            lastY = y;
-            final int deltaX = Math.abs(x-lastX);
-            final int deltaY = Math.abs(y-lastY);
+            x -= widget.totalPaddingLeft
+            y -= widget.totalPaddingTop
 
-            x -= widget.getTotalPaddingLeft();
-            y -= widget.getTotalPaddingTop();
+            x += widget.scrollX
+            y += widget.scrollY
 
-            x += widget.getScrollX();
-            y += widget.getScrollY();
+            val link = getClosestSpan(widget, buffer, x, y)
 
-            Layout layout = widget.getLayout();
-            int line = layout.getLineForVertical(y);
-            int off = layout.getOffsetForHorizontal(line, x);
-
-            final LongClickableSpan[] link = buffer.getSpans(off, off, LongClickableSpan.class);
-
-            if (link.length != 0) {
-                if(mLongPressRunnable != null) {
-                    widget.removeCallbacks(mLongPressRunnable);
+            if (link != null) {
+                if (mLongPressRunnable != null) {
+                    widget.removeCallbacks(mLongPressRunnable)
                 }
-                mLongPressRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        if (deltaX < 10 && deltaY < 10) {
-                            link[0].onLongClick(widget);
-                        }
-                    }
-                };
+
+                mLongPressRunnable = Runnable {
+                    link.onLongClick(widget)
+                }
 
                 if (action == MotionEvent.ACTION_UP) {
                     if (System.currentTimeMillis() - lastClickTime < LONG_CLICK_DELAY) {
-                        link[0].onClick(widget);
-                    } else if (deltaX < 10 && deltaY < 10) {
-                        link[0].onLongClick(widget);
+                        link.onClick(widget)
+                    } else {
+                        link.onLongClick(widget)
                     }
-                } else if (action == MotionEvent.ACTION_DOWN) {
-                    Selection.setSelection(buffer,
-                            buffer.getSpanStart(link[0]),
-                            buffer.getSpanEnd(link[0]));
-                    lastClickTime = System.currentTimeMillis();
-                    widget.postDelayed(mLongPressRunnable, LONG_CLICK_DELAY);
+                } else {
+                    Selection.setSelection(
+                        buffer,
+                        buffer.getSpanStart(link),
+                        buffer.getSpanEnd(link)
+                    )
+                    lastClickTime = System.currentTimeMillis()
+                    widget.postDelayed(mLongPressRunnable, LONG_CLICK_DELAY.toLong())
                 }
-                return true;
+                return true
             }
         }
 
-        return super.onTouchEvent(widget, buffer, event);
+        return super.onTouchEvent(widget, buffer, event)
     }
 
+    private fun getClosestSpan(
+        widget: TextView,
+        content: Spannable,
+        x: Float,
+        y: Float
+    ): LongClickableSpan? {
+        val layout = widget.layout
+        val line = layout.getLineForVertical(y.roundToInt())
+        val offset = layout.getOffsetForHorizontal(line, x)
 
-    public static MovementMethod getInstance() {
-        if (sInstance == null)
-            sInstance = new LongClickLinkMovementMethod();
+        val spans = content.getSpans<LongClickableSpan>(offset, offset)
 
-        return sInstance;
+        if (spans.size == 1) return spans[0]
+
+        return spans.singleOrNull { span ->
+            val start = content.getSpanStart(span)
+            val end = content.getSpanEnd(span)
+            val spanLine = layout.getLineForOffset(start)
+            val left = layout.getPrimaryHorizontal(start)
+            val right = layout.getPrimaryHorizontal(end)
+            val top = layout.getLineTop(spanLine)
+            val bottom = layout.getLineBottom(spanLine)
+
+            x in left..right && y.toInt() in top..bottom
+        }
     }
 
-    private static LongClickLinkMovementMethod sInstance;
+    companion object {
+        private const val LONG_CLICK_DELAY = 400
+
+        val instance: MovementMethod
+            get() {
+                if (sInstance == null) sInstance = LongClickLinkMovementMethod()
+                return sInstance!!
+            }
+
+        private var sInstance: LongClickLinkMovementMethod? = null
+    }
 }

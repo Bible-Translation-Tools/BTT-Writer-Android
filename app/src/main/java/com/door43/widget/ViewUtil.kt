@@ -1,75 +1,64 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.core.graphics.drawable.DrawableCompat;
-
-import android.text.method.MovementMethod;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.TranslateAnimation;
-import android.widget.PopupMenu;
-import android.widget.TextView;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationSet
+import android.view.animation.LinearInterpolator
+import android.view.animation.TranslateAnimation
+import android.widget.PopupMenu
+import android.widget.TextView
+import androidx.core.graphics.drawable.DrawableCompat
+import com.google.android.material.R
+import com.google.android.material.snackbar.Snackbar
 
 /**
  * This class provides utilities for views
  */
-public class ViewUtil {
-
+object ViewUtil {
     /**
      * Makes links in a textview clickable
      * includes support for long clicks
      * @param view
      */
-    public static void makeLinksClickable(TextView view) {
-        MovementMethod m = view.getMovementMethod();
-        if(m == null || !(m instanceof LongClickLinkMovementMethod)) {
-            if(view.getLinksClickable()) {
-                view.setMovementMethod(LongClickLinkMovementMethod.getInstance());
+    @JvmStatic
+    fun makeLinksClickable(view: TextView) {
+        val m = view.movementMethod
+        if (m == null || m !is LongClickLinkMovementMethod) {
+            if (view.linksClickable) {
+                view.movementMethod = LongClickLinkMovementMethod.instance
             }
         }
     }
 
     /**
-     * Sets the color of the snackbar text
+     * Sets the color of the snack bar text
      * @param snack
      * @param color
      */
-    public static void setSnackBarTextColor(Snackbar snack, int color) {
-        TextView tv = snack.getView().findViewById(com.google.android.material.R.id.snackbar_text);
-        tv.setTextColor(color);
+    @JvmStatic
+    fun setSnackBarTextColor(snack: Snackbar, color: Int) {
+        val tv = snack.view.findViewById<TextView>(R.id.snackbar_text)
+        tv.setTextColor(color)
     }
 
     /**
-     * Provides a backwards compatable way to tint view drawables
+     * Provides a backwards compatible way to tint view drawables
      * @param view the view who's background drawable will be tinted
      * @param color the color that will be applied
      */
-    public static void tintViewDrawable(View view, int color) {
-        final Drawable originalDrawable = view.getBackground();
-        final Drawable wrappedDrawable = DrawableCompat.wrap(originalDrawable);
-        DrawableCompat.setTintList(wrappedDrawable, ColorStateList.valueOf(color));
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            view.setBackground(wrappedDrawable);
-        } else {
-            view.setBackgroundDrawable(wrappedDrawable);
-        }
+    @JvmStatic
+    fun tintViewDrawable(view: View, color: Int) {
+        val originalDrawable = view.background
+        val wrappedDrawable = DrawableCompat.wrap(originalDrawable)
+        DrawableCompat.setTintList(wrappedDrawable, ColorStateList.valueOf(color))
+        view.background = wrappedDrawable
     }
 
     /**
      * Performs a stacked card animation that brings a bottom card to the front
-     * In preperation two views should be stacked on top of each other with appropriate margin
+     * In preparation two views should be stacked on top of each other with appropriate margin
      * so that the bottom card sticks out on the bottom and the right.
      *
      * @param topCard
@@ -79,144 +68,180 @@ public class ViewUtil {
      * @param leftToRight indicates which direction the animation of the top card should go.
      * @param listener
      */
-    public static void animateSwapCards(final View topCard, final View bottomCard, final int topCardElevation, final int bottomCardElevation, final boolean leftToRight, Animation.AnimationListener listener) {
-        long duration = 400;
-        float xMargin = topCard.getX() - bottomCard.getX();
-        float yMargin = topCard.getY() - bottomCard.getY();
+    @JvmStatic
+    fun animateSwapCards(
+        topCard: View,
+        bottomCard: View,
+        topCardElevation: Int,
+        bottomCardElevation: Int,
+        leftToRight: Boolean,
+        listener: Animation.AnimationListener?
+    ) {
+        val duration: Long = 400
+        val xMargin = topCard.x - bottomCard.x
+        val yMargin = topCard.y - bottomCard.y
 
-        topCard.clearAnimation();
-        bottomCard.clearAnimation();
+        topCard.clearAnimation()
+        bottomCard.clearAnimation()
 
-        final ViewGroup.LayoutParams topLayout = topCard.getLayoutParams();
-        final ViewGroup.LayoutParams bottomLayout = bottomCard.getLayoutParams();
+        val topLayout = topCard.layoutParams
+        val bottomLayout = bottomCard.layoutParams
 
         // bottom animation
-        Animation upLeft = new TranslateAnimation(0f, xMargin, 0f, yMargin);
-        upLeft.setDuration(duration);
-        Animation bottomCardRight = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, .5f, Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, 0);
-        bottomCardRight.setDuration(duration);
-        Animation bottomCardLeft = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, -.5f, Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, 0);
-        bottomCardLeft.setDuration(duration);
+        val upLeft: Animation = TranslateAnimation(0f, xMargin, 0f, yMargin)
+        upLeft.duration = duration
+        val bottomCardRight: Animation = TranslateAnimation(
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            .5f,
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            0f
+        )
+        bottomCardRight.duration = duration
+        val bottomCardLeft: Animation = TranslateAnimation(
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            -.5f,
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            0f
+        )
+        bottomCardLeft.duration = duration
 
-        AnimationSet bottomOutSet = new AnimationSet(false);
-        if(leftToRight) {
-            bottomOutSet.addAnimation(bottomCardLeft);
+        val bottomOutSet = AnimationSet(false)
+        if (leftToRight) {
+            bottomOutSet.addAnimation(bottomCardLeft)
         } else {
-            bottomOutSet.addAnimation(bottomCardRight);
+            bottomOutSet.addAnimation(bottomCardRight)
         }
-        AnimationSet bottomInSet = new AnimationSet(false);
-        bottomInSet.setStartOffset(duration);
-        if(leftToRight) {
-            bottomInSet.addAnimation(bottomCardRight);
-            bottomInSet.addAnimation(upLeft);
+        val bottomInSet = AnimationSet(false)
+        bottomInSet.startOffset = duration
+        if (leftToRight) {
+            bottomInSet.addAnimation(bottomCardRight)
+            bottomInSet.addAnimation(upLeft)
         } else {
-            bottomInSet.addAnimation(bottomCardLeft);
-            bottomInSet.addAnimation(upLeft);
+            bottomInSet.addAnimation(bottomCardLeft)
+            bottomInSet.addAnimation(upLeft)
         }
-        AnimationSet bottomSet = new AnimationSet(false);
-        bottomSet.setInterpolator(new LinearInterpolator());
-        bottomSet.addAnimation(bottomOutSet);
-        bottomSet.addAnimation(bottomInSet);
-        bottomSet.setAnimationListener(listener);
+        val bottomSet = AnimationSet(false)
+        bottomSet.interpolator = LinearInterpolator()
+        bottomSet.addAnimation(bottomOutSet)
+        bottomSet.addAnimation(bottomInSet)
+        bottomSet.setAnimationListener(listener)
 
-        bottomOutSet.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
+        bottomOutSet.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation) {
             }
 
-            @Override
-            public void onAnimationEnd(Animation animation) {
+            override fun onAnimationEnd(animation: Animation) {
                 // elevation takes precedence for API 21+
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    topCard.setElevation(bottomCardElevation);
-                    bottomCard.setElevation(topCardElevation);
-                }
-                bottomCard.bringToFront();
-                ((View) bottomCard.getParent()).requestLayout();
-                ((View) bottomCard.getParent()).invalidate();
+                topCard.elevation = bottomCardElevation.toFloat()
+                bottomCard.elevation = topCardElevation.toFloat()
+                bottomCard.bringToFront()
+                (bottomCard.parent as View).requestLayout()
+                (bottomCard.parent as View).invalidate()
             }
 
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
+            override fun onAnimationRepeat(animation: Animation) {
             }
-        });
-        bottomInSet.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
+        })
+        bottomInSet.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation) {
             }
 
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                bottomCard.clearAnimation();
-                bottomCard.setLayoutParams(topLayout);
-                topCard.clearAnimation();
-                topCard.setLayoutParams(bottomLayout);
+            override fun onAnimationEnd(animation: Animation) {
+                bottomCard.clearAnimation()
+                bottomCard.layoutParams = topLayout
+                topCard.clearAnimation()
+                topCard.layoutParams = bottomLayout
             }
 
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
+            override fun onAnimationRepeat(animation: Animation) {
             }
-        });
+        })
 
         // top animation
-        Animation downRight = new TranslateAnimation(0f, -xMargin, 0f, -yMargin);
-        downRight.setDuration(duration);
-        Animation topCardRight = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, .5f, Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, 0);
-        topCardRight.setDuration(duration);
-        Animation topCardLeft = new TranslateAnimation(Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, -.5f, Animation.RELATIVE_TO_SELF, 0, Animation.RELATIVE_TO_SELF, 0);
-        topCardLeft.setDuration(duration);
+        val downRight: Animation = TranslateAnimation(0f, -xMargin, 0f, -yMargin)
+        downRight.duration = duration
+        val topCardRight: Animation = TranslateAnimation(
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            .5f,
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            0f
+        )
+        topCardRight.duration = duration
+        val topCardLeft: Animation = TranslateAnimation(
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            -.5f,
+            Animation.RELATIVE_TO_SELF,
+            0f,
+            Animation.RELATIVE_TO_SELF,
+            0f
+        )
+        topCardLeft.duration = duration
 
-        AnimationSet topOutSet = new AnimationSet(false);
-        if(leftToRight) {
-            topOutSet.addAnimation(topCardRight);
+        val topOutSet = AnimationSet(false)
+        if (leftToRight) {
+            topOutSet.addAnimation(topCardRight)
         } else {
-            topOutSet.addAnimation(topCardLeft);
+            topOutSet.addAnimation(topCardLeft)
         }
-        AnimationSet topInSet = new AnimationSet(false);
-        topInSet.setStartOffset(duration);
-        if(leftToRight) {
-            topInSet.addAnimation(topCardLeft);
-            topInSet.addAnimation(downRight);
+        val topInSet = AnimationSet(false)
+        topInSet.startOffset = duration
+        if (leftToRight) {
+            topInSet.addAnimation(topCardLeft)
+            topInSet.addAnimation(downRight)
         } else {
-            topInSet.addAnimation(topCardRight);
-            topInSet.addAnimation(downRight);
+            topInSet.addAnimation(topCardRight)
+            topInSet.addAnimation(downRight)
         }
 
-        AnimationSet topSet = new AnimationSet(false);
-        topSet.setInterpolator(new LinearInterpolator());
-        topSet.addAnimation(topOutSet);
-        topSet.addAnimation(topInSet);
+        val topSet = AnimationSet(false)
+        topSet.interpolator = LinearInterpolator()
+        topSet.addAnimation(topOutSet)
+        topSet.addAnimation(topInSet)
 
         // start animations
-        bottomCard.startAnimation(bottomSet);
-        topCard.startAnimation(topSet);
+        bottomCard.startAnimation(bottomSet)
+        topCard.startAnimation(topSet)
     }
 
     /**
      * Forces a popup menu to display it's icons
      * @param popup
      */
-    public static void forcePopupMenuIcons(PopupMenu popup) {
+    @JvmStatic
+    fun forcePopupMenuIcons(popup: PopupMenu) {
         try {
-            Field[] fields = popup.getClass().getDeclaredFields();
-            for (Field field : fields) {
-                if ("mPopup".equals(field.getName())) {
-                    field.setAccessible(true);
-                    Object menuPopupHelper = field.get(popup);
-                    Class<?> classPopupHelper = Class.forName(menuPopupHelper
-                            .getClass().getName());
-                    Method setForceIcons = classPopupHelper.getMethod(
-                            "setForceShowIcon", boolean.class);
-                    setForceIcons.invoke(menuPopupHelper, true);
-                    break;
+            val fields = popup.javaClass.declaredFields
+            for (field in fields) {
+                if ("mPopup" == field.name) {
+                    field.isAccessible = true
+                    val menuPopupHelper = field[popup]
+                    val classPopupHelper = Class.forName(
+                        menuPopupHelper
+                            .javaClass.name
+                    )
+                    val setForceIcons = classPopupHelper.getMethod(
+                        "setForceShowIcon", Boolean::class.javaPrimitiveType
+                    )
+                    setForceIcons.invoke(menuPopupHelper, true)
+                    break
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -225,11 +250,12 @@ public class ViewUtil {
      * @param view
      * @return
      */
-    public static Bitmap convertToBitmap(View view) {
-        view.setDrawingCacheEnabled(true);
-        view.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
-        view.buildDrawingCache(true);
-        return view.getDrawingCache();
+    @JvmStatic
+    fun convertToBitmap(view: View): Bitmap {
+        view.isDrawingCacheEnabled = true
+        view.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        view.layout(0, 0, view.measuredWidth, view.measuredHeight)
+        view.buildDrawingCache(true)
+        return view.drawingCache
     }
 }

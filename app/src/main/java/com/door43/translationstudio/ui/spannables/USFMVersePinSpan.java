@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.spannables;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -30,6 +31,8 @@ public class USFMVersePinSpan extends USFMVerseSpan {
         super(verse);
     }
 
+    @SuppressLint("SetTextI18n")
+    @Override
     public SpannableStringBuilder render() {
         if(mSpannable == null) {
             mSpannable = super.render();

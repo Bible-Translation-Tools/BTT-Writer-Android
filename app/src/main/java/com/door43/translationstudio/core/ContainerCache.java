@@ -90,7 +90,7 @@ public class ContainerCache {
                 // delete invalid container
                 client.delete(resourceContainerSlug);
             } catch (Exception e) {
-                Logger.e("ContainerCache", "Failed to open the RC " + resourceContainerSlug, e);
+                Logger.w("ContainerCache", "Failed to open the RC " + resourceContainerSlug, e);
             } finally {
                 // fag as inspected
                 sInstance.inspectedContainers.add(resourceContainerSlug);

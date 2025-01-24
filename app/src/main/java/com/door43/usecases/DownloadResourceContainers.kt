@@ -66,7 +66,7 @@ class DownloadResourceContainers @Inject constructor(
                         downloadedContainers.add(rc)
                     }
                 } catch (e: java.lang.Exception) {
-                    Logger.e(
+                    Logger.w(
                         DownloadResourceContainers::class.java.simpleName,
                         "Download translation words Failed: " + translation.resourceContainerSlug,
                         e
@@ -81,7 +81,7 @@ class DownloadResourceContainers @Inject constructor(
                     )
                     downloadedContainers.add(rc)
                 } catch (e: java.lang.Exception) {
-                    Logger.e(
+                    Logger.w(
                         DownloadResourceContainers::class.java.simpleName,
                         "Download translation notes Failed: " + translation.resourceContainerSlug,
                         e
@@ -96,7 +96,7 @@ class DownloadResourceContainers @Inject constructor(
                     )
                     downloadedContainers.add(rc)
                 } catch (e: java.lang.Exception) {
-                    Logger.e(
+                    Logger.w(
                         DownloadResourceContainers::class.java.simpleName,
                         "Download translation questions Failed: " + translation.resourceContainerSlug,
                         e
@@ -199,7 +199,7 @@ class DownloadResourceContainers @Inject constructor(
                                 )
                             }
                         } catch (e: java.lang.Exception) {
-                            Logger.e(
+                            Logger.w(
                                 this.javaClass.simpleName,
                                 "download translation words Failed: $resourceContainerSlug", e
                             )
@@ -357,7 +357,7 @@ class DownloadResourceContainers @Inject constructor(
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
             val resource = languageSlug + "_" + projectSlug + "_" + resourceSlug
-            Logger.e(
+            Logger.w(
                 this.javaClass.simpleName,
                 "$name download Helps Failed: $resource", e
             )
