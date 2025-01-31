@@ -10,6 +10,8 @@ import com.door43.translationstudio.databinding.FragmentMergeCardBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding;
 import com.door43.translationstudio.ui.translate.IReviewListItemBinding;
 import com.door43.translationstudio.ui.translate.ReviewListItem;
+import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
+import com.door43.usecases.ParseMergeConflicts;
 import com.google.android.material.tabs.TabLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,7 +36,6 @@ import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
-import com.door43.translationstudio.ui.translate.ViewModeAdapter;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.unfoldingword.resourcecontainer.Language;
@@ -69,7 +70,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     public IReviewListItemBinding binding;
     private final Typography typography;
-    private final ViewModeAdapter<ReviewHolder> adapter;
+    private final ReviewModeAdapter adapter;
 
     private enum MergeConflictDisplayState {
         NORMAL,
@@ -81,7 +82,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public ReviewHolder(
             IReviewListItemBinding binding,
             Typography typography,
-            ViewModeAdapter<ReviewHolder> adapter
+            ReviewModeAdapter adapter
     ) {
         super(binding.getRoot());
         this.binding = binding;
@@ -293,16 +294,11 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * set up the merge conflicts on the card
-     * @param language
-     * @param conflicts
      * @param item
      */
-    public void displayMergeConflictsOnTargetCard(
-            Language language,
-            List<CharSequence> conflicts,
-            final ReviewListItem item
-    ) {
-        item.mergeItems = conflicts;
+    public void displayMergeConflictsOnTargetCard(final ReviewListItem item) {
+        Language language = item.source.language;
+        item.mergeItems = ParseMergeConflicts.INSTANCE.execute(item.getTargetText());
 
         if(mergeTexts != null) { // if previously rendered (could be recycled view)
             while (mergeTexts.size() > item.mergeItems.size()) { // if too many items, remove extras
@@ -351,7 +347,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             if (textView != null) {
                 textView.setOnClickListener(v -> {
                     item.mergeItemSelected = pos;
-                    displayMergeConflictSelectionState(item);
+                    adapter.notifyItemChanged(getAbsoluteAdapterPosition());
                 });
             }
         }
@@ -361,7 +357,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * set merge conflict selection state
-     * @param item
+     //* @param item
      */
     public void displayMergeConflictSelectionState(ReviewListItem item) {
         for(int i = 0; i < item.mergeItems.size(); i++ ) {
@@ -371,18 +367,23 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             if (item.mergeItemSelected >= 0) {
                 if (item.mergeItemSelected == i) {
                     displayMergeSelectionState(MergeConflictDisplayState.SELECTED, textView, mergeConflictCard);
-                    if (binding.getConflictText() != null) binding.getConflictText().setVisibility(View.GONE);
-                    if (binding.getButtonBar() != null) binding.getButtonBar().setVisibility(View.VISIBLE);
                 } else {
                     displayMergeSelectionState(MergeConflictDisplayState.DESELECTED, textView, mergeConflictCard);
-                    if (binding.getConflictText() != null) binding.getConflictText().setVisibility(View.GONE);
-                    if (binding.getButtonBar() != null) binding.getButtonBar().setVisibility(View.VISIBLE);
                 }
-
+                if (binding.getConflictText() != null) {
+                    binding.getConflictText().setVisibility(View.GONE);
+                }
+                if (binding.getButtonBar() != null) {
+                    binding.getButtonBar().setVisibility(View.VISIBLE);
+                }
             } else {
                 displayMergeSelectionState(MergeConflictDisplayState.NORMAL, textView, mergeConflictCard);
-                if (binding.getConflictText() != null) binding.getConflictText().setVisibility(View.VISIBLE);
-                if (binding.getButtonBar() != null) binding.getButtonBar().setVisibility(View.GONE);
+                if (binding.getConflictText() != null) {
+                    binding.getConflictText().setVisibility(View.VISIBLE);
+                }
+                if (binding.getButtonBar() != null) {
+                    binding.getButtonBar().setVisibility(View.GONE);
+                }
             }
         }
     }
@@ -392,7 +393,6 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
      * @param state
      */
     private void displayMergeSelectionState(MergeConflictDisplayState state, TextView view, CharSequence text) {
-
         SpannableStringBuilder span;
 
         switch (state) {
@@ -559,9 +559,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         if(currentItem.isEditing) {
             prepareUndoRedoUI();
 
-            boolean allowFootnote =
-                    currentItem.getTargetTranslationFormat() == TranslationFormat.USFM &&
-                            currentItem.isChunk();
+            boolean allowFootnote = currentItem.getTargetTranslationFormat() == TranslationFormat.USFM && currentItem.isChunk();
             if(binding.getEditButton() != null) {
                 binding.getEditButton().setImageResource(R.drawable.ic_done_secondary_24dp);
             }

@@ -61,7 +61,6 @@ import com.door43.translationstudio.ui.translate.review.OnResourceClickListener;
 import com.door43.translationstudio.ui.translate.review.OnSourceClickListener;
 import com.door43.translationstudio.ui.translate.review.ReviewHolder;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
-import com.door43.usecases.ParseMergeConflicts;
 import com.door43.util.ColorUtil;
 import com.door43.widget.ViewUtil;
 
@@ -96,7 +95,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     private CharSequence searchText = null;
     private SearchSubject searchSubject = null;
     private boolean haveMergeConflict = false;
-    private boolean mergeConflictFilterOn = false;
+    private boolean mergeConflictFilterOn;
     private int chunkSearchMatchesCounter = 0;
     private int searchPosition = 0;
     private int searchSubPositionItems = 0;
@@ -257,11 +256,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         triggerNotifyDataSetChanged();
     }
 
-    public ListItem getItem(int position) {
-        if (position >= 0 && position < filteredItems.size()) {
-            return filteredItems.get(position);
-        }
-        return null;
+    @Override
+    public ReviewListItem getItem(int position) {
+        return (ReviewListItem) super.getItem(position);
     }
 
     @Override
@@ -464,34 +461,17 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             return;
         }
 
-        item.mergeItemSelected = -1;
+        holder.displayMergeConflictsOnTargetCard(item);
 
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(() -> {
-            List<CharSequence> conflicts =
-                    ParseMergeConflicts.INSTANCE.execute(item.getTargetText());
-            holder.displayMergeConflictsOnTargetCard(
-                    item.source.language,
-                    conflicts,
-                    item
-            );
-        });
-
-        if (holder.binding.getConflictText() != null) {
-            holder.binding.getConflictText().setVisibility(View.VISIBLE);
-        }
-        if (holder.binding.getButtonBar() != null) {
-            holder.binding.getButtonBar().setVisibility(View.GONE);
-        }
         if (holder.binding.getCancelButton() != null) {
             holder.binding.getCancelButton().setOnClickListener(v -> {
                 item.mergeItemSelected = -1;
-                holder.displayMergeConflictSelectionState(item);
+                notifyItemChanged(holder.getAbsoluteAdapterPosition());
             });
         }
         if (holder.binding.getConfirmButton() != null) {
             holder.binding.getConfirmButton().setOnClickListener(v -> {
-                if ((item.mergeItemSelected >= 0) && (item.mergeItemSelected < item.mergeItems.size())) {
+                if (item.mergeItemSelected >= 0 && item.mergeItemSelected < item.mergeItems.size()) {
                     CharSequence selectedText = item.mergeItems.get(item.mergeItemSelected);
                     applyNewCompiledText(selectedText.toString(), holder, item);
                     item.setTargetText(selectedText.toString());
@@ -505,7 +485,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     if (!item.getHasMergeConflicts() && mergeConflictFilterOn) {
                         filteredItems.remove(item);
                     }
-                    triggerNotifyDataSetChanged();
+                    notifyItemChanged(holder.getAbsoluteAdapterPosition());
                     updateMergeConflict();
                 }
             });
@@ -2211,8 +2191,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
         if (!haveMergeConflict || !enableFilter) {
             // if no merge conflict or filter off, then remove filter
-            filteredItems = items;
-            filteredChapters = chapters;
+            filteredItems.clear();
+            filteredItems.addAll(items);
+            filteredChapters.clear();
+            filteredChapters.addAll(chapters);
 
             if (mergeConflictFilterOn) {
                 mergeConflictFilterOn = false;
@@ -2245,7 +2227,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     @NonNull CharSequence constraint,
                     @NonNull ArrayList<ListItem> results
             ) {
-                filteredItems = results;
+                filteredItems.clear();
+                filteredItems.addAll(results);
                 updateMergeConflict();
                 triggerNotifyDataSetChanged();
                 checkForConflictSummary(filteredItems.size(), items.size());

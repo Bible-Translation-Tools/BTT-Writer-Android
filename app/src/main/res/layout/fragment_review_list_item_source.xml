@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-
 <androidx.cardview.widget.CardView xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -10,8 +8,7 @@
     android:layout_height="match_parent"
     card_view:cardElevation="2dp"
     android:layout_weight="0.255"
-    android:layout_marginLeft="@dimen/card_margin"
-    android:layout_marginRight="@dimen/dialog_controls_margin"
+    android:layout_marginHorizontal="@dimen/card_margin"
     android:layout_marginTop="@dimen/card_margin"
     android:layout_marginBottom="@dimen/card_margin"
     android:padding="0dp"

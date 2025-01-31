@@ -46,10 +46,10 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     protected Typography typography;
     protected RenderingProvider renderingProvider;
 
-    protected List<ListItem> items = new ArrayList<>();
-    protected List<ListItem> filteredItems = new ArrayList<>();
-    protected List<String> chapters = new ArrayList<>();
-    protected List<String> filteredChapters = new ArrayList<>();
+    protected final List<ListItem> items = new ArrayList<>();
+    protected final List<ListItem> filteredItems = new ArrayList<>();
+    protected final List<String> chapters = new ArrayList<>();
+    protected final List<String> filteredChapters = new ArrayList<>();
 
     private enum MovementDirection {
         UP,
@@ -341,6 +341,13 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
             if (item.isChunk() && chapterSlug.equals(item.chapterSlug) && chunkSlug.equals(item.chunkSlug)) {
                 return item;
             }
+        }
+        return null;
+    }
+
+    protected ListItem getItem(int position) {
+        if (position >= 0 && position < filteredItems.size()) {
+            return filteredItems.get(position);
         }
         return null;
     }

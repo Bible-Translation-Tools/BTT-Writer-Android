@@ -23,8 +23,8 @@ abstract class ListItem(
 ) {
     @JvmField var renderedSourceText: CharSequence? = null
     @JvmField var renderedTargetText: CharSequence? = null
-    @JvmField var isEditing: Boolean = false
-    @JvmField var isDisabled: Boolean = false
+    @JvmField var isEditing = false
+    @JvmField var isDisabled = false
 
     val sourceText: String
         get() = getSourceText(chapterSlug, chunkSlug)
@@ -308,21 +308,21 @@ class ReviewListItem(
     private val getTabsFunc: () -> List<ContentValues>
 ) : ListItem(chapterSlug, chunkSlug, source, target) {
     @JvmField
-    var hasSearchText: Boolean = false
+    var hasSearchText = false
     @JvmField
     var mergeItems: List<CharSequence> = emptyList()
     @JvmField
-    var mergeItemSelected: Int = -1
+    var mergeItemSelected = -1
     @JvmField
-    var selectItemNum: Int = -1
+    var selectItemNum = -1
     @JvmField
-    var refreshSearchHighlightSource: Boolean = false
+    var refreshSearchHighlightSource = false
     @JvmField
-    var refreshSearchHighlightTarget: Boolean = false
+    var refreshSearchHighlightTarget = false
     @JvmField
-    var hasMissingVerses: Boolean = false
+    var hasMissingVerses = false
     @JvmField
-    var resourcesOpened: Boolean = false
+    var resourcesOpened = false
 
     override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
         return getSourceTextFunc(chapterSlug, chunkSlug)
