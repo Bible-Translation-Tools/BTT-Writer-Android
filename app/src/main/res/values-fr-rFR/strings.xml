@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The app name -->
     <string name="title_projects">Projets</string>
     <string name="title_frames">Cadres</string>
-    <!-- Acknowlogment or an affirmative statement -->
+    <!-- Acknowledgment or an affirmative statement -->
     <string name="label_ok">OK</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
     <string name="label_close">Fermer</string>
     <!-- Close or reject an action -->
     <string name="title_cancel">Annuler</string>
     <!-- The application is already executing a different task -->
-    <!-- Theapplication is out of memory -->
+    <string name="error_task_running">A task is already running</string>
+    <!-- The application is out of memory -->
+    <string name="error_out_of_memory">Out of memory</string>
     <!-- The remote git repository could not be found -->
+    <string name="error_repository_not_found">Repository Not Found</string>
     <!-- Local changes are being uploaded to the server -->
     <string name="uploading">Téléchargement</string>
+    <string name="creating_repository">Creating repository</string>
     <!-- The repository could not be created-->
+    <string name="error_could_not_create_repository">Could not create repository</string>
     <!-- The terms that users must agree with in order to use the app -->
     <string name="terms_title">Conditions d\'utilisation</string>
     <string name="terms">En utilisant cette application, vous acceptez la déclaration de foi et les directives de traduction et de publication de votre travail sous les termes de la Creative Commons Attribution-Partage à l\'identique 4. Licence Internationale.</string>
@@ -23,7 +28,7 @@
     <string name="chapter_reference_field">Référence de chapitre</string>
     <!-- The language from which a project is being translated -->
     <string name="source_language_field">Langue Source</string>
-    <!-- The langage to which a project is being translated -->
+    <!-- The language to which a project is being translated -->
     <string name="target_language">Langue Cible</string>
     <string name="title_activity_chapter_setting">Traduction du chapitre</string>
     <string name="title_activity_language_selector">Langue</string>
@@ -33,8 +38,10 @@
     <string name="missing_external_storage">Stockage externe non disponible</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
     <string name="project_exported_to">Projet enregistré à <xliff:g example="/storage/sdcard1/" id="file_path">%1$s</xliff:g></string>
+    <string name="project_share_exception">The project cannot be shared</string>
     <!-- The file browser -->
     <string name="title_activity_file_explorer">Explorateur de fichiers</string>
+    <string name="missing_file">The file does not exist</string>
     <!-- Export a project to another app on the device -->
     <string name="backup_to_app">Envoyer vers une autre application</string>
     <!-- Export a project to the sd card -->
@@ -72,9 +79,9 @@
     <string name="label_translation_notes">Notes</string>
     <string name="label_passage_note">Note de Passage:</string>
     <string name="label_delete">Supprimer</string>
-    <!-- Explaination of what a source language is -->
+    <!-- Explanation of what a source language is -->
     <string name="source_language_instructions">Traductions terminées</string>
-    <!-- Explaination of what a target language is -->
+    <!-- Explanation of what a target language is -->
     <string name="target_language_instructions">Traductions non démarrées ou en cours</string>
     <string name="notes_cannot_overlap">Les notes ne peuvent pas se chevaucher</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
@@ -310,6 +317,8 @@
     <string name="email">Adresse email</string>
     <string name="phone">Numéro de téléphone</string>
     <string name="profile">Profil</string>
+    <string name="create_account_title">Please create or login to your account.</string>
+    <string name="names_will_be_public">Names will be publicly available</string>
     <string name="default_translator">Nom du traducteur par défaut</string>
     <string name="project_title_complex">Projet: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <!-- A warning shown, when publishing, indicating that names/pseudonyms (but not email or phone number) are published in the catealog -->
@@ -453,6 +462,7 @@
     <string name="registration_failed">Votre compte n’a pas pu être créé.</string>
     <string name="title_door43_account_required">Compte du serveur requis</string>
     <string name="door43_account_required">Vous devez d\'abord vous connecter à un compte du serveur.</string>
+    <string name="server_account">Server Account</string>
     <string name="login_doo43">Se connecter avec le compte serveur</string>
     <string name="register_door43">Créer un nouveau compte serveur</string>
     <string name="create_offline_profile">Créer un compte hors ligne</string>
@@ -502,7 +512,7 @@
     <string name="chapter_out_of_order">Chapitre déclassé : \'<xliff:g example="4" id="found">%1$s</xliff:g>\' après \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
     <string name="missing_verses_in_section">Aucun verset dans la section</string>
     <string name="error_prefix">Erreur: %s</string>
-    <string name="no_error">Aucune erreur trouvée</string>
+    <string name="no_error">No errors found</string>
     <string name="warning_prefix">Avertissement : %s</string>
     <string name="found_book">Livre trouvé : %s</string>
     <string name="importing_file">Importation : %s</string>
@@ -604,6 +614,7 @@
     <string name="update_languages">Mettre à jour la liste des langues cibles disponibles</string>
     <string name="update_source">Mettre à jour la liste des textes de source disponibles</string>
     <string name="download_index">Download New index.sqlite</string>
+    <string name="import_index">Import index.sqlite from File</string>
     <string name="update_all">Mettre tout à jour</string>
     <string name="time_very_slow">Prend un certain temps</string>
     <string name="time_slow">Peut prendre plusieurs minutes (ou plus)</string>
@@ -633,6 +644,8 @@
     <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
     <string name="updating_sources">Mise à jour de la liste des textes sources. Cela peut prendre un certain temps. Veuillez patienter...</string>
     <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
+    <string name="importing_index">Importing index.sqlite file. Please wait...</string>
+    <string name="import_index_failed">Failed to import index.sqlite file. Check if the file is correct.</string>
     <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Langues cibles ont été ajoutées.</string>
     <string name="updating_languages">Mise à jour de la liste des textes sources. Cela peut prendre un certain temps. Veuillez patienter...</string>
     <string name="available_online">Disponible en ligne</string>
@@ -706,4 +719,32 @@
     <string name="pref_title_check_hardware_requirements">Vérifier les exigences de matériel</string>
     <string name="pref_description_check_hardware_requirements">Vérifier les suggestions de matériel au démarrage de l\'application</string>
     <string name="import_project_already_exists">Ce projet (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) existe déjà localement. Comment voulez-vous procéder ?</string>
+    <string name="searching_repositories">Searching repositories</string>
+    <string name="cloning_repository">Cloning repository</string>
+    <string name="start_new_translation">Start a new translation</string>
+    <string name="regenerate_ssh_keys">Regenerate SSH keys</string>
+    <string name="regenerate_ssh_keys_hint">Discards and regenerates the ssh keys used for git</string>
+    <string name="read_debug_log">Read debugging log</string>
+    <string name="read_debug_log_hint">View the error logs that have been generated on this device.</string>
+    <string name="simulate_crash">Simulate crash</string>
+    <string name="check_system_resources">Check system resources</string>
+    <string name="check_system_resources_hint">Check for minimum system resources.</string>
+    <string name="delete_library">Delete Library</string>
+    <string name="delete_library_hint">Deletes the entire library database so it can be rebuilt from scratch</string>
+    <string name="recreate_keys">Regenerating keys</string>
+    <string name="deleting_library">Deleting library</string>
+    <string name="reading_logs">Reading logs</string>
+    <string name="simulating_crash">Simulating crash</string>
+    <string name="no_logs">There are no logs</string>
+    <string name="system_resources_check">System Resources Check</string>
+    <string name="library_was_deleted">The library content was deleted</string>
+    <string name="source_draft_translation_not_found">Source text for this draft translation not found.</string>
+    <string name="migrate_from_old_app">Migrate from Old App</string>
+    <string name="migrate_from_old_app_description">Would you like to migrate from the old app data? You can do that later in Settings.</string>
+    <string name="migrating_translations">Migrating translations</string>
+    <string name="migrating_complete">Migration complete!</string>
+    <string name="copying_file">Copying file: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
+    <string name="import_from_backup">Import from Backups</string>
+    <string name="filename">File name</string>
+    <string name="date_modified">Modified at</string>
 </resources>
