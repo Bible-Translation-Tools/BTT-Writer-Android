@@ -7,7 +7,7 @@
     android:fitsSystemWindows="false"
     tools:context=".ui.draft.DraftActivity">
 
-    <include layout="@layout/content_draft_preview" />
+    <include android:id="@+id/drafts" layout="@layout/content_draft_preview" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

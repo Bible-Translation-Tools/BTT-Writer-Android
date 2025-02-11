@@ -1,5 +1,6 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
 import android.text.TextUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -23,7 +24,11 @@ public class LinkToHtmlRenderer extends RenderingEngine {
      *
      * @param preprocessor called to determine if link should be rendered
      */
-    public LinkToHtmlRenderer(OnPreprocessLink preprocessor) {
+    public LinkToHtmlRenderer(
+            Context context,
+            OnPreprocessLink preprocessor
+    ) {
+        this.context = context;
         preprocessCallback = preprocessor;
     }
 

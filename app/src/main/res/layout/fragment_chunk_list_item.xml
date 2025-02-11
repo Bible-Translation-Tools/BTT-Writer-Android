@@ -12,9 +12,9 @@
         android:id="@+id/target_translation_card"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginLeft="@dimen/stacked_card_margin"
+        android:layout_marginStart="@dimen/stacked_card_margin"
         android:layout_marginTop="@dimen/stacked_card_margin"
-        android:layout_marginRight="@dimen/card_margin"
+        android:layout_marginEnd="@dimen/card_margin"
         android:layout_marginBottom="@dimen/card_margin"
         android:clickable="true">
 
@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right"
+                android:layout_gravity="end"
                 android:textSize="@dimen/title"
                 android:layout_marginBottom="@dimen/stacked_card_margin"
                 android:textColor="@color/dark_secondary_text"
@@ -88,9 +88,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         card_view:cardElevation="3dp"
-        android:layout_marginLeft="@dimen/card_margin"
+        android:layout_marginStart="@dimen/card_margin"
         android:layout_marginTop="@dimen/card_margin"
-        android:layout_marginRight="@dimen/stacked_card_margin"
+        android:layout_marginEnd="@dimen/stacked_card_margin"
         android:layout_marginBottom="@dimen/stacked_card_margin"
         android:clickable="true">
 
@@ -101,39 +101,40 @@
             android:layout_height="match_parent"
             android:gravity="center_vertical">
 
-            <FrameLayout
+            <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/card_margin">
+
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/source_translation_tabs"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginRight="@dimen/stacked_card_margin"
-                    android:layout_marginLeft="@dimen/stacked_card_margin"
-                    android:layout_gravity="center_vertical|center_horizontal"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_gravity="center_vertical"
                     app:tabSelectedTextColor="@color/dark_primary_text"
                     app:tabTextColor="@color/dark_disabled_text"
                     app:layout_scrollFlags="scroll|enterAlways"/>
+
                 <ImageButton
                     android:id="@+id/new_tab_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingTop="10dp"
-                    android:paddingBottom="10dp"
-                    android:paddingLeft="@dimen/card_margin"
-                    android:paddingRight="@dimen/stacked_card_margin"
-                    android:layout_gravity="right|center_vertical"
+                    android:paddingVertical="10dp"
+                    android:paddingStart="@dimen/card_margin"
+                    android:paddingEnd="@dimen/stacked_card_margin"
+                    android:layout_gravity="end|center_vertical"
                     android:background="?attr/selectableItemBackground"
                     android:src="@drawable/ic_tab_edit_secondary_24dp"/>
-            </FrameLayout>
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="@dimen/body"
-                android:layout_gravity="right|center_vertical"
+                android:layout_gravity="end|center_vertical"
                 android:textColor="@color/dark_secondary_text"
                 android:text="John 1:1-3"
                 android:layout_marginBottom="@dimen/stacked_card_margin"

@@ -9,20 +9,25 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.door43.data.AssetsProvider;
+import com.door43.data.IDirectoryProvider;
+import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.App;
+import com.door43.translationstudio.IntegrationTest;
+import com.door43.usecases.ExportProjects;
 import com.door43.util.FileUtilities;
 import com.door43.util.Zip;
 
-import org.eclipse.jgit.util.StringUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.ChunkMarker;
+import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.door43client.models.Versification;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
 
@@ -30,53 +35,69 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.unfoldingword.door43client.models.TargetLanguage;
+import javax.inject.Inject;
+
+import dagger.hilt.android.qualifiers.ApplicationContext;
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 
 /**
  * Created by blm on 7/25/16.
  */
+@HiltAndroidTest
+@RunWith(AndroidJUnit4.class)
+@IntegrationTest
 public class ExportUsfmTest {
 
-    public static final String TAG = ExportUsfmTest.class.getSimpleName();
-    File mTempFolder;
-    private Context mTestContext;
-    private Context mAppContext;
-    private TargetLanguage mTargetLanguage;
-    private Door43Client mLibrary;
-    private ImportUsfm mUsfm;
-    private File mOutputFolder;
-    private TargetTranslation mTargetTranslation;
-    private String mErrorLog;
+    @Rule
+    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
 
+    @Inject
+    @ApplicationContext
+    Context appContext;
+    @Inject
+    Door43Client library;
+    @Inject
+    IDirectoryProvider directoryProvider;
+    @Inject
+    Profile profile;
+    @Inject
+    ExportProjects exportProjects;
+    @Inject
+    AssetsProvider assetsProvider;
+    @Inject
+    IPreferenceRepository prefRepository;
+
+    public static final String TAG = ExportUsfmTest.class.getSimpleName();
+    private File tempFolder;
+    private TargetLanguage targetLanguage;
+    private ProcessUSFM usfm;
+    private File outputFile;
+    private TargetTranslation targetTranslation;
+    private String errorLog;
 
     @Before
-    public void setUp() throws Exception {
-        mErrorLog = null;
-        mLibrary = App.getLibrary();
+    public void setUp() {
+        errorLog = null;
         Logger.flush();
-        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mAppContext = App.context();
-        if(!App.isLibraryDeployed()) {
-            App.deployDefaultLibrary();
-        }
-        mTargetLanguage = mLibrary.index().getTargetLanguage("aae");
-        if(App.getProfile() == null) { // make sure this is initialized
-            App.setProfile(new Profile("testing"));
-        }
+
+        hiltRule.inject();
+
+        targetLanguage = library.index.getTargetLanguage("aae");
     }
 
     @After
-    public void tearDown() throws Exception {
-        if (mUsfm != null) {
-            mUsfm.cleanup();
+    public void tearDown() {
+        if (usfm != null) {
+            usfm.cleanup();
         }
-        FileUtilities.deleteQuietly(mTempFolder);
+        FileUtilities.deleteQuietly(tempFolder);
     }
 
     @Test
@@ -88,7 +109,14 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
+
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
@@ -103,7 +131,14 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
+
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
@@ -118,7 +153,14 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
+
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
@@ -133,126 +175,135 @@ public class ExportUsfmTest {
         importTestTranslation(source);
 
         //when
-        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
+
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
 
         //then
         verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
     }
 
-//    public void test08ValidExportIsaiahSingle() throws Exception {
-//        //given
-//        String zipFileName = null;
-//        boolean separateChapters = false;
-//        String source = "23-ISA.usfm";
-//        importTestTranslation(source);
-//
-//        //when
-//        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
-//
-//        //then
-//        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
-//    }
-//
-//    public void test09ValidExportJeremiahSingle() throws Exception {
-//        //given
-//        String zipFileName = null;
-//        boolean separateChapters = false;
-//        String source = "24-JER.usfm";
-//        importTestTranslation(source);
-//
-//        //when
-//        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
-//
-//        //then
-//        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
-//    }
-//
-//    public void test10ValidExportLukeSingle() throws Exception {
-//        //given
-//        String zipFileName = null;
-//        boolean separateChapters = false;
-//        String source = "43-LUK.usfm";
-//        importTestTranslation(source);
-//
-//        //when
-//        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
-//
-//        //then
-//        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
-//    }
-//
-//    public void test11ValidExportJohnSingle() throws Exception {
-//        //given
-//        String zipFileName = null;
-//        boolean separateChapters = false;
-//        String source = "44-JHN.usfm";
-//        importTestTranslation(source);
-//
-//        //when
-//        Uri usfmOutput = ExportUsfm.saveToUSFM(mTargetTranslation, Uri.fromFile(mOutputFolder), null, false);
-//
-//        //then
-//        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
-//    }
-
     @Test
-    public void test12VerifyBookChunkMarkersAgainstSourceTOC() throws Exception {
+    public void test08ValidExportIsaiahSingle() throws Exception {
         //given
-        String[] books = {
-                "gen", "exo", "lev", "num", "deu", "jos", "jud", "rut", "1sa", "2sa",
-                "1ki", "2ki", "1ch", "2ch", "ezr", "neh", "est", "job", "psa", "pro",
-                "ecc", "sng", "isa", "jer", "lam", "ezk", "dan", "hos", "jol", "amo",
-                "oba", "jon", "mic", "nam", "hab", "zep", "hag", "zec", "mal",
-                "mat", "mrk", "luk", "jhn", "act", "rom", "1co", "2co", "gal", "eph",
-                "php", "col", "1th", "2th", "1ti", "2ti", "tit", "phm", "heb", "jas",
-                "1pe", "2pe", "1jn", "2jn", "3jn", "jud", "rev"
-        };
+        String zipFileName = null;
+        boolean separateChapters = false;
+        String source = "23-ISA.usfm";
+        importTestTranslation(source);
 
         //when
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
+
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
 
         //then
-        verifyTOC(books);
+        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
     }
 
-    private void verifyTOC(String[] books) throws IOException {
-        String errorLog = "";
+    @Test
+    public void test09ValidExportJeremiahSingle() throws Exception {
+        //given
+        String zipFileName = null;
+        boolean separateChapters = false;
+        String source = "24-JER.usfm";
+        importTestTranslation(source);
 
-        for (String book : books) {
-            verifyBookTOC(book);
-            if(!mErrorLog.isEmpty()) {
-                errorLog += "Errors in book '" + book + "':\n" + mErrorLog + "\n\n";
-            }
-        }
+        //when
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
 
-        if(!errorLog.isEmpty()) {
-            Log.d(TAG, "Invalid TOCs found:\n" + errorLog);
-            fail("Invalid TOCs found:\n" + errorLog);
-        }
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
+
+        //then
+        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
     }
 
+    @Test
+    public void test10ValidExportLukeSingle() throws Exception {
+        //given
+        String zipFileName = null;
+        boolean separateChapters = false;
+        String source = "43-LUK.usfm";
+        importTestTranslation(source);
+
+        //when
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
+
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
+
+        //then
+        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
+    }
+
+    @Test
+    public void test11ValidExportJohnSingle() throws Exception {
+        //given
+        String zipFileName = null;
+        boolean separateChapters = false;
+        String source = "44-JHN.usfm";
+        importTestTranslation(source);
+
+        //when
+        ExportProjects.Result result = exportProjects.exportUSFM(
+                targetTranslation,
+                Uri.fromFile(outputFile)
+        );
+
+        assertTrue(result.getSuccess());
+
+        Uri usfmOutput = result.getUri();
+
+        //then
+        verifyExportedUsfmFile(zipFileName, separateChapters, source, usfmOutput);
+    }
 
     /**
      * match all the book identifiers
+     *
      * @param input
      * @param output
      */
     private void verifyBookID(String input, String output) {
-        String bookTitle = extractString(input, ImportUsfm.PATTERN_BOOK_TITLE_MARKER);
-        String bookLongName = extractString(input, ImportUsfm.PATTERN_BOOK_LONG_NAME_MARKER);
-        String bookShortName = extractString(input, ImportUsfm.PATTERN_BOOK_ABBREVIATION_MARKER);
-        String bookTitleOut = extractString(output, ImportUsfm.PATTERN_BOOK_TITLE_MARKER);
-        String bookLongNameOut = extractString(output, ImportUsfm.PATTERN_BOOK_LONG_NAME_MARKER);
-        String bookShortNameOut = extractString(output, ImportUsfm.PATTERN_BOOK_ABBREVIATION_MARKER);
+        String bookTitle = extractString(input, ProcessUSFM.PATTERN_BOOK_TITLE_MARKER);
+        String bookLongName = extractString(input, ProcessUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
+        String bookShortName = extractString(input, ProcessUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
+        String bookTitleOut = extractString(output, ProcessUSFM.PATTERN_BOOK_TITLE_MARKER);
+        String bookLongNameOut = extractString(output, ProcessUSFM.PATTERN_BOOK_LONG_NAME_MARKER);
+        String bookShortNameOut = extractString(output,
+                ProcessUSFM.PATTERN_BOOK_ABBREVIATION_MARKER);
 
-        String bookID = extractString(input, ImportUsfm.ID_TAG_MARKER);
+        String bookID = extractString(input, ProcessUSFM.ID_TAG_MARKER);
         String[] bookIdParts = bookID.split(" ");
-        String bookIDOut = extractString(output, ImportUsfm.ID_TAG_MARKER);
+        String bookIDOut = extractString(output, ProcessUSFM.ID_TAG_MARKER);
         String[] bookIdOutParts = bookIDOut.split(" ");
 
-        assertEquals("Input and output book titles (\\toc1) should equal", bookTitle.toLowerCase(), bookTitleOut.toLowerCase());
-        assertEquals("Input and output book codes (\\toc3) should equal", bookShortName.toLowerCase(), bookShortNameOut.toLowerCase());
-        assertEquals("Input and output book long name (\\toc2) should equal", bookLongName.toLowerCase(), bookLongNameOut.toLowerCase());
-        assertEquals("Input and output book ID code (\\id) should equal", bookIdParts[0].toLowerCase(), bookIdOutParts[0].toLowerCase());
+        assertEquals("Input and output book titles (\\toc1) should equal",
+                bookTitle.toLowerCase(), bookTitleOut.toLowerCase());
+        assertEquals("Input and output book codes (\\toc3) should equal",
+                bookShortName.toLowerCase(), bookShortNameOut.toLowerCase());
+        assertEquals("Input and output book long name (\\toc2) should equal",
+                bookLongName.toLowerCase(), bookLongNameOut.toLowerCase());
+        assertEquals("Input and output book ID code (\\id) should equal",
+                bookIdParts[0].toLowerCase(), bookIdOutParts[0].toLowerCase());
     }
 
     /**
@@ -277,30 +328,23 @@ public class ExportUsfmTest {
     }
 
     /**
-     * handles validation of book source TOC against versification chunk list
-     * @throws IOException
-     */
-    private void verifyBookTOC(String projectSlug) throws IOException {
-        mErrorLog = "";
-        String sourceTranslationSlug = getAvailableTargetTranslations(mLibrary, projectSlug);
-        List<Map> sourceToc = getResourceToc(mLibrary, sourceTranslationSlug);
-        verifyChunking(sourceToc, projectSlug);
-    }
-
-    /**
      * handles validation of exported USFM file by comparing to original imported USFM file
-     * @param zipFileName - to determine if zip file was expected
+     *
+     * @param zipFileName      - to determine if zip file was expected
      * @param separateChapters
      * @param source
-     * @param usfmOutput - actual output file
+     * @param usfmOutput       - actual output file
      * @throws IOException
      */
-    private void verifyExportedUsfmFile(String zipFileName, boolean separateChapters, String source, Uri usfmOutput) throws IOException {
+    private void verifyExportedUsfmFile(
+            String zipFileName,
+            boolean separateChapters,
+            String source,
+            Uri usfmOutput
+    ) throws IOException {
         assertNotNull("exported file", usfmOutput);
-        mErrorLog = "";
-        List<Map> sourceToc = getResourceTOC(mTargetTranslation, mLibrary);
-        String projectSlug = mTargetTranslation.getProjectId();
-        verifyChunking(sourceToc, projectSlug);
+        errorLog = "";
+
         String usfmOutputPath = usfmOutput.getPath();
         File usfmOutputFile = new File(usfmOutputPath);
 
@@ -318,31 +362,33 @@ public class ExportUsfmTest {
             }
         }
 
-        if(!mErrorLog.isEmpty()) {
-            Log.d(TAG, "Errors found:\n" + mErrorLog);
-            fail("Errors found:\n" + mErrorLog);
+        if (!errorLog.isEmpty()) {
+            Log.d(TAG, "Errors found:\n" + errorLog);
+            fail("Errors found:\n" + errorLog);
         }
     }
 
     /**
-     * handles validation of exported USFM zip file containing chapters by comparing to original imported USFM file
+     * handles validation of exported USFM zip file containing chapters by comparing to original
+     * imported USFM file
+     *
      * @param source
      * @param usfmOutput
      * @throws IOException
      */
     private void verifyUsfmZipFile(String source, File usfmOutput) throws IOException {
 
-        File unzipFolder = new File(mTempFolder,"scratch_test_unzip");
+        File unzipFolder = new File(tempFolder, "scratch_test_unzip");
         FileUtilities.forceMkdir(unzipFolder);
 
         InputStream zipStream = new FileInputStream(usfmOutput);
         Zip.unzipFromStream(zipStream, unzipFolder);
         File[] usfmFiles = unzipFolder.listFiles();
 
-        InputStream usfmStream = mTestContext.getAssets().open("usfm/" + source);
+        InputStream usfmStream = assetsProvider.open("usfm/" + source);
         String usfmInputText = FileUtilities.readStreamToString(usfmStream);
 
-        Matcher inputMatcher = ImportUsfm.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
+        Matcher inputMatcher = ProcessUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
 
         int lastInputChapterStart = -1;
         String chapterIn = "";
@@ -351,22 +397,24 @@ public class ExportUsfmTest {
             chapterIn = inputMatcher.group(1); // chapter number in input
             chapterInInt = Integer.valueOf(chapterIn);
 
-            if(usfmFiles.length < chapterInInt) {
-                addErrorMsg("chapter count " + usfmFiles.length + "' should be greater than or equal to chapter number '" + chapterInInt + "'\n");
+            if (usfmFiles.length < chapterInInt) {
+                addErrorMsg("chapter count " + usfmFiles.length + "' should be greater than or " +
+                        "equal to chapter number '" + chapterInInt + "'\n");
             }
 
             if (chapterInInt > 1) {
                 // verify verses in last chapter
-                String inputChapter = usfmInputText.substring(lastInputChapterStart, inputMatcher.start());
-                String outputChapter = FileUtilities.readFileToString(usfmFiles[chapterInInt-1]);
+                String inputChapter = usfmInputText.substring(lastInputChapterStart,
+                        inputMatcher.start());
+                String outputChapter = FileUtilities.readFileToString(usfmFiles[chapterInInt - 1]);
                 verifyBookID(usfmInputText, outputChapter);
-                compareVersesInChapter(chapterInInt-1, inputChapter, outputChapter);
+                compareVersesInChapter(chapterInInt - 1, inputChapter, outputChapter);
             }
 
             lastInputChapterStart = inputMatcher.end();
         }
 
-        if(usfmFiles.length != chapterInInt + 1) {
+        if (usfmFiles.length != chapterInInt + 1) {
             addErrorMsg("chapter count " + usfmFiles.length + "' should be  '" + (chapterInInt + 1) + "'\n");
         }
 
@@ -379,14 +427,16 @@ public class ExportUsfmTest {
 
     /**
      * queue up error messages
+     *
      * @param error
      */
     private void addErrorMsg(String error) {
-        mErrorLog = error + mErrorLog;
+        errorLog = error + errorLog;
     }
 
     /**
      * handles validation of exported USFM file by comparing to original imported USFM file
+     *
      * @param source
      * @param usfmOutput
      * @throws IOException
@@ -394,17 +444,17 @@ public class ExportUsfmTest {
     private void verifySingleUsfmFile(String source, File usfmOutput) throws IOException {
         String usfmOutputText = FileUtilities.readFileToString(usfmOutput);
 
-        InputStream usfmStream = mTestContext.getAssets().open("usfm/" + source);
+        InputStream usfmStream = assetsProvider.open("usfm/" + source);
         String usfmInputText = FileUtilities.readStreamToString(usfmStream);
 
         verifyBookID(usfmInputText, usfmOutputText);
 
-        Matcher inputMatcher = ImportUsfm.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
-        Matcher outputMatcher = ImportUsfm.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmOutputText);
+        Matcher inputMatcher = ProcessUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmInputText);
+        Matcher outputMatcher = ProcessUSFM.PATTERN_CHAPTER_NUMBER_MARKER.matcher(usfmOutputText);
 
         int lastInputChapterStart = -1;
         int lastOutputChapterStart = -1;
-        String chapterIn = "";
+        String chapterIn;
         int chapterInInt = -1;
         while (inputMatcher.find()) {
             chapterIn = inputMatcher.group(1); // chapter number in input
@@ -413,8 +463,9 @@ public class ExportUsfmTest {
             if (outputMatcher.find()) {
                 String chapterOut = outputMatcher.group(1); // chapter number in output
                 int chapterOutInt = Integer.parseInt(chapterOut);
-                if(chapterInInt != chapterOutInt) {
-                    addErrorMsg("chapter input: " + chapterInInt + "\n does not match chapter output:" + chapterOutInt + "\n");
+                if (chapterInInt != chapterOutInt) {
+                    addErrorMsg("chapter input: " + chapterInInt + "\n does not match chapter " +
+                            "output:" + chapterOutInt + "\n");
                 }
             } else {
                 addErrorMsg("chapter '" + chapterIn + "' missing in output\n");
@@ -423,9 +474,11 @@ public class ExportUsfmTest {
 
             if (chapterInInt > 1) {
                 // verify verses in last chapter
-                String inputChapter = usfmInputText.substring(lastInputChapterStart, inputMatcher.start());
-                String outputChapter = usfmOutputText.substring(lastOutputChapterStart, outputMatcher.start());
-                compareVersesInChapter(chapterInInt-1, inputChapter, outputChapter);
+                String inputChapter = usfmInputText.substring(lastInputChapterStart,
+                        inputMatcher.start());
+                String outputChapter = usfmOutputText.substring(lastOutputChapterStart,
+                        outputMatcher.start());
+                compareVersesInChapter(chapterInInt - 1, inputChapter, outputChapter);
             }
 
             lastInputChapterStart = inputMatcher.end();
@@ -444,14 +497,15 @@ public class ExportUsfmTest {
 
     /**
      * compares the verses in exported chapter to make sure they are in same order and have same
-     *  contents as imported chapter
+     * contents as imported chapter
+     *
      * @param chapter
      * @param inputChapter
      * @param outputChapter
      */
     private void compareVersesInChapter(int chapter, String inputChapter, String outputChapter) {
-        Matcher inputVerseMatcher = ImportUsfm.PATTERN_USFM_VERSE_SPAN.matcher(inputChapter);
-        Matcher outputVerseMatcher = ImportUsfm.PATTERN_USFM_VERSE_SPAN.matcher(outputChapter);
+        Matcher inputVerseMatcher = ProcessUSFM.PATTERN_USFM_VERSE_SPAN.matcher(inputChapter);
+        Matcher outputVerseMatcher = ProcessUSFM.PATTERN_USFM_VERSE_SPAN.matcher(outputChapter);
         int lastInputVerseStart = -1;
         int lastOutputVerseStart = -1;
         String verseIn = "";
@@ -459,18 +513,22 @@ public class ExportUsfmTest {
             verseIn = inputVerseMatcher.group(1); // verse number in input
             if (outputVerseMatcher.find()) {
                 String verseOut = outputVerseMatcher.group(1); // verse number in output
-                if(!verseIn.equals(verseOut)) {
-                    addErrorMsg("in chapter '" + chapter + "' verse input '" + verseIn + "'\n does not match verse output '" + verseOut + "'\n");
+                if (!verseIn.equals(verseOut)) {
+                    addErrorMsg("in chapter '" + chapter + "' verse input '" + verseIn + "'\n " +
+                            "does not match verse output '" + verseOut + "'\n");
                     return;
                 }
             } else {
-                addErrorMsg("in chapter '" + chapter + "', verse '" + verseIn + "' missing in output\n");
+                addErrorMsg("in chapter '" + chapter + "', verse '" + verseIn + "' missing in " +
+                        "output\n");
                 return;
             }
 
             if (lastInputVerseStart > 0) {
-                String inputVerse = inputChapter.substring(lastInputVerseStart, inputVerseMatcher.start());
-                String outputVerse = outputChapter.substring(lastOutputVerseStart, outputVerseMatcher.start());
+                String inputVerse = inputChapter.substring(lastInputVerseStart,
+                        inputVerseMatcher.start());
+                String outputVerse = outputChapter.substring(lastOutputVerseStart,
+                        outputVerseMatcher.start());
                 compareVerses(chapter, verseIn, inputVerse, outputVerse);
             }
 
@@ -489,12 +547,14 @@ public class ExportUsfmTest {
 
     /**
      * compares contents of verses
+     *
      * @param chapterNum
      * @param verseIn
      * @param inputVerse
      * @param outputVerse
      */
-    private void compareVerses(int chapterNum, String verseIn, String inputVerse, String outputVerse) {
+    private void compareVerses(int chapterNum, String verseIn, String inputVerse,
+                               String outputVerse) {
 
         String input = inputVerse;
         String output = outputVerse;
@@ -513,11 +573,11 @@ public class ExportUsfmTest {
             return;
         }
 
-        if(!input.equals(output)) {
-            if(!output.equals(input + "\n")) {
+        if (!input.equals(output)) {
+            if (!output.equals(input + "\n")) {
                 return;
             }
-            if(!input.equals(output + "\n")) {
+            if (!input.equals(output + "\n")) {
                 return;
             }
             addErrorMsg("In chapter '" + chapterNum + "' verse '" + verseIn + "' verse input:\n" + input + "\n does not match output:\n" + output + "\n");
@@ -525,40 +585,43 @@ public class ExportUsfmTest {
     }
 
     public static final String CHAPTER_LABEL_MARKER = "\\\\cl\\s([^\\n]*)";
-    public static final Pattern PATTERN_CHAPTER_LABEL_MARKER = Pattern.compile(CHAPTER_LABEL_MARKER);
+    public static final Pattern PATTERN_CHAPTER_LABEL_MARKER =
+            Pattern.compile(CHAPTER_LABEL_MARKER);
 
     /**
      * clean up by stripping section marker and removing double new-lines
+     *
      * @param text
      * @return
      */
     private String cleanUpVerse(String text) {
 
         Matcher chapterLabelMatcher = PATTERN_CHAPTER_LABEL_MARKER.matcher(text);
-        if(chapterLabelMatcher.find()) {
-            text = text.substring(0,chapterLabelMatcher.start());
+        if (chapterLabelMatcher.find()) {
+            text = text.substring(0, chapterLabelMatcher.start());
         }
 
         text = text.replace("\\s5\n", "\n"); // remove section markers
         text = text.replace("\\s5 \n", "\n"); // remove section markers
-        text = replaceAll(text,"\n\n", "\n"); // remove double new-lines
-        text = replaceAll(text,"\n\n", "\n"); // remove double new-lines
-        text = replaceAll(text,"\n \n", "\n"); // remove double new-lines
+        text = replaceAll(text, "\n\n", "\n"); // remove double new-lines
+        text = replaceAll(text, "\n\n", "\n"); // remove double new-lines
+        text = replaceAll(text, "\n \n", "\n"); // remove double new-lines
         return text;
     }
 
     /**
      * repeatedly replaces strings - useful
+     *
      * @param text
      * @param target
      * @param replacement
      * @return
      */
-    private String replaceAll(String text, CharSequence target, CharSequence replacement)  {
+    private String replaceAll(String text, CharSequence target, CharSequence replacement) {
         String oldText = null;
         String newText = text;
 
-        while(newText != oldText) {
+        while (!Objects.equals(newText, oldText)) {
             oldText = newText;
             newText = newText.replace(target, replacement);
         }
@@ -568,134 +631,58 @@ public class ExportUsfmTest {
 
     /**
      * import a usfm file to be used for export testing.
+     *
      * @param source
-     * @throws IOException
      */
-    private void importTestTranslation(String source) throws IOException {
+    private void importTestTranslation(String source) {
         //import USFM file to be used for testing
-        mUsfm = new ImportUsfm(mAppContext, mTargetLanguage);
-        assertNotNull("mTargetLanguage", mTargetLanguage);
-        boolean success = mUsfm.readResourceFile(mTestContext, "usfm/" + source);
-        assertTrue("import usfm test file should succeed", success);
-        File[] imports = mUsfm.getImportProjects();
-        assertEquals("import usfm test file should succeed", 1, imports.length);
+        usfm = new ProcessUSFM.Builder(
+                appContext,
+                directoryProvider,
+                profile,
+                library,
+                assetsProvider
+        )
+                .fromRc(targetLanguage, "usfm/" + source, null)
+                .build();
+
+        assertNotNull(usfm);
+        assertNotNull("mTargetLanguage", targetLanguage);
+        assertTrue("import usfm test file should succeed", usfm.isProcessSuccess());
+        List<File> imports = usfm.getImportProjects();
+        assertEquals("import usfm test file should succeed", 1, imports.size());
 
         //open import as targetTranslation
-        File projectFolder = imports[0];
-        mTempFolder = projectFolder.getParentFile();
-        mOutputFolder = new File(mTempFolder,"scratch_test");
-        FileUtilities.forceMkdir(mOutputFolder);
-        mTargetTranslation = TargetTranslation.open(projectFolder);
-    }
-
-    private void verifyChunking(List<Map> sourceToc, String projectSlug) {
-        assertNotNull("sourceToc should not be null", sourceToc);
-        mErrorLog = "";
-        List<Versification> versifications = App.getLibrary().index().getVersifications("en");
-        List<ChunkMarker> markers = App.getLibrary().index().getChunkMarkers(projectSlug, versifications.get(0).slug);
-        assertTrue("chunk markers should not be empty", markers.size() > 0);
-
-        ImportUsfm.ParsedChunks parsedChunks = ImportUsfm.parseChunks(markers);
-        List<String> mChapters = parsedChunks.chapters;
-        HashMap<String, List<String>> mChunks = parsedChunks.chunks;
-
-        int versificationIndex = 0;
-        int lastChapter = -1;
-
-        for (int i = 0; i < sourceToc.size(); i++) {
-            Map tocChapter = sourceToc.get(i);
-            String chapterSlug = (String) tocChapter.get("chapter");
-            int chapterInt = strToInt(chapterSlug,-1);
-            if(chapterInt < 0) { // skip if not number
-                continue;
-            }
-
-            if(lastChapter >= 0) {
-                if(chapterInt <= lastChapter) {
-                    addErrorMsg("versification chunks are out of order chapter '" + chapterSlug + "' should be greater than '" + lastChapter + "'\n");
-                }
-            }
-            lastChapter = chapterInt;
-
-            if(versificationIndex >= mChapters.size()) {
-                addErrorMsg("missing chunk for versification '" + versificationIndex + "'\n");
-                break;
-            }
-
-            String versificationChapter = mChapters.get(versificationIndex++);
-            if(strToInt(chapterSlug, -1) != strToInt(versificationChapter,-1)) {
-                addErrorMsg("Resource chapter '" + chapterSlug + "' does not equal versification chapter '" + versificationChapter + "'\n");
-                continue;
-            }
-
-            List<String> tocChunks = (List) tocChapter.get("chunks");
-            List<String> versificationChunks = mChunks.get(versificationChapter);
-
-            boolean chunkErrors = false;
-
-            int offset = 0;
-            while(strToInt(tocChunks.get(offset), -1) < 0) {
-                offset++;
-            }
-
-            if((tocChunks.size()-offset) != versificationChunks.size()) {
-                addErrorMsg("For chapter '" + chapterSlug + "' toc chunk count is '" + (tocChunks.size()-offset) + "' but versification chunk count is '" + versificationChunks.size() + "'\n");
-                chunkErrors = true;
-            }
-
-            int limit = (tocChunks.size()-offset) < versificationChunks.size() ? tocChunks.size()-offset : versificationChunks.size();
-            for(int j = 0; j < limit; j++) {
-                String tocVerse = tocChunks.get(j+offset);
-                String versificationVerse = versificationChunks.get(j);
-                int tocVerseNumber = strToInt(tocVerse, -1);
-                if(tocVerseNumber != strToInt(versificationVerse,-1)) {
-                    boolean atLastChunk = false;
-                    boolean atLastChapter = (i == (sourceToc.size()-1));
-                    if(atLastChapter) {
-                        atLastChunk = (j == limit - 1);
-                    }
-
-                    if(atLastChunk && (tocVerseNumber != 0)) {
-                        addErrorMsg("For chapter '" + chapterSlug + "' toc chunk " + i + " is '" + tocVerse + "' but versification chunk is '" + versificationVerse + "'\n");
-                        chunkErrors = true;
-                    }
-                }
-            }
-
-            if(chunkErrors) {
-                addErrorMsg("For chapter '" + chapterSlug + "' toc chunks: " + i + " is: " + StringUtils.join(tocChunks, ", ") + "\nbut versification chunks are " + StringUtils.join(versificationChunks, ", ") + "\n");
-            }
-        }
-
-        if(versificationIndex != mChapters.size()) {
-            addErrorMsg("unprocessed chunk for versification '" + (mChapters.size() - versificationIndex) + "'\n");
-        }
-
-        if(!mErrorLog.isEmpty()) {
-            addErrorMsg("\n\n==============\nChunking Errors found:\n");
-        }
+        File projectFolder = imports.get(0);
+        tempFolder = projectFolder.getParentFile();
+        outputFile = new File(tempFolder, "scratch_test");
+        targetTranslation = TargetTranslation.open(projectFolder, null);
     }
 
     /**
      * gets the resource TOCs even if user has not selected one yet
+     *
      * @param targetTranslation
      * @param library
      * @return
      */
-    public static List<Map> getResourceTOC(TargetTranslation targetTranslation, Door43Client library) {
-        Translation sourceTranslation;
-        ResourceContainer mSourceContainer;
-        List<Map> sourceToc;
-        String sourceTranslationSlug = App.getSelectedSourceTranslationId(targetTranslation.getId());
-        if(sourceTranslationSlug == null) { // if none selected, try list of selected translations
-            String[] sourceTranslationSlugs = App.getOpenSourceTranslations(targetTranslation.getId());
-            if((sourceTranslationSlugs != null) && (sourceTranslationSlugs.length > 0)) {
+    public List<Map> getResourceTOC(TargetTranslation targetTranslation, Door43Client library) {
+        String sourceTranslationSlug = prefRepository.getSelectedSourceTranslationId(
+                targetTranslation.getId()
+        );
+        // if none selected, try list of selected translations
+        if (sourceTranslationSlug == null) {
+            String[] sourceTranslationSlugs = prefRepository.getOpenSourceTranslations(
+                    targetTranslation.getId()
+            );
+            if (sourceTranslationSlugs.length > 0) {
                 sourceTranslationSlug = sourceTranslationSlugs[0];
             }
         }
 
         // last try look for any available that are loaded into memory
-        if(sourceTranslationSlug == null) { // if none selected, try list of selected translations
+        // if none selected, try list of selected translations
+        if (sourceTranslationSlug == null) {
             String projectId = targetTranslation.getProjectId();
             sourceTranslationSlug = getAvailableTargetTranslations(library, projectId);
         }
@@ -704,28 +691,27 @@ public class ExportUsfmTest {
     }
 
     private static List<Map> getResourceToc(Door43Client library, String sourceTranslationSlug) {
-        Translation sourceTranslation;
-        ResourceContainer mSourceContainer;
-        List<Map> sourceToc;
-        sourceTranslation = library.index().getTranslation(sourceTranslationSlug);
-        mSourceContainer = ContainerCache.cache(library, sourceTranslation.resourceContainerSlug);
-        sourceToc = (List<Map>) mSourceContainer.toc;
-        return sourceToc;
+        Translation sourceTranslation = library.index.getTranslation(sourceTranslationSlug);
+        ResourceContainer mSourceContainer = ContainerCache.cache(library, sourceTranslation.resourceContainerSlug);
+        return (List<Map>) mSourceContainer.toc;
     }
 
     /**
      * find an available translation for project ID
+     *
      * @param library
      * @param projectId
      * @return
      */
     private static String getAvailableTargetTranslations(Door43Client library, String projectId) {
         String sourceTranslationSlug = null;
-        List<Translation> availableTranslations = library.index().findTranslations(null, projectId, null, "book", "all", App.MIN_CHECKING_LEVEL, -1);
-        if((availableTranslations != null) && (availableTranslations.size() > 0)) {
+        List<Translation> availableTranslations = library.index.findTranslations(null, projectId,
+                null, "book", "all", App.MIN_CHECKING_LEVEL, -1);
+        if ((availableTranslations != null) && (availableTranslations.size() > 0)) {
             for (Translation availableTranslation : availableTranslations) {
-                final boolean isDownloaded = library.exists(availableTranslation.resourceContainerSlug);
-                if(isDownloaded) {
+                final boolean isDownloaded =
+                        library.exists(availableTranslation.resourceContainerSlug);
+                if (isDownloaded) {
                     sourceTranslationSlug = availableTranslation.resourceContainerSlug;
                     break;
                 }
@@ -736,20 +722,22 @@ public class ExportUsfmTest {
 
     /**
      * right size the file name length.  App expects file names under 100 to be only two digits.
+     *
      * @param fileName
      * @return
      */
     public static String getRightFileNameLength(String fileName) {
         Integer numericalValue = strToInt(fileName, -1);
-        if((numericalValue >= 0) && (numericalValue < 100) && (fileName.length() != 2)) {
+        if ((numericalValue >= 0) && (numericalValue < 100) && (fileName.length() != 2)) {
             fileName = "00" + fileName; // make sure has leading zeroes
-            fileName = fileName.substring(fileName.length()-2); // trim down extra leading zeros
+            fileName = fileName.substring(fileName.length() - 2); // trim down extra leading zeros
         }
         return fileName;
     }
 
     /**
      * do string to integer with default value on conversion error
+     *
      * @param value
      * @param defaultValue
      * @return

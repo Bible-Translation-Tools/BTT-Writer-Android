@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
 public class SlugSorterTest {
 
     @Test
-    public void sort() throws Exception {
+    public void sort() {
         SlugSorter sorter = new SlugSorter();
         List<String> slugs = new ArrayList<>();
 

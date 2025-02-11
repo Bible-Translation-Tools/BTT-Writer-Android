@@ -1,7 +1,8 @@
 package com.door43.translationstudio.ui;
 
-import android.app.Fragment;
 import android.content.Intent;
+
+import androidx.fragment.app.Fragment;
 
 import org.unfoldingword.tools.logger.Logger;
 
@@ -18,9 +19,9 @@ public abstract class BaseFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        if(getActivity() instanceof TermsOfUseActivity == false
-                && getActivity() instanceof  SplashScreenActivity == false
-                && getActivity() instanceof CrashReporterActivity == false) {
+        if(!(getActivity() instanceof TermsOfUseActivity)
+                && !(getActivity() instanceof SplashScreenActivity)
+                && !(getActivity() instanceof CrashReporterActivity)) {
             // check if we crashed or if we need to reload
             File[] crashFiles = Logger.listStacktraces();
             if (crashFiles.length > 0) {

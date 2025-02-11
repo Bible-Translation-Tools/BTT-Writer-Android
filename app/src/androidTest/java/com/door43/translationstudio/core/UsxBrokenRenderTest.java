@@ -1,45 +1,53 @@
 package com.door43.translationstudio.core;
 
-import android.content.Context;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.door43.data.AssetsProvider;
+import com.door43.translationstudio.IntegrationTest;
 import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
-import com.door43.translationstudio.rendering.Clickables;
 import com.door43.translationstudio.rendering.RenderingGroup;
 import com.door43.util.FileUtilities;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.unfoldingword.tools.logger.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 
 /**
  * Created by blm on 7/25/16.
  */
+@HiltAndroidTest
+@RunWith(AndroidJUnit4.class)
+@IntegrationTest
 public class UsxBrokenRenderTest {
 
-    public static final String TAG = UsxBrokenRenderTest.class.getSimpleName();
-    File mTempFolder;
-    private Context mTestContext;
-    private String mTestText;
-    private String mExpectedText;
+    @Rule
+    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
 
+    @Inject
+    AssetsProvider assetsProvider;
+    @Inject
+    RenderingProvider renderingProvider;
+
+    public static final String TAG = UsxBrokenRenderTest.class.getSimpleName();
+    private String expectedText;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Logger.flush();
-        mTestContext = InstrumentationRegistry.getInstrumentation().getContext();
-    }
-
-    @After
-    public void tearDown() throws Exception {
+        hiltRule.inject();
     }
 
     @Test
@@ -52,7 +60,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -65,7 +73,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -78,7 +86,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -91,7 +99,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -104,7 +112,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -117,7 +125,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -130,7 +138,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -143,7 +151,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -156,7 +164,7 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     @Test
@@ -169,29 +177,35 @@ public class UsxBrokenRenderTest {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     private String doRender(String search, String testId) throws IOException {
         String testTextFile = testId+ "_raw.data";
         String expectTextFile = testId+ "_processed.data";
-        InputStream testTextStream = mTestContext.getAssets().open(testTextFile);
-        mTestText = FileUtilities.readStreamToString(testTextStream);
-        Assert.assertNotNull(mTestText);
-        Assert.assertFalse(mTestText.isEmpty());
-        InputStream testExpectedStream = mTestContext.getAssets().open(expectTextFile);
-        mExpectedText = FileUtilities.readStreamToString(testExpectedStream);
-        Assert.assertNotNull(mExpectedText);
-        Assert.assertFalse(mExpectedText.isEmpty());
-        mExpectedText = mExpectedText.substring(0,mExpectedText.length() - 1); // rendering does trim of whitespace
+        InputStream testTextStream = assetsProvider.open(testTextFile);
+        String testText = FileUtilities.readStreamToString(testTextStream);
+        Assert.assertNotNull(testText);
+        Assert.assertFalse(testText.isEmpty());
+        InputStream testExpectedStream = assetsProvider.open(expectTextFile);
+        expectedText = FileUtilities.readStreamToString(testExpectedStream);
+        Assert.assertNotNull(expectedText);
+        Assert.assertFalse(expectedText.isEmpty());
         RenderingGroup renderingGroup = new RenderingGroup();
         TranslationFormat format = TranslationFormat.USX;
-        Clickables.setupRenderingGroup(format, renderingGroup, null, null, false);
 
-        if( search != null ) {
+        renderingProvider.setupRenderingGroup(
+                format,
+                renderingGroup,
+                null,
+                null,
+                false
+        );
+
+        if(search != null) {
             renderingGroup.setSearchString(search, ReviewModeAdapter.HIGHLIGHT_COLOR);
         }
-        renderingGroup.init(mTestText);
+        renderingGroup.init(testText);
         return renderingGroup.start().toString();
     }
 

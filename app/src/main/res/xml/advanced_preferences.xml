@@ -1,35 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <CheckBoxPreference
-        android:key="check_hardware_requirements"
-        android:title="@string/pref_title_check_hardware_requirements"
-        android:summary="@string/pref_description_check_hardware_requirements"
-        android:defaultValue="true" />
-    <ListPreference
-        android:key="backup_interval"
-        android:title="Backup Interval"
-        android:entries="@array/pref_backup_interval_titles"
-        android:entryValues="@array/pref_backup_interval_values"
-        android:defaultValue="@string/pref_default_backup_interval"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ListPreference
-        android:key="logging_level"
-        android:title="@string/pref_title_logging_level"
-        android:entries="@array/pref_logging_level_titles"
-        android:entryValues="@array/pref_logging_level_values"
-        android:defaultValue="@string/pref_default_logging_level"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+    <PreferenceCategory android:title="@string/pref_header_advanced">
 
-    <!-- TODO: eventually we'll use this to enable the developer settings by tapping on it several times-->
-    <!--<Preference-->
+        <Preference
+            android:key="migrate_old_app"
+            android:title="@string/pref_title_migrate_old_app"
+            android:summary="@string/pref_description_migrate_old_app"
+            android:defaultValue="true"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="false">
+        </Preference>
+
+        <CheckBoxPreference
+            android:key="check_hardware_requirements"
+            android:title="@string/pref_title_check_hardware_requirements"
+            android:summary="@string/pref_description_check_hardware_requirements"
+            android:defaultValue="true"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
+
+        <ListPreference
+            android:key="backup_interval"
+            android:title="Backup Interval"
+            android:entries="@array/pref_backup_interval_titles"
+            android:entryValues="@array/pref_backup_interval_values"
+            android:defaultValue="@string/pref_default_backup_interval"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
+
+        <ListPreference
+            android:key="logging_level"
+            android:title="@string/pref_title_logging_level"
+            android:entries="@array/pref_logging_level_titles"
+            android:entryValues="@array/pref_logging_level_values"
+            android:defaultValue="@string/pref_default_logging_level"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
+
+        <!-- TODO: eventually we'll use this to enable the developer settings by tapping on it several times-->
+        <!--<Preference-->
         <!--android:key="app_version"-->
         <!--android:title="@string/version"-->
         <!--android:defaultValue="0.0.0" />-->
 
-    <Preference android:title="@string/pref_title_developer_tools">
-        <intent android:action="com.activity.DeveloperToolsActivity" />
-    </Preference>
+        <Preference
+            android:title="@string/pref_title_developer_tools"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="false">
+            <intent android:action="com.activity.DeveloperToolsActivity" />
+        </Preference>
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

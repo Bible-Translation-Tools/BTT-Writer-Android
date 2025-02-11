@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingRight="16dp"
     android:paddingLeft="16dp"
     android:paddingTop="10dp"
     android:paddingBottom="10dp">
 
-
     <ImageView
         android:layout_gravity="center_vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:tint="@color/icon_color"
         android:src="@drawable/ic_check_box_outline_blank_black_24dp"
         android:id="@+id/item_icon"
-        android:layout_marginRight="@dimen/card_margin"
-        android:layout_weight="0" />
+        android:layout_marginEnd="@dimen/card_margin"
+        android:layout_weight="0"
+        app:tint="@color/icon_color" />
 
     <ImageView
         android:layout_gravity="center_vertical"
@@ -24,12 +25,12 @@
         android:layout_height="wrap_content"
         android:src="@drawable/ic_error_black_24dp"
         android:id="@+id/error_icon"
-        android:layout_marginRight="@dimen/card_margin"
+        android:layout_marginEnd="@dimen/card_margin"
         android:layout_weight="0"
-        android:tint="@color/danger" />
+        app:tint="@color/danger" />
 
     <TextView
-        android:layout_gravity="left"
+        android:layout_gravity="start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="@dimen/body"
@@ -40,10 +41,10 @@
         android:maxLines="2"
         android:scrollHorizontally="false"
         android:layout_weight="0.5"
-        android:gravity="left" />
+        android:gravity="start" />
 
     <TextView
-        android:layout_gravity="right"
+        android:layout_gravity="end"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="@dimen/body"
@@ -51,8 +52,8 @@
         android:text="Unlocked Literal Bible - English"
         android:id="@+id/title2"
         android:textAlignment="viewEnd"
-        android:layout_marginLeft="@dimen/dialog_controls_margin"
-        android:gravity="left"
+        android:layout_marginStart="@dimen/dialog_controls_margin"
+        android:gravity="end"
         android:maxLines="2"
         android:scrollHorizontally="false"
         android:layout_weight="0.5" />

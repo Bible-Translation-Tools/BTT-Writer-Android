@@ -30,11 +30,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/dialog_controls_margin"
-                android:gravity="left|center_horizontal"
-                android:layout_gravity="left"
+                android:gravity="start|center_horizontal"
+                android:layout_gravity="start"
                 android:baselineAligned="false"
                 android:id="@+id/column_sort_layout"
-                android:layout_marginRight="@dimen/dialog_content_margin">
+                android:layout_marginEnd="@dimen/dialog_content_margin">
 
                 <TextView
                     android:text="@string/sort_column"
@@ -44,7 +44,7 @@
                     android:textColor="@color/dark_secondary_text"
                     android:textAlignment="center"
                     android:textSize="@dimen/caption"
-                    android:layout_gravity="top"
+                    android:layout_gravity="center"
                     android:id="@+id/textView4" />
 
                 <Spinner
@@ -57,7 +57,6 @@
                     android:layout_height="1px"
                     android:background="@color/border_color"/>
 
-
             </LinearLayout>
 
             <LinearLayout
@@ -65,10 +64,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/dialog_controls_margin"
-                android:gravity="right"
-                android:layout_gravity="right"
-                android:layout_toRightOf="@+id/column_sort_layout"
-                android:layout_marginLeft="@dimen/dialog_content_margin">
+                android:gravity="end"
+                android:layout_gravity="end"
+                android:layout_toEndOf="@+id/column_sort_layout"
+                android:layout_marginStart="@dimen/dialog_content_margin">
 
                 <TextView
                     android:text="@string/sort_projects"
@@ -78,7 +77,7 @@
                     android:textColor="@color/dark_secondary_text"
                     android:textAlignment="center"
                     android:textSize="@dimen/caption"
-                    android:layout_gravity="top"
+                    android:layout_gravity="center"
                     android:id="@+id/textView5" />
 
                 <Spinner
@@ -90,7 +89,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="1px"
                     android:background="@color/border_color"/>
-
 
             </LinearLayout>
 
@@ -108,7 +106,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="40dp"
+                android:paddingHorizontal="20dp"
                 android:layout_weight="1"
                 android:text="@string/Project"
                 android:textColor="@color/dark_secondary_text"/>
@@ -117,22 +115,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginLeft="50dp"
-                android:gravity="right|center_vertical"
+                android:layout_marginStart="25dp"
+                android:gravity="end|center_vertical"
                 android:layout_weight="1">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingLeft="66dp"
+                    android:paddingHorizontal="33dp"
                     android:text="@string/language"
                     android:textColor="@color/dark_secondary_text"/>
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:paddingRight="36dp"
+                    android:gravity="end"
+                    android:paddingHorizontal="18dp"
                     android:layout_weight="1"
                     android:text="@string/progress"
                     android:textColor="@color/dark_secondary_text"/>
@@ -141,10 +139,10 @@
         </LinearLayout>
 
         <ListView
-            xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/translationsList"
             android:layout_width="match_parent"
             android:elevation="2dp"
+            android:background="@color/card_background_color"
             android:layout_height="wrap_content"/>
 
     </LinearLayout>

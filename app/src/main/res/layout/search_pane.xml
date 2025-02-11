@@ -32,7 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/search_text"
-        android:layout_marginRight="@dimen/dialog_controls_margin"
+        android:layout_marginEnd="@dimen/dialog_controls_margin"
         android:hint="@string/search_hint"
         android:layout_weight="0.5" />
 
@@ -73,7 +73,7 @@
         android:textAlignment="center"
         android:textSize="@dimen/body"
         android:layout_gravity="center"
-        android:gravity="right" />
+        android:gravity="center" />
 
     <ImageButton
         android:layout_width="wrap_content"

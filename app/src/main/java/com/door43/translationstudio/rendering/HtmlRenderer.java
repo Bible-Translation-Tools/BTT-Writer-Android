@@ -1,5 +1,6 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
 import android.text.Html;
 import android.text.TextUtils;
 
@@ -22,7 +23,12 @@ public class HtmlRenderer extends RenderingEngine {
     private final Span.OnClickListener mLinkListener;
     private final OnPreprocessLink preprocessCallback;
 
-    public HtmlRenderer(OnPreprocessLink preprocessor, Span.OnClickListener linkListener) {
+    public HtmlRenderer(
+            Context context,
+            OnPreprocessLink preprocessor,
+            Span.OnClickListener linkListener
+    ) {
+        this.context = context;
         mLinkListener = linkListener;
         preprocessCallback = preprocessor;
     }
@@ -42,7 +48,7 @@ public class HtmlRenderer extends RenderingEngine {
         if(isStopped()) return in;
         // TODO: 12/15/2015 it would be nice if we could pass in a private click listener and interpret the link types before calling the supplied listener.
         // this will allow calling code to use instance of rather than comparing strings.
-        out = Html.fromHtml(out.toString(), null, new HtmlTagHandler(mLinkListener));
+        out = Html.fromHtml(out.toString(), null, new HtmlTagHandler(context, mLinkListener));
         if(isStopped()) return in;
         return out;
     }

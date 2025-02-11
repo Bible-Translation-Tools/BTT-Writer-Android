@@ -3,9 +3,7 @@ package com.door43.translationstudio.core;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.tasks.MergeConflictsParseTask;
-import com.door43.translationstudio.ui.home.ImportDialog;
+import com.door43.usecases.ParseMergeConflicts;
 
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 import org.unfoldingword.tools.taskmanager.TaskManager;
@@ -19,8 +17,8 @@ import java.util.regex.Pattern;
  */
 
 public class MergeConflictsHandler {
-    public static final String MergeConflictHead = "(?:<<<<<<< HEAD.*\\n)";
-    public static Pattern MergeConflictPatternHead = Pattern.compile(MergeConflictHead);
+    public static final String mergeConflictHead = "<<<<<<< HEAD.*\\n";
+    public static Pattern mergeConflictPatternHead = Pattern.compile(mergeConflictHead);
 
 
     /**
@@ -30,9 +28,7 @@ public class MergeConflictsHandler {
      * @return
      */
     static public List<CharSequence> getMergeConflictItems(String text) {
-        MergeConflictsParseTask task = new MergeConflictsParseTask(text);
-        task.start();
-        return task.getMergeConflictItems();
+        return ParseMergeConflicts.INSTANCE.execute(text);
     }
 
     /**
@@ -43,7 +39,7 @@ public class MergeConflictsHandler {
      */
     static public CharSequence getMergeConflictItemsHead(String text) {
         List<CharSequence> items = getMergeConflictItems(text);
-        if( (items == null) || (items.size() <= 0) ) {
+        if(items.isEmpty()) {
             return null;
         }
         return items.get(0);
@@ -56,10 +52,9 @@ public class MergeConflictsHandler {
      * @return
      */
     static public boolean isMergeConflicted(CharSequence text) {
-        if ((text != null) && (text.length() > 0)) {
-            Matcher matcher = MergeConflictPatternHead.matcher(text);
-            boolean matchFound = matcher.find();
-            return matchFound;
+        if (text != null && text.length() > 0) {
+            Matcher matcher = mergeConflictPatternHead.matcher(text);
+            return matcher.find();
         }
         return false;
     }
@@ -70,12 +65,13 @@ public class MergeConflictsHandler {
      * @param targetTranslationId
      * @return
      */
-    static public boolean isTranslationMergeConflicted(String targetTranslationId) {
+    static public boolean isTranslationMergeConflicted(
+            String targetTranslationId,
+            Translator translator
+    ) {
         if(targetTranslationId == null) {
             return false;
         }
-
-        Translator translator = App.getTranslator();
 
         TargetTranslation targetTranslation = translator.getTargetTranslation(targetTranslationId);
         if(targetTranslation == null) {
@@ -101,10 +97,9 @@ public class MergeConflictsHandler {
                 return true;
             }
 
-            FrameTranslation[] frames = targetTranslation.getFrameTranslations(ct.getId(), TranslationFormat.DEFAULT);
-            for (int i = 0; i < frames.length; i++) {
-                FrameTranslation frame = frames[i];
-                if(isMergeConflicted(frame.body)) {
+            FrameTranslation[] frames = targetTranslation.getFrameTranslations(ct.id, TranslationFormat.DEFAULT);
+            for (FrameTranslation frame : frames) {
+                if (isMergeConflicted(frame.body)) {
                     return true;
                 }
             }
@@ -116,40 +111,39 @@ public class MergeConflictsHandler {
     /**
      * check the whole project to see if there is actually a chunk conflict
      * @param targetTranslationId
+     * @param listener
      */
-    public static void backgroundTestForConflictedChunks(final String targetTranslationId, final OnMergeConflictListener listener) {
+    public static void backgroundTestForConflictedChunks(
+            final String targetTranslationId,
+            final Translator translator,
+            final OnMergeConflictListener listener
+            ) {
         ManagedTask task = new ManagedTask() {
             @Override
             public void start() {
                 try {
                     if(interrupted()) return;
-                    boolean conflicted = MergeConflictsHandler.isTranslationMergeConflicted(targetTranslationId);
+                    boolean conflicted = MergeConflictsHandler.isTranslationMergeConflicted(targetTranslationId, translator);
                     setResult(conflicted);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         };
-        task.addOnFinishedListener(new ManagedTask.OnFinishedListener() {
-            @Override
-            public void onTaskFinished(ManagedTask task) {
-                TaskManager.clearTask(task);
-                boolean conflicted = false;
-                if(task.getResult() != null) conflicted = (boolean)task.getResult();
-                if(!task.isCanceled()) {
-                    Handler hand = new Handler(Looper.getMainLooper());
-                    final boolean finalConflicted = conflicted;
-                    hand.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(finalConflicted) {
-                                listener.onMergeConflict(targetTranslationId);
-                            } else {
-                                listener.onNoMergeConflict(targetTranslationId);
-                            }
-                        }
-                    });
-                }
+        task.addOnFinishedListener(task1 -> {
+            TaskManager.clearTask(task1);
+            boolean conflicted = false;
+            if(task1.getResult() != null) conflicted = (boolean) task1.getResult();
+            if(!task1.isCanceled()) {
+                Handler hand = new Handler(Looper.getMainLooper());
+                final boolean finalConflicted = conflicted;
+                hand.post(() -> {
+                    if(finalConflicted) {
+                        listener.onMergeConflict(targetTranslationId);
+                    } else {
+                        listener.onNoMergeConflict(targetTranslationId);
+                    }
+                });
             }
         });
         TaskManager.addTask(task);

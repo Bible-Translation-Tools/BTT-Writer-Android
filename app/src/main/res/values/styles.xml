@@ -14,7 +14,7 @@
         <item name="android:actionBarTabTextStyle">@style/AppActionBarTabText</item>
         <item name="android:actionMenuTextColor">@color/light_primary_text</item>
 
-        <!-- Support library compatability -->
+        <!-- Support library compatibility -->
         <item name="actionBarStyle">@style/AppActionBar</item>
         <item name="actionBarTabTextStyle">@style/AppActionBarTabText</item>
         <item name="actionMenuTextColor">@color/light_primary_text</item>
@@ -68,7 +68,7 @@
         <item name="android:titleTextStyle">@style/AppActionBarTitleText.Light</item>
         <item name="android:background">@color/shadow</item>
 
-        <!-- Support library compatability-->
+        <!-- Support library compatibility-->
         <item name="titleTextStyle">@style/AppActionBarTitleText.Light</item>
         <item name="background">@color/shadow</item>
     </style>

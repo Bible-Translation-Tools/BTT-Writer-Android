@@ -4,20 +4,18 @@ package com.door43.translationstudio.core;
  * Represents a translation of a frame
  */
 public class FrameTranslation {
+    public final String id;
     public final String body;
-    private final String mChapterId;
-    private final boolean mFinished;
-    private TranslationFormat mFormat;
-    private int[] mVerses;
-    private String mTitle;
-    private String mId;
+    private final String chapterId;
+    private final boolean finished;
+    private final TranslationFormat format;
 
     public FrameTranslation(String frameId, String chapterId, String body, TranslationFormat format, boolean finished) {
-        mChapterId = chapterId;
+        this.chapterId = chapterId;
         this.body = body;
-        mFormat = format;
-        mId = frameId;
-        mFinished = finished;
+        this.format = format;
+        this.id = frameId;
+        this.finished = finished;
     }
 
     /**
@@ -26,23 +24,16 @@ public class FrameTranslation {
      */
     public String getTitle() {
         // get verse range
-        mVerses = Frame.getVerseRange(body, mFormat);
-        if (mVerses.length == 1) {
-            mTitle = mVerses[0] + "";
-        } else if (mVerses.length == 2) {
-            mTitle = mVerses[0] + "-" + mVerses[1];
+        int[] verses = Frame.getVerseRange(body, format);
+        String title;
+        if (verses.length == 1) {
+            title = verses[0] + "";
+        } else if (verses.length == 2) {
+            title = verses[0] + "-" + verses[1];
         } else {
-            mTitle = Integer.parseInt(mId) + "";
+            title = Integer.parseInt(id) + "";
         }
-        return mTitle;
-    }
-
-    /**
-     * Returns the frame id
-     * @return
-     */
-    public String getId() {
-        return mId;
+        return title;
     }
 
     /**
@@ -50,7 +41,7 @@ public class FrameTranslation {
      * @return
      */
     public String getComplexId() {
-        return mChapterId + "-" + mId;
+        return chapterId + "-" + id;
     }
 
     /**
@@ -58,7 +49,7 @@ public class FrameTranslation {
      * @return
      */
     public String getChapterId() {
-        return mChapterId;
+        return chapterId;
     }
 
     /**
@@ -66,7 +57,7 @@ public class FrameTranslation {
      * @return
      */
     public TranslationFormat getFormat() {
-        return mFormat;
+        return format;
     }
 
     /**
@@ -74,7 +65,7 @@ public class FrameTranslation {
      * @return
      */
     public boolean isFinished() {
-        return mFinished;
+        return finished;
     }
 
 }

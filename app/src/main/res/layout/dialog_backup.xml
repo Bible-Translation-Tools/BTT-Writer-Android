@@ -209,7 +209,7 @@
                 android:background="@color/border_color"/>
 
             <LinearLayout
-                android:id="@+id/backup_to_sd"
+                android:id="@+id/export_to_project"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"

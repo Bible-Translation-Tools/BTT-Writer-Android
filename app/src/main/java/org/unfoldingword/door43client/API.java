@@ -72,7 +72,7 @@ class API {
         DatabaseContext databaseContext = new DatabaseContext(context, databasePath.getParentFile(), dbExt);
         String dbName = databasePath.getName().replaceFirst("\\.[^\\.]+$", "");
         synchronized (this) {
-            if (this.sqLiteHelper == null) {
+            if (sqLiteHelper == null) {
                 sqLiteHelper = new SQLiteHelper(databaseContext, schema, dbName);
             }
         }
@@ -84,9 +84,9 @@ class API {
      * e.g. closing the db, etc.
      */
     public void tearDown() {
-        if(this.sqLiteHelper != null) {
-            this.sqLiteHelper.close();
-            this.sqLiteHelper = null;
+        if(sqLiteHelper != null) {
+            sqLiteHelper.close();
+            sqLiteHelper = null;
         }
     }
 
@@ -160,12 +160,15 @@ class API {
 
     /**
      * Updates all the global catalogs
-     * @param listener
-     * @throws Exception
+     * @param force Should we update/insert catalogs
+     * @param listener Progress Listener
+     * @throws Exception Any exception
      */
-    public void updateCatalogs(OnProgressListener listener) throws Exception {
-        // inject missing global catalogs
-        LegacyTools.injectGlobalCatalogs(library, globalCatalogHost);
+    public void updateCatalogs(Boolean force, OnProgressListener listener) throws Exception {
+        if (force) {
+            // inject missing global catalogs
+            LegacyTools.injectGlobalCatalogs(library, globalCatalogHost);
+        }
         List<Catalog> catalogs = library.getCatalogs();
         for(Catalog c:catalogs) {
             updateCatalog(c, listener);

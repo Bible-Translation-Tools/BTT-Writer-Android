@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
-//apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
 
     defaultConfig {
-        compileSdk 30
+        compileSdk 35
         minSdk 22
-        targetSdk 28
+        targetSdk 35
     }
 
     namespace 'it.moondroid.seekbarhint.library'
@@ -14,6 +14,15 @@ android {
     // Do not abort build if lint finds errors
     lint {
         abortOnError false
+    }
+    buildTypes {
+        applicationVariants {
+        }
+        verify {
+        }
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
 }
 
@@ -23,4 +32,5 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.core:core-ktx:1.15.0'
 }

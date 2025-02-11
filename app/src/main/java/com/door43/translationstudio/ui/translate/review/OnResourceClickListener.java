@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.translate.review;
 
+import com.door43.translationstudio.ui.translate.ReviewListItem;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
 
 import org.unfoldingword.resourcecontainer.Link;

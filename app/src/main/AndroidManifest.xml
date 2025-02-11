@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
@@ -14,10 +15,11 @@
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:targetApi="m">
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="org.bibletranslationtools.writer.android"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -43,15 +45,14 @@
 
         <activity
             android:name=".ui.TermsOfUseActivity"
-            android:label="@string/app_name"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ui.SplashScreenActivity"
-            android:label="@string/app_name"
             android:launchMode="singleTop"
             android:alwaysRetainTaskState="true"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -72,13 +73,10 @@
             android:launchMode="singleTop"
             android:label="@string/title_activity_crash_reporter" />
         <activity
-            android:name=".ui.filechooser.FileChooserActivity"
-            android:launchMode="singleTop"
-            android:label="@string/title_file_browser" />
-        <activity
             android:name=".ui.devtools.DeveloperToolsActivity"
             android:launchMode="singleTop"
-            android:label="@string/title_activity_developer">
+            android:label="@string/title_activity_developer"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.activity.DeveloperToolsActivity" />
 
@@ -94,7 +92,8 @@
             android:launchMode="singleTask"
             android:alwaysRetainTaskState="true"
             android:label="@string/title_activity_target_translations"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="true">
 
             <!-- this does not work to register file extension -->
             <intent-filter>
@@ -142,12 +141,14 @@
             android:name=".ui.newlanguage.NewTempLanguageActivity"
             android:label="@string/title_activity_new_language"
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            android:exported="false"/>
         <activity
             android:name=".ui.legal.LegalDocumentActivity"
             android:label=""
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Transparent">
+            android:theme="@style/AppTheme.Transparent"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.activity.LegalDocumentActivity" />
 
@@ -168,14 +169,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.translate.TargetTranslationActivity" />
         </activity>
-        <activity android:name=".ui.RegisterDoor43Activity" />
         <activity android:name=".ui.LoginDoor43Activity" />
-        <activity android:name=".ui.RegisterOfflineActivity"></activity>
+        <activity android:name=".ui.RegisterOfflineActivity" />
         <activity
             android:name=".ui.ImportUsfmActivity"
             android:launchMode="singleTop"
             android:label="@string/title_activity_import_usfm_language">
         </activity>
+        <activity android:name=".ui.home.ImportIndexActivity" />
     </application>
 
 </manifest>

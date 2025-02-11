@@ -51,7 +51,7 @@
                         android:textColor="@color/dark_secondary_text"
                         android:layout_weight="1"
                         android:textSize="@dimen/caption"
-                        android:gravity="right|center_vertical" />
+                        android:gravity="end|center_vertical" />
 
                     <!-- TRICKY: leave this here for activity consistency.-->
                     <Button
@@ -61,7 +61,7 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/logout_button"
                         android:textColor="@color/accent"
-                        android:gravity="right|center_vertical"
+                        android:gravity="end|center_vertical"
                         android:textSize="@dimen/sub_title"
                         android:textAllCaps="false" />
                 </LinearLayout>
@@ -70,14 +70,8 @@
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:background="@color/border_color"
-                    android:layout_height="1px"></LinearLayout>
+                    android:layout_height="1px" />
 
-                <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                </LinearLayout>
             </LinearLayout>
 
             <FrameLayout

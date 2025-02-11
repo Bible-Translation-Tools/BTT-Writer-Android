@@ -3,9 +3,6 @@ package org.unfoldingword.door43client;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Build;
-
-import java.io.File;
 
 /**
  * A SQLite database helper
@@ -27,11 +24,7 @@ class SQLiteHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            db.execSQL("PRAGMA foreign_keys=OFF;");
-        } else {
-            db.setForeignKeyConstraintsEnabled(false);
-        }
+        db.setForeignKeyConstraintsEnabled(false);
         String[] queries = schema.split(";");
         for (String query : queries) {
             query = query.trim();
@@ -51,11 +44,7 @@ class SQLiteHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onConfigure(SQLiteDatabase db) {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            db.setForeignKeyConstraintsEnabled(false);
-        } else {
-            db.execSQL("PRAGMA foreign_keys=OFF;");
-        }
+        db.setForeignKeyConstraintsEnabled(false);
     }
 
     @Override
@@ -71,10 +60,6 @@ class SQLiteHelper extends SQLiteOpenHelper {
 
     @Override
     public void onOpen(SQLiteDatabase db) {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            db.setForeignKeyConstraintsEnabled(true);
-        } else {
-            db.execSQL("PRAGMA foreign_keys=ON;");
-        }
+        db.setForeignKeyConstraintsEnabled(true);
     }
 }

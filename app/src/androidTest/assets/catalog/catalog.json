@@ -1,0 +1,20 @@
+[
+  {
+    "date_modified": "{datetime}",
+    "lang_catalog": "{server}/mat",
+    "meta": [
+      "bible-nt"
+    ],
+    "slug": "mat",
+    "sort": "41"
+  },
+  {
+    "date_modified": "{datetime}",
+    "lang_catalog": "{server}/luk",
+    "meta": [
+      "bible-nt"
+    ],
+    "slug": "luk",
+    "sort": "43"
+  }
+]

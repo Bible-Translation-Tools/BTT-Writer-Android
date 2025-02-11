@@ -43,7 +43,7 @@
                         android:textColor="@color/dark_secondary_text"
                         android:textSize="@dimen/body"
                         android:text="@string/Project"
-                        android:paddingRight="10dp"/>
+                        android:paddingEnd="10dp"/>
                     <TextView
                         android:id="@+id/project_title"
                         android:layout_width="match_parent"
@@ -64,7 +64,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="0"
-                        android:paddingRight="10dp"
+                        android:paddingEnd="10dp"
                         android:text="@string/target_language"
                         android:textColor="@color/dark_secondary_text"
                         android:textSize="@dimen/body" />
@@ -82,7 +82,7 @@
                         android:id="@+id/change_language"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="@dimen/dialog_content_margin"
+                        android:layout_marginStart="@dimen/dialog_content_margin"
                         android:layout_weight="0"
                         android:clickable="true"
                         android:text="@string/label_change"
@@ -103,7 +103,7 @@
                         android:textColor="@color/dark_secondary_text"
                         android:textSize="@dimen/body"
                         android:text="@string/progress"
-                        android:paddingRight="10dp"/>
+                        android:paddingEnd="10dp"/>
                     <TextView
                         android:id="@+id/progress"
                         android:layout_width="match_parent"
@@ -126,7 +126,7 @@
                         android:textColor="@color/dark_secondary_text"
                         android:textSize="@dimen/body"
                         android:text="@string/translators"
-                        android:paddingRight="10dp"/>
+                        android:paddingEnd="10dp"/>
                     <TextView
                         android:id="@+id/translators"
                         android:layout_width="match_parent"
@@ -189,25 +189,25 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="right|end">
+                android:gravity="end">
 
                 <ImageButton
                     android:id="@+id/print_button"
-                    android:layout_marginLeft="@dimen/dialog_controls_margin"
+                    android:layout_marginStart="@dimen/dialog_controls_margin"
                     android:src="@drawable/ic_print_black_24dp"
                     android:tint="@color/icon_color"
                     style="@style/Widget.Alert.Button"/>
 
                 <ImageButton
                     android:id="@+id/publish_button"
-                    android:layout_marginLeft="@dimen/dialog_controls_margin"
+                    android:layout_marginStart="@dimen/dialog_controls_margin"
                     android:src="@drawable/ic_done_all_black_24dp"
                     android:tint="@color/icon_color"
                     style="@style/Widget.Alert.Button"/>
 
                 <ImageButton
                     android:id="@+id/backup_button"
-                    android:layout_marginLeft="@dimen/dialog_controls_margin"
+                    android:layout_marginStart="@dimen/dialog_controls_margin"
                     android:src="@drawable/ic_file_upload_black_24dp"
                     android:tint="@color/icon_color"
                     style="@style/Widget.Alert.Button"/>

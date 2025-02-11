@@ -1,0 +1,53 @@
+[
+  {
+    "language": {
+      "date_modified": "{datetime}",
+      "direction": "ltr",
+      "name": "Espa\u00f1ol (Latin American Spanish)",
+      "slug": "es-419"
+    },
+    "project": {
+      "desc": "Mateo Spanish",
+      "meta": [
+        "bible-nt"
+      ],
+      "name": "Mateo",
+      "sort": "41"
+    },
+    "res_catalog": "{server}/mat_es"
+  },
+  {
+    "language": {
+      "date_modified": "{datetime}",
+      "direction": "ltr",
+      "name": "Tok Pisin",
+      "slug": "tpi"
+    },
+    "project": {
+      "desc": "Mateo Tok Pisin",
+      "meta": [
+        "bible-nt"
+      ],
+      "name": "Matyu",
+      "sort": "41"
+    },
+    "res_catalog": "{server}/mat_tpi"
+  },
+  {
+    "language": {
+      "date_modified": "{datetime}",
+      "direction": "ltr",
+      "name": "Test Language",
+      "slug": "test"
+    },
+    "project": {
+      "desc": "Mateo Test",
+      "meta": [
+        "bible-nt"
+      ],
+      "name": "Matthew New",
+      "sort": "41"
+    },
+    "res_catalog": "{server}/mat_test"
+  }
+]
