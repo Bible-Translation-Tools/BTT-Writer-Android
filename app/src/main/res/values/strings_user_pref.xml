@@ -54,6 +54,8 @@
     <!-- The port on the server to which data is uploaded -->
     <string name="pref_title_git_server_port">Git Server Port</string>
     <!-- The server used to perform api requests with the git server-->
+    <string name="pref_title_data_server">Data Server</string>
+    <!-- The server used to perform api requests with the git server-->
     <string name="pref_title_gogs_api">Git Server API</string>
     <!-- The server from which data is downloaded -->
     <string name="pref_title_media_server">Media Server</string>
