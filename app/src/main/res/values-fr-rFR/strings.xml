@@ -560,6 +560,7 @@
     <string name="download_latest_apk">Voulez-vous télécharger cette mise à jour ?</string>
     <string name="updating_projects">Mise à jour des projets</string>
     <string name="view_online">Voir en ligne</string>
+    <string name="read_on_web">Read on Web</string>
     <string name="change_detected">Changement de projet détecté</string>
     <string name="upload_push_failure">Il y a des modifications à cette traduction sur votre compte serveur. Vous devez importer ces modifications avant de les télécharger.</string>
     <string name="merge_request">Il y a des modifications à votre traduction de \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' dans \'<xliff:g example="English" id="language">%2$s</xliff:g>\' sur votre compte serveur. Voulez-vous importer ces modifications maintenant ?</string>
