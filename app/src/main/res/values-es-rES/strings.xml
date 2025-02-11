@@ -554,6 +554,7 @@ para cualquier propósito, incluso comercialmente.
     <string name="download_latest_apk">¿Quiere descargar este archivo?</string>
     <string name="updating_projects">Actualizando los proyectos</string>
     <string name="view_online">Ver en línea</string>
+    <string name="read_on_web">Read on Web</string>
     <string name="change_detected">Cambio de proyecto detectado</string>
     <string name="upload_push_failure">Hay cambios en esta traducción en tu cuenta del servidor. Debes importar esos cambios antes de subir.</string>
     <string name="merge_request">Hay cambios en tu traducción de \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' en \'<xliff:g example="English" id="language">%2$s</xliff:g>\' en tu cuenta de servidor. ¿Te gustaría importar esos cambios ahora?</string>
