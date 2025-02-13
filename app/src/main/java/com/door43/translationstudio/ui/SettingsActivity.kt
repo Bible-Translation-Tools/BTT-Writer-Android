@@ -454,7 +454,6 @@ class SettingsActivity : AppCompatActivity() {
                         )
                         updateColorTheme(value)
                         delegate.applyDayNight()
-                        requireActivity().recreate()
                     }
                 }
 

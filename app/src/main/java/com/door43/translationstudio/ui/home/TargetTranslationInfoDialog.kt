@@ -131,7 +131,7 @@ class TargetTranslationInfoDialog : DialogFragment() {
                 deleteButton.setOnClickListener {
                     AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                         .setTitle(R.string.label_delete)
-                        .setIcon(R.drawable.ic_delete_dark_secondary_24dp)
+                        .setIcon(R.drawable.ic_delete_secondary_24dp)
                         .setMessage(R.string.confirm_delete_target_translation)
                         .setPositiveButton(R.string.confirm) { _, _ ->
                             try {

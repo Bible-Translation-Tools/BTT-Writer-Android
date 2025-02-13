@@ -38,7 +38,7 @@ object ProgressHelper {
                         val ft = fragmentManager.beginTransaction()
                         val fragment = ProgressFragment.newInstance(title, cancelable)
                         ft.add(fragment, TAG)
-                        ft.commitNow()
+                        ft.commitNowAllowingStateLoss()
                     }
                 }
             }
@@ -50,7 +50,7 @@ object ProgressHelper {
                     fragment?.let {
                         val ft = fragmentManager.beginTransaction()
                         ft.remove(it)
-                        ft.commitNow()
+                        ft.commitNowAllowingStateLoss()
                     }
                 }
             }
