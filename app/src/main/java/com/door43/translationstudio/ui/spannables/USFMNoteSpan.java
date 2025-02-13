@@ -1,9 +1,7 @@
 package com.door43.translationstudio.ui.spannables;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -12,6 +10,8 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
+
+import androidx.core.content.res.ResourcesCompat;
 
 import com.door43.translationstudio.R;
 
@@ -47,15 +47,13 @@ public class USFMNoteSpan extends NoteSpan {
         CharSequence altQuotation = "";
         CharSequence passageText = "";
         for(USFMChar c:chars) {
-            if(c.style.equals(USFMChar.STYLE_PASSAGE_TEXT)) {
-                passageText = c.value;
-            } else if(c.style.equals(USFMChar.STYLE_FOOTNOTE_QUOTATION)) {
-                quotation = c.value;
-            } else if(c.style.equals(USFMChar.STYLE_FOOTNOTE_ALT_QUOTATION)) {
-                altQuotation = c.value;
-            } else {
-                // TODO: implement better. We may need to format the values
-                note = TextUtils.concat(note, c.value);
+            switch (c.style) {
+                case USFMChar.STYLE_PASSAGE_TEXT -> passageText = c.value;
+                case USFMChar.STYLE_FOOTNOTE_QUOTATION -> quotation = c.value;
+                case USFMChar.STYLE_FOOTNOTE_ALT_QUOTATION -> altQuotation = c.value;
+                default ->
+                    // TODO: implement better. We may need to format the values
+                    note = TextUtils.concat(note, c.value);
             }
         }
 
@@ -80,11 +78,12 @@ public class USFMNoteSpan extends NoteSpan {
             mSpannable = super.render();
             // apply custom styles
             if(getHumanReadable().toString().isEmpty()) {
-                int icon = mHighlight ? R.drawable.ic_description_black_24dp_highlight : R.drawable.ic_description_black_24dp;
-                Bitmap image = BitmapFactory.decodeResource(context.getResources(), icon);
-                BitmapDrawable background = new BitmapDrawable(context.getResources(), image);
-                background.setBounds(0, 0, background.getMinimumWidth(), background.getMinimumHeight());
-                mSpannable.setSpan(new ImageSpan(background), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                int icon = mHighlight ? R.drawable.ic_description_black_24dp_highlight : R.drawable.ic_description_neutral_24dp;
+                Drawable image = ResourcesCompat.getDrawable(context.getResources(), icon, context.getTheme());
+                if (image != null) {
+                    image.setBounds(0, 0, image.getMinimumWidth(), image.getMinimumHeight());
+                    mSpannable.setSpan(new ImageSpan(image), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             } else {
                 mSpannable.setSpan(new BackgroundColorSpan(context.getResources().getColor(R.color.footnote_yellow)), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 mSpannable.setSpan(new StyleSpan(Typeface.ITALIC), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

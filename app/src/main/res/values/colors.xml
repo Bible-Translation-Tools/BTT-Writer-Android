@@ -24,6 +24,7 @@
     <color name="reverse_text_color">#FFFFFF</color>
     <color name="merge_text_color">#272727</color>
     <color name="highlight_background_color">@color/accent</color>
+    <color name="highlighted_foreground_color">@color/light_primary_text</color>
     <color name="highlighted_text_color">@color/reverse_text_color</color>
 
     <!-- dark text -->
