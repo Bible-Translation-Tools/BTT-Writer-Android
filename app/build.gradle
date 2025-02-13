@@ -159,7 +159,7 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.15.0'
     implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'androidx.fragment:fragment-ktx:1.8.6'
-    implementation 'commons-io:commons-io:2.5' // Do not upgrade, unless increase android sdk api version
+    implementation 'commons-io:commons-io:2.8.0' // Do not upgrade, unless increase android sdk api version
 
     // Hilt/Dagger dependencies
     implementation 'com.google.dagger:hilt-android:2.52'
