@@ -1524,6 +1524,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                         item
                                 );
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+                                toggleDisableItems(false, null);
                                 v.setOnDragListener(null);
                                 editText.setSelection(editText.getSelectionEnd());
                                 // reset verse if dragged off the view
@@ -1543,7 +1544,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                             item
                                     );
                                 }
-                                toggleDisableItems(false, null);
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
                                 hasEntered = true;
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_EXITED) {
