@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -17,6 +18,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.core.content.res.ResourcesCompat;
 import androidx.viewbinding.ViewBinding;
 
 import com.door43.translationstudio.R;
@@ -285,9 +287,9 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     private CharSequence getSelectedText() {
         CharSequence text = context.getResources().getString(R.string.selected);
         CharSequence limit = context.getResources().getString(R.string.maximum_limit, MAX_SOURCE_ITEMS);
-        SpannableStringBuilder refresh = createImageSpannable(R.drawable.ic_refresh_black_24dp);
+        SpannableStringBuilder refresh = createImageSpannable(R.drawable.ic_refresh_secondary_24dp);
         CharSequence warning = context.getResources().getString(R.string.requires_internet);
-        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_black_18dp);
+        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_secondary_18dp);
         return TextUtils.concat(text, " ", limit, "    ", refresh, " ", warning, " ", wifi); // combine all on one line
     }
 
@@ -298,7 +300,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     private CharSequence getDownloadableText() {
         CharSequence text = context.getResources().getString(R.string.available_online);
         CharSequence warning = context.getResources().getString(R.string.requires_internet);
-        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_black_18dp);
+        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_secondary_18dp);
         return TextUtils.concat(text, "    ", warning, " ", wifi); // combine all on one line
     }
 
@@ -309,10 +311,11 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      */
     private SpannableStringBuilder createImageSpannable(int resource) {
         SpannableStringBuilder refresh = new SpannableStringBuilder(" ");
-        Bitmap refreshImage = BitmapFactory.decodeResource(context.getResources(), resource);
-        BitmapDrawable refreshBackground = new BitmapDrawable(context.getResources(), refreshImage);
-        refreshBackground.setBounds(0, 0, refreshBackground.getMinimumWidth(), refreshBackground.getMinimumHeight());
-        refresh.setSpan(new ImageSpan(refreshBackground), 0, refresh.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        Drawable refreshDrawable = ResourcesCompat.getDrawable(context.getResources(), resource, null);
+        if (refreshDrawable != null) {
+            refreshDrawable.setBounds(0, 0, refreshDrawable.getMinimumWidth(), refreshDrawable.getMinimumHeight());
+            refresh.setSpan(new ImageSpan(refreshDrawable), 0, refresh.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
         return refresh;
     }
 

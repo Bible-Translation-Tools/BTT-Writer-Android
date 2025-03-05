@@ -142,7 +142,7 @@ class DeveloperViewModel @Inject constructor(
         return ToolItem(
             application.getString(R.string.delete_library),
             application.getString(R.string.delete_library_hint),
-            R.drawable.ic_delete_dark_secondary_24dp
+            R.drawable.ic_delete_secondary_24dp
         ) {
             deleteLibrary()
         }

@@ -1524,6 +1524,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                         item
                                 );
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+                                toggleDisableItems(false, null);
                                 v.setOnDragListener(null);
                                 editText.setSelection(editText.getSelectionEnd());
                                 // reset verse if dragged off the view
@@ -1543,7 +1544,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                                             item
                                     );
                                 }
-                                toggleDisableItems(false, null);
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
                                 hasEntered = true;
                             } else if (e.getAction() == DragEvent.ACTION_DRAG_EXITED) {
@@ -1684,14 +1684,13 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         while (end < text.length() && !isWhitespace(text.charAt(end))) {
             end++;
         }
-
         SpannableString str = resetHighlightColor(text);
         BackgroundColorSpan bgColor = new BackgroundColorSpan(
                 ColorUtil.getColor(context, R.color.highlight_background_color)
         );
         str.setSpan(bgColor, start, end, 0);
         ForegroundColorSpan fgColor = new ForegroundColorSpan(
-                ColorUtil.getColor(context, R.color.highlighted_text_color)
+                ColorUtil.getColor(context, R.color.highlighted_foreground_color)
         );
         str.setSpan(fgColor, start, end, 0);
         return str;
