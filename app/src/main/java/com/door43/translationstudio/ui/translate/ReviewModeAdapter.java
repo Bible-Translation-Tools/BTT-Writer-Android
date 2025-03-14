@@ -1635,7 +1635,22 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             offset--;
         }
 
+        while (offset > 0 && isFootNote(text, offset)) {
+            offset--;
+        }
+
         return (offset > 0) ? offset + 1 : offset;
+    }
+
+    private boolean isFootNote(CharSequence text, int offset) {
+        Pattern pattern = Pattern.compile(USFMNoteSpan.PATTERN);
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            if (offset >= matcher.start() && offset < matcher.end()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
