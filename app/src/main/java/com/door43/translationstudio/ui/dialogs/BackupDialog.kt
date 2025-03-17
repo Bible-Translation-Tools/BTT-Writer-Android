@@ -198,10 +198,10 @@ class BackupDialog : DialogFragment() {
                 exportToUsfm.visibility = View.GONE
             }
 
-            backupToDevice.setOnClickListener {
-                // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
-                showDeviceNetworkAliasDialog()
-            }
+//            backupToDevice.setOnClickListener {
+//                // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
+//                showDeviceNetworkAliasDialog()
+//            }
 
             backupToApp.setOnClickListener {
                 viewModel.exportToApp()

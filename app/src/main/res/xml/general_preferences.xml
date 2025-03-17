@@ -3,12 +3,12 @@
 
     <PreferenceCategory android:title="@string/pref_header_general">
 
-        <EditTextPreference
+        <!--<EditTextPreference
             android:key="device_name"
             android:title="@string/device_name"
             android:defaultValue=""
             app:allowDividerAbove="false"
-            app:allowDividerBelow="true"/>
+            app:allowDividerBelow="true"/>-->
 
         <ListPreference
             android:key="color_theme"

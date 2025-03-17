@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:minWidth="@dimen/dialog_min_width"
@@ -50,7 +51,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/backup_to_door43"
-                        android:drawableLeft="@drawable/ic_backup_secondary_24dp"
                         android:drawableStart="@drawable/ic_backup_secondary_24dp"
                         android:drawablePadding="10dp"
                         android:textColor="@color/dark_primary_text"
@@ -59,18 +59,17 @@
                         android:focusable="false"
                         android:clickable="false"
                         android:duplicateParentState="true"
-                        android:gravity="left|center_vertical"
+                        android:gravity="start|center_vertical"
                         android:layout_weight="1"
                         android:padding="@dimen/dialog_controls_margin" />
 
                     <ImageView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginRight="5dp"
                         android:layout_marginEnd="5dp"
                         android:src="@drawable/ic_wifi_black_18dp"
-                        android:tint="@color/icon_color"
-                        android:layout_gravity="center_vertical" />
+                        android:layout_gravity="center_vertical"
+                        app:tint="@color/icon_color" />
 
                     <TextView
                         android:text="Current User: tester"
@@ -79,7 +78,7 @@
                         android:id="@+id/current_user"
                         android:textColor="@color/dark_primary_text"
                         android:layout_weight="1"
-                        android:gravity="right|center_vertical"
+                        android:gravity="end|center_vertical"
                         android:textSize="14sp" />
 
                     <Button
@@ -88,7 +87,7 @@
                         android:layout_height="wrap_content"
                         android:id="@+id/logout_button"
                         android:textColor="@color/accent"
-                        android:layout_marginLeft="@dimen/dialog_controls_margin"
+                        android:layout_marginStart="@dimen/dialog_controls_margin"
                         android:gravity="center"
                         android:textSize="@dimen/button"
                         android:textAllCaps="false" />
@@ -106,7 +105,7 @@
                     android:duplicateParentState="true"
                     android:gravity="start"
                     android:textSize="@dimen/caption"
-                    android:layout_marginLeft="@dimen/dialog_content_margin" />
+                    android:layout_marginStart="@dimen/dialog_content_margin" />
             </LinearLayout>
 
             <LinearLayout
@@ -130,7 +129,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/export_to_usfm"
-                    android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
                     android:drawableStart="@drawable/icon_export_sd_secondary_24dp"
                     android:drawablePadding="10dp"
                     android:textColor="@color/dark_primary_text"
@@ -139,7 +137,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:duplicateParentState="true"
-                    android:gravity="left|center_vertical"
+                    android:gravity="start|center_vertical"
                     android:padding="@dimen/dialog_controls_margin" />
 
                 <TextView
@@ -153,14 +151,15 @@
                     android:duplicateParentState="true"
                     android:gravity="start"
                     android:textSize="@dimen/caption"
-                    android:layout_marginLeft="@dimen/dialog_content_margin" />
+                    android:layout_marginStart="@dimen/dialog_content_margin" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/export_to_usfm_separator"
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/border_color" />
+                android:background="@color/border_color"
+                android:orientation="horizontal" />
 
             <LinearLayout
                 android:id="@+id/export_to_pdf"
@@ -172,12 +171,10 @@
                 android:contextClickable="true"
                 android:layout_marginBottom="@dimen/dialog_controls_margin">
 
-
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/export_to_pdf"
-                    android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
                     android:drawableStart="@drawable/icon_export_sd_secondary_24dp"
                     android:drawablePadding="10dp"
                     android:textColor="@color/dark_primary_text"
@@ -186,7 +183,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:duplicateParentState="true"
-                    android:gravity="left|center_vertical"
+                    android:gravity="start|center_vertical"
                     android:padding="@dimen/dialog_controls_margin" />
 
                 <TextView
@@ -200,7 +197,7 @@
                     android:duplicateParentState="true"
                     android:gravity="start"
                     android:textSize="@dimen/caption"
-                    android:layout_marginLeft="@dimen/dialog_content_margin" />
+                    android:layout_marginStart="@dimen/dialog_content_margin" />
             </LinearLayout>
 
             <LinearLayout
@@ -223,7 +220,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/backup_to_sd"
-                    android:drawableLeft="@drawable/icon_export_sd_secondary_24dp"
                     android:drawableStart="@drawable/icon_export_sd_secondary_24dp"
                     android:drawablePadding="10dp"
                     android:textColor="@color/dark_primary_text"
@@ -232,7 +228,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:duplicateParentState="true"
-                    android:gravity="left|center_vertical"
+                    android:gravity="start|center_vertical"
                     android:padding="@dimen/dialog_controls_margin" />
 
                 <TextView
@@ -246,7 +242,7 @@
                     android:duplicateParentState="true"
                     android:gravity="start"
                     android:textSize="@dimen/caption"
-                    android:layout_marginLeft="@dimen/dialog_content_margin" />
+                    android:layout_marginStart="@dimen/dialog_content_margin" />
             </LinearLayout>
 
             <LinearLayout
@@ -254,14 +250,13 @@
                 android:layout_height="1px"
                 android:background="@color/border_color"/>
 
-            <Button
+            <!--<Button
                 android:id="@+id/backup_to_device"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/backup_to_friend"
-                android:drawableLeft="@drawable/ic_phone_android_secondary_24dp"
                 android:drawableStart="@drawable/ic_phone_android_secondary_24dp"
-                android:gravity="left|center_vertical"
+                android:gravity="start|center_vertical"
                 android:drawablePadding="10dp"
                 android:textColor="@color/dark_primary_text"
                 android:textAllCaps="false"
@@ -271,16 +266,15 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="1px"
-                android:background="@color/border_color"/>
+                android:background="@color/border_color"/>-->
 
             <Button
                 android:id="@+id/backup_to_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/backup_to_app"
-                android:drawableLeft="@drawable/ic_share_secondary_24dp"
                 android:drawableStart="@drawable/ic_share_secondary_24dp"
-                android:gravity="left|center_vertical"
+                android:gravity="start|center_vertical"
                 android:drawablePadding="10dp"
                 android:textColor="@color/dark_primary_text"
                 android:textAllCaps="false"
@@ -297,17 +291,16 @@
 
     <LinearLayout
         android:orientation="horizontal"
-        android:gravity="right|end"
+        android:gravity="end"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:id="@+id/linearLayout2"
-        android:paddingRight="@dimen/dialog_controls_margin"
+        android:paddingEnd="@dimen/dialog_controls_margin"
         android:paddingBottom="@dimen/dialog_controls_margin">
 
         <Button
             android:id="@+id/dismiss_button"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
+            android:layout_marginStart="@dimen/dialog_controls_margin"
             android:text="@string/dismiss"
             style="@style/Widget.Alert.Button"/>
     </LinearLayout>
