@@ -931,8 +931,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         final CharSequence original = editText.getText();
 
         LayoutInflater inflater = LayoutInflater.from(context);
-        FragmentFootnotePromptBinding footnoteBinding =
-         FragmentFootnotePromptBinding.inflate(inflater);
+        FragmentFootnotePromptBinding footnoteBinding = FragmentFootnotePromptBinding.inflate(inflater);
 
         footnoteBinding.footnoteText.setText(initialNote);
         // pop up note prompt
@@ -940,8 +939,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 .setTitle(R.string.title_add_footnote)
                 .setPositiveButton(R.string.label_ok, (dialog, which) -> {
                     CharSequence footnote = footnoteBinding.footnoteText.getText();
-                    boolean validated = verifyAndReplaceFootnote(footnote, original, footnotePos,
-                            footnoteEndPos, holder, item, editText);
+                    boolean validated = verifyAndReplaceFootnote(
+                            footnote,
+                            original,
+                            footnotePos,
+                            footnoteEndPos,
+                            holder,
+                            item,
+                            editText
+                    );
                     if (validated) {
                         dialog.dismiss();
                     }

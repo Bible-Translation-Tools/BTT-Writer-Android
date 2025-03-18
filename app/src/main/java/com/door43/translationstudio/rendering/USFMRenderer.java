@@ -363,6 +363,9 @@ public class USFMRenderer extends ClickableRenderingEngine {
      * @return
      */
     public CharSequence renderNote(CharSequence in) {
+        // Remove line breaks from the note
+        in = renderLineBreaks(in);
+
         CharSequence out = "";
         Pattern pattern = Pattern.compile(USFMNoteSpan.PATTERN);
         Matcher matcher = pattern.matcher(in);
@@ -371,21 +374,16 @@ public class USFMRenderer extends ClickableRenderingEngine {
             if(isStopped()) return in;
             String noteText = matcher.group(2);
             USFMNoteSpan note = USFMNoteSpan.parseNote(matcher.group(1), noteText);
-            if(note != null) {
-                note.setOnClickListener(mNoteListener);
-                if(mSearch != null) {
-                    boolean foundSearch = noteText.toLowerCase().contains(mSearch);
-                    note.setHighlight(foundSearch);
-                }
-                out = TextUtils.concat(
-                        out,
-                        in.subSequence(lastIndex, matcher.start()),
-                        note.toCharSequence(context)
-                );
-            } else {
-                // failed to parse the note
-                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
+            note.setOnClickListener(mNoteListener);
+            if(mSearch != null) {
+                boolean foundSearch = noteText.toLowerCase().contains(mSearch);
+                note.setHighlight(foundSearch);
             }
+            out = TextUtils.concat(
+                    out,
+                    in.subSequence(lastIndex, matcher.start()),
+                    note.toCharSequence(context)
+            );
 
             lastIndex = matcher.end();
         }

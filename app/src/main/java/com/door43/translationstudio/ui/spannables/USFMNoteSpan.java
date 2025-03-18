@@ -31,7 +31,7 @@ public class USFMNoteSpan extends NoteSpan {
     private String mStyle;
     private boolean mHighlight = false;
     private SpannableStringBuilder mSpannable;
-    public static final String PATTERN = "\\\\f\\s(\\S)\\s(.+?)\\\\f\\*";
+    public static final String PATTERN = "\\\\f\\s(\\S)\\s([\\s\\S]+?)\\\\f\\*";
     public static final String CHAR_PATTERN = "\\\\f([^*\\s]+)\\s([^\\\\]+)(?:\\\\f\\1\\*)?";
 
     /**
@@ -103,19 +103,19 @@ public class USFMNoteSpan extends NoteSpan {
      */
     public static CharSequence generateTag(String style, String caller, CharSequence title, List<USFMChar> chars) {
 
-        String tag = "\\f " + caller + " ";
+        StringBuilder tag = new StringBuilder("\\f " + caller + " ");
         for(USFMChar c: chars) {
             switch(c.style) {
                 case USFMChar.STYLE_FOOTNOTE_VERSE:
-                    tag += "\\fv " + c.value + "\\fv*";
+                    tag.append("\\fv ").append(c.value).append("\\fv*");
                     break;
                 default:
-                    tag += "\\" + c.style + " " + c.value + " ";
+                    tag.append("\\").append(c.style).append(" ").append(c.value).append(" ");
                     break;
             }
         }
-        tag += "\\f*";
-        return tag;
+        tag.append("\\f*");
+        return tag.toString();
     }
 
     /**
