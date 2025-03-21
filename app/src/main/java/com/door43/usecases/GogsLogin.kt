@@ -46,7 +46,7 @@ class GogsLogin @Inject constructor(
             }
 
             // Create a new token
-            val t = Token(tokenName)
+            val t = Token(tokenName, arrayOf("write:repository", "write:user"))
             user.token = api.createToken(t, authUser)
 
             // validate access token
