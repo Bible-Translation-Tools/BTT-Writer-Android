@@ -71,14 +71,6 @@ class TargetTranslationAdapter(private val typography: Typography) : BaseAdapter
                     }
                     return@sortWith compare
                 }
-
-                else -> {
-                    compare = ((rhs.progress - lhs.progress) * 100).toInt()
-                    if (compare == 0) {
-                        compare = compareProject(lhs, rhs, sortProjectColumn)
-                    }
-                    return@sortWith compare
-                }
             }
         }
 

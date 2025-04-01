@@ -34,7 +34,7 @@ android {
         minSdk 22
         compileSdk 35
         targetSdk 35
-        versionCode 35
+        versionCode 36
         versionName "1.5.1"
 
         testBuildType "verify"

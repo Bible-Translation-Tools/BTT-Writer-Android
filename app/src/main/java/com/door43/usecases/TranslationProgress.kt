@@ -74,7 +74,7 @@ class TranslationProgress @Inject constructor(
     private fun getSourceTranslation(targetTranslation: TargetTranslation): Translation? {
         val selectedSourceId = translator.getSelectedSourceTranslationId(targetTranslation.id)
 
-        return library.index.findTranslations(
+        val translations = library.index.findTranslations(
             null,
             targetTranslation.projectId,
             null,
@@ -82,8 +82,12 @@ class TranslationProgress @Inject constructor(
             null,
             App.MIN_CHECKING_LEVEL,
             -1
-        ).firstOrNull {
-            it.resourceContainerSlug == selectedSourceId || it.language.slug == "en"
-        }
+        )
+
+        return translations.find {
+            it.resourceContainerSlug == selectedSourceId
+        } ?: translations.find {
+            it.language.slug == "en" && it.resource.slug == "ulb"
+        } ?: translations.find { it.language.slug == "en" }
     }
 }
