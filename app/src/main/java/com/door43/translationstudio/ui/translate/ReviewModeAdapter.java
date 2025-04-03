@@ -931,8 +931,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         final CharSequence original = editText.getText();
 
         LayoutInflater inflater = LayoutInflater.from(context);
-        FragmentFootnotePromptBinding footnoteBinding =
-         FragmentFootnotePromptBinding.inflate(inflater);
+        FragmentFootnotePromptBinding footnoteBinding = FragmentFootnotePromptBinding.inflate(inflater);
 
         footnoteBinding.footnoteText.setText(initialNote);
         // pop up note prompt
@@ -940,8 +939,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 .setTitle(R.string.title_add_footnote)
                 .setPositiveButton(R.string.label_ok, (dialog, which) -> {
                     CharSequence footnote = footnoteBinding.footnoteText.getText();
-                    boolean validated = verifyAndReplaceFootnote(footnote, original, footnotePos,
-                            footnoteEndPos, holder, item, editText);
+                    boolean validated = verifyAndReplaceFootnote(
+                            footnote,
+                            original,
+                            footnotePos,
+                            footnoteEndPos,
+                            holder,
+                            item,
+                            editText
+                    );
                     if (validated) {
                         dialog.dismiss();
                     }
@@ -1635,7 +1641,22 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             offset--;
         }
 
+        while (offset > 0 && isFootNote(text, offset)) {
+            offset--;
+        }
+
         return (offset > 0) ? offset + 1 : offset;
+    }
+
+    private boolean isFootNote(CharSequence text, int offset) {
+        Pattern pattern = Pattern.compile(USFMNoteSpan.PATTERN);
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            if (offset >= matcher.start() && offset < matcher.end()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

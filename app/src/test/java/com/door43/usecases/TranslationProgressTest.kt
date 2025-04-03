@@ -17,6 +17,7 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Language
+import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 class TranslationProgressTest {
@@ -226,15 +227,21 @@ class TranslationProgressTest {
 
     private fun mockSourceTranslations() {
         val english: Language = mockk()
+        val ulb: Resource = mockk()
         val enTranslation: Translation = mockk()
         TestUtils.setPropertyReflection(english, "slug", "en")
+        TestUtils.setPropertyReflection(ulb, "slug", "ulb")
         TestUtils.setPropertyReflection(enTranslation, "language", english)
+        TestUtils.setPropertyReflection(enTranslation, "resource", ulb)
         TestUtils.setPropertyReflection(enTranslation, "resourceContainerSlug", "en_mrk_ulb")
 
         val indonesian: Language = mockk()
+        val ayt: Resource = mockk()
         val idTranslation: Translation = mockk()
         TestUtils.setPropertyReflection(indonesian, "slug", "id")
+        TestUtils.setPropertyReflection(ayt, "slug", "ayt")
         TestUtils.setPropertyReflection(idTranslation, "language", indonesian)
+        TestUtils.setPropertyReflection(idTranslation, "resource", ayt)
         TestUtils.setPropertyReflection(idTranslation, "resourceContainerSlug", "id_mrk_ayt")
 
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }

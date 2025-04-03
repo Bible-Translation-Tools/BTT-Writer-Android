@@ -34,7 +34,7 @@ android {
         minSdk 22
         compileSdk 35
         targetSdk 35
-        versionCode 29
+        versionCode 36
         versionName "1.5.1"
 
         testBuildType "verify"
@@ -140,9 +140,7 @@ dependencies {
     implementation 'org.apmem.tools:layouts:1.10'
     implementation 'com.itextpdf:itextg:5.5.10'
     implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation('org.unfoldingword.tools:gogs-client:1.6.1') {
-        exclude group: 'org.unfoldingword.tools', module: 'http'
-    }
+    implementation 'org.bibletranslationtools:gogs-client:1.7.4'
     implementation 'org.unfoldingword.tools:task-manager:1.5.3'
     implementation 'org.unfoldingword.tools:resource-container:0.7.19'
     implementation('org.unfoldingword.tools:logger:2.0.0') {

@@ -338,7 +338,7 @@ class DownloadResourceContainers @Inject constructor(
                 App.MIN_CHECKING_LEVEL,
                 -1
             )
-            if (helps.size == 0) {
+            if (helps.isEmpty()) {
                 Logger.i(
                     this.javaClass.simpleName,
                     "No '$name' for: $resourceContainerSlug"

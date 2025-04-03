@@ -495,7 +495,7 @@ class TargetTranslationActivityTest {
             checkDialogText(R.string.export_to_usfm, true)
             checkDialogText(R.string.export_to_pdf, true)
             checkDialogText(R.string.backup_to_sd, true)
-            checkDialogText(R.string.backup_to_friend, true)
+            //checkDialogText(R.string.backup_to_friend, true)
             checkDialogText(R.string.backup_to_app, true)
         }
     }

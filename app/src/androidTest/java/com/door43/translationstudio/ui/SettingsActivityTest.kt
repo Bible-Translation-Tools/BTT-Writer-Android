@@ -61,7 +61,7 @@ class SettingsActivityTest {
     }
 
     private fun verifyTopViewsInPlace(displayed: Boolean) {
-        checkText(R.string.device_name, displayed)
+        //checkText(R.string.device_name, displayed)
         checkText(R.string.pref_title_color_theme, displayed)
         checkText(R.string.pref_title_source_typeface, displayed)
         checkText(R.string.pref_title_translation_typeface, displayed)

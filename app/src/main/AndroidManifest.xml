@@ -76,7 +76,7 @@
             android:name=".ui.devtools.DeveloperToolsActivity"
             android:launchMode="singleTop"
             android:label="@string/title_activity_developer"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.activity.DeveloperToolsActivity" />
 
@@ -148,7 +148,7 @@
             android:label=""
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.Transparent"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.activity.LegalDocumentActivity" />
 

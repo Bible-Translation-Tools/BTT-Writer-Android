@@ -96,7 +96,7 @@ class TargetTranslationViewModel @Inject constructor(
             null,
             0,
             -1
-        ).isNotEmpty()
+        ).any { it.resource.slug != "udb" }
     }
 
     fun getLastViewMode(): TranslationViewMode {

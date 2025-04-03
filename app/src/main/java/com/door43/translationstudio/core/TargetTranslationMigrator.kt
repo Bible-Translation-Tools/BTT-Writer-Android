@@ -255,8 +255,11 @@ class TargetTranslationMigrator @Inject constructor(
             3,
             -1
         )
-        if (translations.size > 0) {
-            val container = library.open(translations[0].resourceContainerSlug)
+        if (translations.isNotEmpty()) {
+            val sourceTranslation = translations.find {
+                it.resource.slug == "ulb"
+            } ?: translations.first()
+            val container = library.open(sourceTranslation.resourceContainerSlug)
             for (dir in chapters) {
                 val chunk00 = File(dir, "00.txt")
                 if (chunk00.exists()) {
