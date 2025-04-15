@@ -31,7 +31,8 @@ class CreateRepository @Inject constructor(
             prefRepo.getDefaultPref(
                 SettingsActivity.KEY_PREF_GOGS_API,
                 context.resources.getString(R.string.pref_default_gogs_api)
-            )
+            ),
+            context.getString(R.string.gogs_user_agent)
         )
         if (profile.gogsUser != null) {
             val templateRepo = Repository(targetTranslation.id, "", false)

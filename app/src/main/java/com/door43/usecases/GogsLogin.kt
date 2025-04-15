@@ -31,7 +31,7 @@ class GogsLogin @Inject constructor(
             SettingsActivity.KEY_PREF_GOGS_API,
             context.getString(R.string.pref_default_gogs_api)
         )
-        val api = GogsAPI(apiUrl)
+        val api = GogsAPI(apiUrl, context.getString(R.string.gogs_user_agent))
         val authUser = User(username, password)
         val tokenName = getTokenStub()
 
