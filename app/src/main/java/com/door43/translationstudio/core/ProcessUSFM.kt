@@ -1181,7 +1181,6 @@ class ProcessUSFM {
         end: String
     ): Boolean {
         if (start == null) { // skip over stuff before verse 1 for now
-            // TODO: 11/1/16 save stuff before verse one
             if (!isMissing(chapter)) {
                 val pattern = PATTERN_USFM_VERSE_SPAN
                 val matcher = pattern.matcher(text)
@@ -1199,10 +1198,8 @@ class ProcessUSFM {
                             chapterTitleEnd = chapterTitleMatcher.end(1)
                         }
 
-                        if (chapterTitle != null) {
-                            getChapterFolderName(chapter)?.let {
-                                saveSection(it, "title", chapterTitle)
-                            }
+                        getChapterFolderName(chapter)?.let {
+                            saveSection(it, "title", chapterTitle ?: "")
                         }
                     }
                 }
@@ -1326,7 +1323,7 @@ class ProcessUSFM {
             val chunkFileName = getChunkFileName(chapter, firstVerse)
             success = getChapterFolderName(chapter)?.let {
                 saveSection(it, chunkFileName, section)
-            } ?: false
+            } == true
             successOverall = success
         }
         return successOverall
@@ -1698,8 +1695,6 @@ class ProcessUSFM {
         @JvmField
         val PATTERN_USFM_VERSE_SPAN: Pattern = Pattern.compile(USFMVerseSpan.PATTERN)
         const val END_MARKER: Int = 999999
-        const val FIRST_VERSE: String = "first_verse"
-        const val FILE_NAME: String = "file_name"
 
         private fun getOptInteger(json: JSONObject, key: String): Int? {
             return getOpt(json, key) as Int?
