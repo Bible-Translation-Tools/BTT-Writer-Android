@@ -10,6 +10,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator.Companion.TXT_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
+import com.door43.translationstudio.ui.spannables.USFMNoteSpan
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
@@ -1335,11 +1336,20 @@ class ProcessUSFM {
      */
     private fun splitAtVerseEnd(text: CharSequence, start: Int, end: Int): VerseSplitResults {
         val verseStr = text.subSequence(start, end).toString()
+
         val sectionEnd = "\\s5\n"
-        val pos = verseStr.indexOf(sectionEnd)
-        if (pos >= 0) {
-            val verseStart = verseStr.substring(0, pos)
-            val extra = verseStr.substring(pos + sectionEnd.length)
+        val sectionPos = verseStr.indexOf(sectionEnd)
+
+        val footnoteMatcher = PATTERN_FOOTNOTE_MARKER.matcher(verseStr)
+
+        if (sectionPos >= 0) {
+            val verseStart = verseStr.substring(0, sectionPos)
+            val extra = verseStr.substring(sectionPos + sectionEnd.length)
+            return VerseSplitResults(verseStart, extra)
+        } else if (footnoteMatcher.find()) {
+            val footnoteStart = footnoteMatcher.start()
+            val verseStart = verseStr.substring(0, footnoteStart)
+            val extra = verseStr.substring(footnoteStart)
             return VerseSplitResults(verseStart, extra)
         }
         return VerseSplitResults(verseStr, "")
@@ -1675,6 +1685,7 @@ class ProcessUSFM {
         val TAG: String = ProcessUSFM::class.java.simpleName
         private const val CHAPTER_TITLE_MARKER: String = "\\\\cl\\s([^\\n]*)"
         val PATTERN_CHAPTER_TITLE_MARKER: Pattern = Pattern.compile(CHAPTER_TITLE_MARKER)
+        val PATTERN_FOOTNOTE_MARKER: Pattern = Pattern.compile(USFMNoteSpan.PATTERN)
         private const val BOOK_TITLE_MARKER: String = "\\\\toc1\\s([^\\n]*)"
         @JvmField
         val PATTERN_BOOK_TITLE_MARKER: Pattern = Pattern.compile(BOOK_TITLE_MARKER)
