@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:layout_width="?attr/actionBarSize"
     android:background="?attr/colorPrimary"
-    android:fitsSystemWindows="true"
     android:layout_height="match_parent">
 
      <!--top -->
@@ -65,7 +64,8 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:gravity="center">
 
             <com.door43.widget.VerticalSeekBarHint
                 android:id="@+id/action_seek"

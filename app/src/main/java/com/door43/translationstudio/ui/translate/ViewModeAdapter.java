@@ -4,8 +4,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,19 +18,13 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.SlugSorter;
-import com.door43.translationstudio.core.TargetTranslation;
+import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.tasks.CheckForMergeConflictsTask;
+import com.door43.translationstudio.databinding.RemovableTabBinding;
 import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
-
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,15 +34,22 @@ import java.util.List;
 /**
  * Created by joel on 9/18/2015.
  */
-public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH>  implements SectionIndexer, ManagedTask.OnFinishedListener {
-    private List<VH> mViewHolders = new ArrayList<>();
-    private OnEventListener mListener;
-    private int mStartPosition = 0;
-    protected String startingChapterSlug;
-    protected String startingChunkSlug;
+public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH>  implements SectionIndexer {
+    private final List<VH> viewHolders = new ArrayList<>();
+    private OnEventListener listener;
+    private int startPosition = 0;
     private int currentPosition = -1;
     private MovementDirection currentMovementDirection = MovementDirection.UNKNOWN;
-    protected boolean mShowMergeSummary = false;
+    protected boolean showMergeSummary = false;
+    protected int layoutBuildNumber = 0;
+    protected Context context;
+    protected Typography typography;
+    protected RenderingProvider renderingProvider;
+
+    protected final List<ListItem> items = new ArrayList<>();
+    protected final List<ListItem> filteredItems = new ArrayList<>();
+    protected final List<String> chapters = new ArrayList<>();
+    protected final List<String> filteredChapters = new ArrayList<>();
 
     private enum MovementDirection {
         UP,
@@ -63,7 +68,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     @Override
     public final VH onCreateViewHolder(ViewGroup parent, int viewType) {
         VH holder = onCreateManagedViewHolder(parent, viewType);
-        mViewHolders.add(holder);
+        viewHolders.add(holder);
         return holder;
     }
 
@@ -81,6 +86,12 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         onVisiblePositionsChanged(range);
     }
 
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        context = recyclerView.getContext();
+    }
+
     /**
      * Calculates a theoretical range of visible positions.
      * You should validate the upper bound.
@@ -95,27 +106,27 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
             if(nextPosition >= this.currentPosition) {
                 // continue direction
                 max = nextPosition;
-                min = nextPosition - (mViewHolders.size() - 1);
+                min = nextPosition - (viewHolders.size() - 1);
             } else {
                 // reverse
-                max = nextPosition + mViewHolders.size() - 1;
+                max = nextPosition + viewHolders.size() - 1;
                 min =  nextPosition;
                 currentMovementDirection = MovementDirection.UP;
             }
         } else if(currentMovementDirection == MovementDirection.UP) {
             if(nextPosition <= this.currentPosition) {
                 // continue direction
-                max = nextPosition + mViewHolders.size() - 1;
+                max = nextPosition + viewHolders.size() - 1;
                 min = nextPosition;
             } else {
                 // reverse
                 max = nextPosition;
-                min = nextPosition - (mViewHolders.size() - 1);
+                min = nextPosition - (viewHolders.size() - 1);
                 currentMovementDirection = MovementDirection.DOWN;
             }
         } else {
-            max = nextPosition + mViewHolders.size() - 1;
-            min = nextPosition - (mViewHolders.size() - 1);
+            max = nextPosition + viewHolders.size() - 1;
+            min = nextPosition - (viewHolders.size() - 1);
         }
 
         // constrain bounds
@@ -142,7 +153,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @return
      */
     protected int getListStartPosition() {
-        return mStartPosition;
+        return startPosition;
     }
 
     /**
@@ -150,7 +161,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @param startPosition
      */
     protected void setListStartPosition(int startPosition) {
-        mStartPosition = startPosition;
+        this.startPosition = startPosition;
     }
 
     /**
@@ -158,7 +169,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @return
      */
     protected OnEventListener getListener() {
-        return mListener;
+        return listener;
     }
 
     /**
@@ -166,28 +177,15 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @param listener
      */
     public void setOnClickListener(OnEventListener listener) {
-        mListener = listener;
+        this.listener = listener;
     }
-
-    /**
-     * Updates the source translation to be displayed.
-     * This should call notifyDataSetChanged()
-     * @param sourceContainer
-     */
-    abstract void setSourceContainer(ResourceContainer sourceContainer);
-
-    /**
-     * Called when coordinating operations need to be applied to all the view holders
-     * @param holder
-     */
-    abstract void onCoordinate(VH holder);
 
     /**
      * set true if we want to initially show a summary of merge conflicts
      * @param showMergeSummary
      */
     public void setShowMergeSummary(boolean showMergeSummary) {
-        mShowMergeSummary = showMergeSummary;
+        this.showMergeSummary = showMergeSummary;
     }
 
     /**
@@ -204,21 +202,32 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     }
 
     /**
-     * Requests the layout manager to coordinate all visible children in the list
+     * Sets the resources opened status
+     * @param status
      */
-    protected void coordinateViewHolders() {
-        for(VH holder:mViewHolders) {
-            onCoordinate(holder);
-        }
-    }
+    abstract public void setResourcesOpened(boolean status);
 
     /**
      * calls notify dataset changed and triggers some other actions
      */
     protected void triggerNotifyDataSetChanged() {
         notifyDataSetChanged();
-        if(mListener != null) {
-            mListener.onDataSetChanged(getItemCount());
+        if(listener != null) {
+            listener.onDataSetChanged(getItemCount());
+        }
+    }
+
+    protected void triggerNotifyItemChanged(int position) {
+        notifyItemChanged(position);
+        if(listener != null) {
+            listener.onDataSetChanged(1);
+        }
+    }
+
+    protected void triggerNotifyItemChanged(ListItem item) {
+        notifyItemChanged(filteredItems.indexOf(item));
+        if(listener != null) {
+            listener.onDataSetChanged(1);
         }
     }
 
@@ -239,61 +248,58 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         // Override this in your adapter to enable next/previous
     }
 
-    protected void initializeListItems(List<ListItem> items, List<String> chapters, ResourceContainer sourceContainer) {
-        // TODO: there is also a map form of the toc.
-        setListStartPosition(0);
+    /**
+     * Update the list of items
+     */
+    protected void initializeListItems(
+            List<ListItem> listItems,
+            String startingChapter,
+            String startingChunk
+    ) {
+        layoutBuildNumber++; // force resetting of fonts
         items.clear();
         chapters.clear();
-        boolean foundStartPosition = false;
-        if(sourceContainer != null) {
-            SlugSorter sorter = new SlugSorter();
-            List<String> chapterSlugs = sorter.sort(sourceContainer.chapters());
+        filteredItems.clear();
+        filteredChapters.clear();
 
-            for (String chapterSlug : chapterSlugs) {
-                chapters.add(chapterSlug);
-                List<String> chunkSlugs = sorter.sort(sourceContainer.chunks(chapterSlug));
-                for (String chunkSlug : chunkSlugs) {
-                    if (!foundStartPosition && chapterSlug.equals(startingChapterSlug) && (chunkSlug.equals(startingChunkSlug) || startingChunkSlug == null)) {
-                        setListStartPosition(items.size());
-                        foundStartPosition = true;
-                    }
-                    items.add(createListItem(chapterSlug, chunkSlug));
-                }
+        var foundPosition = false;
+        for (ListItem item: listItems) {
+            if (!foundPosition && item.chapterSlug.equals(startingChapter) &&
+                    item.chunkSlug.equals(startingChunk)) {
+                setListStartPosition(items.size());
+                foundPosition = true;
             }
+            if (!chapters.contains(item.chapterSlug)) {
+                chapters.add(item.chapterSlug);
+            }
+            items.add(createListItem(item));
         }
+
+        filteredChapters.addAll(chapters);
+        filteredItems.addAll(items);
     }
 
     /**
      * need to override
-     * @param chapterSlug
-     * @param chunkSlug
+     * @param item
      * @return
      */
-    public abstract ListItem createListItem(String chapterSlug, String chunkSlug);
+    public abstract ListItem createListItem(ListItem item);
 
     public abstract void markAllChunksDone();
 
     /**
-     * check all cards for merge conflicts to see if we should show warning.  Runs as background task.
+     * check all cards for merge conflicts to see if we should show warning.
      */
-    protected void doCheckForMergeConflictTask(List<ListItem> items, ResourceContainer sourceContainer, TargetTranslation targetTranslation) {
-        if((items != null) && (items.size() > 0) ) {  // make sure initialized
-            CheckForMergeConflictsTask task = new CheckForMergeConflictsTask(items, sourceContainer, targetTranslation);
-            task.addOnFinishedListener(this);
-            TaskManager.addTask(task, CheckForMergeConflictsTask.TASK_ID);
-        }
-    }
-
-    @Override
-    public abstract void onTaskFinished(ManagedTask task);
-
-    /**
-     * enable/disable merge conflict filter in adapter
-     * @param enableFilter
-     * @param forceMergeConflict - if true, then will initialize have merge conflict flag to true
-     */
-    public void setMergeConflictFilter(boolean enableFilter, boolean forceMergeConflict) {
-        // Override this in your adapter to enable merge conflict filtering
+    protected void doCheckForMergeConflict() {
+        boolean hasConflicts = getConflictsCount() > 0;
+        Handler hand = new Handler(Looper.getMainLooper());
+        hand.post(() -> {
+            OnEventListener listener = getListener();
+            if(listener != null) {
+                listener.onEnableMergeConflict(hasConflicts, false);
+            }
+        });
     }
 
     /**
@@ -325,57 +331,46 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @param chunkSlug
      * @return -1 if no item is found
      */
-    public abstract int getItemPosition(String chapterSlug, String chunkSlug);
+    protected int getItemPosition(String chapterSlug, String chunkSlug) {
+        ListItem item = getItem(chapterSlug, chunkSlug);
+        return filteredItems.indexOf(item);
+    }
 
-    /**
-     * Returns the corresponding chunk slug.
-     * Override this method if you need to map verses to chunks.
-     *
-     * @param chapterSlug
-     * @param verseSlug
-     * @return
-     */
-    public String getVerseChunk(String chapterSlug, String verseSlug) {
-        // stub
-        return verseSlug;
+    protected ListItem getItem(String chapterSlug, String chunkSlug) {
+        for (ListItem item: filteredItems) {
+            if (item.isChunk() && chapterSlug.equals(item.chapterSlug) && chunkSlug.equals(item.chunkSlug)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    protected ListItem getItem(int position) {
+        if (position >= 0 && position < filteredItems.size()) {
+            return filteredItems.get(position);
+        }
+        return null;
     }
 
     /**
      * Restarts the auto commit timer
      */
     public void restartAutoCommitTimer() {
-        mListener.restartAutoCommitTimer();
+        listener.restartAutoCommitTimer();
     }
-
-    /**
-     * if better font for language, save language info in values
-     * @param context
-     * @param st
-     * @param values
-     */
-    public static void getFontForLanguageTab(Context context, Translation st, ContentValues values) {
-        //see if there is a special font for tab
-        Typeface typeface = Typography.getBestFontForLanguage(context, TranslationType.SOURCE, st.language.slug, st.language.direction);
-        if(typeface != Typeface.DEFAULT) {
-            values.put("language", st.language.slug);
-            values.put("direction", st.language.direction);
-        }
-    }
-
 
     /**
      * if language is specified in values, finds the created tab that has the title text and applies the Typeface for the language
-     * @param context
      * @param layout
      * @param values
      * @param title
      */
-    public static void applyLanguageTypefaceToTab(Context context, ViewGroup layout, ContentValues values, String title) {
+    public void applyLanguageTypefaceToTab(ViewGroup layout, ContentValues values, String title) {
         if(values.containsKey("language")) {
             String code = values.getAsString("language");
             String direction = values.getAsString("direction");
-            Typeface typeface = Typography.getBestFontForLanguage(context, TranslationType.SOURCE, code, direction);
-            TextView view = ViewModeAdapter.findTab(layout, title);
+            Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, direction);
+            TextView view = findTab(layout, title);
             if(view != null) {
                 view.setTypeface(typeface, Typeface.NORMAL);
             }
@@ -388,8 +383,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @param match
      * @return
      */
-    public static TextView findTab(ViewGroup viewGroup, String match) {
-
+    public TextView findTab(ViewGroup viewGroup, String match) {
         int count = viewGroup.getChildCount();
         for (int i = 0; i < count; i++) {
             View view = viewGroup.getChildAt(i);
@@ -416,8 +410,8 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      * @param offset - if greater than or equal to 0, then set specific offset
      */
     protected void onSetSelectedPosition(int position, int offset) {
-        if(mListener != null) {
-            mListener.onSetSelectedPosition(position, offset);
+        if(listener != null) {
+            listener.onSetSelectedPosition(position, offset);
         }
     }
 
@@ -426,29 +420,43 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      *      support this.
      * @return
      */
-    public boolean ismMergeConflictSummaryDisplayed() {
+    public boolean isMergeConflictSummaryDisplayed() {
         return false;
     }
 
-    public static View createRemovableTabLayout(Context context, final OnViewModeListener listener, String tag, String title) {
-        View root = LayoutInflater.from(context).inflate(R.layout.removable_tab, null);
-        TextView tabText = root.findViewById(R.id.tab);
-        tabText.setText(title);
+    public View createRemovableTabLayout(final OnViewModeListener listener, String tag, String title) {
+        RemovableTabBinding binding = RemovableTabBinding.inflate(LayoutInflater.from(context));
 
-        Button closeBtn = root.findViewById(R.id.close);
-        closeBtn.setTag(tag);
+        binding.tab.setText(title);
+        binding.close.setTag(tag);
 
-        closeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final String sourceTranslationId = (String) view.getTag();
-                if (listener != null) {
-                    listener.onSourceRemoveButtonClicked(sourceTranslationId);
-                }
+        binding.close.setOnClickListener(view -> {
+            final String sourceTranslationId = (String) view.getTag();
+            if (listener != null) {
+                listener.onSourceRemoveButtonClicked(sourceTranslationId);
             }
         });
 
-        return root;
+        return binding.getRoot();
+    }
+
+    /**
+     * enable/disable merge conflict filter in adapter
+     * @param enableFilter
+     * @param forceMergeConflict - if true, then will initialize have merge conflict flag to true
+    */
+    protected void setMergeConflictFilter(boolean enableFilter, boolean forceMergeConflict) {
+        // Override this in your adapter to enable merge conflict filtering
+    }
+
+    protected int getConflictsCount() {
+        int conflictsCount = 0;
+        for (ListItem item : items) {
+            if(item.getHasMergeConflicts()) {
+                conflictsCount++;
+            }
+        }
+        return conflictsCount;
     }
 
 

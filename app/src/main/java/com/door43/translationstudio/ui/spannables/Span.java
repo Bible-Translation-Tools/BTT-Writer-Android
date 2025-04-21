@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.spannables;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -7,6 +8,8 @@ import android.text.Spanned;
 import android.text.SpannedString;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import com.door43.widget.LongClickableSpan;
 
@@ -19,6 +22,8 @@ public abstract class Span {
     private Boolean mClickable = true;
     private OnClickListener mClickListener;
     private Bundle extras;
+
+    protected Context context;
 
     /**
      * Creates a new empty span.
@@ -90,7 +95,7 @@ public abstract class Span {
             if (mClickable) {
                 LongClickableSpan clickSpan = new LongClickableSpan() {
                     @Override
-                    public void onLongClick(View view) {
+                    public void onLongClick(@NonNull View view) {
                         if(mClickListener != null) {
                             TextView tv = (TextView)view;
                             Spanned s = (Spanned)tv.getText();
@@ -101,7 +106,7 @@ public abstract class Span {
                     }
 
                     @Override
-                    public void onClick(View view) {
+                    public void onClick(@NonNull View view) {
                         if (mClickListener != null) {
                             TextView tv = (TextView)view;
                             Spanned s = (Spanned)tv.getText();
@@ -137,7 +142,8 @@ public abstract class Span {
      * Returns the span as a CharSequence
      * @return
      */
-    public CharSequence toCharSequence() {
+    public CharSequence toCharSequence(Context context) {
+        this.context = context;
         return render();
     }
 

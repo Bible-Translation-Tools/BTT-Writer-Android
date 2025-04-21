@@ -21,8 +21,8 @@
         android:layout_gravity="center_vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:background="@drawable/ic_file_download_black_24dp"
+        android:layout_marginStart="16dp"
+        android:background="@drawable/ic_file_download_secondary_24dp"
         android:id="@+id/download_resource" />
 
 </LinearLayout>

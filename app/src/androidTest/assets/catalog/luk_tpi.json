@@ -1,0 +1,24 @@
+[
+  {
+    "checking_questions": "",
+    "chunks": "{server}/luk/tpi/chunks.json",
+    "date_modified": "{datetime}",
+    "name": "Tok Pisin Unlocked Literal Bible",
+    "notes": "",
+    "slug": "ulb",
+    "source": "{server}/luk/tpi/source.json",
+    "status": {
+      "checking_entity": "Unknown",
+      "checking_level": "3",
+      "comments": null,
+      "contributors": "User 1, User 2",
+      "publish_date": "{date}",
+      "source_text": "ulb",
+      "source_text_version": "9",
+      "version": "9.1"
+    },
+    "terms": "",
+    "tw_cat": "",
+    "usfm": "{server}/luk/tpi/luk.usfm"
+  }
+]

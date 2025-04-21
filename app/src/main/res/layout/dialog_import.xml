@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:minWidth="@dimen/dialog_min_width"
@@ -19,6 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -27,18 +29,18 @@
                 android:textColor="@color/dark_primary_text"
                 android:textAlignment="center"
                 android:textSize="@dimen/headline"
-                android:layout_gravity="top"
+                android:layout_gravity="center_horizontal"
                 android:id="@+id/title" />
+
             <ImageButton
                 android:id="@+id/infoButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/card_margin"
+                android:layout_marginStart="@dimen/card_margin"
                 style="@style/Widget.Alert.Button"
-                android:tint="@color/icon_color"
-                android:src="@drawable/ic_info_black_24dp"/>
+                android:src="@drawable/ic_info_black_24dp"
+                app:tint="@color/icon_color" />
         </LinearLayout>
-
 
         <LinearLayout
             android:orientation="vertical"
@@ -54,7 +56,7 @@
                 android:textColor="@color/dark_primary_text"
                 android:textAllCaps="false"
                 style="@style/Widget.Button.Secondary"
-                android:drawableRight="@drawable/ic_wifi_secondary_18dp" />
+                android:drawableEnd="@drawable/ic_wifi_secondary_18dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -104,6 +106,20 @@
                 android:background="@color/border_color"/>
 
             <Button
+                android:id="@+id/import_backup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/import_from_backup"
+                android:textAllCaps="false"
+                android:textColor="@color/dark_primary_text"
+                style="@style/Widget.Button.Secondary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="@color/border_color"/>
+
+            <Button
                 android:id="@+id/import_from_device"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -116,23 +132,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="1px"
                 android:background="@color/border_color"/>
-
-                android:background="@color/border_color"/>
         </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
         android:padding="@dimen/dialog_controls_margin"
-        android:gravity="right|end"
+        android:gravity="end"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:id="@+id/linearLayout2">
 
         <Button
             android:id="@+id/dismiss_button"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
+            android:layout_marginStart="@dimen/dialog_controls_margin"
             android:text="@string/title_cancel"
             style="@style/Widget.Alert.Button"/>
     </LinearLayout>

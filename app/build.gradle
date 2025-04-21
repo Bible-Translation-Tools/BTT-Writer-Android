@@ -1,19 +1,23 @@
-apply plugin: 'com.android.application'
-
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.1'
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.6.1'
+        classpath 'com.android.tools.build:gradle:8.7.2'
     }
 }
 
-apply plugin: 'com.getkeepsafe.dexcount'
+plugins {
+    id "com.android.application"
+    id "com.getkeepsafe.dexcount" version "4.0.0"
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'com.google.dagger.hilt.android'
+}
 
 android {
+    namespace 'com.door43.translationstudio'
     signingConfigs {
         if (project.hasProperty('signIt')) {
             release {
@@ -25,15 +29,18 @@ android {
             }
         }
     }
-    compileSdkVersion 28
     defaultConfig {
         applicationId "org.bibletranslationtools.writer.android"
-        minSdkVersion 15
-        targetSdkVersion 28
-        versionCode 18
-        versionName "1.4.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    } 
+        minSdk 22
+        compileSdk 35
+        targetSdk 35
+        versionCode 36
+        versionName "1.5.1"
+
+        testBuildType "verify"
+        testInstrumentationRunner "com.door43.translationstudio.CustomTestRunner"
+        testInstrumentationRunnerArguments clearPackageData: 'true'
+    }
     buildTypes {
         release {
             minifyEnabled true
@@ -44,27 +51,55 @@ android {
             }
         }
         debug {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            testProguardFile('proguard-rules.pro')
+            minifyEnabled false
+        }
+        verify {
+            initWith debug
+            applicationIdSuffix = ".test"
         }
         applicationVariants.all { variant ->
-            if(variant.buildType.name == "release") {
+            if (variant.buildType.name == "release") {
                 variant.outputs.all {
                     outputFileName = "release.apk"
+                }
+            } else {
+                variant.mergeResourcesProvider.configure { mergeTask ->
+                    mergeTask.dependsOn tasks.named("copyDebugGithubToken")
                 }
             }
         }
     }
-    lintOptions {
-        disable 'MissingTranslation'
-        disable 'ExtraTranslation'
+    packagingOptions {
+        resources {
+            merges += ['plugin.properties']
+            excludes += "/META-INF/*"
+        }
+    }
+    lint {
         abortOnError false
+        disable 'MissingTranslation', 'ExtraTranslation'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+    testOptions {
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        unitTests.includeAndroidResources = true
+        unitTests.returnDefaultValues = true
+        animationsDisabled = true
     }
 }
 
 configurations {
-    all {
+    configureEach {
         exclude module: 'httpclient'
         exclude module: 'commons-logging'
     }
@@ -91,22 +126,21 @@ configurations {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.legacy:legacy-support-v13:1.0.0'
-    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.+' // new version available 4.6.0
-    implementation 'com.jcraft:jsch:0.1.53'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.201504261725-r'
+    implementation 'com.jcraft:jsch:0.1.55'
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
-    implementation 'com.jpardogo.materialtabstrip:library:1.0.8'
+    implementation 'com.jpardogo.materialtabstrip:library:1.1.1'
     implementation 'com.github.filippudak.progresspieview:library:1.0.4'
     implementation 'org.apmem.tools:layouts:1.10'
-    implementation 'com.itextpdf:itextpdf:5.5.10'
+    implementation 'com.itextpdf:itextg:5.5.10'
     implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation('org.unfoldingword.tools:gogs-client:1.6.1') {
-        exclude group: 'org.unfoldingword.tools', module: 'http'
-    }
+    implementation 'org.bibletranslationtools:gogs-client:1.7.4'
     implementation 'org.unfoldingword.tools:task-manager:1.5.3'
     implementation 'org.unfoldingword.tools:resource-container:0.7.19'
     implementation('org.unfoldingword.tools:logger:2.0.0') {
@@ -116,26 +150,91 @@ dependencies {
     implementation 'org.unfoldingword.tools:foreground:0.1.0'
     implementation project(':html-textview')
     implementation project(':seekbarhint')
-    implementation 'com.google.android.gms:play-services-appindexing:9.8.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
-    androidTestImplementation 'androidx.recyclerview:recyclerview:1.0.0'
-    androidTestImplementation 'androidx.appcompat:appcompat:1.3.1'
-    androidTestImplementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    androidTestImplementation 'com.google.android.material:material:1.0.0'
-    androidTestImplementation 'androidx.annotation:annotation:1.0.0'
-    androidTestImplementation 'androidx.test:runner:1.1.0'
-    androidTestImplementation 'androidx.test:rules:1.1.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
-    androidTestImplementation('androidx.test.espresso:espresso-contrib:3.1.0') {
-        // Necessary to avoid version conflicts
-//        exclude group: 'com.android.support', module: 'appcompat'
-//        exclude group: 'com.android.support', module: 'support-v4'
-//        exclude group: 'com.android.support', module: 'support-annotations'
-//        exclude module: 'recyclerview-v7'
-    }
-    //    // Optional -- UI testing with UI Automator
-
-    //    androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
-    testImplementation 'junit:junit:4.12'
+    implementation 'com.google.firebase:firebase-appindexing:20.0.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'org.markdownj:markdownj-core:0.4'
+    implementation 'androidx.test.ext:junit:1.2.1'
+    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'androidx.fragment:fragment-ktx:1.8.6'
+    implementation 'commons-io:commons-io:2.8.0' // Do not upgrade, unless increase android sdk api version
+
+    // Hilt/Dagger dependencies
+    implementation 'com.google.dagger:hilt-android:2.52'
+    kapt 'com.google.dagger:hilt-compiler:2.52'
+    //kapt 'com.google.dagger:hilt-android-compiler:2.52'
+
+    androidTestImplementation  'com.google.dagger:hilt-android-testing:2.52'
+    kaptAndroidTest 'com.google.dagger:hilt-android-compiler:2.52'
+    androidTestAnnotationProcessor 'com.google.dagger:hilt-android-compiler:2.52'
+
+    testImplementation 'com.google.dagger:hilt-android-testing:2.52'
+    kaptTest 'com.google.dagger:hilt-android-compiler:2.52'
+    testAnnotationProcessor 'com.google.dagger:hilt-android-compiler:2.52'
+
+    androidTestImplementation 'androidx.recyclerview:recyclerview:1.4.0'
+    androidTestImplementation 'androidx.appcompat:appcompat:1.7.0'
+    androidTestImplementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    androidTestImplementation 'com.google.android.material:material:1.12.0'
+    kapt 'androidx.annotation:annotation:1.9.1'
+    androidTestImplementation 'org.hamcrest:hamcrest:3.0'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    androidTestImplementation('androidx.test.espresso:espresso-contrib:3.6.1')
+    androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
+    androidTestImplementation "androidx.test.uiautomator:uiautomator:2.3.0"
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestUtil 'androidx.test:orchestrator:1.5.1'
+
+    // Mockk
+    testImplementation "io.mockk:mockk:1.13.13"
+    testImplementation "io.mockk:mockk-agent:1.13.13"
+    androidTestImplementation "io.mockk:mockk-android:1.13.13"
+    androidTestImplementation "io.mockk:mockk-agent:1.13.13"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+
+    // JSON
+    testImplementation "org.junit.jupiter:junit-jupiter:5.9.1"
+    testImplementation "org.json:json:20230618"
+}
+
+kapt {
+    correctErrorTypes true
+}
+
+hilt {
+    enableAggregatingTask = true
+}
+
+tasks.register("copyDebugGithubToken") {
+    doLast {
+        def sourceFile = file("src/androidTest/assets/dummy_strings_private_app_pref.xml")
+        def destinationFile = file("src/androidTest/res/values/dummy_strings_private_app_pref.xml")
+
+        destinationFile.parentFile.mkdirs()
+
+        if (sourceFile.exists()) {
+            destinationFile.withOutputStream { out ->
+                sourceFile.withInputStream { inStream ->
+                    out << inStream
+                }
+            }
+            println "$destinationFile copied for Debug build"
+        }
+    }
+}
+
+tasks.register('uiTests', Exec) {
+    commandLine "../gradlew",
+            "connectedAndroidTest",
+            "-Pandroid.testInstrumentationRunnerArguments.annotation=com.door43.translationstudio.UITest"
+}
+
+tasks.register('integrationTests', Exec) {
+    commandLine "../gradlew",
+            "connectedAndroidTest",
+            "-Pandroid.testInstrumentationRunnerArguments.annotation=com.door43.translationstudio.IntegrationTest"
 }

@@ -1,14 +1,31 @@
 apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
+
 android {
-    compileSdkVersion 28
 
     defaultConfig {
-        minSdkVersion 7
-        targetSdkVersion 28
+        compileSdk 35
+        minSdk 22
+        targetSdk 35
     }
 
+    namespace 'org.sufficientlysecure.htmltextview'
+
     // Do not abort build if lint finds errors
-    lintOptions {
+    lint {
         abortOnError false
     }
+    buildTypes {
+        applicationVariants {
+        }
+        verify {
+        }
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.15.0'
 }

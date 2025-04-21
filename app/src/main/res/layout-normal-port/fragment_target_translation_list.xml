@@ -12,11 +12,11 @@
         android:layout_marginTop="@dimen/dialog_controls_margin"
         android:layout_marginBottom="@dimen/dialog_controls_margin"
         android:background="@color/card_background_color">
+
         <TextView
             android:text="@string/sort_column"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
             android:layout_marginStart="@dimen/dialog_controls_margin"
             android:layout_marginBottom="@dimen/dialog_controls_margin"
             android:textColor="@color/dark_secondary_text"
@@ -32,7 +32,6 @@
             android:layout_height="1px"
             android:background="@color/border_color"/>
 
-
     </LinearLayout>
 
     <LinearLayout
@@ -45,7 +44,6 @@
             android:text="@string/sort_projects"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
             android:layout_marginStart="@dimen/dialog_controls_margin"
             android:layout_marginBottom="@dimen/dialog_controls_margin"
             android:textColor="@color/dark_secondary_text"
@@ -63,9 +61,9 @@
     </LinearLayout>
 
     <ListView
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/translationsList"
         android:layout_width="match_parent"
         android:elevation="2dp"
+        android:background="@color/card_background_color"
         android:layout_height="wrap_content"/>
 </LinearLayout>

@@ -89,6 +89,15 @@ public interface Index {
     SourceLanguage getSourceLanguage(String sourceLanguageSlug);
 
     /**
+     * Inserts or updates a source language in the library.
+     *
+     * @param language
+     * @return the id of the source language row
+     * @throws Exception
+     */
+    long addSourceLanguage(SourceLanguage language)  throws Exception;
+
+    /**
      * Returns a list of every source language.
      *
      * @return an array of source languages
@@ -108,10 +117,20 @@ public interface Index {
      *
      * Note: does not include the row id. You don't need it
      *
-     * @param targetLangaugeSlug
+     * @param targetLanguageSlug
      * @return the language object or null if it does not exist
      */
-    TargetLanguage getTargetLanguage(String targetLangaugeSlug);
+    TargetLanguage getTargetLanguage(String targetLanguageSlug);
+
+    /**
+     * Inserts or updates a target language in the library.
+     * Note: the result is boolean since you don't need the row id. See getTargetLanguages for more information
+     *
+     * @param language
+     * @return
+     * @throws Exception
+     */
+    boolean addTargetLanguage(TargetLanguage language) throws Exception;
 
     /**
      * Searches for a target language by name.
@@ -169,6 +188,17 @@ public interface Index {
     List<Project> getProjects(String sourceLanguageSlug);
 
     /**
+     * Inserts or updates a project in the library
+     *
+     * @param project
+     * @param categories this is the category branch that the project will attach to
+     * @param sourceLanguageId the parent source language row id
+     * @return the id of the project row
+     * @throws Exception
+     */
+    long addProject(Project project, List<Category> categories, long sourceLanguageId) throws Exception;
+
+    /**
      * Returns a list of projects in the given language or (if enabled) a default language.
      * The affect is a list of all unique projects with preference given to the specified language
      *
@@ -200,6 +230,16 @@ public interface Index {
     Resource getResource(String sourceLanguageSlug, String projectSlug, String resourceSlug);
 
     /**
+     * Inserts or updates a resource in the library.
+     *
+     * @param resource the resource being indexed
+     * @param projectId the parent project row id
+     * @return the id of the resource row
+     * @throws Exception
+     */
+    long addResource(Resource resource, long projectId) throws Exception;
+
+    /**
      * Returns a list of resources available in the given project
      *
      * @param sourcelanguageSlug the language of the resource. If null then all resources of the project will be returned.
@@ -217,6 +257,15 @@ public interface Index {
     Catalog getCatalog(String catalogSlug);
 
     /**
+     * Inserts or updates a catalog in the library.
+     *
+     * @param catalog
+     * @return the id of the catalog
+     * @throws Exception
+     */
+    long addCatalog(Catalog catalog) throws Exception;
+
+    /**
      * Returns a list of catalogs
      *
      * @return
@@ -231,6 +280,16 @@ public interface Index {
      * @return versification or null
      */
     Versification getVersification(String sourceLanguageSlug, String versificationSlug);
+
+    /**
+     * Inserts or updates a versification in the library.
+     *
+     * @param versification
+     * @param sourceLanguageId the parent source language row id
+     * @return the id of the versification or -1
+     * @throws Exception
+     */
+    long addVersification(Versification versification, long sourceLanguageId) throws Exception;
 
     /**
      * Returns a list of versifications

@@ -1,15 +1,12 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,7 +17,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.unfoldingword.door43client.Door43Client;
 import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.tools.logger.Logger;
@@ -28,128 +24,123 @@ import org.unfoldingword.tools.logger.Logger;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.ContainerCache;
-import com.door43.translationstudio.core.TargetTranslation;
+import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
+import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.core.entity.SourceTranslation;
+import com.door43.translationstudio.databinding.FragmentStackedCardListBinding;
 import com.door43.translationstudio.ui.BaseFragment;
+import com.door43.translationstudio.ui.dialogs.ProgressHelper;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
 
 import org.json.JSONException;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * Created by joel on 9/18/2015.
  */
-public abstract class ViewModeFragment extends BaseFragment implements ViewModeAdapter.OnEventListener, ChooseSourceTranslationDialog.OnClickListener, ManagedTask.OnFinishedListener {
+@AndroidEntryPoint
+public abstract class ViewModeFragment extends BaseFragment implements ViewModeAdapter.OnEventListener,
+        ChooseSourceTranslationDialog.OnClickListener,
+        ManagedTask.OnFinishedListener {
 
     public static final String TAG = ViewModeFragment.class.getSimpleName();
-    private static final String TASK_ID_OPEN_SELECTED_SOURCE = "open-selected-source";
-    private static final String TASK_ID_OPEN_SOURCE = "open-source";
-    private static ResourceContainer mSourceContainer = null;
-    private RecyclerView mRecyclerView;
-    private LinearLayoutManager mLayoutManager;
-    private ViewModeAdapter mAdapter;
-    private boolean mFingerScroll = false;
-    private OnEventListener mListener;
-    private TargetTranslation mTargetTranslation;
-    private Translator mTranslator;
-    private Door43Client mLibrary;
-    private GestureDetector mGesture;
-    private Translation mSourceTranslation = null;
-    private ProgressDialog mProgressDialog = null;
-    private int mSavedPosition = 0;
+    private LinearLayoutManager layoutManager;
+    private ViewModeAdapter adapter;
+    private boolean fingerScroll = false;
+    private OnEventListener listener;
+    private GestureDetector gesture;
+    private ProgressHelper.ProgressDialog progressDialog = null;
+
+    protected FragmentStackedCardListBinding binding;
+    protected TargetTranslationViewModel viewModel;
+
+    protected String chapterSlug;
+    protected String chunkSlug;
+
+    @Inject
+    Typography typography;
+
+    @Inject
+    RenderingProvider renderingProvider;
 
     /**
      * Returns an instance of the adapter
-     * @param activity
-     * @param targetTranslationSlug
-     * @param startingChapterSlug
-     * @param startingChunkSlug
-     * @param extras
      * @return
      */
-    abstract ViewModeAdapter generateAdapter(Activity activity, String targetTranslationSlug, String startingChapterSlug, String startingChunkSlug, Bundle extras);
+    abstract ViewModeAdapter generateAdapter();
 
     /**
      * Resets the static variables
      */
     public static void reset() {
         ContainerCache.empty();
-        mSourceContainer = null;
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_stacked_card_list, container, false);
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        adapter = generateAdapter();
+    }
 
-        mLibrary = App.getLibrary();
-        mTranslator = App.getTranslator();
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentStackedCardListBinding.inflate(inflater, container, false);
+        viewModel = new ViewModelProvider(requireActivity()).get(TargetTranslationViewModel.class);
 
         Bundle args = getArguments();
-        String targetTranslationSlug = args.getString(App.EXTRA_TARGET_TRANSLATION_ID, null);
-        mTargetTranslation = mTranslator.getTargetTranslation(targetTranslationSlug);
-        if(mTargetTranslation == null) {
-            Logger.e(getClass().getName() ,"A valid target translation id is required. Received '" + targetTranslationSlug + "' but the translation could not be found");
-            getActivity().finish();
-        }
+        assert args != null;
 
-        String chapterSlug = args.getString(App.EXTRA_CHAPTER_ID, App.getLastFocusChapterId(targetTranslationSlug));
-        String chunkSlug = args.getString(App.EXTRA_FRAME_ID, App.getLastFocusFrameId(targetTranslationSlug));
+        chapterSlug = args.getString(Translator.EXTRA_CHAPTER_ID, null);
+        chunkSlug = args.getString(Translator.EXTRA_FRAME_ID, null);
 
-        try {
-            String sourceTranslationSlug = App.getSelectedSourceTranslationId(targetTranslationSlug);
-            if (sourceTranslationSlug != null) {
-                mSourceTranslation = mLibrary.index().getTranslation(sourceTranslationSlug);
-                if(mSourceTranslation == null) App.removeOpenSourceTranslation(targetTranslationSlug, sourceTranslationSlug);
+        progressDialog = ProgressHelper.newInstance(
+                getChildFragmentManager(),
+                R.string.loading_sources,
+                false
+        );
+
+        setupObservers();
+
+        viewModel.setSelectedResourceContainer();
+
+        // TRICKY: there is a bug in Android's LinearLayoutManager
+        layoutManager = new WrapContentLinearLayoutManager(getActivity());
+        binding.translationCards.setLayoutManager(layoutManager);
+        binding.translationCards.setItemAnimator(new DefaultItemAnimator());
+        binding.translationCards.setAdapter(adapter);
+        binding.translationCards.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                fingerScroll = true;
+                super.onScrollStateChanged(recyclerView, newState);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-        // open selected tab
-        if(null == mSourceTranslation) {
-            if(mListener != null) mListener.onNoSourceTranslations(targetTranslationSlug);
-        } else {
-            mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
-            // TRICKY: there is a bug in Android's LinearLayoutManager
-            mLayoutManager = new WrapContentLinearLayoutManager(getActivity());
-            mRecyclerView.setLayoutManager(mLayoutManager);
-            mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-            mAdapter = generateAdapter(this.getActivity(), targetTranslationSlug, chapterSlug, chunkSlug, args);
-            mRecyclerView.setAdapter(mAdapter);
-            mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                @Override
-                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                    mFingerScroll = true;
-                    super.onScrollStateChanged(recyclerView, newState);
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (fingerScroll) {
+                    int position = getCurrentPosition();
+                    if(listener != null) listener.onScrollProgress(position);
                 }
-
-                @Override
-                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                    super.onScrolled(recyclerView, dx, dy);
-                    if (mFingerScroll) {
-                        int position = getCurrentPosition();
-                        if(mListener != null) mListener.onScrollProgress(position);
-                    }
-                }
-            });
-
-            // notify activity contents changed
-            onDataSetChanged(mAdapter.getItemCount());
-
-            mAdapter.setOnClickListener(this);
-
-            if(savedInstanceState == null) {
-                doScrollToPosition(mAdapter.getListStartPosition(), 0);
             }
-        }
+        });
 
-        mGesture = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+        // notify activity contents changed
+        onDataSetChanged(adapter.getItemCount());
+
+        adapter.setOnClickListener(this);
+
+        gesture = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
             public MotionEvent mLastOnDownEvent;
             private final float SWIPE_THRESHOLD_VELOCITY = 20f;
             private final float SWIPE_MIN_DISTANCE = 50f;
@@ -187,9 +178,42 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         });
 
         // let child classes modify the view
-        onPrepareView(rootView);
+        onPrepareView(binding.getRoot());
 
-        return rootView;
+        return binding.getRoot();
+    }
+
+    protected void setupObservers() {
+        viewModel.getProgress().observe(getViewLifecycleOwner(), progress -> {
+            if (progress != null) {
+                if (progressDialog != null) {
+                    progressDialog.show();
+                    progressDialog.setProgress(progress.getProgress());
+                    progressDialog.setMessage(progress.getMessage());
+                    progressDialog.setMax(progress.getMax());
+                }
+            } else {
+                if (progressDialog != null) progressDialog.dismiss();
+            }
+        });
+        viewModel.getListItems().observe(getViewLifecycleOwner(), items -> {
+            if (!items.isEmpty()) {
+                if (adapter != null) {
+                    if (chapterSlug == null) {
+                        chapterSlug = viewModel.getLastFocusChapterId();
+                    }
+                    if (chunkSlug == null) {
+                        chunkSlug = viewModel.getLastFocusFrameId();
+                    }
+                    adapter.initializeListItems(items, chapterSlug, chunkSlug);
+                    doScrollToPosition(adapter.getListStartPosition(), 0);
+                }
+            } else {
+                if(listener != null) {
+                    listener.onNoSourceTranslations();
+                }
+            }
+        });
     }
 
     /**
@@ -198,11 +222,11 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param offset
      */
     public void doScrollToPosition(int position, int offset) {
-        if(mLayoutManager != null) {
-            mLayoutManager.scrollToPositionWithOffset(position, offset);
+        if(layoutManager != null) {
+            layoutManager.scrollToPositionWithOffset(position, offset);
             Logger.i(TAG, "doScrollToPosition: position=" + position + ", offset=" + offset);
         }
-        if(mListener != null) mListener.onScrollProgress(position);
+        if(listener != null) listener.onScrollProgress(position);
     }
 
     /**
@@ -210,8 +234,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param showMergeSummary
      */
     public void setShowMergeSummary(boolean showMergeSummary) {
-        if(mAdapter != null) {
-            mAdapter.setShowMergeSummary(showMergeSummary);
+        if(adapter != null) {
+            adapter.setShowMergeSummary(showMergeSummary);
         }
     }
 
@@ -220,7 +244,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param position
      */
     public String getChapterSlug(int position) {
-        if(mAdapter != null) return mAdapter.getChapterSlug(position);
+        if(adapter != null) return adapter.getChapterSlug(position);
         return Integer.toString(position + 1);
     }
 
@@ -230,7 +254,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param e2
      */
     protected void onRightSwipe(MotionEvent e1, MotionEvent e2) {
-
     }
 
     /**
@@ -239,7 +262,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param e2
      */
     protected void onLeftSwipe(MotionEvent e1, MotionEvent e2) {
-
     }
 
     /**
@@ -247,7 +269,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected ResourceContainer getSelectedResourceContainer() {
-        return ContainerCache.cache(mLibrary, mSourceTranslation.resourceContainerSlug);
+        return viewModel.getResourceContainer();
     }
 
     /**
@@ -258,7 +280,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      */
     public void scrollToChunk(String chapterSlug, String chunkSlug) {
         closeKeyboard();
-        int position = mAdapter.getItemPosition(chapterSlug, chunkSlug);
+        int position = adapter.getItemPosition(chapterSlug, chunkSlug);
         if(position != -1) {
             doScrollToPosition(position, 0);
         }
@@ -270,8 +292,21 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param verseSlug
      */
     public void scrollToVerse(String chapterSlug, String verseSlug) {
-        String chunkSlug = mAdapter.getVerseChunk(chapterSlug, verseSlug);
+        String chunkSlug = getVerseChunk(chapterSlug, verseSlug);
         scrollToChunk(chapterSlug, chunkSlug);
+    }
+
+    /**
+     * Returns the corresponding chunk slug.
+     * Override this method if you need to map verses to chunks.
+     *
+     * @param chapterSlug
+     * @param verseSlug
+     * @return
+     */
+    public String getVerseChunk(String chapterSlug, String verseSlug) {
+        // stub
+        return verseSlug;
     }
 
     /**
@@ -281,9 +316,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected int findViewHolderAdapterPosition(float x, float y) {
-        if(mRecyclerView != null) {
-            View view = mRecyclerView.findChildViewUnder(x, y);
-            return mRecyclerView.getChildAdapterPosition(view);
+        View view = binding.translationCards.findChildViewUnder(x, y);
+        if (view != null) {
+            return binding.translationCards.getChildAdapterPosition(view);
         } else {
             return 0;
         }
@@ -295,11 +330,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected RecyclerView.ViewHolder getViewHolderForAdapterPosition(int position) {
-        if(mRecyclerView != null) {
-            return mRecyclerView.findViewHolderForAdapterPosition(position);
-        } else {
-            return null;
-        }
+        return binding.translationCards.findViewHolderForAdapterPosition(position);
     }
 
     /**
@@ -307,9 +338,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     protected RecyclerView.ViewHolder getViewHolderSample() {
-        if(mLayoutManager != null && mRecyclerView != null) {
+        if(layoutManager != null) {
             int position = getCurrentPosition();
-            return mRecyclerView.findViewHolderForLayoutPosition(position);
+            return binding.translationCards.findViewHolderForLayoutPosition(position);
         } else {
             return null;
         }
@@ -320,23 +351,23 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     protected ViewModeAdapter getAdapter() {
-        return mAdapter;
+        return adapter;
     }
 
     public void onDataSetChanged(int count) {
-        if(mListener != null) mListener.onDataSetChanged(count);
+        if(listener != null) listener.onDataSetChanged(count);
     }
 
     public void onEnableMergeConflict(boolean showConflicted, boolean active) {
-        if(mListener != null) {
-            mListener.onEnableMergeConflict(showConflicted, active);
+        if(listener != null) {
+            listener.onEnableMergeConflict(showConflicted, active);
         }
     }
 
     @Override
     public RecyclerView.ViewHolder getVisibleViewHolder(int position) {
-        if(mLayoutManager != null && mRecyclerView != null) {
-            return mRecyclerView.findViewHolderForAdapterPosition(position);//.findViewHolderForLayoutPosition(position);
+        if(layoutManager != null) {
+            return binding.translationCards.findViewHolderForAdapterPosition(position);
         }
         return null;
     }
@@ -346,96 +377,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     public int getItemCount() {
-        if(mAdapter != null) {
-            return mAdapter.getItemCount();
+        if(adapter != null) {
+            return adapter.getItemCount();
         }
         return 0;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        showProgressDialog();
-        if(mSourceContainer == null) {
-            // load the container
-            if(mAdapter != null) mAdapter.setSourceContainer(null);
-            onSourceContainerLoaded(null);
-            ManagedTask task = new ManagedTask() {
-                @Override
-                public void start() {
-                    if (mSourceTranslation != null) {
-                        mSourceContainer = ContainerCache.cache(mLibrary, mSourceTranslation.resourceContainerSlug);
-                    }
-                }
-            };
-            task.addOnFinishedListener(this);
-            TaskManager.addTask(task, TASK_ID_OPEN_SELECTED_SOURCE);
-        } else if(mAdapter != null) {
-            mAdapter.setSourceContainer(mSourceContainer);
-            doScrollToPosition(mAdapter.getListStartPosition(), 0);
-            onSourceContainerLoaded(mSourceContainer);
-            stopProgressDialog();
-        }
-    }
-
-    /**
-     * Initiates a task to open a resource container.
-     * This is used for switching the source translation.
-     * @param slug
-     */
-    private void openResourceContainer(final String slug) {
-        showProgressDialog();
-        mSavedPosition = getCurrentPosition();
-        if(mAdapter != null) mAdapter.setSourceContainer(null);
-        onSourceContainerLoaded(null);
-        ManagedTask task = new ManagedTask() {
-            @Override
-            public void start() {
-                setResult(ContainerCache.cache(mLibrary, slug));
-            }
-        };
-        Bundle args = new Bundle();
-        args.putString("slug", slug);
-        task.setArgs(args);
-        task.addOnFinishedListener(this);
-        TaskManager.addTask(task, TASK_ID_OPEN_SOURCE);
-    }
-
-    /**
-     * removes progress dialog if shown
-     */
-    private void stopProgressDialog() {
-        if(mProgressDialog != null) {
-            try {
-                mProgressDialog.dismiss();
-                mProgressDialog = null;
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * create a general progress dialog
-     * @param titleId
-     * @return
-     */
-    private void showProgressDialog(int titleId) {
-        if(mProgressDialog != null) {
-            mProgressDialog.dismiss(); // remove previous
-        }
-        mProgressDialog = new ProgressDialog(getActivity());
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.setCanceledOnTouchOutside(true);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mProgressDialog.setTitle(titleId);
-        mProgressDialog.setMessage("");
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.show();
-    }
-
-    private void showProgressDialog() {
-        showProgressDialog(R.string.loading_sources);
     }
 
     /**
@@ -487,7 +432,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      */
     public boolean ismMergeConflictSummaryDisplayed() {
         if(getAdapter() != null) {
-            return getAdapter().ismMergeConflictSummaryDisplayed();
+            return getAdapter().isMergeConflictSummaryDisplayed();
         }
         return false;
     }
@@ -521,27 +466,12 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     /**
      * Require correct interface
-     * @param activity
+     * @param context Activity context
      */
     @Override
-    @TargetApi(23)
-    public void onAttach(Context activity) {
-        super.onAttach(activity);
-        onAttachToContext(activity);
-    }
-
-    /**
-     * Deprecated on API 23
-     * Require correct interface
-     * @param activity
-     */
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if(Build.VERSION.SDK_INT < 23) {
-            onAttachToContext(activity);
-        }
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        onAttachToContext(context);
     }
 
     /**
@@ -550,9 +480,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      */
     protected void onAttachToContext(Context context) {
         try {
-            this.mListener = (OnEventListener) context;
+            this.listener = (OnEventListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString() + " must implement ViewModeFragment.OnEventListener");
+            throw new ClassCastException(context + " must implement ViewModeFragment.OnEventListener");
         }
     }
 
@@ -562,10 +492,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param percent - percentage to scroll within card
      */
     public void onScrollProgressUpdate(int scrollProgress, int percent) {
-        mFingerScroll = false;
+        fingerScroll = false;
         Log.d(TAG, "onScrollProgressUpdate: scrollProgress=" + scrollProgress + ", percent=" + percent);
         if(percent == 0) {
-            mRecyclerView.scrollToPosition(scrollProgress);
+            binding.translationCards.scrollToPosition(scrollProgress);
         } else {
             fineScrollToPosition(scrollProgress, percent);
         }
@@ -579,14 +509,14 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      */
     private void fineScrollToPosition(int position, int percent) {
 
-        mRecyclerView.scrollToPosition(position); // do coarse adjustment
+        binding.translationCards.scrollToPosition(position); // do coarse adjustment
 
-        View visibleChild = mRecyclerView.getChildAt(0);
+        View visibleChild = binding.translationCards.getChildAt(0);
         if (visibleChild == null) {
             return;
         }
 
-        RecyclerView.ViewHolder holder = mRecyclerView.getChildViewHolder(visibleChild);
+        RecyclerView.ViewHolder holder = binding.translationCards.getChildViewHolder(visibleChild);
         if(holder == null) {
             return;
         }
@@ -594,9 +524,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         int itemHeight = holder.itemView.getHeight();
         int offset = (int) (percent * itemHeight / 100);
 
-        LinearLayoutManager layoutManager = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-        layoutManager.scrollToPositionWithOffset(position, -offset);
-        return;
+        LinearLayoutManager layoutManager = (LinearLayoutManager) binding.translationCards.getLayoutManager();
+        if (layoutManager != null) {
+            layoutManager.scrollToPositionWithOffset(position, -offset);
+        }
     }
 
     public void setScrollProgress(int position) {
@@ -605,35 +536,31 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
     @Override
     public void onSourceTranslationTabClick(String sourceTranslationId) {
-        App.setSelectedSourceTranslation(mTargetTranslation.getId(), sourceTranslationId);
-        openResourceContainer(sourceTranslationId);
+        chapterSlug = null;
+        chunkSlug = null;
+        updateListStartPosition();
+        viewModel.setSelectedResourceContainer(sourceTranslationId);
     }
 
     @Override
     public void onSourceRemoveButtonClicked(String sourceTranslationId) {
-        String targetTranslationId = mTargetTranslation.getId();
-
-        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        if (targetTranslation == null) {
-            return;
-        }
-
-        App.removeOpenSourceTranslation(targetTranslationId, sourceTranslationId);
-
-        String[] sourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
+        viewModel.removeOpenSourceTranslation(sourceTranslationId);
+        String[] sourceTranslationIds = viewModel.getOpenSourceTranslations();
 
         if (sourceTranslationIds.length > 0) {
-            String selectedSourceId = App.getSelectedSourceTranslationId(targetTranslationId);
-            openResourceContainer(selectedSourceId);
+            String selectedSourceId = viewModel.getSelectedSourceTranslationId();
+            viewModel.setSelectedResourceContainer(selectedSourceId);
         } else {
-            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+            if (listener != null) {
+                listener.onNoSourceTranslations();
+            }
         }
     }
 
     @Override
     public void onNewSourceTranslationTabClick() {
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-        Fragment prev = getFragmentManager().findFragmentByTag("tabsDialog");
+        FragmentTransaction ft = getParentFragmentManager().beginTransaction();
+        Fragment prev = getParentFragmentManager().findFragmentByTag("tabsDialog");
         if (prev != null) {
             ft.remove(prev);
         }
@@ -641,7 +568,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         ChooseSourceTranslationDialog dialog = new ChooseSourceTranslationDialog();
         Bundle args = new Bundle();
-        args.putString(ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID, mTargetTranslation.getId());
+        args.putString(
+            ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID,
+            viewModel.getTargetTranslation().getId()
+        );
         dialog.setOnClickListener(this);
         dialog.setArguments(args);
         dialog.show(ft, "tabsDialog");
@@ -653,69 +583,83 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     @Override
-    public void onConfirmTabsDialog(String targetTranslationId, List<String> sourceTranslationIds) {
-        TargetTranslation targetTranslation = mTranslator.getTargetTranslation(targetTranslationId);
-        if (targetTranslation == null) {
-            return;
-        }
-
-        String[] oldSourceTranslationIds = App.getOpenSourceTranslations(targetTranslationId);
+    public void onConfirmTabsDialog(@NonNull List<String> sourceTranslationIds) {
+        String[] oldSourceTranslationIds = viewModel.getOpenSourceTranslations();
         for (String id : oldSourceTranslationIds) {
-            App.removeOpenSourceTranslation(targetTranslationId, id);
+            viewModel.removeOpenSourceTranslation(id);
         }
-
-        if (sourceTranslationIds.size() > 0) {
-            setSelectedSources(sourceTranslationIds, targetTranslation);
-            String selectedSourceId = App.getSelectedSourceTranslationId(targetTranslationId);
-            openResourceContainer(selectedSourceId);
+        if (!sourceTranslationIds.isEmpty()) {
+            setSelectedSources(sourceTranslationIds);
+            String selectedSourceId = viewModel.getSelectedSourceTranslationId();
+            if (selectedSourceId != null) {
+                viewModel.setSelectedResourceContainer(selectedSourceId);
+            }
         } else {
-            if (mListener != null) mListener.onNoSourceTranslations(targetTranslationId);
+            if (listener != null) listener.onNoSourceTranslations();
         }
     }
 
-    private void setSelectedSources(List<String> sourceSlugs, TargetTranslation targetTranslation) {
+    private void setSelectedSources(List<String> sourceSlugs) {
         List<SourceTranslation> sources = new ArrayList<>();
         for (String slug : sourceSlugs) {
             try {
-                App.addOpenSourceTranslation(targetTranslation.getId(), slug);
+                viewModel.addOpenSourceTranslation(slug);
             } catch (Exception e) {
                 Logger.e(
                         this.getClass().getName(),
-                        "Error while adding source " + slug + " for " + targetTranslation.getId()
+                        "Error while adding source " + slug + " for " + viewModel.getTargetTranslation().getId()
                 );
                 e.printStackTrace();
             }
 
-            Translation translation = mLibrary.index.getTranslation(slug);
-            int modifiedAt = mLibrary.getResourceContainerLastModified(
-                    translation.language.slug,
-                    translation.project.slug,
-                    translation.resource.slug
-            );
-            sources.add(new SourceTranslation(translation, modifiedAt));
+            Translation translation = viewModel.getTranslation(slug);
+            if (translation != null) {
+                int modifiedAt = viewModel.getResourceContainerLastModified(translation);
+                sources.add(new SourceTranslation(translation, modifiedAt));
+            }
         }
 
         try {
-            targetTranslation.setSourceTranslations(sources);
+            viewModel.getTargetTranslation().setSourceTranslations(sources);
         } catch (JSONException e) {
             Logger.e(
                     this.getClass().getName(),
-                    "Failed to set source translations for the target translation " + targetTranslation.getId(), e
+                    "Failed to set source translations for the target translation " + viewModel.getTargetTranslation().getId(), e
             );
+        }
+    }
+
+    /**
+     * Updates the position where the list should start when first built
+     */
+    private void updateListStartPosition() {
+        int lastItemPosition = getCurrentPosition();
+        String chapterId = adapter.getFocusedChapterSlug(lastItemPosition);
+        String frameId = adapter.getFocusedChunkSlug(lastItemPosition);
+        if (chapterId != null) {
+            viewModel.setLastFocus(chapterId, frameId);
+            adapter.setListStartPosition(lastItemPosition);
         }
     }
 
     @Override
     public void onDestroy() {
-        // save position state
-        if(mLayoutManager != null) {
-            int lastItemPosition = getCurrentPosition();
-            String chapterId = mAdapter.getFocusedChapterSlug(lastItemPosition);
-            String frameId = mAdapter.getFocusedChunkSlug(lastItemPosition);
-            App.setLastFocus(mTargetTranslation.getId(), chapterId, frameId);
+        viewModel.cancelRenderJobs();
+        if(layoutManager != null) {
+            // save position state
+            updateListStartPosition();
         }
-        if(mAdapter != null) mAdapter.setOnClickListener(null);
+        if(adapter != null) adapter.setOnClickListener(null);
         super.onDestroy();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+        if (progressDialog != null) {
+            progressDialog = null;
+        }
     }
 
     /**
@@ -723,8 +667,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     public int getCurrentPosition() {
-        if(mLayoutManager != null) {
-            return mLayoutManager.findFirstVisibleItemPosition();
+        if(layoutManager != null) {
+            return layoutManager.findFirstVisibleItemPosition();
         }
         return 0;
     }
@@ -738,8 +682,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @return
      */
     public boolean onTouchEvent(MotionEvent event) {
-        if(mGesture != null) {
-            return mGesture.onTouchEvent(event);
+        if(gesture != null) {
+            return gesture.onTouchEvent(event);
         } else {
             Logger.w(this.getClass().getName(), "The gesture detector was not initialized so the touch was not handled");
             return false;
@@ -751,14 +695,14 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param mode
      */
     public void openTranslationMode(TranslationViewMode mode, Bundle extras) {
-        if(mListener != null) mListener.openTranslationMode(mode, extras);
+        if(listener != null) listener.openTranslationMode(mode, extras);
     }
 
     /**
      * Restarts the auto commit timer
      */
     public void restartAutoCommitTimer() {
-        if(mListener != null) mListener.restartAutoCommitTimer();
+        if(listener != null) listener.restartAutoCommitTimer();
     }
 
     /**
@@ -769,56 +713,18 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
      * @param atStart - we are at first search item highlighted
      */
     public void onSearching(boolean doingSearch, int numberOfChunkMatches, boolean atEnd, boolean atStart) {
-        if(mListener != null) mListener.onSearching(doingSearch, numberOfChunkMatches, atEnd, atStart);
+        if(listener != null) listener.onSearching(doingSearch, numberOfChunkMatches, atEnd, atStart);
     }
 
     /**
      * user has selected to update sources
      */
     public void onUpdateSources() {
-        if(mListener != null) mListener.onUpdateSources();
+        if(listener != null) listener.onUpdateSources();
     }
 
     @Override
     public void onTaskFinished(final ManagedTask task) {
-        TaskManager.clearTask(task);
-        if(task.getTaskId().equals(TASK_ID_OPEN_SELECTED_SOURCE)) {
-            Handler hand  = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(mSourceContainer == null) {
-                        if(mListener != null) mListener.onNoSourceTranslations(mTargetTranslation.getId());
-                    } else if(mAdapter != null) {
-                        mAdapter.setSourceContainer(mSourceContainer);
-                        doScrollToPosition(mAdapter.getListStartPosition(), 0);
-                        onSourceContainerLoaded(mSourceContainer);
-                    }
-                    stopProgressDialog();
-                }
-            });
-        } else if(task.getTaskId().equals(TASK_ID_OPEN_SOURCE)) {
-            Handler hand  = new Handler(Looper.getMainLooper());
-            hand.post(new Runnable() {
-                @Override
-                public void run() {
-                    if(task.getResult() == null) {
-                        // failed to load the container
-                        String slug = task.getArgs().getString("slug");
-                        App.removeOpenSourceTranslation(mTargetTranslation.getId(), slug);
-                        mAdapter.triggerNotifyDataSetChanged();
-
-                        // TODO: 10/5/16 notify user we failed to select the source
-                    } else if(mAdapter != null) {
-                        mSourceContainer = (ResourceContainer) task.getResult();
-                        mAdapter.setSourceContainer(mSourceContainer);
-                        doScrollToPosition(mSavedPosition, 0);
-                        onSourceContainerLoaded(mSourceContainer);
-                    }
-                    stopProgressDialog();
-                }
-            });
-        }
     }
 
     /**
@@ -830,12 +736,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         Log.d(TAG, "onSetSelectedPosition: position=" + position + ", offset=" + offset);
         doScrollToPosition(position, offset);
     }
-
-    /**
-     * Allows child classes to perform operations that dependon the source container
-     * @param sourceContainer
-     */
-    protected abstract void onSourceContainerLoaded(ResourceContainer sourceContainer);
 
     protected abstract void markAllChunksDone();
 
@@ -854,10 +754,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         void onDataSetChanged(int count);
 
         /**
-         * No source translation has been chosen for this target translation
-         * @param targetTranslationId
+         * No source translation has been chosen
          */
-        void onNoSourceTranslations(String targetTranslationId);
+        void onNoSourceTranslations();
 
         /**
          * Opens a particular translation mode

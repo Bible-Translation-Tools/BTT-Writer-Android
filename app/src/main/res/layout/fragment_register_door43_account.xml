@@ -28,7 +28,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Names will be publicly available"
+                android:text="@string/names_will_be_public"
                 android:paddingEnd="@dimen/card_margin"
                 android:textSize="@dimen/title"
                 android:textColor="@color/dark_secondary_text"

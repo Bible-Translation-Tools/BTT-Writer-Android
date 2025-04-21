@@ -2,14 +2,13 @@ package org.unfoldingword.door43client;
 
 import android.content.Context;
 
+import com.door43.data.IDirectoryProvider;
+
 import org.unfoldingword.resourcecontainer.ContainerTools;
-import org.unfoldingword.resourcecontainer.Resource;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.http.Request;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,6 +18,7 @@ import java.io.InputStreamReader;
  */
 
 public class Door43Client {
+    private final IDirectoryProvider directoryProvider;
 
     private final API api;
     private static String schema = null;
@@ -30,13 +30,14 @@ public class Door43Client {
     /**
      * Initializes a new Door43 client
      * @param context the application context
-     * @param databasePath the name of the database where information will be indexed
-     * @param resourceDir the directory where resource containers will be stored
+     * @param directoryProvider
      * @throws IOException
      */
-    public Door43Client(Context context, File databasePath, File resourceDir) throws IOException {
+    public Door43Client(Context context, IDirectoryProvider directoryProvider) throws IOException {
+        this.directoryProvider = directoryProvider;
+
         // load schema
-        if(this.schema == null) {
+        if(schema == null) {
             InputStream is = context.getAssets().open("schema.sqlite");
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             StringBuilder sb = new StringBuilder();
@@ -44,10 +45,15 @@ public class Door43Client {
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
             }
-            this.schema = sb.toString();
+            schema = sb.toString();
         }
 
-        this.api = new API(context, this.schema, databasePath, resourceDir);
+        this.api = new API(
+                context,
+                schema,
+                directoryProvider.getDatabaseFile(),
+                directoryProvider.getContainersDir()
+        );
         this.index = api.index();
     }
 
@@ -57,15 +63,6 @@ public class Door43Client {
      */
     public void setLogger(OnLogListener listener) {
         api.setLogger(listener);
-    }
-
-    /**
-     * Returns the read only index
-     * @return the index
-     */
-    @Deprecated
-    public Index index() {
-        return api.index();
     }
 
     /**
@@ -94,11 +91,12 @@ public class Door43Client {
 
     /**
      * Indexes the supplementary catalogs
+     * @param force
      * @param listener
      * @throws Exception
      */
-    public void updateCatalogs(OnProgressListener listener) throws Exception {
-        api.updateCatalogs(listener);
+    public void updateCatalogs(Boolean force, OnProgressListener listener) throws Exception {
+        api.updateCatalogs(force, listener);
     }
 
     public void updateLanguageUrl(String url) throws Exception {
@@ -166,6 +164,14 @@ public class Door43Client {
      */
     public void exportResourceContainer(File destFile, String languageSlug, String projectSlug, String resourceSlug) throws Exception {
         api.exportResourceContainer(destFile, languageSlug, projectSlug, resourceSlug);
+    }
+
+    public Boolean getIsLibraryDeployed() {
+        Boolean hasContainers = directoryProvider.getContainersDir().exists()
+                && directoryProvider.getContainersDir().isDirectory()
+                && directoryProvider.getContainersDir().list().length > 0;
+
+        return index.getSourceLanguages().size() > 1 && hasContainers;
     }
 
     /**

@@ -11,7 +11,6 @@ import org.unfoldingword.resourcecontainer.ResourceContainer;
 import org.unfoldingword.door43client.models.TargetLanguage;
 import org.unfoldingword.tools.logger.Logger;
 
-import com.door43.translationstudio.App;
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
 import com.door43.util.NumericStringComparator;
@@ -34,7 +33,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -286,10 +284,11 @@ public class TargetTranslation {
     /**
      * Opens an existing target translation.
      * @param targetTranslationDir
+     * @param onError An action to take if there is an error opening this translation
      * @return null if the directory does not exist or the manifest is invalid
      */
     @Nullable
-    public static TargetTranslation open(File targetTranslationDir) {
+    public static TargetTranslation open(File targetTranslationDir, @Nullable OnError onError) {
         if(targetTranslationDir != null && targetTranslationDir.exists()) {
             File manifestFile = new File(targetTranslationDir, "manifest.json");
             if (manifestFile.exists()) {
@@ -303,12 +302,8 @@ public class TargetTranslation {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    // Try to backup and delete corrupt project
-                    try {
-                        App.backupTargetTranslation(targetTranslationDir);
-                        App.getTranslator().deleteTargetTranslation(targetTranslationDir);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                    if (onError != null) {
+                        onError.doAction();
                     }
                 }
             } else {
@@ -566,7 +561,7 @@ public class TargetTranslation {
         if(speaker != null) {
             removeContributor(speaker);
             JSONArray translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS);
-            translatorsJson.put(speaker.name);
+            translatorsJson.put(speaker.getName());
             manifest.put(FIELD_TRANSLATORS, translatorsJson);
         }
     }
@@ -579,7 +574,7 @@ public class TargetTranslation {
     public void removeContributor(NativeSpeaker speaker) {
         if(speaker != null) {
             JSONArray translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS);
-            manifest.put(FIELD_TRANSLATORS, Manifest.removeValue(translatorsJson, speaker.name));
+            manifest.put(FIELD_TRANSLATORS, Manifest.removeValue(translatorsJson, speaker.getName()));
         }
     }
 
@@ -592,7 +587,7 @@ public class TargetTranslation {
         manifest.load();
         ArrayList<NativeSpeaker> translators = getContributors();
         for (NativeSpeaker speaker:translators) {
-            if (speaker.name.equals(name)) {
+            if (speaker.getName().equals(name)) {
                 return speaker;
             }
         }
@@ -646,13 +641,19 @@ public class TargetTranslation {
         if(frameFile.exists()) {
             try {
                 String body = FileUtilities.readFileToString(frameFile);
-                return new FrameTranslation(frameId, chapterId, body, format, isFrameFinished(chapterId + "-" + frameId));
+                return RenderingProvider.Companion.getFrameTranslation(
+                        frameId,
+                        chapterId,
+                        body,
+                        format,
+                        isFrameFinished(chapterId + "-" + frameId)
+                );
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         // give empty translation
-        return new FrameTranslation(frameId, chapterId, "", format, false);
+        return RenderingProvider.Companion.getFrameTranslation(frameId, chapterId, "", format, false);
     }
 
     /**
@@ -736,7 +737,7 @@ public class TargetTranslation {
      * @param translatedText
      */
     private void saveFrameTranslation(FrameTranslation frameTranslation, String translatedText) throws IOException {
-        File frameFile = getFrameFile(frameTranslation.getChapterId(), frameTranslation.getId());
+        File frameFile = getFrameFile(frameTranslation.getChapterId(), frameTranslation.id);
         if(translatedText.isEmpty()) {
             frameFile.delete();
         } else {
@@ -753,7 +754,7 @@ public class TargetTranslation {
      * @throws IOException
      */
     private void saveChapterReferenceTranslation(ChapterTranslation chapterTranslation, String translatedText) throws IOException {
-        File chapterReferenceFile = getChapterReferenceFile(chapterTranslation.getId());
+        File chapterReferenceFile = getChapterReferenceFile(chapterTranslation.id);
         if(translatedText.isEmpty()) {
             chapterReferenceFile.delete();
         } else {
@@ -770,7 +771,7 @@ public class TargetTranslation {
      * @throws IOException
      */
     private void saveChapterTitleTranslation(ChapterTranslation chapterTranslation, String translatedText) throws IOException {
-        File chapterTitleFile = getChapterTitleFile(chapterTranslation.getId());
+        File chapterTitleFile = getChapterTitleFile(chapterTranslation.id);
         if(translatedText.isEmpty()) {
             chapterTitleFile.delete();
         } else {
@@ -1168,12 +1169,13 @@ public class TargetTranslation {
     /**
      * Merges a local repository into this one
      * @param newDir
+     * @param onError An action to take if there is an error opening this translation
      * @return boolean false if there were merge conflicts
      * @throws Exception
      */
-    public boolean merge(File newDir) throws Exception {
+    public boolean merge(File newDir, OnError onError) throws Exception {
         // commit everything
-        TargetTranslation importedTargetTranslation = TargetTranslation.open(newDir);
+        TargetTranslation importedTargetTranslation = TargetTranslation.open(newDir, onError);
         if(importedTargetTranslation != null) {
             importedTargetTranslation.commitSync();
         }
@@ -1248,6 +1250,16 @@ public class TargetTranslation {
     }
 
     /**
+     * Returns the new language request if one exists
+     * @return
+     */
+    @Nullable
+    public NewLanguageRequest getNewLanguageRequest(Context context) {
+        File requestFile = new File(getPath(), "new_language.json");
+        return new NewLanguageRequest.Builder(context).fromFile(requestFile).build();
+    }
+
+    /**
      * Sets the new language request that represents the temporary language code being used by this target translation
      * @param request
      * @throws IOException
@@ -1255,29 +1267,13 @@ public class TargetTranslation {
     public void setNewLanguageRequest(NewLanguageRequest request) throws IOException {
         File requestFile = new File(getPath(), "new_language.json");
         if(request != null) {
-            FileUtilities.writeStringToFile(requestFile, request.toJson());
+            String json = request.toJson();
+            if (json != null) {
+                FileUtilities.writeStringToFile(requestFile, json);
+            }
         } else if(requestFile.exists()) {
             FileUtilities.safeDelete(requestFile);
         }
-    }
-
-    /**
-     * Returns the new language request if one exists
-     * @return
-     * @throws IOException
-     */
-    @Nullable
-    public NewLanguageRequest getNewLanguageRequest() {
-        File requestFile = new File(getPath(), "new_language.json");
-        if(requestFile.exists()) {
-            try {
-                String data = FileUtilities.readFileToString(requestFile);
-                return NewLanguageRequest.generate(data);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
     }
 
     /**
@@ -1344,9 +1340,8 @@ public class TargetTranslation {
     /**
      * Returns the commit hash of the repo HEAD
      * @return
-     * @throws Exception
      */
-    public String getCommitHash() throws Exception {
+    public String getCommitHash() {
         String tag = null;
         try {
             RevCommit commit = getGitHead(getRepo());
@@ -1409,12 +1404,12 @@ public class TargetTranslation {
      */
     public int numTranslated() {
         int numFiles = 0;
-        File[] chapterDirs = targetTranslationDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isDirectory() && !pathname.getName().equals(".git") && !pathname.getName().equals("manifest.json");
-            }
-        });
+        File[] chapterDirs = targetTranslationDir
+                .listFiles(pathname ->
+                    pathname.isDirectory() &&
+                    !pathname.getName().equals(".git") &&
+                    !pathname.getName().equals("manifest.json")
+                );
         if(chapterDirs != null) {
             for (File dir : chapterDirs) {
                 String[] files = dir.list();
@@ -1467,7 +1462,7 @@ public class TargetTranslation {
 
     public FileHistory getFrameHistory(FrameTranslation frameTranslation) {
         try {
-            return new FileHistory(getRepo(), getFrameFile(frameTranslation.getChapterId(), frameTranslation.getId()));
+            return new FileHistory(getRepo(), getFrameFile(frameTranslation.getChapterId(), frameTranslation.id));
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -1476,7 +1471,7 @@ public class TargetTranslation {
 
     public FileHistory getChapterTitleHistory(ChapterTranslation chapterTranslation) {
         try {
-            return new FileHistory(getRepo(), getChapterTitleFile(chapterTranslation.getId()));
+            return new FileHistory(getRepo(), getChapterTitleFile(chapterTranslation.id));
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -1485,7 +1480,7 @@ public class TargetTranslation {
 
     public FileHistory getChapterReferenceHistory(ChapterTranslation chapterTranslation) {
         try {
-            return new FileHistory(getRepo(), getChapterReferenceFile(chapterTranslation.getId()));
+            return new FileHistory(getRepo(), getChapterReferenceFile(chapterTranslation.id));
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -1529,7 +1524,21 @@ public class TargetTranslation {
         return frameTranslations.toArray(new FrameTranslation[frameTranslations.size()]);
     }
 
+    public Boolean normalizePath() {
+        if (!getPath().getName().equals(getId())) {
+            File dest = new File(getPath().getParentFile(), getId());
+            if (!dest.exists()) {
+                return FileUtilities.moveOrCopyQuietly(getPath(), dest);
+            }
+        }
+        return false;
+    }
+
     public interface OnCommitListener {
         void onCommit(boolean success);
+    }
+
+    public interface OnError {
+        void doAction();
     }
 }

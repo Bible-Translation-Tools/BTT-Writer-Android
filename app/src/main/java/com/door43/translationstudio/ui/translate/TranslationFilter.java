@@ -45,7 +45,7 @@ public class TranslationFilter extends Filter {
         if(constraint == null || constraint.toString().trim().isEmpty()){
             results.values = items;
             results.count = items.size();
-            // reset the rendred text to clear filter highlights
+            // reset the rendered text to clear filter highlights
             for(ListItem item:items) {
                 item.renderedSourceText = null;
                 item.renderedTargetText = null;
@@ -56,16 +56,13 @@ public class TranslationFilter extends Filter {
                 item.renderedSourceText = null;
                 item.renderedTargetText = null;
 
-                // load text
-                item.load(sourceContainer, targetTranslation);
-
                 // match
                 boolean match = false;
                 if(subject == SearchSubject.TARGET || subject == SearchSubject.BOTH) {
-                    match = item.targetText.toString().toLowerCase().contains(matcher) || match;
+                    match = item.getTargetText().toLowerCase().contains(matcher) || match;
                 }
                 if(subject == SearchSubject.SOURCE || subject == SearchSubject.BOTH) {
-                    match = item.sourceText.toString().toLowerCase().contains(matcher) || match;
+                    match = item.getSourceText().toLowerCase().contains(matcher) || match;
                 }
 
                 // record matches

@@ -1,9 +1,7 @@
 package com.door43.translationstudio.ui.spannables;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -13,8 +11,9 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
 
+import androidx.core.content.res.ResourcesCompat;
+
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.App;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +31,8 @@ public class USFMNoteSpan extends NoteSpan {
     private String mStyle;
     private boolean mHighlight = false;
     private SpannableStringBuilder mSpannable;
-    public static final String PATTERN = "\\\\f\\s(\\S)\\s(.+)\\\\f\\*";
-    public static final String CHAR_PATTERN = "\\\\f([^\\*\\s]+)\\s([^\\\\]+)(?:\\\\f\\1\\*)?";
+    public static final String PATTERN = "\\\\f\\s(\\S)\\s([\\s\\S]+?)\\\\f\\*";
+    public static final String CHAR_PATTERN = "\\\\f([^*\\s]+)\\s([^\\\\]+)(?:\\\\f\\1\\*)?";
 
     /**
      * @param style the note style
@@ -48,15 +47,13 @@ public class USFMNoteSpan extends NoteSpan {
         CharSequence altQuotation = "";
         CharSequence passageText = "";
         for(USFMChar c:chars) {
-            if(c.style.equals(USFMChar.STYLE_PASSAGE_TEXT)) {
-                passageText = c.value;
-            } else if(c.style.equals(USFMChar.STYLE_FOOTNOTE_QUOTATION)) {
-                quotation = c.value;
-            } else if(c.style.equals(USFMChar.STYLE_FOOTNOTE_ALT_QUOTATION)) {
-                altQuotation = c.value;
-            } else {
-                // TODO: implement better. We may need to format the values
-                note = TextUtils.concat(note, c.value);
+            switch (c.style) {
+                case USFMChar.STYLE_PASSAGE_TEXT -> passageText = c.value;
+                case USFMChar.STYLE_FOOTNOTE_QUOTATION -> quotation = c.value;
+                case USFMChar.STYLE_FOOTNOTE_ALT_QUOTATION -> altQuotation = c.value;
+                default ->
+                    // TODO: implement better. We may need to format the values
+                    note = TextUtils.concat(note, c.value);
             }
         }
 
@@ -81,15 +78,16 @@ public class USFMNoteSpan extends NoteSpan {
             mSpannable = super.render();
             // apply custom styles
             if(getHumanReadable().toString().isEmpty()) {
-                int icon = mHighlight ? R.drawable.ic_description_black_24dp_highlight : R.drawable.ic_description_black_24dp;
-                Bitmap image = BitmapFactory.decodeResource(App.context().getResources(), icon);
-                BitmapDrawable background = new BitmapDrawable(App.context().getResources(), image);
-                background.setBounds(0, 0, background.getMinimumWidth(), background.getMinimumHeight());
-                mSpannable.setSpan(new ImageSpan(background), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                int icon = mHighlight ? R.drawable.ic_description_black_24dp_highlight : R.drawable.ic_description_neutral_24dp;
+                Drawable image = ResourcesCompat.getDrawable(context.getResources(), icon, context.getTheme());
+                if (image != null) {
+                    image.setBounds(0, 0, image.getMinimumWidth(), image.getMinimumHeight());
+                    mSpannable.setSpan(new ImageSpan(image), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             } else {
-                mSpannable.setSpan(new BackgroundColorSpan(App.context().getResources().getColor(R.color.footnote_yellow)), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                mSpannable.setSpan(new BackgroundColorSpan(context.getResources().getColor(R.color.footnote_yellow)), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 mSpannable.setSpan(new StyleSpan(Typeface.ITALIC), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                mSpannable.setSpan(new ForegroundColorSpan(App.context().getResources().getColor(R.color.dark_gray)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.dark_gray)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
         return mSpannable;
@@ -105,19 +103,19 @@ public class USFMNoteSpan extends NoteSpan {
      */
     public static CharSequence generateTag(String style, String caller, CharSequence title, List<USFMChar> chars) {
 
-        String tag = "\\f " + caller + " ";
+        StringBuilder tag = new StringBuilder("\\f " + caller + " ");
         for(USFMChar c: chars) {
             switch(c.style) {
                 case USFMChar.STYLE_FOOTNOTE_VERSE:
-                    tag += "\\fv " + c.value + "\\fv*";
+                    tag.append("\\fv ").append(c.value).append("\\fv*");
                     break;
                 default:
-                    tag += "\\" + c.style + " " + c.value + " ";
+                    tag.append("\\").append(c.style).append(" ").append(c.value).append(" ");
                     break;
             }
         }
-        tag += "\\f*";
-        return tag;
+        tag.append("\\f*");
+        return tag.toString();
     }
 
     /**

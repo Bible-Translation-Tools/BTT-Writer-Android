@@ -87,13 +87,11 @@ public class Repo {
     }
 
     public Git getGit() throws IOException {
-        if (mGit != null) {
-            return mGit;
-        } else {
+        if (mGit == null) {
             File repoFile = getDir();
             mGit = Git.open(repoFile);
-            return mGit;
         }
+        return mGit;
     }
 
     /**

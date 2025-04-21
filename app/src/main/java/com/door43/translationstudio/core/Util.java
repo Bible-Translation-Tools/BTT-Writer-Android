@@ -1,9 +1,8 @@
 package com.door43.translationstudio.core;
 
-import androidx.core.graphics.drawable.DrawableCompat;
-
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.unfoldingword.resourcecontainer.ResourceContainer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -149,5 +149,42 @@ public class Util {
             }
         }
         return match;
+    }
+
+    /**
+     * Maps a verse to a chunk.
+     *
+     * @param rc
+     * @param chapter
+     * @param verse
+     * @return
+     */
+    public static String mapVerseToChunk(ResourceContainer rc, String chapter, String verse) {
+        try {
+            String[] chunks = rc.chunks(chapter);
+            if (chunks != null) {
+                Arrays.sort(chunks, (o1, o2) -> {
+                    Integer i1;
+                    Integer i2;
+                    // TRICKY: push strings to top
+                    try {
+                        i1 = Integer.valueOf(o1);
+                    } catch (NumberFormatException e) {
+                        return 1;
+                    }
+                    try {
+                        i2 = Integer.valueOf(o2);
+                    } catch (NumberFormatException e) {
+                        return 1;
+                    }
+                    return i1.compareTo(i2);
+                });
+                return Util.verseToChunk(verse, chunks);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            return verse;
+        }
     }
 }

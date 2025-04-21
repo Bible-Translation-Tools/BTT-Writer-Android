@@ -1,5 +1,7 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
+
 import com.door43.translationstudio.ui.spannables.Span;
 
 /**
@@ -15,8 +17,45 @@ public class DefaultRenderer extends RenderingEngine {
     /**
      * Creates a new default rendering engine without any listeners
      */
-    public DefaultRenderer() {
+    public DefaultRenderer(Context context) {
+        this.context = context;
+    }
 
+    /**
+     * Creates a new default rendering engine with some custom click listeners
+     * @param noteListener
+     */
+    public DefaultRenderer(
+            Context context,
+            Span.OnClickListener noteListener
+    ) {
+        this.context = context;
+        mNoteListener = noteListener;
+    }
+
+    /**
+     * Renders the input into a readable format
+     * @param in the raw input string
+     * @return
+     */
+    @Override
+    public CharSequence render(CharSequence in) {
+        CharSequence out = in;
+
+        renderer = new USXRenderer(context, null, mNoteListener);
+        renderer.setSearchString(mSearch, mHighlightColor);
+
+        if(isStopped()) return in;
+        out = renderer.renderNote(out);
+        if(isStopped()) return in;
+        out = renderer.renderHighlightSearch(out);
+
+        return out;
+    }
+
+    @Override
+    public void onStop() {
+        if(renderer != null) renderer.stop();
     }
 
     /**
@@ -32,38 +71,5 @@ public class DefaultRenderer extends RenderingEngine {
         } else {
             mSearch = null;
         }
-    }
-
-    /**
-     * Creates a new default rendering engine with some custom click listeners
-     * @param noteListener
-     */
-    public DefaultRenderer(Span.OnClickListener noteListener) {
-        mNoteListener = noteListener;
-    }
-
-    /**
-     * Renders the input into a readable format
-     * @param in the raw input string
-     * @return
-     */
-    @Override
-    public CharSequence render(CharSequence in) {
-        CharSequence out = in;
-
-        renderer = new USXRenderer(null, mNoteListener);
-        renderer.setSearchString(mSearch, mHighlightColor);
-
-        if(isStopped()) return in;
-        out = renderer.renderNote(out);
-        if(isStopped()) return in;
-        out = renderer.renderHighlightSearch(out);
-
-        return out;
-    }
-
-    @Override
-    public void onStop() {
-        if(renderer != null) renderer.stop();
     }
 }

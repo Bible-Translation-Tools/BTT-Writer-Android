@@ -16,6 +16,11 @@
         <item>9299</item>
     </string-array>
 
+    <string-array name="content_server_data_server_values_array">
+        <item>https://content.bibletranslationtools.org</item>
+        <item>https://git.door43.org</item>
+    </string-array>
+
     <string-array name="content_server_git_server_api_values_array">
         <item>https://content.bibletranslationtools.org/api/v1</item>
         <item>https://git.door43.org/api/v1</item>

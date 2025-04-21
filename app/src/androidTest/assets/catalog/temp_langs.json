@@ -1,0 +1,39 @@
+[
+  {
+    "gw": false,
+    "cc": [],
+    "ld": "ltr",
+    "ang": "",
+    "lr": "Africa",
+    "lc": "qaa-x-111111",
+    "ln": "Test Temp 1",
+    "pk": 236,
+    "alt": []
+  },
+  {
+    "gw": false,
+    "cc": [
+      "ID"
+    ],
+    "ld": "ltr",
+    "ang": "",
+    "lr": "Asia",
+    "lc": "qaa-x-222222",
+    "ln": "Test Temp 2",
+    "pk": 395,
+    "alt": []
+  },
+  {
+    "gw": false,
+    "cc": [
+      "ID"
+    ],
+    "ld": "ltr",
+    "ang": "",
+    "lr": "Asia",
+    "lc": "ifk-x-yattuca",
+    "ln": "Yattuca",
+    "pk": 395,
+    "alt": []
+  }
+]

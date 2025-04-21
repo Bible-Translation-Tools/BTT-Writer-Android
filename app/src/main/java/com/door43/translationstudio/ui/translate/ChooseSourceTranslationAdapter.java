@@ -5,8 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Handler;
-import android.os.Looper;
+import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -19,21 +18,22 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.door43.translationstudio.App;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.viewbinding.ViewBinding;
+
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Typography;
+import com.door43.translationstudio.databinding.FragmentSelectSourceTranslationListDownloadItemBinding;
+import com.door43.translationstudio.databinding.FragmentSelectSourceTranslationListHeaderBinding;
+import com.door43.translationstudio.databinding.FragmentSelectSourceTranslationListItemBinding;
+import com.door43.translationstudio.databinding.FragmentSelectSourceTranslationListUpdatableItemBinding;
 import com.door43.widget.ViewUtil;
 
 import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,120 +44,90 @@ import java.util.TreeSet;
  * a target translation.
  */
 public class ChooseSourceTranslationAdapter extends BaseAdapter {
+    public static final String TAG = ChooseSourceTranslationAdapter.class.getSimpleName();
     public static final int TYPE_ITEM_SELECTABLE = 0;
     public static final int TYPE_SEPARATOR = 1;
     public static final int TYPE_ITEM_NEED_DOWNLOAD = 2;
     public static final int TYPE_ITEM_SELECTABLE_UPDATABLE = 3;
-    public static final String TAG = ChooseSourceTranslationAdapter.class.getSimpleName();
     public static final int MAX_SOURCE_ITEMS = 3;
-    private final Context mContext;
-    private Map<String, ViewItem> mData = new HashMap<>();
-    private List<String> mSelected = new ArrayList<>();
-    private List<String> mAvailable = new ArrayList<>();
-    private List<String> mDownloadable = new ArrayList<>();
-    private List<ViewItem> mSortedData = new ArrayList<>();
-    private TreeSet<Integer> mSectionHeader = new TreeSet<>();
-    private String mSearchText;
 
+    private final Context context;
+    private final Typography typography;
 
-    public ChooseSourceTranslationAdapter(Context context) {
-        mContext = context;
+    private final Map<String, RCItem> data = new HashMap<>();
+    private final List<String> selected = new ArrayList<>();
+    private final List<String> available = new ArrayList<>();
+    private final List<String> downloadable = new ArrayList<>();
+    private List<RCItem> sortedData = new ArrayList<>();
+    private TreeSet<Integer> sectionHeader = new TreeSet<>();
+    private String searchText;
+
+    private OnItemClickListener itemClickListener = null;
+
+    public interface OnItemClickListener {
+        void onCheckForItemUpdates(String containerSlug, int position);
+        void onTriggerDownload(RCItem item, int position, Callbacks.OnDownloadCancel callback);
+        void onTriggerDeleteContainer(
+                String containerSlug,
+                int position,
+                Callbacks.OnDeleteContainer callback
+        );
+    }
+
+    public interface Callbacks {
+        interface OnDownloadCancel {
+            void onCancel(int position);
+        }
+        interface OnDeleteContainer {
+            void onDelete(int position);
+        }
+    }
+
+    public ChooseSourceTranslationAdapter(Context context, Typography typography) {
+        this.context = context;
+        this.typography = typography;
+    }
+
+    public void setItems(List<RCItem> items) {
+        data.clear();
+        available.clear();
+        selected.clear();
+        downloadable.clear();
+        sortedData.clear();
+
+        for (RCItem item : items) {
+            addItem(item);
+        }
+        sort();
     }
 
     @Override
     public int getCount() {
-        return mSortedData.size();
+        return sortedData.size();
     }
 
     /**
      * Adds an item to the list
      * If the item id matches an existing item it will be skipped
      * @param item
-     * @param selectable - true if this is to be in the selectable section
      */
-    public void addItem(final ViewItem item, boolean selectable) {
-        if(!mData.containsKey(item.containerSlug)) {
-            mData.put(item.containerSlug, item);
+    private void addItem(final RCItem item) {
+        if(!data.containsKey(item.containerSlug)) {
+            data.put(item.containerSlug, item);
             if(item.selected && item.downloaded) {
-                mSelected.add(item.containerSlug);
+                selected.add(item.containerSlug);
             } else if(!item.downloaded) {
-                mDownloadable.add(item.containerSlug);
+                downloadable.add(item.containerSlug);
             } else {
-                mAvailable.add(item.containerSlug);
-            }
-
-            if (selectable) { // see if there are updates available to download
-                Log.i(TAG, "Checking for updates on " + item.containerSlug);
-                boolean hasUpdates = false;
-                try {
-                    ResourceContainer container = ContainerCache.cache(App.getLibrary(), item.containerSlug);
-                    int lastModified = App.getLibrary().getResourceContainerLastModified(container.language.slug, container.project.slug, container.resource.slug);
-                    hasUpdates = (lastModified > container.modifiedAt);
-                    Log.i(TAG, "Checking for updates on " + item.containerSlug + " finished, needs updates: " +hasUpdates);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                item.hasUpdates = hasUpdates;
-                item.checkedUpdates = true;
+                available.add(item.containerSlug);
             }
         }
-    }
-
-    /**
-     * will check for updates for language if needed
-     * @param item
-     */
-    public ManagedTask checkForItemUpdates(final ViewItem item) {
-        ManagedTask task = null;
-        if(!item.checkedUpdates && item.downloaded) {
-            task = new ManagedTask() {
-                @Override
-                public void start() {
-                    Log.i(TAG, "Checking for updates on " + item.containerSlug);
-                    this.publishProgress(-1,"");
-                    try {
-                        if (interrupted()) return;
-                        ResourceContainer container = App.getLibrary().open(item.containerSlug);
-                        int lastModified = App.getLibrary().getResourceContainerLastModified(container.language.slug, container.project.slug, container.resource.slug);
-                        setResult(lastModified > container.modifiedAt);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-            task.addOnFinishedListener(new ManagedTask.OnFinishedListener() {
-                @Override
-                public void onTaskFinished(final ManagedTask task) {
-                    TaskManager.clearTask(task);
-                    boolean hasUpdates = false;
-                    item.currentTaskId = null;
-                    if(task.isCanceled()) {
-                        Log.i(TAG, "Checking for updates on " + item.containerSlug + " cancelled");
-                        return;
-                    }
-                    if (task.getResult() != null) hasUpdates = (boolean) task.getResult();
-                    item.hasUpdates = hasUpdates;
-                    Log.i(TAG, "Checking for updates on " + item.containerSlug + " finished, needs updates: " + hasUpdates);
-                    item.checkedUpdates = true;
-
-                    Handler hand = new Handler(Looper.getMainLooper());
-                    hand.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            notifyDataSetChanged();
-                        }
-                    });
-                }
-            });
-        }
-
-        return task;
     }
 
     @Override
-    public ViewItem getItem(int position) {
-        if(position >= 0 && position < mSortedData.size()) {
-            return mSortedData.get(position);
+    public RCItem getItem(int position) {
+        if(position >= 0 && position < sortedData.size()) {
+            return sortedData.get(position);
         } else {
             return null;
         }
@@ -182,15 +152,14 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     }
 
     public boolean isSelectableItem(int position) {
-        boolean selectable = getItemViewType(position) != ChooseSourceTranslationAdapter.TYPE_SEPARATOR;
-        return selectable;
+        return getItemViewType(position) != TYPE_SEPARATOR;
     }
 
     @Override
     public int getItemViewType(int position) {
-        int type = mSectionHeader.contains(position) ? TYPE_SEPARATOR : TYPE_ITEM_SELECTABLE;
+        int type = sectionHeader.contains(position) ? TYPE_SEPARATOR : TYPE_ITEM_SELECTABLE;
         if(type == TYPE_ITEM_SELECTABLE) {
-            ViewItem v = getItem(position);
+            RCItem v = getItem(position);
             if(!v.downloaded) { // check if we need to download
                 type = TYPE_ITEM_NEED_DOWNLOAD;
             } else if(v.hasUpdates) {
@@ -209,38 +178,38 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * applies search string and resorts list
      */
     public void applySearch(String search) {
-        mSearchText = search;
+        searchText = search;
         sort();
     }
 
     /**
      * Resorts the data
      */
-    public void sort() {
-        mSortedData = new ArrayList<>();
-        mSectionHeader = new TreeSet<>();
+    private void sort() {
+        sortedData = new ArrayList<>();
+        sectionHeader = new TreeSet<>();
 
         // build list
-        ViewItem selectedHeader = new ChooseSourceTranslationAdapter.ViewItem(getSelectedText(), null, false, false);
-        mSortedData.add(selectedHeader);
-        mSectionHeader.add(mSortedData.size() - 1);
+        RCItem selectedHeader = new RCItem(getSelectedText(), null, false, false);
+        sortedData.add(selectedHeader);
+        sectionHeader.add(sortedData.size() - 1);
 
-        List<ViewItem> section = getViewItems(mSelected, null); // do not restrict selections by search string
-        mSortedData.addAll(section);
+        List<RCItem> section = getViewItems(selected, null); // do not restrict selections by search string
+        sortedData.addAll(section);
 
-        ViewItem availableHeader = new ChooseSourceTranslationAdapter.ViewItem(mContext.getResources().getString(R.string.available), null, false, false);
-        mSortedData.add(availableHeader);
-        mSectionHeader.add(mSortedData.size() - 1);
+        RCItem availableHeader = new RCItem(context.getResources().getString(R.string.available), null, false, false);
+        sortedData.add(availableHeader);
+        sectionHeader.add(sortedData.size() - 1);
 
-        section = getViewItems(mAvailable, mSearchText);
-        mSortedData.addAll(section);
+        section = getViewItems(available, searchText);
+        sortedData.addAll(section);
 
-        ViewItem downloadableHeader = new ChooseSourceTranslationAdapter.ViewItem(getDownloadableText(), null, false, false);
-        mSortedData.add(downloadableHeader);
-        mSectionHeader.add(mSortedData.size() - 1);
+        RCItem downloadableHeader = new RCItem(getDownloadableText(), null, false, false);
+        sortedData.add(downloadableHeader);
+        sectionHeader.add(sortedData.size() - 1);
 
-        section = getViewItems(mDownloadable, mSearchText);
-        mSortedData.addAll(section);
+        section = getViewItems(downloadable, searchText);
+        sortedData.addAll(section);
 
         notifyDataSetChanged();
     }
@@ -250,30 +219,28 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * @param data
      * @return
      */
-    private List<ViewItem> getViewItems(List<String> data, String searchText) {
-        List<ViewItem> section = new ArrayList<>();
+    private List<RCItem> getViewItems(List<String> data, String searchText) {
+        List<RCItem> section = new ArrayList<>();
         for(String id:data) {
-            section.add(mData.get(id));
+            section.add(this.data.get(id));
         }
 
         // sort by language code
-        Collections.sort(section, new Comparator<ViewItem>() { // do numeric sort
-            @Override
-            public int compare(ViewItem lhs, ViewItem rhs) {
-                try {
-                    return lhs.sourceTranslation.language.slug.compareTo(rhs.sourceTranslation.language.slug);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return 0;
-                }
+        // do numeric sort
+        Collections.sort(section, (lhs, rhs) -> {
+            try {
+                return lhs.sourceTranslation.language.slug.compareTo(rhs.sourceTranslation.language.slug);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return 0;
             }
         });
 
         if((searchText != null) && (!searchText.isEmpty())) {
-            List<ViewItem> filtered = new ArrayList<>();
+            List<RCItem> filtered = new ArrayList<>();
 
             // filter by language code
-            for (ViewItem item : section) {
+            for (RCItem item : section) {
                 String code = item.sourceTranslation.language.slug;
                 if(code.length() >= searchText.length()) {
                     if (code.substring(0, searchText.length()).equalsIgnoreCase(searchText)) {
@@ -283,7 +250,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
             }
 
             // filter by language name
-            for (ViewItem item : section) {
+            for (RCItem item : section) {
                 String name = item.sourceTranslation.language.name;
                 if(name.length() >= searchText.length()) {
                     if (name.substring(0, searchText.length()).equalsIgnoreCase(searchText)) {
@@ -295,7 +262,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
             }
 
             // filter by resource name
-            for (ViewItem item : section) {
+            for (RCItem item : section) {
                 String[] parts = item.sourceTranslation.resource.name.split("-");
                 for (String part : parts) { // handle sections separately
                     String name = part.trim();
@@ -318,11 +285,11 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * @return
      */
     private CharSequence getSelectedText() {
-        CharSequence text = mContext.getResources().getString(R.string.selected);
-        CharSequence limit = mContext.getResources().getString(R.string.maximum_limit, MAX_SOURCE_ITEMS);
-        SpannableStringBuilder refresh = createImageSpannable(R.drawable.ic_refresh_black_24dp);
-        CharSequence warning = mContext.getResources().getString(R.string.requires_internet);
-        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_black_18dp);
+        CharSequence text = context.getResources().getString(R.string.selected);
+        CharSequence limit = context.getResources().getString(R.string.maximum_limit, MAX_SOURCE_ITEMS);
+        SpannableStringBuilder refresh = createImageSpannable(R.drawable.ic_refresh_secondary_24dp);
+        CharSequence warning = context.getResources().getString(R.string.requires_internet);
+        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_secondary_18dp);
         return TextUtils.concat(text, " ", limit, "    ", refresh, " ", warning, " ", wifi); // combine all on one line
     }
 
@@ -331,9 +298,9 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * @return
      */
     private CharSequence getDownloadableText() {
-        CharSequence text = mContext.getResources().getString(R.string.available_online);
-        CharSequence warning = mContext.getResources().getString(R.string.requires_internet);
-        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_black_18dp);
+        CharSequence text = context.getResources().getString(R.string.available_online);
+        CharSequence warning = context.getResources().getString(R.string.requires_internet);
+        SpannableStringBuilder wifi = createImageSpannable(R.drawable.ic_wifi_secondary_18dp);
         return TextUtils.concat(text, "    ", warning, " ", wifi); // combine all on one line
     }
 
@@ -344,51 +311,82 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      */
     private SpannableStringBuilder createImageSpannable(int resource) {
         SpannableStringBuilder refresh = new SpannableStringBuilder(" ");
-        Bitmap refreshImage = BitmapFactory.decodeResource(App.context().getResources(), resource);
-        BitmapDrawable refreshBackground = new BitmapDrawable(App.context().getResources(), refreshImage);
-        refreshBackground.setBounds(0, 0, refreshBackground.getMinimumWidth(), refreshBackground.getMinimumHeight());
-        refresh.setSpan(new ImageSpan(refreshBackground), 0, refresh.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        Drawable refreshDrawable = ResourcesCompat.getDrawable(context.getResources(), resource, null);
+        if (refreshDrawable != null) {
+            refreshDrawable.setBounds(0, 0, refreshDrawable.getMinimumWidth(), refreshDrawable.getMinimumHeight());
+            refresh.setSpan(new ImageSpan(refreshDrawable), 0, refresh.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
         return refresh;
     }
 
+
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-        View v = convertView;
-        ViewHolder holder = null;
+        View view = convertView;
+        ViewBinding binding;
+        ViewHolder holder;
         int rowType = getItemViewType(position);
-        final ViewItem item = getItem(position);
+        final RCItem item = getItem(position);
+        final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
         if(convertView == null) {
             switch (rowType) {
                 case TYPE_SEPARATOR:
-                    v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_select_source_translation_list_header, null);
+                    binding = FragmentSelectSourceTranslationListHeaderBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListHeaderBinding separatorBinding =
+                            ((FragmentSelectSourceTranslationListHeaderBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = (TextView)v;
-                    holder.titleView.setTransformationMethod(null);
+                    holder.titleView = separatorBinding.title;
+                    separatorBinding.title.setTransformationMethod(null);
                     break;
                 case TYPE_ITEM_SELECTABLE:
-                    v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_select_source_translation_list_item, null);
+                    binding = FragmentSelectSourceTranslationListItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListItemBinding selectableBinding =
+                            ((FragmentSelectSourceTranslationListItemBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = (TextView)v.findViewById(R.id.title);
-                    holder.checkboxView = (ImageView) v.findViewById(R.id.checkBoxView);
+                    holder.titleView = selectableBinding.title;
+                    holder.checkboxView = selectableBinding.checkBoxView;
                     break;
                 case TYPE_ITEM_SELECTABLE_UPDATABLE:
-                    v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_select_source_translation_list_updatable_item, null);
+                    binding = FragmentSelectSourceTranslationListUpdatableItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListUpdatableItemBinding updatableItemBinding =
+                            ((FragmentSelectSourceTranslationListUpdatableItemBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = (TextView)v.findViewById(R.id.title);
-                    holder.checkboxView = (ImageView) v.findViewById(R.id.checkBoxView);
-                    holder.downloadView = (ImageView) v.findViewById(R.id.download_resource);
+                    holder.titleView = updatableItemBinding.title;
+                    holder.checkboxView = updatableItemBinding.checkBoxView;
+                    holder.downloadView = updatableItemBinding.downloadResource;
                     break;
                 case TYPE_ITEM_NEED_DOWNLOAD:
-                    v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_select_source_translation_list_download_item, null);
+                    binding = FragmentSelectSourceTranslationListDownloadItemBinding.inflate(
+                            inflater,
+                            parent,
+                            false
+                    );
+                    FragmentSelectSourceTranslationListDownloadItemBinding downloadBinding =
+                            ((FragmentSelectSourceTranslationListDownloadItemBinding) binding);
                     holder = new ViewHolder();
-                    holder.titleView = (TextView)v.findViewById(R.id.title);
-                    holder.downloadView = (ImageView) v.findViewById(R.id.download_resource);
+                    holder.titleView = downloadBinding.title;
+                    holder.downloadView = downloadBinding.downloadResource;
                     break;
+                default:
+                    throw new IllegalArgumentException("Incorrect view type");
             }
-            v.setTag(holder);
+            view = binding.getRoot();
+            view.setTag(holder);
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            holder = (ViewHolder) view.getTag();
         }
 
         // load update status
@@ -421,7 +419,32 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
             }
         }
 
-        return v;
+        view.setOnClickListener(v -> {
+            if (itemClickListener != null && isSelectableItem(position)) {
+                if (item.hasUpdates || !item.downloaded) {
+                    itemClickListener.onTriggerDownload(item, position, this::toggleSelection);
+                } else {
+                    toggleSelection(position);
+                    if (!item.checkedUpdates && item.downloaded) {
+                        itemClickListener.onCheckForItemUpdates(item.containerSlug, position);
+                    }
+                }
+            }
+        });
+
+        view.setOnLongClickListener(v -> {
+            if (itemClickListener != null && item.downloaded && isSelectableItem(position)) {
+                itemClickListener.onTriggerDeleteContainer(
+                        item.containerSlug,
+                        position,
+                        this::markItemDeleted
+                );
+                return true;
+            }
+            return false;
+        });
+
+        return view;
     }
 
     /**
@@ -431,51 +454,51 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * @param holder
      * @param item
      */
-    public void setFontForLanguage(ViewHolder holder, ViewItem item) {
+    private void setFontForLanguage(ViewHolder holder, RCItem item) {
         String code = item.sourceTranslation.language.slug;
-        Typography.format(mContext, TranslationType.SOURCE, holder.titleView, code, item.sourceTranslation.language.direction);
+        typography.format(TranslationType.SOURCE, holder.titleView, code, item.sourceTranslation.language.direction);
 
-        Typeface typeface = Typography.getBestFontForLanguage(mContext, TranslationType.SOURCE, code, item.sourceTranslation.language.direction);
+        Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, item.sourceTranslation.language.direction);
         if(typeface != Typeface.DEFAULT) {
             holder.titleView.setTypeface(typeface, Typeface.NORMAL);
         }
     }
 
-    public void select(int position) {
-        if (mSelected.size() >= MAX_SOURCE_ITEMS) {
+    private void select(int position) {
+        if (selected.size() >= MAX_SOURCE_ITEMS) {
             return;
         }
 
-        ViewItem item = getItem(position);
+        RCItem item = getItem(position);
         item.selected = true;
-        mSelected.remove(item.containerSlug);
-        mAvailable.remove(item.containerSlug);
-        mDownloadable.remove(item.containerSlug);
-        mSelected.add(item.containerSlug);
+        selected.remove(item.containerSlug);
+        available.remove(item.containerSlug);
+        downloadable.remove(item.containerSlug);
+        selected.add(item.containerSlug);
     }
 
-    public void deselect(int position) {
-        ViewItem item = getItem(position);
+    private void deselect(int position) {
+        RCItem item = getItem(position);
         item.selected = false;
-        mSelected.remove(item.containerSlug);
-        mAvailable.remove(item.containerSlug);
-        mDownloadable.remove(item.containerSlug);
-        mAvailable.add(item.containerSlug);
+        selected.remove(item.containerSlug);
+        available.remove(item.containerSlug);
+        downloadable.remove(item.containerSlug);
+        available.add(item.containerSlug);
     }
 
     /**
      * Marks an item as deleted
      * @param position
      */
-    public void markItemDeleted(int position) {
-        ViewItem item = getItem(position);
+    private void markItemDeleted(int position) {
+        RCItem item = getItem(position);
         if(item != null) {
             item.hasUpdates = false;
             item.downloaded = false;
             item.selected = false;
-            mSelected.remove(item.containerSlug);
-            mAvailable.remove(item.containerSlug);
-            if(!mDownloadable.contains(item.containerSlug)) mDownloadable.add(item.containerSlug);
+            selected.remove(item.containerSlug);
+            available.remove(item.containerSlug);
+            if(!downloadable.contains(item.containerSlug)) downloadable.add(item.containerSlug);
         }
         sort();
     }
@@ -485,13 +508,28 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * @param position
      */
     public void markItemDownloaded(int position) {
-        ViewItem item = getItem(position);
+        RCItem item = getItem(position);
         if(item != null) {
             item.hasUpdates = false;
             item.downloaded = true;
             select(position); // auto select download item
         }
         sort();
+    }
+
+    public void setItemClickListener(OnItemClickListener listener) {
+        itemClickListener = listener;
+    }
+
+    public void setItemHasUpdates(int position, boolean hasUpdates) {
+        RCItem item = getItem(position);
+        item.hasUpdates = hasUpdates;
+        item.checkedUpdates = true;
+        notifyDataSetChanged();
+        Log.i(
+                TAG,
+                "Checking for updates on " + item.containerSlug + " finished, needs updates: " + hasUpdates
+        );
     }
 
     public static class ViewHolder {
@@ -501,7 +539,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         public int currentPosition;
     }
 
-    public static class ViewItem {
+    public static class RCItem {
         public final CharSequence title;
         public final String containerSlug;
         public final Translation sourceTranslation;
@@ -509,9 +547,8 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         public boolean downloaded;
         public boolean hasUpdates;
         public boolean checkedUpdates = false;
-        public Object currentTaskId = null;
 
-        public ViewItem(CharSequence title, Translation sourceTranslation, boolean selected, boolean downloaded) {
+        public RCItem(CharSequence title, Translation sourceTranslation, boolean selected, boolean downloaded) {
             this.title = title;
             this.selected = selected;
             this.sourceTranslation = sourceTranslation;

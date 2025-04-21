@@ -1,0 +1,36 @@
+[
+  {
+    "language": {
+      "date_modified": "{datetime}",
+      "direction": "ltr",
+      "name": "Espa\u00f1ol (Latin American Spanish)",
+      "slug": "es-419"
+    },
+    "project": {
+      "desc": "Lucas Spanish",
+      "meta": [
+        "bible-nt"
+      ],
+      "name": "Lucas",
+      "sort": "43"
+    },
+    "res_catalog": "{server}/luk_es"
+  },
+  {
+    "language": {
+      "date_modified": "{datetime}",
+      "direction": "ltr",
+      "name": "Tok Pisin",
+      "slug": "tpi"
+    },
+    "project": {
+      "desc": "Lucas Tok Pisin",
+      "meta": [
+        "bible-nt"
+      ],
+      "name": "Luk",
+      "sort": "43"
+    },
+    "res_catalog": "{server}/luk_tpi"
+  }
+]

@@ -5,11 +5,11 @@
     android:layout_height="match_parent">
 
     <include layout="@layout/search_bar"
-        android:id="@+id/include" />
+        android:id="@+id/search" />
 
     <ListView
-        android:id="@+id/list"
+        android:id="@+id/languages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/include" />
+        android:layout_below="@+id/search" />
 </RelativeLayout>

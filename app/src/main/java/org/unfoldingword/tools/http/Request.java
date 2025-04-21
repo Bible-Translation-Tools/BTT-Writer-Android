@@ -214,9 +214,11 @@ public abstract class Request {
     public final String read() throws IOException {
         HttpURLConnection connection = openConnection();
 
-        if (connection.getResponseCode() != 200) {
-            throw new IOException(connection.getResponseMessage());
-        }
+        // Perhaps we should not check for response code here
+        // Because we don't have it yet
+//        if (connection.getResponseCode() != 200) {
+//            throw new IOException(connection.getResponseMessage());
+//        }
 
         int responseSize = connection.getContentLength();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -240,8 +242,6 @@ public abstract class Request {
 
             }
             publishProgress(responseSize, bytesRead);
-        } catch (Exception e) {
-            throw e;
         } finally {
             if(in != null) in.close();
             out.close();

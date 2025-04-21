@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
     android:padding="@dimen/card_margin"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
@@ -9,14 +11,14 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Names will be publicly available"
+        android:text="@string/names_will_be_public"
         android:paddingEnd="@dimen/card_margin"
         android:textSize="@dimen/title"
-        android:textColor="@color/dark_secondary_text"
-        android:paddingRight="@dimen/card_margin"/>
+        android:textColor="@color/dark_secondary_text" />
+
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:tint="@color/icon_color"
-        android:src="@drawable/ic_info_secondary_24dp"/>
+        android:src="@drawable/ic_info_secondary_24dp"
+        app:tint="@color/icon_color" />
 </LinearLayout>

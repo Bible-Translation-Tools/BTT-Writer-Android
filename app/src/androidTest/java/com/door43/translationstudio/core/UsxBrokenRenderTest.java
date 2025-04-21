@@ -1,43 +1,56 @@
 package com.door43.translationstudio.core;
 
-import android.content.Context;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.door43.data.AssetsProvider;
+import com.door43.translationstudio.IntegrationTest;
 import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
-import com.door43.translationstudio.rendering.Clickables;
 import com.door43.translationstudio.rendering.RenderingGroup;
 import com.door43.util.FileUtilities;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.unfoldingword.tools.logger.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 
 /**
  * Created by blm on 7/25/16.
  */
-public class UsxBrokenRenderTest extends InstrumentationTestCase {
+@HiltAndroidTest
+@RunWith(AndroidJUnit4.class)
+@IntegrationTest
+public class UsxBrokenRenderTest {
+
+    @Rule
+    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
+
+    @Inject
+    AssetsProvider assetsProvider;
+    @Inject
+    RenderingProvider renderingProvider;
 
     public static final String TAG = UsxBrokenRenderTest.class.getSimpleName();
-    File mTempFolder;
-    private Context mTestContext;
-    private String mTestText;
-    private String mExpectedText;
+    private String expectedText;
 
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() {
         Logger.flush();
-        mTestContext = getInstrumentation().getContext();
+        hiltRule.inject();
     }
 
-    @Override
-    public void tearDown() throws Exception {
-    }
-
+    @Test
     public void test01ProcessMk_1_1() throws Exception {
         //given
         String search = null;
@@ -47,9 +60,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test02ProcessMk_7_6() throws Exception {
         //given
         String search = null;
@@ -59,9 +73,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test03ProcessMk_7_14() throws Exception {
         //given
         String search = null;
@@ -71,9 +86,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test04ProcessMk_11_24() throws Exception {
         //given
         String search = null;
@@ -83,9 +99,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test05ProcessMk_16_19() throws Exception {
         //given
         String search = null;
@@ -95,9 +112,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test06ProcessMk_1_1Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -107,9 +125,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test07ProcessMk_7_6Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -119,9 +138,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test08ProcessMk_7_14Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -131,9 +151,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test09ProcessMk_11_24Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -143,9 +164,10 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
+    @Test
     public void test10ProcessMk_16_19Search() throws Exception {
         //given
         String search = "</"; // make sure matching part of token does not break rendering
@@ -155,35 +177,41 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
         String out = doRender(search, testId);
 
         //then
-        verifyProcessedText(mExpectedText, out);
+        verifyProcessedText(expectedText, out);
     }
 
     private String doRender(String search, String testId) throws IOException {
         String testTextFile = testId+ "_raw.data";
         String expectTextFile = testId+ "_processed.data";
-        InputStream testTextStream = mTestContext.getAssets().open(testTextFile);
-        mTestText = FileUtilities.readStreamToString(testTextStream);
-        assertNotNull(mTestText);
-        assertFalse(mTestText.isEmpty());
-        InputStream testExpectedStream = mTestContext.getAssets().open(expectTextFile);
-        mExpectedText = FileUtilities.readStreamToString(testExpectedStream);
-        assertNotNull(mExpectedText);
-        assertFalse(mExpectedText.isEmpty());
-        mExpectedText = mExpectedText.substring(0,mExpectedText.length() - 1); // rendering does trim of whitespace
+        InputStream testTextStream = assetsProvider.open(testTextFile);
+        String testText = FileUtilities.readStreamToString(testTextStream);
+        Assert.assertNotNull(testText);
+        Assert.assertFalse(testText.isEmpty());
+        InputStream testExpectedStream = assetsProvider.open(expectTextFile);
+        expectedText = FileUtilities.readStreamToString(testExpectedStream);
+        Assert.assertNotNull(expectedText);
+        Assert.assertFalse(expectedText.isEmpty());
         RenderingGroup renderingGroup = new RenderingGroup();
         TranslationFormat format = TranslationFormat.USX;
-        Clickables.setupRenderingGroup(format, renderingGroup, null, null, false);
 
-        if( search != null ) {
+        renderingProvider.setupRenderingGroup(
+                format,
+                renderingGroup,
+                null,
+                null,
+                false
+        );
+
+        if(search != null) {
             renderingGroup.setSearchString(search, ReviewModeAdapter.HIGHLIGHT_COLOR);
         }
-        renderingGroup.init(mTestText);
+        renderingGroup.init(testText);
         return renderingGroup.start().toString();
     }
 
     private void verifyProcessedText(String expectedText, String out) {
-        assertNotNull(out);
-        assertFalse(out.isEmpty());
+        Assert.assertNotNull(out);
+        Assert.assertFalse(out.isEmpty());
         if(!out.equals(expectedText)) {
             if(out.length() != expectedText.length()) {
                 Log.e(TAG, "expected length " + expectedText.length() + " but got length " + out.length());
@@ -215,7 +243,7 @@ public class UsxBrokenRenderTest extends InstrumentationTestCase {
                 }
             }
         }
-        assertEquals(out, expectedText);
+        Assert.assertEquals(out, expectedText);
     }
 
 

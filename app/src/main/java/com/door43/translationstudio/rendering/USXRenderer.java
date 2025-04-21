@@ -1,5 +1,6 @@
 package com.door43.translationstudio.rendering;
 
+import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.text.Layout;
@@ -48,15 +49,20 @@ public class USXRenderer extends ClickableRenderingEngine {
     /**
      * Creates a new usx rendering engine without any listeners
      */
-    public USXRenderer() {
-
+    public USXRenderer(Context context) {
+        this.context = context;
     }
 
     /**
      * Creates a new usx rendering engine with some custom click listeners
      * @param verseListener
      */
-    public USXRenderer(Span.OnClickListener verseListener, Span.OnClickListener noteListener) {
+    public USXRenderer(
+            Context context,
+            Span.OnClickListener verseListener,
+            Span.OnClickListener noteListener
+    ) {
+        this.context = context;
         mVerseListener = verseListener;
         mNoteListener = noteListener;
     }
@@ -356,7 +362,7 @@ public class USXRenderer extends ClickableRenderingEngine {
                     boolean foundSearch = noteText.toLowerCase().contains(mSearch);
                     note.setHighlight(foundSearch);
                 }
-                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), note.toCharSequence());
+                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), note.toCharSequence(context));
             } else {
                 // failed to parse the note
                 out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
@@ -378,11 +384,6 @@ public class USXRenderer extends ClickableRenderingEngine {
         CharSequence out = "";
 
         CharSequence insert = "";
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.JELLY_BEAN) {
-            insert = "\n"; // this is a hack to get around bug in JellyBean in rendering multiple
-                            // verses on a long line.  This hack messes up the paragraph formatting,
-                            // but at least JellyBean becomes usable and doesn't crash.
-        }
 
         Pattern pattern = Pattern.compile(USXVerseSpan.PATTERN);
         Matcher matcher = pattern.matcher(in);
@@ -435,7 +436,7 @@ public class USXRenderer extends ClickableRenderingEngine {
                         }
                         if(!invalidVerse) {
                             verse.setOnClickListener(mVerseListener);
-                            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), insert, verse.toCharSequence());
+                            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), insert, verse.toCharSequence(context));
                         } else {
                             // exclude invalid verse
                             out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()));
@@ -468,7 +469,7 @@ public class USXRenderer extends ClickableRenderingEngine {
                         verse = new USXVersePinSpan(mExpectedVerseRange[0]);
                     }
                     verse.setOnClickListener(mVerseListener);
-                    out = TextUtils.concat(verse.toCharSequence(), out);
+                    out = TextUtils.concat(verse.toCharSequence(context), out);
                     mAddedMissingVerse = true;
                 }
             } else if (mExpectedVerseRange.length == 2) {
@@ -482,7 +483,7 @@ public class USXRenderer extends ClickableRenderingEngine {
                             verse = new USXVersePinSpan(i);
                         }
                         verse.setOnClickListener(mVerseListener);
-                        out = TextUtils.concat(verse.toCharSequence(), out);
+                        out = TextUtils.concat(verse.toCharSequence(context), out);
                         mAddedMissingVerse = true;
                     }
                 }
@@ -670,7 +671,7 @@ public class USXRenderer extends ClickableRenderingEngine {
      * Return the leading section heading, if any. Non-leading major section headings, and leading
      * headings of other types, are not included.
      *
-     * @see http://digitalbiblelibrary.org/static/docs/usx/parastyles.html
+     * @see <a href="http://digitalbiblelibrary.org/static/docs/usx/parastyles.html">...</a>
      * @param in The string to examine for a leading major section heading.
      * @return The leading major section heading; or the empty string if there is none.
      */

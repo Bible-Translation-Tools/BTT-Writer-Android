@@ -1,68 +1,92 @@
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <EditTextPreference
-        android:key="device_name"
-        android:title="@string/device_name"
-        android:defaultValue=""/>
+    <PreferenceCategory android:title="@string/pref_header_general">
 
-    <ListPreference
-        android:key="color_theme"
-        android:title="@string/pref_title_color_theme"
-        android:entries="@array/pref_color_theme_titles"
-        android:entryValues="@array/pref_color_theme_values"
-        android:defaultValue="@string/pref_default_color_theme"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        <!--<EditTextPreference
+            android:key="device_name"
+            android:title="@string/device_name"
+            android:defaultValue=""
+            app:allowDividerAbove="false"
+            app:allowDividerBelow="true"/>-->
 
-    <ListPreference
-        android:key="translation_typeface"
-        android:title="@string/pref_title_translation_typeface"
-        android:entries="@array/pref_translation_typeface_titles"
-        android:entryValues="@array/pref_translation_typeface_values"
-        android:defaultValue="@string/pref_default_translation_typeface"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        <ListPreference
+            android:key="color_theme"
+            android:title="@string/pref_title_color_theme"
+            android:entries="@array/pref_color_theme_titles"
+            android:entryValues="@array/pref_color_theme_values"
+            android:defaultValue="@string/pref_default_color_theme"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
 
-    <ListPreference
-        android:key="typeface_size"
-        android:title="@string/pref_title_typeface_size"
-        android:entries="@array/pref_typeface_size_titles"
-        android:entryValues="@array/pref_typeface_size_values"
-        android:defaultValue="@string/pref_default_typeface_size"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        <ListPreference
+            android:key="translation_typeface"
+            android:title="@string/pref_title_translation_typeface"
+            android:entries="@array/pref_translation_typeface_titles"
+            android:entryValues="@array/pref_translation_typeface_values"
+            android:defaultValue="@string/pref_default_translation_typeface"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
 
-    <ListPreference
-        android:key="source_typeface"
-        android:title="@string/pref_title_source_typeface"
-        android:entries="@array/pref_translation_typeface_titles"
-        android:entryValues="@array/pref_translation_typeface_values"
-        android:defaultValue="@string/pref_default_translation_typeface"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        <ListPreference
+            android:key="typeface_size"
+            android:title="@string/pref_title_typeface_size"
+            android:entries="@array/pref_typeface_size_titles"
+            android:entryValues="@array/pref_typeface_size_values"
+            android:defaultValue="@string/pref_default_typeface_size"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
 
-    <ListPreference
-        android:key="source_typeface_size"
-        android:title="@string/pref_title_source_typeface_size"
-        android:entries="@array/pref_typeface_size_titles"
-        android:entryValues="@array/pref_typeface_size_values"
-        android:defaultValue="@string/pref_default_typeface_size"
-        android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        <ListPreference
+            android:key="source_typeface"
+            android:title="@string/pref_title_source_typeface"
+            android:entries="@array/pref_translation_typeface_titles"
+            android:entryValues="@array/pref_translation_typeface_values"
+            android:defaultValue="@string/pref_default_translation_typeface"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
 
-    <CheckBoxPreference
-        android:key="always_share"
-        android:title="@string/pref_title_always_share"
-        android:summary="@string/pref_description_always_share"
-        android:defaultValue="@string/pref_default_always_share" />
+        <ListPreference
+            android:key="source_typeface_size"
+            android:title="@string/pref_title_source_typeface_size"
+            android:entries="@array/pref_typeface_size_titles"
+            android:entryValues="@array/pref_typeface_size_values"
+            android:defaultValue="@string/pref_default_typeface_size"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
 
-    <Preference
-        android:key="app_version"
-        android:title="@string/version"
-        android:defaultValue="0.0.0" />
+        <CheckBoxPreference
+            android:key="always_share"
+            android:title="@string/pref_title_always_share"
+            android:summary="@string/pref_description_always_share"
+            android:defaultValue="@string/pref_default_always_share"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
 
-    <Preference
-        android:key="app_updates"
-        android:title="@string/check_for_updates"
-        android:summary="@string/check_for_app_updates"/>
+        <Preference
+            android:key="app_version"
+            android:title="@string/version"
+            android:defaultValue="0.0.0"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
+
+        <Preference
+            android:key="app_updates"
+            android:title="@string/check_for_updates"
+            android:summary="@string/check_for_app_updates"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="false"/>
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

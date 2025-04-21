@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:minWidth="@dimen/dialog_min_width"
@@ -18,6 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -26,16 +28,17 @@
                 android:textColor="@color/dark_primary_text"
                 android:textAlignment="center"
                 android:textSize="@dimen/headline"
-                android:layout_gravity="top"
+                android:layout_gravity="center_horizontal"
                 android:id="@+id/title" />
+
             <ImageButton
                 android:id="@+id/infoButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/Widget.Alert.Button"
-                android:layout_marginLeft="@dimen/card_margin"
-                android:tint="@color/icon_color"
-                android:src="@drawable/ic_info_black_24dp"/>
+                android:layout_marginStart="@dimen/card_margin"
+                android:src="@drawable/ic_info_black_24dp"
+                app:tint="@color/icon_color" />
         </LinearLayout>
 
         <LinearLayout
@@ -58,11 +61,10 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:layout_marginEnd="5dp"
+                android:layout_marginHorizontal="5dp"
                 style="@style/Widget.Alert.Button"
-                android:tint="@color/icon_color"
-                android:src="@drawable/ic_wifi_black_18dp"/>
+                android:src="@drawable/ic_wifi_black_18dp"
+                app:tint="@color/icon_color" />
         </LinearLayout>
 
         <LinearLayout
@@ -96,7 +98,39 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:textAllCaps="false"
-                    android:gravity="left"
+                    android:gravity="start"
+                    android:background="@null"
+                    android:duplicateParentState="true"
+                    style="@style/Widget.Alert.Button.Secondary"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="@color/border_color"/>
+
+            <LinearLayout
+                android:id="@+id/import_index"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:contextClickable="true"
+                android:background="?attr/selectableItemBackground"
+                android:paddingBottom="@dimen/dialog_controls_margin"
+                android:visibility="visible">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/import_index"
+                    android:textColor="@color/dark_primary_text"
+                    android:focusable="false"
+                    android:clickable="false"
+                    android:textAllCaps="false"
+                    android:gravity="start"
                     android:background="@null"
                     android:duplicateParentState="true"
                     style="@style/Widget.Alert.Button.Secondary"/>
@@ -128,7 +162,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:textAllCaps="false"
-                    android:gravity="left"
+                    android:gravity="start"
                     android:background="@null"
                     android:duplicateParentState="true"
                     style="@style/Widget.Alert.Button.Secondary"/>
@@ -159,7 +193,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:textAllCaps="false"
-                    android:gravity="left"
+                    android:gravity="start"
                     android:background="@null"
                     android:duplicateParentState="true"
                     style="@style/Widget.Alert.Button.Secondary"/>
@@ -190,7 +224,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:textAllCaps="false"
-                    android:gravity="left"
+                    android:gravity="start"
                     android:background="@null"
                     android:duplicateParentState="true"
                     style="@style/Widget.Alert.Button.Secondary"/>
@@ -221,7 +255,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:textAllCaps="false"
-                    android:gravity="left"
+                    android:gravity="start"
                     android:background="@null"
                     android:duplicateParentState="true"
                     style="@style/Widget.Alert.Button.Secondary"
@@ -255,7 +289,7 @@
                     android:focusable="false"
                     android:clickable="false"
                     android:textAllCaps="false"
-                    android:gravity="left"
+                    android:gravity="start"
                     android:background="@null"
                     android:duplicateParentState="true"
                     style="@style/Widget.Alert.Button.Secondary"/>
@@ -269,7 +303,7 @@
                     android:clickable="false"
                     android:duplicateParentState="true"
                     android:textSize="@dimen/caption"
-                    android:layout_marginLeft="@dimen/dialog_content_margin" />
+                    android:layout_marginStart="@dimen/dialog_content_margin" />
             </LinearLayout>
 
             <LinearLayout
@@ -283,15 +317,14 @@
     <LinearLayout
         android:orientation="horizontal"
         android:padding="@dimen/dialog_controls_margin"
-        android:gravity="right|end"
+        android:gravity="end"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:id="@+id/linearLayout2">
 
         <Button
             android:id="@+id/dismiss_button"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
+            android:layout_marginStart="@dimen/dialog_controls_margin"
             android:text="@string/menu_cancel"
             style="@style/Widget.Alert.Button"/>
     </LinearLayout>

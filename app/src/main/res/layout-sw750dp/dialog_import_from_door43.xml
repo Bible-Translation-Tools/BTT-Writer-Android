@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:background="@color/background_color"
+    android:layout_height="wrap_content"
     android:minWidth="@dimen/dialog_min_width"
-    android:layout_height="wrap_content">
+    android:background="@color/background_color">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginLeft="@dimen/dialog_content_margin"
-        android:layout_marginRight="@dimen/dialog_content_margin"
+        android:layout_marginHorizontal="@dimen/dialog_content_margin"
         android:layout_marginTop="@dimen/dialog_content_margin"
         android:layout_above="@+id/linearLayout2">
 
@@ -26,6 +25,7 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
@@ -62,8 +62,7 @@
             android:minHeight="1px"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/card_margin"
-            android:layout_marginBottom="@dimen/card_margin"
+            android:layout_marginVertical="@dimen/card_margin"
             android:background="@color/border_color" />
 
         <LinearLayout
@@ -79,7 +78,7 @@
 
             <TextView
                 android:text="@string/language"
-                android:gravity="right"
+                android:gravity="end"
                 android:textSize="@dimen/body"
                 android:textColor="@color/dark_primary_text"
                 android:layout_width="match_parent"
@@ -97,7 +96,7 @@
     <LinearLayout
         android:orientation="horizontal"
         android:padding="@dimen/dialog_controls_margin"
-        android:gravity="right|end"
+        android:gravity="end"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -105,7 +104,7 @@
 
         <Button
             android:id="@+id/dismiss_button"
-            android:layout_marginLeft="@dimen/dialog_controls_margin"
+            android:layout_marginHorizontal="@dimen/dialog_controls_margin"
             android:text="@string/dismiss"
             style="@style/Widget.Alert.Button"/>
     </LinearLayout>

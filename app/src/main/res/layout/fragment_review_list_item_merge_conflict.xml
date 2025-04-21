@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_content"
     android:orientation="horizontal"
     android:layout_width="match_parent"
@@ -13,7 +11,8 @@
     android:weightSum=".765"
     android:clipChildren="false">
 
-    <include layout="@layout/fragment_review_list_item_source" />
+    <include android:id="@+id/item_source"
+        layout="@layout/fragment_review_list_item_source" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/target_translation_card"
@@ -41,7 +40,7 @@
             <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
                 android:layout_margin="0dp"
                 android:padding="0dp"
                 android:gravity="top"
@@ -69,7 +68,7 @@
                             android:id="@+id/undo_button"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="left|center_vertical"
+                            android:layout_gravity="start|center_vertical"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_undo_secondary_24dp"
                             android:layout_weight="0"
@@ -80,7 +79,7 @@
                             android:id="@+id/redo_button"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="left|center_vertical"
+                            android:layout_gravity="start|center_vertical"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_redo_secondary_24dp"
                             android:layout_weight="0"
@@ -91,7 +90,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:textSize="@dimen/title"
-                            android:layout_gravity="left|center_vertical"
+                            android:layout_gravity="start|center_vertical"
                             android:layout_marginLeft="@dimen/dialog_controls_margin"
                             android:layout_marginRight="@dimen/dialog_controls_margin"
                             android:textColor="@color/dark_secondary_text"
@@ -165,6 +164,7 @@
 
     </androidx.cardview.widget.CardView>
 
-    <include layout="@layout/fragment_review_list_item_resources" />
+    <include android:id="@+id/item_resources"
+        layout="@layout/fragment_review_list_item_resources" />
 
 </LinearLayout>
