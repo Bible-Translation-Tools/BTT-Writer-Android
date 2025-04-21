@@ -123,9 +123,9 @@
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
     <string name="translation_guidlines"><![CDATA[<h1>Directives de traduction</h1>
 <p>
-     <strong>Précise</strong> - Les traductions précises communiquent éfficacement le sens voulu du texte original, divinement inspiré. Une traduction précise exprime le sens voulu par l'auteur pour le public d'origine dans le contexte original.
+     <strong>Précise</strong> - Les traductions précises communiquent éfficacement le sens voulu du texte original, divinement inspiré. Une traduction précise exprime le sens voulu par l\'auteur pour le public d\'origine dans le contexte original.
     <p>
-        1.  Dans la mesure du possible, rien n'est ajouté, mal interprété ou supprimé du message original.
+        1.  Dans la mesure du possible, rien n\'est ajouté, mal interprété ou supprimé du message original.
         <br/>2. Il ne reformule pas le sens du texte original pour le rendre plus pertinent pour le public contemporain.
         <br/>3.  Une traduction précise ne déforme pas le sens afin de favoriser une perspective interprétative specifique. Elle doit être exempte de tout préjugé théologique, culturel ou personnel.
         <br/>4. Une traduction précise communique les événements et les faits historiques avec exactitude.
@@ -535,14 +535,14 @@
     <string name="title_import_failed">L\'importation a échoué !</string>
     <string name="import_project_success">Importation réussie <xliff:g example="Mark" id="project">%1$s</xliff:g> de :\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Table des matières </string>
-    <string name="license_pdf"><![CDATA[<h2>Creative Commons Paternité-Partage à l'identique 4. International</h2>
-<h3>Résumé lisible par l'homme</h3>
+    <string name="license_pdf"><![CDATA[<h2>Creative Commons Paternité-Partage à l\'identique 4. International</h2>
+<h3>Résumé lisible par l\'homme</h3>
 <p>The Creative Commons Attribution-Share Alike 4. La licence internationale est disponible à <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4. /</a></p>
-<h4>Ceci est un résumé lisible par l'homme (et non pas un substitut) de la licence</h4>
+<h4>Ceci est un résumé lisible par l\'homme (et non pas un substitut) de la licence</h4>
 <br/>
 <h3>Vous êtes libre à:</h3>
-<br/><b>&#8226; Partager</b> - copiez et redistribuez le matériel dans n'importe quel support ou format
-<br/><b>&#8226; Adaptation</b> - remixez, transformer, et construire sur le matériel pour n'importe quel but, même commercialement.
+<br/><b>&#8226; Partager</b> - copiez et redistribuez le matériel dans n\'importe quel support ou format
+<br/><b>&#8226; Adaptation</b> - remixez, transformer, et construire sur le matériel pour n\'importe quel but, même commercialement.
 <p>Le concédant ne peut pas révoquer ces libertés tant que vous respectez les conditions de la licence.</p>
 <h3>Selon les conditions suivantes :</h3>
 <br/><b>&#8226; Attribution</b> - Vous devez donner un crédit approprié, fournir un lien vers la licence et indiquer si des changements ont été apportés. Vous pouvez le faire de quelque manière que ce soit, mais pas de quelque manière que ce soit qui suggère que le concédant vous approuve ou que vous utilisez.
