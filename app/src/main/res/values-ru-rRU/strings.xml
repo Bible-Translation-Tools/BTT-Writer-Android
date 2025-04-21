@@ -6,7 +6,7 @@
     <!-- Acknowledgment or an affirmative statement -->
     <string name="label_ok">Ок</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
-    <string name="label_close">Close</string>
+    <string name="label_close">Закрыть</string>
     <!-- Close or reject an action -->
     <string name="title_cancel">Отмена</string>
     <!-- The application is already executing a different task -->
@@ -17,7 +17,7 @@
     <string name="error_repository_not_found">Repository Not Found</string>
     <!-- Local changes are being uploaded to the server -->
     <string name="uploading">Загрузка</string>
-    <string name="creating_repository">Creating repository</string>
+    <string name="creating_repository">Создание репозитория</string>
     <!-- The repository could not be created-->
     <string name="error_could_not_create_repository">Could not create repository</string>
     <!-- The terms that users must agree with in order to use the app -->
@@ -86,7 +86,7 @@
     <string name="notes_cannot_overlap">Примечания не должны пересекаться</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
     <string name="currently_viewed_frame_index">Рамка <xliff:g id="current_frame" example="2"> %1$s </xliff:g> из <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
-    <string name="content_server">Content Server</string>
+    <string name="content_server">Сервер контента</string>
     <string name="opening_project">Открытие проекта</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
     <string name="loading_target_language">Загрузка целевой язык: %1$s</string>
@@ -171,13 +171,13 @@
     <string name="import_project">Импорт проекта</string>
     <string name="no_projects_available_on_server">Проекты не доступны на этом сервере</string>
     <string name="downloading">Загрузка</string>
-    <string name="downloading_images">Downloading images</string>
-    <string name="connecting_to_server">Connecting to remote server...</string>
-    <string name="downloading_images_for_print_failed">The download failed to complete. Try printing without images.</string>
+    <string name="downloading_images">Загрузка изображений</string>
+    <string name="connecting_to_server">Подключение к удаленному серверу...</string>
+    <string name="downloading_images_for_print_failed">Загрузка не удалась. Попробуйте распечатать без изображений.</string>
     <!-- as in "23 out of 46 MB downloaded" -->
-    <string name="out_of">out of</string>
-    <string name="mb_downloaded">MB downloaded</string>
-    <string name="image_large_download">Downloading images will take several megabytes. Are you sure you want to include images?</string>
+    <string name="out_of">из</string>
+    <string name="mb_downloaded">МБ загружено</string>
+    <string name="image_large_download">Загрузка изображений займет несколько мегабайт. Вы уверены, что хотите включить изображения?</string>
     <string name="confirm_import">Пожалуйста, подтвердите, что вы хотите импортировать.</string>
     <string name="waiting_for_another_device">Ожидание устройства</string>
     <string name="label_back">Назад</string>
@@ -218,7 +218,7 @@
     <string name="import_draft">Импорт Проект</string>
     <string name="import_draft_confirmation">Это заменит ваш текущий перевод целевом языке, по-прежнему?</string>
     <string name="action_search">Поиск</string>
-    <string name="mark_chunks_done">Mark All Chunks Done</string>
+    <string name="mark_chunks_done">Отметить все фрагменты как выполненные</string>
     <string name="transfer_from_device">Трансфер из устройства</string>
     <string name="transfer_from_device_description">Проекты будут переданы по сети из соседнего устройства</string>
     <string name="import_from_storage">Импорт из хранилища</string>
@@ -240,45 +240,45 @@
     <string name="complete_required_fields">Пожалуйста заполните все поля</string>
     <string name="required_field"><xliff:g id="marker"> * </xliff:g> требуется</string>
     <string name="upload_failed">Загрузка не удалась</string>
-    <string name="download_failed">Download failed</string>
+    <string name="download_failed">Ошибка при загрузке</string>
     <string name="publishing_translation">Перевод издания</string>
     <string name="backing_up_translation">Резервное копирование перевод</string>
     <string name="review_all_checking_questions">Пожалуйста, ознакомьтесь с все вопросы</string>
-    <string name="browse">Browse</string>
-    <string name="please_enter_text">Please enter some text</string>
-    <string name="apk_update_available">A new version of the app is available</string>
-    <string name="download_update">Download Update</string>
-    <string name="upload_report_or_download_latest_apk">Downloading this update may fix your problem, continue?</string>
-    <string name="welcome">Welcome to BTT Writer</string>
-    <string name="please_wait">Please wait</string>
-    <string name="updating_app">Performing updates</string>
-    <string name="preparing_for_first_use">Preparing app for first use. This may take a few minutes.</string>
-    <string name="loading_languages">Preparing languages</string>
-    <string name="title_activity_target_translations">Your Translation Projects</string>
-    <string name="title_activity_new_target_translation">New Translation</string>
-    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the green button in the top right.]]></string>
-    <string name="title_activity_target_translation_detail">Translation Project</string>
-    <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
-    <string name="Project">Project</string>
-    <string name="language">Language</string>
-    <string name="progress">Progress</string>
-    <string name="choose_first_source_translation">Choose source translation(s) to begin reading and translating</string>
-    <string name="choose_source_translations">Choose source translations</string>
-    <string name="confirm">Confirm</string>
-    <string name="selected">Selected</string>
-    <string name="available">Available</string>
-    <string name="action_translations">Home</string>
-    <string name="publish">Publish</string>
-    <string name="backup">Upload</string>
-    <string name="attached_files">Attached files</string>
-    <string name="requires_internet">This will use your Internet Connection</string>
-    <string name="maximum_limit">(Maximum: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
-    <string name="input_required">Input cannot be empty</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="done">Done</string>
-    <string name="translate_first">Please provide a translation first</string>
-    <string name="consecutive_verse_markers">Verse markers are placed too close to each other. Please verify marker positions.</string>
-    <string name="outoforder_verse_markers">Verse markers are out of order</string>
+    <string name="browse">Просмотр</string>
+    <string name="please_enter_text">Пожалуйста, введите текст</string>
+    <string name="apk_update_available">Доступна новая версия приложения</string>
+    <string name="download_update">Загрузить обновление</string>
+    <string name="upload_report_or_download_latest_apk">Загрузка обновления может исправить вашу проблему, продолжить?</string>
+    <string name="welcome">Добро пожаловать в BTT Writer</string>
+    <string name="please_wait">Пожалуйста, подождите</string>
+    <string name="updating_app">Выполняется обновление</string>
+    <string name="preparing_for_first_use">Подготовка приложения к первому использованию. Это может занять несколько минут.</string>
+    <string name="loading_languages">Подготовка языков</string>
+    <string name="title_activity_target_translations">Ваши проекты перевода</string>
+    <string name="title_activity_new_target_translation">Новый перевод</string>
+    <string name="translations_welcome"><![CDATA[Добро пожаловать!\nЭто ваш домашний экран. Когда у вас есть проекты перевода на этом устройстве, они появятся здесь.\n\nВы можете начать новый перевод в любое время, нажав зеленую кнопку в правом верхнем углу.]]></string>
+    <string name="title_activity_target_translation_detail">Проект перевода</string>
+    <string name="duplicate_target_translation">Вы уже переводите <xliff:g example="Genesis" id="project">%1$s</xliff:g> на <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
+    <string name="Project">Проект</string>
+    <string name="language">Язык</string>
+    <string name="progress">Прогресс</string>
+    <string name="choose_first_source_translation">Выберите исходный перевод(ы) для начала чтения и перевода</string>
+    <string name="choose_source_translations">Выберите исходные переводы</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="selected">Выбранные</string>
+    <string name="available">Доступные</string>
+    <string name="action_translations">Главная</string>
+    <string name="publish">Опубликовать</string>
+    <string name="backup">Выгрузить</string>
+    <string name="attached_files">Прикреплённые файлы</string>
+    <string name="requires_internet">Будет использовано подключение к Интернету</string>
+    <string name="maximum_limit">(Максимум: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
+    <string name="input_required">Ввод не может быть пустым</string>
+    <string name="dismiss">Скрыть</string>
+    <string name="done">Готово</string>
+    <string name="translate_first">Сначала предоставьте перевод</string>
+    <string name="consecutive_verse_markers">Маркеры стихов размещены слишком близко друг к другу. Проверьте позиции маркеров.</string>
+    <string name="outoforder_verse_markers">Маркеры стихов расположены не по порядку</string>
     <string name="outofrange_verse_marker">Verse marker is out of range</string>
     <string name="duplicate_verse_marker">Duplicate verse marker</string>
     <string name="failed_to_commit_chunk">The chunk could not be saved</string>
