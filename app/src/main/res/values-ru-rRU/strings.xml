@@ -153,15 +153,15 @@
     <br/>2. Ongoing revisions and improvements are made.
 </p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
-    <string name="statement_of_faith"><![CDATA[<h1>Statement of Faith</h1>
-<p>We believe:</p>
+    <string name="statement_of_faith"><![CDATA[<h1>Заявление веры</h1>
+<p>Мы верим:</p>
 <ul>
-    <li>The Bible is divinely inspired by God and has final authority.</li>
-    <li>God is one and exists in three persons: God the Father, God the Son and God the Holy Spirit.</li>
-    <li>Because of the fall of man, all humans are sinful, and in need of salvation.</li>
-    <li>The death of Christ is a substitute for sinners and provides for the cleansing of those who believe.</li>
-    <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
-    <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
+    <li>Библия вдохновлена ​​Богом и имеет окончательный авторитет.</li>
+    <li>Бог един и существует в трех личностях: Бог Отец, Бог Сын и Бог Святой Дух.</li>
+    <li>Из-за грехопадения человека, все люди грешны и нуждаются в спасении.</li>
+    <li>Смерть Христа является искуплением для грешников и обеспечивает очищение верующих.</li>
+    <li>Божьей благодатью через веру, человек получает спасение в качестве бесплатного дара, благодаря смерти Иисуса и Его воскресению.</li>
+    <li>Воскресение всех спасенных к вечной жизни и грешных к вечному наказанию.</li>
 </ul>]]></string>
     <string name="view_statement_of_faith">Посмотреть Заявление Веры</string>
     <string name="view_translation_guidelines">Посмотреть принципы перевода</string>
@@ -413,53 +413,53 @@
     <string name="restored_to_time">Восстановлено в %s</string>
     <string name="restoring_end">Достигнут конец архива</string>
     <string name="title_add_footnote">Добавить примечание</string>
-    <string name="add_footnote_title">Title:</string>
-    <string name="add_footnote">Footnote:</string>
-    <string name="add_footnote_title_prompt">Enter Title</string>
-    <string name="add_footnote_prompt">Enter Footnote</string>
-    <string name="title_footnote_invalid">Invalid Footnote</string>
-    <string name="footnote_confirm_delete">Are you sure you want to delete footnote?</string>
-    <string name="footnote_label">Footnote</string>
-    <string name="footnote_title_empty">Footnote Title cannot be empty</string>
-    <string name="footnote_message_empty">Footnote cannot be empty</string>
-    <string name="who_translated_notice">Who contributed to this translation?</string>
-    <string name="privacy_notice">Privacy Notice</string>
-    <string name="need_translator_notice">Please add a contributor</string>
-    <string name="duplicate_native_speaker">A contributor with that name has already been added</string>
-    <string name="edit_contributor">Edit Contributor</string>
-    <string name="registration_failure">Registration Failed. Please check your internet connection</string>
-    <string name="auth_failure_retry">Authentication Failed. Retry?</string>
-    <string name="registering_keys">Registering with server</string>
-    <string name="person_agrees_with_licenses">This person has agreed with the Statement of Faith and Translation Guidelines and agrees to release his/her work on this project under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
-    <string name="invalid_entry_title">Invalid Entry</string>
-    <string name="answers_missing_title">Answers Missing</string>
-    <string name="missing_question_answer">Missing answer for question</string>
-    <string name="answer_missing_for">Missing answer for question:\n%s</string>
-    <string name="answers_missing_continue">Answers are missing for questions.\nContinue anyway?</string>
-    <string name="previous">Previous</string>
-    <string name="title_activity_new_language">New Language Request</string>
-    <string name="new_language_confirmation">Your new language code is \"<xliff:g example="zz-zzz" id="temp_language_code">%1$s</xliff:g>\" for \"<xliff:g example="Greek" id="language_name">%2$s</xliff:g>\".</string>
-    <string name="error_importing_unsupported_target_translation">The  translation of <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> into <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> was created by a different version of <xliff:g example="BTT Writer or translationStudio" id="app_name">%3$s</xliff:g> and cannot be opened. Please update your app and try again.</string>
-    <string name="version">Version</string>
-    <string name="username">login name</string>
-    <string name="password">password</string>
-    <string name="password_confirm">re-type password</string>
-    <string name="logging_in">Logging in</string>
-    <string name="double_check_credentials">Double check your credentials and try again</string>
-    <string name="passwords_mismatch">Passwords do not match</string>
-    <string name="contributors">Contributors</string>
-    <string name="show_passwords">Show Passwords</string>
-    <string name="hide_passwords">Hide Passwords</string>
-    <string name="log_out">Log out</string>
-    <string name="gogs_username_already_exists">That username already exists</string>
-    <string name="registration_failed">Your account could not be created.</string>
-    <string name="title_door43_account_required">Server Account Required</string>
-    <string name="door43_account_required">You must connect to a server account first.</string>
-    <string name="server_account">Server Account</string>
-    <string name="login_doo43">Login with Server Account</string>
-    <string name="register_door43">Create new Server Account</string>
-    <string name="create_offline_profile">Create offline Account</string>
-    <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
+    <string name="add_footnote_title">Заголовок:</string>
+    <string name="add_footnote">Примечание:</string>
+    <string name="add_footnote_title_prompt">Введите заголовок</string>
+    <string name="add_footnote_prompt">Введите Примечание</string>
+    <string name="title_footnote_invalid">Неверное примечание</string>
+    <string name="footnote_confirm_delete">Вы уверены, что хотите удалить примечание?</string>
+    <string name="footnote_label">Примечание</string>
+    <string name="footnote_title_empty">Название примечания не может быть пустым</string>
+    <string name="footnote_message_empty">Примечание не может быть пустым</string>
+    <string name="who_translated_notice">Кто внес вклад в этот перевод?</string>
+    <string name="privacy_notice">Политика Конфиденциальности</string>
+    <string name="need_translator_notice">Пожалуйста, добавьте участника</string>
+    <string name="duplicate_native_speaker">Участник с таким именем уже был добавлен</string>
+    <string name="edit_contributor">Редактировать участника</string>
+    <string name="registration_failure">Регистрация не удалась. Пожалуйста, проверьте подключение к Интернету</string>
+    <string name="auth_failure_retry">Ошибка аутентификации. Повторить?</string>
+    <string name="registering_keys">Регистрация на сервере</string>
+    <string name="person_agrees_with_licenses">Этот человек согласился с Утверждением веры, и руководством по переводу, и согласен выпустить свою работу по этому проекту в соответствии с условиями международной лицензии Creative Commons Attribution-ShareAlike 4,0.</string>
+    <string name="invalid_entry_title">Неверная запись</string>
+    <string name="answers_missing_title">Отсутствуют ответы</string>
+    <string name="missing_question_answer">Отсутствует ответ на вопрос</string>
+    <string name="answer_missing_for">Отсутствует ответ на вопрос:\n%s</string>
+    <string name="answers_missing_continue">Отсутствуют ответы на вопросы.\nВсе равно продолжить?</string>
+    <string name="previous">Предыдущий</string>
+    <string name="title_activity_new_language">Запрос нового языка</string>
+    <string name="new_language_confirmation">Код вашего нового языка - \"<xliff:g example="zz-zzz" id="temp_language_code">%1$s</xliff:g>\" для \"<xliff:g example="Greek" id="language_name">%2$s</xliff:g>\".</string>
+    <string name="error_importing_unsupported_target_translation">Перевод <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> на <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> был создан другой версией <xliff:g example="BTT Writer or translationStudio" id="app_name">%3$s</xliff:g> и не может быть открыт. Пожалуйста, обновите приложение и повторите попытку.</string>
+    <string name="version">Версия</string>
+    <string name="username">имя пользователя</string>
+    <string name="password">пароль</string>
+    <string name="password_confirm">повторно введите пароль</string>
+    <string name="logging_in">Выполняется вход</string>
+    <string name="double_check_credentials">Проверьте ваши учетные данные и повторите попытку</string>
+    <string name="passwords_mismatch">Пароли не совпадают</string>
+    <string name="contributors">Участники</string>
+    <string name="show_passwords">Показывать пароли</string>
+    <string name="hide_passwords">Скрыть пароли</string>
+    <string name="log_out">Выйти</string>
+    <string name="gogs_username_already_exists">Имя пользователя уже существует</string>
+    <string name="registration_failed">Ваша учётная запись не может быть создана.</string>
+    <string name="title_door43_account_required">Требуется учетная запись сервера</string>
+    <string name="door43_account_required">Сначала необходимо подключить учетную запись сервера.</string>
+    <string name="server_account">Учетная запись сервера</string>
+    <string name="login_doo43">Войти с помощью аккаунта сервера</string>
+    <string name="register_door43">Создать аккаунт на сервере</string>
+    <string name="create_offline_profile">Создать оффлайн аккаунт</string>
+    <string name="still_possible_to_register_door43">Вы можете создать или войти на сервер позже</string>
     <string name="title_connect_door43">Подключиться к серверу</string>
     <string name="gogs_public_key_name">ts-android</string>
     <string name="restore_failed">Не удалось импортировать перевод</string>
@@ -517,17 +517,17 @@
     <string name="reading_usfm">Чтение USFM</string>
     <string name="importing_usfm">Импортирование USFM</string>
     <string name="import_usfm_file">Импортировать файл USFM</string>
-    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\' \'\nимеет неверное название книги: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\nВы хотите выбрать название книги?</string>
-    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nis missing book name\nDo you wish to select a book name?</string>
-    <string name="could_not_parse">Could not parse \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
-    <string name="no_chunk_list">No chunk list found for \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
-    <string name="chapter_count_invalid">Expected <xliff:g example="16" id="chunk_count">%1$s</xliff:g> chapters, but last chapter was <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
-    <string name="no_chapter">No chapter found</string>
-    <string name="label_restore">Restore</string>
-    <string name="title_import_success">Import Success</string>
-    <string name="title_import_failed">Import Failed!</string>
-    <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
-    <string name="table_of_contents">Table of Contents </string>
+    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\' \'\nимеет неверное название книги: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\nВы хотите выбрать название?</string>
+    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nне содержит название книги\nВы хотите выбрать название?</string>
+    <string name="could_not_parse">Не удалось обработать \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
+    <string name="no_chunk_list">Не найден список фрагментов для \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
+    <string name="chapter_count_invalid">Ожидалось <xliff:g example="16" id="chunk_count">%1$s</xliff:g> глав, но последняя глава была <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
+    <string name="no_chapter">Главы не найдены</string>
+    <string name="label_restore">Восстановить</string>
+    <string name="title_import_success">Успешно импортировано</string>
+    <string name="title_import_failed">Импортирование не удалось!</string>
+    <string name="import_project_success">Успешно импортировано <xliff:g example="Mark" id="project">%1$s</xliff:g> из:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
+    <string name="table_of_contents">Содержание </string>
     <string name="license_pdf"><![CDATA[<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
 <h3>Human-Readable Summary</h3>
 <p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
@@ -544,40 +544,40 @@
 <h3>Notices:</h3>
 <p><br/>&#8226; You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
 <p><br/>&#8226; No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>]]></string>
-    <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
-    <string name="new_lang_api_upload_failure_title">New Language Error</string>
-    <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
-    <string name="answer_not_saved">Your answer could not be saved. Please try again.</string>
-    <string name="try_again">Please try again</string>
-    <string name="copy">Copy</string>
-    <string name="submitting_new_language_requests">Submitting new language requests</string>
-    <string name="downloading_languages">Downloading languages</string>
-    <string name="confirm_leave_questionnaire">Are you sure you want to leave the questionnaire?</string>
-    <string name="continue_requesting_new_language">Continue requesting new language</string>
-    <string name="request_new_language">Request new language</string>
-    <string name="title_new_language_code">New Language Code</string>
-    <string name="confirm_start_new_language_code">You are about to request a new language code.</string>
-    <string name="check_for_updates">Check for updates</string>
-    <string name="check_for_app_updates">Check the internet for updates to BTT Writer App.</string>
-    <string name="have_latest_app_update">You are already using the latest version of BTT Writer.</string>
-    <string name="download_latest_apk">Do you want to download this update?</string>
-    <string name="updating_projects">Updating projects</string>
-    <string name="view_online">View Online</string>
-    <string name="read_on_web">Read on Web</string>
-    <string name="change_detected">Project Change Detected</string>
-    <string name="upload_push_failure">There are changes to this translation on your server account. You must import those changes before uploading.</string>
-    <string name="merge_request">There are changes to your translation of \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' in \'<xliff:g example="English" id="language">%2$s</xliff:g>\' on your server account. Would you like to import those changes now?</string>
-    <string name="import_failed_title">Import failed</string>
-    <string name="push_rejected">Upload failed because of changes on Server. Do you want to review conflicts?</string>
-    <string name="backup_rejected">Backup failed because of changes on Server. Do you want to review conflicts?</string>
-    <string name="backup_failed_title">Backup failed</string>
-    <string name="update_failed">Update Failed</string>
-    <string name="success_translation_update">Your translation has been successfully updated.</string>
-    <string name="success_translation_update_with_conflicts">Your translation has been successfully updated.\nSome chunks had conflicts and need review.</string>
-    <string name="search_hint">Enter Search String</string>
-    <string name="search_source">Search Source:</string>
-    <string name="search_translation">Search Translation:</string>
-    <string name="tip_export_to_usfm">Creates a .usfm file of your project</string>
+    <string name="questionnaire_title">Страница <xliff:g example="1" id="page_num">%1$d</xliff:g> из <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
+    <string name="new_lang_api_upload_failure_title">Ошибка нового языка</string>
+    <string name="new_lang_api_upload_failure">Мы не смогли сохранить ответы в анкете на новый язык. Мы попробуем снова в следующий раз</string>
+    <string name="answer_not_saved">Ваш ответ не удалось сохранить. Пожалуйста, попробуйте еще раз.</string>
+    <string name="try_again">Пожалуйста, попробуйте еще раз</string>
+    <string name="copy">Копировать</string>
+    <string name="submitting_new_language_requests">Отправка новых языковых запросов</string>
+    <string name="downloading_languages">Скачивание языков</string>
+    <string name="confirm_leave_questionnaire">Вы уверены, что хотите покинуть опросник?</string>
+    <string name="continue_requesting_new_language">Продолжить запрос на новый язык</string>
+    <string name="request_new_language">Запросить новый язык</string>
+    <string name="title_new_language_code">Код нового языка</string>
+    <string name="confirm_start_new_language_code">Вы собираетесь запросить новый код языка.</string>
+    <string name="check_for_updates">Проверить обновления</string>
+    <string name="check_for_app_updates">Проверьте наличие обновлений в Интернете для приложения BTT Writer.</string>
+    <string name="have_latest_app_update">Вы уже используете последнюю версию BTT Writer.</string>
+    <string name="download_latest_apk">Вы хотите загрузить это обновление?</string>
+    <string name="updating_projects">Обновление проектов</string>
+    <string name="view_online">Смотреть онлайн</string>
+    <string name="read_on_web">Читать в Интернете</string>
+    <string name="change_detected">Обнаружено изменение проекта</string>
+    <string name="upload_push_failure">Этот перевод был изменен в вашей учетной записи сервера. Вы должны импортировать эти изменения перед отправкой.</string>
+    <string name="merge_request">Имеются изменения в вашем переводе \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' в \'<xliff:g example="English" id="language">%2$s</xliff:g>\' в вашей учетной записи сервера. Хотите импортировать эти изменения сейчас?</string>
+    <string name="import_failed_title">Импортирование не удалось</string>
+    <string name="push_rejected">Отправка не удалась из-за изменений на сервере. Вы хотите просмотреть конфликты?</string>
+    <string name="backup_rejected">Резервное копирование не удалось из-за изменений на сервере. Вы хотите просмотреть конфликты?</string>
+    <string name="backup_failed_title">Резервное копирование не удалось</string>
+    <string name="update_failed">Обновление не удалось</string>
+    <string name="success_translation_update">Ваш перевод был успешно обновлен.</string>
+    <string name="success_translation_update_with_conflicts">Ваш перевод был успешно обновлен.\nВ некоторых фрагментах найдены конфликты и вам необходимо их проверить.</string>
+    <string name="search_hint">Введите текст поиска</string>
+    <string name="search_source">Искать в исходном:</string>
+    <string name="search_translation">Искать в целевом:</string>
+    <string name="tip_export_to_usfm">Создать usfm-файл вашего проекта</string>
     <string name="export_to_pdf">Экспорт в PDF файл</string>
     <string name="tip_export_to_pdf">Создать PDF-файл вашего проекта</string>
     <string name="title_upload_export">Параметры отправки/экспорта</string>
@@ -628,56 +628,56 @@
     <string name="not_a_source_text">Не исходный текст</string>
     <string name="could_not_import">Не удалось импортировать</string>
     <string name="overwrite_content">Перезаписать <xliff:g example="English - Genesis - Unlocked Literal Bible" id="content">%1$s</xliff:g>?</string>
-    <string name="pdf_output_filename_title_prompt">Enter Print to PDF file name:</string>
-    <string name="choose_destination_folder">Choose Destination Folder:</string>
-    <string name="options_update_failed">The update failed.  Check your Internet connection.</string>
-    <string name="update_cancelled">The update was cancelled</string>
-    <string name="update_menu_requires_internet">Requires internet Connection\nThese updates may take a while.</string>
-    <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> New Source Texts and <xliff:g example="10" id="updated">%2$d</xliff:g> Updated Source Texts are available to be downloaded.</string>
-    <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
-    <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
-    <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
-    <string name="importing_index">Importing index.sqlite file. Please wait...</string>
-    <string name="import_index_failed">Failed to import index.sqlite file. Check if the file is correct.</string>
-    <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
-    <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
-    <string name="available_online">Available Online</string>
-    <string name="update_sources_label">Exit to Update Source Text List</string>
-    <string name="warning_title">Warning</string>
-    <string name="update_warning">Checking for new and updated source texts will close this project. This requires an Internet Connection.</string>
-    <string name="download_sources">Download Available Source Texts</string>
-    <string name="check_app_update">Check for Update to BTT Writer</string>
-    <string name="all_up_to_date">All Source Texts already up to date!</string>
-    <string name="loading_sources">Loading Source Texts\nPlease wait...</string>
-    <string name="old_testament_label">Old Testament</string>
-    <string name="new_testament_label">New Testament</string>
+    <string name="pdf_output_filename_title_prompt">Введите имя PDF-файла:</string>
+    <string name="choose_destination_folder">Выберите папку назначения:</string>
+    <string name="options_update_failed">Обновление не удалось. Проверьте подключение к Интернету.</string>
+    <string name="update_cancelled">Обновление отменено</string>
+    <string name="update_menu_requires_internet">Требуется подключение к Интернету\nЭти обновления могут занять некоторое время.</string>
+    <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> Новые исходные тексты и <xliff:g example="10" id="updated">%2$d</xliff:g> обновленные исходные тексты доступны для загрузки.</string>
+    <string name="download_index_success">Новый index.sqlite был успешно загружен.</string>
+    <string name="updating_sources">Обновление списка исходных текстов. Это может занять некоторое время. Пожалуйста, подождите...</string>
+    <string name="downloading_index">Загрузка файла index.sqlite. Это может занять некоторое время. Пожалуйста, подождите...</string>
+    <string name="importing_index">Импортирование файла index.sqlite. Пожалуйста, подождите...</string>
+    <string name="import_index_failed">Не удалось импортировать файл index.sqlte. Проверьте правильность файла.</string>
+    <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> целевых языков добавлено.</string>
+    <string name="updating_languages">Обновление списка целевых языков. Это может занять некоторое время. Пожалуйста, подождите...</string>
+    <string name="available_online">Доступно онлайн</string>
+    <string name="update_sources_label">Выйти для обновления исходных текстов</string>
+    <string name="warning_title">Внимание</string>
+    <string name="update_warning">Проверка новых и обновленных исходных текстов закроет этот проект. Для этого требуется подключение к Интернету.</string>
+    <string name="download_sources">Загрузить доступные исходные тексты</string>
+    <string name="check_app_update">Проверить обновление для BTT Writer</string>
+    <string name="all_up_to_date">Все исходные тексты уже актуальны!</string>
+    <string name="loading_sources">Загрузка исходных текстов\nПожалуйста подождите...</string>
+    <string name="old_testament_label">Ветхий Завет</string>
+    <string name="new_testament_label">Новый Завет</string>
     <string name="ta_label">translationAcademy</string>
-    <string name="other_label">Other</string>
-    <string name="choose_language">Choose a Language</string>
-    <string name="choose_category">Choose a Category</string>
-    <string name="choose_sources">Choose Source(s)</string>
-    <string name="choose_book">Choose a Book</string>
-    <string name="by_language_label">By Language</string>
-    <string name="by_book_label">By Book</string>
-    <string name="select_all_label">Select All</string>
-    <string name="unselect_all_label">Unselect All</string>
-    <string name="downloads_success"><xliff:g example="6" id="success_count">%1$d</xliff:g> Source Texts have been successfully downloaded.</string>
-    <string name="downloads_fail"><xliff:g example="6" id="fail_count">%1$d</xliff:g> Source downloads have failed.</string>
-    <string name="download_cancelled">Download Cancelled</string>
-    <string name="download_errors">Download Errors</string>
-    <string name="helps_download_errors">Helps failed to download for: <xliff:g example="en_obs,fr_obs" id="fails">%1$s</xliff:g></string>
-    <string name="source_not_found">Source Not Found on Server</string>
-    <string name="search_for_language">Search for Language</string>
-    <string name="sort_column">Column to Sort By</string>
-    <string name="sort_projects">Sort Project Column By</string>
-    <string name="sort_project_then_language">Project then Language</string>
-    <string name="sort_language_then_project">Language then Project</string>
-    <string name="sort_progress_then_project">Progress then Project</string>
-    <string name="sort_bible_order">Bible Order</string>
-    <string name="sort_alphabetical_order">Alphabetical Order</string>
-    <string name="usfm_output_filename_title_prompt">Enter USFM output file name:</string>
-    <string name="found_in_chunks">Found in <xliff:g example="6" id="found_count">%1$d</xliff:g> chunks</string>
-    <string name="retry_label">Retry</string>
+    <string name="other_label">Другое</string>
+    <string name="choose_language">Выберите язык</string>
+    <string name="choose_category">Выберите категорию</string>
+    <string name="choose_sources">Выберите источник(и)</string>
+    <string name="choose_book">Выберите книгу</string>
+    <string name="by_language_label">По языку</string>
+    <string name="by_book_label">По книге</string>
+    <string name="select_all_label">Выбрать все</string>
+    <string name="unselect_all_label">Отменить выбор</string>
+    <string name="downloads_success"><xliff:g example="6" id="success_count">%1$d</xliff:g> исходных текстов было успешно загружено.</string>
+    <string name="downloads_fail"><xliff:g example="6" id="fail_count">%1$d</xliff:g> исходных текстов не удалось загрузить.</string>
+    <string name="download_cancelled">Загрузка отменена</string>
+    <string name="download_errors">Ошибки загрузки</string>
+    <string name="helps_download_errors">Не удалось загрузить вспомогательные ресурсы для: <xliff:g example="en_obs,fr_obs" id="fails">%1$s</xliff:g></string>
+    <string name="source_not_found">Исходный текст не найден на сервере</string>
+    <string name="search_for_language">Поиск языка</string>
+    <string name="sort_column">Сортировка столбца по</string>
+    <string name="sort_projects">Сортировка столбца проекта по</string>
+    <string name="sort_project_then_language">Проект, затем язык</string>
+    <string name="sort_language_then_project">Язык, затем проект</string>
+    <string name="sort_progress_then_project">Прогресс, затем проект</string>
+    <string name="sort_bible_order">По порядку книг Библии</string>
+    <string name="sort_alphabetical_order">В алфавитном порядке</string>
+    <string name="usfm_output_filename_title_prompt">Введите имя USFM файла:</string>
+    <string name="found_in_chunks">Найдено во фрагментах <xliff:g example="6" id="found_count">%1$d</xliff:g></string>
+    <string name="retry_label">Повторить</string>
     <string name="current_user">Текущий пользователь: <xliff:g example="tester" id="user_name">%1$s</xliff:g></string>
     <string name="print_success">Успешно распечатано в:\n<xliff:g example="/downloads/en_ulb.pdf" id="destination">%1$s</xliff:g></string>
     <string name="check_network_connection">Проверьте интернет и повторите попытку</string>
@@ -728,16 +728,16 @@
     <string name="deleting_library">Удаление библиотеки</string>
     <string name="reading_logs">Чтение логов</string>
     <string name="simulating_crash">Имитация сбоя</string>
-    <string name="no_logs">There are no logs</string>
-    <string name="system_resources_check">System Resources Check</string>
-    <string name="library_was_deleted">The library content was deleted</string>
-    <string name="source_draft_translation_not_found">Source text for this draft translation not found.</string>
-    <string name="migrate_from_old_app">Migrate from Old App</string>
-    <string name="migrate_from_old_app_description">Would you like to migrate from the old app data? You can do that later in Settings.</string>
-    <string name="migrating_translations">Migrating translations</string>
-    <string name="migrating_complete">Migration complete!</string>
-    <string name="copying_file">Copying file: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
-    <string name="import_from_backup">Import from Backups</string>
-    <string name="filename">File name</string>
-    <string name="date_modified">Modified at</string>
+    <string name="no_logs">Нет журналов</string>
+    <string name="system_resources_check">Проверка системных ресурсов</string>
+    <string name="library_was_deleted">Содержание библиотеки было удалено</string>
+    <string name="source_draft_translation_not_found">Исходный текст для этого черновика не найден.</string>
+    <string name="migrate_from_old_app">Миграция из старого приложения</string>
+    <string name="migrate_from_old_app_description">Хотите провести миграцию из старых данных приложения? Вы можете сделать это позже в настройках.</string>
+    <string name="migrating_translations">Миграция переводов</string>
+    <string name="migrating_complete">Миграция выполнена!</string>
+    <string name="copying_file">Копирование файла: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
+    <string name="import_from_backup">Импорт из резервных копий</string>
+    <string name="filename">Имя файла</string>
+    <string name="date_modified">Изменено в</string>
 </resources>
