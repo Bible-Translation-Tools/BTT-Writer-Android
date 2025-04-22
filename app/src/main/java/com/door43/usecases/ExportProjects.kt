@@ -170,8 +170,7 @@ class ExportProjects @Inject constructor(
                     var startChunk = 0
                     if (frameList.isNotEmpty()) {
                         val frame = frameList[0]
-                        val verseID =
-                            Util.strToInt(frame.id, 0)
+                        val verseID = Util.strToInt(frame.id, 0)
                         if ((verseID == 0)) {
                             startChunk++
                         }

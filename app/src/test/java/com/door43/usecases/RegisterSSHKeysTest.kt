@@ -66,6 +66,7 @@ class RegisterSSHKeysTest {
         every { resources.getString(R.string.gogs_public_key_name) }
             .returns("public key")
         every { context.getString(R.string.pref_default_gogs_api) }.returns("/api")
+        every { context.getString(R.string.gogs_user_agent) }.returns("btt-writer-android")
     }
 
     @After

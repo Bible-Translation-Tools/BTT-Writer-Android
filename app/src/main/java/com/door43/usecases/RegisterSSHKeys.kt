@@ -34,7 +34,8 @@ class RegisterSSHKeys @Inject constructor(
             prefRepository.getDefaultPref(
                 SettingsActivity.KEY_PREF_GOGS_API,
                 context.getString(R.string.pref_default_gogs_api)
-            )
+            ),
+            context.getString(R.string.gogs_user_agent)
         )
 
         if (profile.gogsUser != null) {

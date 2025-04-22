@@ -10,6 +10,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator.Companion.TXT_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
+import com.door43.translationstudio.ui.spannables.USFMNoteSpan
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
@@ -1036,8 +1037,7 @@ class ProcessUSFM {
         var success = true
 
         // remove CRLF and replace with newlines
-        val cleanedString =
-            text.toString().replace("\r\n".toRegex(), "\n")
+        val cleanedString = text.toString().replace("\r\n".toRegex(), "\n")
 
         if (!isMissing(currentChapterStr)) {
             try {
@@ -1077,14 +1077,9 @@ class ProcessUSFM {
                 return false
             }
         } else { // save stuff before first chapter
-            val strippedUSFMFrontTags = removeKnownUSFMTags(cleanedString)
-            if (strippedUSFMFrontTags.isNotEmpty()) {
-                success = saveSection("front", "intro", strippedUSFMFrontTags)
-                successOverall = success
-            }
             val chapterFront = "front"
-            success = bookName?.let { saveSection(chapterFront, "title", it) } ?: false
-            successOverall = successOverall && success
+            success = bookName?.let { saveSection(chapterFront, "title", it) } == true
+            successOverall = success
         }
         return successOverall
     }
@@ -1186,24 +1181,26 @@ class ProcessUSFM {
         start: String?,
         end: String
     ): Boolean {
-        if (null == start) { // skip over stuff before verse 1 for now
-            // TODO: 11/1/16 save stuff before verse one
+        if (start == null) { // skip over stuff before verse 1 for now
             if (!isMissing(chapter)) {
                 val pattern = PATTERN_USFM_VERSE_SPAN
                 val matcher = pattern.matcher(text)
                 if (matcher.find()) {
                     val verseStart = matcher.start()
                     if (verseStart > 0) {
-                        var chapterTitleStart = 0
+                        var chapterTitle: String? = null
+                        var chapterTitleEnd = 0
                         val chapterTitlePattern = PATTERN_CHAPTER_TITLE_MARKER
                         val chapterTitleMatcher = chapterTitlePattern.matcher(text)
                         if (chapterTitleMatcher.find()) {
-                            chapterTitleStart = chapterTitleMatcher.start(1)
+                            chapterTitle = chapterTitleMatcher.group(1)?.let {
+                                removeKnownUSFMTags(it)
+                            }
+                            chapterTitleEnd = chapterTitleMatcher.end(1)
                         }
 
-                        val title = text.subSequence(chapterTitleStart, verseStart)
                         getChapterFolderName(chapter)?.let {
-                            saveSection(it, "title", title)
+                            saveSection(it, "title", chapterTitle ?: "")
                         }
                     }
                 }
@@ -1327,7 +1324,7 @@ class ProcessUSFM {
             val chunkFileName = getChunkFileName(chapter, firstVerse)
             success = getChapterFolderName(chapter)?.let {
                 saveSection(it, chunkFileName, section)
-            } ?: false
+            } == true
             successOverall = success
         }
         return successOverall
@@ -1339,11 +1336,20 @@ class ProcessUSFM {
      */
     private fun splitAtVerseEnd(text: CharSequence, start: Int, end: Int): VerseSplitResults {
         val verseStr = text.subSequence(start, end).toString()
+
         val sectionEnd = "\\s5\n"
-        val pos = verseStr.indexOf(sectionEnd)
-        if (pos >= 0) {
-            val verseStart = verseStr.substring(0, pos)
-            val extra = verseStr.substring(pos + sectionEnd.length)
+        val sectionPos = verseStr.indexOf(sectionEnd)
+
+        val footnoteMatcher = PATTERN_FOOTNOTE_MARKER.matcher(verseStr)
+
+        if (sectionPos >= 0) {
+            val verseStart = verseStr.substring(0, sectionPos)
+            val extra = verseStr.substring(sectionPos + sectionEnd.length)
+            return VerseSplitResults(verseStart, extra)
+        } else if (footnoteMatcher.find()) {
+            val footnoteStart = footnoteMatcher.start()
+            val verseStart = verseStr.substring(0, footnoteStart)
+            val extra = verseStr.substring(footnoteStart)
             return VerseSplitResults(verseStart, extra)
         }
         return VerseSplitResults(verseStr, "")
@@ -1437,7 +1443,7 @@ class ProcessUSFM {
      */
     private fun removeKnownUSFMTags(text: CharSequence): String {
         if (text.isNotEmpty()) {
-            val usfmTagPattern = "\\\\(\\w+)\\s([^\\n\\\\]*)"
+            val usfmTagPattern = "\\\\(\\w+)(?:\\s([^\\n\\\\]*))?"
             val regexPattern = Pattern.compile(usfmTagPattern)
 
             // find instance
@@ -1679,8 +1685,7 @@ class ProcessUSFM {
         val TAG: String = ProcessUSFM::class.java.simpleName
         private const val CHAPTER_TITLE_MARKER: String = "\\\\cl\\s([^\\n]*)"
         val PATTERN_CHAPTER_TITLE_MARKER: Pattern = Pattern.compile(CHAPTER_TITLE_MARKER)
-        private const val CHAPTER_SUB_TITLE_MARKER: String = "\\\\cl\\s([^\\n]*)"
-        val PATTERN_CHAPTER_SUB_TITLE_MARKER: Pattern = Pattern.compile(CHAPTER_SUB_TITLE_MARKER)
+        val PATTERN_FOOTNOTE_MARKER: Pattern = Pattern.compile(USFMNoteSpan.PATTERN)
         private const val BOOK_TITLE_MARKER: String = "\\\\toc1\\s([^\\n]*)"
         @JvmField
         val PATTERN_BOOK_TITLE_MARKER: Pattern = Pattern.compile(BOOK_TITLE_MARKER)
@@ -1701,8 +1706,6 @@ class ProcessUSFM {
         @JvmField
         val PATTERN_USFM_VERSE_SPAN: Pattern = Pattern.compile(USFMVerseSpan.PATTERN)
         const val END_MARKER: Int = 999999
-        const val FIRST_VERSE: String = "first_verse"
-        const val FILE_NAME: String = "file_name"
 
         private fun getOptInteger(json: JSONObject, key: String): Int? {
             return getOpt(json, key) as Int?
