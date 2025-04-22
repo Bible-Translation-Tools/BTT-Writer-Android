@@ -46,7 +46,10 @@ class SplashScreenActivity : BaseActivity() {
         openDirectory = registerForActivityResult(
             ActivityResultContracts.OpenDocumentTree()
         ) {
-            it?.let(viewModel::migrateOldAppdataFolder)
+            it?.let(viewModel::migrateOldAppdataFolder) ?: run {
+                viewModel.setMigrationShown(false)
+                showMigrationDialog()
+            }
         }
 
         setupObservers()
