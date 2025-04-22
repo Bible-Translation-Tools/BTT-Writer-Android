@@ -52,7 +52,7 @@ class CreateRepositoryTest {
         every { targetTranslation.id }.returns("aa_gen_text_reg")
 
         every { resources.getString(R.string.pref_default_gogs_api) }.returns(apiUrl)
-        every { context.getString(R.string.gogs_user_agent) }.returns("btt-writer")
+        every { context.getString(R.string.gogs_user_agent) }.returns("btt-writer-android")
     }
 
     @After
