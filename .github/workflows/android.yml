@@ -51,7 +51,6 @@ jobs:
       - name: Build AAB with Gradle
         # no sign it cause: "Android App Bundles include all your app’s compiled code and resources, but defer APK generation and signing to Google Play."
         run: ./gradlew bundleRelease
-
       - name: move apk
         run: mkdir ./release && mv ./app/build/outputs/apk/release/release.apk ./release/btt-writer.apk && mv ./app/build/outputs/bundle/release/app-release.aab ./release/btt-writer.aab
       - name: set s3 destination_dir for release or dev for install4j updates to work
@@ -72,6 +71,12 @@ jobs:
           aws_bucket: ${{ secrets.AWS_BUCKET }}
           source_dir: ./release
           destination_dir: ${{ env.CURRENT_S3_DESTINATION }}
+      - name: Make apk and aab avaialable as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-artifacts
+          path: ./release
+          retention-days: 7
       - name: upload artifacts to github releases on tags
         uses: "marvinpinto/action-automatic-releases@v1.2.1"
         if: github.ref == 'refs/heads/master'
