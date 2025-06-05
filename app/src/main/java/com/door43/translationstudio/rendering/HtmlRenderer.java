@@ -4,7 +4,6 @@ import android.content.Context;
 import android.text.Html;
 import android.text.TextUtils;
 
-import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
 import com.door43.translationstudio.ui.spannables.MarkdownLinkSpan;
 import com.door43.translationstudio.ui.spannables.MarkdownTitledLinkSpan;
 import com.door43.translationstudio.ui.spannables.PassageLinkSpan;
@@ -36,8 +35,6 @@ public class HtmlRenderer extends RenderingEngine {
     @Override
     public CharSequence render(CharSequence in) {
         CharSequence out = in;
-        out = renderTranslationAcademyAddress(out);
-        if(isStopped()) return in;
         out = renderPassageLink(out);
         if(isStopped()) return in;
         out = renderShortReferenceLink(out);
@@ -116,44 +113,6 @@ public class HtmlRenderer extends RenderingEngine {
             @Override
             public Span onCreate(Matcher matcher) {
                 return new ShortReferenceSpan(matcher.group(0));
-            }
-        });
-    }
-
-    /**
-     * Renders addresses to translation academy pages as html
-     * Example [[en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
-     * @param in
-     * @return
-     */
-    public CharSequence renderTranslationAcademyAddress(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.ADDRESS_PATTERN, "ta", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                String title = matcher.group(4);
-                if(title == null) {
-                    title = matcher.group(0);
-                }
-                return ArticleLinkSpan.parse(title, matcher.group(2));
-            }
-        });
-    }
-
-    /**
-     * Renders links to translation academy pages as html
-     * Example <a href="/en/ta/vol1/translate/figs_intro" title="en:ta:vol1:translate:figs_intro">Figures of Speech</a>
-     * @param in
-     * @return
-     */
-    public CharSequence renderTranslationAcademyLink(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.LINK_PATTERN, "ta", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                String title = matcher.group(6);
-                if(title == null) {
-                    title = matcher.group(0);
-                }
-                return ArticleLinkSpan.parse(title, matcher.group(3).replace("/", ":"));
             }
         });
     }
