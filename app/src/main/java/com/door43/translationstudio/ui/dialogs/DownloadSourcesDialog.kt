@@ -134,7 +134,7 @@ class DownloadSourcesDialog : DialogFragment() {
                                     R.string.choose_category
                                 )
 
-                                SelectionType.oldTestament, SelectionType.newTestament, SelectionType.translationAcademy, SelectionType.other_book -> addStep(
+                                SelectionType.oldTestament, SelectionType.newTestament, SelectionType.other_book -> addStep(
                                     SelectionType.language, R.string.choose_language
                                 )
 
@@ -148,11 +148,6 @@ class DownloadSourcesDialog : DialogFragment() {
 
                                         SelectionType.newTestament -> addStep(
                                             SelectionType.newTestament,
-                                            R.string.choose_book
-                                        )
-
-                                        SelectionType.translationAcademy -> addStep(
-                                            SelectionType.translationAcademy,
                                             R.string.choose_book
                                         )
 

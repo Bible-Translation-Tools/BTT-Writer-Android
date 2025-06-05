@@ -17,7 +17,6 @@ class GetAvailableSources @Inject constructor(
         val otBooks: Map<String, List<Int>>,
         val ntBooks: Map<String, List<Int>>,
         val otherBooks: Map<String, List<Int>>,
-        val taBooks: Map<String, List<Int>>
     )
 
     fun execute(prefix: String, progressListener: OnProgressListener? = null): Result {
@@ -71,7 +70,6 @@ class GetAvailableSources @Inject constructor(
             otBooks[book] = books
         }
         val otherBooks = LinkedHashMap<String, ArrayList<Int>>()
-        val taBooks = LinkedHashMap<String, ArrayList<Int>>()
 
         for (i in 0 until maxProgress) {
             val t: Translation = sources[i]
@@ -99,9 +97,7 @@ class GetAvailableSources @Inject constructor(
             } else if (otBooks.containsKey(book)) { // if OT book
                 otBooks[book]!!.add(i)
             } else { // other
-                if ("ta-" == book.substring(0, 3)) {
-                    addToOtherBook(taBooks, i, book)
-                } else {
+                if ("ta-" != book.substring(0, 3)) {
                     addToOtherBook(otherBooks, i, book)
                 }
             }
@@ -112,8 +108,7 @@ class GetAvailableSources @Inject constructor(
             byLanguage,
             otBooks,
             ntBooks,
-            otherBooks,
-            taBooks
+            otherBooks
         )
     }
 

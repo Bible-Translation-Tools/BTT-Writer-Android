@@ -3,7 +3,6 @@ package com.door43.translationstudio.rendering;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
 import com.door43.translationstudio.ui.spannables.PassageLinkSpan;
 import com.door43.translationstudio.ui.spannables.Span;
 
@@ -40,8 +39,6 @@ public class LinkRenderer extends RenderingEngine {
 
         out = renderPassageLink(out);
         if(isStopped()) return in;
-        out = renderTranslationAcademyLink(out);
-        if(isStopped()) return in;
 
         return out;
     }
@@ -52,8 +49,6 @@ public class LinkRenderer extends RenderingEngine {
         CharSequence out = in;
 
         out = renderPassageLink(out);
-        if(isStopped()) return in.toString();
-        out = renderTranslationAcademyLink(out);
         if(isStopped()) return in.toString();
 
         return out.toString();
@@ -69,20 +64,6 @@ public class LinkRenderer extends RenderingEngine {
             @Override
             public Span onCreate(Matcher matcher) {
                 return new PassageLinkSpan(matcher.group(3), matcher.group(2));
-            }
-        });
-    }
-
-    /**
-     * Renders links to translation academy pages
-     * @param in
-     * @return
-     */
-    private CharSequence renderTranslationAcademyLink(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.ADDRESS_PATTERN, new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                return ArticleLinkSpan.parse(matcher.group(3), matcher.group(2));
             }
         });
     }

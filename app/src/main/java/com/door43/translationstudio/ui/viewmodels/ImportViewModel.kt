@@ -212,7 +212,6 @@ class ImportViewModel @Inject constructor(
                         "tw" -> R.string.translation_words
                         "tn" -> R.string.label_translation_notes
                         "tq" -> R.string.translation_questions
-                        "ta" -> R.string.translation_academy
                         else -> R.string.unsupported
                     }
                 }
