@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
 import com.door43.translationstudio.ui.spannables.PassageLinkSpan;
 import com.door43.translationstudio.ui.spannables.Span;
 
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
  * Handles rendering of internal links to html anchors
  */
 public class LinkToHtmlRenderer extends RenderingEngine {
+    public static final String SCHEME_TA = "ta";
     public static final String SCHEME_CHUNK = "chunk";
     private final OnPreprocessLink preprocessCallback;
 
@@ -33,6 +35,10 @@ public class LinkToHtmlRenderer extends RenderingEngine {
     @Override
     public CharSequence render(CharSequence in) {
         CharSequence out = in;
+        out = renderTranslationAcademyAddress(out);
+        if(isStopped()) return in;
+        out = renderTranslationAcademyLink(out);
+        if(isStopped()) return in;
         out = renderPassageLink(out);
         if(isStopped()) return in;
         return out;
@@ -49,6 +55,44 @@ public class LinkToHtmlRenderer extends RenderingEngine {
             @Override
             public Span onCreate(Matcher matcher) {
                 return new PassageLinkSpan(matcher.group(3), matcher.group(2));
+            }
+        });
+    }
+
+    /**
+     * Renders addresses to translation academy pages as html
+     * Example [[en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
+     * @param in
+     * @return
+     */
+    public CharSequence renderTranslationAcademyAddress(CharSequence in) {
+        return renderLink(in, SCHEME_TA, ArticleLinkSpan.ADDRESS_PATTERN, new OnCreateLink() {
+            @Override
+            public Span onCreate(Matcher matcher) {
+                String title = matcher.group(4);
+                if(title == null) {
+                    title = matcher.group(0);
+                }
+                return ArticleLinkSpan.parse(title, matcher.group(2));
+            }
+        });
+    }
+
+    /**
+     * Renders links to translation academy pages as html
+     * Example <a href="/en/ta/vol1/translate/figs_intro" title="en:ta:vol1:translate:figs_intro">Figures of Speech</a>
+     * @param in
+     * @return
+     */
+    public CharSequence renderTranslationAcademyLink(CharSequence in) {
+        return renderLink(in, SCHEME_TA, ArticleLinkSpan.LINK_PATTERN, new OnCreateLink() {
+            @Override
+            public Span onCreate(Matcher matcher) {
+                String title = matcher.group(6);
+                if(title == null) {
+                    title = matcher.group(0);
+                }
+                return ArticleLinkSpan.parse(title, matcher.group(3).replace("/", ":"));
             }
         });
     }
@@ -112,6 +156,9 @@ public class LinkToHtmlRenderer extends RenderingEngine {
             if(url != null) {
                 if (url.startsWith(SCHEME_CHUNK + postfix)) {
                     onOverriddenLinkClick(view, url, new PassageLinkSpan("", url.substring((SCHEME_CHUNK + postfix).length())));
+                    return true;
+                } else if (url.startsWith(SCHEME_TA + postfix)) {
+                    onOverriddenLinkClick(view, url, ArticleLinkSpan.parse(url.substring((SCHEME_TA + postfix).length())));
                     return true;
                 }
             }

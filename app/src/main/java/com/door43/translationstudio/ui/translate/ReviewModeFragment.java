@@ -1,5 +1,8 @@
 package com.door43.translationstudio.ui.translate;
 
+import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_ENABLE_TM_LINKS;
+import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_TM_URL;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -18,6 +21,7 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.Frame;
 import com.door43.translationstudio.core.TranslationFormat;
@@ -29,6 +33,7 @@ import com.door43.translationstudio.databinding.FragmentResourcesQuestionBinding
 import com.door43.translationstudio.databinding.FragmentResourcesWordBinding;
 import com.door43.translationstudio.databinding.FragmentWordsIndexListBinding;
 import com.door43.translationstudio.rendering.HtmlRenderer;
+import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
 import com.door43.translationstudio.ui.spannables.LinkSpan;
 import com.door43.translationstudio.ui.spannables.PassageLinkSpan;
 import com.door43.translationstudio.ui.spannables.ShortReferenceSpan;
@@ -52,11 +57,19 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * Created by joel on 9/8/2015.
  */
+@AndroidEntryPoint
 public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener,
         ReviewModeAdapter.OnItemActionListener {
+
+    @Inject
+    IPreferenceRepository prefRepository;
 
     private static final String STATE_RESOURCES_OPEN = "state_resources_open";
     private static final String STATE_RESOURCES_DRAWER_OPEN = "state_resources_drawer_open";
@@ -68,6 +81,8 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     private boolean resourcesOpen = false;
     private boolean resourcesDrawerOpen = false;
     private String translationWordId;
+
+    private boolean enableTmLinks = false;
 
     private TranslationHelp translationQuestion = null;
     private TranslationHelp translationNote = null;
@@ -140,6 +155,11 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     @Override
     public void onResume() {
         super.onResume();
+        enableTmLinks = prefRepository.getDefaultPref(
+                KEY_PREF_ENABLE_TM_LINKS,
+                false,
+                Boolean.class
+        );
     }
 
     @Override
@@ -225,6 +245,19 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                                        int width) {
         renderTranslationWord(resourceContainerSlug, chapterSlug);
         openResourcesDrawer(width);
+    }
+
+    @Override
+    public void onTranslationManualClick(String section, String slug) {
+        String baseUrl = prefRepository.getDefaultPref(
+                KEY_PREF_TM_URL,
+                getString(R.string.pref_default_tm_url),
+                String.class
+        );
+        String url = baseUrl + "?section=" + section + "#" + slug;
+
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(browserIntent);
     }
 
     @Override
@@ -317,8 +350,11 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                     rc.language.slug, rc.language.direction);
             HtmlRenderer renderer = renderingProvider.createHtmlRenderer(span -> {
                     boolean result = false;
-
-                    if (span instanceof PassageLinkSpan link) {
+                    if (span instanceof ArticleLinkSpan link) {
+                        String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
+                        link.setTitle(title);
+                        result = enableTmLinks;
+                    } else if (span instanceof PassageLinkSpan link) {
                         String chunk = rc.readChunk(link.getChapterId(), link.getFrameId());
                         String verseTitle = Frame.parseVerseTitle(chunk,
                                 TranslationFormat.parse(rc.contentMimeType));
@@ -355,6 +391,13 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                     public void onClick(View view, Span span, int start, int end) {
                         String type = ((LinkSpan) span).getType();
                         switch (type) {
+                            case "ta" -> {
+                                String url = span.getMachineReadable().toString();
+                                ArticleLinkSpan link = ArticleLinkSpan.parse(url);
+                                if (link != null) {
+                                    onTranslationManualClick(link.getSection(), link.getSlug());
+                                }
+                            }
                             case "p" -> {
                                 String url = span.getMachineReadable().toString();
                                 PassageLinkSpan link = new PassageLinkSpan("", url);
@@ -503,8 +546,12 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 //            mCloseResourcesDrawerButton.setText(note.getTitle());
 
         HtmlRenderer renderer = renderingProvider.createHtmlRenderer(span -> {
-            Boolean result = false;
-            if (span instanceof PassageLinkSpan) {
+            boolean result = false;
+            if (span instanceof ArticleLinkSpan link) {
+                String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
+                link.setTitle(title);
+                result = enableTmLinks;
+            } else if (span instanceof PassageLinkSpan) {
 //                        PassageLinkSpan link = (PassageLinkSpan)span;
 //                        String chapterID = link.getChapterId();
                 // TODO: 3/30/2016 rather than assuming passage links are always referring to the
@@ -555,6 +602,13 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
             public void onClick(View view, Span span, int start, int end) {
                 String type = ((LinkSpan) span).getType();
                 switch (type) {
+                    case "ta" -> {
+                        String url = span.getMachineReadable().toString();
+                        ArticleLinkSpan link = ArticleLinkSpan.parse(url);
+                        if (link != null) {
+                            onTranslationManualClick(link.getSection(), link.getSlug());
+                        }
+                    }
                     case "p" -> {
                         String url = span.getMachineReadable().toString();
                         PassageLinkSpan link = new PassageLinkSpan("", url);
@@ -757,5 +811,13 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     @Override
     public String getVerseChunk(String chapter, String verse) {
         return Util.mapVerseToChunk(viewModel.getResourceContainer(), chapter, verse);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (resourcesDrawerOpen) {
+            closeResourcesDrawer();
+        }
     }
 }

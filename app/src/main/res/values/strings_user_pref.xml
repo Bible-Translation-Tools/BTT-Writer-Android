@@ -64,6 +64,7 @@
     <!-- The URL to download the list of languages -->
     <string name="pref_title_language_url">Language URL</string>
     <string name="pref_title_index_sqlite_url">Index.sqlite URL</string>
+    <string name="pref_title_tm_url">Translation Manual URL</string>
     <!-- The URL to create a new account. -->
     <string name="pref_title_create_account_url">Account Creation URL</string>
 
