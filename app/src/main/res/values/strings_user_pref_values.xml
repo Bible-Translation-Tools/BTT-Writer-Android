@@ -44,6 +44,8 @@
 
     <string name="pref_default_index_sqlite_url" translatable="false">https://writer-resources.bibletranslationtools.org/index.sqlite</string>
 
+    <string name="pref_default_tm_url" translatable="false">https://read.bibleineverylanguage.org/WA-Catalog/en_tm</string>
+
     <!--<string name="pref_default_export_format" translatable="false">dokuwiki</string>-->
     <!--<string-array name="pref_export_format_values" translatable="false">-->
         <!--<item>dokuwiki</item>-->

@@ -75,6 +75,13 @@
             android:title="@string/pref_title_index_sqlite_url"
             android:defaultValue="@string/pref_default_index_sqlite_url"
             app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
+
+        <EditTextPreference
+            android:key="tm_url"
+            android:title="@string/pref_title_tm_url"
+            android:defaultValue="@string/pref_default_tm_url"
+            app:allowDividerAbove="true"
             app:allowDividerBelow="false"/>
 
     </PreferenceCategory>

@@ -450,7 +450,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     @Override
-    public void onTranslationArticleClick(String volume, String manual, String slug, int width) {
+    public void onTranslationManualClick(String section, String slug) {
 
     }
 

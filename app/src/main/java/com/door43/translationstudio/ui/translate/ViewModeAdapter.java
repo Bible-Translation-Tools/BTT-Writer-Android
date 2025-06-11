@@ -4,20 +4,17 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-import com.door43.translationstudio.R;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
@@ -464,7 +461,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
         void closeKeyboard();
         void openTranslationMode(TranslationViewMode mode, Bundle extras);
         void onTranslationWordClick(String resourceContainerSlug, String chapterSlug, int width);
-        void onTranslationArticleClick(String volume, String manual, String slug, int width);
+        void onTranslationManualClick(String section, String slug);
         void onTranslationNoteClick(TranslationHelp note, int width);
         void onTranslationQuestionClick(TranslationHelp question, int width);
         void scrollToChunk(String chapterSlug, String frameSlug);

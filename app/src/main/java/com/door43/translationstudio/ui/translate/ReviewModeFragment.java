@@ -1,5 +1,8 @@
 package com.door43.translationstudio.ui.translate;
 
+import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_ENABLE_TM_LINKS;
+import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_TM_URL;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -12,27 +15,24 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.Frame;
-import com.door43.translationstudio.core.TranslationArticle;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Util;
-import com.door43.translationstudio.databinding.FragmentResourcesArticleBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesExampleItemBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesNoteBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesQuestionBinding;
 import com.door43.translationstudio.databinding.FragmentResourcesWordBinding;
 import com.door43.translationstudio.databinding.FragmentWordsIndexListBinding;
 import com.door43.translationstudio.rendering.HtmlRenderer;
-import com.door43.translationstudio.rendering.LinkToHtmlRenderer;
 import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
 import com.door43.translationstudio.ui.spannables.LinkSpan;
 import com.door43.translationstudio.ui.spannables.PassageLinkSpan;
@@ -44,9 +44,7 @@ import com.door43.util.StringUtilities;
 import com.door43.widget.ViewUtil;
 import com.google.android.material.snackbar.Snackbar;
 
-import org.markdownj.MarkdownProcessor;
 import org.sufficientlysecure.htmltextview.LocalLinkMovementMethod;
-import org.unfoldingword.door43client.models.Translation;
 import org.unfoldingword.resourcecontainer.Language;
 import org.unfoldingword.resourcecontainer.Link;
 import org.unfoldingword.resourcecontainer.ResourceContainer;
@@ -59,11 +57,19 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * Created by joel on 9/8/2015.
  */
+@AndroidEntryPoint
 public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener,
         ReviewModeAdapter.OnItemActionListener {
+
+    @Inject
+    IPreferenceRepository prefRepository;
 
     private static final String STATE_RESOURCES_OPEN = "state_resources_open";
     private static final String STATE_RESOURCES_DRAWER_OPEN = "state_resources_drawer_open";
@@ -75,6 +81,8 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     private boolean resourcesOpen = false;
     private boolean resourcesDrawerOpen = false;
     private String translationWordId;
+
+    private boolean enableTmLinks = false;
 
     private TranslationHelp translationQuestion = null;
     private TranslationHelp translationNote = null;
@@ -147,6 +155,11 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     @Override
     public void onResume() {
         super.onResume();
+        enableTmLinks = prefRepository.getDefaultPref(
+                KEY_PREF_ENABLE_TM_LINKS,
+                false,
+                Boolean.class
+        );
     }
 
     @Override
@@ -235,9 +248,16 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     }
 
     @Override
-    public void onTranslationArticleClick(String volume, String manual, String slug, int width) {
-        renderTranslationArticle(volume, manual, slug);
-        openResourcesDrawer(width);
+    public void onTranslationManualClick(String section, String slug) {
+        String baseUrl = prefRepository.getDefaultPref(
+                KEY_PREF_TM_URL,
+                getString(R.string.pref_default_tm_url),
+                String.class
+        );
+        String url = baseUrl + "?section=" + section + "#" + slug;
+
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(browserIntent);
     }
 
     @Override
@@ -297,131 +317,6 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     }
 
     /**
-     * Prepares the resources drawer with the translation article
-     *
-     * @param volume
-     * @param manual
-     * @param slug
-     */
-    private void renderTranslationArticle(String volume, String manual, String slug) {
-        TranslationArticle article =
-                getPreferredTranslationArticle(getSelectedResourceContainer(), volume, manual,
-                        slug);
-        binding.resourcesDrawerContent.setVisibility(View.GONE);
-
-        if (article != null) {
-//            mCloseResourcesDrawerButton.setText(article.getTitle());
-            binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
-            binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
-
-            FragmentResourcesArticleBinding articleBinding =
-                    FragmentResourcesArticleBinding.inflate(requireActivity().getLayoutInflater());
-//            TextView title = (TextView)view.findViewById(R.id.title);
-//            TextView descriptionView = (TextView)view.findViewById(R.id.description);
-
-            final ResourceContainer resourceContainer = getSelectedResourceContainer();
-            LinkToHtmlRenderer renderer = renderingProvider.createLinkToHtmlRenderer(span -> {
-                if (span instanceof ArticleLinkSpan) {
-                    ArticleLinkSpan link = ((ArticleLinkSpan) span);
-                    TranslationArticle article1 =
-                            getPreferredTranslationArticle(resourceContainer, link.getVolume(),
-                                    link.getManual(), link.getId());
-                    if (article1 != null) {
-                        link.setTitle(article1.getTitle());
-                    } else {
-                        return false;
-                    }
-                } else if (span instanceof PassageLinkSpan) {
-                    PassageLinkSpan link = (PassageLinkSpan) span;
-                    String text = resourceContainer.readChunk(link.getChapterId(),
-                            link.getFrameId());
-
-//                        Frame frame = library.getFrame(resourceContainer, link.getChapterId(),
-//                        link.getFrameId());
-                    String title =
-                            resourceContainer.readChunk("front", "title") + " " + Integer.parseInt(link.getChapterId()) + ":" + Frame.parseVerseTitle(text, TranslationFormat.parse(resourceContainer.contentMimeType));
-                    link.setTitle(title);
-                    return !resourceContainer.readChunk(link.getChapterId(), link.getFrameId()).isEmpty();
-                }
-                return true;
-            });
-//            , new Span.OnClickListener() {
-//                @Override
-//                public void onClick(View view, Span span, int start, int end) {
-//                    if(((LinkSpan)span).getType().equals("ta")) {
-//                        String url = span.getMachineReadable().toString();
-//                        ArticleLinkSpan link = ArticleLinkSpan.parse(url);
-//                        if(link != null) {
-//                            onTranslationArticleClick(link.getVolume(), link.getManual(), link
-//                            .getId(), mResourcesDrawer.getLayoutParams().width);
-//                        }
-//                    } else if(((LinkSpan)span).getType().equals("p")) {
-//                        PassageLinkSpan link = (PassageLinkSpan) span;
-//                        scrollToChunk(link.getChapterId(), link.getFrameId());
-//                    }
-//                }
-//
-//                @Override
-//                public void onLongClick(View view, Span span, int start, int end) {
-//
-//                }
-//            });
-
-//            title.setText(article.getTitle());
-//            SourceLanguage sourceLanguage = library.getSourceLanguage(sourceTranslation
-//            .projectSlug, sourceTranslation.sourceLanguageSlug);
-//            typography.format(title, sourceLanguage.getId(), sourceLanguage.getDirection());
-
-//            descriptionView.setText(renderer.render(article.getBody()));
-//            typography.formatSub(descriptionView, sourceLanguage.getId(), sourceLanguage
-//            .getDirection());
-//            descriptionView.setMovementMethod(LocalLinkMovementMethod.getInstance());
-
-            articleBinding.getRoot().setWebViewClient(new LinkToHtmlRenderer.CustomWebViewClient() {
-                @Override
-                public void onOverriddenLinkClick(WebView view, String url, Span span) {
-                    if (span instanceof ArticleLinkSpan) {
-                        ArticleLinkSpan link = (ArticleLinkSpan) span;
-                        onTranslationArticleClick(
-                                link.getVolume(),
-                                link.getManual(),
-                                link.getId(),
-                                binding.resourcesDrawerCard.getLayoutParams().width
-                        );
-                    } else if (span instanceof PassageLinkSpan) {
-                        PassageLinkSpan link = (PassageLinkSpan) span;
-                        scrollToChunk(link.getChapterId(), link.getFrameId());
-                    }
-                }
-
-                @Override
-                public void onLinkClick(WebView view, final String url) {
-                    // opens web url
-                    new AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.view_online)
-                            .setMessage(R.string.use_internet_confirmation)
-                            .setNegativeButton(R.string.title_cancel, null)
-                            .setPositiveButton(R.string.label_continue,
-                                    new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                                    startActivity(intent);
-                                }
-                            })
-                            .show();
-                }
-            });
-            articleBinding.getRoot().loadData(typography.getStyle(TranslationType.SOURCE)
-                    + renderer.render(article.getBody()).toString(), "text/html", "utf-8");
-
-            binding.scrollingResourcesDrawerContent.removeAllViews();
-            binding.scrollingResourcesDrawerContent.addView(articleBinding.getRoot());
-        }
-
-    }
-
-    /**
      * Prepares the resources drawer with the translation word
      *
      * @param resourceContainerSlug
@@ -455,14 +350,10 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                     rc.language.slug, rc.language.direction);
             HtmlRenderer renderer = renderingProvider.createHtmlRenderer(span -> {
                     boolean result = false;
-
                     if (span instanceof ArticleLinkSpan link) {
-                        TranslationArticle article = getPreferredTranslationArticle(rc,
-                                link.getVolume(), link.getManual(), link.getId());
-                        if (article != null) {
-                            link.setTitle(article.getTitle());
-                            result = true;
-                        }
+                        String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
+                        link.setTitle(title);
+                        result = enableTmLinks;
                     } else if (span instanceof PassageLinkSpan link) {
                         String chunk = rc.readChunk(link.getChapterId(), link.getFrameId());
                         String verseTitle = Frame.parseVerseTitle(chunk,
@@ -504,9 +395,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                                 String url = span.getMachineReadable().toString();
                                 ArticleLinkSpan link = ArticleLinkSpan.parse(url);
                                 if (link != null) {
-                                    onTranslationArticleClick(link.getVolume(),
-                                            link.getManual(), link.getId(),
-                                            binding.resourcesDrawerCard.getLayoutParams().width);
+                                    onTranslationManualClick(link.getSection(), link.getSlug());
                                 }
                             }
                             case "p" -> {
@@ -657,15 +546,11 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 //            mCloseResourcesDrawerButton.setText(note.getTitle());
 
         HtmlRenderer renderer = renderingProvider.createHtmlRenderer(span -> {
-            Boolean result = false;
-            if (span instanceof ArticleLinkSpan) {
-                ArticleLinkSpan link = ((ArticleLinkSpan) span);
-                TranslationArticle article = getPreferredTranslationArticle(sourceTranslation,
-                        link.getVolume(), link.getManual(), link.getId());
-                if (article != null) {
-                    link.setTitle(article.getTitle());
-                    result = true;
-                }
+            boolean result = false;
+            if (span instanceof ArticleLinkSpan link) {
+                String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
+                link.setTitle(title);
+                result = enableTmLinks;
             } else if (span instanceof PassageLinkSpan) {
 //                        PassageLinkSpan link = (PassageLinkSpan)span;
 //                        String chapterID = link.getChapterId();
@@ -721,9 +606,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                         String url = span.getMachineReadable().toString();
                         ArticleLinkSpan link = ArticleLinkSpan.parse(url);
                         if (link != null) {
-                            onTranslationArticleClick(link.getVolume(), link.getManual(),
-                                    link.getId(),
-                                    binding.resourcesDrawerCard.getLayoutParams().width);
+                            onTranslationManualClick(link.getSection(), link.getSlug());
                         }
                     }
                     case "p" -> {
@@ -925,35 +808,16 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
         super.onSaveInstanceState(out);
     }
 
-    /**
-     * Returns the preferred translation academy
-     * if none exist in the source language it will return the english version.
-     *
-     * @param resourceContainer
-     * @param volume
-     * @param manual
-     * @param articleId         @return
-     */
-    private TranslationArticle getPreferredTranslationArticle(ResourceContainer resourceContainer
-            , String volume, String manual, String articleId) {
-        List<Translation> translations =
-                viewModel.findTranslations(resourceContainer.language.slug, "ta-" + manual,
-                        volume, "man", null, 0, -1);
-        if (translations.isEmpty()) return null;
-
-        ResourceContainer container =
-                viewModel.getResourceContainer(translations.get(0).resourceContainerSlug);
-        if (container == null) return null;
-        String title = container.readChunk(articleId, "title");
-        String body = container.readChunk(articleId, "01");
-        MarkdownProcessor md = new MarkdownProcessor();
-        String html = md.markdown(body);
-
-        return new TranslationArticle(volume, "ta-" + manual, articleId, title, html, "test");
-    }
-
     @Override
     public String getVerseChunk(String chapter, String verse) {
         return Util.mapVerseToChunk(viewModel.getResourceContainer(), chapter, verse);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (resourcesDrawerOpen) {
+            closeResourcesDrawer();
+        }
     }
 }

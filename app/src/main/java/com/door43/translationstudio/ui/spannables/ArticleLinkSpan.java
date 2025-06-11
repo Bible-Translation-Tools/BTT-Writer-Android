@@ -16,32 +16,32 @@ import java.util.regex.Pattern;
 public class ArticleLinkSpan extends Span {
     // e.g. [[en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
     // or [[:en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
-    public static final Pattern ADDRESS_PATTERN = Pattern.compile("\\[\\[:?(([-a-zA-Z0-9]+:ta:[-\\_a-z0-9]+:[-\\_a-z0-9]+:[-\\_a-z0-9]+)( *\\|(((?!\\]\\]).)+))?)\\]\\]");
+    public static final Pattern ADDRESS_PATTERN = Pattern.compile("\\[\\[:?(([-a-zA-Z0-9]+:ta:[-_a-z0-9]+:[-_a-z0-9]+:[-_a-z0-9]+)( *\\|(((?!]]).)+))?)]]");
     // e.g <a href="/en/ta/vol1/translate/figs_intro" title="en:ta:vol1:translate:figs_intro">Figures of Speech</a>
-    public static final Pattern LINK_PATTERN = Pattern.compile("<a(((?!<\\/a>).)*)href=\"\\/?([-a-zA-Z0-9]+\\/ta\\/[-\\_a-z0-9]+\\/[-\\_a-z0-9]+\\/[-\\_a-z0-9]+)\\/?\"(((?!<\\/a>).)*)>\\s*(((?!<\\/a>).)*)\\s*<\\/a>");
+    public static final Pattern LINK_PATTERN = Pattern.compile("<a(((?!</a>).)*)href=\"/?([-a-zA-Z0-9]+/ta/[-_a-z0-9]+/[-_a-z0-9]+/[-_a-z0-9]+)/?\"(((?!</a>).)*)>\\s*(((?!</a>).)*)\\s*</a>");
     private final String title;
     private final String address;
     private SpannableStringBuilder mSpannable;
     private String sourceLanguageSlug;
     private String volume;
-    private String id;
-    private String manual;
+    private String slug;
+    private String section;
 
     /**
      *
      * @param title
      * @param sourceLanguageSlug
      * @param volume
-     * @param manual
-     * @param id
+     * @param section
+     * @param slug
      */
-    protected ArticleLinkSpan(String title, String sourceLanguageSlug, String volume, String manual, String id) {
+    protected ArticleLinkSpan(String title, String sourceLanguageSlug, String volume, String section, String slug) {
         this.title = title;
-        this.address = buildAddress(sourceLanguageSlug, volume, manual, id);
+        this.address = buildAddress(sourceLanguageSlug, volume, section, slug);
         this.sourceLanguageSlug = sourceLanguageSlug;
         this.volume = volume;
-        this.manual = manual;
-        this.id = id;
+        this.section = section;
+        this.slug = slug;
         init(this.title, address);
     }
 
@@ -96,11 +96,11 @@ public class ArticleLinkSpan extends Span {
         return volume;
     }
 
-    public String getId() {
-        return id;
+    public String getSlug() {
+        return slug;
     }
 
-    public String getManual() {
-        return manual;
+    public String getSection() {
+        return section;
     }
 }
