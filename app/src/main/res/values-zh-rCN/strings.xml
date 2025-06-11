@@ -3,18 +3,23 @@
     <!-- The app name -->
     <string name="title_projects">工程</string>
     <string name="title_frames">帧</string>
-    <!-- Acknowlogment or an affirmative statement -->
+    <!-- Acknowledgment or an affirmative statement -->
     <string name="label_ok">还行</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
     <string name="label_close">Close</string>
     <!-- Close or reject an action -->
     <string name="title_cancel">取消</string>
     <!-- The application is already executing a different task -->
-    <!-- Theapplication is out of memory -->
+    <string name="error_task_running">A task is already running</string>
+    <!-- The application is out of memory -->
+    <string name="error_out_of_memory">Out of memory</string>
     <!-- The remote git repository could not be found -->
+    <string name="error_repository_not_found">Repository Not Found</string>
     <!-- Local changes are being uploaded to the server -->
     <string name="uploading">上传</string>
+    <string name="creating_repository">Creating repository</string>
     <!-- The repository could not be created-->
+    <string name="error_could_not_create_repository">Could not create repository</string>
     <!-- The terms that users must agree with in order to use the app -->
     <string name="terms_title">使用条款</string>
     <string name="terms">通过使用这个程序，你同意的信仰和翻译准则的声明，你在知识共享署名 - 相同方式共享4.0国际许可条款的工作释放。</string>
@@ -23,7 +28,7 @@
     <string name="chapter_reference_field">章参考</string>
     <!-- The language from which a project is being translated -->
     <string name="source_language_field">源语言</string>
-    <!-- The langage to which a project is being translated -->
+    <!-- The language to which a project is being translated -->
     <string name="target_language">目标语言</string>
     <string name="title_activity_chapter_setting">章设置</string>
     <string name="title_activity_language_selector">语言</string>
@@ -33,8 +38,10 @@
     <string name="missing_external_storage">外部存储设备不可用</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
     <string name="project_exported_to">项目保存到<xliff:g id="file_path" example="/storage/sdcard1/"> %1$s </xliff:g></string>
+    <string name="project_share_exception">The project cannot be shared</string>
     <!-- The file browser -->
     <string name="title_activity_file_explorer">文件浏览器</string>
+    <string name="missing_file">The file does not exist</string>
     <!-- Export a project to another app on the device -->
     <string name="backup_to_app">导出到应用程序</string>
     <!-- Export a project to the sd card -->
@@ -72,9 +79,9 @@
     <string name="label_translation_notes">翻译的注意事项</string>
     <string name="label_passage_note">通过注：</string>
     <string name="label_delete">删除</string>
-    <!-- Explaination of what a source language is -->
+    <!-- Explanation of what a source language is -->
     <string name="source_language_instructions">语言编制的源程序是已完成的翻译。</string>
-    <!-- Explaination of what a target language is -->
+    <!-- Explanation of what a target language is -->
     <string name="target_language_instructions">目标语言没有被翻译，或正在进行中的工程。</string>
     <string name="notes_cannot_overlap">注意不能重叠</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
@@ -114,7 +121,48 @@
     <string name="yes">是的</string>
     <string name="no">无</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
+    <string name="translation_guidlines"><![CDATA[<h1>翻译指南</h1>
+<p>
+      <strong>准确的</strong> - 准确的翻译有效地传达了原始的、受神启发的文本的预期含义。准确的翻译会表达出作者在原始文本中对原始读者的意图。
+      <p>
+        1. 在可能的范围内，不从原始信息中添加、误解或删除任何内容。
+        <br/>2. 不重新诠释原文的含义，使其与当代群众更相关连。
+        <br/>3. 准确的翻译不会为了支持特定的解释视角而歪曲意思。它应该没有神学、文化或个人偏见。
+        <br/>4. 准确的翻译要准确地传达历史的事件和事实。
+      <p>
+</p>
+<p>
+      <strong>清晰</strong> - 清晰的翻译将使用任何需要的语言结构来帮助读者轻松阅读和理解。
+      <p>
+        1. 清晰的翻译可以使用或多或或少的字词来尽可能清楚地传达原始含义。
+        <br/>2. 清晰的翻译并不意味着译者要澄清源文本中有歧义的东西。
+        <br/>3. 清晰的翻译并不意味着译者在对每一个史上曾有争议的段落都给予读者一个特定的解释。
+      </p>
+</p>
+<p>
+      <strong>自然</strong> - 自然翻译中使用的语言形式应该反映出目标语言在信件往来的景况下使用的方式。
+      <p>
+        1. 自然的圣经翻译，在听读的时候，会像是由一位母语说的很好或写得很好的成年人士说写的。
+        <br/>2. 自然的圣经翻译不会为了使翻译显得自然而去用他们自己文化里特定的表达方式。
+        <br/>3. 翻译一段圣经时，其准确度要比让人读的自然度来得更重要。
+      </p>
+</p>
+<p> 我们相信，在应用上述准则后，翻译质量就很可能达到一个高水平。再来就靠以下行动把翻译完结。</p>
+<p>
+     1. 由语言社区的信徒和他们的教会领袖测试和认可。
+    <br/> 2. 不断修改完善。
+</p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
+    <string name="statement_of_faith"><![CDATA[<h1>Statement of Faith</h1>
+<p>We believe:</p>
+<ul>
+    <li>The Bible is divinely inspired by God and has final authority.</li>
+    <li>God is one and exists in three persons: God the Father, God the Son and God the Holy Spirit.</li>
+    <li>Because of the fall of man, all humans are sinful, and in need of salvation.</li>
+    <li>The death of Christ is a substitute for sinners and provides for the cleansing of those who believe.</li>
+    <li>By God’s grace, through faith, man receives salvation as a free gift because of Jesus’ death and resurrection.</li>
+    <li>The resurrection of all—the saved to eternal life and the lost to eternal punishment.</li>
+</ul>]]></string>
     <string name="view_statement_of_faith">信仰观声明</string>
     <string name="view_translation_guidelines">查看翻译指南</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
@@ -262,6 +310,8 @@
     <string name="email">Email Address</string>
     <string name="phone">Phone Number</string>
     <string name="profile">Profile</string>
+    <string name="create_account_title">Please create or login to your account.</string>
+    <string name="names_will_be_public">Names will be publicly available</string>
     <string name="default_translator">Default translator name</string>
     <string name="project_title_complex">Project: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <!-- A warning shown, when publishing, indicating that names/pseudonyms (but not email or phone number) are published in the catealog -->
@@ -405,6 +455,7 @@
     <string name="registration_failed">Your account could not be created.</string>
     <string name="title_door43_account_required">Server Account Required</string>
     <string name="door43_account_required">You must connect to a server account first.</string>
+    <string name="server_account">Server Account</string>
     <string name="login_doo43">Login with Server Account</string>
     <string name="register_door43">Create new Server Account</string>
     <string name="create_offline_profile">Create offline Account</string>
@@ -454,7 +505,7 @@
     <string name="chapter_out_of_order">Chapter out of order: \'<xliff:g example="4" id="found">%1$s</xliff:g>\' after \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
     <string name="missing_verses_in_section">No Verses in Section</string>
     <string name="error_prefix">Error: %s</string>
-    <string name="no_error">No errors Found</string>
+    <string name="no_error">No errors found</string>
     <string name="warning_prefix">Warning: %s</string>
     <string name="found_book">Found book: %s</string>
     <string name="importing_file">Importing: %s</string>
@@ -477,6 +528,22 @@
     <string name="title_import_failed">Import Failed!</string>
     <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
     <string name="table_of_contents">Table of Contents </string>
+    <string name="license_pdf"><![CDATA[<h2>知识共享署名-相同方式共享 4.0 国际</h2>
+<h3>免责声明</h3>
+<p>此处包含知识共享署名-相同方式共享 4.0 国际许可证，可在 <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
+<h4> 许可权免责声明摘要(此声明不替代作品许可权)</h4>
+<br/>
+<h3> 您可以自由地：</h3>
+<br/><b>&#8226; 共享</b> - 在任何媒介以任何形式复制、发行本作品
+<br/><b>&#8226; 演绎</b> - 修改、转换或以本作品为基础进行创作在任何用途下，甚至商业目的
+<p> 只要你遵守许可协议条款，许可人就无法收回你的这些权利</p>
+<h3>惟须遵守下列条件：</h3>
+<br/><b>&#8226; 署名</b> - 您必须给出适当的署名，提供指向本许可协议的链接，同时标明是否（对原始作品）作了修改。您可以用任何合理的方式来署名，但是不得以任何方式暗示许可人为您或您的使用背书。
+<br/><b>&#8226; 相同方式共享</b> - 如果您再混合、转换或者基于本作品进行创作，您必须基于与原先许可协议相同的许可协议 分发您贡献的作品。
+<br/><b>&#8226; 没有附加限制</b> - 您不得适用法律术语或者 技术措施 从而限制其他人做许可协议允许的事情。</p>
+<h3> 声明：</h3>
+<p><br/>&#8226; 您不必因为公共领域的作品要素而遵守许可协议，或者您的使用被可适用的 例外或限制所允许。</p>
+<p><br/>&#8226; 不提供担保。许可协议可能不会给与您意图使用的所必须的所有许可。例如，其他权利比如形象权、隐私权或人格权可能限制您如何使用作品。]]></string>
     <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
     <string name="new_lang_api_upload_failure_title">New Language Error</string>
     <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
@@ -496,6 +563,7 @@
     <string name="download_latest_apk">Do you want to download this update?</string>
     <string name="updating_projects">Updating projects</string>
     <string name="view_online">View Online</string>
+    <string name="read_on_web">Read on Web</string>
     <string name="change_detected">Project Change Detected</string>
     <string name="upload_push_failure">There are changes to this translation on your server account. You must import those changes before uploading.</string>
     <string name="merge_request">There are changes to your translation of \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' in \'<xliff:g example="English" id="language">%2$s</xliff:g>\' on your server account. Would you like to import those changes now?</string>
@@ -539,6 +607,7 @@
     <string name="update_languages">Update List of Available Target Languages</string>
     <string name="update_source">Update List of Available Source Texts</string>
     <string name="download_index">Download New index.sqlite</string>
+    <string name="import_index">Import index.sqlite from File</string>
     <string name="update_all">Update All</string>
     <string name="time_very_slow">Takes awhile</string>
     <string name="time_slow">May take many minutes (or longer)</string>
@@ -568,6 +637,8 @@
     <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
     <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
     <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
+    <string name="importing_index">Importing index.sqlite file. Please wait...</string>
+    <string name="import_index_failed">Failed to import index.sqlite file. Check if the file is correct.</string>
     <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
     <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
     <string name="available_online">Available Online</string>
@@ -580,7 +651,6 @@
     <string name="loading_sources">Loading Source Texts\nPlease wait...</string>
     <string name="old_testament_label">Old Testament</string>
     <string name="new_testament_label">New Testament</string>
-    <string name="ta_label">translationAcademy</string>
     <string name="other_label">Other</string>
     <string name="choose_language">Choose a Language</string>
     <string name="choose_category">Choose a Category</string>
@@ -616,7 +686,6 @@
     <string name="overwrite_projects_label">Overwrite Project</string>
     <string name="project_output_filename_title_prompt">Enter Project output file name:</string>
     <string name="translation_questions">Questions</string>
-    <string name="translation_academy">Translation Academy</string>
     <string name="unsupported">Unsupported</string>
     <string name="import_warning">The project \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' may not be supported in this app.  Currently, BTT Writer only supports Scripture and Open Bible Stories projects. If this is not one of those types of projects it will not be imported into BTT Writer.\n\nDo you want to try to import it anyway?</string>
     <string name="overwrite_file_title">Overwrite File?</string>
@@ -639,6 +708,37 @@
     <string name="min_hardware_req_not_met">This device does not meet the minimum hardware requirements and may function poorly. You may also experience problems on some phones and other very small devices.</string>
     <string name="do_not_show_again">Don\'t show again</string>
     <string name="pref_title_check_hardware_requirements">Check Hardware Requirements</string>
+    <string name="pref_title_enable_tm_links">Enable TM Links</string>
     <string name="pref_description_check_hardware_requirements">Check for suggested hardware when starting the app</string>
+    <string name="pref_description_enable_tm_links">Open Translation Manual links in browser (requires internet)</string>
     <string name="import_project_already_exists">This project (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) already exists locally. How would you like to proceed?</string>
+    <string name="searching_repositories">Searching repositories</string>
+    <string name="cloning_repository">Cloning repository</string>
+    <string name="start_new_translation">Start a new translation</string>
+    <string name="regenerate_ssh_keys">Regenerate SSH keys</string>
+    <string name="regenerate_ssh_keys_hint">Discards and regenerates the ssh keys used for git</string>
+    <string name="read_debug_log">Read debugging log</string>
+    <string name="read_debug_log_hint">View the error logs that have been generated on this device.</string>
+    <string name="simulate_crash">Simulate crash</string>
+    <string name="check_system_resources">Check system resources</string>
+    <string name="check_system_resources_hint">Check for minimum system resources.</string>
+    <string name="delete_library">Delete Library</string>
+    <string name="delete_library_hint">Deletes the entire library database so it can be rebuilt from scratch</string>
+    <string name="recreate_keys">Regenerating keys</string>
+    <string name="deleting_library">Deleting library</string>
+    <string name="reading_logs">Reading logs</string>
+    <string name="simulating_crash">Simulating crash</string>
+    <string name="no_logs">There are no logs</string>
+    <string name="system_resources_check">System Resources Check</string>
+    <string name="library_was_deleted">The library content was deleted</string>
+    <string name="source_draft_translation_not_found">Source text for this draft translation not found.</string>
+    <string name="migrate_from_old_app">Migrate from Old App</string>
+    <string name="migrate_from_old_app_description">Would you like to migrate from the old app data? You can do that later in Settings.</string>
+    <string name="migrating_translations">Migrating translations</string>
+    <string name="migrating_complete">Migration complete!</string>
+    <string name="copying_file">Copying file: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
+    <string name="import_from_backup">Import from Backups</string>
+    <string name="filename">File name</string>
+    <string name="date_modified">Modified at</string>
+    <string name="tm_title">Translation Manual: <xliff:g example="fig" id="section">%1$s</xliff:g>/<xliff:g example="translate-names" id="slug">%2$s</xliff:g></string>
 </resources>

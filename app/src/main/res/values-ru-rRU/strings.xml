@@ -3,18 +3,23 @@
     <!-- The app name -->
     <string name="title_projects">Проекты</string>
     <string name="title_frames">Рамки</string>
-    <!-- Acknowlogment or an affirmative statement -->
+    <!-- Acknowledgment or an affirmative statement -->
     <string name="label_ok">Ок</string>
     <!-- Close a message/notification/dialog, but without implying an affirmative statement -->
-    <string name="label_close">Close</string>
+    <string name="label_close">Закрыть</string>
     <!-- Close or reject an action -->
     <string name="title_cancel">Отмена</string>
     <!-- The application is already executing a different task -->
-    <!-- Theapplication is out of memory -->
+    <string name="error_task_running">A task is already running</string>
+    <!-- The application is out of memory -->
+    <string name="error_out_of_memory">Out of memory</string>
     <!-- The remote git repository could not be found -->
+    <string name="error_repository_not_found">Repository Not Found</string>
     <!-- Local changes are being uploaded to the server -->
     <string name="uploading">Загрузка</string>
+    <string name="creating_repository">Создание репозитория</string>
     <!-- The repository could not be created-->
+    <string name="error_could_not_create_repository">Could not create repository</string>
     <!-- The terms that users must agree with in order to use the app -->
     <string name="terms_title">Условия использования</string>
     <string name="terms">С помощью этого приложения вы согласны с утверждением веры и принципов перевода и освободить вас работать под условиями Creative Commons Attribution-ShareAlike 4.0 License Международного.</string>
@@ -23,7 +28,7 @@
     <string name="chapter_reference_field">Глава Ссылкой:</string>
     <!-- The language from which a project is being translated -->
     <string name="source_language_field">Исходный Язык:</string>
-    <!-- The langage to which a project is being translated -->
+    <!-- The language to which a project is being translated -->
     <string name="target_language">Целевой Язык:</string>
     <string name="title_activity_chapter_setting">Глава Настройки</string>
     <string name="title_activity_language_selector">Язык</string>
@@ -33,8 +38,10 @@
     <string name="missing_external_storage">Внешний накопитель не доступен</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
     <string name="project_exported_to">Проект, сохраненный на </string>
+    <string name="project_share_exception">The project cannot be shared</string>
     <!-- The file browser -->
     <string name="title_activity_file_explorer">File Explorer</string>
+    <string name="missing_file">The file does not exist</string>
     <!-- Export a project to another app on the device -->
     <string name="backup_to_app">Экспорт в app</string>
     <!-- Export a project to the sd card -->
@@ -57,14 +64,14 @@
     <string name="error_chapter_title_missing">Название главы отсутствует</string>
     <string name="error_chapter_reference_missing">Справочная глава отсутствует</string>
     <string name="label_chapter_title_detailed">Глава <xliff:g id="chapter" example="1. The Creation"> %1$s </xliff:g></string>
-    <string name="label_frame_title_detailed">Рама: <xliff:g id="frame" example="1"> %1$s </xliff:g></string>
+    <string name="label_frame_title_detailed">Фрагмент: <xliff:g id="frame" example="1">%1$s </xliff:g></string>
     <!-- Errors were encountered while validating the translation -->
-    <string name="dialog_validation_errors">Ошибки Проверки</string>
-    <string name="validation_errors">Имеются нерешенные ошибки в переводе. Пожалуйста, исправьте эти повторите попытку.</string>
+    <string name="dialog_validation_errors">Ошибки проверки</string>
+    <string name="validation_errors">Имеются нерешенные ошибки в переводе. Пожалуйста, исправьте их и повторите попытку</string>
     <!-- Indicates that a number of frames have not been translated. e.g. 3 frames have not been translated -->
-    <string name="error_frames_not_translated">%1$s кадры не были переведены.</string>
-    <string name="dialog_validation_warnings">Предупреждения Проверки</string>
-    <string name="validation_warnings">Имеются нерешенные предупреждения. Вы уверены, что хотите отправить этот перевод?</string>
+    <string name="error_frames_not_translated"><xliff:g example="5" id="number">%1$s</xliff:g> фрагментов не были переведены.</string>
+    <string name="dialog_validation_warnings">Предупреждения проверки</string>
+    <string name="validation_warnings">Есть нерешенные предупреждения. Продолжить?</string>
     <string name="no_translated_chapters">Ничего не переведено еще.</string>
     <string name="title_chapters">Главы</string>
     <!-- Notifies the user that they are viewing a frame within a chapter. e.g. Viewing frame 01 in chapter 1. The Creation -->
@@ -72,14 +79,14 @@
     <string name="label_translation_notes">Перевод Заметки</string>
     <string name="label_passage_note">Пассаж Примечание:</string>
     <string name="label_delete">Удалить</string>
-    <!-- Explaination of what a source language is -->
+    <!-- Explanation of what a source language is -->
     <string name="source_language_instructions">Языки Источник завершены переводы.</string>
-    <!-- Explaination of what a target language is -->
+    <!-- Explanation of what a target language is -->
     <string name="target_language_instructions">Целевые языки не были переведены или работы в прогресс.</string>
     <string name="notes_cannot_overlap">Примечания не должны пересекаться</string>
     <!-- Indicates the current frame (page) being viewed e.g. Frame 2 of 10 -->
     <string name="currently_viewed_frame_index">Рамка <xliff:g id="current_frame" example="2"> %1$s </xliff:g> из <xliff:g id="total_frames" example="10"> %2$s </xliff:g></string>
-    <string name="content_server">Content Server</string>
+    <string name="content_server">Сервер контента</string>
     <string name="opening_project">Открытие проекта</string>
     <!-- Indicates the target language that is being loaded. e.g. Loading target language: Deutsch -->
     <string name="loading_target_language">Загрузка целевой язык: %1$s</string>
@@ -114,7 +121,48 @@
     <string name="yes">Да</string>
     <string name="no">Нет</string>
     <!-- This is the translation guidelines that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we can find a reliable source -->
+    <string name="translation_guidlines"><![CDATA[<h1>Translation Guidelines</h1>
+<p>
+      <strong>Accurate</strong> - Accurate translations effectively communicate the intended meaning of the original, divinely inspired text. An accurate translation expresses the meaning the author intended for the original audience in the original context.
+      <p>
+        1. To the extent that is possible, nothing is added, misconstrued, or deleted from the original message.
+        <br/>2. It does not recast the meaning of the original text to make it more relevant to the contemporary audience.
+        <br/>3. An accurate translation does not distort the meaning in order to favor a specific interpretive perspective. It should be free from theological, cultural, or personal biases.
+        <br/>4. An accurate translation communicates historical events and facts accurately.
+      <p>
+</p>
+<p>
+      <strong>Clear</strong> - Clear translations will use whatever language structures are needed to help readers easily read and understand it.
+      <p>
+        1. A clear translation may use as many or as few terms as necessary to communicate the original meaning as clearly as possible.
+        <br/>2. Making a clear translation does not mean that the translator clarifies something that is ambiguous in the source text.
+        <br/>3. Making a clear translation does not mean that the translator gives the reader a specific interpretation for every passage where meaning is genuinely debated.
+      </p>
+</p>
+<p>
+      <strong>Natural</strong> - Natural translations use language forms that are reflect the way the target language is used in corresponding contexts.
+      <p>
+        1. Natural Bible translations sound like they were produced by an adult native speaker who speaks and/or writes well.
+        <br/>2. A natural Bible translation does not use expressions that are particular to their own culture in order to make the translation appear natural.
+        <br/>3. It is more important for a portion of Scripture to be translated accurately than for it to sound perfectly natural to everyone who reads it.
+      </p>
+</p>
+<p> We believe that a translation has the highest likelihood of being good quality when after applying the guidelines above, the following are completed: </p>
+<p>
+    1. It is tested and approved by believers of the language community and their church leaders.
+    <br/>2. Ongoing revisions and improvements are made.
+</p>]]></string>
     <!-- This is the statement of faith that users must agree to before using the app. It is formatted as HTML. Translation on this will wait until we have a reliable source -->
+    <string name="statement_of_faith"><![CDATA[<h1>Заявление веры</h1>
+<p>Мы верим:</p>
+<ul>
+    <li>Библия вдохновлена ​​Богом и имеет окончательный авторитет.</li>
+    <li>Бог един и существует в трех личностях: Бог Отец, Бог Сын и Бог Святой Дух.</li>
+    <li>Из-за грехопадения человека, все люди грешны и нуждаются в спасении.</li>
+    <li>Смерть Христа является искуплением для грешников и обеспечивает очищение верующих.</li>
+    <li>Божьей благодатью через веру, человек получает спасение в качестве бесплатного дара, благодаря смерти Иисуса и Его воскресению.</li>
+    <li>Воскресение всех спасенных к вечной жизни и грешных к вечному наказанию.</li>
+</ul>]]></string>
     <string name="view_statement_of_faith">Посмотреть Заявление Веры</string>
     <string name="view_translation_guidelines">Посмотреть принципы перевода</string>
     <!-- Indicates the user should click on the item in order to connect to the server -->
@@ -123,13 +171,13 @@
     <string name="import_project">Импорт проекта</string>
     <string name="no_projects_available_on_server">Проекты не доступны на этом сервере</string>
     <string name="downloading">Загрузка</string>
-    <string name="downloading_images">Downloading images</string>
-    <string name="connecting_to_server">Connecting to remote server...</string>
-    <string name="downloading_images_for_print_failed">The download failed to complete. Try printing without images.</string>
+    <string name="downloading_images">Загрузка изображений</string>
+    <string name="connecting_to_server">Подключение к удаленному серверу...</string>
+    <string name="downloading_images_for_print_failed">Загрузка не удалась. Попробуйте распечатать без изображений.</string>
     <!-- as in "23 out of 46 MB downloaded" -->
-    <string name="out_of">out of</string>
-    <string name="mb_downloaded">MB downloaded</string>
-    <string name="image_large_download">Downloading images will take several megabytes. Are you sure you want to include images?</string>
+    <string name="out_of">из</string>
+    <string name="mb_downloaded">МБ загружено</string>
+    <string name="image_large_download">Загрузка изображений займет несколько мегабайт. Вы уверены, что хотите включить изображения?</string>
     <string name="confirm_import">Пожалуйста, подтвердите, что вы хотите импортировать.</string>
     <string name="waiting_for_another_device">Ожидание устройства</string>
     <string name="label_back">Назад</string>
@@ -170,7 +218,7 @@
     <string name="import_draft">Импорт Проект</string>
     <string name="import_draft_confirmation">Это заменит ваш текущий перевод целевом языке, по-прежнему?</string>
     <string name="action_search">Поиск</string>
-    <string name="mark_chunks_done">Mark All Chunks Done</string>
+    <string name="mark_chunks_done">Отметить все фрагменты как выполненные</string>
     <string name="transfer_from_device">Трансфер из устройства</string>
     <string name="transfer_from_device_description">Проекты будут переданы по сети из соседнего устройства</string>
     <string name="import_from_storage">Импорт из хранилища</string>
@@ -192,51 +240,51 @@
     <string name="complete_required_fields">Пожалуйста заполните все поля</string>
     <string name="required_field"><xliff:g id="marker"> * </xliff:g> требуется</string>
     <string name="upload_failed">Загрузка не удалась</string>
-    <string name="download_failed">Download failed</string>
+    <string name="download_failed">Ошибка при загрузке</string>
     <string name="publishing_translation">Перевод издания</string>
     <string name="backing_up_translation">Резервное копирование перевод</string>
     <string name="review_all_checking_questions">Пожалуйста, ознакомьтесь с все вопросы</string>
-    <string name="browse">Browse</string>
-    <string name="please_enter_text">Please enter some text</string>
-    <string name="apk_update_available">A new version of the app is available</string>
-    <string name="download_update">Download Update</string>
-    <string name="upload_report_or_download_latest_apk">Downloading this update may fix your problem, continue?</string>
-    <string name="welcome">Welcome to BTT Writer</string>
-    <string name="please_wait">Please wait</string>
-    <string name="updating_app">Performing updates</string>
-    <string name="preparing_for_first_use">Preparing app for first use. This may take a few minutes.</string>
-    <string name="loading_languages">Preparing languages</string>
-    <string name="title_activity_target_translations">Your Translation Projects</string>
-    <string name="title_activity_new_target_translation">New Translation</string>
-    <string name="translations_welcome"><![CDATA[Welcome!\nThis is your Home Screen. When you have translation projects on this device they will appear here.\n\nYou can start a new translation any time by tapping the green button in the top right.]]></string>
-    <string name="title_activity_target_translation_detail">Translation Project</string>
-    <string name="duplicate_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
-    <string name="Project">Project</string>
-    <string name="language">Language</string>
-    <string name="progress">Progress</string>
-    <string name="choose_first_source_translation">Choose source translation(s) to begin reading and translating</string>
-    <string name="choose_source_translations">Choose source translations</string>
-    <string name="confirm">Confirm</string>
-    <string name="selected">Selected</string>
-    <string name="available">Available</string>
-    <string name="action_translations">Home</string>
-    <string name="publish">Publish</string>
-    <string name="backup">Upload</string>
-    <string name="attached_files">Attached files</string>
-    <string name="requires_internet">This will use your Internet Connection</string>
-    <string name="maximum_limit">(Maximum: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
-    <string name="input_required">Input cannot be empty</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="done">Done</string>
-    <string name="translate_first">Please provide a translation first</string>
-    <string name="consecutive_verse_markers">Verse markers are placed too close to each other. Please verify marker positions.</string>
-    <string name="outoforder_verse_markers">Verse markers are out of order</string>
-    <string name="outofrange_verse_marker">Verse marker is out of range</string>
-    <string name="duplicate_verse_marker">Duplicate verse marker</string>
-    <string name="failed_to_commit_chunk">The chunk could not be saved</string>
-    <string name="title_activity_publish">Publish Translation</string>
+    <string name="browse">Просмотр</string>
+    <string name="please_enter_text">Пожалуйста, введите текст</string>
+    <string name="apk_update_available">Доступна новая версия приложения</string>
+    <string name="download_update">Загрузить обновление</string>
+    <string name="upload_report_or_download_latest_apk">Загрузка обновления может исправить вашу проблему, продолжить?</string>
+    <string name="welcome">Добро пожаловать в BTT Writer</string>
+    <string name="please_wait">Пожалуйста, подождите</string>
+    <string name="updating_app">Выполняется обновление</string>
+    <string name="preparing_for_first_use">Подготовка приложения к первому использованию. Это может занять несколько минут.</string>
+    <string name="loading_languages">Подготовка языков</string>
+    <string name="title_activity_target_translations">Ваши проекты перевода</string>
+    <string name="title_activity_new_target_translation">Новый перевод</string>
+    <string name="translations_welcome"><![CDATA[Добро пожаловать!\nЭто ваш домашний экран. Когда у вас есть проекты перевода на этом устройстве, они появятся здесь.\n\nВы можете начать новый перевод в любое время, нажав зеленую кнопку в правом верхнем углу.]]></string>
+    <string name="title_activity_target_translation_detail">Проект перевода</string>
+    <string name="duplicate_target_translation">Вы уже переводите <xliff:g example="Genesis" id="project">%1$s</xliff:g> на <xliff:g example="English" id="target_language">%2$s</xliff:g></string>
+    <string name="Project">Проект</string>
+    <string name="language">Язык</string>
+    <string name="progress">Прогресс</string>
+    <string name="choose_first_source_translation">Выберите исходный перевод(ы) для начала чтения и перевода</string>
+    <string name="choose_source_translations">Выберите исходные переводы</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="selected">Выбранные</string>
+    <string name="available">Доступные</string>
+    <string name="action_translations">Главная</string>
+    <string name="publish">Опубликовать</string>
+    <string name="backup">Выгрузить</string>
+    <string name="attached_files">Прикреплённые файлы</string>
+    <string name="requires_internet">Будет использовано подключение к Интернету</string>
+    <string name="maximum_limit">(Максимум: <xliff:g example="3" id="maximum">%d</xliff:g>)</string>
+    <string name="input_required">Ввод не может быть пустым</string>
+    <string name="dismiss">Скрыть</string>
+    <string name="done">Готово</string>
+    <string name="translate_first">Сначала предоставьте перевод</string>
+    <string name="consecutive_verse_markers">Маркеры стихов размещены слишком близко друг к другу. Проверьте позиции маркеров.</string>
+    <string name="outoforder_verse_markers">Маркеры стихов расположены не по порядку</string>
+    <string name="outofrange_verse_marker">Маркер стиха выходит за пределы диапазона</string>
+    <string name="duplicate_verse_marker">Маркер продублирован</string>
+    <string name="failed_to_commit_chunk">Не удалось сохранить фрагмент</string>
+    <string name="title_activity_publish">Опубликовать перевод</string>
     <!-- The title of the dialog asking the user to verify completion of everything required to mark a chunk complete -->
-    <string name="chunk_checklist_title">Chunk Checklist</string>
+    <string name="chunk_checklist_title">Контрольный список фрагмента</string>
     <!-- The text asking the user to verify that all required steps have been taken prior to marking a chunk complete -->
     <string name="chunk_checklist_body"><![CDATA[<p>Are you sure you are done with this chunk?<p>
 <ul>
@@ -245,7 +293,7 @@
   <li>I have reviewed the translation questions</li>
 </ul>]]></string>
     <!-- The title of the dialog asking the user to verify completion of everything required to mark all chunks in project complete -->
-    <string name="project_checklist_title">Project Chunks Checklist</string>
+    <string name="project_checklist_title">Контрольный список проекта</string>
     <!-- The text asking the user to verify that all required steps have been taken prior to marking all chunks in project complete -->
     <string name="project_checklist_body"><![CDATA[<p>Are you sure you are Done with all the chunks in this project?<p>
 <ul>
@@ -253,82 +301,84 @@
   <li>I have reviewed the words and meaning</li>
   <li>I have reviewed the translation questions</li>
 </ul>]]></string>
-    <string name="result">Result</string>
-    <string name="mark_chunks_done_result">Marked <xliff:g example="1" id="marked">%1$d</xliff:g> chunks out of <xliff:g example="1" id="total">%2$d</xliff:g></string>
-    <string name="your_name">Your Name or Pseudonym</string>
-    <string name="your_email">Your Email Address</string>
-    <string name="your_phone">Your Phone Number</string>
-    <string name="name">Name or Pseudonym</string>
-    <string name="email">Email Address</string>
-    <string name="phone">Phone Number</string>
-    <string name="profile">Profile</string>
-    <string name="default_translator">Default translator name</string>
-    <string name="project_title_complex">Project: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
+    <string name="result">Результат</string>
+    <string name="mark_chunks_done_result">Отмечено <xliff:g example="1" id="marked">%1$d</xliff:g> фрагментов из <xliff:g example="1" id="total">%2$d</xliff:g></string>
+    <string name="your_name">Ваше имя или псевдоним</string>
+    <string name="your_email">Ваша электронная почта</string>
+    <string name="your_phone">Ваш номер телефона</string>
+    <string name="name">Имя или псевдоним</string>
+    <string name="email">Адрес эл. почты</string>
+    <string name="phone">Номер телефона</string>
+    <string name="profile">Профиль</string>
+    <string name="create_account_title">Пожалуйста, создайте или войдите в свою учетную запись.</string>
+    <string name="names_will_be_public">Имена будут доступны публично</string>
+    <string name="default_translator">Имя переводчика по умолчанию</string>
+    <string name="project_title_complex">Проект: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <!-- A warning shown, when publishing, indicating that names/pseudonyms (but not email or phone number) are published in the catealog -->
-    <string name="publishing_privacy_notice">Your name or pseudonym will be published along with your translation in the catalog.</string>
-    <string name="publish_to_unfoldingword">Publish your project directly to the server.</string>
-    <string name="checking_for_updates">Checking for updates</string>
-    <string name="download">Download</string>
-    <string name="source_language_already_downloaded">Language already downloaded. Download again?</string>
-    <string name="confirm_delete_project">Delete this project? You can download it again later.</string>
-    <string name="cannot_delete_project_with_translations">You cannot delete a project you are translating.</string>
-    <string name="missing_project">The project is missing</string>
-    <string name="menu_update_library">Update</string>
-    <string name="questions">Questions</string>
-    <string name="references">References</string>
-    <string name="question">Question</string>
-    <string name="answer">Answer</string>
-    <string name="begin_translating">Begin translating</string>
+    <string name="publishing_privacy_notice">Ваше имя или псевдоним будут опубликованы вместе с Вашим переводом в каталоге.</string>
+    <string name="publish_to_unfoldingword">Опубликуйте ваш проект прямо на сервере.</string>
+    <string name="checking_for_updates">Проверка обновления</string>
+    <string name="download">Скачать</string>
+    <string name="source_language_already_downloaded">Язык уже загружен. Скачать снова?</string>
+    <string name="confirm_delete_project">Удалить этот проект? Вы можете загрузить его еще раз позже.</string>
+    <string name="cannot_delete_project_with_translations">Вы не можете удалить перевод, над которым работаете в данный момент.</string>
+    <string name="missing_project">Проект отсутствует</string>
+    <string name="menu_update_library">Обновить</string>
+    <string name="questions">Вопросы</string>
+    <string name="references">Ссылки</string>
+    <string name="question">Вопрос</string>
+    <string name="answer">Ответ</string>
+    <string name="begin_translating">Начать перевод</string>
     <string name="publishing_explanation"><![CDATA[<p>Publishing your work makes your content available:</p>
 <ul>
     <li>Online in multiple formats</li>
     <li>In the Mobile App</li>
     <li>In a PDF suitable for printing</li>
 </ul>]]></string>
-    <string name="confirm_delete_target_translation">This will permanently remove the translation. Continue?</string>
-    <string name="long_click_to_drag">Tap and hold to drag</string>
-    <string name="feedback">Feedback</string>
-    <string name="import_from_sd">Import from SD Card</string>
-    <string name="backup_to_door43">Upload to Server</string>
-    <string name="translation_export_failed">Translation could not be exported</string>
-    <string name="invalid_file">Not a valid file</string>
-    <string name="action_download_updates">Download updates</string>
-    <string name="list_may_be_outdated">The list may be out of date</string>
-    <string name="label_import">Import</string>
-    <string name="label_import_options">Import</string>
-    <string name="import_from_online">Import from Online (requires internet)</string>
-    <string name="automatic_backups">Automatic Backups</string>
-    <string name="export_to_sd">Export to SD Card</string>
-    <string name="chunk_done_prompt">"This chunk is done. Continue editing?"</string>
-    <string name="chunk_done_title">"Edit Chunk"</string>
-    <string name="edit">"Edit"</string>
-    <string name="share_apk">Share this app</string>
-    <string name="send_to">Send To</string>
-    <string name="translators">Contributors</string>
-    <string name="no_backups_online">There are no backups online</string>
-    <string name="translation_words_index">Words Index</string>
-    <string name="print">Print</string>
-    <string name="include_images">Include images</string>
-    <string name="include_incomplete_frames">Include incomplete chunks</string>
-    <string name="backup_to_friend">Send to Friend</string>
-    <string name="device_network_alias_description">Choose a name or pseudonym others will see when sharing with your device</string>
-    <string name="device_name">Device Name</string>
-    <string name="confirm_import_target_translation">Do you want to import <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
-    <string name="success_import_target_translation"><xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g> was successfully imported.</string>
+    <string name="confirm_delete_target_translation">Перевод будет удален навсегда. Продолжить?</string>
+    <string name="long_click_to_drag">Нажмите и удерживайте, чтобы перетащить</string>
+    <string name="feedback">Обратная связь</string>
+    <string name="import_from_sd">Импорт с SD-карты</string>
+    <string name="backup_to_door43">Отправить на сервер</string>
+    <string name="translation_export_failed">Не удалось экспортировать перевод</string>
+    <string name="invalid_file">Неверный файл</string>
+    <string name="action_download_updates">Скачать обновление</string>
+    <string name="list_may_be_outdated">Список возможно устарел</string>
+    <string name="label_import">Импортировать</string>
+    <string name="label_import_options">Импортировать</string>
+    <string name="import_from_online">Импорт из Интернета (требуется подключение)</string>
+    <string name="automatic_backups">Автоматическое резервное копирование</string>
+    <string name="export_to_sd">Экспорт на SD карту</string>
+    <string name="chunk_done_prompt">"Этот фрагмент завершен. Продолжить редактирование?"</string>
+    <string name="chunk_done_title">"Редактировать фрагмент"</string>
+    <string name="edit">"Редактировать"</string>
+    <string name="share_apk">Поделиться приложением</string>
+    <string name="send_to">Отправить в</string>
+    <string name="translators">Участники</string>
+    <string name="no_backups_online">Нет резервных копий онлайн</string>
+    <string name="translation_words_index">Индекс слов</string>
+    <string name="print">Печать</string>
+    <string name="include_images">Включить изображения</string>
+    <string name="include_incomplete_frames">Включить незавершенные фрагменты</string>
+    <string name="backup_to_friend">Отправить другу</string>
+    <string name="device_network_alias_description">Выберите имя или псевдоним, который другие увидят при совместном использовании с вашим устройством</string>
+    <string name="device_name">Имя устройства</string>
+    <string name="confirm_import_target_translation">Вы хотите импортировать <xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g>?</string>
+    <string name="success_import_target_translation"><xliff:g example="Open Bible Stories - Afaraf" id="target_translation_name">%1$s</xliff:g> был успешно импортирован.</string>
     <string name="title_activity_custom_alert_dialog">CustomAlertDialog</string>
-    <string name="neutral">Neutral</string>
-    <string name="mark_done">Mark chunk as done</string>
-    <string name="add_contributor">Add Contributor</string>
-    <string name="confirm_delete_translator">This will permanently remove the translator. Continue?</string>
-    <string name="delete_translator_title">Delete Translator</string>
+    <string name="neutral">Нейтральный</string>
+    <string name="mark_done">Отметить фрагмент как выполненный</string>
+    <string name="add_contributor">Добавить участника</string>
+    <string name="confirm_delete_translator">Переводчик будет удален навсегда. Продолжить?</string>
+    <string name="delete_translator_title">Удалить переводчика</string>
     <string name="title_activity_profile">ProfileActivity</string>
-    <string name="action_translate_resources">Translate Resources</string>
-    <string name="publish_state">Publish State</string>
-    <string name="publish_status_not">Not Published</string>
-    <string name="publish_status_current">Published</string>
-    <string name="publish_status_not_current">Not Current</string>
-    <string name="error">Error</string>
-    <string name="enable_sd_card_access_title">Enable SD Card Access</string>
+    <string name="action_translate_resources">Ресурсы для перевода</string>
+    <string name="publish_state">Статус публикации</string>
+    <string name="publish_status_not">Не опубликовано</string>
+    <string name="publish_status_current">Опубликовано</string>
+    <string name="publish_status_not_current">Не текущий</string>
+    <string name="error">Ошибка</string>
+    <string name="enable_sd_card_access_title">Разрешить доступ к SD-карте</string>
     <string name="enable_sd_card_access"><![CDATA[Do you want to enable SD card access?  If so then:
 \n
 \n\u00A0\u00A0 1. Tap \'Confirm\' at bottom of this message. This message will close and a new window will open.
@@ -338,307 +388,357 @@
 \n\u00A0\u00A0 3. If the \'SD card\' icon is in the left column then tap on the icon. The files on the SD card are then shown.  Tap on the words \'SELECT \"SD card\"\' at the bottom of the window.
 \n
 \nIf you tap on SKIP below, then Import/Export will use internal memory.]]></string>
-    <string name="access_title">Access Attempt</string>
-    <string name="access_failed">Failed on access request to:\n\'%s\'\nYou may have selected a folder other than the SD CARD base.\nMake sure you pressed the \'SD card\' icon on the left, and then that the button you pressed on the bottom said \'SELECT \"SD card\"\'.</string>
-    <string name="access_granted_sd_card">Success! Access Allowed.\n\nAfter tapping OK, choose the folder and then the file name for your import/export.</string>
-    <string name="access_skipped">Access Request Cancelled</string>
-    <string name="label_skip">Skip</string>
-    <string name="label_internal">Internal</string>
-    <string name="label_sd_card">SD Card</string>
-    <string name="label_up">Up</string>
-    <string name="title_file_browser">File Browser</string>
-    <string name="no_item_selected">No Item Selected</string>
-    <string name="backup_failed">Failed Backing up to:</string>
-    <string name="import_failed">Failed Import from:</string>
-    <string name="backup_success">Success Backing up to:</string>
-    <string name="import_success">Success Importing from:</string>
-    <string name="view_available_drafts">View available drafts</string>
-    <string name="preview">Preview</string>
-    <string name="importing_draft">Importing draft</string>
-    <string name="draft_translation_exists">A draft of this translation is available</string>
-    <string name="print_failed">Failed to print</string>
-    <string name="printing">Printing:\n</string>
-    <string name="label_undo">Undo</string>
-    <string name="label_redo">Redo</string>
-    <string name="restored_to_time">Restored to %s</string>
-    <string name="restoring_end">Reached End of Archive</string>
-    <string name="title_add_footnote">Add Footnote</string>
-    <string name="add_footnote_title">Title:</string>
-    <string name="add_footnote">Footnote:</string>
-    <string name="add_footnote_title_prompt">Enter Title</string>
-    <string name="add_footnote_prompt">Enter Footnote</string>
-    <string name="title_footnote_invalid">Invalid Footnote</string>
-    <string name="footnote_confirm_delete">Are you sure you want to delete footnote?</string>
-    <string name="footnote_label">Footnote</string>
-    <string name="footnote_title_empty">Footnote Title cannot be empty</string>
-    <string name="footnote_message_empty">Footnote cannot be empty</string>
-    <string name="who_translated_notice">Who contributed to this translation?</string>
-    <string name="privacy_notice">Privacy Notice</string>
-    <string name="need_translator_notice">Please add a contributor</string>
-    <string name="duplicate_native_speaker">A contributor with that name has already been added</string>
-    <string name="edit_contributor">Edit Contributor</string>
-    <string name="registration_failure">Registration Failed. Please check your internet connection</string>
-    <string name="auth_failure_retry">Authentication Failed. Retry?</string>
-    <string name="registering_keys">Registering with server</string>
-    <string name="person_agrees_with_licenses">This person has agreed with the Statement of Faith and Translation Guidelines and agrees to release his/her work on this project under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>
-    <string name="invalid_entry_title">Invalid Entry</string>
-    <string name="answers_missing_title">Answers Missing</string>
-    <string name="missing_question_answer">Missing answer for question</string>
-    <string name="answer_missing_for">Missing answer for question:\n%s</string>
-    <string name="answers_missing_continue">Answers are missing for questions.\nContinue anyway?</string>
-    <string name="previous">Previous</string>
-    <string name="title_activity_new_language">New Language Request</string>
-    <string name="new_language_confirmation">Your new language code is \"<xliff:g example="zz-zzz" id="temp_language_code">%1$s</xliff:g>\" for \"<xliff:g example="Greek" id="language_name">%2$s</xliff:g>\".</string>
-    <string name="error_importing_unsupported_target_translation">The  translation of <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> into <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> was created by a different version of <xliff:g example="BTT Writer or translationStudio" id="app_name">%3$s</xliff:g> and cannot be opened. Please update your app and try again.</string>
-    <string name="version">Version</string>
-    <string name="username">login name</string>
-    <string name="password">password</string>
-    <string name="password_confirm">re-type password</string>
-    <string name="logging_in">Logging in</string>
-    <string name="double_check_credentials">Double check your credentials and try again</string>
-    <string name="passwords_mismatch">Passwords do not match</string>
-    <string name="contributors">Contributors</string>
-    <string name="show_passwords">Show Passwords</string>
-    <string name="hide_passwords">Hide Passwords</string>
-    <string name="log_out">Log out</string>
-    <string name="gogs_username_already_exists">That username already exists</string>
-    <string name="registration_failed">Your account could not be created.</string>
-    <string name="title_door43_account_required">Server Account Required</string>
-    <string name="door43_account_required">You must connect to a server account first.</string>
-    <string name="login_doo43">Login with Server Account</string>
-    <string name="register_door43">Create new Server Account</string>
-    <string name="create_offline_profile">Create offline Account</string>
-    <string name="still_possible_to_register_door43">You can still create or login to a server account later</string>
-    <string name="title_connect_door43">Connect To Server</string>
+    <string name="access_title">Попытка доступа</string>
+    <string name="access_failed">Ошибка при запросе доступа к:\n\'%s\'\nВозможно, вы выбрали папку, отличную от корня SD CARD.\nУбедитесь, что вы нажали значок \'SD-карты\' слева, и затем кнопку внизу с надписью \'SELECT \"SD card\"\".</string>
+    <string name="access_granted_sd_card">Успех! Доступ разрешен.\n\nПосле нажатия кнопки ОК, выберите папку и затем файл для импорта/экспорта.</string>
+    <string name="access_skipped">Запрос доступа отменен</string>
+    <string name="label_skip">Пропустить</string>
+    <string name="label_internal">Внутренняя</string>
+    <string name="label_sd_card">SD-карта</string>
+    <string name="label_up">Вверх</string>
+    <string name="title_file_browser">Файловый менеджер</string>
+    <string name="no_item_selected">Не выбрано ни одного элемента</string>
+    <string name="backup_failed">Ошибка резервного копирования в:</string>
+    <string name="import_failed">Не удалось импортировать из:</string>
+    <string name="backup_success">Ошибка резервного копирования в:</string>
+    <string name="import_success">Успешно импортировано с:</string>
+    <string name="view_available_drafts">Просмотр доступных черновиков</string>
+    <string name="preview">Предпросмотр</string>
+    <string name="importing_draft">Импортирование черновика</string>
+    <string name="draft_translation_exists">Доступен черновик этого перевода</string>
+    <string name="print_failed">Не удалось распечатать</string>
+    <string name="printing">Печать:\n</string>
+    <string name="label_undo">Отменить</string>
+    <string name="label_redo">Повторить</string>
+    <string name="restored_to_time">Восстановлено в %s</string>
+    <string name="restoring_end">Достигнут конец архива</string>
+    <string name="title_add_footnote">Добавить примечание</string>
+    <string name="add_footnote_title">Заголовок:</string>
+    <string name="add_footnote">Примечание:</string>
+    <string name="add_footnote_title_prompt">Введите заголовок</string>
+    <string name="add_footnote_prompt">Введите Примечание</string>
+    <string name="title_footnote_invalid">Неверное примечание</string>
+    <string name="footnote_confirm_delete">Вы уверены, что хотите удалить примечание?</string>
+    <string name="footnote_label">Примечание</string>
+    <string name="footnote_title_empty">Название примечания не может быть пустым</string>
+    <string name="footnote_message_empty">Примечание не может быть пустым</string>
+    <string name="who_translated_notice">Кто внес вклад в этот перевод?</string>
+    <string name="privacy_notice">Политика Конфиденциальности</string>
+    <string name="need_translator_notice">Пожалуйста, добавьте участника</string>
+    <string name="duplicate_native_speaker">Участник с таким именем уже был добавлен</string>
+    <string name="edit_contributor">Редактировать участника</string>
+    <string name="registration_failure">Регистрация не удалась. Пожалуйста, проверьте подключение к Интернету</string>
+    <string name="auth_failure_retry">Ошибка аутентификации. Повторить?</string>
+    <string name="registering_keys">Регистрация на сервере</string>
+    <string name="person_agrees_with_licenses">Этот человек согласился с Утверждением веры, и руководством по переводу, и согласен выпустить свою работу по этому проекту в соответствии с условиями международной лицензии Creative Commons Attribution-ShareAlike 4,0.</string>
+    <string name="invalid_entry_title">Неверная запись</string>
+    <string name="answers_missing_title">Отсутствуют ответы</string>
+    <string name="missing_question_answer">Отсутствует ответ на вопрос</string>
+    <string name="answer_missing_for">Отсутствует ответ на вопрос:\n%s</string>
+    <string name="answers_missing_continue">Отсутствуют ответы на вопросы.\nВсе равно продолжить?</string>
+    <string name="previous">Предыдущий</string>
+    <string name="title_activity_new_language">Запрос нового языка</string>
+    <string name="new_language_confirmation">Код вашего нового языка - \"<xliff:g example="zz-zzz" id="temp_language_code">%1$s</xliff:g>\" для \"<xliff:g example="Greek" id="language_name">%2$s</xliff:g>\".</string>
+    <string name="error_importing_unsupported_target_translation">Перевод <xliff:g example="Open Bible Stories" id="project_name">%1$s</xliff:g> на <xliff:g example="Afaraf" id="language_name">%2$s</xliff:g> был создан другой версией <xliff:g example="BTT Writer or translationStudio" id="app_name">%3$s</xliff:g> и не может быть открыт. Пожалуйста, обновите приложение и повторите попытку.</string>
+    <string name="version">Версия</string>
+    <string name="username">имя пользователя</string>
+    <string name="password">пароль</string>
+    <string name="password_confirm">повторно введите пароль</string>
+    <string name="logging_in">Выполняется вход</string>
+    <string name="double_check_credentials">Проверьте ваши учетные данные и повторите попытку</string>
+    <string name="passwords_mismatch">Пароли не совпадают</string>
+    <string name="contributors">Участники</string>
+    <string name="show_passwords">Показывать пароли</string>
+    <string name="hide_passwords">Скрыть пароли</string>
+    <string name="log_out">Выйти</string>
+    <string name="gogs_username_already_exists">Имя пользователя уже существует</string>
+    <string name="registration_failed">Ваша учётная запись не может быть создана.</string>
+    <string name="title_door43_account_required">Требуется учетная запись сервера</string>
+    <string name="door43_account_required">Сначала необходимо подключить учетную запись сервера.</string>
+    <string name="server_account">Учетная запись сервера</string>
+    <string name="login_doo43">Войти с помощью аккаунта сервера</string>
+    <string name="register_door43">Создать аккаунт на сервере</string>
+    <string name="create_offline_profile">Создать оффлайн аккаунт</string>
+    <string name="still_possible_to_register_door43">Вы можете создать или войти на сервер позже</string>
+    <string name="title_connect_door43">Подключиться к серверу</string>
     <string name="gogs_public_key_name">ts-android</string>
-    <string name="restore_failed">The translation could not be imported</string>
-    <string name="import_from_door43">Import from Server</string>
-    <string name="restore_from_door43">Restore from Server</string>
-    <string name="title_chunk_conflicts">Chunk Conflicts</string>
-    <string name="chunk_conflict_description">A conflict was found between the translation on the server and your device.</string>
-    <string name="review_conflicts">Review differences</string>
-    <string name="keep_server_changes">Keep server changes</string>
-    <string name="keep_local_changes">Keep my changes</string>
-    <string name="translation_name">translation name</string>
-    <string name="project_uploaded_to">Your project has been uploaded to:\n\n<xliff:g example="http:/test.com/test" id="destination_url">%1$s</xliff:g></string>
-    <string name="label_open">Open</string>
-    <string name="title_activity_import_usfm_language">Import USFM Project - Select Language</string>
-    <string name="title_activity_import_usfm_book">Import USFM Project - Select Book For: </string>
-    <string name="label_import_usfm">Import USFM</string>
-    <string name="import_usfm_success">USFM file Import Success</string>
-    <string name="import_usfm_failed">USFM file Import Failed</string>
-    <string name="title_import_usfm_error_book">Error Importing USFM book \'%s\'</string>
-    <string name="title_import_usfm_error">Error Importing USFM</string>
-    <string name="title_processing_usfm_summary">USFM Processing Summary</string>
-    <string name="title_import_usfm_results">USFM Import Results</string>
-    <string name="zip_read_error">Error reading Zip</string>
-    <string name="file_read_error">Error reading File</string>
-    <string name="file_write_error">Error writing File</string>
-    <string name="file_write_for_verse">Error writing verse %s</string>
-    <string name="file_read_error_detail">Error reading File \'%s\'</string>
-    <string name="missing_book_short_name">Missing book short name (\\id or \\toc3)</string>
-    <string name="missing_book_name">Missing book name (\\toc1)</string>
-    <string name="missing_language">Missing language</string>
-    <string name="no_section_no_verse">No section nor verse markers found</string>
-    <string name="no_verse">No verse markers found</string>
-    <string name="no_section_no_chunk">No sections found and no chunking breakdown list</string>
-    <string name="book_parse_error">Error parsing book</string>
-    <string name="error_reading_file">Error reading file: %s</string>
-    <string name="could_not_find_chapter">Could not find chapter: %s</string>
-    <string name="could_not_find_verses_in_chapter">No verses in range <xliff:g example="1" id="start_verse">%1$d</xliff:g> to <xliff:g example="2" id="end_verse">%2$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%3$s</xliff:g></string>
-    <string name="missing_verses_in_chapter">Missing <xliff:g example="2" id="verse_count">%1$d</xliff:g> verse(s) in range <xliff:g example="1" id="start_verse">%2$d</xliff:g> to <xliff:g example="2" id="end_verse">%3$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
-    <string name="extra_verses_in_chapter">Extra <xliff:g example="2" id="verse_count">%1$d</xliff:g> verse(s) in range <xliff:g example="1" id="start_verse">%2$d</xliff:g> to <xliff:g example="2" id="end_verse">%3$d</xliff:g> in chapter: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
-    <string name="could_not_parse_chapter">Could not parse chapter: %s</string>
-    <string name="missing_chapter_n">Missing chapter %s - will try to recover</string>
-    <string name="duplicate_chapter">Duplicate chapter: %s</string>
-    <string name="chapter_out_of_order">Chapter out of order: \'<xliff:g example="4" id="found">%1$s</xliff:g>\' after \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
-    <string name="missing_verses_in_section">No Verses in Section</string>
-    <string name="error_prefix">Error: %s</string>
-    <string name="no_error">No errors Found</string>
-    <string name="warning_prefix">Warning: %s</string>
-    <string name="found_book">Found book: %s</string>
-    <string name="importing_file">Importing: %s</string>
-    <string name="selected_language">Selected Language: %s</string>
-    <string name="initializing_import">Initializing Import</string>
-    <string name="finished_loading">Finished Loading Books</string>
-    <string name="processing_chapter">Processing Chapter: %s</string>
-    <string name="building_manifest">Building Manifest</string>
-    <string name="reading_usfm">Reading USFM</string>
-    <string name="importing_usfm">Importing USFM</string>
-    <string name="import_usfm_file">Import USFM File</string>
-    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nhas invalid book name: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\nDo you wish to select a book name?</string>
-    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nis missing book name\nDo you wish to select a book name?</string>
-    <string name="could_not_parse">Could not parse \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
-    <string name="no_chunk_list">No chunk list found for \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
-    <string name="chapter_count_invalid">Expected <xliff:g example="16" id="chunk_count">%1$s</xliff:g> chapters, but last chapter was <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
-    <string name="no_chapter">No chapter found</string>
-    <string name="label_restore">Restore</string>
-    <string name="title_import_success">Import Success</string>
-    <string name="title_import_failed">Import Failed!</string>
-    <string name="import_project_success">Success Importing <xliff:g example="Mark" id="project">%1$s</xliff:g> from:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
-    <string name="table_of_contents">Table of Contents </string>
-    <string name="questionnaire_title">Page <xliff:g example="1" id="page_num">%1$d</xliff:g> of <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
-    <string name="new_lang_api_upload_failure_title">New Language Error</string>
-    <string name="new_lang_api_upload_failure">We could not save the answers to the New Language Questionnaire.  We will try again the next time you</string>
-    <string name="answer_not_saved">Your answer could not be saved. Please try again.</string>
-    <string name="try_again">Please try again</string>
-    <string name="copy">Copy</string>
-    <string name="submitting_new_language_requests">Submitting new language requests</string>
-    <string name="downloading_languages">Downloading languages</string>
-    <string name="confirm_leave_questionnaire">Are you sure you want to leave the questionnaire?</string>
-    <string name="continue_requesting_new_language">Continue requesting new language</string>
-    <string name="request_new_language">Request new language</string>
-    <string name="title_new_language_code">New Language Code</string>
-    <string name="confirm_start_new_language_code">You are about to request a new language code.</string>
-    <string name="check_for_updates">Check for updates</string>
-    <string name="check_for_app_updates">Check the internet for updates to BTT Writer App.</string>
-    <string name="have_latest_app_update">You are already using the latest version of BTT Writer.</string>
-    <string name="download_latest_apk">Do you want to download this update?</string>
-    <string name="updating_projects">Updating projects</string>
-    <string name="view_online">View Online</string>
-    <string name="change_detected">Project Change Detected</string>
-    <string name="upload_push_failure">There are changes to this translation on your server account. You must import those changes before uploading.</string>
-    <string name="merge_request">There are changes to your translation of \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' in \'<xliff:g example="English" id="language">%2$s</xliff:g>\' on your server account. Would you like to import those changes now?</string>
-    <string name="import_failed_title">Import failed</string>
-    <string name="push_rejected">Upload failed because of changes on Server. Do you want to review conflicts?</string>
-    <string name="backup_rejected">Backup failed because of changes on Server. Do you want to review conflicts?</string>
-    <string name="backup_failed_title">Backup failed</string>
-    <string name="update_failed">Update Failed</string>
-    <string name="success_translation_update">Your translation has been successfully updated.</string>
-    <string name="success_translation_update_with_conflicts">Your translation has been successfully updated.\nSome chunks had conflicts and need review.</string>
-    <string name="search_hint">Enter Search String</string>
-    <string name="search_source">Search Source:</string>
-    <string name="search_translation">Search Translation:</string>
-    <string name="tip_export_to_usfm">Creates a .usfm file of your project</string>
-    <string name="export_to_pdf">Export to PDF File</string>
-    <string name="tip_export_to_pdf">Creates a .pdf file of your project</string>
-    <string name="title_upload_export">Upload/Export Options</string>
-    <string name="menu_upload_export">Upload/Export</string>
-    <string name="title_review">Project Review</string>
-    <string name="title_book">Project</string>
-    <string name="tip_backup_to_door43">Uploads project to your server account.\nBy uploading the project to your server account, the content is available to be downloaded by other translators, merged with other projects, or used as an online backup.</string>
-    <string name="tip_backup_to_sd">Creates a copy of your project file</string>
-    <string name="draft_translation">Draft Level <xliff:g example="3" id="checking_level">%1$d</xliff:g>: <xliff:g example="Pig Latin" id="language">%2$s</xliff:g></string>
-    <string name="title_download_source_language">Download from Online</string>
-    <string name="download_source_language">Download \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' now? This requires an Internet Connection?</string>
-    <string name="downloading_source">Downloading source <xliff:g example="en" id="source_language">%1$s</xliff:g></string>
-    <string name="title_export_usfm">Export to USFM</string>
-    <string name="export_usfm_by_chapter">Do you want the USFM output separated into chapters or do you want the whole book as a single file?</string>
-    <string name="label_separate">Separate</string>
-    <string name="label_whole">Whole</string>
-    <string name="export_to_usfm">Export to USFM file</string>
-    <string name="export_failed">Export failed!</string>
-    <string name="export_success">Export successful!\n\nExported file is at:\n<xliff:g example="/sd_card/downloads" id="file_path">%1$s</xliff:g></string>
-    <string name="update_source_language">Do you want to update \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' from Online (requires internet)?</string>
-    <string name="conflict_exists">CONFLICT EXISTS!</string>
-    <string name="resolve_confict_instructions">Conflict: Click on the version to keep</string>
-    <string name="merge_conflict_title">Project Already Exists</string>
-    <string name="import_merge_conflict_project_name">This project (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) already exists locally with differences in some chunks. How would you like to proceed?</string>
-    <string name="import_merge_conflict">This project already exists locally with differences in some chunks.\nHow would you like to proceed?</string>
-    <string name="label_change">change</string>
-    <string name="update_languages">Update List of Available Target Languages</string>
-    <string name="update_source">Update List of Available Source Texts</string>
-    <string name="download_index">Download New index.sqlite</string>
-    <string name="update_all">Update All</string>
-    <string name="time_very_slow">Takes awhile</string>
-    <string name="time_slow">May take many minutes (or longer)</string>
-    <string name="time_fast">May take a few minutes (or longer)</string>
-    <string name="update_options">Update Options</string>
-    <string name="missing_source">Missing source translation</string>
-    <string name="update_success">The update finished successfully</string>
-    <string name="updating">Updating</string>
-    <string name="upload_failed_label">Upload Failed!</string>
-    <string name="upload_feedback_failed">Upload of feedback failed</string>
-    <string name="upload_crash_report_failed">Upload of crash report failed</string>
-    <string name="warn_existing_target_translation_label">Target Translation Already Present</string>
-    <string name="warn_existing_target_translation">You are already translating <xliff:g example="Genesis" id="project">%1$s</xliff:g> into <xliff:g example="English" id="target_language">%2$s</xliff:g>.  Do you want to merge projects?</string>
-    <string name="rename_canceled">Rename cancelled</string>
-    <string name="merge">Merge</string>
-    <string name="import_project_file">Import Project File</string>
-    <string name="import_source_text">Import Source Text</string>
-    <string name="not_a_source_text">Not a source text</string>
-    <string name="could_not_import">Could not import</string>
-    <string name="overwrite_content">Overwrite <xliff:g example="English - Genesis - Unlocked Literal Bible" id="content">%1$s</xliff:g>?</string>
-    <string name="pdf_output_filename_title_prompt">Enter Print to PDF file name:</string>
-    <string name="choose_destination_folder">Choose Destination Folder:</string>
-    <string name="options_update_failed">The update failed.  Check your Internet connection.</string>
-    <string name="update_cancelled">The update was cancelled</string>
-    <string name="update_menu_requires_internet">Requires internet Connection\nThese updates may take a while.</string>
-    <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> New Source Texts and <xliff:g example="10" id="updated">%2$d</xliff:g> Updated Source Texts are available to be downloaded.</string>
-    <string name="download_index_success">New index.sqlite has been successfully downloaded.</string>
-    <string name="updating_sources">Updating list of Source Texts. This may take a while. Please wait...</string>
-    <string name="downloading_index">Downloading index.sqlite file. This may take a while. Please wait...</string>
-    <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> Target Languages have been added.</string>
-    <string name="updating_languages">Updating list of Target Languages. This may take a while. Please wait...</string>
-    <string name="available_online">Available Online</string>
-    <string name="update_sources_label">Exit to Update Source Text List</string>
-    <string name="warning_title">Warning</string>
-    <string name="update_warning">Checking for new and updated source texts will close this project. This requires an Internet Connection.</string>
-    <string name="download_sources">Download Available Source Texts</string>
-    <string name="check_app_update">Check for Update to BTT Writer</string>
-    <string name="all_up_to_date">All Source Texts already up to date!</string>
-    <string name="loading_sources">Loading Source Texts\nPlease wait...</string>
-    <string name="old_testament_label">Old Testament</string>
-    <string name="new_testament_label">New Testament</string>
-    <string name="ta_label">translationAcademy</string>
-    <string name="other_label">Other</string>
-    <string name="choose_language">Choose a Language</string>
-    <string name="choose_category">Choose a Category</string>
-    <string name="choose_sources">Choose Source(s)</string>
-    <string name="choose_book">Choose a Book</string>
-    <string name="by_language_label">By Language</string>
-    <string name="by_book_label">By Book</string>
-    <string name="select_all_label">Select All</string>
-    <string name="unselect_all_label">Unselect All</string>
-    <string name="downloads_success"><xliff:g example="6" id="success_count">%1$d</xliff:g> Source Texts have been successfully downloaded.</string>
-    <string name="downloads_fail"><xliff:g example="6" id="fail_count">%1$d</xliff:g> Source downloads have failed.</string>
-    <string name="download_cancelled">Download Cancelled</string>
-    <string name="download_errors">Download Errors</string>
-    <string name="helps_download_errors">Helps failed to download for: <xliff:g example="en_obs,fr_obs" id="fails">%1$s</xliff:g></string>
-    <string name="source_not_found">Source Not Found on Server</string>
-    <string name="search_for_language">Search for Language</string>
-    <string name="sort_column">Column to Sort By</string>
-    <string name="sort_projects">Sort Project Column By</string>
-    <string name="sort_project_then_language">Project then Language</string>
-    <string name="sort_language_then_project">Language then Project</string>
-    <string name="sort_progress_then_project">Progress then Project</string>
-    <string name="sort_bible_order">Bible Order</string>
-    <string name="sort_alphabetical_order">Alphabetical Order</string>
-    <string name="usfm_output_filename_title_prompt">Enter USFM output file name:</string>
-    <string name="found_in_chunks">Found in <xliff:g example="6" id="found_count">%1$d</xliff:g> chunks</string>
-    <string name="retry_label">Retry</string>
-    <string name="current_user">Current User: <xliff:g example="tester" id="user_name">%1$s</xliff:g></string>
-    <string name="print_success">Print successfully saved to:\n<xliff:g example="/downloads/en_ulb.pdf" id="destination">%1$s</xliff:g></string>
-    <string name="check_network_connection">Check your internet and try again</string>
-    <string name="upload_complete">Upload Complete</string>
-    <string name="unpacking">Unpacking Images</string>
-    <string name="merge_projects_label">Merge Projects</string>
-    <string name="overwrite_projects_label">Overwrite Project</string>
-    <string name="project_output_filename_title_prompt">Enter Project output file name:</string>
-    <string name="translation_questions">Questions</string>
-    <string name="translation_academy">Translation Academy</string>
-    <string name="unsupported">Unsupported</string>
-    <string name="import_warning">The project \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' may not be supported in this app.  Currently, BTT Writer only supports Scripture and Open Bible Stories projects. If this is not one of those types of projects it will not be imported into BTT Writer.\n\nDo you want to try to import it anyway?</string>
-    <string name="overwrite_file_title">Overwrite File?</string>
-    <string name="overwrite_file_warning">The same filename already exists.  Do you want to overwrite\n\<xliff:g example="project.usfm" id="project_name">%1$s</xliff:g>?\n\nSize: <xliff:g example="3.5 KB" id="size">%2$s</xliff:g>\t\nModified: <xliff:g example="2/23/2017" id="date">%3$s</xliff:g></string>
-    <string name="overwrite_label">Overwrite</string>
-    <string name="rename_label">Rename</string>
-    <string name="bytes_short">B</string>
-    <string name="kilobytes_short">KB</string>
-    <string name="megabytes_short">MB</string>
-    <string name="has_warnings">\'<xliff:g example="Chapter 1" id="title">%1$s</xliff:g>\' has warnings:</string>
-    <string name="title">Title</string>
-    <string name="reference">Reference</string>
-    <string name="title_footnote">Footnote</string>
-    <string name="access_not_root">Failed to enable access to SD card base.\nYou may have selected a folder other than the SD CARD base.\nMake sure you pressed the \'SD card\' icon on the left, and then that the button you pressed on the bottom said \'SELECT \"SD card\"\'.</string>
-    <string name="merge_summary">The projects have been merged. There are (<xliff:g example="37" id="count">%1$d</xliff:g>) chunks that contain new conflicts that need your attention.</string>
-    <string name="merge_complete_title">Merge Complete</string>
-    <string name="access_success_title">Enable SD Card Access</string>
-    <string name="interrupting_download">Trying to interrupt download</string>
-    <string name="slow_device">Slow Device</string>
-    <string name="min_hardware_req_not_met">This device does not meet the minimum hardware requirements and may function poorly. You may also experience problems on some phones and other very small devices.</string>
-    <string name="do_not_show_again">Don\'t show again</string>
-    <string name="pref_title_check_hardware_requirements">Check Hardware Requirements</string>
-    <string name="pref_description_check_hardware_requirements">Check for suggested hardware when starting the app</string>
-    <string name="import_project_already_exists">This project (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) already exists locally. How would you like to proceed?</string>
+    <string name="restore_failed">Не удалось импортировать перевод</string>
+    <string name="import_from_door43">Импортировать с сервера</string>
+    <string name="restore_from_door43">Восстановить с сервера</string>
+    <string name="title_chunk_conflicts">Конфликты с фрагментами</string>
+    <string name="chunk_conflict_description">Обнаружен конфликт между переводом на сервере и вашим устройством.</string>
+    <string name="review_conflicts">Просмотреть различия</string>
+    <string name="keep_server_changes">Сохранить изменения сервера</string>
+    <string name="keep_local_changes">Сохранить мои изменения</string>
+    <string name="translation_name">название перевода</string>
+    <string name="project_uploaded_to">Ваш проект был отправлен в:\n\n<xliff:g example="http:/test.com/test" id="destination_url">%1$s</xliff:g></string>
+    <string name="label_open">Открыть</string>
+    <string name="title_activity_import_usfm_language">Импорт проекта USFM - Выбор языка</string>
+    <string name="title_activity_import_usfm_book">Импорт проекта USFM - Выберите книгу для: </string>
+    <string name="label_import_usfm">Импорт USFM</string>
+    <string name="import_usfm_success">Файл USFM импортирован успешно</string>
+    <string name="import_usfm_failed">Не удалось импортировать USFM</string>
+    <string name="title_import_usfm_error_book">Ошибка при импорте USFM книги \'%s\'</string>
+    <string name="title_import_usfm_error">Ошибка при импорте USFM</string>
+    <string name="title_processing_usfm_summary">Сводка по USFM</string>
+    <string name="title_import_usfm_results">Результаты импорта USFM</string>
+    <string name="zip_read_error">Ошибка чтения Zip</string>
+    <string name="file_read_error">Ошибка чтения файла</string>
+    <string name="file_write_error">Ошибка записи файла</string>
+    <string name="file_write_for_verse">Ошибка записи стиха %s</string>
+    <string name="file_read_error_detail">Ошибка чтения файла \'%s\'</string>
+    <string name="missing_book_short_name">Отсутствует краткое название книги (\\id или \\toc3)</string>
+    <string name="missing_book_name">Отсутствует название книги (\\toc1)</string>
+    <string name="missing_language">Отсутствует язык</string>
+    <string name="no_section_no_verse">Не найдено ни секции ни маркеров стихов</string>
+    <string name="no_verse">Маркеры стихов не найдены</string>
+    <string name="no_section_no_chunk">Не найдены секции и не найден список разбиений на фрагменты</string>
+    <string name="book_parse_error">Ошибка парсинга книги</string>
+    <string name="error_reading_file">Ошибка при чтении файла: %s</string>
+    <string name="could_not_find_chapter">Не удалось найти главу: %s</string>
+    <string name="could_not_find_verses_in_chapter">Нет стихов в диапазоне <xliff:g example="1" id="start_verse">%1$d</xliff:g> - <xliff:g example="2" id="end_verse">%2$d</xliff:g> в главе: <xliff:g example="05" id="chapter">%3$s</xliff:g></string>
+    <string name="missing_verses_in_chapter">Отсутствует <xliff:g example="2" id="verse_count">%1$d</xliff:g> стих(и) в диапазоне <xliff:g example="1" id="start_verse">%2$d</xliff:g> - <xliff:g example="2" id="end_verse">%3$d</xliff:g> в главе: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
+    <string name="extra_verses_in_chapter">Лишний <xliff:g example="2" id="verse_count">%1$d</xliff:g> стих(и) в диапазоне <xliff:g example="1" id="start_verse">%2$d</xliff:g> - <xliff:g example="2" id="end_verse">%3$d</xliff:g> в главе: <xliff:g example="05" id="chapter">%4$s</xliff:g></string>
+    <string name="could_not_parse_chapter">Не удалось определить главу: %s</string>
+    <string name="missing_chapter_n">Отсутствует глава %s - пытаемся восстановить</string>
+    <string name="duplicate_chapter">Дублирующаяся глава: %s</string>
+    <string name="chapter_out_of_order">Глава расположена не по порядку: \'<xliff:g example="4" id="found">%1$s</xliff:g>\' после \'<xliff:g example="2" id="previous">%1$s</xliff:g>\'</string>
+    <string name="missing_verses_in_section">В секции нет стихов</string>
+    <string name="error_prefix">Ошибка: %s</string>
+    <string name="no_error">Ошибок не найдено</string>
+    <string name="warning_prefix">Предупреждение: %s</string>
+    <string name="found_book">Найдена книга: %s</string>
+    <string name="importing_file">Импортирование: %s</string>
+    <string name="selected_language">Выбранный язык: %s</string>
+    <string name="initializing_import">Инициализация импорта</string>
+    <string name="finished_loading">Завершена загрузка книг</string>
+    <string name="processing_chapter">Обработка главы: %s</string>
+    <string name="building_manifest">Построение манифеста</string>
+    <string name="reading_usfm">Чтение USFM</string>
+    <string name="importing_usfm">Импортирование USFM</string>
+    <string name="import_usfm_file">Импортировать файл USFM</string>
+    <string name="invalid_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\' \'\nимеет неверное название книги: \'<xliff:g example="marc" id="book_name">%2$s</xliff:g>\'\nВы хотите выбрать название?</string>
+    <string name="missing_book_name_prompt">\'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'\nне содержит название книги\nВы хотите выбрать название?</string>
+    <string name="could_not_parse">Не удалось обработать \'<xliff:g example="Mark.usfm" id="file_name">%1$s</xliff:g>\'</string>
+    <string name="no_chunk_list">Не найден список фрагментов для \'<xliff:g example="marc" id="book_name">%1$s</xliff:g>\'</string>
+    <string name="chapter_count_invalid">Ожидалось <xliff:g example="16" id="chunk_count">%1$s</xliff:g> глав, но последняя глава была <xliff:g example="15" id="chapter_count">%2$s</xliff:g></string>
+    <string name="no_chapter">Главы не найдены</string>
+    <string name="label_restore">Восстановить</string>
+    <string name="title_import_success">Успешно импортировано</string>
+    <string name="title_import_failed">Импортирование не удалось!</string>
+    <string name="import_project_success">Успешно импортировано <xliff:g example="Mark" id="project">%1$s</xliff:g> из:\n<xliff:g example="/downloads/file.tx" id="path">%2$s</xliff:g></string>
+    <string name="table_of_contents">Содержание </string>
+    <string name="license_pdf"><![CDATA[<h2>Creative Commons Attribution-ShareAlike 4.0 International</h2>
+<h3>Human-Readable Summary</h3>
+<p>The Creative Commons Attribution-Share Alike 4.0 International License is available at <a href="http://creativecommons.org/licenses/by-sa/4.0/" title="http://creativecommons.org/licenses/by-sa/4.0/" >http://creativecommons.org/licenses/by-sa/4.0/</a></p>
+<h4>This is a human-readable summary of (and not a substitute for) the License</h4>
+<br/>
+<h3>You are free to:</h3>
+<br/><b>&#8226; Share</b> - copy and redistribute the material in any medium or format
+<br/><b>&#8226; Adapt</b> - remix, transform, and build upon the material for any purpose, even commercially.
+<p>The licensor cannot revoke these freedoms as long as you follow the license terms.</p>
+<h3>Under the following terms:</h3>
+<br/><b>&#8226; Attribution</b> - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+<br/><b>&#8226; ShareAlike</b> - If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
+<br/><b>&#8226; No additional restrictions</b> - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.</p>
+<h3>Notices:</h3>
+<p><br/>&#8226; You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.</p>
+<p><br/>&#8226; No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.</p>]]></string>
+    <string name="questionnaire_title">Страница <xliff:g example="1" id="page_num">%1$d</xliff:g> из <xliff:g example="10" id="page_count">%2$d</xliff:g></string>
+    <string name="new_lang_api_upload_failure_title">Ошибка нового языка</string>
+    <string name="new_lang_api_upload_failure">Мы не смогли сохранить ответы в анкете на новый язык. Мы попробуем снова в следующий раз</string>
+    <string name="answer_not_saved">Ваш ответ не удалось сохранить. Пожалуйста, попробуйте еще раз.</string>
+    <string name="try_again">Пожалуйста, попробуйте еще раз</string>
+    <string name="copy">Копировать</string>
+    <string name="submitting_new_language_requests">Отправка новых языковых запросов</string>
+    <string name="downloading_languages">Скачивание языков</string>
+    <string name="confirm_leave_questionnaire">Вы уверены, что хотите покинуть опросник?</string>
+    <string name="continue_requesting_new_language">Продолжить запрос на новый язык</string>
+    <string name="request_new_language">Запросить новый язык</string>
+    <string name="title_new_language_code">Код нового языка</string>
+    <string name="confirm_start_new_language_code">Вы собираетесь запросить новый код языка.</string>
+    <string name="check_for_updates">Проверить обновления</string>
+    <string name="check_for_app_updates">Проверьте наличие обновлений в Интернете для приложения BTT Writer.</string>
+    <string name="have_latest_app_update">Вы уже используете последнюю версию BTT Writer.</string>
+    <string name="download_latest_apk">Вы хотите загрузить это обновление?</string>
+    <string name="updating_projects">Обновление проектов</string>
+    <string name="view_online">Смотреть онлайн</string>
+    <string name="read_on_web">Читать в Интернете</string>
+    <string name="change_detected">Обнаружено изменение проекта</string>
+    <string name="upload_push_failure">Этот перевод был изменен в вашей учетной записи сервера. Вы должны импортировать эти изменения перед отправкой.</string>
+    <string name="merge_request">Имеются изменения в вашем переводе \'<xliff:g example="Hebrews" id="book">%1$s</xliff:g>\' в \'<xliff:g example="English" id="language">%2$s</xliff:g>\' в вашей учетной записи сервера. Хотите импортировать эти изменения сейчас?</string>
+    <string name="import_failed_title">Импортирование не удалось</string>
+    <string name="push_rejected">Отправка не удалась из-за изменений на сервере. Вы хотите просмотреть конфликты?</string>
+    <string name="backup_rejected">Резервное копирование не удалось из-за изменений на сервере. Вы хотите просмотреть конфликты?</string>
+    <string name="backup_failed_title">Резервное копирование не удалось</string>
+    <string name="update_failed">Обновление не удалось</string>
+    <string name="success_translation_update">Ваш перевод был успешно обновлен.</string>
+    <string name="success_translation_update_with_conflicts">Ваш перевод был успешно обновлен.\nВ некоторых фрагментах найдены конфликты и вам необходимо их проверить.</string>
+    <string name="search_hint">Введите текст поиска</string>
+    <string name="search_source">Искать в исходном:</string>
+    <string name="search_translation">Искать в целевом:</string>
+    <string name="tip_export_to_usfm">Создать usfm-файл вашего проекта</string>
+    <string name="export_to_pdf">Экспорт в PDF файл</string>
+    <string name="tip_export_to_pdf">Создать PDF-файл вашего проекта</string>
+    <string name="title_upload_export">Параметры отправки/экспорта</string>
+    <string name="menu_upload_export">Отправка/Экспорт</string>
+    <string name="title_review">Проверка проекта</string>
+    <string name="title_book">Проект</string>
+    <string name="tip_backup_to_door43">Отправить проект в вашу учетную запись.\nСодержимое будет доступно для загрузки другим переводчикам, объединения с другими проектами или использоваться в качестве резервной копии онлайн.</string>
+    <string name="tip_backup_to_sd">Создать копию файла вашего проекта</string>
+    <string name="draft_translation">Черновик уровня <xliff:g example="3" id="checking_level">%1$d</xliff:g>: <xliff:g example="Pig Latin" id="language">%2$s</xliff:g></string>
+    <string name="title_download_source_language">Скачать из Интернета</string>
+    <string name="download_source_language">Скачать \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' сейчас? Потребуется подключение к Интернету?</string>
+    <string name="downloading_source">Загрузка исходного кода <xliff:g example="en" id="source_language">%1$s</xliff:g></string>
+    <string name="title_export_usfm">Экспорт в USFM</string>
+    <string name="export_usfm_by_chapter">Вы хотите, чтобы конечный USFM файл был разделен на главы или, чтобы вся книга была в одном файле?</string>
+    <string name="label_separate">Раздельно</string>
+    <string name="label_whole">Целиком</string>
+    <string name="export_to_usfm">Экспорт в USFM файл</string>
+    <string name="export_failed">Экспорт не удался!</string>
+    <string name="export_success">Экспорт завершён!\n\nЭкспортировано в:\n<xliff:g example="/sd_card/downloads" id="file_path">%1$s</xliff:g></string>
+    <string name="update_source_language">Вы хотите обновить \'<xliff:g example="Pig Latin" id="language">%1$s</xliff:g>\' через Интернет (требуется подключение)?</string>
+    <string name="conflict_exists">ЕСТЬ КОНФЛИКТ!</string>
+    <string name="resolve_confict_instructions">Конфликт: Нажмите на версию, чтобы сохранить</string>
+    <string name="merge_conflict_title">Такой проект уже существует</string>
+    <string name="import_merge_conflict_project_name">Этот проект (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) уже существует локально с различиями в некоторых фрагментах. Как вы хотите продолжить?</string>
+    <string name="import_merge_conflict">Этот проект уже существует локально с различиями в некоторых фрагментах.\nКак вы хотите продолжить?</string>
+    <string name="label_change">изменить</string>
+    <string name="update_languages">Обновить список доступных целевых языков</string>
+    <string name="update_source">Обновить список доступных исходных текстов</string>
+    <string name="download_index">Загрузить новый index.sqlite</string>
+    <string name="import_index">Импортировать index.sqlite из файла</string>
+    <string name="update_all">Обновить всё</string>
+    <string name="time_very_slow">Займет много времени</string>
+    <string name="time_slow">Может занять несколько минут (или дольше)</string>
+    <string name="time_fast">Может занять несколько минут (или более)</string>
+    <string name="update_options">Параметры обновления</string>
+    <string name="missing_source">Отсутствует исходный перевод</string>
+    <string name="update_success">Обновление успешно завершено</string>
+    <string name="updating">Обновляется</string>
+    <string name="upload_failed_label">Отправка не удалась!</string>
+    <string name="upload_feedback_failed">Не удалось отправить отзыв</string>
+    <string name="upload_crash_report_failed">Не удалось отправить отчет об ошибке</string>
+    <string name="warn_existing_target_translation_label">Целевой перевод уже существует</string>
+    <string name="warn_existing_target_translation">Вы уже переводите <xliff:g example="Genesis" id="project">%1$s</xliff:g> на <xliff:g example="English" id="target_language">%2$s</xliff:g>. Вы хотите объединить проекты?</string>
+    <string name="rename_canceled">Переименование отменено</string>
+    <string name="merge">Слияние</string>
+    <string name="import_project_file">Импорт файла проекта</string>
+    <string name="import_source_text">Импорт исходного текста</string>
+    <string name="not_a_source_text">Не исходный текст</string>
+    <string name="could_not_import">Не удалось импортировать</string>
+    <string name="overwrite_content">Перезаписать <xliff:g example="English - Genesis - Unlocked Literal Bible" id="content">%1$s</xliff:g>?</string>
+    <string name="pdf_output_filename_title_prompt">Введите имя PDF-файла:</string>
+    <string name="choose_destination_folder">Выберите папку назначения:</string>
+    <string name="options_update_failed">Обновление не удалось. Проверьте подключение к Интернету.</string>
+    <string name="update_cancelled">Обновление отменено</string>
+    <string name="update_menu_requires_internet">Требуется подключение к Интернету\nЭти обновления могут занять некоторое время.</string>
+    <string name="update_sources_success"><xliff:g example="6" id="new">%1$d</xliff:g> Новые исходные тексты и <xliff:g example="10" id="updated">%2$d</xliff:g> обновленные исходные тексты доступны для загрузки.</string>
+    <string name="download_index_success">Новый index.sqlite был успешно загружен.</string>
+    <string name="updating_sources">Обновление списка исходных текстов. Это может занять некоторое время. Пожалуйста, подождите...</string>
+    <string name="downloading_index">Загрузка файла index.sqlite. Это может занять некоторое время. Пожалуйста, подождите...</string>
+    <string name="importing_index">Импортирование файла index.sqlite. Пожалуйста, подождите...</string>
+    <string name="import_index_failed">Не удалось импортировать файл index.sqlte. Проверьте правильность файла.</string>
+    <string name="update_languages_success"><xliff:g example="6" id="new">%1$d</xliff:g> целевых языков добавлено.</string>
+    <string name="updating_languages">Обновление списка целевых языков. Это может занять некоторое время. Пожалуйста, подождите...</string>
+    <string name="available_online">Доступно онлайн</string>
+    <string name="update_sources_label">Выйти для обновления исходных текстов</string>
+    <string name="warning_title">Внимание</string>
+    <string name="update_warning">Проверка новых и обновленных исходных текстов закроет этот проект. Для этого требуется подключение к Интернету.</string>
+    <string name="download_sources">Загрузить доступные исходные тексты</string>
+    <string name="check_app_update">Проверить обновление для BTT Writer</string>
+    <string name="all_up_to_date">Все исходные тексты уже актуальны!</string>
+    <string name="loading_sources">Загрузка исходных текстов\nПожалуйста подождите...</string>
+    <string name="old_testament_label">Ветхий Завет</string>
+    <string name="new_testament_label">Новый Завет</string>
+    <string name="other_label">Другое</string>
+    <string name="choose_language">Выберите язык</string>
+    <string name="choose_category">Выберите категорию</string>
+    <string name="choose_sources">Выберите источник(и)</string>
+    <string name="choose_book">Выберите книгу</string>
+    <string name="by_language_label">По языку</string>
+    <string name="by_book_label">По книге</string>
+    <string name="select_all_label">Выбрать все</string>
+    <string name="unselect_all_label">Отменить выбор</string>
+    <string name="downloads_success"><xliff:g example="6" id="success_count">%1$d</xliff:g> исходных текстов было успешно загружено.</string>
+    <string name="downloads_fail"><xliff:g example="6" id="fail_count">%1$d</xliff:g> исходных текстов не удалось загрузить.</string>
+    <string name="download_cancelled">Загрузка отменена</string>
+    <string name="download_errors">Ошибки загрузки</string>
+    <string name="helps_download_errors">Не удалось загрузить вспомогательные ресурсы для: <xliff:g example="en_obs,fr_obs" id="fails">%1$s</xliff:g></string>
+    <string name="source_not_found">Исходный текст не найден на сервере</string>
+    <string name="search_for_language">Поиск языка</string>
+    <string name="sort_column">Сортировка столбца по</string>
+    <string name="sort_projects">Сортировка столбца проекта по</string>
+    <string name="sort_project_then_language">Проект, затем язык</string>
+    <string name="sort_language_then_project">Язык, затем проект</string>
+    <string name="sort_progress_then_project">Прогресс, затем проект</string>
+    <string name="sort_bible_order">По порядку книг Библии</string>
+    <string name="sort_alphabetical_order">В алфавитном порядке</string>
+    <string name="usfm_output_filename_title_prompt">Введите имя USFM файла:</string>
+    <string name="found_in_chunks">Найдено во фрагментах <xliff:g example="6" id="found_count">%1$d</xliff:g></string>
+    <string name="retry_label">Повторить</string>
+    <string name="current_user">Текущий пользователь: <xliff:g example="tester" id="user_name">%1$s</xliff:g></string>
+    <string name="print_success">Успешно распечатано в:\n<xliff:g example="/downloads/en_ulb.pdf" id="destination">%1$s</xliff:g></string>
+    <string name="check_network_connection">Проверьте интернет и повторите попытку</string>
+    <string name="upload_complete">Отправка завершена</string>
+    <string name="unpacking">Распаковка изображений</string>
+    <string name="merge_projects_label">Слияние проектов</string>
+    <string name="overwrite_projects_label">Перезаписать проект</string>
+    <string name="project_output_filename_title_prompt">Введите название файла проекта:</string>
+    <string name="translation_questions">Вопросы</string>
+    <string name="unsupported">Не поддерживается</string>
+    <string name="import_warning">Проект \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' может не поддерживаться в этом приложении. В настоящее время BTT Writer поддерживает только проекты Писания и Онкрытые Библейские Истории. Если это не один из этих типов проектов, он не будет импортирован в BTT Writer.\n\nВы хотите попробовать импортировать его в любом случае?</string>
+    <string name="overwrite_file_title">Перезаписать файл?</string>
+    <string name="overwrite_file_warning">Такое имя файла уже существует. Вы хотите перезаписать\n\<xliff:g example="project.usfm" id="project_name">%1$s</xliff:g>?\n\nРазмер: <xliff:g example="3.5 KB" id="size">%2$s</xliff:g>\t\nИзменено: <xliff:g example="2/23/2017" id="date">%3$s</xliff:g></string>
+    <string name="overwrite_label">Перезаписать</string>
+    <string name="rename_label">Переименовать</string>
+    <string name="bytes_short">Б</string>
+    <string name="kilobytes_short">КБ</string>
+    <string name="megabytes_short">МБ</string>
+    <string name="has_warnings">\'<xliff:g example="Chapter 1" id="title">%1$s</xliff:g>\' содержит предупреждения:</string>
+    <string name="title">Заголовок</string>
+    <string name="reference">Ссылка</string>
+    <string name="title_footnote">Примечание</string>
+    <string name="access_not_root">Ошибка при запросе доступа к:\n\'%s\'\nВозможно, вы выбрали папку, отличную от корня SD CARD.\nУбедитесь, что вы нажали значок \'SD-карты\' слева, и затем кнопку внизу с надписью \'SELECT \"SD card\"\".</string>
+    <string name="merge_summary">Проекты были объединены. Есть (<xliff:g example="37" id="count">%1$d</xliff:g>) фрагменты, содержащие новые конфликты, которые требуют вашего внимания.</string>
+    <string name="merge_complete_title">Слияние завершено</string>
+    <string name="access_success_title">Разрешить доступ к SD-карте</string>
+    <string name="interrupting_download">Попытка прервать загрузку</string>
+    <string name="slow_device">Медленное устройство</string>
+    <string name="min_hardware_req_not_met">Это устройство не соответствует минимальным требованиям к оборудованию и может плохо функционировать. Вы также можете столкнуться с проблемами на некоторых телефонах и других очень маленьких устройствах.</string>
+    <string name="do_not_show_again">Больше не показывать</string>
+    <string name="pref_title_check_hardware_requirements">Проверьте требования к оборудованию</string>
+    <string name="pref_title_enable_tm_links">Enable TM Links</string>
+    <string name="pref_description_check_hardware_requirements">Проверять предлагаемое оборудование при запуске приложения</string>
+    <string name="pref_description_enable_tm_links">Open Translation Manual links in browser (requires internet)</string>
+    <string name="import_project_already_exists">Этот проект (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) уже существует локально. Как вы хотите продолжить?</string>
+    <string name="searching_repositories">Поиск репозиториев</string>
+    <string name="cloning_repository">Клонирование репозитория</string>
+    <string name="start_new_translation">Начать новый перевод</string>
+    <string name="regenerate_ssh_keys">Создать новый ключ SSH</string>
+    <string name="regenerate_ssh_keys_hint">Отменить старый и создать новый ключ ssh, используемый для git</string>
+    <string name="read_debug_log">Чтение журнала отладки</string>
+    <string name="read_debug_log_hint">Просмотр журналов ошибок, сгенерированных на этом устройстве.</string>
+    <string name="simulate_crash">Имитация сбоя</string>
+    <string name="check_system_resources">Проверить ресурсы системы</string>
+    <string name="check_system_resources_hint">Проверка минимальных ресурсов системы.</string>
+    <string name="delete_library">Удалить библиотеку</string>
+    <string name="delete_library_hint">Удалить всю базу данных библиотеки, чтобы ее можно было восстановить с нуля</string>
+    <string name="recreate_keys">Создание нового ключа</string>
+    <string name="deleting_library">Удаление библиотеки</string>
+    <string name="reading_logs">Чтение логов</string>
+    <string name="simulating_crash">Имитация сбоя</string>
+    <string name="no_logs">Нет журналов</string>
+    <string name="system_resources_check">Проверка системных ресурсов</string>
+    <string name="library_was_deleted">Содержание библиотеки было удалено</string>
+    <string name="source_draft_translation_not_found">Исходный текст для этого черновика не найден.</string>
+    <string name="migrate_from_old_app">Миграция из старого приложения</string>
+    <string name="migrate_from_old_app_description">Хотите провести миграцию из старых данных приложения? Вы можете сделать это позже в настройках.</string>
+    <string name="migrating_translations">Миграция переводов</string>
+    <string name="migrating_complete">Миграция выполнена!</string>
+    <string name="copying_file">Копирование файла: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
+    <string name="import_from_backup">Импорт из резервных копий</string>
+    <string name="filename">Имя файла</string>
+    <string name="date_modified">Изменено в</string>
+    <string name="tm_title">Translation Manual: <xliff:g example="fig" id="section">%1$s</xliff:g>/<xliff:g example="translate-names" id="slug">%2$s</xliff:g></string>
 </resources>
