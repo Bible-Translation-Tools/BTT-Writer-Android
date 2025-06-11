@@ -652,7 +652,6 @@ para cualquier propósito, incluso comercialmente.
     <string name="loading_sources">Cargando textos fuente \nPor favor, espere...</string>
     <string name="old_testament_label">Antiguo Testamento</string>
     <string name="new_testament_label">Nuevo Testamento</string>
-    <string name="ta_label">academia de traducción</string>
     <string name="other_label">Otro</string>
     <string name="choose_language">Elige un Idioma</string>
     <string name="choose_category">Elija una categoría</string>
@@ -688,7 +687,6 @@ para cualquier propósito, incluso comercialmente.
     <string name="overwrite_projects_label">Sobrescribir proyecto</string>
     <string name="project_output_filename_title_prompt">Introduzca el nombre del archivo de salida del proyecto:</string>
     <string name="translation_questions">Preguntas</string>
-    <string name="translation_academy">Academia de Traducciones</string>
     <string name="unsupported">No soportado</string>
     <string name="import_warning">El proyecto \'<xliff:g example="MysteryProject" id="project_name">%1$s</xliff:g>\' puede no es compatible con esta aplicación. Actualmente, translationStudio solo es compatible con los proyectos de Escritura e historias bíblicas abiertas. Si este no es uno de esos tipos de proyectos, no se importará a translationStudio. \n\n¿Deseas intentar importarlo de todos modos?</string>
     <string name="overwrite_file_title">¿Sobrescribir archivo?</string>
@@ -711,7 +709,9 @@ para cualquier propósito, incluso comercialmente.
     <string name="min_hardware_req_not_met">Este dispositivo no cumple con los requisitos mínimos de hardware y puede funcionar mal. También puede tener problemas en algunos teléfonos y otros dispositivos muy pequeños.</string>
     <string name="do_not_show_again">No mostrar nuevamente</string>
     <string name="pref_title_check_hardware_requirements">Comprobar Requisitos de Hardware</string>
+    <string name="pref_title_enable_tm_links">Enable TM Links</string>
     <string name="pref_description_check_hardware_requirements">Revise el hardware sugerido al iniciar la aplicación</string>
+    <string name="pref_description_enable_tm_links">Open Translation Manual links in browser (requires internet)</string>
     <string name="import_project_already_exists">Este proyecto (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) ya existe localmente. ¿Cómo quieres continuar?</string>
     <string name="searching_repositories">Searching repositories</string>
     <string name="cloning_repository">Cloning repository</string>
@@ -741,4 +741,5 @@ para cualquier propósito, incluso comercialmente.
     <string name="import_from_backup">Import from Backups</string>
     <string name="filename">File name</string>
     <string name="date_modified">Modified at</string>
+    <string name="tm_title">Translation Manual: <xliff:g example="fig" id="section">%1$s</xliff:g>/<xliff:g example="translate-names" id="slug">%2$s</xliff:g></string>
 </resources>
