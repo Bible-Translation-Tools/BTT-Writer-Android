@@ -33,8 +33,6 @@ public class USFMRenderer extends ClickableRenderingEngine {
 
     private Span.OnClickListener mNoteListener;
     private Span.OnClickListener mVerseListener;
-    private boolean mRenderLinebreaks = false;
-    private boolean mRenderParagraphs = true;
     private boolean mRenderVerses = true;
     private String mSearch;
     private int mHighlightColor = 0;
@@ -70,24 +68,6 @@ public class USFMRenderer extends ClickableRenderingEngine {
      */
     public void setVersesEnabled(boolean enable) {
         mRenderVerses = enable;
-    }
-
-    /**
-     * if set to true, then line breaks will be shown in the output.
-     *
-     * @param enable default is false
-     */
-    public void setLinebreaksEnabled(boolean enable) {
-        mRenderLinebreaks = enable;
-    }
-
-    /**
-     * if set to true, then paragraphs (\p) will be rendered in the output.
-     *
-     * @param enable default is true
-     */
-    public void setParagraphsEnabled(boolean enable) {
-        mRenderParagraphs = enable;
     }
 
     /**
@@ -136,11 +116,7 @@ public class USFMRenderer extends ClickableRenderingEngine {
         CharSequence out = in;
 
         out = trimWhitespace(out);
-        if(!mRenderLinebreaks) {
-            out = renderLineBreaks(out);  // TODO: Eventually we may want to convert these to paragraphs.
-            if(isStopped()) return in;
-        }
-//        out = renderWhiteSpace(out);
+        out = renderLineBreaks(out, " \\p ");
         out = renderChapterMarker(out);
         if(isStopped()) return in;
         out = renderMajorSectionHeading(out);
@@ -319,18 +295,18 @@ public class USFMRenderer extends ClickableRenderingEngine {
     }
 
     /**
-     * Strips out new lines and replaces them with a single space
+     * Strips out new lines and replaces them with a paragraph marker
      * @param in
      * @return
      */
-    public CharSequence renderLineBreaks(CharSequence in) {
+    public CharSequence renderLineBreaks(CharSequence in, CharSequence lineBreak) {
         CharSequence out = "";
         Pattern pattern = Pattern.compile("(\\s*\\n+\\s*)");
         Matcher matcher = pattern.matcher(in);
         int lastIndex = 0;
         while(matcher.find()) {
             if(isStopped()) return in;
-            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), " ");
+            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), lineBreak);
             lastIndex = matcher.end();
         }
         out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
@@ -363,20 +339,18 @@ public class USFMRenderer extends ClickableRenderingEngine {
      * @return
      */
     public CharSequence renderNote(CharSequence in) {
-        // Remove line breaks from the note
-        in = renderLineBreaks(in);
-
         CharSequence out = "";
         Pattern pattern = Pattern.compile(USFMNoteSpan.PATTERN);
         Matcher matcher = pattern.matcher(in);
         int lastIndex = 0;
         while(matcher.find()) {
             if(isStopped()) return in;
-            String noteText = matcher.group(2);
-            USFMNoteSpan note = USFMNoteSpan.parseNote(matcher.group(1), noteText);
+            CharSequence noteText = matcher.group(2);
+            noteText = renderLineBreaks(noteText, "");
+            USFMNoteSpan note = USFMNoteSpan.parseNote(matcher.group(1), noteText.toString().trim());
             note.setOnClickListener(mNoteListener);
             if(mSearch != null) {
-                boolean foundSearch = noteText.toLowerCase().contains(mSearch);
+                boolean foundSearch = noteText.toString().toLowerCase().contains(mSearch);
                 note.setHighlight(foundSearch);
             }
             out = TextUtils.concat(
@@ -518,17 +492,12 @@ public class USFMRenderer extends ClickableRenderingEngine {
         while(matcher.find()) {
             if(isStopped()) return in;
 
-            if (mRenderParagraphs) {
-                USFMParagraphSpan span = new USFMParagraphSpan();
-                out = TextUtils.concat(
-                        out,
-                        in.subSequence(lastIndex, matcher.start()),
-                        span.toCharSequence(context)
-                );
-            } else {
-                // just display \p marker
-                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
-            }
+            USFMParagraphSpan span = new USFMParagraphSpan();
+            out = TextUtils.concat(
+                    out,
+                    in.subSequence(lastIndex, matcher.start()),
+                    span.toCharSequence(context)
+            );
             lastIndex = matcher.end();
         }
         out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
