@@ -2,6 +2,12 @@ package com.door43.translationstudio.ui.translate;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -10,16 +16,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.util.Log;
-import android.view.GestureDetector;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
@@ -36,6 +32,9 @@ import com.door43.translationstudio.ui.translate.review.SearchSubject;
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
 
 import org.json.JSONException;
+import org.unfoldingword.door43client.models.Translation;
+import org.unfoldingword.resourcecontainer.ResourceContainer;
+import org.unfoldingword.tools.logger.Logger;
 import org.unfoldingword.tools.taskmanager.ManagedTask;
 
 import java.util.ArrayList;
@@ -140,7 +139,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         adapter.setOnClickListener(this);
 
-        gesture = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+        gesture = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             public MotionEvent mLastOnDownEvent;
             private final float SWIPE_THRESHOLD_VELOCITY = 20f;
             private final float SWIPE_MIN_DISTANCE = 50f;

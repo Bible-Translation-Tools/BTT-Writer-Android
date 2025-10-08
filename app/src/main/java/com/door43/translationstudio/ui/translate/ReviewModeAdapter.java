@@ -549,7 +549,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             }
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String translation = applyChangedText(s, holder, item);
+                applyChangedText(s, item);
                 // commit immediately if editing history
                 FileHistory history = item.getFileHistory();
                 if (history != null && !history.isAtHead()) {
@@ -607,7 +607,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         ViewUtil.makeLinksClickable(holder.binding.getTargetBody());
                     }
                 }
-                addMissingVerses(item, holder);
+                addMissingVerses(item);
             });
         } else if (item.isEditing) {
             // editing mode
@@ -647,9 +647,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             holder.binding.getRedoButton().setOnClickListener(v -> redoTextInTarget(holder, item));
         }
         // editing button
-        final GestureDetector detector = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+        final GestureDetector detector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onSingleTapUp(MotionEvent e) {
+            public boolean onSingleTapUp(@NonNull MotionEvent e) {
                 item.isEditing = !item.isEditing;
                 holder.rebuildControls();
 
@@ -672,7 +672,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
                         holder.binding.getTargetEditableBody().addTextChangedListener(holder.editableTextWatcher);
                     }
-                    addMissingVerses(item, holder);
+                    addMissingVerses(item);
                 } else {
                     if (holder.editableTextWatcher != null && holder.binding.getTargetEditableBody() != null) {
                         holder.binding.getTargetEditableBody().removeTextChangedListener(holder.editableTextWatcher);
@@ -695,7 +695,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     if (holder.binding.getTargetBody() != null) {
                         holder.binding.getTargetBody().setText(item.renderedTargetText);
                     }
-                    addMissingVerses(item, holder);
+                    addMissingVerses(item);
                 }
                 return true;
             }
@@ -757,23 +757,19 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     /**
      * if missing verses were found during render, then add them
      *
-     * @param item
-     * @param holder
-     * @return - returns true if missing verses were applied
+     * @param item Review list item
      */
-    private boolean addMissingVerses(ReviewListItem item, ReviewHolder holder) {
+    private void addMissingVerses(ReviewListItem item) {
         if (item.hasMissingVerses && !item.isComplete()) {
             Log.i(TAG, "Adding Missing verses to: " + item.getTargetText());
             if (!item.getTargetText().isEmpty()) {
-                String translation = applyChangedText(item.renderedTargetText, holder, item);
+                String translation = applyChangedText(item.renderedTargetText, item);
                 Log.i(TAG, "Added Missing verses: " + translation);
                 item.hasMissingVerses = false;
                 item.renderedTargetText = null; // force re-rendering of target text
                 triggerNotifyDataSetChanged();
-                return true;
             }
         }
-        return false;
     }
 
     /**
@@ -1070,10 +1066,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      *
      * @param s      A string or editable
      * @param item
-     * @param holder
      * @param item   * @return
      */
-    private String applyChangedText(CharSequence s, ReviewHolder holder, ReviewListItem item) {
+    private String applyChangedText(CharSequence s, ReviewListItem item) {
         String translation;
         if (s == null) {
             return null;
@@ -1170,7 +1165,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         // TRICKY: prevent history from getting rolled back soon after the user
                         // views it
                         restartAutoCommitTimer();
-                        applyChangedText(text, holder, item);
+                        applyChangedText(text, item);
 
                         if (getListener() != null) getListener().closeKeyboard();
                         item.setHasMergeConflicts(MergeConflictsHandler.isMergeConflicted(text));
@@ -1246,7 +1241,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                         // TRICKY: prevent history from getting rolled back soon after the user
                         // views it
                         restartAutoCommitTimer();
-                        applyChangedText(text, holder, item);
+                        applyChangedText(text, item);
 
                         if (getListener() != null) getListener().closeKeyboard();
                         item.setHasMergeConflicts(MergeConflictsHandler.isMergeConflicted(text));
