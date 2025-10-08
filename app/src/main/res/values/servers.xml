@@ -3,41 +3,49 @@
 
     <string-array name="content_server_names_array">
         <item>WACS</item>
+        <item>WACS DEV</item>
         <item>DCS</item>
     </string-array>
 
     <string-array name="content_server_values_array">
         <item>wacs_value</item>
+        <item>wacs_dev_value</item>
         <item>dcs_value</item>
     </string-array>
 
     <string-array name="content_server_git_server_port_values_array">
+        <item>22</item>
         <item>22</item>
         <item>9299</item>
     </string-array>
 
     <string-array name="content_server_data_server_values_array">
         <item>https://content.bibletranslationtools.org</item>
+        <item>https://content.wacsdev.org</item>
         <item>https://git.door43.org</item>
     </string-array>
 
     <string-array name="content_server_git_server_api_values_array">
         <item>https://content.bibletranslationtools.org/api/v1</item>
+        <item>https://content.wacsdev.org/api/v1</item>
         <item>https://git.door43.org/api/v1</item>
     </string-array>
 
     <string-array name="content_server_media_server_values_array">
         <item>https://api.bibletranslationtools.org</item>
+        <item>https://api-dev.bibletranslationtools.org</item>
         <item>https://api.unfoldingword.org</item>
     </string-array>
 
     <string-array name="content_server_reader_server_values_array">
         <item>https://read.bibleineverylanguage.org</item>
+        <item>https://read-dev.bibleineverylanguage.org</item>
         <item>https://door43.org/u</item>
     </string-array>
 
     <string-array name="content_server_account_create_urls_array">
         <item>https://content.bibletranslationtools.org/user/sign_up</item>
+        <item>https://content.wacsdev.org/user/sign_up</item>
         <item>https://git.door43.org/user/sign_up</item>
     </string-array>
 
