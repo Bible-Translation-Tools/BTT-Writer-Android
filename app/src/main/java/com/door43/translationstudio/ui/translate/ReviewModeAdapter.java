@@ -473,7 +473,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             holder.binding.getConfirmButton().setOnClickListener(v -> {
                 if (item.mergeItemSelected >= 0 && item.mergeItemSelected < item.mergeItems.size()) {
                     CharSequence selectedText = item.mergeItems.get(item.mergeItemSelected);
-                    applyNewCompiledText(selectedText.toString(), holder, item);
+                    applyNewCompiledText(selectedText.toString(), item);
                     item.setTargetText(selectedText.toString());
                     reOpenItem(item);
                     item.setHasMergeConflicts(MergeConflictsHandler.isMergeConflicted(selectedText));
@@ -1085,7 +1085,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             translation = s.toString();
         }
 
-        applyNewCompiledText(translation, holder, item);
+        applyNewCompiledText(translation, item);
         return translation;
     }
 
@@ -1093,10 +1093,11 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * save new text to item
      *
      * @param translation
-     * @param holder
      * @param item
      */
-    private void applyNewCompiledText(String translation, ReviewHolder holder, ListItem item) {
+    private void applyNewCompiledText(String translation, ListItem item) {
+        translation = translation.replaceAll("\\s*\\R\\s*", " \\\\p ");
+
         item.setTargetText(translation);
         if (item.isChapterReference()) {
             item.target.applyChapterReferenceTranslation(item.getCt(), translation);
@@ -1112,9 +1113,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         } else if (item.isChunk()) {
             item.target.applyFrameTranslation(item.getFt(), translation);
         }
-
-        item.renderedTargetText = renderSourceText(translation, item.getTargetTranslationFormat(),
-                holder, (ReviewListItem) item, true);
     }
 
     /**
@@ -1593,7 +1591,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     true
             );
 
-            renderer.setLinebreaksEnabled(true);
             renderer.setPopulateVerseMarkers(
                 RenderingProvider.Companion.getVerseRange(item.getSourceText(),
                 item.getSourceTranslationFormat())
@@ -1848,9 +1845,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             if (editable) {
                 if (!item.isComplete()) {
                     renderingGroup.setVersesEnabled(false);
-                    renderingGroup.setParagraphsEnabled(false);
                 }
-                renderingGroup.setLinebreaksEnabled(true);
             }
         } else {
             // TODO: add note click listener

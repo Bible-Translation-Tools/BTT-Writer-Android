@@ -4,7 +4,7 @@ import android.text.SpannableStringBuilder;
 
 public class USFMParagraphSpan extends ParagraphSpan {
 
-    public static final String PATTERN = "\\\\p\\W";
+    public static final String PATTERN = "\\\\p\\W?";
 
     private SpannableStringBuilder mSpannable;
 

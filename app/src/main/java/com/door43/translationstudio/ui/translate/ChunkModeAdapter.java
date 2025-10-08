@@ -513,7 +513,6 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                     true
             );
             renderer.setVersesEnabled(false);
-            renderer.setParagraphsEnabled(false);
         } else {
             // TODO: add note click listener
             renderingGroup.addEngine(new DefaultRenderer(null));
