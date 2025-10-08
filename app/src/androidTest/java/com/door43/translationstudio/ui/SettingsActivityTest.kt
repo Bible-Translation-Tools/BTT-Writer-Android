@@ -50,6 +50,7 @@ class SettingsActivityTest {
             onView(withText(R.string.content_server)).tryPerform(click())
 
             checkText("WACS", true)
+            checkText("WACS DEV", true)
             checkText("DCS", true)
 
             onView(withText(R.string.title_cancel)).tryPerform(click())
