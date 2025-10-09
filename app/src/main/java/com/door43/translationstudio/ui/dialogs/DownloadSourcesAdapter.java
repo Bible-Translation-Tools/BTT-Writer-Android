@@ -51,7 +51,6 @@ public class DownloadSourcesAdapter extends BaseAdapter {
     private Map<String,List<Integer>> byLanguage;
     private Map<String,List<Integer>> otBooks;
     private Map<String,List<Integer>> ntBooks;
-    private Map<String,List<Integer>> taBooks;
     private Map<String,List<Integer>> otherBooks;
 
     // 02/20/2017 - for now we are disabling updating of TA since a major change coming up could break the app
@@ -96,7 +95,6 @@ a     * @param task
         otBooks = result.getOtBooks();
         ntBooks = result.getNtBooks();
         otherBooks = result.getOtherBooks();
-        taBooks = result.getTaBooks();
         selected = new ArrayList<>(); // clear selections
         initializeSelections();
     }
@@ -234,7 +232,6 @@ a     * @param task
                 case oldTestament:
                 case newTestament:
                 case other_book:
-                case translationAcademy:
                 case book_type:
                     bookFilter = step.filter;
                     break;
@@ -256,10 +253,6 @@ a     * @param task
 
             case newTestament:
                 getBooksInCategory(ntBooks, false);
-                break;
-
-            case translationAcademy:
-                getBooksInCategory(taBooks, true);
                 break;
 
             case other_book:
@@ -338,8 +331,6 @@ a     * @param task
                     found = isLanguageInCategory(byLanguage, otBooks);
                 } else if (id == R.string.new_testament_label) {
                     found = isLanguageInCategory(byLanguage, ntBooks);
-                } else if (id == R.string.ta_label) {
-                    found = isLanguageInCategory(byLanguage, taBooks);
                 } else {
                     found = isLanguageInCategory(byLanguage, otherBooks);
                 }
@@ -391,11 +382,6 @@ a     * @param task
         if(sourceList == null) {
             if(otBooks.containsKey(bookFilter)) {
                 sourceList = otBooks.get(bookFilter);
-            }
-        }
-        if(sourceList == null) {
-            if(taBooks.containsKey(bookFilter)) {
-                sourceList = taBooks.get(bookFilter);
             }
         }
         if(sourceList == null) {
@@ -462,8 +448,6 @@ a     * @param task
             type = SelectionType.oldTestament;
         } else if (bookTypeSelected == R.string.new_testament_label) {
             type = SelectionType.newTestament;
-        } else if (bookTypeSelected == R.string.ta_label) {
-            type = SelectionType.translationAcademy;
         } else {
             type = SelectionType.other_book;
         }
@@ -482,7 +466,6 @@ a     * @param task
         sortSet = switch (category) {
             case oldTestament -> otBooks;
             case newTestament -> ntBooks;
-            case translationAcademy -> taBooks;
             default -> otherBooks;
         };
 
@@ -810,11 +793,10 @@ a     * @param task
         language(0),
         oldTestament(1),
         newTestament(2),
-        translationAcademy(3),
-        other_book(4),
-        book_type(5),
-        source_filtered_by_language(6),
-        source_filtered_by_book(7);
+        other_book(3),
+        book_type(4),
+        source_filtered_by_language(5),
+        source_filtered_by_book(6);
 
         private int _value;
 

@@ -8,8 +8,7 @@ public enum ResourceType {
     TEXT("text", "Text"),
     TRANSLATION_NOTE("tn", "Notes"),
     TRANSLATION_QUESTION("tq", "Questions"),
-    TRANSLATION_WORD("tw", "Words"),
-    TRANSLATION_ACADEMY("ta", "Translation Academy");
+    TRANSLATION_WORD("tw", "Words");
 
     ResourceType(String id, String name) {
         mId = id;

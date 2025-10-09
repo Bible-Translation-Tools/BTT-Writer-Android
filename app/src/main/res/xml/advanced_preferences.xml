@@ -21,6 +21,14 @@
             app:allowDividerAbove="true"
             app:allowDividerBelow="true"/>
 
+        <CheckBoxPreference
+            android:key="enable_tm_links"
+            android:title="@string/pref_title_enable_tm_links"
+            android:summary="@string/pref_description_enable_tm_links"
+            android:defaultValue="false"
+            app:allowDividerAbove="true"
+            app:allowDividerBelow="true"/>
+
         <ListPreference
             android:key="backup_interval"
             android:title="Backup Interval"

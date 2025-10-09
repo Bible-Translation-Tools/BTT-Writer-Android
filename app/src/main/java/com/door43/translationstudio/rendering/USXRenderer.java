@@ -2,7 +2,6 @@ package com.door43.translationstudio.rendering;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -74,24 +73,6 @@ public class USXRenderer extends ClickableRenderingEngine {
      */
     public void setVersesEnabled(boolean enable) {
         mRenderVerses = enable;
-    }
-
-    /**
-     * if set to true, then line breaks will be shown in the output.
-     *
-     * @param enable default is false
-     */
-    public void setLinebreaksEnabled(boolean enable) {
-        mRenderLinebreaks = enable;
-    }
-
-    /**
-     * if set to true, then paragraphs (\p) will be rendered in the output.
-     *
-     * @param enable default is true
-     */
-    public void setParagraphsEnabled(boolean enable) {
-        mRenderParagraphs = enable;
     }
 
     /**

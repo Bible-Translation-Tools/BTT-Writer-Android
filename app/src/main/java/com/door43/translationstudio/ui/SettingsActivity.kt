@@ -192,6 +192,7 @@ class SettingsActivity : AppCompatActivity() {
             setPreferenceSummaryFromValue(KEY_PREF_CREATE_ACCOUNT_URL)
             setPreferenceSummaryFromValue(KEY_PREF_LANGUAGES_URL)
             setPreferenceSummaryFromValue(KEY_PREF_INDEX_SQLITE_URL)
+            setPreferenceSummaryFromValue(KEY_PREF_TM_URL)
             setPreferenceSummaryFromValue(KEY_PREF_LOGGING_LEVEL)
             setPreferenceSummaryFromValue(KEY_PREF_BACKUP_INTERVAL)
 
@@ -416,7 +417,8 @@ class SettingsActivity : AppCompatActivity() {
             val ignored = arrayListOf(
                 KEY_PREF_ALWAYS_SHARE,
                 KEY_PREF_CHECK_HARDWARE,
-                KEY_PREF_MIGRATE_OLD_APP
+                KEY_PREF_MIGRATE_OLD_APP,
+                KEY_PREF_ENABLE_TM_LINKS
             )
             if (key in ignored) return
 
@@ -514,5 +516,7 @@ class SettingsActivity : AppCompatActivity() {
         const val KEY_PREF_SOFTWARE_LICENSES = "software_licenses"
 
         const val KEY_PREF_MIGRATE_OLD_APP = "migrate_old_app"
+        const val KEY_PREF_TM_URL = "tm_url"
+        const val KEY_PREF_ENABLE_TM_LINKS = "enable_tm_links"
     }
 }
