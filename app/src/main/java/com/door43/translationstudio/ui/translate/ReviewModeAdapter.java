@@ -76,7 +76,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import kotlin.Pair;
 import kotlin.sequences.SequencesKt;
 import kotlin.text.Regex;
 import kotlin.text.RegexOption;
@@ -1302,18 +1301,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         }
 
         // Check for paragraph count.
-        Pair<Integer, Integer> paragraphsCount = compareSourceTargetParagraphs(
-                item.getSourceText(),
-                item.getTargetText()
-        );
+        Regex srcRegex = new Regex("<para\\b", RegexOption.IGNORE_CASE);
+        Integer srcParagraphs = countParagraphs(item.getSourceText(), srcRegex);
 
-        if (paragraphsCount.getSecond() >= (paragraphsCount.getFirst() + 3)) {
+        Regex targetRegex = new Regex("\\\\p\\b");
+        Integer targetParagraphs = countParagraphs(item.getTargetText(), targetRegex);
+
+        if (targetParagraphs >= (srcParagraphs + 3)) {
             throw new IllegalStateException(
-                    context.getString(
-                            R.string.too_many_paragraphs,
-                            paragraphsCount.getFirst(),
-                            paragraphsCount.getSecond()
-                    )
+                    context.getString(R.string.too_many_paragraphs, srcParagraphs, targetParagraphs)
             );
         }
 
@@ -1413,17 +1409,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         item.renderedTargetText = null;
     }
 
-    private Pair<Integer, Integer> compareSourceTargetParagraphs(
-            String srcText,
-            String targetText
-    ) {
-        Regex srcParaTest = new Regex("<para\\b", RegexOption.IGNORE_CASE);
-        int srcParagraphs = SequencesKt.count(srcParaTest.findAll(srcText, 0));
-
-        Regex targetParaTest = new Regex("\\\\p\\b");
-        int targetParagraphs = SequencesKt.count(targetParaTest.findAll(targetText, 0));
-
-        return new Pair<>(srcParagraphs, targetParagraphs);
+    /**
+     * Count the number of paragraphs in the text
+     * @param text - text
+     * @param regex - regex for searching paragraphs
+     * @return - number of paragraphs
+     */
+    private Integer countParagraphs(String text, Regex regex) {
+        return SequencesKt.count(regex.findAll(text, 0));
     }
 
     /**
