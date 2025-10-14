@@ -76,6 +76,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import kotlin.sequences.SequencesKt;
+import kotlin.text.Regex;
+import kotlin.text.RegexOption;
+
 public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements OnResourceClickListener, OnSourceClickListener {
     private static final String TAG = ReviewModeAdapter.class.getSimpleName();
 
@@ -1296,6 +1300,19 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             throw new IllegalStateException(context.getString(R.string.translate_first));
         }
 
+        // Check for paragraph count.
+        Regex srcRegex = new Regex("<para\\b", RegexOption.IGNORE_CASE);
+        Integer srcParagraphs = countParagraphs(item.getSourceText(), srcRegex);
+
+        Regex targetRegex = new Regex("\\\\p\\b");
+        Integer targetParagraphs = countParagraphs(item.getTargetText(), targetRegex);
+
+        if (targetParagraphs >= (srcParagraphs + 3)) {
+            throw new IllegalStateException(
+                    context.getString(R.string.too_many_paragraphs, srcParagraphs, targetParagraphs)
+            );
+        }
+
         Matcher matcher;
         int lowVerse = -1;
         int highVerse = 999999999;
@@ -1390,6 +1407,16 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
         item.isEditing = false;
         item.renderedTargetText = null;
+    }
+
+    /**
+     * Count the number of paragraphs in the text
+     * @param text - text
+     * @param regex - regex for searching paragraphs
+     * @return - number of paragraphs
+     */
+    private Integer countParagraphs(String text, Regex regex) {
+        return SequencesKt.count(regex.findAll(text, 0));
     }
 
     /**
