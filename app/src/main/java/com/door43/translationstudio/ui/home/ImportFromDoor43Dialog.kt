@@ -376,7 +376,6 @@ class ImportFromDoor43Dialog : DialogFragment() {
                     showImportSuccess()
                 }
                 viewModel.clearCloneResult()
-                dismiss()
             }
             .setNeutralButton(R.string.title_cancel) { dialog, _ ->
                 resetToMasterBackup()
@@ -386,8 +385,6 @@ class ImportFromDoor43Dialog : DialogFragment() {
             .setNegativeButton(R.string.overwrite_projects_label) { _, _ ->
                 resetToMasterBackup() // restore and now overwrite
                 cloneRepository(MergeOptions.OVERWRITE)
-                viewModel.clearCloneResult()
-                dismiss()
             }
             .setOnDismissListener {
                 dialogShown = DialogShown.NONE
