@@ -438,7 +438,6 @@ class ImportDialog : DialogFragment() {
                 } else {
                     showImportResults(R.string.title_import_success, null)
                 }
-                dismiss()
             }
             .setNeutralButton(R.string.title_cancel) { _, _ ->
                 resetToMasterBackup()
@@ -450,7 +449,6 @@ class ImportDialog : DialogFragment() {
                 // re-import with overwrite
                 mergeSelection = MergeOptions.OVERWRITE
                 doProjectImport(importUri!!)
-                dismiss()
             }
             .setOnDismissListener { clearResults() }
             .show()
