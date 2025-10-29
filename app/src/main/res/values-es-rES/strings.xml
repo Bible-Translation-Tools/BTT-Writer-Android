@@ -277,6 +277,7 @@
     <string name="dismiss">Descartar</string>
     <string name="done">Hecho</string>
     <string name="translate_first">Por favor, primero proporcione una traducción</string>
+    <string name="too_many_paragraphs">There are too many paragraphs in the translation.\nSource translation: <xliff:g example="1" id="src">%1$d</xliff:g>\nTarget translation: <xliff:g example="1" id="target">%2$d</xliff:g></string>
     <string name="consecutive_verse_markers">Los marcadores del versículo se encuentran demasiado cerca el uno del otro. Por favor verifica las posiciones del marcador.</string>
     <string name="outoforder_verse_markers">Los marcadores de versículo están desordenados</string>
     <string name="outofrange_verse_marker">El marcador de versículo está fuera de rango</string>
