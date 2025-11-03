@@ -31,12 +31,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * Displays detailed information about a target translation
  */
 @AndroidEntryPoint
-class TargetTranslationInfoDialog : DialogFragment() {
+class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.ContributorEventListener {
     @Inject lateinit var typography: Typography
     private var targetTranslation: TranslationItem? = null
 
@@ -105,10 +106,7 @@ class TargetTranslationInfoDialog : DialogFragment() {
 
                 // list translators
                 translators.text = ""
-                val translatorsList = getTranslatorNames()
-                if (translatorsList != null) {
-                    translators.text = translatorsList
-                }
+                refreshContributors()
 
                 changeLanguage.setOnClickListener {
                     val intent = Intent(activity, NewTargetTranslationActivity::class.java)
@@ -209,6 +207,7 @@ class TargetTranslationInfoDialog : DialogFragment() {
                         item.translation.id
                     )
                     dialog.arguments = args1
+                    dialog.setEventListener(this@TargetTranslationInfoDialog)
                     dialog.show(ft, "manage-contributors")
                 }
             }
@@ -224,7 +223,7 @@ class TargetTranslationInfoDialog : DialogFragment() {
             it?.let { progress ->
                 val hand = Handler(Looper.getMainLooper())
                 hand.post {
-                    binding.progress.text = "${Math.round(progress * 100)}%"
+                    binding.progress.text = "${(progress * 100).roundToInt()}%"
                 }
             }
         }
@@ -283,6 +282,17 @@ class TargetTranslationInfoDialog : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onDismiss() {
+        refreshContributors()
+    }
+
+    private fun refreshContributors() {
+        val translatorsList = getTranslatorNames()
+        if (translatorsList != null) {
+            _binding?.translators?.text = translatorsList
+        }
     }
 
     @Throws(Exception::class)

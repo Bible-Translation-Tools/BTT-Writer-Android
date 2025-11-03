@@ -27,9 +27,14 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
     @Inject lateinit var translator: Translator
     @Inject lateinit var profile: Profile
 
+    interface ContributorEventListener {
+        fun onDismiss()
+    }
+
     private lateinit var targetTranslation: TargetTranslation
     private val adapter by lazy { ContributorsAdapter() }
     private var onNativeSpeakerDialogClick: View.OnClickListener? = null
+    private var eventListener: ContributorEventListener? = null
 
     private var _binding: FragmentContributorsBinding? = null
     val binding get() = _binding!!
@@ -112,6 +117,13 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        eventListener?.onDismiss()
+        eventListener = null
+        onNativeSpeakerDialogClick = null
+    }
+
+    fun setEventListener(listener: ContributorEventListener) {
+        eventListener = listener
     }
 
     private fun showAddNativeSpeakerDialog() {
