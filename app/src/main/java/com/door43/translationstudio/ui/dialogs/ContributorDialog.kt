@@ -152,6 +152,7 @@ class ContributorDialog : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        listener = null
     }
 
     /**
