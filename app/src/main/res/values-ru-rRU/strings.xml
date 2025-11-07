@@ -277,7 +277,6 @@
     <string name="dismiss">Скрыть</string>
     <string name="done">Готово</string>
     <string name="translate_first">Сначала предоставьте перевод</string>
-    <string name="too_many_paragraphs">There are too many paragraphs in the translation.\nSource translation: <xliff:g example="1" id="src">%1$d</xliff:g>\nTarget translation: <xliff:g example="1" id="target">%2$d</xliff:g></string>
     <string name="consecutive_verse_markers">Маркеры стихов размещены слишком близко друг к другу. Проверьте позиции маркеров.</string>
     <string name="outoforder_verse_markers">Маркеры стихов расположены не по порядку</string>
     <string name="outofrange_verse_marker">Маркер стиха выходит за пределы диапазона</string>
