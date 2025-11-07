@@ -76,6 +76,15 @@ public class USXRenderer extends ClickableRenderingEngine {
     }
 
     /**
+     * if set to true, then paragraphs (\p) will be rendered in the output.
+     *
+     * @param enable default is true
+     */
+    public void setParagraphsEnabled(boolean enable) {
+        mRenderParagraphs = enable;
+    }
+
+    /**
      * If set to not null matched strings will be highlighted.
      *
      * @param searchString - null is disable

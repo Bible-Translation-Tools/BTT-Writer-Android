@@ -17,7 +17,6 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -754,11 +753,12 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
         Snackbar snack = Snackbar.make(
                 requireActivity().findViewById(android.R.id.content),
                 message,
-                Snackbar.LENGTH_LONG
+                Snackbar.LENGTH_SHORT
         );
-        TextView tv = ViewUtil.getSnackBarTextView(snack);
-        tv.setTextColor(requireActivity().getResources().getColor(R.color.light_primary_text));
-        tv.setMaxLines(3);
+        ViewUtil.setSnackBarTextColor(
+                snack,
+                requireActivity().getResources().getColor(R.color.light_primary_text)
+        );
         snack.show();
     }
 

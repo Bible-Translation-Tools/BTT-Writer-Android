@@ -43,11 +43,6 @@ object ViewUtil {
         tv.setTextColor(color)
     }
 
-    @JvmStatic
-    fun getSnackBarTextView(snack: Snackbar): TextView {
-        return snack.view.findViewById(R.id.snackbar_text)
-    }
-
     /**
      * Provides a backwards compatible way to tint view drawables
      * @param view the view who's background drawable will be tinted

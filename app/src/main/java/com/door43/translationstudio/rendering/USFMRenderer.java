@@ -33,6 +33,7 @@ public class USFMRenderer extends ClickableRenderingEngine {
 
     private Span.OnClickListener mNoteListener;
     private Span.OnClickListener mVerseListener;
+    private boolean mRenderParagraphs = true;
     private boolean mRenderVerses = true;
     private String mSearch;
     private int mHighlightColor = 0;
@@ -68,6 +69,15 @@ public class USFMRenderer extends ClickableRenderingEngine {
      */
     public void setVersesEnabled(boolean enable) {
         mRenderVerses = enable;
+    }
+
+    /**
+     * if set to true, then paragraphs (\p) will be rendered in the output.
+     *
+     * @param enable default is true
+     */
+    public void setParagraphsEnabled(boolean enable) {
+        mRenderParagraphs = enable;
     }
 
     /**
@@ -116,7 +126,6 @@ public class USFMRenderer extends ClickableRenderingEngine {
         CharSequence out = in;
 
         out = trimWhitespace(out);
-        out = renderLineBreaks(out, " \\p ");
         out = renderChapterMarker(out);
         if(isStopped()) return in;
         out = renderMajorSectionHeading(out);
@@ -295,18 +304,18 @@ public class USFMRenderer extends ClickableRenderingEngine {
     }
 
     /**
-     * Strips out new lines and replaces them with a paragraph marker
+     * Strips out new lines and replaces them with a single space
      * @param in
      * @return
      */
-    public CharSequence renderLineBreaks(CharSequence in, CharSequence lineBreak) {
+    public CharSequence stripLineBreaks(CharSequence in) {
         CharSequence out = "";
         Pattern pattern = Pattern.compile("(\\s*\\n+\\s*)");
         Matcher matcher = pattern.matcher(in);
         int lastIndex = 0;
         while(matcher.find()) {
             if(isStopped()) return in;
-            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), lineBreak);
+            out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), " ");
             lastIndex = matcher.end();
         }
         out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
@@ -346,7 +355,7 @@ public class USFMRenderer extends ClickableRenderingEngine {
         while(matcher.find()) {
             if(isStopped()) return in;
             CharSequence noteText = matcher.group(2);
-            noteText = renderLineBreaks(noteText, "");
+            noteText = stripLineBreaks(noteText);
             USFMNoteSpan note = USFMNoteSpan.parseNote(matcher.group(1), noteText.toString().trim());
             note.setOnClickListener(mNoteListener);
             if(mSearch != null) {
@@ -485,6 +494,8 @@ public class USFMRenderer extends ClickableRenderingEngine {
      * @return
      */
     public CharSequence renderParagraphMarker(CharSequence in) {
+        if (!mRenderParagraphs) return in;
+
         CharSequence out = "";
         Pattern pattern = Pattern.compile(USFMParagraphSpan.PATTERN, Pattern.DOTALL);
         Matcher matcher = pattern.matcher(in);
