@@ -380,42 +380,39 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         renderResourceCard(item, holder);
 
         // set up fonts
-        if (holder.layoutBuildNumber != layoutBuildNumber) {
-            holder.layoutBuildNumber = layoutBuildNumber;
+        typography.format(
+                TranslationType.SOURCE,
+                holder.binding.getSourceBody(),
+                item.source.language.slug,
+                item.source.language.direction
+        );
+        if (!item.getHasMergeConflicts()) {
             typography.format(
-                    TranslationType.SOURCE,
-                    holder.binding.getSourceBody(),
-                    item.source.language.slug,
-                    item.source.language.direction
+                    TranslationType.TARGET,
+                    holder.binding.getTargetBody(),
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
             );
-            if (!item.getHasMergeConflicts()) {
-                typography.format(
-                        TranslationType.TARGET,
-                        holder.binding.getTargetBody(),
-                        item.target.getTargetLanguage().slug,
-                        item.target.getTargetLanguage().direction
-                );
-                typography.format(
-                        TranslationType.TARGET,
-                        holder.binding.getTargetEditableBody(),
-                        item.target.getTargetLanguage().slug,
-                        item.target.getTargetLanguage().direction
-                );
-            } else {
-                typography.formatSub(
-                        TranslationType.TARGET,
-                        holder.binding.getConflictText(),
-                        item.target.getTargetLanguage().slug,
-                        item.target.getTargetLanguage().direction
-                );
-            }
+            typography.format(
+                    TranslationType.TARGET,
+                    holder.binding.getTargetEditableBody(),
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
+        } else {
             typography.formatSub(
                     TranslationType.TARGET,
-                    holder.binding.getTargetTitle(),
+                    holder.binding.getConflictText(),
                     item.target.getTargetLanguage().slug,
                     item.target.getTargetLanguage().direction
             );
         }
+        typography.formatSub(
+                TranslationType.TARGET,
+                holder.binding.getTargetTitle(),
+                item.target.getTargetLanguage().slug,
+                item.target.getTargetLanguage().direction
+        );
     }
 
     private void renderSourceCard(final ReviewListItem item, final ReviewHolder holder) {
@@ -612,6 +609,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         } else if (item.isEditing) {
             // editing mode
             if (holder.binding.getTargetEditableBody() != null) {
+                item.renderedTargetText = renderSourceText(item.getTargetText(), item.getTargetTranslationFormat(), holder, item, true);
                 holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
                 holder.binding.getTargetEditableBody().setVisibility(View.VISIBLE);
                 holder.binding.getTargetEditableBody().addTextChangedListener(holder.editableTextWatcher);
@@ -625,6 +623,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         } else {
             // verse marker mode
             if (holder.binding.getTargetBody() != null) {
+                item.renderedTargetText = renderTargetText(item.getTargetText(), item.getTargetTranslationFormat(), item.getFt(), holder, item);
                 holder.binding.getTargetBody().setText(item.renderedTargetText);
                 holder.binding.getTargetBody().setVisibility(View.VISIBLE);
                 holder.binding.getTargetBody().setOnTouchListener((v, event) -> {
@@ -661,13 +660,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     }
 
                     // re-render for editing mode
-                    item.renderedTargetText = renderSourceText(
-                            item.getTargetText(),
-                            item.getTargetTranslationFormat(),
-                            holder,
-                            item,
-                            true
-                    );
+                    item.renderedTargetText = renderSourceText(item.getTargetText(), item.getTargetTranslationFormat(), holder, item, true);
                     if (holder.binding.getTargetEditableBody() != null) {
                         holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
                         holder.binding.getTargetEditableBody().addTextChangedListener(holder.editableTextWatcher);
@@ -685,13 +678,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     // TODO: 2/16/17 save translation
 
                     // re-render for verse mode
-                    item.renderedTargetText = renderTargetText(
-                            item.getTargetText(),
-                            item.getTargetTranslationFormat(),
-                            item.getFt(),
-                            holder,
-                            item
-                    );
+                    item.renderedTargetText = renderTargetText(item.getTargetText(), item.getTargetTranslationFormat(), item.getFt(), holder, item);
                     if (holder.binding.getTargetBody() != null) {
                         holder.binding.getTargetBody().setText(item.renderedTargetText);
                     }
