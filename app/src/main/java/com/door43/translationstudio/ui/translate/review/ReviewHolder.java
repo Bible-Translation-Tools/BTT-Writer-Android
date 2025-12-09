@@ -58,7 +58,6 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     private final LayoutInflater inflater;
     private final TabLayout.OnTabSelectedListener resourceTabClickListener;
     public ReviewListItem currentItem = null;
-    public int layoutBuildNumber = -1;
     public TextWatcher editableTextWatcher;
     private List<TextView> mergeTexts;
     private OnResourceClickListener listener;
