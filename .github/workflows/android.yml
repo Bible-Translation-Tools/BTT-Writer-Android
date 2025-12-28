@@ -184,6 +184,8 @@ jobs:
           profile: pixel_c
           target: google_apis
           script: ./gradlew integrationTests --stacktrace
+        env:
+          ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 1000
 
       - name: Upload results
         if: ${{ always() }}
