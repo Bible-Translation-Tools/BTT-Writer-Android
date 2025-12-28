@@ -161,6 +161,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cleanup before emulator
+        run: |
+          sudo apt purge -yq $(dpkg -l | grep '^ii' | awk '{ print $2 }' | grep -P '(aspnetcore|cabal-|dotnet-|ghc-|libmono|mongodb-|mysql-|php)') \
+            firefox google-chrome-stable google-cloud-cli microsoft-edge-stable mono-devel mono-runtime-common monodoc-manual powershell ruby
+          sudo apt autoremove -yq
+          sudo apt clean
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
