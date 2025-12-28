@@ -149,7 +149,9 @@ jobs:
 
       - name: Cleanup before emulator
         run: |
-          sudo apt-get purge -yq $(dpkg -l | grep '^ii' | awk '{ print $2 }' | grep -P '(mongodb-|mysql-|postgresql-|php)') \
+          echo "Removing not necessary packages to cleanup space for the emulator"
+          sudo apt-get remove --purge -yq \
+            "php*" "mongodb*" "mysql*" "postgresql*" \
             firefox google-chrome-stable microsoft-edge-stable powershell \
             ruby kubectl google-cloud-cli azure-cli google-cloud-cli-anthoscli
           sudo apt-get autoremove -yq
