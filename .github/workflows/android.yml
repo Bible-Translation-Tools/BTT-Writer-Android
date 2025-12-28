@@ -161,6 +161,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Packages 1
+        run: |
+          dpkg-query -Wf '${Installed-size}\t${Package}\n' | column -t
+
+      - name: Packages 2
+        run: |
+          dpkg-query -W -f='${Installed-Size;8}  ${Package}\n' | sort -n
+
       - name: Cleanup before emulator
         run: |
           sudo apt purge -yq $(dpkg -l | grep '^ii' | awk '{ print $2 }' | grep -P '(aspnetcore|cabal-|dotnet-|ghc-|libmono|mongodb-|mysql-|php)') \
