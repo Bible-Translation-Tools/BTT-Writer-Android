@@ -560,7 +560,6 @@ class PdfPrinter(
                         fnChunk.setLocalGoto("footnote-$fnId")
                         currentParagraph.add(fnChunk)
                     }
-
                     marker == "v" -> {
                         if (argument.isNotEmpty()) {
                             val vChunk = Chunk(argument, superScriptFont)
@@ -598,17 +597,14 @@ class PdfPrinter(
                             newBlockMarker = marker
                         )
                     }
-
-                marker in listOf("p", "m", "b") -> {
-                    flushParagraph(newBlockTag = "p")
-                    currentFont = bodyFont
-                }
-
+                    marker in listOf("p", "m", "b") -> {
+                        flushParagraph(newBlockMarker = "p")
+                        currentFont = bodyFont
+                    }
                     marker == "qac" -> {
                         if (isCloser) currentParagraph.add(Chunk(" "))
                         currentFont = if (isCloser) bodyFont else italicFont
                     }
-
                     marker.startsWith("qm") -> {
                         val level = marker.filter { it.isDigit() }.toIntOrNull() ?: 1
                         flushParagraph(
@@ -617,7 +613,6 @@ class PdfPrinter(
                         )
                         currentFont = italicFont
                     }
-
                     marker.startsWith("q") -> {
                         val level = marker.filter { it.isDigit() }.toIntOrNull() ?: 1
                         flushParagraph(
@@ -626,9 +621,8 @@ class PdfPrinter(
                         )
                         currentFont = bodyFont
                     }
-
-                    // All other markers
                     else -> {
+                        // All other markers
                         currentParagraph.add(Chunk(match.value, currentFont))
                     }
                 }
