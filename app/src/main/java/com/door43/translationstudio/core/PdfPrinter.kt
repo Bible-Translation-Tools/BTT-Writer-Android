@@ -599,15 +599,10 @@ class PdfPrinter(
                         )
                     }
 
-                    marker == "p" -> {
-                        flushParagraph(newBlockMarker = "p")
-                        currentFont = bodyFont
-                    }
-
-                    marker == "b" -> {
-                        flushParagraph(newBlockMarker = "b")
-                        currentFont = bodyFont
-                    }
+                marker in listOf("p", "m", "b") -> {
+                    flushParagraph(newBlockTag = "p")
+                    currentFont = bodyFont
+                }
 
                     marker == "qac" -> {
                         if (isCloser) currentParagraph.add(Chunk(" "))
