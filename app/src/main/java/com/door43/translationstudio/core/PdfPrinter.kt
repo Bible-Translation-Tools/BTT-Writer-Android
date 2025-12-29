@@ -524,13 +524,8 @@ class PdfPrinter(
                     )
                 }
 
-                marker == "p" -> {
+                marker in listOf("p", "m", "b") -> {
                     flushParagraph(newBlockTag = "p")
-                    currentFont = bodyFont
-                }
-
-                marker == "b" -> {
-                    flushParagraph(newBlockTag = "b")
                     currentFont = bodyFont
                 }
 
