@@ -5,8 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.spannables.Span
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan
 import com.door43.usecases.ExportProjects.Companion.sortFrameTranslations
 import com.itextpdf.text.Anchor
 import com.itextpdf.text.Chapter
@@ -34,7 +32,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.util.regex.Pattern
 
 /**
  * Created by joel on 11/12/2015.
@@ -71,6 +68,12 @@ class PdfPrinter(
     private var mCurrentParagraph: Paragraph? = null
     private val targetLanguageFontSize: Float
 
+    data class ParagraphStyle(
+        val indent: Float = 0f,
+        val alignment: Int = Element.ALIGN_LEFT,
+        val spacingBefore: Float = 0f
+    )
+
     init {
         val p = library.index.getProject(
             "en",
@@ -100,7 +103,7 @@ class PdfPrinter(
         superScriptFont.setColor(94, 94, 94)
 
         licenseBaseFont =
-            BaseFont.createFont(licenseFontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+            BaseFont.createFont(licenseFontPath, BaseFont.IDENTITY_H, true)
         licenseFont = Font(licenseBaseFont, 20f)
     }
 
@@ -393,9 +396,10 @@ class PdfPrinter(
             for (i in frameList.indices) {
                 val f = frameList[i]
                 if (includeIncomplete || f.isFinished) {
-                    if (includeMedia &&
-                        this.format == TranslationFormat.MARKDOWN &&
-                        imagesDir != null) {
+                    if (includeMedia
+                        && this.format == TranslationFormat.MARKDOWN
+                        && imagesDir != null
+                    ) {
                         // TODO: 11/13/2015 insert frame images if we have them.
                         // TODO: 11/13/2015 eventually we need to provide the directory
                         //  where to find these images which will be downloaded not in assets
@@ -440,31 +444,133 @@ class PdfPrinter(
     }
 
     private fun addUSFM(usfm: String, table: PdfPTable) {
-        val pattern = Pattern.compile(USFMVerseSpan.PATTERN)
-        val matcher = pattern.matcher(usfm)
-        var lastIndex = 0
-        val paragraph = Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont)
-        while (matcher.find()) {
-            // add preceding text
-            paragraph.add(usfm.substring(lastIndex, matcher.start()))
+        val usfmRegex = Regex("""\\([a-z0-9]+)(\*?)(?:\s+(\d+(?:-\d+)?))?[ \t]?""")
 
-            // add verse
-            val verse: Span = USFMVerseSpan(matcher.group(1))
-            val chunk = Chunk()
-            chunk.font = superScriptFont
-            chunk.setTextRise(targetLanguageFontSize / 2)
-            if (verse != null) {
-                chunk.append(verse.humanReadable.toString())
-            } else {
-                // failed to parse the verse
-                chunk.append(usfm.subSequence(lastIndex, matcher.end()).toString())
+        var lastIndex = 0
+        var currentParagraph = Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont)
+        var currentFont = bodyFont
+        val italicFont = Font(baseFont, targetLanguageFontSize, Font.ITALIC)
+
+        var currentBlockTag = "p"
+
+        fun flushParagraph(newStyle: ParagraphStyle? = null, newBlockTag: String = "p") {
+            if (!currentParagraph.isEmpty() || currentParagraph.chunks.isNotEmpty()) {
+                addBidiParagraphToTable(table, currentParagraph)
             }
-            chunk.append(" ")
-            paragraph.add(chunk)
-            lastIndex = matcher.end()
+            currentParagraph = Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont)
+            if (newStyle != null) {
+                currentParagraph.indentationLeft = newStyle.indent
+                currentParagraph.alignment = newStyle.alignment
+                currentParagraph.spacingBefore = newStyle.spacingBefore
+            }
+            currentBlockTag = newBlockTag
         }
-        paragraph.add(usfm.subSequence(lastIndex, usfm.length).toString())
-        addBidiParagraphToTable(table, paragraph)
+
+        usfmRegex.findAll(usfm).forEach { match ->
+            val markerIndex = match.range.first
+            val marker = match.groupValues[1]
+            val isCloser = match.groupValues[2] == "*"
+            val argument = match.groupValues[3]
+
+            if (markerIndex > lastIndex) {
+                val gapText = usfm.substring(lastIndex, markerIndex)
+                val hasNewline = gapText.contains("\n")
+
+                if (gapText.isNotBlank()) {
+                    currentParagraph.add(Chunk(gapText, currentFont))
+                }
+
+                if (isBlockPoetry(currentBlockTag) && hasNewline) {
+                    flushParagraph(newBlockTag = "p")
+                }
+            }
+
+            when {
+                marker == "v" -> {
+                    if (argument.isNotEmpty()) {
+                        val vChunk = Chunk(argument, superScriptFont)
+                        vChunk.textRise = targetLanguageFontSize / 2
+                        currentParagraph.add(vChunk)
+                        currentParagraph.add(Chunk(" "))
+                    }
+                }
+                marker == "qa" -> {
+                    flushParagraph(
+                        newStyle = ParagraphStyle(alignment = Element.ALIGN_CENTER),
+                        newBlockTag = marker
+                    )
+                    currentFont = italicFont
+                }
+                marker == "qc" -> flushParagraph(
+                    newStyle = ParagraphStyle(alignment = Element.ALIGN_CENTER),
+                    newBlockTag = marker
+                )
+                marker == "qd" -> {
+                    flushParagraph(
+                        newStyle = ParagraphStyle(alignment = Element.ALIGN_CENTER),
+                        newBlockTag = marker
+                    )
+                    currentFont = italicFont
+                }
+                marker == "qr" -> flushParagraph(
+                    newStyle = ParagraphStyle(alignment = Element.ALIGN_RIGHT),
+                    newBlockTag = marker
+                )
+                marker == "qs" -> {
+                    if (isCloser) flushParagraph(newBlockTag = "p")
+                    else flushParagraph(
+                        newStyle = ParagraphStyle(alignment = Element.ALIGN_RIGHT),
+                        newBlockTag = marker
+                    )
+                }
+
+                marker in listOf("p", "m", "b") -> {
+                    flushParagraph(newBlockTag = "p")
+                    currentFont = bodyFont
+                }
+
+                marker == "qac" -> {
+                    if (isCloser) currentParagraph.add(Chunk(" "))
+                    currentFont = if (isCloser) bodyFont else italicFont
+                }
+
+                marker.startsWith("qm") -> {
+                    val level = marker.filter { it.isDigit() }.toIntOrNull() ?: 1
+                    flushParagraph(
+                        newStyle = ParagraphStyle(indent = level * 20f),
+                        newBlockTag = marker
+                    )
+                    currentFont = italicFont
+                }
+
+                marker.startsWith("q") -> {
+                    val level = marker.filter { it.isDigit() }.toIntOrNull() ?: 1
+                    flushParagraph(
+                        newStyle = ParagraphStyle(indent = level * 20f),
+                        newBlockTag = marker
+                    )
+                    currentFont = bodyFont
+                }
+
+                // All other markers
+                else -> {
+                    currentParagraph.add(Chunk(match.value, currentFont))
+                }
+            }
+
+            lastIndex = match.range.last + 1
+        }
+
+        if (lastIndex < usfm.length) {
+            currentParagraph.add(Chunk(usfm.substring(lastIndex), currentFont))
+        }
+
+        addBidiParagraphToTable(table, currentParagraph)
+    }
+
+    private fun isBlockPoetry(marker: String): Boolean {
+        return marker.startsWith("q")
+            && marker != "qac"
     }
 
     /**
