@@ -632,7 +632,7 @@ class BackupDialog : DialogFragment() {
      */
     private fun doManualMerge() {
         if (activity is TargetTranslationActivity) {
-            (activity as? TargetTranslationActivity)?.redrawTarget()
+            (activity as? TargetTranslationActivity)?.recreate()
             this@BackupDialog.dismiss()
             // TODO: 4/20/16 it would be nice to navigate directly to the first conflict
         } else {
