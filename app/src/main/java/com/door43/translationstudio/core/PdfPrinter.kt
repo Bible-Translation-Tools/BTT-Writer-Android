@@ -17,10 +17,13 @@ import com.itextpdf.text.Font
 import com.itextpdf.text.Image
 import com.itextpdf.text.PageSize
 import com.itextpdf.text.Paragraph
+import com.itextpdf.text.Phrase
 import com.itextpdf.text.Rectangle
 import com.itextpdf.text.pdf.BaseFont
+import com.itextpdf.text.pdf.ColumnText
 import com.itextpdf.text.pdf.PdfContentByte
 import com.itextpdf.text.pdf.PdfPCell
+import com.itextpdf.text.pdf.PdfPCellEvent
 import com.itextpdf.text.pdf.PdfPTable
 import com.itextpdf.text.pdf.PdfPageEventHelper
 import com.itextpdf.text.pdf.PdfTemplate
@@ -70,12 +73,6 @@ class PdfPrinter(
     private var mCurrentParagraph: Paragraph? = null
     private val targetLanguageFontSize: Float
 
-    data class ParagraphStyle(
-        val indent: Float = 0f,
-        val alignment: Int = Element.ALIGN_LEFT,
-        val spacingBefore: Float = 0f
-    )
-
     init {
         val p = library.index.getProject(
             "en",
@@ -93,7 +90,7 @@ class PdfPrinter(
 
         targetLanguageFontSize = fontSize / RATIO_OF_SP_TO_PT
 
-        baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED)
+        baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, true)
         titleFont = Font(baseFont, targetLanguageFontSize * 2.5f, Font.BOLD)
         chapterFont = Font(baseFont, targetLanguageFontSize * 2)
         bodyFont = Font(baseFont, targetLanguageFontSize)
@@ -453,7 +450,7 @@ class PdfPrinter(
                     val fnId = "${c.id}-$fnIndex"
                     val p = Paragraph()
                     p.spacingAfter = 2f
-                    p.indentationLeft = 10f
+                    p.indentationLeft = DEFAULT_INDENT_SPACING
 
                     val numChunk = Chunk("$fnIndex. ", superScriptFont)
                     numChunk.setLocalDestination("footnote-$fnId")
@@ -477,37 +474,11 @@ class PdfPrinter(
         chapterId: String,
         footnotes: MutableList<String>
     ) {
+        val context = ParseContext(table, chapterId, footnotes)
+
+        // Captures: 1=Marker, 2=Closer(*), 3=Argument
         val usfmRegex = Regex("""\\([a-z0-9]+)(\*?)(?:\s+(\d+(?:-\d+)?))?[ \t]?""")
-
         var lastIndex = 0
-        var currentBlockMarker = "p"
-        var currentParagraph = Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont)
-        var currentFont = bodyFont
-        val italicFont = Font(baseFont, targetLanguageFontSize, Font.ITALIC)
-        val footnoteFont = Font(
-            baseFont,
-            targetLanguageFontSize * 0.7f,
-            Font.NORMAL,
-            BaseColor.BLUE
-        )
-
-        var inFootnote = false
-        val footnoteBuffer = StringBuilder()
-
-        fun flushParagraph(newStyle: ParagraphStyle? = null, newBlockMarker: String = "p") {
-            if (inFootnote) return
-
-            if (!currentParagraph.isEmpty() || currentParagraph.chunks.isNotEmpty()) {
-                addBidiParagraphToTable(table, currentParagraph)
-            }
-            currentParagraph = Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont)
-            if (newStyle != null) {
-                currentParagraph.indentationLeft = newStyle.indent
-                currentParagraph.alignment = newStyle.alignment
-                currentParagraph.spacingBefore = newStyle.spacingBefore
-            }
-            currentBlockMarker = newBlockMarker
-        }
 
         usfmRegex.findAll(usfm).forEach { match ->
             val markerIndex = match.range.first
@@ -515,142 +486,23 @@ class PdfPrinter(
             val isCloser = match.groupValues[2] == "*"
             val argument = match.groupValues[3]
 
+            // Handle text between markers
             if (markerIndex > lastIndex) {
-                val gapText = usfm.substring(lastIndex, markerIndex)
-
-                if (inFootnote) {
-                    footnoteBuffer.append(gapText)
-                } else {
-                    val hasNewline = gapText.contains("\n")
-
-                    if (gapText.isNotBlank()) {
-                        currentParagraph.add(Chunk(gapText, currentFont))
-                    }
-
-                    if (isBlockPoetry(currentBlockMarker) && hasNewline) {
-                        flushParagraph(newBlockMarker = "p")
-                    }
-                }
+                val text = usfm.substring(lastIndex, markerIndex)
+                context.addText(text)
             }
 
-            if (inFootnote) {
-                if (marker == "f" && isCloser) {
-                    val cleanContent = footnoteBuffer.toString()
-                        .replaceFirst(Regex("^\\s*\\S+\\s*"), "")
-                        .trim()
-                    if (cleanContent.isNotEmpty()) {
-                        footnotes.add(cleanContent)
-                    }
-                    footnoteBuffer.clear()
-                    inFootnote = false
-                } else {
-                    if (argument.isNotEmpty()) {
-                        footnoteBuffer.append(argument).append(" ")
-                    }
-                }
-            } else {
-                when {
-                    marker == "f" && !isCloser -> {
-                        inFootnote = true
-
-                        val fnIndex = footnotes.size + 1
-                        val fnId = "$chapterId-$fnIndex"
-                        val fnChunk = Chunk(fnIndex.toString(), footnoteFont)
-                        fnChunk.textRise = targetLanguageFontSize / 2.5f
-                        fnChunk.setLocalGoto("footnote-$fnId")
-                        currentParagraph.add(fnChunk)
-                    }
-                    marker == "v" -> {
-                        if (argument.isNotEmpty()) {
-                            val vChunk = Chunk(argument, superScriptFont)
-                            vChunk.textRise = targetLanguageFontSize / 2
-                            currentParagraph.add(vChunk)
-                            currentParagraph.add(Chunk(" "))
-                        }
-                    }
-                    marker == "qa" -> {
-                        flushParagraph(
-                            newStyle = ParagraphStyle(alignment = Element.ALIGN_CENTER),
-                            newBlockMarker = marker
-                        )
-                        currentFont = italicFont
-                    }
-                    marker == "qc" -> flushParagraph(
-                        newStyle = ParagraphStyle(alignment = Element.ALIGN_CENTER),
-                        newBlockMarker = marker
-                    )
-                    marker == "qd" -> {
-                        flushParagraph(
-                            newStyle = ParagraphStyle(alignment = Element.ALIGN_CENTER),
-                            newBlockMarker = marker
-                        )
-                        currentFont = italicFont
-                    }
-                    marker == "qr" -> flushParagraph(
-                        newStyle = ParagraphStyle(alignment = Element.ALIGN_RIGHT),
-                        newBlockMarker = marker
-                    )
-                    marker == "qs" -> {
-                        if (isCloser) flushParagraph(newBlockMarker = "p")
-                        else flushParagraph(
-                            newStyle = ParagraphStyle(alignment = Element.ALIGN_RIGHT),
-                            newBlockMarker = marker
-                        )
-                    }
-                    marker in listOf("p", "m", "b") -> {
-                        flushParagraph(newBlockMarker = "p")
-                        currentFont = bodyFont
-                    }
-                    marker == "qac" -> {
-                        if (isCloser) currentParagraph.add(Chunk(" "))
-                        currentFont = if (isCloser) bodyFont else italicFont
-                    }
-                    marker.startsWith("qm") -> {
-                        val level = marker.filter { it.isDigit() }.toIntOrNull() ?: 1
-                        flushParagraph(
-                            newStyle = ParagraphStyle(indent = level * 20f),
-                            newBlockMarker = marker
-                        )
-                        currentFont = italicFont
-                    }
-                    marker.startsWith("q") -> {
-                        val level = marker.filter { it.isDigit() }.toIntOrNull() ?: 1
-                        flushParagraph(
-                            newStyle = ParagraphStyle(indent = level * 20f),
-                            newBlockMarker = marker
-                        )
-                        currentFont = bodyFont
-                    }
-                    else -> {
-                        // All other markers
-                        currentParagraph.add(Chunk(match.value, currentFont))
-                    }
-                }
-            }
+            // Handle the marker itself
+            context.processMarker(marker, isCloser, argument)
 
             lastIndex = match.range.last + 1
         }
 
+        // Handle Trailing Text & Final Flush
         if (lastIndex < usfm.length) {
-            val remaining = usfm.substring(lastIndex)
-            if (inFootnote) {
-                // Edge case: Unclosed footnote
-                footnotes.add(
-                    remaining
-                        .replaceFirst(Regex("^\\s*\\S+\\s*"), "")
-                        .trim()
-                )
-            } else {
-                currentParagraph.add(Chunk(remaining, currentFont))
-            }
+            context.addText(usfm.substring(lastIndex), isTrailing = true)
         }
-
-        addBidiParagraphToTable(table, currentParagraph)
-    }
-
-    private fun isBlockPoetry(marker: String): Boolean {
-        return marker.startsWith("q")
-            && marker != "qac"
+        context.flush()
     }
 
     /**
@@ -677,13 +529,18 @@ class PdfPrinter(
      * @param paragraph
      * @return
      */
-    private fun addBidiParagraphToTable(table: PdfPTable, paragraph: Paragraph): PdfPCell {
+    private fun addBidiParagraphToTable(table: PdfPTable, paragraph: Paragraph, verseNumber: String? = null): PdfPCell {
         val cell = PdfPCell()
         cell.addElement(paragraph)
         // need to set predominant language direction in case first character runs other direction
-        cell.runDirection =
-            if (rtl) PdfWriter.RUN_DIRECTION_RTL else PdfWriter.RUN_DIRECTION_LTR
+        cell.runDirection = if (rtl) PdfWriter.RUN_DIRECTION_RTL else PdfWriter.RUN_DIRECTION_LTR
         cell.border = Rectangle.NO_BORDER
+
+        // Draw verse number with absolute position
+        if (verseNumber != null) {
+            cell.cellEvent = VerseNumberEvent(verseNumber, superScriptFont, rtl)
+        }
+
         table.addCell(cell)
         return cell
     }
@@ -911,7 +768,7 @@ class PdfPrinter(
 
         val token = text.substring(pos + 1, end)
         if (token.isNotEmpty() && (token[token.length - 1] == '/')) {
-            return FoundHtml(token.substring(0, token.length - 1), pos, end + 1, "")
+            return FoundHtml(token.dropLast(1), pos, end + 1, "")
         }
 
         val parts = token.split(" ".toRegex()) // ignore attributes
@@ -930,6 +787,16 @@ class PdfPrinter(
         return FoundHtml(token, pos, htmlFinishPos, text.substring(end + 1, finish))
     }
 
+    private fun defaultParagraphStyle(
+        indent: Float = 0f,
+        alignment: Int = Element.ALIGN_LEFT,
+        spacingBefore: Float = 0f
+    ): ParagraphStyle = ParagraphStyle(
+        indent = indent,
+        alignment = alignment,
+        spacingBefore = spacingBefore
+    )
+
     /**
      * class for keeping track of an html tag that was found, it's name, it's contents, and position
      */
@@ -942,6 +809,7 @@ class PdfPrinter(
 
     companion object {
         private const val PAGE_NUMBER_FONT_SIZE = 10f
+        private const val DEFAULT_INDENT_SPACING = 16f
         private const val VERTICAL_PADDING = 72.0f // 1 inch
         private const val HORIZONTAL_PADDING = 72.0f // 1 inch
         const val RATIO_OF_SP_TO_PT: Float = 2.5f
@@ -987,13 +855,13 @@ class PdfPrinter(
         /**
          * Add Image from an input stream
          * @param document
-         * @param is
+         * @param inputStream
          * @throws DocumentException
          * @throws IOException
          */
         @Throws(DocumentException::class, IOException::class)
-        fun addImage(document: Document, `is`: InputStream?) {
-            val bmp = BitmapFactory.decodeStream(`is`)
+        fun addImage(document: Document, inputStream: InputStream?) {
+            val bmp = BitmapFactory.decodeStream(inputStream)
             val stream = ByteArrayOutputStream()
             bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
             val image = Image.getInstance(stream.toByteArray())
@@ -1020,6 +888,249 @@ class PdfPrinter(
          */
         private fun pageWidth(document: Document): Float {
             return document.pageSize.width - HORIZONTAL_PADDING * 2
+        }
+    }
+
+    private inner class ParseContext(
+        val table: PdfPTable,
+        val chapterId: String,
+        val footnotes: MutableList<String>
+    ) {
+        val italicFont = Font(baseFont, targetLanguageFontSize, Font.ITALIC)
+        val footnoteFont = Font(
+            baseFont,
+            targetLanguageFontSize * 0.7f,
+            Font.NORMAL,
+            BaseColor.BLUE
+        )
+
+        private var currentParagraph = createNewParagraph()
+        private var currentFont = bodyFont
+        private var isParagraphStart = true
+        private var inFootnote = false
+        private var currentIndentLevel = 0
+        private var currentAlignment = Element.ALIGN_LEFT
+        private var pendingVerseNumber: String? = null
+
+        private val footnoteBuffer = StringBuilder()
+
+        fun addText(text: String, isTrailing: Boolean = false) {
+            if (inFootnote) {
+                footnoteBuffer.append(text)
+                return
+            }
+
+            if (text.isNotBlank()) {
+                currentParagraph.add(Chunk(text, currentFont))
+                isParagraphStart = false
+            } else if (inFootnote && isTrailing) {
+                // Edge case: handle unclosed footnote at end of string
+                captureFootnote(text)
+            }
+        }
+
+        fun processMarker(marker: String, isCloser: Boolean, argument: String) {
+            if (inFootnote) {
+                handleFootnoteMarker(marker, isCloser, argument)
+                return
+            }
+
+            when {
+                // Footnotes
+                marker == "f" && !isCloser -> startFootnote()
+
+                // Verses
+                marker == "v" && argument.isNotEmpty() -> handleVerse(argument)
+
+                // Structure: Spacers & Breaks
+                marker == "b" -> addSpacerBlock()
+                marker in listOf("p", "m") -> startBlock(Element.ALIGN_LEFT)
+
+                // Alignment
+                marker == "qa" || marker == "qc" || marker == "qd" -> {
+                    startBlock(Element.ALIGN_CENTER, font = italicFont)
+                }
+                marker == "qr" -> startBlock(Element.ALIGN_RIGHT)
+                marker == "qs" -> if (!isCloser) startBlock(Element.ALIGN_RIGHT) else flush()
+
+                // Inline Styles
+                marker == "qac" -> toggleItalic(isCloser)
+
+                // Poetry
+                marker.startsWith("qm") -> startPoetryBlock(marker, font = italicFont)
+                marker.startsWith("q") -> startPoetryBlock(marker, font = bodyFont)
+
+                // Default / Fallback
+                else -> currentParagraph.add(Chunk("\\$marker$argument", currentFont))
+            }
+        }
+
+        private fun handleVerse(number: String) {
+            // Special block is the paragraph with indentation and/or uncommon alignment
+            val isSpecialBlock = currentIndentLevel > 0 || currentAlignment != Element.ALIGN_LEFT
+
+            // Auto-flush: If adding a verse to a special block that has content, force a new line
+            if (isSpecialBlock && !isParagraphStart) {
+                flush()
+            }
+
+            if (isParagraphStart && isSpecialBlock) {
+                pendingVerseNumber = number
+            } else {
+                val vChunk = Chunk(number, superScriptFont).apply {
+                    textRise = targetLanguageFontSize / 2
+                }
+                currentParagraph.add(vChunk)
+            }
+            isParagraphStart = false
+        }
+
+        private fun startPoetryBlock(marker: String, font: Font) {
+            val level = marker.filter { it.isDigit() }.toIntOrNull() ?: 1
+            currentIndentLevel = level
+            currentFont = font
+
+            // Poetry implicitly resets alignment to Start/Left
+            val style = defaultParagraphStyle(
+                indent = level * DEFAULT_INDENT_SPACING,
+                alignment = Element.ALIGN_LEFT
+            )
+            flush(style)
+        }
+
+        private fun startBlock(alignment: Int, font: Font = bodyFont) {
+            currentIndentLevel = 0
+            currentFont = font
+            flush(defaultParagraphStyle(alignment = alignment))
+        }
+
+        private fun addSpacerBlock() {
+            // Commit previous content
+            flush(defaultParagraphStyle(alignment = Element.ALIGN_LEFT))
+
+            // Add the physical spacer row
+            val spacer = Paragraph(" ", bodyFont).apply {
+                leading = targetLanguageFontSize * 1.6f
+                spacingAfter = 0f
+            }
+            addBidiParagraphToTable(table, spacer)
+
+            // Reset State
+            currentFont = bodyFont
+            currentIndentLevel = 0
+        }
+
+        private fun startFootnote() {
+            inFootnote = true
+            val index = footnotes.size + 1
+            val id = "$chapterId-$index"
+
+            val chunk = Chunk(index.toString(), footnoteFont).apply {
+                textRise = targetLanguageFontSize / 2.5f
+                setLocalGoto("footnote-$id")
+            }
+            currentParagraph.add(chunk)
+        }
+
+        private fun handleFootnoteMarker(marker: String, isCloser: Boolean, argument: String) {
+            if (marker == "f" && isCloser) {
+                captureFootnote(footnoteBuffer.toString())
+                footnoteBuffer.clear()
+                inFootnote = false
+            } else if (argument.isNotEmpty()) {
+                footnoteBuffer.append(argument).append(" ")
+            }
+        }
+
+        private fun captureFootnote(rawContent: String) {
+            val clean = rawContent.replaceFirst(Regex("^\\s*\\S+\\s*"), "")
+                .trim()
+            if (clean.isNotEmpty()) {
+                footnotes.add(clean)
+            }
+        }
+
+        private fun toggleItalic(isCloser: Boolean) {
+            if (isCloser) currentParagraph.add(Chunk(" "))
+            currentFont = if (isCloser) bodyFont else italicFont
+        }
+
+        fun flush(newStyle: ParagraphStyle? = null) {
+            if (inFootnote) return
+
+            // Commit pending content
+            if (!currentParagraph.isEmpty()
+                || currentParagraph.chunks.isNotEmpty()
+                || pendingVerseNumber != null
+            ) {
+                addBidiParagraphToTable(table, currentParagraph, pendingVerseNumber)
+            }
+
+            // Reset logic
+            currentParagraph = createNewParagraph()
+            isParagraphStart = true
+            pendingVerseNumber = null
+
+            if (newStyle != null) {
+                applyStyle(currentParagraph, newStyle)
+                currentAlignment = newStyle.alignment // Update Tracker
+            } else {
+                // Inherit Tracker
+                currentParagraph.alignment = currentAlignment
+                if (currentIndentLevel > 0) {
+                    val indent = currentIndentLevel * DEFAULT_INDENT_SPACING
+                    applyIndent(currentParagraph, indent)
+                }
+            }
+        }
+
+        private fun createNewParagraph() =
+            Paragraph(targetLanguageFontSize * 1.6f, "", bodyFont)
+
+        private fun applyStyle(p: Paragraph, style: ParagraphStyle) {
+            applyIndent(p, style.indent)
+            p.alignment = style.alignment
+            p.spacingBefore = style.spacingBefore
+        }
+
+        private fun applyIndent(p: Paragraph, indent: Float) {
+            p.indentationLeft = indent
+        }
+    }
+
+    private data class ParagraphStyle(
+        val indent: Float,
+        val alignment: Int,
+        val spacingBefore: Float
+    )
+
+    private class VerseNumberEvent(
+        private val verseNumber: String,
+        private val font: Font,
+        private val rtl: Boolean
+    ) : PdfPCellEvent {
+
+        override fun cellLayout(cell: PdfPCell, position: Rectangle, canvases: Array<PdfContentByte>) {
+            val canvas = canvases[PdfPTable.TEXTCANVAS]
+
+            // Calculate Y position
+            val yPos = position.top - font.size * 1.6f
+
+            // Calculate X position:
+            val xPos = if (rtl) {
+                position.right - 2f
+            } else {
+                position.left + 2f
+            }
+
+            ColumnText.showTextAligned(
+                canvas,
+                if (rtl) Element.ALIGN_RIGHT else Element.ALIGN_LEFT,
+                Phrase(verseNumber, font),
+                xPos,
+                yPos,
+                0f
+            )
         }
     }
 }
