@@ -623,7 +623,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         } else {
             // verse marker mode
             if (holder.binding.getTargetBody() != null) {
-                item.renderedTargetText = renderTargetText(item.getTargetText(), item.getTargetTranslationFormat(), item.getFt(), holder, item);
                 holder.binding.getTargetBody().setText(item.renderedTargetText);
                 holder.binding.getTargetBody().setVisibility(View.VISIBLE);
                 holder.binding.getTargetBody().setOnTouchListener((v, event) -> {

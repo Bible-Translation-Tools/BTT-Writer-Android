@@ -960,6 +960,9 @@ class PdfPrinter(
                 marker.startsWith("qm") -> startPoetryBlock(marker, font = italicFont)
                 marker.startsWith("q") -> startPoetryBlock(marker, font = bodyFont)
 
+                // We ignore chapter marker if it's in the chunk file
+                marker == "c" -> {}
+
                 // Default / Fallback
                 else -> currentParagraph.add(Chunk("\\$marker$argument", currentFont))
             }
