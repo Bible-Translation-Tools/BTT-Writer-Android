@@ -11,7 +11,7 @@
         android:inputType="text"
         android:textSize="@dimen/body"
         android:layout_gravity="start|center_vertical"
-        android:textColor="@color/dark_secondary_text"
+        android:textColor="@color/dark_primary_text"
         android:gravity="start|center"
         android:hint="@string/add_footnote_prompt"
         android:id="@+id/footnote_text"

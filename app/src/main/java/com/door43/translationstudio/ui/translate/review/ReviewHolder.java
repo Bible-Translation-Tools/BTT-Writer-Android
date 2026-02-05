@@ -1,20 +1,14 @@
 package com.door43.translationstudio.ui.translate.review;
 
+import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
+
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
-
-import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.databinding.FragmentMergeCardBinding;
-import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding;
-import com.door43.translationstudio.ui.translate.IReviewListItemBinding;
-import com.door43.translationstudio.ui.translate.ReviewListItem;
-import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
-import com.door43.usecases.ParseMergeConflicts;
-import com.google.android.material.tabs.TabLayout;
-import androidx.recyclerview.widget.RecyclerView;
-
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
@@ -31,11 +25,23 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
+import com.door43.translationstudio.core.Typography;
+import com.door43.translationstudio.databinding.FragmentMergeCardBinding;
+import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding;
+import com.door43.translationstudio.ui.translate.IReviewListItemBinding;
+import com.door43.translationstudio.ui.translate.ReviewListItem;
+import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
+import com.door43.usecases.ParseMergeConflicts;
+import com.door43.widget.ViewUtil;
+import com.google.android.material.tabs.TabLayout;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.unfoldingword.resourcecontainer.Language;
@@ -57,10 +63,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     private final Context context;
     private final LayoutInflater inflater;
     private final TabLayout.OnTabSelectedListener resourceTabClickListener;
-    public ReviewListItem currentItem = null;
-    public TextWatcher editableTextWatcher;
     private List<TextView> mergeTexts;
-    private OnResourceClickListener listener;
+    private final OnItemActionListener targetActionListener;
     private List<TranslationHelp> notes = new ArrayList<>();
     private List<TranslationHelp> questions = new ArrayList<>();
     private List<Link> words = new ArrayList<>();
@@ -69,7 +73,9 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     public IReviewListItemBinding binding;
     private final Typography typography;
-    private final ReviewModeAdapter adapter;
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final TextWatcher editableTextWatcher;
 
     private enum MergeConflictDisplayState {
         NORMAL,
@@ -81,28 +87,39 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public ReviewHolder(
             IReviewListItemBinding binding,
             Typography typography,
-            ReviewModeAdapter adapter
+            OnItemActionListener targetActionListener
     ) {
         super(binding.getRoot());
         this.binding = binding;
 
+        this.targetActionListener = targetActionListener;
+
         this.typography = typography;
-        this.adapter = adapter;
         context = binding.getRoot().getContext();
         inflater = LayoutInflater.from(context);
-        
+
+        final GestureDetector editButtonDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(@NonNull MotionEvent e) {
+                if (targetActionListener != null) {
+                    targetActionListener.onEditorToggle(getBindingAdapterPosition(), ReviewHolder.this);
+                }
+                return true;
+            }
+        });
+
         resourceTabClickListener = new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int tag = (int) tab.getTag();
-                if(listener == null) return;
+                if(targetActionListener == null) return;
 
                 if (tag == TAB_NOTES) {
-                    listener.onResourceTabNotesSelected(ReviewHolder.this, currentItem);
+                    targetActionListener.onResourceTabNotesSelected(getBindingAdapterPosition(), ReviewHolder.this);
                 } else if (tag == TAB_WORDS) {
-                    listener.onResourceTabWordsSelected(ReviewHolder.this, currentItem);
+                    targetActionListener.onResourceTabWordsSelected(getBindingAdapterPosition(), ReviewHolder.this);
                 } else if (tag == TAB_QUESTIONS) {
-                    listener.onResourceTabQuestionsSelected(ReviewHolder.this, currentItem);
+                    targetActionListener.onResourceTabQuestionsSelected(getBindingAdapterPosition(), ReviewHolder.this);
                 }
             }
 
@@ -115,26 +132,348 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             public void onTabReselected(TabLayout.Tab tab) {
             }
         };
+
         final GestureDetector resourceCardDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
-                if(listener != null) listener.onTapResourceCard();
+                if(targetActionListener != null) targetActionListener.onTapResourceCard();
                 return true;
             }
         });
-        binding.getResourceCard().setOnTouchListener((v, event) -> resourceCardDetector.onTouchEvent(event));
+
+        editableTextWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (binding.getTargetEditableBody() != null && binding.getTargetEditableBody().hasFocus()) {
+                    if (targetActionListener != null) {
+                        targetActionListener.onApplyChangedText(s, getBindingAdapterPosition(), ReviewHolder.this);
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+
+        // Attach listeners when view is created
+        handler.post(() -> {
+            if (binding.getEditButton() != null) {
+                binding.getEditButton().setOnTouchListener((v, event) -> editButtonDetector.onTouchEvent(event));
+            }
+
+            binding.getResourceCard().setOnTouchListener((v, event) -> resourceCardDetector.onTouchEvent(event));
+
+            if (binding.getTargetBody() != null) {
+                binding.getTargetBody().setOnTouchListener((v, event) -> {
+                    v.onTouchEvent(event);
+                    v.clearFocus();
+                    return true;
+                });
+            }
+
+            if (binding.getUndoButton() != null) {
+                binding.getUndoButton().setOnClickListener(v -> {
+                    if (targetActionListener != null) {
+                        targetActionListener.onUndoTextInTarget(getBindingAdapterPosition(), this);
+                    }
+                });
+            }
+
+            if (binding.getRedoButton() != null) {
+                binding.getRedoButton().setOnClickListener(v -> {
+                    if (targetActionListener != null) {
+                        targetActionListener.onRedoTextInTarget(getBindingAdapterPosition(), this);
+                    }
+                });
+            }
+
+            if (binding.getDoneSwitch() != null) {
+                binding.getDoneSwitch().setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    if (targetActionListener != null && buttonView.isPressed()) {
+                        targetActionListener.onDoneSwitchClicked(getBindingAdapterPosition(), this, isChecked);
+                    }
+                });
+            }
+
+            if (binding.getAddNoteButton() != null) {
+                binding.getAddNoteButton().setOnClickListener(v -> {
+                    if (targetActionListener != null) {
+                        targetActionListener.onCreateFootnoteAtSelection(getBindingAdapterPosition(), this);
+                    }
+                });
+            }
+
+            if (binding.getCancelButton() != null) {
+                binding.getCancelButton().setOnClickListener(v -> {
+                    if (targetActionListener != null) {
+                        targetActionListener.onMergeConflictItemCancel(getBindingAdapterPosition());
+                    }
+                });
+            }
+
+            if (binding.getConfirmButton() != null) {
+                binding.getConfirmButton().setOnClickListener(v -> {
+                    if (targetActionListener != null) {
+                        targetActionListener.onMergeConflictItemConfirm(getBindingAdapterPosition());
+                    }
+                });
+            }
+        });
+    }
+
+    public void bind(ReviewListItem item) {
+        showResourceCard(item.resourcesOpened, false);
+        ViewUtil.makeLinksClickable(binding.getSourceBody());
+
+        // render the cards
+        renderSourceCard(item);
+
+        if (getItemViewType() == ReviewModeAdapter.VIEW_TYPE_CONFLICT) {
+            renderConflictingTargetCard(item);
+        } else {
+            renderTargetCard(item);
+        }
+
+        renderResourceCard(item);
+
+        // set up fonts
+        typography.format(
+                TranslationType.SOURCE,
+                binding.getSourceBody(),
+                item.source.language.slug,
+                item.source.language.direction
+        );
+        if (!item.getHasMergeConflicts()) {
+            typography.format(
+                    TranslationType.TARGET,
+                    binding.getTargetBody(),
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
+            typography.format(
+                    TranslationType.TARGET,
+                    binding.getTargetEditableBody(),
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
+        } else {
+            typography.formatSub(
+                    TranslationType.TARGET,
+                    binding.getConflictText(),
+                    item.target.getTargetLanguage().slug,
+                    item.target.getTargetLanguage().direction
+            );
+        }
+        typography.formatSub(
+                TranslationType.TARGET,
+                binding.getTargetTitle(),
+                item.target.getTargetLanguage().slug,
+                item.target.getTargetLanguage().direction
+        );
+    }
+
+    public void attachTextChangeListener() {
+        if (binding.getTargetEditableBody() != null) {
+            binding.getTargetEditableBody().removeTextChangedListener(editableTextWatcher);
+            binding.getTargetEditableBody().addTextChangedListener(editableTextWatcher);
+        }
+    }
+
+    public void removeTextChangeListener() {
+        if (binding.getTargetEditableBody() != null) {
+            binding.getTargetEditableBody().removeTextChangedListener(editableTextWatcher);
+        }
+    }
+
+    private void renderSourceCard(final ReviewListItem item) {
+        if (item.renderedSourceText == null) {
+            showLoadingSource();
+        } else {
+            setSource(item.renderedSourceText);
+        }
+
+        if (targetActionListener != null) {
+            CharSequence renderedText = targetActionListener.onRenderSourceText(item);
+            item.renderedSourceText = renderedText;
+            setSource(renderedText);
+
+            // update the search
+            targetActionListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getSourceBody(), false);
+        }
+
+        List<ContentValues> tabs = item.getTabs();
+        renderSourceTabs(tabs, item.source.slug);
+
+        if (tabs.size() >= MAX_SOURCE_ITEMS) {
+            binding.getNewTabButton().setVisibility(View.GONE);
+        } else {
+            binding.getNewTabButton().setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Renders a target card that has merge conflicts
+     *
+     * @param item the review list item
+     */
+    private void renderConflictingTargetCard(final ReviewListItem item) {
+        // render title
+        binding.getTargetTitle().setText(item.getTargetTitle());
+        if (binding.getMergeConflictLayout() == null) { // sanity check
+            return;
+        }
+
+        displayMergeConflictsOnTargetCard(item);
+        rebuildControls(item);
+
+        if (binding.getUndoButton() != null) {
+            binding.getUndoButton().setVisibility(View.GONE);
+        }
+        if (binding.getRedoButton() != null) {
+            binding.getRedoButton().setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Renders a normal target card
+     *
+     * @param item the review list item
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private void renderTargetCard(final ReviewListItem item) {
+        // Remove text change listener before rendering
+        removeTextChangeListener();
+        rebuildControls(item);
+
+        // insert rendered text
+        if (item.isEditing) {
+            // editing mode
+            if (binding.getTargetEditableBody() != null) {
+                binding.getTargetEditableBody().setText(item.renderedTargetText);
+            }
+        } else {
+            // verse marker mode
+            if (binding.getTargetBody() != null) {
+                binding.getTargetBody().setText(item.renderedTargetText);
+                ViewUtil.makeLinksClickable(binding.getTargetBody());
+                binding.getTargetBody().setEnabled(!item.isDisabled);
+            }
+        }
+
+        // title
+        binding.getTargetTitle().setText(item.getTargetTitle());
+
+        // render target body
+        if (item.renderedTargetText == null) {
+            if (binding.getTargetEditableBody() != null) {
+                binding.getTargetEditableBody().setText(item.getTargetText());
+            }
+            if (binding.getTargetBody() != null) {
+                binding.getTargetBody().setText(item.getTargetText());
+            }
+
+            if (targetActionListener != null) {
+                CharSequence text;
+                if (item.isComplete() || item.isEditing) {
+                    text = targetActionListener.onRenderTargetText(this, item, true);
+                } else {
+                    text = targetActionListener.onRenderTargetText(this, item);
+                }
+                item.renderedTargetText = text;
+            }
+
+            if (item.isEditing) {
+                // edit mode
+                if (binding.getTargetEditableBody() != null) {
+                    binding.getTargetEditableBody().setText(item.renderedTargetText);
+                    if (targetActionListener != null) {
+                        targetActionListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetEditableBody(), true);
+                    }
+                }
+            } else {
+                // verse marker mode
+                if (binding.getTargetBody() != null) {
+                    binding.getTargetBody().setText(item.renderedTargetText);
+                    if (targetActionListener != null) {
+                        targetActionListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetBody(), true);
+                    }
+                    binding.getTargetBody().setOnTouchListener((v, event) -> {
+                        v.onTouchEvent(event);
+                        v.clearFocus();
+                        return true;
+                    });
+                    setFinishedMode(item.isComplete());
+                    ViewUtil.makeLinksClickable(binding.getTargetBody());
+                }
+            }
+
+            if (targetActionListener != null) {
+                targetActionListener.onAddMissingVerses(getBindingAdapterPosition());
+            }
+        } else if (item.isEditing) {
+            // editing mode
+            if (binding.getTargetEditableBody() != null) {
+                if (targetActionListener != null) {
+                    item.renderedTargetText = targetActionListener.onRenderTargetText(this, item, true);
+                }
+                binding.getTargetEditableBody().setText(item.renderedTargetText);
+            }
+            if (item.refreshSearchHighlightTarget && targetActionListener != null) {
+                targetActionListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetEditableBody(), true);
+            }
+        } else {
+            // verse marker mode
+            if (binding.getTargetBody() != null) {
+                binding.getTargetBody().setText(item.renderedTargetText);
+                ViewUtil.makeLinksClickable(binding.getTargetBody());
+            }
+            if (item.refreshSearchHighlightTarget && targetActionListener != null) {
+                targetActionListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetBody(), true);
+            }
+        }
+
+        // Reattach text change listener
+        attachTextChangeListener();
+
+        // display as finished
+        handler.post(() -> setFinishedMode(item.isComplete()));
+    }
+
+    /**
+     * Initiates rendering the resource card
+     *
+     * @param item the review list item
+     */
+    private void renderResourceCard(final ReviewListItem item) {
+        clearResourceCard();
+
+        // skip if chapter title/reference or udb
+        if (!item.isChunk() || item.source.resource.slug.equals("udb")) {
+            return;
+        }
+
+        showLoadingResources();
+
+        if (targetActionListener != null) {
+            targetActionListener.onRenderHelps(item);
+        }
     }
 
     /**
      * Returns the full width of the resource card
-     * @return
+     * @return resource card width
      */
     public int getResourceCardWidth() {
         int rightMargin = ((ViewGroup.MarginLayoutParams)binding.getResourceCard().getLayoutParams()).rightMargin;
         return binding.getResourceCard().getWidth() + rightMargin;
     }
 
-    public void showLoadingResources() {
+    private void showLoadingResources() {
         clearHelps();
         binding.getResourceTabs().removeAllTabs();
 
@@ -148,13 +487,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         binding.getResourceList().addView(layout);
     }
 
-    public void showLoadingSource() {
+    private void showLoadingSource() {
         binding.getSourceBody().setText("");
         binding.getSourceBody().setVisibility(View.GONE);
         binding.getSourceLoader().setVisibility(View.VISIBLE);
     }
 
-    public void setSource(CharSequence sourceText) {
+    private void setSource(CharSequence sourceText) {
         binding.getSourceBody().setText(sourceText);
         binding.getSourceBody().setVisibility(View.VISIBLE);
         binding.getSourceLoader().setVisibility(View.GONE);
@@ -212,9 +551,35 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     }
 
     /**
+     * set the UI to reflect the finished mode
+     *
+     * @param isComplete if the item is complete
+     */
+    private void setFinishedMode(boolean isComplete) {
+        if (isComplete) {
+            if (binding.getEditButton() != null)
+                binding.getEditButton().setVisibility(View.GONE);
+            if (binding.getUndoButton() != null)
+                binding.getUndoButton().setVisibility(View.GONE);
+            if (binding.getRedoButton() != null)
+                binding.getRedoButton().setVisibility(View.GONE);
+            if (binding.getAddNoteButton() != null)
+                binding.getAddNoteButton().setVisibility(View.GONE);
+            if (binding.getDoneSwitch() != null)
+                binding.getDoneSwitch().setChecked(true);
+            binding.getTargetInnerCard().setBackgroundResource(R.color.card_background_color);
+        } else {
+            if (binding.getEditButton() != null)
+                binding.getEditButton().setVisibility(View.VISIBLE);
+            if (binding.getDoneSwitch() != null)
+                binding.getDoneSwitch().setChecked(false);
+        }
+    }
+
+    /**
      * Removes the tabs and all the loaded resources from the resource tab
      */
-    public void clearResourceCard() {
+    private void clearResourceCard() {
         clearHelps();
         binding.getResourceTabs().removeOnTabSelectedListener(resourceTabClickListener);
         binding.getResourceTabs().removeAllTabs();
@@ -229,7 +594,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * Displays the notes
-     * @param language
+     * @param language language
      */
     public void showNotes(Language language) {
         clearHelps();
@@ -238,8 +603,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             FragmentResourcesListItemBinding notesBinding = FragmentResourcesListItemBinding.inflate(inflater);
             notesBinding.getRoot().setText(note.title);
             notesBinding.getRoot().setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onNoteClick(note, getResourceCardWidth());
+                if (targetActionListener != null) {
+                    targetActionListener.onNoteClick(note, getResourceCardWidth());
                 }
             });
             typography.formatSub(
@@ -254,7 +619,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * Displays the words
-     * @param language
+     * @param language language
      */
     public void showWords(final Language language) {
         clearHelps();
@@ -263,8 +628,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             FragmentResourcesListItemBinding wordsBinding = FragmentResourcesListItemBinding.inflate(inflater);
             wordsBinding.getRoot().setText(word.title);
             wordsBinding.getRoot().setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onWordClick(rcSlug, word, getResourceCardWidth());
+                if (targetActionListener != null) {
+                    targetActionListener.onWordClick(rcSlug, word, getResourceCardWidth());
                 }
             });
             typography.formatSub(TranslationType.SOURCE, wordsBinding.getRoot(), language.slug, language.direction);
@@ -274,7 +639,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * Displays the questions
-     * @param language
+     * @param language language
      */
     public void showQuestions(Language language) {
         clearHelps();
@@ -282,8 +647,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             FragmentResourcesListItemBinding questionsBinding = FragmentResourcesListItemBinding.inflate(inflater);
             questionsBinding.getRoot().setText(question.title);
             questionsBinding.getRoot().setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onQuestionClick(question, getResourceCardWidth());
+                if (targetActionListener != null) {
+                    targetActionListener.onQuestionClick(question, getResourceCardWidth());
                 }
             });
             typography.formatSub(TranslationType.SOURCE, questionsBinding.getRoot(), language.slug, language.direction);
@@ -293,9 +658,9 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * set up the merge conflicts on the card
-     * @param item
+     * @param item the review list item
      */
-    public void displayMergeConflictsOnTargetCard(final ReviewListItem item) {
+    private void displayMergeConflictsOnTargetCard(final ReviewListItem item) {
         Language language = item.source.language;
         item.mergeItems = ParseMergeConflicts.INSTANCE.execute(item.getTargetText());
 
@@ -342,11 +707,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             typography.format(TranslationType.SOURCE, textView, language.slug, language.direction);
 
-            final int pos = i;
+            final int selectedIndex = i;
             if (textView != null) {
                 textView.setOnClickListener(v -> {
-                    item.mergeItemSelected = pos;
-                    adapter.notifyItemChanged(getAbsoluteAdapterPosition());
+                    item.mergeItemSelected = selectedIndex;
+                    if (targetActionListener != null) {
+                        targetActionListener.onNotifyItemChanged(getBindingAdapterPosition());
+                    }
                 });
             }
         }
@@ -358,7 +725,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
      * set merge conflict selection state
      //* @param item
      */
-    public void displayMergeConflictSelectionState(ReviewListItem item) {
+    private void displayMergeConflictSelectionState(ReviewListItem item) {
         for(int i = 0; i < item.mergeItems.size(); i++ ) {
             CharSequence mergeConflictCard = item.mergeItems.get(i);
             TextView textView = mergeTexts.get(i);
@@ -389,7 +756,9 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * display the selection state for card
-     * @param state
+     * @param state the merge conflict display state
+     * @param view the view to display the state on
+     * @param text the text to display
      */
     private void displayMergeSelectionState(MergeConflictDisplayState state, TextView view, CharSequence text) {
         SpannableStringBuilder span;
@@ -437,8 +806,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * get the left margin for view
-     * @param v
-     * @return
+     * @param v view
+     * @return the left margin
      */
     private int getLeftMargin(View v) {
         ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
@@ -447,18 +816,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     /**
      * Shows/hides the resource card
-     * @param show
-     */
-    public void showResourceCard(boolean show) {
-        showResourceCard(show, false);
-    }
-
-    /**
-     * Shows/hides the resource card
      * @param show will be shown if true
      * @param animate animates the change
      */
-    public void showResourceCard(final boolean show, boolean animate) {
+    private void showResourceCard(final boolean show, boolean animate) {
         float openWeight = 1f;
         float closedWeight = 0.765f;
         if(animate) {
@@ -487,26 +848,28 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    public void renderSourceTabs(List<ContentValues> tabs) {
+    private void renderSourceTabs(List<ContentValues> tabs, String sourceSlug) {
         binding.getTranslationTabs().setOnTabSelectedListener(null);
         binding.getTranslationTabs().removeAllTabs();
         for(ContentValues values:tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
-            View tabLayout = adapter.createRemovableTabLayout(listener, tag, title);
 
-            TabLayout.Tab tab = binding.getTranslationTabs().newTab();
-            tab.setTag(tag);
-            tab.setCustomView(tabLayout);
-            binding.getTranslationTabs().addTab(tab);
+            if (targetActionListener != null) {
+                View tabLayout = targetActionListener.onCreateRemovableTabLayout(tag, title);
+                TabLayout.Tab tab = binding.getTranslationTabs().newTab();
+                tab.setTag(tag);
+                tab.setCustomView(tabLayout);
+                binding.getTranslationTabs().addTab(tab);
 
-            adapter.applyLanguageTypefaceToTab(binding.getTranslationTabs(), values, title);
+                targetActionListener.onApplyLanguageTypefaceToTab(binding.getTranslationTabs(), values, title);
+            }
         }
 
         // open selected tab
         for(int i = 0; i < binding.getTranslationTabs().getTabCount(); i ++) {
             TabLayout.Tab tab = binding.getTranslationTabs().getTabAt(i);
-            if(tab.getTag().equals(currentItem.source.slug)) {
+            if(tab.getTag().equals(sourceSlug)) {
                 tab.select();
                 break;
             }
@@ -517,8 +880,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 final String sourceTranslationId = (String) tab.getTag();
-                if (listener != null) {
-                    listener.onSourceTranslationTabClick(sourceTranslationId);
+                if (targetActionListener != null) {
+                    targetActionListener.onSourceTranslationTabClick(sourceTranslationId);
                 }
             }
 
@@ -533,18 +896,18 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
         // change tabs listener
         binding.getNewTabButton().setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onNewSourceTranslationTabClick();
+            if (targetActionListener != null) {
+                targetActionListener.onNewSourceTranslationTabClick();
             }
         });
     }
 
     /**
      * get appropriate edit text - it is different when editing versus viewing
-     * @return
+     * @return the edit text
      */
-    public EditText getEditText() {
-        if (!currentItem.isEditing) {
+    public EditText getEditText(boolean isEditing) {
+        if (!isEditing) {
             return binding.getTargetBody();
         } else {
             return binding.getTargetEditableBody();
@@ -554,11 +917,11 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     /**
      * Sets the correct ui state for translation controls
      */
-    public void rebuildControls() {
-        if(currentItem.isEditing) {
-            prepareUndoRedoUI();
+    public void rebuildControls(ReviewListItem item) {
+        if(item.isEditing) {
+            prepareUndoRedoUI(item);
 
-            boolean allowFootnote = currentItem.getTargetTranslationFormat() == TranslationFormat.USFM && currentItem.isChunk();
+            boolean allowFootnote = item.getTargetTranslationFormat() == TranslationFormat.USFM && item.isChunk();
             if(binding.getEditButton() != null) {
                 binding.getEditButton().setImageResource(R.drawable.ic_done_secondary_24dp);
             }
@@ -590,8 +953,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     /**
      * check history to see if we should show undo/redo buttons
      */
-    private void prepareUndoRedoUI() {
-        final FileHistory history = currentItem.getFileHistory();
+    private void prepareUndoRedoUI(ReviewListItem item) {
+        final FileHistory history = item.getFileHistory();
         ThreadableUI thread = new ThreadableUI(context) {
             @Override
             public void onStop() {
@@ -632,9 +995,5 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             }
         };
         thread.start();
-    }
-
-    public void setOnClickListener(OnResourceClickListener listener) {
-        this.listener = listener;
     }
 }

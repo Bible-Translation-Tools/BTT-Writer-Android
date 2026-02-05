@@ -3,35 +3,33 @@ package com.door43.translationstudio
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Process
-import android.provider.Settings
 import android.text.TextUtils
 import android.view.View
-import android.view.WindowManager
-import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.preference.PreferenceManager
+import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
+import com.door43.data.setDefaultPref
 import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
+import com.door43.util.RuntimeWrapper
+import dagger.hilt.android.HiltAndroidApp
 import org.unfoldingword.tools.foreground.Foreground
 import org.unfoldingword.tools.logger.LogLevel
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.IOException
 import java.util.Locale
-import android.net.NetworkCapabilities
-import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
-import com.door43.data.getDefaultPref
-import com.door43.data.setDefaultPref
-import com.door43.usecases.BackupRC
-import com.door43.util.RuntimeWrapper
-import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 /**
@@ -193,25 +191,10 @@ class App : Application() {
          * @param view
          */
         @JvmStatic
-        fun showKeyboard(activity: Activity?, view: View?, forced: Boolean) {
-            if (activity != null) {
-                if (activity.currentFocus != null) {
-                    try {
-                        val mgr =
-                            activity.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        if (forced) {
-                            mgr.showSoftInput(view, InputMethodManager.SHOW_FORCED)
-                        } else {
-                            mgr.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
-                        }
-                    } catch (e: Exception) {
-                    }
-                } else {
-                    try {
-                        activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
-                    } catch (e: Exception) {
-                    }
-                }
+        fun showKeyboard(activity: Activity?, view: View?) {
+            if (activity != null && view != null) {
+                val controller = WindowCompat.getInsetsController(activity.window, view)
+                controller.show(WindowInsetsCompat.Type.ime())
             }
         }
 
@@ -221,36 +204,10 @@ class App : Application() {
          */
         @JvmStatic
         fun closeKeyboard(activity: Activity?) {
-            if (activity != null) {
-                if (activity.currentFocus != null) {
-                    try {
-                        val imm =
-                            activity.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(activity.currentFocus!!.windowToken, 0)
-                    } catch (e: Exception) {
-                    }
-                } else {
-                    try {
-                        activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
-                    } catch (e: Exception) {
-                    }
-                }
-            }
-        }
-
-        /**
-         * Closes the keyboard for view that has focus, need to use this in dialog fragments
-         * @param context
-         * @param view - value that has focus (usually EditText)
-         */
-        @JvmStatic
-        fun closeKeyboard(context: Context?, view: View?) {
-            if ((view != null) && (context != null)) {
-                try {
-                    val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.hideSoftInputFromWindow(view.windowToken, 0)
-                } catch (e: Exception) {
-                }
+            if (activity != null && activity.window != null) {
+                val decorView: View = activity.window.decorView
+                val controller = WindowCompat.getInsetsController(activity.window, decorView)
+                controller.hide(WindowInsetsCompat.Type.ime())
             }
         }
 

@@ -122,7 +122,7 @@
             <com.door43.widget.KeyboardlessEditText
                 android:id="@+id/target_translation_body"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="this is the tflkjlksjsd\nlkjsdlfkjsdlkjsfdl\nlksjsdlfkjsdlkjsfdl\nlksjsdlfkjsdlkjsfdlkjsfdl\nlksjdlfkjsd"
                 android:textSize="@dimen/body"
                 android:inputType="textMultiLine"
@@ -137,7 +137,7 @@
                 android:visibility="gone"
                 android:id="@+id/target_translation_editable_body"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="this is the tflkjlksjsd\nlkjsdlfkjsdlkjsfdl\nlksjsdlfkjsdlkjsfdl\nlksjsdlfkjsdlkjsfdlkjsfdl\nlksjdlfkjsd"
                 android:textSize="@dimen/body"
                 android:inputType="textMultiLine"

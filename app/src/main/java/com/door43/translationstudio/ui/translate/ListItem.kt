@@ -11,7 +11,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
-
 /**
  * Represents a single row in the translation list
  */

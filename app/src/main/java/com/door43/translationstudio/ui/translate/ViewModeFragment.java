@@ -112,20 +112,19 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         viewModel.setSelectedResourceContainer();
 
-        // TRICKY: there is a bug in Android's LinearLayoutManager
-        layoutManager = new WrapContentLinearLayoutManager(getActivity());
+        layoutManager = new LinearLayoutManager(getActivity());
         binding.translationCards.setLayoutManager(layoutManager);
         binding.translationCards.setItemAnimator(new DefaultItemAnimator());
         binding.translationCards.setAdapter(adapter);
         binding.translationCards.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 fingerScroll = true;
                 super.onScrollStateChanged(recyclerView, newState);
             }
 
             @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 if (fingerScroll) {
                     int position = getCurrentPosition();
@@ -434,6 +433,10 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             return getAdapter().isMergeConflictSummaryDisplayed();
         }
         return false;
+    }
+
+    public void showKeyboard(View view) {
+        App.showKeyboard(getActivity(), view);
     }
 
     /**

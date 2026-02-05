@@ -458,6 +458,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
 
 
     public interface OnEventListener extends OnViewModeListener {
+        void showKeyboard(View view);
         void closeKeyboard();
         void openTranslationMode(TranslationViewMode mode, Bundle extras);
         void onTranslationWordClick(String resourceContainerSlug, String chapterSlug, int width);

@@ -66,7 +66,7 @@ import dagger.hilt.android.AndroidEntryPoint;
  */
 @AndroidEntryPoint
 public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener,
-        ReviewModeAdapter.OnItemActionListener {
+        ReviewModeAdapter.OnShowToastListener {
 
     @Inject
     IPreferenceRepository prefRepository;
@@ -92,8 +92,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ReviewModeAdapter(resourcesOpen, enableMergeConflictsFilter, typography,
-                renderingProvider);
+        return new ReviewModeAdapter(resourcesOpen, enableMergeConflictsFilter, typography, renderingProvider);
     }
 
     @Override

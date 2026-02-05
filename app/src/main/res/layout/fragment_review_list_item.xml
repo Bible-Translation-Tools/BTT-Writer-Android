@@ -4,8 +4,8 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fitsSystemWindows="true"
     android:animateLayoutChanges="true"
+    android:measureWithLargestChild="true"
     android:padding="0dp"
     android:weightSum=".765"
     android:clipChildren="false">

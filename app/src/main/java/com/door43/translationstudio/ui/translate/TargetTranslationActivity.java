@@ -1,19 +1,11 @@
 package com.door43.translationstudio.ui.translate;
 
-import androidx.fragment.app.FragmentTransaction;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-
-import com.door43.data.IPreferenceRepository;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.databinding.ActivityTargetTranslationDetailBinding;
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
-import com.google.android.material.snackbar.Snackbar;
 import android.text.Editable;
 import android.text.Layout;
 import android.text.TextWatcher;
@@ -33,25 +25,31 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.unfoldingword.tools.logger.Logger;
-
+import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
-import com.door43.translationstudio.ui.SettingsActivity;
+import com.door43.translationstudio.core.TargetTranslation;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
+import com.door43.translationstudio.databinding.ActivityTargetTranslationDetailBinding;
+import com.door43.translationstudio.ui.BaseActivity;
+import com.door43.translationstudio.ui.SettingsActivity;
 import com.door43.translationstudio.ui.dialogs.BackupDialog;
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog;
 import com.door43.translationstudio.ui.dialogs.PrintDialog;
 import com.door43.translationstudio.ui.draft.DraftActivity;
 import com.door43.translationstudio.ui.publish.PublishActivity;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
 import com.door43.widget.VerticalSeekBar;
 import com.door43.widget.VerticalSeekBarHint;
 import com.door43.widget.ViewUtil;
-import com.door43.translationstudio.ui.BaseActivity;
+import com.google.android.material.snackbar.Snackbar;
+
+import org.unfoldingword.tools.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -318,10 +316,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
                     ((ViewModeFragment) fragment).onScrollProgressUpdate(position, percentage);
                 }
 
-                TargetTranslationActivity activity = (TargetTranslationActivity) seekBar.getContext();
-                if (activity != null) {
-                    activity.closeKeyboard();
-                }
+                closeKeyboard();
             }
 
             @Override
@@ -621,8 +616,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             Handler hand1 = new Handler(Looper.getMainLooper());
             hand1.post(() -> App.showKeyboard(
                     TargetTranslationActivity.this,
-                    binding.searchPane.searchText,
-                    true
+                    binding.searchPane.searchText
             ));
         });
     }
@@ -743,31 +737,22 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     }
 
     public void closeKeyboard() {
-        if (fragment instanceof ViewModeFragment) {
-            boolean enteringSearchText = searchEnabled && (binding.searchPane.searchText.hasFocus());
-            if(!enteringSearchText) { // we don't want to close keyboard if we are entering search text
-                ((ViewModeFragment) fragment).closeKeyboard();
-            }
-        }
+        App.closeKeyboard(this);
     }
 
     public void checkIfCursorStillOnScreen() {
-
         Rect cursorPos = getCursorPositionOnScreen();
         if (cursorPos != null) {
-
             View scrollView = findViewById(R.id.fragment_container);
             if (scrollView != null) {
-
-                Boolean visible = true;
+                boolean visible = true;
 
                 Rect scrollBounds = new Rect();
                 scrollView.getHitRect(scrollBounds);
 
                 if (cursorPos.top < scrollBounds.top) {
                     visible = false;
-                }
-                else if (cursorPos.bottom > scrollBounds.bottom) {
+                } else if (cursorPos.bottom > scrollBounds.bottom) {
                     visible = false;
                 }
 
@@ -779,20 +764,16 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     }
 
     public Rect getCursorPositionOnScreen() {
-
-        View focusedView = (View) getCurrentFocus();
+        View focusedView = getCurrentFocus();
         if (focusedView != null) {
-
             // get view position on screen
             int[] l = new int[2];
             focusedView.getLocationOnScreen(l);
             int focusedViewX = l[0];
             int focusedViewY = l[1];
 
-            if (focusedView instanceof EditText) {
-
+            if (focusedView instanceof EditText editText) {
                 // getting relative cursor position
-                EditText editText = (EditText) focusedView;
                 int pos = editText.getSelectionStart();
                 Layout layout = editText.getLayout();
                 if (layout != null) {
@@ -815,11 +796,8 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
     @Override
     public void onScrollProgress(int position) {
-//        position = handleItemCountIfChanged(position);
         // TODO: 2/16/17 record scroll position
         int progress = computeProgressFromPosition(position);
-        // Too much logging
-        //Log.d(TAG, "onScrollProgress: position=" + position + ", mapped to progressbar=" + progress);
         SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
         seekBar.setProgress(progress);
         checkIfCursorStillOnScreen();
