@@ -102,7 +102,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             @Override
             public boolean onSingleTapUp(@NonNull MotionEvent e) {
                 if (reviewModeListener != null) {
-                    reviewModeListener.onEditorToggle(getBindingAdapterPosition(), ReviewHolder.this);
+                    reviewModeListener.onEditorToggle(ReviewHolder.this);
                 }
                 return true;
             }
@@ -115,11 +115,11 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 if(reviewModeListener == null) return;
 
                 if (tag == TAB_NOTES) {
-                    reviewModeListener.onResourceTabNotesSelected(getBindingAdapterPosition(), ReviewHolder.this);
+                    reviewModeListener.onResourceTabNotesSelected(ReviewHolder.this);
                 } else if (tag == TAB_WORDS) {
-                    reviewModeListener.onResourceTabWordsSelected(getBindingAdapterPosition(), ReviewHolder.this);
+                    reviewModeListener.onResourceTabWordsSelected(ReviewHolder.this);
                 } else if (tag == TAB_QUESTIONS) {
-                    reviewModeListener.onResourceTabQuestionsSelected(getBindingAdapterPosition(), ReviewHolder.this);
+                    reviewModeListener.onResourceTabQuestionsSelected(ReviewHolder.this);
                 }
             }
 
@@ -150,7 +150,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (binding.getTargetEditableBody() != null && binding.getTargetEditableBody().hasFocus()) {
                     if (reviewModeListener != null) {
-                        reviewModeListener.onApplyChangedText(s, getBindingAdapterPosition(), ReviewHolder.this);
+                        reviewModeListener.onApplyChangedText(s, ReviewHolder.this);
                     }
                 }
             }
@@ -179,7 +179,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             if (binding.getUndoButton() != null) {
                 binding.getUndoButton().setOnClickListener(v -> {
                     if (reviewModeListener != null) {
-                        reviewModeListener.onUndoTextInTarget(getBindingAdapterPosition(), this);
+                        reviewModeListener.onUndoTextInTarget(this);
                     }
                 });
             }
@@ -187,7 +187,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             if (binding.getRedoButton() != null) {
                 binding.getRedoButton().setOnClickListener(v -> {
                     if (reviewModeListener != null) {
-                        reviewModeListener.onRedoTextInTarget(getBindingAdapterPosition(), this);
+                        reviewModeListener.onRedoTextInTarget(this);
                     }
                 });
             }
@@ -195,7 +195,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             if (binding.getDoneSwitch() != null) {
                 binding.getDoneSwitch().setOnCheckedChangeListener((buttonView, isChecked) -> {
                     if (reviewModeListener != null && buttonView.isPressed()) {
-                        reviewModeListener.onDoneSwitchClicked(getBindingAdapterPosition(), this, isChecked);
+                        reviewModeListener.onDoneSwitchClicked(this, isChecked);
                     }
                 });
             }
@@ -203,7 +203,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             if (binding.getAddNoteButton() != null) {
                 binding.getAddNoteButton().setOnClickListener(v -> {
                     if (reviewModeListener != null) {
-                        reviewModeListener.onCreateFootnoteAtSelection(getBindingAdapterPosition(), this);
+                        reviewModeListener.onCreateFootnoteAtSelection(this);
                     }
                 });
             }

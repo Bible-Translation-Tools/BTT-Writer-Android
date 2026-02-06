@@ -158,19 +158,22 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     @Override
-    public void onResourceTabNotesSelected(int position, ReviewHolder holder) {
+    public void onResourceTabNotesSelected(ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         holder.showNotes(item.source.language);
     }
 
     @Override
-    public void onResourceTabWordsSelected(int position, ReviewHolder holder) {
+    public void onResourceTabWordsSelected(ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         holder.showWords(item.source.language);
     }
 
     @Override
-    public void onResourceTabQuestionsSelected(int position, ReviewHolder holder) {
+    public void onResourceTabQuestionsSelected(ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         holder.showQuestions(item.source.language);
     }
@@ -357,8 +360,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     @Override
-    public void onEditorToggle(int position, ReviewHolder holder) {
+    public void onEditorToggle(ReviewHolder holder) {
         Handler handler = new Handler(Looper.getMainLooper());
+
+        final int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         item.isEditing = !item.isEditing;
 
@@ -393,7 +398,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     @Override
-    public void onApplyChangedText(CharSequence s, int position, ReviewHolder holder) {
+    public void onApplyChangedText(CharSequence s, ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         applyChangedText(s, item);
 
@@ -406,19 +412,22 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     @Override
-    public void onUndoTextInTarget(int position, ReviewHolder holder) {
+    public void onUndoTextInTarget(ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         undoTextInTarget(holder, item);
     }
 
     @Override
-    public void onRedoTextInTarget(int position, ReviewHolder holder) {
+    public void onRedoTextInTarget(ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         redoTextInTarget(holder, item);
     }
 
     @Override
-    public void onDoneSwitchClicked(int position, ReviewHolder holder, boolean checked) {
+    public void onDoneSwitchClicked(ReviewHolder holder, boolean checked) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         if (checked) {
             if (item.isEditing && holder.binding.getTargetEditableBody() != null) {
@@ -456,7 +465,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     @Override
-    public void onCreateFootnoteAtSelection(int position, ReviewHolder holder) {
+    public void onCreateFootnoteAtSelection(ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         createFootnoteAtSelection(holder, item);
     }
