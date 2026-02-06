@@ -582,6 +582,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             }
 
             binding.targetTranslationBody.setText(targetText);
+            ViewUtil.makeLinksClickable(binding.targetTranslationBody);
 
             String targetCardTitle = "";
 
