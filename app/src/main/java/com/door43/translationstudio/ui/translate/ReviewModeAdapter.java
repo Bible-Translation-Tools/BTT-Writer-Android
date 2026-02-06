@@ -50,8 +50,7 @@ import com.door43.translationstudio.ui.spannables.Span;
 import com.door43.translationstudio.ui.spannables.USFMNoteSpan;
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
 import com.door43.translationstudio.ui.spannables.VerseSpan;
-import com.door43.translationstudio.ui.translate.review.OnItemActionListener;
-import com.door43.translationstudio.ui.translate.review.OnSourceClickListener;
+import com.door43.translationstudio.ui.translate.review.OnReviewModeListener;
 import com.door43.translationstudio.ui.translate.review.ReviewHolder;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 import com.door43.util.ColorUtil;
@@ -69,7 +68,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements OnSourceClickListener, OnItemActionListener {
+public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements OnReviewModeListener {
     private static final String TAG = ReviewModeAdapter.class.getSimpleName();
 
     public interface OnRenderHelpsListener {

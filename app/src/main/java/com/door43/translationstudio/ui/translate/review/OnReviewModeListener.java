@@ -5,12 +5,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.door43.translationstudio.ui.spannables.NoteSpan;
+import com.door43.translationstudio.ui.translate.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.ReviewListItem;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
 
 import org.unfoldingword.resourcecontainer.Link;
 
-public interface OnItemActionListener extends OnViewModeListener {
+public interface OnReviewModeListener extends OnViewModeListener {
     void onNoteClick(TranslationHelp note, int resourceCardWidth);
     void onWordClick(String resourceContainerSlug, Link word, int resourceCardWidth);
     void onQuestionClick(TranslationHelp question, int resourceCardWidth);
@@ -35,4 +37,5 @@ public interface OnItemActionListener extends OnViewModeListener {
     CharSequence onRenderTargetText(ReviewHolder holder, ReviewListItem item);
     void onAddMissingVerses(int position);
     void onRenderHelps(ReviewListItem item);
+    void onSourceFootnoteClick(ReviewListItem item, NoteSpan span, int start, int end);
 }

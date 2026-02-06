@@ -1,7 +1,8 @@
 package com.door43.translationstudio.ui.translate;
 
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.MotionEvent;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Displays translations in chunks
@@ -17,9 +18,9 @@ public class ChunkModeFragment extends ViewModeFragment {
 
     /***
      * doTranslationCardToggle
-     * @param e1
-     * @param e2
-     * @param swipeLeft
+     * @param e1 - touch event
+     * @param e2 - touch event
+     * @param swipeLeft - if true then swipe left, otherwise swipe right
      */
     protected void doTranslationCardToggle(final MotionEvent e1, final MotionEvent e2, final boolean swipeLeft) {
         if(getAdapter() != null) {
@@ -29,7 +30,8 @@ public class ChunkModeFragment extends ViewModeFragment {
             }
             if(position != -1) {
                 RecyclerView.ViewHolder holder = getViewHolderForAdapterPosition(position);
-                ((ChunkModeAdapter) getAdapter()).toggleTargetTranslationCard((ChunkModeAdapter.ViewHolder) holder, position, swipeLeft);
+                ChunkModeAdapter adapter = (ChunkModeAdapter) getAdapter();
+                adapter.toggleTargetTranslationCard((ChunkModeAdapter.ViewHolder) holder, swipeLeft);
             }
         }
     }

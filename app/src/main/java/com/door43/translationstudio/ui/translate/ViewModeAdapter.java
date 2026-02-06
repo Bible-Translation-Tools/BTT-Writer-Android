@@ -20,7 +20,6 @@ import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.databinding.RemovableTabBinding;
-import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
 import java.util.ArrayList;
@@ -302,7 +301,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     /**
      * Checks if filtering is enabled for this adapter.
      * Override this to customize filtering.
-     * @return
+     * @return true if filtering is enabled
      */
     public boolean hasFilter() {
         return false;
