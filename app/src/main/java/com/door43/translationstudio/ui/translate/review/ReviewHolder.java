@@ -6,8 +6,6 @@ import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -63,6 +61,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     private final Context context;
     private final LayoutInflater inflater;
     private final TabLayout.OnTabSelectedListener resourceTabClickListener;
+    private final TabLayout.OnTabSelectedListener tabSelectedListener;
     private List<TextView> mergeTexts;
     private final OnReviewModeListener reviewModeListener;
     private List<TranslationHelp> notes = new ArrayList<>();
@@ -74,7 +73,6 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public IReviewListItemBinding binding;
     private final Typography typography;
 
-    private final Handler handler = new Handler(Looper.getMainLooper());
     private final TextWatcher editableTextWatcher;
 
     private enum MergeConflictDisplayState {
@@ -133,6 +131,24 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             }
         };
 
+        tabSelectedListener = new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                final String sourceTranslationId = (String) tab.getTag();
+                if (reviewModeListener != null) {
+                    reviewModeListener.onSourceTranslationTabClick(sourceTranslationId);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        };
+
         final GestureDetector resourceCardDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
@@ -161,7 +177,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         };
 
         // Attach listeners when view is created
-        handler.post(() -> {
+        itemView.post(() -> {
             if (binding.getEditButton() != null) {
                 binding.getEditButton().setOnTouchListener((v, event) -> editButtonDetector.onTouchEvent(event));
             }
@@ -223,6 +239,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     }
                 });
             }
+
+            // change tabs listener
+            binding.getNewTabButton().setOnClickListener(v -> {
+                if (reviewModeListener != null) {
+                    reviewModeListener.onNewSourceTranslationTabClick();
+                }
+            });
         });
     }
 
@@ -441,7 +464,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         attachTextChangeListener();
 
         // display as finished
-        handler.post(() -> setFinishedMode(item.isComplete()));
+        itemView.post(() -> setFinishedMode(item.isComplete()));
     }
 
     /**
@@ -849,8 +872,9 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     }
 
     private void renderSourceTabs(List<ContentValues> tabs, String sourceSlug) {
-        binding.getTranslationTabs().setOnTabSelectedListener(null);
+        binding.getTranslationTabs().removeOnTabSelectedListener(tabSelectedListener);
         binding.getTranslationTabs().removeAllTabs();
+
         for(ContentValues values:tabs) {
             String tag = values.getAsString("tag");
             String title = values.getAsString("title");
@@ -876,30 +900,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         }
 
         // tabs listener
-        binding.getTranslationTabs().setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                final String sourceTranslationId = (String) tab.getTag();
-                if (reviewModeListener != null) {
-                    reviewModeListener.onSourceTranslationTabClick(sourceTranslationId);
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
-
-        // change tabs listener
-        binding.getNewTabButton().setOnClickListener(v -> {
-            if (reviewModeListener != null) {
-                reviewModeListener.onNewSourceTranslationTabClick();
-            }
-        });
+        binding.getTranslationTabs().addOnTabSelectedListener(tabSelectedListener);
     }
 
     /**

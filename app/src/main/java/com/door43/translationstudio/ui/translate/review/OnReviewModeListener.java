@@ -1,18 +1,15 @@
 package com.door43.translationstudio.ui.translate.review;
 
-import android.content.ContentValues;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.door43.translationstudio.ui.spannables.NoteSpan;
-import com.door43.translationstudio.ui.translate.OnViewModeListener;
+import com.door43.translationstudio.ui.translate.OnAdapterListener;
 import com.door43.translationstudio.ui.translate.ReviewListItem;
 import com.door43.translationstudio.ui.translate.TranslationHelp;
 
 import org.unfoldingword.resourcecontainer.Link;
 
-public interface OnReviewModeListener extends OnViewModeListener {
+public interface OnReviewModeListener extends OnAdapterListener {
     void onNoteClick(TranslationHelp note, int resourceCardWidth);
     void onWordClick(String resourceContainerSlug, Link word, int resourceCardWidth);
     void onQuestionClick(TranslationHelp question, int resourceCardWidth);
@@ -21,8 +18,6 @@ public interface OnReviewModeListener extends OnViewModeListener {
     void onResourceTabQuestionsSelected(ReviewHolder holder);
     void onTapResourceCard();
     void onNotifyItemChanged(int position);
-    View onCreateRemovableTabLayout(String tag, String title);
-    void onApplyLanguageTypefaceToTab(ViewGroup layout, ContentValues values, String title);
     void onEditorToggle(ReviewHolder holder);
     void onApplyChangedText(CharSequence s, ReviewHolder holder);
     void onUndoTextInTarget(ReviewHolder holder);

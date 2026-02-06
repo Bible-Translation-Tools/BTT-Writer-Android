@@ -5,8 +5,7 @@ import android.view.View;
 
 import com.google.android.material.tabs.TabLayout;
 
-public interface OnViewModeListener {
-    void onSourceRemoveButtonClicked(String sourceTranslationId);
+public interface OnAdapterListener {
     void onSourceTranslationTabClick(String sourceTranslationId);
     void onNewSourceTranslationTabClick();
     View onCreateRemovableTabLayout(String tag, String title);

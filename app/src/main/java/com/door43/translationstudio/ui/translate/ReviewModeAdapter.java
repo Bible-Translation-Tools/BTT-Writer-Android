@@ -55,6 +55,7 @@ import com.door43.translationstudio.ui.translate.review.ReviewHolder;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 import com.door43.util.ColorUtil;
 import com.door43.widget.ViewUtil;
+import com.google.android.material.tabs.TabLayout;
 
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.unfoldingword.resourcecontainer.Link;
@@ -189,13 +190,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     public void onNewSourceTranslationTabClick() {
         if (getListener() != null) {
             getListener().onNewSourceTranslationTabClick();
-        }
-    }
-
-    @Override
-    public void onSourceRemoveButtonClicked(String sourceTranslationId) {
-        if (getListener() != null) {
-            getListener().onSourceRemoveButtonClicked(sourceTranslationId);
         }
     }
 
@@ -1380,12 +1374,12 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     true
             );
 
-            renderer.setPopulateVerseMarkers(
-                    RenderingProvider.Companion.getVerseRange(item.getSourceText(),
-                            item.getSourceTranslationFormat())
+            int[] verseRange = RenderingProvider.Companion.getVerseRange(
+                    item.getSourceText(),
+                    item.getSourceTranslationFormat()
             );
+            renderer.setPopulateVerseMarkers(verseRange);
         } else {
-            // TODO: add note click listener
             renderingGroup.addEngine(new DefaultRenderer(null));
         }
 
@@ -1608,7 +1602,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
                 @Override
                 public void onLongClick(View view, Span span, int start, int end) {
-
                 }
             };
 
@@ -2099,12 +2092,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     @Override
     public View onCreateRemovableTabLayout(String tag, String title) {
-        return createRemovableTabLayout(this, tag, title);
+        return getListener().onCreateRemovableTabLayout(tag, title);
     }
 
     @Override
-    public void onApplyLanguageTypefaceToTab(ViewGroup layout, ContentValues values, String title) {
-        applyLanguageTypefaceToTab(layout, values, title);
+    public void onApplyLanguageTypefaceToTab(TabLayout layout, ContentValues values, String title) {
+        if (getListener() != null) {
+            getListener().onApplyLanguageTypefaceToTab(layout, values, title);
+        }
     }
 
     private void searchItems(final int initialPosition) {

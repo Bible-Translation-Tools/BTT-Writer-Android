@@ -5,8 +5,6 @@ import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationA
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -131,19 +129,20 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
     @Override
     public View onCreateRemovableTabLayout(String tag, String title) {
-        return createRemovableTabLayout(getListener(), tag, title);
+        return getListener().onCreateRemovableTabLayout(tag, title);
     }
 
     @Override
     public void onApplyLanguageTypefaceToTab(TabLayout layout, ContentValues values, String title) {
-        applyLanguageTypefaceToTab(layout, values, title);
+        if (getListener() != null) {
+            getListener().onApplyLanguageTypefaceToTab(layout, values, title);
+        }
     }
 
     @Override
     public void onSourceTranslationTabClick(String sourceId) {
         if (getListener() != null) {
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(() -> getListener().onSourceTranslationTabClick(sourceId));
+            getListener().onSourceTranslationTabClick(sourceId);
         }
     }
 
@@ -458,7 +457,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         public TextWatcher textWatcher;
         private final Context context;
         private final OnChunkModeListener chunkModeListener;
-        private TabLayout.OnTabSelectedListener tabSelectedListener;
+        private final TabLayout.OnTabSelectedListener tabSelectedListener;
         private final Typography typography;
 
         public ViewHolder(
@@ -467,9 +466,9 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                 OnChunkModeListener chunkModeListener
         ) {
             super(binding.getRoot());
-            context = binding.getRoot().getContext();
             this.binding = binding;
 
+            context = binding.getRoot().getContext();
             this.chunkModeListener = chunkModeListener;
             this.typography = typography;
 
@@ -509,8 +508,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                 }
             };
 
-            Handler handler = new Handler(Looper.getMainLooper());
-            handler.post(() -> {
+            itemView.post(() -> {
                 binding.targetTranslationCard.setOnTouchListener((v, event) -> { // for touches on card other than edit area
                     if (MotionEvent.ACTION_UP == event.getAction()) {
                         if (chunkModeListener != null) {
@@ -550,25 +548,6 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                         chunkModeListener.onCloseTargetTranslationCard(this);
                     }
                 });
-
-                // hook up listener
-//                binding.sourceTranslationTabs.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-//                    @Override
-//                    public void onTabSelected(TabLayout.Tab tab) {
-//                        final String sourceTranslationId = (String) tab.getTag();
-//                        if (chunkModeListener != null) {
-//                            chunkModeListener.onSourceTranslationTabClick(sourceTranslationId);
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onTabUnselected(TabLayout.Tab tab) {
-//                    }
-//
-//                    @Override
-//                    public void onTabReselected(TabLayout.Tab tab) {
-//                    }
-//                });
 
                 binding.newTabButton.setOnClickListener(v -> {
                     if (chunkModeListener != null) {

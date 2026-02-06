@@ -5,7 +5,6 @@
     android:id="@+id/main_content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fitsSystemWindows="true"
     android:descendantFocusability="blocksDescendants"
     android:clipChildren="false">
 
@@ -24,14 +23,14 @@
             android:orientation="vertical"
             style="@style/Widget.CardContent.Stacked"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical">
+            android:layout_height="match_parent">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/headline"
+                android:layout_marginTop="@dimen/stacked_card_thin_margin"
                 android:layout_marginBottom="@dimen/stacked_card_margin"
                 android:textColor="@color/dark_primary_text"
                 android:textStyle="bold"
@@ -51,7 +50,7 @@
             <TextView
                 android:id="@+id/target_translation_body"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="this is the top ca\nsdf\nsdf\ndf\nsdfrd\nlsjdflkjsd\nlksjdflksjdflksd\nlkjsdlfkjsdlkjsfdl\nlksjdlfkjsd"
                 android:textSize="@dimen/body"
                 android:textColor="@color/dark_primary_text"
@@ -75,8 +74,7 @@
             android:orientation="vertical"
             style="@style/Widget.CardContent.Stacked.Skinny"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical">
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:orientation="horizontal"
@@ -112,6 +110,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/headline"
+                android:layout_marginTop="@dimen/stacked_card_thin_margin"
                 android:layout_marginBottom="@dimen/stacked_card_margin"
                 android:layout_marginLeft="@dimen/stacked_card_margin"
                 android:layout_marginRight="@dimen/stacked_card_margin"
@@ -127,6 +126,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textSize="@dimen/headline"
+                android:layout_marginTop="@dimen/stacked_card_thin_margin"
                 android:layout_marginBottom="@dimen/stacked_card_margin"
                 android:layout_marginLeft="@dimen/stacked_card_margin"
                 android:layout_marginRight="@dimen/stacked_card_margin"
@@ -140,7 +140,7 @@
                 android:layout_marginRight="@dimen/stacked_card_margin"
                 android:id="@+id/source_translation_body"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="this is the top ca\nsdf\nsdf\ndf\nsdfrd\nlsjdflkjsd\nlksjdflksjdflksd\nlkjsdlfkjsdlkjsfdl\nlksjdlfkjsd"
                 android:textSize="@dimen/body"
                 android:textColor="@color/dark_primary_text"
