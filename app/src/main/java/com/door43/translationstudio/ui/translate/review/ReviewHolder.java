@@ -436,7 +436,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             }
 
             if (reviewModeListener != null) {
-                reviewModeListener.onAddMissingVerses(getBindingAdapterPosition());
+                reviewModeListener.onAddMissingVerses(this);
             }
         } else if (item.isEditing) {
             // editing mode

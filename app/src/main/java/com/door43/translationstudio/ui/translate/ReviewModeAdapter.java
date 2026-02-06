@@ -387,7 +387,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             }
         }
 
-        addMissingVerses(position);
+        addMissingVerses(holder);
         holder.rebuildControls(item);
     }
 
@@ -564,8 +564,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     }
 
     @Override
-    public void onAddMissingVerses(int position) {
-        addMissingVerses(position);
+    public void onAddMissingVerses(ReviewHolder holder) {
+        addMissingVerses(holder);
     }
 
     @Override
@@ -578,9 +578,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     /**
      * if missing verses were found during render, then add them
      *
-     * @param position list item position
+     * @param holder review holder
      */
-    private void addMissingVerses(int position) {
+    private void addMissingVerses(ReviewHolder holder) {
+        int position = holder.getBindingAdapterPosition();
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         if (item.hasMissingVerses && !item.isComplete()) {
             Log.i(TAG, "Adding Missing verses to: " + item.getTargetText());
@@ -589,7 +590,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 Log.i(TAG, "Added Missing verses: " + translation);
                 item.hasMissingVerses = false;
                 item.renderedTargetText = null; // force re-rendering of target text
-                notifyItemChanged(position);
+
+                holder.itemView.post(() -> notifyItemChanged(position));
             }
         }
     }

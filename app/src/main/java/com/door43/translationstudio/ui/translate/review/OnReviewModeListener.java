@@ -30,7 +30,7 @@ public interface OnReviewModeListener extends OnAdapterListener {
     void onMergeConflictItemConfirm(int position);
     CharSequence onRenderTargetText(ReviewHolder holder, ReviewListItem item, boolean editable);
     CharSequence onRenderTargetText(ReviewHolder holder, ReviewListItem item);
-    void onAddMissingVerses(int position);
+    void onAddMissingVerses(ReviewHolder holder);
     void onRenderHelps(ReviewListItem item);
     void onSourceFootnoteClick(ReviewListItem item, NoteSpan span, int start, int end);
 }
