@@ -226,7 +226,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             if (binding.getCancelButton() != null) {
                 binding.getCancelButton().setOnClickListener(v -> {
-                    if (reviewModeListener != null) {
+                    int position = getBindingAdapterPosition();
+                    if (reviewModeListener != null && position != RecyclerView.NO_POSITION) {
                         reviewModeListener.onMergeConflictItemCancel(getBindingAdapterPosition());
                     }
                 });
@@ -234,7 +235,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             if (binding.getConfirmButton() != null) {
                 binding.getConfirmButton().setOnClickListener(v -> {
-                    if (reviewModeListener != null) {
+                    int position = getBindingAdapterPosition();
+                    if (reviewModeListener != null && position != RecyclerView.NO_POSITION) {
                         reviewModeListener.onMergeConflictItemConfirm(getBindingAdapterPosition());
                     }
                 });
@@ -881,10 +883,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
             if (reviewModeListener != null) {
                 View tabLayout = reviewModeListener.onCreateRemovableTabLayout(tag, title);
-                TabLayout.Tab tab = binding.getTranslationTabs().newTab();
-                tab.setTag(tag);
-                tab.setCustomView(tabLayout);
-                binding.getTranslationTabs().addTab(tab);
+
+                if (tabLayout != null) {
+                    TabLayout.Tab tab = binding.getTranslationTabs().newTab();
+                    tab.setTag(tag);
+                    tab.setCustomView(tabLayout);
+                    binding.getTranslationTabs().addTab(tab);
+                }
 
                 reviewModeListener.onApplyLanguageTypefaceToTab(binding.getTranslationTabs(), values, title);
             }
@@ -893,7 +898,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         // open selected tab
         for(int i = 0; i < binding.getTranslationTabs().getTabCount(); i ++) {
             TabLayout.Tab tab = binding.getTranslationTabs().getTabAt(i);
-            if(tab.getTag().equals(sourceSlug)) {
+            if(sourceSlug.equals(tab.getTag())) {
                 tab.select();
                 break;
             }

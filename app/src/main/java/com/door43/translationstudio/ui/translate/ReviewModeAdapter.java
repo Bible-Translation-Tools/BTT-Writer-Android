@@ -28,6 +28,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.FileHistory;
@@ -175,8 +176,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onResourceTabQuestionsSelected(ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        holder.showQuestions(item.source.language);
+        if (position != RecyclerView.NO_POSITION) {
+            ReviewListItem item = (ReviewListItem) filteredItems.get(position);
+            holder.showQuestions(item.source.language);
+        }
     }
 
     @Override
@@ -369,7 +372,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 view.setText(item.renderedTargetText);
 
                 handler.post(() -> {
-                    getListener().showKeyboard(view);
+                    if (getListener() != null) {
+                        getListener().showKeyboard(view);
+                    }
                     view.requestFocus();
                 });
             }
@@ -381,7 +386,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 view.setText(item.renderedTargetText);
 
                 handler.post(() -> {
-                    getListener().closeKeyboard();
+                    if (getListener() != null) {
+                        getListener().closeKeyboard();
+                    }
                     view.requestFocus();
                 });
             }
@@ -442,7 +449,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                             item.target.commit();
                         } catch (Exception e) {
                             Logger.e(TAG, "Failed to commit translation of " + item.target.getId(), e);
-                            itemActionListener.onShowToast(e.getMessage());
+                            if (itemActionListener != null) {
+                                itemActionListener.onShowToast(e.getMessage());
+                            }
                         }
                         triggerNotifyDataSetChanged();
                     })
@@ -2094,7 +2103,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
     @Override
     public View onCreateRemovableTabLayout(String tag, String title) {
-        return getListener().onCreateRemovableTabLayout(tag, title);
+        if (getListener() != null) {
+            return getListener().onCreateRemovableTabLayout(tag, title);
+        }
+        return null;
     }
 
     @Override

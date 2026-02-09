@@ -737,7 +737,12 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
     }
 
     public void closeKeyboard() {
-        App.closeKeyboard(this);
+        if (fragment instanceof ViewModeFragment) {
+            boolean enteringSearchText = searchEnabled && (binding.searchPane.searchText.hasFocus());
+            if(!enteringSearchText) { // we don't want to close keyboard if we are entering search text
+                ((ViewModeFragment) fragment).closeKeyboard();
+            }
+        }
     }
 
     public void checkIfCursorStillOnScreen() {

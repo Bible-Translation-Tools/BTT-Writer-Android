@@ -441,6 +441,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         return false;
     }
 
+    @Override
     public void showKeyboard(View view) {
         App.showKeyboard(getActivity(), view);
     }

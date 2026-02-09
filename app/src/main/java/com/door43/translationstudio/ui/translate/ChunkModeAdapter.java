@@ -129,7 +129,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
     @Override
     public View onCreateRemovableTabLayout(String tag, String title) {
-        return getListener().onCreateRemovableTabLayout(tag, title);
+        if (getListener() != null) {
+            return getListener().onCreateRemovableTabLayout(tag, title);
+        }
+        return null;
     }
 
     @Override
@@ -227,7 +230,9 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
         // set focus on edit text
         target.requestFocus();
-        getListener().showKeyboard(target);
+        if (getListener() != null) {
+            getListener().showKeyboard(target);
+        }
     }
 
     /**
@@ -701,7 +706,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                 }
                 String verseSpan = Frame.parseVerseTitle(item.getSourceText(), item.getSourceTranslationFormat());
                 if (verseSpan.isEmpty()) {
-                    title += ":" + Integer.parseInt(item.chunkSlug);
+                    try {
+                        title += ":" + Integer.parseInt(item.chunkSlug);
+                    } catch (Exception e) {
+                        title += ":" + item.chunkSlug;
+                    }
                 } else {
                     title += ":" + verseSpan;
                 }
@@ -750,10 +759,13 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
                 if (chunkModeListener != null) {
                     View tabLayout = chunkModeListener.onCreateRemovableTabLayout(tag, title);
-                    TabLayout.Tab tab = binding.sourceTranslationTabs.newTab();
-                    tab.setTag(tag);
-                    tab.setCustomView(tabLayout);
-                    binding.sourceTranslationTabs.addTab(tab);
+
+                    if (tabLayout != null) {
+                        TabLayout.Tab tab = binding.sourceTranslationTabs.newTab();
+                        tab.setTag(tag);
+                        tab.setCustomView(tabLayout);
+                        binding.sourceTranslationTabs.addTab(tab);
+                    }
 
                     chunkModeListener.onApplyLanguageTypefaceToTab(binding.sourceTranslationTabs, values, title);
                 }
@@ -762,7 +774,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             // select correct tab
             for (int i = 0; i < binding.sourceTranslationTabs.getTabCount(); i++) {
                 TabLayout.Tab tab = binding.sourceTranslationTabs.getTabAt(i);
-                if (tab.getTag().equals(sourceSlug)) {
+                if (sourceSlug.equals(tab.getTag())) {
                     tab.select();
                     break;
                 }

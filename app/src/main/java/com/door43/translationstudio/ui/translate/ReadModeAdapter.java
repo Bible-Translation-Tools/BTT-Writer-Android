@@ -258,12 +258,17 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         Bundle args = new Bundle();
         args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true);
         args.putString(Translator.EXTRA_CHAPTER_ID, chapterSlug);
-        getListener().openTranslationMode(TranslationViewMode.CHUNK, args);
+        if (getListener() != null) {
+            getListener().openTranslationMode(TranslationViewMode.CHUNK, args);
+        }
     }
 
     @Override
     public View onCreateRemovableTabLayout(String tag, String title) {
-        return getListener().onCreateRemovableTabLayout(tag, title);
+        if (getListener() != null) {
+            return getListener().onCreateRemovableTabLayout(tag, title);
+        }
+        return null;
     }
 
     @Override
@@ -606,7 +611,13 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
             if (targetCardTitle.isEmpty()) { // fall back to project source title
                 targetCardTitle = item.source.readChunk("front", "title").trim();
-                if(!chapterSlug.equals("front")) targetCardTitle += " " + Integer.parseInt(chapterSlug);
+                if(!chapterSlug.equals("front")) {
+                    try {
+                        targetCardTitle += " " + Integer.parseInt(chapterSlug);
+                    } catch (Exception e) {
+                        targetCardTitle += " " + chapterSlug;
+                    }
+                }
             }
 
             binding.targetTranslationTitle.setText(targetCardTitle + " - " + item.target.getTargetLanguage().name);
@@ -664,10 +675,13 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
                 if (readModeListener != null) {
                     View tabLayout = readModeListener.onCreateRemovableTabLayout(tag, title);
-                    TabLayout.Tab tab = binding.sourceTranslationTabs.newTab();
-                    tab.setTag(tag);
-                    tab.setCustomView(tabLayout);
-                    binding.sourceTranslationTabs.addTab(tab);
+
+                    if (tabLayout != null) {
+                        TabLayout.Tab tab = binding.sourceTranslationTabs.newTab();
+                        tab.setTag(tag);
+                        tab.setCustomView(tabLayout);
+                        binding.sourceTranslationTabs.addTab(tab);
+                    }
 
                     readModeListener.onApplyLanguageTypefaceToTab(binding.sourceTranslationTabs, values, title);
                 }
@@ -676,7 +690,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             // select correct tab
             for(int i = 0; i < binding.sourceTranslationTabs.getTabCount(); i ++) {
                 TabLayout.Tab tab = binding.sourceTranslationTabs.getTabAt(i);
-                if(tab.getTag().equals(sourceSlug)) {
+                if(sourceSlug.equals(tab.getTag())) {
                     tab.select();
                     break;
                 }
