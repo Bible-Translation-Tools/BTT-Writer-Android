@@ -702,7 +702,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                 // TODO: we should read the title from a cache instead of doing file io again
                 String title = item.source.readChunk(item.chapterSlug, "title").trim();
                 if (title.isEmpty()) {
-                    title = item.source.project.name.trim() + " " + Integer.parseInt(item.chapterSlug);
+                    try {
+                        title = item.source.project.name.trim() + " " + Integer.parseInt(item.chapterSlug);
+                    } catch (Exception e) {
+                        title = item.source.project.name.trim() + " " + item.chapterSlug;
+                    }
                 }
                 String verseSpan = Frame.parseVerseTitle(item.getSourceText(), item.getSourceTranslationFormat());
                 if (verseSpan.isEmpty()) {

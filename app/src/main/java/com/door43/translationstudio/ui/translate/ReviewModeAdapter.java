@@ -1140,7 +1140,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
             int max = min;
             if (sourceVerseRange.length == 2) max = sourceVerseRange[1];
             while (matcher.find()) {
-                int verse = Integer.parseInt(matcher.group(1));
+                String verseStr = matcher.group(1);
+                int verse = -1;
+                if (verseStr != null) {
+                    try {
+                        verse = Integer.parseInt(verseStr);
+                    } catch (Exception ignored) {
+                    }
+                }
                 if (verse < min || verse > max) {
                     error = R.string.outofrange_verse_marker;
                     break;
@@ -1159,7 +1166,14 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         }
         int lastVerseSeen = 0;
         while (matcher.find()) {
-            int currentVerse = Integer.parseInt(matcher.group(1));
+            String verseStr = matcher.group(1);
+            int currentVerse = -1;
+            if (verseStr != null) {
+                try {
+                    currentVerse = Integer.parseInt(verseStr);
+                } catch (Exception ignored) {
+                }
+            }
             if (currentVerse <= lastVerseSeen) {
                 if (currentVerse == lastVerseSeen) {
                     error = R.string.duplicate_verse_marker;

@@ -605,7 +605,11 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             if (targetCardTitle.isEmpty()) { // if no chapter titles, fall back to project title, try translated title first
                 ProjectTranslation projTrans = item.target.getProjectTranslation();
                 if(!projTrans.getTitle().trim().isEmpty()) {
-                    targetCardTitle = projTrans.getTitle().trim() + " " + Integer.parseInt(chapterSlug);
+                    try {
+                        targetCardTitle = projTrans.getTitle().trim() + " " + Integer.parseInt(chapterSlug);
+                    } catch (Exception e) {
+                        targetCardTitle = projTrans.getTitle().trim() + " " + chapterSlug;
+                    }
                 }
             }
 

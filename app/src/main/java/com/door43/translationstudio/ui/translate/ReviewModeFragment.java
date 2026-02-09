@@ -357,8 +357,13 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                         String chunk = rc.readChunk(link.getChapterId(), link.getFrameId());
                         String verseTitle = Frame.parseVerseTitle(chunk,
                                 TranslationFormat.parse(rc.contentMimeType));
-                        String title =
-                                rc.readChunk("front", "title") + " " + Integer.parseInt(link.getChapterId()) + ":" + verseTitle;
+                        String chapterId;
+                        try {
+                            chapterId = String.valueOf(Integer.parseInt(link.getChapterId()));
+                        } catch (Exception e) {
+                            chapterId = link.getChapterId();
+                        }
+                        String title = rc.readChunk("front", "title") + " " + chapterId + ":" + verseTitle;
                         link.setTitle(title);
                         result = !chunk.isEmpty();
                     } else if (span instanceof TranslationWordLinkSpan) {
