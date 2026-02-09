@@ -20,7 +20,6 @@ import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.databinding.RemovableTabBinding;
-import com.door43.translationstudio.ui.translate.review.OnViewModeListener;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ import java.util.List;
 /**
  * Created by joel on 9/18/2015.
  */
-public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH>  implements SectionIndexer {
+public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements SectionIndexer {
     private final List<VH> viewHolders = new ArrayList<>();
     private OnEventListener listener;
     private int startPosition = 0;
@@ -302,7 +301,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     /**
      * Checks if filtering is enabled for this adapter.
      * Override this to customize filtering.
-     * @return
+     * @return true if filtering is enabled
      */
     public boolean hasFilter() {
         return false;
@@ -357,51 +356,6 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     }
 
     /**
-     * if language is specified in values, finds the created tab that has the title text and applies the Typeface for the language
-     * @param layout
-     * @param values
-     * @param title
-     */
-    public void applyLanguageTypefaceToTab(ViewGroup layout, ContentValues values, String title) {
-        if(values.containsKey("language")) {
-            String code = values.getAsString("language");
-            String direction = values.getAsString("direction");
-            Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, direction);
-            TextView view = findTab(layout, title);
-            if(view != null) {
-                view.setTypeface(typeface, Typeface.NORMAL);
-            }
-        }
-    }
-
-    /**
-     * finds a TextView with match text within viewGroup (recursive)
-     * @param viewGroup
-     * @param match
-     * @return
-     */
-    public TextView findTab(ViewGroup viewGroup, String match) {
-        int count = viewGroup.getChildCount();
-        for (int i = 0; i < count; i++) {
-            View view = viewGroup.getChildAt(i);
-            if (view instanceof ViewGroup) {
-                TextView foundView = findTab((ViewGroup) view, match);
-                if(foundView != null) {
-                    return foundView;
-                }
-            }
-            else if (view instanceof TextView) {
-                TextView textView = (TextView) view;
-                CharSequence text = textView.getText();
-                if(match.equals(text.toString())) {
-                    return textView;
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
      * called to set new selected position
      * @param position
      * @param offset - if greater than or equal to 0, then set specific offset
@@ -419,22 +373,6 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
      */
     public boolean isMergeConflictSummaryDisplayed() {
         return false;
-    }
-
-    public View createRemovableTabLayout(final OnViewModeListener listener, String tag, String title) {
-        RemovableTabBinding binding = RemovableTabBinding.inflate(LayoutInflater.from(context));
-
-        binding.tab.setText(title);
-        binding.close.setTag(tag);
-
-        binding.close.setOnClickListener(view -> {
-            final String sourceTranslationId = (String) view.getTag();
-            if (listener != null) {
-                listener.onSourceRemoveButtonClicked(sourceTranslationId);
-            }
-        });
-
-        return binding.getRoot();
     }
 
     /**
@@ -458,6 +396,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
 
 
     public interface OnEventListener extends OnViewModeListener {
+        void showKeyboard(View view);
         void closeKeyboard();
         void openTranslationMode(TranslationViewMode mode, Bundle extras);
         void onTranslationWordClick(String resourceContainerSlug, String chapterSlug, int width);

@@ -92,7 +92,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
             searchBar.searchBackButton.visibility = View.GONE
             searchBar.searchMagIcon.setOnClickListener {
                 searchBar.searchText.requestFocus()
-                showKeyboard(activity, searchBar.searchText, false)
+                showKeyboard(activity, searchBar.searchText)
             }
 
             list.adapter = adapter

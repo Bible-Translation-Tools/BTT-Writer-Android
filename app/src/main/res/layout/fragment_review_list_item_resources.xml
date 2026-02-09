@@ -18,7 +18,7 @@
         android:orientation="vertical"
         style="@style/Widget.CardContent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_margin="0dp"
         android:padding="0dp"
         android:gravity="top">
@@ -28,7 +28,7 @@
             android:orientation="vertical"
             android:id="@+id/resources_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_margin="0dp"
             android:padding="0dp">
 
@@ -51,7 +51,7 @@
                 android:layout_marginTop="@dimen/dialog_controls_margin"
                 android:layout_marginBottom="@dimen/dialog_content_margin"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="wrap_content" />
 
         </LinearLayout>
 

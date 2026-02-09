@@ -7,12 +7,12 @@ import java.util.Map;
  * Created by joel on 1/14/2015.
  */
 public class KeyValueStore {
-    private Map<String, Object> dataStore = new HashMap<String, Object>();
+    private final Map<String, Object> dataStore = new HashMap<String, Object>();
 
     /**
-     * Add a vlaue to the store
-     * @param key
-     * @param value
+     * Add a value to the store
+     * @param key Key
+     * @param value Value
      */
     public void add(String key, Object value) {
         dataStore.put(key, value);
@@ -20,34 +20,40 @@ public class KeyValueStore {
 
     /**
      * Retrieve a value as a string
-     * @param key
-     * @return
+     * @param key Key
+     * @return String
      */
     public String getString(String key) {
         if(dataStore.containsKey(key)) {
             Object value = dataStore.get(key);
-            return value.toString();
-        } else {
-            return null;
+            if (value != null) {
+                return value.toString();
+            }
         }
+        return null;
     }
 
     /**
      * Retrieve a value as an int
-     * @param key
+     * @param key Key
      */
     public int getInt(String key) {
         if(dataStore.containsKey(key)) {
             Object value = dataStore.get(key);
-            return Integer.parseInt(value.toString());
-        } else {
-            return 0;
+            if (value != null) {
+                try {
+                    return Integer.parseInt(value.toString());
+                } catch (Exception ignored) {
+                }
+            }
         }
+        return 0;
     }
 
     /**
      * Retrieve a value
-     * @param key
+     * @param key Key
+     * @return Object
      */
     public Object get(String key) {
         if(dataStore.containsKey(key)) {
@@ -60,9 +66,10 @@ public class KeyValueStore {
     public boolean getBool(String key) {
         if(dataStore.containsKey(key)) {
             Object value = dataStore.get(key);
-            return Boolean.parseBoolean(value.toString());
-        } else {
-            return false;
+            if (value != null) {
+                return Boolean.parseBoolean(value.toString());
+            }
         }
+        return false;
     }
 }

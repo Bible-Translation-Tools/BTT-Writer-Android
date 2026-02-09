@@ -1,6 +1,8 @@
 package com.door43.translationstudio.ui.translate;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -8,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -21,15 +24,18 @@ import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.RenderingProvider;
+import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.databinding.FragmentStackedCardListBinding;
+import com.door43.translationstudio.databinding.RemovableTabBinding;
 import com.door43.translationstudio.ui.BaseFragment;
 import com.door43.translationstudio.ui.dialogs.ProgressHelper;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
+import com.google.android.material.tabs.TabLayout;
 
 import org.json.JSONException;
 import org.unfoldingword.door43client.models.Translation;
@@ -112,20 +118,19 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
 
         viewModel.setSelectedResourceContainer();
 
-        // TRICKY: there is a bug in Android's LinearLayoutManager
-        layoutManager = new WrapContentLinearLayoutManager(getActivity());
+        layoutManager = new LinearLayoutManager(getActivity());
         binding.translationCards.setLayoutManager(layoutManager);
         binding.translationCards.setItemAnimator(new DefaultItemAnimator());
         binding.translationCards.setAdapter(adapter);
         binding.translationCards.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 fingerScroll = true;
                 super.onScrollStateChanged(recyclerView, newState);
             }
 
             @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 if (fingerScroll) {
                     int position = getCurrentPosition();
@@ -436,6 +441,11 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         return false;
     }
 
+    @Override
+    public void showKeyboard(View view) {
+        App.showKeyboard(getActivity(), view);
+    }
+
     /**
      * Forces the software keyboard to close
      */
@@ -577,8 +587,41 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     }
 
     @Override
-    public void onCancelTabsDialog(String targetTranslationId) {
+    public View onCreateRemovableTabLayout(String tag, String title) {
+        RemovableTabBinding binding = RemovableTabBinding.inflate(LayoutInflater.from(getContext()));
 
+        binding.tab.setText(title);
+        binding.close.setTag(tag);
+
+        binding.close.setOnClickListener(view -> {
+            final String sourceTranslationId = (String) view.getTag();
+            onSourceRemoveButtonClicked(sourceTranslationId);
+        });
+
+        return binding.getRoot();
+    }
+
+    /**
+     * if language is specified in values, finds the created tab that has the title text and applies the Typeface for the language
+     * @param layout
+     * @param values
+     * @param title
+     */
+    @Override
+    public void onApplyLanguageTypefaceToTab(TabLayout layout, ContentValues values, String title) {
+        if(values.containsKey("language")) {
+            String code = values.getAsString("language");
+            String direction = values.getAsString("direction");
+            Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, direction);
+            TextView view = findTab(layout, title);
+            if(view != null) {
+                view.setTypeface(typeface, Typeface.NORMAL);
+            }
+        }
+    }
+
+    @Override
+    public void onCancelTabsDialog(String targetTranslationId) {
     }
 
     @Override
@@ -596,6 +639,33 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         } else {
             if (listener != null) listener.onNoSourceTranslations();
         }
+    }
+
+    /**
+     * finds a TextView with match text within viewGroup (recursive)
+     * @param viewGroup
+     * @param match
+     * @return
+     */
+    private TextView findTab(ViewGroup viewGroup, String match) {
+        int count = viewGroup.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View view = viewGroup.getChildAt(i);
+            if (view instanceof ViewGroup) {
+                TextView foundView = findTab((ViewGroup) view, match);
+                if(foundView != null) {
+                    return foundView;
+                }
+            }
+            else if (view instanceof TextView) {
+                TextView textView = (TextView) view;
+                CharSequence text = textView.getText();
+                if(match.equals(text.toString())) {
+                    return textView;
+                }
+            }
+        }
+        return null;
     }
 
     private void setSelectedSources(List<String> sourceSlugs) {

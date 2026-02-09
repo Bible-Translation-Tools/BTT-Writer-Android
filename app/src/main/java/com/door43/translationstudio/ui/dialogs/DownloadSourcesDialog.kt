@@ -403,7 +403,7 @@ class DownloadSourcesDialog : DialogFragment() {
         binding.searchText.visibility = View.VISIBLE
         binding.searchText.isEnabled = true
         binding.searchText.requestFocus()
-        showKeyboard(activity, binding.searchText, false)
+        showKeyboard(activity, binding.searchText)
         binding.searchText.setText("")
 
         if (searchTextWatcher != null) {

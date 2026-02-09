@@ -5,7 +5,6 @@
     android:id="@+id/main_content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fitsSystemWindows="true"
     android:clipChildren="false">
 
     <androidx.cardview.widget.CardView
@@ -40,7 +39,7 @@
             <com.door43.widget.LinedEditText
                 android:id="@+id/target_translation_body"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:text="this is the top ca\nsdf\nsdf\ndf\nsdfrd\nlsjdflkjsd\nlksjdflksjdflksd\nlkjsdlfkjsdlkjsfdl\nlksjdlfkjsd"
                 android:textSize="@dimen/body"
                 android:focusable="true"
@@ -98,7 +97,7 @@
             android:orientation="vertical"
             style="@style/Widget.CardContent.Stacked.Skinny"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center_vertical">
 
             <LinearLayout
@@ -145,7 +144,7 @@
             <TextView
                 android:id="@+id/source_translation_body"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/stacked_card_margin"
                 android:layout_marginRight="@dimen/stacked_card_margin"
                 android:text="this is the top ca\nsdf\nsdf\ndf\nsdfrd\nlsjdflkjsd\nlksjdflksjdflksd\nlkjsdlfkjsdlkjsfdl\nlksjdlfkjsd"

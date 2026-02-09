@@ -8,7 +8,7 @@
         android:id="@+id/translation_cards"
         android:scrollbars="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/resources_drawer_card"

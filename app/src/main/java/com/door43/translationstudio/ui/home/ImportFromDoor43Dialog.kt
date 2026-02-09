@@ -94,10 +94,10 @@ class ImportFromDoor43Dialog : DialogFragment() {
                 val repoQuery = translationId.text.toString()
 
                 if (username.hasFocus()) {
-                    closeKeyboard(activity, username)
+                    closeKeyboard(activity)
                 }
                 if (translationId.hasFocus()) {
-                    closeKeyboard(activity, translationId)
+                    closeKeyboard(activity)
                 }
 
                 viewModel.searchRepositories(userQuery, repoQuery, 50)
