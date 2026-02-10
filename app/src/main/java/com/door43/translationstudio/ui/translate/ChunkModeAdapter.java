@@ -243,6 +243,9 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     private boolean checkForPromptToEditDoneTargetCard(final ViewHolder holder) {
         // if page is already in front and they are tapping on it, then see if they want to open for edit
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return false;
+        }
         ChunkListItem item = (ChunkListItem) filteredItems.get(position);
 
         if (item.isComplete()) {
@@ -347,7 +350,11 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      * @param leftToRight true if moving left to right
      */
     public void closeTargetTranslationCard(final ViewHolder holder, final boolean leftToRight) {
-        ChunkListItem item = (ChunkListItem) filteredItems.get(holder.getBindingAdapterPosition());
+        int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
+        ChunkListItem item = (ChunkListItem) filteredItems.get(position);
 
         if (item.isTargetCardOpen) {
             clearSelectionFromTarget(holder);
@@ -393,6 +400,9 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      */
     public void openTargetTranslationCard(final ViewHolder holder, final boolean leftToRight) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         final ChunkListItem item = (ChunkListItem) filteredItems.get(position);
 
         if (!item.isTargetCardOpen) {
@@ -485,7 +495,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     if (chunkModeListener != null) {
-                        chunkModeListener.onTextChanged(s, start, before, count, getBindingAdapterPosition());
+                        int position = getBindingAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            chunkModeListener.onTextChanged(s, start, before, count, position);
+                        }
                     }
                 }
 
@@ -540,7 +553,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
                         // Accept clicks anywhere on card as if they were on the text box --
                         // but only if the text is actually editable (i.e., not yet done).
                         if (binding.targetTranslationBody.isEnabled()) {
-                            chunkModeListener.onEditTarget(binding.targetTranslationBody, getBindingAdapterPosition());
+                            int position = getBindingAdapterPosition();
+                            if (position != RecyclerView.NO_POSITION) {
+                                chunkModeListener.onEditTarget(binding.targetTranslationBody, position);
+                            }
                         } else {
                             // if marked as done (disabled for edit), enable to allow capture of click events, but do not make it focusable so they can't edit
                             enableClicksIfChunkIsDone();
@@ -562,7 +578,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
 
                 binding.conflictButton.setOnClickListener(v -> {
                     if (chunkModeListener != null) {
-                        chunkModeListener.onConflictButtonClicked(getBindingAdapterPosition());
+                        int position = getBindingAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            chunkModeListener.onConflictButtonClicked(position);
+                        }
                     }
                 });
             });

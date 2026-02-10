@@ -228,7 +228,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 binding.getCancelButton().setOnClickListener(v -> {
                     int position = getBindingAdapterPosition();
                     if (reviewModeListener != null && position != RecyclerView.NO_POSITION) {
-                        reviewModeListener.onMergeConflictItemCancel(getBindingAdapterPosition());
+                        reviewModeListener.onMergeConflictItemCancel(position);
                     }
                 });
             }
@@ -237,7 +237,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 binding.getConfirmButton().setOnClickListener(v -> {
                     int position = getBindingAdapterPosition();
                     if (reviewModeListener != null && position != RecyclerView.NO_POSITION) {
-                        reviewModeListener.onMergeConflictItemConfirm(getBindingAdapterPosition());
+                        reviewModeListener.onMergeConflictItemConfirm(position);
                     }
                 });
             }
@@ -328,7 +328,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             setSource(renderedText);
 
             // update the search
-            reviewModeListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getSourceBody(), false);
+            int position = getBindingAdapterPosition();
+            if (position != RecyclerView.NO_POSITION) {
+                reviewModeListener.onSearchItemUpdated(position, binding.getSourceBody(), false);
+            }
         }
 
         List<ContentValues> tabs = item.getTabs();
@@ -417,7 +420,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 if (binding.getTargetEditableBody() != null) {
                     binding.getTargetEditableBody().setText(item.renderedTargetText);
                     if (reviewModeListener != null) {
-                        reviewModeListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetEditableBody(), true);
+                        int position = getBindingAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            reviewModeListener.onSearchItemUpdated(position, binding.getTargetEditableBody(), true);
+                        }
                     }
                 }
             } else {
@@ -425,7 +431,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 if (binding.getTargetBody() != null) {
                     binding.getTargetBody().setText(item.renderedTargetText);
                     if (reviewModeListener != null) {
-                        reviewModeListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetBody(), true);
+                        int position = getBindingAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            reviewModeListener.onSearchItemUpdated(position, binding.getTargetBody(), true);
+                        }
                     }
                     binding.getTargetBody().setOnTouchListener((v, event) -> {
                         v.onTouchEvent(event);
@@ -449,7 +458,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 binding.getTargetEditableBody().setText(item.renderedTargetText);
             }
             if (item.refreshSearchHighlightTarget && reviewModeListener != null) {
-                reviewModeListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetEditableBody(), true);
+                int position = getBindingAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    reviewModeListener.onSearchItemUpdated(position, binding.getTargetEditableBody(), true);
+                }
             }
         } else {
             // verse marker mode
@@ -458,7 +470,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 ViewUtil.makeLinksClickable(binding.getTargetBody());
             }
             if (item.refreshSearchHighlightTarget && reviewModeListener != null) {
-                reviewModeListener.onSearchItemUpdated(getBindingAdapterPosition(), binding.getTargetBody(), true);
+                int position = getBindingAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    reviewModeListener.onSearchItemUpdated(position, binding.getTargetBody(), true);
+                }
             }
         }
 
@@ -737,7 +752,10 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 textView.setOnClickListener(v -> {
                     item.mergeItemSelected = selectedIndex;
                     if (reviewModeListener != null) {
-                        reviewModeListener.onNotifyItemChanged(getBindingAdapterPosition());
+                        int position = getBindingAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            reviewModeListener.onNotifyItemChanged(position);
+                        }
                     }
                 });
             }
