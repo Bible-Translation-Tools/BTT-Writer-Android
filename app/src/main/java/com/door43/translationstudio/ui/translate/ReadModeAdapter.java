@@ -156,13 +156,17 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     @Override
     public void onOpenTargetTranslationCard(ViewHolder holder) {
         int position = holder.getBindingAdapterPosition();
-        openTargetTranslationCard(holder, position, false);
+        if (position != RecyclerView.NO_POSITION) {
+            openTargetTranslationCard(holder, position, false);
+        }
     }
 
     @Override
     public void onCloseTargetTranslationCard(ViewHolder holder) {
         int position = holder.getBindingAdapterPosition();
-        closeTargetTranslationCard(holder, position, true);
+        if (position != RecyclerView.NO_POSITION) {
+            closeTargetTranslationCard(holder, position, true);
+        }
     }
 
     @Override
@@ -175,6 +179,9 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     @Override
     public CharSequence onRenderSourceText(ReadModeAdapter.ViewHolder holder) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return "";
+        }
         ReadListItem item = (ReadListItem) items.get(position);
 
         String sourceChapterBody = item.getSourceText();
@@ -218,6 +225,9 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     @Override
     public CharSequence onRenderTargetText(ViewHolder holder) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return "";
+        }
         ReadListItem item = (ReadListItem) items.get(position);
 
         TranslationFormat bodyFormat = item.target.getFormat();

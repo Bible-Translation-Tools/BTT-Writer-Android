@@ -162,15 +162,19 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onResourceTabNotesSelected(ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        holder.showNotes(item.source.language);
+        if (position != RecyclerView.NO_POSITION) {
+            ReviewListItem item = (ReviewListItem) filteredItems.get(position);
+            holder.showNotes(item.source.language);
+        }
     }
 
     @Override
     public void onResourceTabWordsSelected(ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        holder.showWords(item.source.language);
+        if (position != RecyclerView.NO_POSITION) {
+            ReviewListItem item = (ReviewListItem) filteredItems.get(position);
+            holder.showWords(item.source.language);
+        }
     }
 
     @Override
@@ -361,6 +365,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         Handler handler = new Handler(Looper.getMainLooper());
 
         final int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         item.isEditing = !item.isEditing;
 
@@ -401,6 +408,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onApplyChangedText(CharSequence s, ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         applyChangedText(s, item);
 
@@ -415,6 +425,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onUndoTextInTarget(ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         undoTextInTarget(holder, item);
     }
@@ -422,6 +435,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onRedoTextInTarget(ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         redoTextInTarget(holder, item);
     }
@@ -429,6 +445,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onDoneSwitchClicked(ReviewHolder holder, boolean checked) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         if (checked) {
             if (item.isEditing && holder.binding.getTargetEditableBody() != null) {
@@ -470,6 +489,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     @Override
     public void onCreateFootnoteAtSelection(ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         createFootnoteAtSelection(holder, item);
     }
@@ -591,6 +613,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      */
     private void addMissingVerses(ReviewHolder holder) {
         int position = holder.getBindingAdapterPosition();
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         if (item.hasMissingVerses && !item.isComplete()) {
             Log.i(TAG, "Adding Missing verses to: " + item.getTargetText());
