@@ -46,6 +46,7 @@ android {
         }
         create("verify") {
             initWith(getByName("debug"))
+            matchingFallbacks += listOf("release", "debug")
             applicationIdSuffix = ".test"
         }
     }
