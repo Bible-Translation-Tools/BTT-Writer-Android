@@ -6,7 +6,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.core.ContainerCache
@@ -16,25 +15,20 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.RCItem
 import com.door43.usecases.DownloadResourceContainers
 import com.door43.usecases.DownloadResourceContainers.DownloadResult
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import javax.inject.Inject
 
-@HiltViewModel
-class ChooseSourcesViewModel @Inject constructor(
-    application: Application
+class ChooseSourcesViewModel(
+    application: Application,
+    private val downloadResourceContainers: DownloadResourceContainers,
+    private val prefRepository: IPreferenceRepository,
+    private val library: Door43Client,
+    private val translator: Translator
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var downloadResourceContainers: DownloadResourceContainers
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var library: Door43Client
 
     private val jobs = arrayListOf<Job>()
 

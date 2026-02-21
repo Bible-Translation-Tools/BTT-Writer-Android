@@ -8,7 +8,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
@@ -16,10 +15,9 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
 
-class BackupRC @Inject constructor(
-    @ApplicationContext private val context: Context,
+class BackupRC (
+    private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val migrator: TargetTranslationMigrator,
     private val exportProjects: ExportProjects,

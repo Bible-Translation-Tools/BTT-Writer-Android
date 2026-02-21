@@ -9,7 +9,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
 import org.unfoldingword.tools.logger.Logger
 import java.io.BufferedInputStream
@@ -20,10 +19,9 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
-import javax.inject.Inject
 
-class SubmitNewLanguageRequests @Inject constructor(
-    @ApplicationContext private val context: Context,
+class SubmitNewLanguageRequests(
+    private val context: Context,
     languageRequestRepository: ILanguageRequestRepository,
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider,

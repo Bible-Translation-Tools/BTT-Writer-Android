@@ -19,7 +19,6 @@ import android.widget.AdapterView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.showKeyboard
 import com.door43.translationstudio.R
@@ -31,21 +30,20 @@ import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.SelectedSt
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.SelectionType
 import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
 import com.door43.usecases.DownloadResourceContainers
-import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 import java.util.Objects
-import javax.inject.Inject
 import kotlin.math.min
 
 /**
  * Created by blm on 12/1/16.
  */
-@AndroidEntryPoint
 class DownloadSourcesDialog : DialogFragment() {
-    @Inject lateinit var typography: Typography
+    val typography: Typography by inject()
 
     private lateinit var progressDialog: ProgressHelper.ProgressDialog
     private lateinit var adapter: DownloadSourcesAdapter
@@ -58,7 +56,7 @@ class DownloadSourcesDialog : DialogFragment() {
     private var _binding: DialogDownloadSourcesBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: DownloadSourcesViewModel by viewModels()
+    private val viewModel: DownloadSourcesViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,

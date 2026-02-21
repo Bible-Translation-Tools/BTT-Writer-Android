@@ -13,7 +13,6 @@ import android.view.ViewGroup
 import android.view.Window
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.isStoreVersion
 import com.door43.translationstudio.R
@@ -22,19 +21,18 @@ import com.door43.translationstudio.ui.viewmodels.FeedbackViewModel
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Created by joel on 9/17/2015.
  */
-@AndroidEntryPoint
 class FeedbackDialog : DialogFragment() {
     private var message = ""
 
     private var _binding: DialogFeedbackBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: FeedbackViewModel by viewModels()
+    private val viewModel: FeedbackViewModel by viewModel()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)

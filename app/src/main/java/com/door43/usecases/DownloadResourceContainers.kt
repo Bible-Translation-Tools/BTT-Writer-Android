@@ -6,9 +6,8 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-class DownloadResourceContainers @Inject constructor(
+class DownloadResourceContainers(
     private val library: Door43Client
 ) {
 

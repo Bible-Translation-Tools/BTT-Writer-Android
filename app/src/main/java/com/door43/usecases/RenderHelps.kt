@@ -8,9 +8,8 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Link
 import org.unfoldingword.tools.logger.Logger
 import java.util.regex.Pattern
-import javax.inject.Inject
 
-class RenderHelps @Inject constructor(
+class RenderHelps(
     private val library: Door43Client
 ) {
     data class RenderHelpsResult(val item: ListItem, val helps: Map<String, Any>)

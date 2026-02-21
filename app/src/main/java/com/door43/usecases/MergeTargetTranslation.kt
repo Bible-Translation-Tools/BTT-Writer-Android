@@ -2,9 +2,8 @@ package com.door43.usecases
 
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
-import javax.inject.Inject
 
-class MergeTargetTranslation @Inject constructor(
+class MergeTargetTranslation(
     private val translator: Translator,
     private val backupRC: BackupRC
 ) {

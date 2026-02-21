@@ -3,9 +3,8 @@ package com.door43.usecases
 import com.door43.OnProgressListener
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-class UpdateCatalogs @Inject constructor(
+class UpdateCatalogs(
     private val library: Door43Client
 ) {
     data class Result(val success: Boolean, val addedCount: Int)

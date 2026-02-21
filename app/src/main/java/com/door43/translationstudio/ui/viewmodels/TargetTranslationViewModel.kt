@@ -7,13 +7,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.core.ContainerCache
-import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationType
@@ -25,7 +23,6 @@ import com.door43.translationstudio.ui.translate.ListItem
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.usecases.RenderHelps
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -36,21 +33,15 @@ import org.unfoldingword.resourcecontainer.Language
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
-import javax.inject.Inject
 
-@HiltViewModel
-class TargetTranslationViewModel @Inject constructor(
-    application: Application
+class TargetTranslationViewModel(
+    application: Application,
+    private val translator: Translator,
+    private val renderHelps: RenderHelps,
+    private val library: Door43Client,
+    private val prefRepository: IPreferenceRepository,
+    private val typography: Typography
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var renderHelps: RenderHelps
-    @Inject lateinit var library: Door43Client
-
-    @Inject lateinit var typography: Typography
 
     private val renderHelpJobs = arrayListOf<Job>()
 

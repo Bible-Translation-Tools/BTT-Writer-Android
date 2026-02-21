@@ -5,9 +5,8 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-class GetRepository @Inject constructor(
+class GetRepository(
     private val createRepository: CreateRepository,
     private val searchRepository: SearchGogsRepositories,
     private val profile: Profile

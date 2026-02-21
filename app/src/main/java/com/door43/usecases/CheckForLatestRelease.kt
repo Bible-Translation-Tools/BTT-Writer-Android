@@ -3,7 +3,6 @@ package com.door43.usecases
 import android.content.Context
 import android.content.pm.PackageManager
 import com.door43.data.IPreferenceRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONException
 import org.json.JSONObject
 import org.unfoldingword.tools.http.GetRequest
@@ -11,10 +10,9 @@ import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
 import java.io.Serializable
 import java.net.URL
-import javax.inject.Inject
 
-class CheckForLatestRelease @Inject constructor(
-    @ApplicationContext private val context: Context,
+class CheckForLatestRelease(
+    private val context: Context,
     private val prefRepository: IPreferenceRepository
 ) {
     data class Result(val release: Release?)

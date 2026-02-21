@@ -14,7 +14,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
@@ -43,21 +42,20 @@ import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.PullTargetTranslation
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.eclipse.jgit.merge.MergeStrategy
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.eventbuffer.EventBuffer
 import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class HomeActivity : BaseActivity(),
     OnCreateNewTargetTranslation, TargetTranslationListFragment.OnItemClickListener,
     EventBuffer.OnEventListener, DialogInterface.OnCancelListener {
 
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var translator: Translator
+    val profile: Profile by inject()
+    val translator: Translator by inject()
 
     private var fragment: Fragment? = null
     private var alertShown = DialogShown.NONE
@@ -70,7 +68,7 @@ class HomeActivity : BaseActivity(),
     private lateinit var newTranslationLauncher: ActivityResultLauncher<Intent>
     private lateinit var translationViewRequestLauncher: ActivityResultLauncher<Intent>
 
-    private val viewModel: HomeViewModel by viewModels()
+    private val viewModel: HomeViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui.newlanguage
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.viewModels
 import com.door43.questionnaire.QuestionnaireActivity
 import com.door43.questionnaire.QuestionnairePage
 import com.door43.questionnaire.QuestionnairePager
@@ -12,16 +11,15 @@ import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.models.Question
 import org.unfoldingword.door43client.models.TargetLanguage
 
 /**
  * Created by joel on 6/8/16.
  */
-@AndroidEntryPoint
 class NewTempLanguageActivity : QuestionnaireActivity(), LanguageSuggestionsDialog.OnClickListener {
-    private val viewModel: NewTempLanguageViewModel by viewModels()
+    private val viewModel: NewTempLanguageViewModel by viewModel()
 
     private var request: NewLanguageRequest? = null
     private lateinit var questionnairePager: QuestionnairePager

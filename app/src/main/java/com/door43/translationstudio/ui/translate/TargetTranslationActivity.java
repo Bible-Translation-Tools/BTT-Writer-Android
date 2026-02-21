@@ -1,5 +1,8 @@
 package com.door43.translationstudio.ui.translate;
 
+import static org.koin.android.compat.ViewModelCompat.getViewModel;
+import static org.koin.java.KoinJavaComponent.inject;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -26,7 +29,6 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.door43.data.IPreferenceRepository;
 import com.door43.translationstudio.App;
@@ -56,15 +58,12 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import it.moondroid.seekbarhint.library.SeekBarHint;
+import kotlin.Lazy;
 
-@AndroidEntryPoint
 public class TargetTranslationActivity extends BaseActivity implements ViewModeFragment.OnEventListener, FirstTabFragment.OnEventListener, Spinner.OnItemSelectedListener {
-    @Inject
-    IPreferenceRepository prefRepository;
+
+    Lazy<IPreferenceRepository> prefRepository = inject(IPreferenceRepository.class);
 
     private TargetTranslationViewModel viewModel;
     private ActivityTargetTranslationDetailBinding binding;
@@ -111,14 +110,14 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         binding = ActivityTargetTranslationDetailBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        viewModel = new ViewModelProvider(this).get(TargetTranslationViewModel.class);
-
         // validate parameters
         Bundle args = getIntent().getExtras();
         assert args != null;
 
         String targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
         mergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false);
+
+        viewModel = getViewModel(this, TargetTranslationViewModel.class);
 
         TargetTranslation translation = viewModel.getTargetTranslation(targetTranslationId);
         if (translation == null) {
@@ -590,7 +589,7 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
         binding.searchPane.searchType.setAdapter(typesAdapter);
 
         // restore last search type
-        String lastSearchSourceStr = prefRepository.getDefaultPref(SEARCH_SOURCE, SearchSubject.SOURCE.name().toUpperCase(), String.class);
+        String lastSearchSourceStr = prefRepository.getValue().getDefaultPref(SEARCH_SOURCE, SearchSubject.SOURCE.name().toUpperCase(), String.class);
         SearchSubject lastSearchSource = SearchSubject.SOURCE;
         try {
             lastSearchSource = SearchSubject.valueOf(lastSearchSourceStr.toUpperCase());

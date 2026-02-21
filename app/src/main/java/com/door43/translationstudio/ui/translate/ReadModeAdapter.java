@@ -1,7 +1,5 @@
 package com.door43.translationstudio.ui.translate;
 
-import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.Bundle;
@@ -36,8 +34,6 @@ import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 /**
  * Created by joel on 9/9/2015.
@@ -455,7 +451,6 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         private final Context context;
         private final TabLayout.OnTabSelectedListener tabSelectedListener;
 
-        @Nullable
         private String chapterSlug;
 
         public ViewHolder(
@@ -524,8 +519,8 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                 ReadListItem item,
                 boolean isTargetOpen,
                 String chapterSlug,
-                @Nullable CharSequence renderedSourceText,
-                @Nullable CharSequence renderedTargetText
+                CharSequence renderedSourceText,
+                CharSequence renderedTargetText
         ) {
             int cardMargin = context.getResources().getDimensionPixelSize(R.dimen.card_margin);
             int stackedCardMargin = context.getResources().getDimensionPixelSize(R.dimen.stacked_card_margin);
@@ -672,7 +667,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
                     item.target.getTargetLanguage().direction
             );
 
-            if (tabs.size() >= MAX_SOURCE_ITEMS) {
+            if (tabs.size() >= ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS) {
                 binding.newTabButton.setVisibility(View.GONE);
             } else {
                 binding.newTabButton.setVisibility(View.VISIBLE);

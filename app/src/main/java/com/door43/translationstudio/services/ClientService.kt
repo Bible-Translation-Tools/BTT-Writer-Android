@@ -12,10 +12,10 @@ import com.door43.translationstudio.network.Peer
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.ImportProjects.ImportResults
 import com.door43.util.RSAEncryption
-import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.logger.Logger
 import java.io.DataInputStream
 import java.io.File
@@ -28,17 +28,16 @@ import java.net.Socket
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.util.UUID
-import javax.inject.Inject
+import kotlin.getValue
 
 /**
  * This class provides an importing service (effectively a client) that can
  * communicate with an exporting service (server) to browse and retrieve translations
  */
-@AndroidEntryPoint
 class ClientService : NetworkService() {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var directoryProvider: IDirectoryProvider
+    val translator: Translator by inject()
+    val importProjects: ImportProjects by inject()
+    val directoryProvider: IDirectoryProvider by inject()
 
     private val binder: IBinder = LocalBinder()
     private var listener: OnClientEventListener? = null

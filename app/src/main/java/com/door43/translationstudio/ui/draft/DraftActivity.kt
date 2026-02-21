@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.draft
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,22 +13,21 @@ import com.door43.translationstudio.databinding.ActivityDraftPreviewBinding
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.viewmodels.DraftViewModel
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.security.InvalidParameterException
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class DraftActivity : BaseActivity() {
-    @Inject lateinit var typography: Typography
-    @Inject lateinit var renderingProvider: RenderingProvider
+    val typography: Typography by inject()
+    val renderingProvider: RenderingProvider by inject()
 
     private val adapter by lazy { DraftAdapter(typography, renderingProvider) }
     private var sourceContainer: ResourceContainer? = null
 
     private lateinit var binding: ActivityDraftPreviewBinding
-    private val viewModel: DraftViewModel by viewModels()
+    private val viewModel: DraftViewModel by viewModel()
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 

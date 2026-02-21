@@ -16,13 +16,11 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.databinding.ActivityProfileBinding
 import com.door43.widget.ViewUtil
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
 
-@AndroidEntryPoint
 class ProfileActivity : BaseActivity() {
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var preRepository: IPreferenceRepository
+    val profile: Profile by inject()
+    val preRepository: IPreferenceRepository by inject()
 
     private lateinit var binding: ActivityProfileBinding
 

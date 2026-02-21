@@ -18,16 +18,14 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.FileUtilities
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.IOException
-import javax.inject.Inject
 
-class UpdateApp @Inject constructor(
-    @ApplicationContext private val context: Context,
+class UpdateApp(
+    private val context: Context,
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider,
     private val library: Door43Client,

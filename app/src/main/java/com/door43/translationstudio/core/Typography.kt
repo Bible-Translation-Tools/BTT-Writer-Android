@@ -9,15 +9,13 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
-import javax.inject.Inject
 
 /**
  * Created by joel on 9/11/2015.
  */
-class Typography @Inject constructor(
-    @ApplicationContext private val context: Context,
+class Typography(
+    private val context: Context,
     private val prefRepository: IPreferenceRepository,
     private val assetsProvider: AssetsProvider
 ) {

@@ -6,12 +6,10 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import javax.inject.Inject
 
-class ImportDraft @Inject constructor(
-    @ApplicationContext private val context: Context,
+class ImportDraft(
+    private val context: Context,
     private val translator: Translator,
     private val profile: Profile
 ) {

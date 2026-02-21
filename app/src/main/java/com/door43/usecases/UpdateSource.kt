@@ -7,12 +7,10 @@ import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
-class UpdateSource @Inject constructor(
-    @ApplicationContext val context: Context,
+class UpdateSource(
+    private val context: Context,
     private val library: Door43Client,
     private val prefRepository: IPreferenceRepository
 ) {

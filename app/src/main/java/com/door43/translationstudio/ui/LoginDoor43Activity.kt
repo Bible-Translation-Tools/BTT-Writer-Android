@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.door43.translationstudio.App.Companion.closeKeyboard
@@ -13,18 +12,17 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.databinding.ActivityLoginDoor43Binding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.viewmodels.LoginViewModel
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
-@AndroidEntryPoint
 class LoginDoor43Activity : AppCompatActivity() {
-    @Inject
-    lateinit var profile: Profile
+
+    val profile: Profile by inject()
 
     private lateinit var binding: ActivityLoginDoor43Binding
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
-    private val viewModel: LoginViewModel by viewModels()
+    private val viewModel: LoginViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

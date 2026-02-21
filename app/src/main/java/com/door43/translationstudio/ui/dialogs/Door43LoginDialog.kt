@@ -14,17 +14,16 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.DialogDoor43LoginBinding
 import com.door43.translationstudio.ui.LoginDoor43Activity
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import kotlin.getValue
 
 /**
  * This dialog provides options for the user to login into or create a Door43 account
  * and connect it to their profile.
  * This should be used anywhere a Door43 account is required but does not exist.
  */
-@AndroidEntryPoint
 class Door43LoginDialog : DialogFragment() {
-    @Inject lateinit var prefRepository: IPreferenceRepository
+    val prefRepository: IPreferenceRepository by inject()
 
     private var _binding: DialogDoor43LoginBinding? = null
     val binding get() = _binding!!

@@ -6,9 +6,8 @@ import com.door43.translationstudio.core.Translator
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import javax.inject.Inject
 
-class TranslationProgress @Inject constructor(
+class TranslationProgress(
     private val library: Door43Client,
     private val translator: Translator
 ) {

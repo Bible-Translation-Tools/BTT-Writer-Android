@@ -17,16 +17,15 @@ import com.door43.translationstudio.databinding.DialogNativeSpeakerBinding
 import com.door43.translationstudio.ui.legal.LegalDocumentActivity
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
 import java.security.InvalidParameterException
-import javax.inject.Inject
+import kotlin.getValue
 
 /**
  * Created by joel on 2/19/2016.
  */
-@AndroidEntryPoint
 class ContributorDialog : DialogFragment() {
-    @Inject lateinit var translator: Translator
+    val translator: Translator by inject()
 
     private var targetTranslation: TargetTranslation? = null
     private var nativeSpeaker: NativeSpeaker? = null

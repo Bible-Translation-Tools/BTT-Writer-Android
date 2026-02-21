@@ -7,12 +7,11 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.databinding.ActivityRegisterOfflineBinding
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import kotlin.getValue
 
-@AndroidEntryPoint
 class RegisterOfflineActivity : AppCompatActivity() {
-    @Inject lateinit var profile: Profile
+    val profile: Profile by inject()
 
     private lateinit var binding: ActivityRegisterOfflineBinding
 

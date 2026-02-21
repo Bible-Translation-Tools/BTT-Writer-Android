@@ -8,19 +8,15 @@ import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.DownloadResourceContainers
 import com.door43.usecases.GetAvailableSources
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-@HiltViewModel
-class DownloadSourcesViewModel @Inject constructor(
-    application: Application
+class DownloadSourcesViewModel(
+    application: Application,
+    private val getAvailableSources: GetAvailableSources,
+    private val downloadResourceContainers: DownloadResourceContainers
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var getAvailableSources: GetAvailableSources
-    @Inject lateinit var downloadResourceContainers: DownloadResourceContainers
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

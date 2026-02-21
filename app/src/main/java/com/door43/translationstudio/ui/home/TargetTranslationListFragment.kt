@@ -21,16 +21,15 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortByColumnType
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortProjectColumnType
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import kotlin.getValue
 
 /**
  * Displays a list of target translations
  */
-@AndroidEntryPoint
 class TargetTranslationListFragment : BaseFragment() {
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var typography: Typography
+    val prefRepository: IPreferenceRepository by inject()
+    val typography: Typography by inject()
 
     private var listener: OnItemClickListener? = null
     private var sortProjectColumn = SortProjectColumnType.BibleOrder

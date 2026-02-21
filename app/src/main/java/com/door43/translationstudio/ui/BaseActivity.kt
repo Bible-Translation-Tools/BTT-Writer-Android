@@ -4,23 +4,22 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.door43.data.IDirectoryProvider
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.foreground.Foreground
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
+import kotlin.getValue
 
 /**
  * This should be extended by all activities in the app so that we can perform verification on
  * activities such as recovery from crashes.
  *
  */
-@AndroidEntryPoint
 abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
     private var foreground: Foreground? = null
 
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
+    val directoryProvider: IDirectoryProvider by inject()
+    val library: Door43Client by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

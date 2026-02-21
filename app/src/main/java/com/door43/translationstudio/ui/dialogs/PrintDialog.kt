@@ -18,7 +18,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
@@ -29,23 +28,22 @@ import com.door43.translationstudio.databinding.DialogPrintBinding
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.usecases.ExportProjects
 import com.door43.util.FileUtilities
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.security.InvalidParameterException
-import javax.inject.Inject
 import kotlin.math.min
 
 /**
  * Created by joel on 11/16/2015.
  */
-@AndroidEntryPoint
 class PrintDialog : DialogFragment() {
 
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var typography: Typography
+    val directoryProvider: IDirectoryProvider by inject()
+    val library: Door43Client by inject()
+    val typography: Typography by inject()
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
     private lateinit var targetTranslation: TargetTranslation
@@ -55,7 +53,7 @@ class PrintDialog : DialogFragment() {
     private var mAlertShown = DialogShown.NONE
     private val mPrompt: AlertDialog? = null
 
-    private val viewModel: ExportViewModel by viewModels()
+    private val viewModel: ExportViewModel by viewModel()
 
     private var _binding: DialogPrintBinding? = null
     private val binding get() = _binding!!

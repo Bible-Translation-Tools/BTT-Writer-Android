@@ -1,5 +1,8 @@
 package com.door43.translationstudio.ui.translate;
 
+import static org.koin.android.compat.ViewModelCompat.getViewModel;
+import static org.koin.java.KoinJavaComponent.inject;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Typeface;
@@ -13,9 +16,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,14 +49,11 @@ import org.unfoldingword.tools.taskmanager.ManagedTask;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import kotlin.Lazy;
 
 /**
  * Created by joel on 9/18/2015.
  */
-@AndroidEntryPoint
 public abstract class ViewModeFragment extends BaseFragment implements ViewModeAdapter.OnEventListener,
         ChooseSourceTranslationDialog.OnClickListener,
         ManagedTask.OnFinishedListener {
@@ -72,11 +72,9 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     protected String chapterSlug;
     protected String chunkSlug;
 
-    @Inject
-    Typography typography;
+    Lazy<Typography> typography = inject(Typography.class);
 
-    @Inject
-    RenderingProvider renderingProvider;
+    Lazy<RenderingProvider> renderingProvider = inject(RenderingProvider.class);
 
     /**
      * Returns an instance of the adapter
@@ -100,13 +98,23 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentStackedCardListBinding.inflate(inflater, container, false);
-        viewModel = new ViewModelProvider(requireActivity()).get(TargetTranslationViewModel.class);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         Bundle args = getArguments();
         assert args != null;
 
         chapterSlug = args.getString(Translator.EXTRA_CHAPTER_ID, null);
         chunkSlug = args.getString(Translator.EXTRA_FRAME_ID, null);
+
+        viewModel = getViewModel(requireActivity(), TargetTranslationViewModel.class);
+
+        initRecyclerView();
+        initGestureDetector();
 
         progressDialog = ProgressHelper.newInstance(
                 getChildFragmentManager(),
@@ -115,13 +123,24 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         );
 
         setupObservers();
-
         viewModel.setSelectedResourceContainer();
 
+        // notify activity contents changed
+        onDataSetChanged(adapter.getItemCount());
+        adapter.setOnClickListener(this);
+
+        // let child classes modify the view
+        onPrepareView(binding.getRoot());
+    }
+
+    private void initRecyclerView() {
         layoutManager = new LinearLayoutManager(getActivity());
         binding.translationCards.setLayoutManager(layoutManager);
         binding.translationCards.setItemAnimator(new DefaultItemAnimator());
         binding.translationCards.setAdapter(adapter);
+
+        adapter.setOnClickListener(this);
+
         binding.translationCards.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -132,18 +151,14 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (fingerScroll) {
-                    int position = getCurrentPosition();
-                    if(listener != null) listener.onScrollProgress(position);
+                if (fingerScroll && listener != null) {
+                    listener.onScrollProgress(getCurrentPosition());
                 }
             }
         });
+    }
 
-        // notify activity contents changed
-        onDataSetChanged(adapter.getItemCount());
-
-        adapter.setOnClickListener(this);
-
+    private void initGestureDetector() {
         gesture = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             public MotionEvent mLastOnDownEvent;
             private final float SWIPE_THRESHOLD_VELOCITY = 20f;
@@ -180,11 +195,6 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
                 return false;
             }
         });
-
-        // let child classes modify the view
-        onPrepareView(binding.getRoot());
-
-        return binding.getRoot();
     }
 
     protected void setupObservers() {
@@ -612,7 +622,7 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         if(values.containsKey("language")) {
             String code = values.getAsString("language");
             String direction = values.getAsString("direction");
-            Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, direction);
+            Typeface typeface = typography.getValue().getBestFontForLanguage(TranslationType.SOURCE, code, direction);
             TextView view = findTab(layout, title);
             if(view != null) {
                 view.setTypeface(typeface, Typeface.NORMAL);

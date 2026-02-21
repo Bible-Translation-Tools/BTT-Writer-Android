@@ -9,17 +9,15 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.tasks.io.OkHttpRequest
 import com.door43.translationstudio.tasks.io.RequestAPI
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.Token
 import org.unfoldingword.gogsclient.User
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-class GogsLogin @Inject constructor(
-    @ApplicationContext private val context: Context,
+class GogsLogin(
+    private val context: Context,
     private val prefRepository: IPreferenceRepository
 ) {
     fun execute(

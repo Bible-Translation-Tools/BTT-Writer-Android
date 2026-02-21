@@ -9,15 +9,13 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.publish.ValidationItem
 import com.door43.util.StringUtilities
 import com.door43.util.sortNumerically
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONException
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-class ValidateProject @Inject constructor(
-    @ApplicationContext private val context: Context,
+class ValidateProject(
+    private val context: Context,
     private val library: Door43Client,
     private val translator: Translator
 ) {

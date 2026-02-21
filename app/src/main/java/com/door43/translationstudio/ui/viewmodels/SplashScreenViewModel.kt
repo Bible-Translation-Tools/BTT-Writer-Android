@@ -15,26 +15,16 @@ import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_CHECK
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.MigrateTranslations
 import com.door43.usecases.UpdateApp
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
-@HiltViewModel
-class SplashScreenViewModel @Inject constructor(
-    private val application: Application
+class SplashScreenViewModel(
+    private val application: Application,
+    private val updateApp: UpdateApp,
+    private val prefRepository: IPreferenceRepository,
+    private val migrateTranslations: MigrateTranslations
 ) : AndroidViewModel(application) {
-
-    @Inject
-    lateinit var updateApp: UpdateApp
-    @Inject
-    lateinit var migrateTranslations: MigrateTranslations
-    @Inject
-    lateinit var prefRepository: IPreferenceRepository
-    @Inject
-    lateinit var library: Door43Client
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

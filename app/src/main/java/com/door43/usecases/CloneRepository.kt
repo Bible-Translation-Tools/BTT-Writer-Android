@@ -9,16 +9,14 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.git.TransportCallback
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.FileUtilities.deleteQuietly
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import javax.inject.Inject
 
-class CloneRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+class CloneRepository(
+    private val context: Context,
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider
 ) {

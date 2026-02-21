@@ -14,7 +14,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
 import com.door43.usecases.MergeTargetTranslation
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,19 +22,16 @@ import org.unfoldingword.door43client.models.CategoryEntry
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-@HiltViewModel
-class NewTargetTranslationModel @Inject constructor(
-    application: Application
+class NewTargetTranslationModel(
+    application: Application,
+    private val mergeTargetTranslation: MergeTargetTranslation,
+    private val languageRequestRepository: ILanguageRequestRepository,
+    private val prefRepository: IPreferenceRepository,
+    private val library: Door43Client,
+    private val translator: Translator,
+    private val profile: Profile
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var mergeTargetTranslation: MergeTargetTranslation
-    @Inject lateinit var languageRequestRepository: ILanguageRequestRepository
-    @Inject lateinit var prefRepository: IPreferenceRepository
 
     var selectedTargetLanguage: TargetLanguage? = null
     var newTargetTranslationId: String? = null

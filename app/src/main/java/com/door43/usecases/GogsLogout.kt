@@ -8,15 +8,13 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.tasks.io.OkHttpRequest
 import com.door43.translationstudio.tasks.io.RequestAPI
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.unfoldingword.gogsclient.User
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-class GogsLogout @Inject constructor(
-    @ApplicationContext private val context: Context,
+class GogsLogout(
+    private val context: Context,
     private val profile: Profile,
     private val prefs: IPreferenceRepository
 ) {

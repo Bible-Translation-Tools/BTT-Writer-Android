@@ -5,30 +5,24 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.ActivitySplashBinding
 import com.door43.translationstudio.ui.viewmodels.SplashScreenViewModel
 import com.door43.util.RuntimeWrapper
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
 /**
  * This activity initializes the app
  */
-@AndroidEntryPoint
 class SplashScreenActivity : BaseActivity() {
-    @Inject
-    lateinit var prefs: IPreferenceRepository
 
     private var silentStart = true
     private var started = false
 
-    private val viewModel: SplashScreenViewModel by viewModels()
+    private val viewModel: SplashScreenViewModel by viewModel()
     private lateinit var binding: ActivitySplashBinding
 
     private lateinit var openDirectory: ActivityResultLauncher<Uri?>

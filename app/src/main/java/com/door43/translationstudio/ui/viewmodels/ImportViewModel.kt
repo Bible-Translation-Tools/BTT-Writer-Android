@@ -20,7 +20,6 @@ import com.door43.usecases.BackupRC
 import com.door43.usecases.CloneRepository
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.RegisterSSHKeys
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,21 +27,19 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.gogsclient.Repository
 import java.io.File
 import java.security.InvalidParameterException
-import javax.inject.Inject
 
-@HiltViewModel
-class ImportViewModel @Inject constructor(
-    private val application: Application
+class ImportViewModel(
+    private val application: Application,
+    private var profile: Profile,
+    private val translator: Translator,
+    private val advancedGogsRepoSearch: AdvancedGogsRepoSearch,
+    private val cloneRepository: CloneRepository,
+    private val registerSSHKeys: RegisterSSHKeys,
+    private val importProjects: ImportProjects,
+    private val backupRC: BackupRC,
+    private val library: Door43Client,
+    private val directoryProvider: IDirectoryProvider
 ) : AndroidViewModel(application) {
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var advancedGogsRepoSearch: AdvancedGogsRepoSearch
-    @Inject lateinit var cloneRepository: CloneRepository
-    @Inject lateinit var registerSSHKeys: RegisterSSHKeys
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var backupRC: BackupRC
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var directoryProvider: IDirectoryProvider
 
     private val _translation = MutableLiveData<TargetTranslation?>(null)
     val translation: LiveData<TargetTranslation?> = _translation

@@ -7,20 +7,16 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.UploadFeedback
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-@HiltViewModel
-class FeedbackViewModel @Inject constructor(
-    application: Application
+class FeedbackViewModel(
+    application: Application,
+    private val checkForLatestRelease: CheckForLatestRelease,
+    private val uploadFeedback: UploadFeedback
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
-    @Inject lateinit var uploadFeedback: UploadFeedback
 
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> = _loading

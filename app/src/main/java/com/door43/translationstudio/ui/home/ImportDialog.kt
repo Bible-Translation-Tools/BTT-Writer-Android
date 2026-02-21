@@ -14,7 +14,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
@@ -32,23 +31,22 @@ import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import javax.inject.Inject
 
 /**
  * Created by joel on 10/5/2015.
  */
-@AndroidEntryPoint
 class ImportDialog : DialogFragment() {
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
+    val profile: Profile by inject()
+    val translator: Translator by inject()
+    val directoryProvider: IDirectoryProvider by inject()
+    val library: Door43Client by inject()
 
-    private val viewModel: ImportViewModel by viewModels()
+    private val viewModel: ImportViewModel by viewModel()
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 

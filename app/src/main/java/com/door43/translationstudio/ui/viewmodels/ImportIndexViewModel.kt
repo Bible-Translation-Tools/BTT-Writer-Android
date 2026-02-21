@@ -9,18 +9,14 @@ import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.DownloadIndex
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-@HiltViewModel
-class ImportIndexViewModel @Inject constructor(
-    private val application: Application
+class ImportIndexViewModel(
+    private val application: Application,
+    private val downloadIndex: DownloadIndex
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var downloadIndex: DownloadIndex
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

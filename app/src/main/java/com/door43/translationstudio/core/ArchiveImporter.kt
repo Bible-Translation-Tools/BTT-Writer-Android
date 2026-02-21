@@ -4,14 +4,13 @@ import com.door43.util.FileUtilities.readFileToString
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
-import javax.inject.Inject
 
 
 /**
  * Handles the importing of tstudio archives.
  * The importing is placed here to keep the Translator clean and organized.
  */
-class ArchiveImporter @Inject constructor(
+class ArchiveImporter(
     private val migrator: TargetTranslationMigrator
 ) {
     /**

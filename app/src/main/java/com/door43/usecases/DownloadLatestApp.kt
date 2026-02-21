@@ -6,11 +6,9 @@ import android.content.Intent
 import android.net.Uri
 import com.door43.translationstudio.App.Companion.isStoreVersion
 import com.door43.usecases.CheckForLatestRelease.Release
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
-class DownloadLatestRelease @Inject constructor(
-    @ApplicationContext private val context: Context
+class DownloadLatestRelease(
+    private val context: Context
 ) {
     fun execute(release: Release) {
         if (isStoreVersion) {

@@ -21,7 +21,6 @@ import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.PushTargetTranslation
 import com.door43.usecases.RegisterSSHKeys
 import com.door43.util.RSAEncryption
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,25 +32,22 @@ import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.security.InvalidParameterException
 import java.util.Locale
-import javax.inject.Inject
 
-@HiltViewModel
-class ExportViewModel @Inject constructor(
+class ExportViewModel(
     private val application: Application,
+    private val export: ExportProjects,
+    private val downloadImages: DownloadImages,
+    private val translator: Translator,
+    private val profile: Profile,
+    private val directoryProvider: IDirectoryProvider,
+    private val prefRepository: IPreferenceRepository,
+    private val library: Door43Client,
+    private val gogsLogout: GogsLogout,
+    private val createRepository: CreateRepository,
+    private val pullTargetTranslation: PullTargetTranslation,
+    private val pushTargetTranslation: PushTargetTranslation,
+    private val registerSSHKeys: RegisterSSHKeys
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var export: ExportProjects
-    @Inject lateinit var downloadImages: DownloadImages
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var pullTargetTranslation: PullTargetTranslation
-    @Inject lateinit var pushTargetTranslation: PushTargetTranslation
-    @Inject lateinit var registerSSHKeys: RegisterSSHKeys
-    @Inject lateinit var createRepository: CreateRepository
-    @Inject lateinit var gogsLogout: GogsLogout
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var library: Door43Client
 
     private val _translation = MutableLiveData<TargetTranslation?>(null)
     val translation: LiveData<TargetTranslation?> = _translation

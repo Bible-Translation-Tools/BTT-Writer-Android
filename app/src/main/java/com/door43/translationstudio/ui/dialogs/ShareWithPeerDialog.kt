@@ -17,7 +17,6 @@ import android.widget.AdapterView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.translationstudio.App.Companion.deviceNetworkAlias
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -38,17 +37,16 @@ import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.usecases.ImportProjects
-import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 import java.security.InvalidParameterException
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
     BroadcastListenerService.Callbacks, OnClientEventListener {
 
-    @Inject lateinit var translator: Translator
+    val translator: Translator by inject()
 
     private var serverIntent: Intent? = null
     private var clientIntent: Intent? = null
@@ -63,7 +61,7 @@ class ShareWithPeerDialog : DialogFragment(), OnServerEventListener,
     private lateinit var targetTranslation: TargetTranslation
     private lateinit var adapter: PeerAdapter
 
-    private val viewModel: ExportViewModel by viewModels()
+    private val viewModel: ExportViewModel by viewModel()
 
     private var _binding: DialogShareWithPeerBinding? = null
     private val binding get() = _binding!!

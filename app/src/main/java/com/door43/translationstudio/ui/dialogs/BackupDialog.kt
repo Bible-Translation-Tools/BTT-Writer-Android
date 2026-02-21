@@ -17,7 +17,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
@@ -43,20 +42,19 @@ import com.door43.usecases.PushTargetTranslation
 import com.door43.util.FileUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.merge.MergeStrategy
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.security.InvalidParameterException
-import javax.inject.Inject
 
 /**
  * Created by joel on 10/5/2015.
  */
-@AndroidEntryPoint
 class BackupDialog : DialogFragment() {
     private var settingDeviceAlias = false
     private var dialogShown = DialogShown.NONE
@@ -65,13 +63,13 @@ class BackupDialog : DialogFragment() {
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var library: Door43Client
+    val profile: Profile by inject()
+    val directoryProvider: IDirectoryProvider by inject()
+    val prefRepository: IPreferenceRepository by inject()
+    val translator: Translator by inject()
+    val library: Door43Client by inject()
 
-    private val viewModel: ExportViewModel by viewModels()
+    private val viewModel: ExportViewModel by viewModel()
 
     private lateinit var targetTranslation: TargetTranslation
     private lateinit var exportTranslationLauncher: ActivityResultLauncher<Intent>

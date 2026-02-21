@@ -16,16 +16,15 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.FragmentContributorsBinding
 import com.door43.translationstudio.ui.ContributorsAdapter
 import com.door43.translationstudio.ui.dialogs.ContributorDialog
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import kotlin.getValue
 
 /**
  * Created by joel on 2/22/2016.
  */
-@AndroidEntryPoint
 class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickListener {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
+    val translator: Translator by inject()
+    val profile: Profile by inject()
 
     interface ContributorEventListener {
         fun onDismiss()

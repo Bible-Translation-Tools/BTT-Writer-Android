@@ -2,9 +2,8 @@ package com.door43.usecases
 
 import com.door43.OnProgressListener
 import org.unfoldingword.gogsclient.Repository
-import javax.inject.Inject
 
-class AdvancedGogsRepoSearch @Inject constructor(
+class AdvancedGogsRepoSearch(
     private val submitNewLanguageRequests: SubmitNewLanguageRequests,
     private val searchGogsUsers: SearchGogsUsers,
     private val searchGogsRepositories: SearchGogsRepositories

@@ -17,16 +17,15 @@ import com.door43.translationstudio.ui.ContributorsAdapter
 import com.door43.translationstudio.ui.dialogs.ContributorDialog
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import kotlin.getValue
 
 /**
  * Created by joel on 9/20/2015.
  */
-@AndroidEntryPoint
 class TranslatorsFragment : PublishStepFragment(), ContributorsAdapter.OnClickListener {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
+    val translator: Translator by inject()
+    val profile: Profile by inject()
 
     private lateinit var targetTranslation: TargetTranslation
     private val adapter by lazy { ContributorsAdapter() }

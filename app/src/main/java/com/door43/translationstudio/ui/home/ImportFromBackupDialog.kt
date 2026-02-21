@@ -8,19 +8,17 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.AdapterView
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.translationstudio.databinding.DialogImportFromBackupBinding
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import kotlin.math.min
 
 /**
  * Created by joel on 5/10/16.
  */
-@AndroidEntryPoint
 class ImportFromBackupDialog: DialogFragment() {
-    private val viewModel: ImportViewModel by viewModels()
+    private val viewModel: ImportViewModel by viewModel()
 
     private val adapter by lazy { BackupItemsAdapter() }
 

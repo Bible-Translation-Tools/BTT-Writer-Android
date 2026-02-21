@@ -8,11 +8,9 @@ import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.rendering.LinkToHtmlRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.ui.spannables.Span
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
-class RenderingProvider @Inject constructor(
-    @ApplicationContext private val context: Context
+class RenderingProvider(
+    private val context: Context
 ) {
 
     fun createDefaultRenderer(): DefaultRenderer {

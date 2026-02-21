@@ -4,15 +4,13 @@ import android.content.Context
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.util.FileUtilities
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.tools.http.Request
 import org.unfoldingword.tools.logger.GithubReporter
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import javax.inject.Inject
 
-class UploadFeedback @Inject constructor(
-    @ApplicationContext private val context: Context,
+class UploadFeedback(
+    private val context: Context,
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider
 ) {

@@ -26,7 +26,6 @@ import com.door43.usecases.UpdateCatalogs
 import com.door43.usecases.UpdateSource
 import com.door43.usecases.cleanup
 import com.door43.util.FileUtilities
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,28 +33,25 @@ import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 import java.io.File
-import javax.inject.Inject
 
-@HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val application: Application
+class HomeViewModel(
+    private val application: Application,
+    private val translator: Translator,
+    private val profile: Profile,
+    private val gogsLogout: GogsLogout,
+    private val directoryProvider: IDirectoryProvider,
+    private val pullTargetTranslation: PullTargetTranslation,
+    private val examineImportsForCollisions: ExamineImportsForCollisions,
+    private val importProjects: ImportProjects,
+    private val checkForLatestRelease: CheckForLatestRelease,
+    private val updateSource: UpdateSource,
+    private val updateCatalogs: UpdateCatalogs,
+    private val registerSSHKeys: RegisterSSHKeys,
+    private val downloadLatestRelease: DownloadLatestRelease,
+    private val backupRC: BackupRC,
+    private val library: Door43Client,
+    private val calculateProgress: TranslationProgress
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var gogsLogout: GogsLogout
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var pullTargetTranslation: PullTargetTranslation
-    @Inject lateinit var examineImportsForCollisions: ExamineImportsForCollisions
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
-    @Inject lateinit var updateSource: UpdateSource
-    @Inject lateinit var updateCatalogs: UpdateCatalogs
-    @Inject lateinit var registerSSHKeys: RegisterSSHKeys
-    @Inject lateinit var downloadLatestRelease: DownloadLatestRelease
-    @Inject lateinit var backupRC: BackupRC
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var calculateProgress: TranslationProgress
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

@@ -17,7 +17,6 @@ import com.door43.translationstudio.core.Util
 import com.door43.util.FileUtilities
 import com.door43.util.RepoUtils
 import com.door43.util.Zip
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.errors.TransportException
 import org.json.JSONArray
 import org.json.JSONObject
@@ -27,10 +26,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.PrintStream
 import java.util.Locale
-import javax.inject.Inject
 
-class ExportProjects @Inject constructor(
-    @ApplicationContext private val context: Context,
+class ExportProjects(
+    private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val library: Door43Client,
     private val typography: Typography

@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.home
 import android.os.Bundle
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
@@ -11,12 +10,13 @@ import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.viewmodels.ImportIndexViewModel
 import com.door43.util.FileUtilities
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ImportIndexActivity : BaseActivity() {
 
     private lateinit var openIndexContent: ActivityResultLauncher<String>
 
-    private val viewModel: ImportIndexViewModel by viewModels()
+    private val viewModel: ImportIndexViewModel by viewModel()
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

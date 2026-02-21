@@ -10,7 +10,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.addCallback
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import com.door43.translationstudio.R
@@ -24,6 +23,7 @@ import com.door43.translationstudio.ui.newtranslation.ProjectListFragment
 import com.door43.translationstudio.ui.newtranslation.TargetLanguageListFragment
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
@@ -46,7 +46,7 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
     private var conflictingTargetTranslation: TargetTranslation? = null
 
     private lateinit var binding: ActivityImportUsfmBinding
-    private val viewModel: ImportUsfmViewModel by viewModels()
+    private val viewModel: ImportUsfmViewModel by viewModel()
 
     /**
      * returns string to use for language title

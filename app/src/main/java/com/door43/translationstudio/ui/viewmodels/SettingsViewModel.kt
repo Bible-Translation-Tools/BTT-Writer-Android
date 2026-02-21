@@ -7,7 +7,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
@@ -15,25 +14,20 @@ import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.MigrateTranslations
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
-@HiltViewModel
-class SettingsViewModel @Inject constructor(
-    private val application: Application
+class SettingsViewModel(
+    private val application: Application,
+    private val checkForLatestRelease: CheckForLatestRelease,
+    private val downloadLatestRelease: DownloadLatestRelease,
+    private val library: Door43Client,
+    private val profile: Profile,
+    private val logout: GogsLogout,
+    private val migrateTranslations: MigrateTranslations
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
-    @Inject lateinit var downloadLatestRelease: DownloadLatestRelease
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var logout: GogsLogout
-    @Inject lateinit var migrateTranslations: MigrateTranslations
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

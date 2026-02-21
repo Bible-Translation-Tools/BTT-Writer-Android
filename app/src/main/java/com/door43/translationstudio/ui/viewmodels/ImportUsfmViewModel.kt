@@ -16,26 +16,22 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.ImportProjects
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
 import java.io.File
-import javax.inject.Inject
 
-@HiltViewModel
-class ImportUsfmViewModel @Inject constructor(
-    private val application: Application
+class ImportUsfmViewModel(
+    private val application: Application,
+    private val directoryProvider: IDirectoryProvider,
+    private val importProjects: ImportProjects,
+    private val translator: Translator,
+    private val library: Door43Client,
+    private val assetsProvider: AssetsProvider,
+    private val profile: Profile
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var assetsProvider: AssetsProvider
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

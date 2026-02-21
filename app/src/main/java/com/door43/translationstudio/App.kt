@@ -19,34 +19,40 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
+import com.door43.di.appModule
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
 import com.door43.util.RuntimeWrapper
-import dagger.hilt.android.HiltAndroidApp
+import org.koin.android.ext.android.inject
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
+import org.koin.core.logger.Level
 import org.unfoldingword.tools.foreground.Foreground
 import org.unfoldingword.tools.logger.LogLevel
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.IOException
 import java.util.Locale
-import javax.inject.Inject
 
 /**
  * This class provides global access to the application context as well as other important tools
  */
-@HiltAndroidApp
 class App : Application() {
 
-    @Inject
-    lateinit var prefRepository: IPreferenceRepository
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
-    @Inject
-    lateinit var backupRC: BackupRC
+    val prefRepository: IPreferenceRepository by inject()
+    val directoryProvider: IDirectoryProvider by inject()
+    val backupRC: BackupRC by inject()
 
     override fun onCreate() {
         super.onCreate()
+
+        startKoin {
+            androidLogger(Level.DEBUG)
+            androidContext(this@App)
+            modules(appModule)
+        }
 
         instance = this
         directory = directoryProvider

@@ -11,7 +11,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.api.errors.TransportException
@@ -20,10 +19,9 @@ import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import javax.inject.Inject
 
-class PushTargetTranslation @Inject constructor(
-    @ApplicationContext private val context: Context,
+class PushTargetTranslation(
+    private val context: Context,
     private val profile: Profile,
     private val getRepository: GetRepository,
     private val directoryProvider: IDirectoryProvider,

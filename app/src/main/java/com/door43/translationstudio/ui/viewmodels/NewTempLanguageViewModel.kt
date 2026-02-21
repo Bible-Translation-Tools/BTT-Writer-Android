@@ -6,19 +6,15 @@ import com.door43.data.ILanguageRequestRepository
 import com.door43.questionnaire.QuestionnairePager
 import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.translationstudio.core.Profile
-import dagger.hilt.android.lifecycle.HiltViewModel
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
-import javax.inject.Inject
 
-@HiltViewModel
-class NewTempLanguageViewModel @Inject constructor(
-    application: Application
+class NewTempLanguageViewModel(
+    application: Application,
+    private val languageRequestRepository: ILanguageRequestRepository,
+    private val library: Door43Client,
+    private val profile: Profile
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var languageRequestRepository: ILanguageRequestRepository
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var profile: Profile
 
     fun getQuestionnaire(): QuestionnairePager? {
         // TRICKY: for now we only have one questionnaire

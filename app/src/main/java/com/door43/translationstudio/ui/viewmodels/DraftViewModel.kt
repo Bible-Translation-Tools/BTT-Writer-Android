@@ -9,7 +9,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.ImportDraft
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,15 +17,13 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.SourceLanguage
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import javax.inject.Inject
 
-@HiltViewModel
-class DraftViewModel @Inject constructor(
-    private val application: Application
+class DraftViewModel (
+    private val application: Application,
+    private val translator: Translator,
+    private val library: Door43Client,
+    private val importDraft: ImportDraft
 ) : AndroidViewModel(application) {
-    @Inject lateinit var importDraft: ImportDraft
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var library: Door43Client
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
     val progress: LiveData<ProgressHelper.Progress?> = _progress

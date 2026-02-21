@@ -6,13 +6,11 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.User
-import javax.inject.Inject
 
-class SearchGogsUsers @Inject constructor(
-    @ApplicationContext private val context: Context,
+class SearchGogsUsers(
+    private val context: Context,
     private val prefRepository: IPreferenceRepository
 ) {
     private val max = 100

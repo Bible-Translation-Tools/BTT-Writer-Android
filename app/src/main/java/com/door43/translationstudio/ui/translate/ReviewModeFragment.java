@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.translate;
 
 import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_ENABLE_TM_LINKS;
 import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_TM_URL;
+import static org.koin.java.KoinJavaComponent.inject;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -57,19 +58,15 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.inject.Inject;
-
-import dagger.hilt.android.AndroidEntryPoint;
+import kotlin.Lazy;
 
 /**
  * Created by joel on 9/8/2015.
  */
-@AndroidEntryPoint
 public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener,
         ReviewModeAdapter.OnShowToastListener {
 
-    @Inject
-    IPreferenceRepository prefRepository;
+    Lazy<IPreferenceRepository> prefRepository = inject(IPreferenceRepository.class);
 
     private static final String STATE_RESOURCES_OPEN = "state_resources_open";
     private static final String STATE_RESOURCES_DRAWER_OPEN = "state_resources_drawer_open";
@@ -92,7 +89,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ReviewModeAdapter(resourcesOpen, enableMergeConflictsFilter, typography, renderingProvider);
+        return new ReviewModeAdapter(resourcesOpen, enableMergeConflictsFilter, typography.getValue(), renderingProvider.getValue());
     }
 
     @Override
@@ -154,7 +151,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
     @Override
     public void onResume() {
         super.onResume();
-        enableTmLinks = prefRepository.getDefaultPref(
+        enableTmLinks = prefRepository.getValue().getDefaultPref(
                 KEY_PREF_ENABLE_TM_LINKS,
                 false,
                 Boolean.class
@@ -248,7 +245,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
     @Override
     public void onTranslationManualClick(String section, String slug) {
-        String baseUrl = prefRepository.getDefaultPref(
+        String baseUrl = prefRepository.getValue().getDefaultPref(
                 KEY_PREF_TM_URL,
                 getString(R.string.pref_default_tm_url),
                 String.class
@@ -345,9 +342,9 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                 //  maybe?
                 wordBinding.descriptionTitle.setText("Description");
             }
-            typography.formatTitle(TranslationType.SOURCE, wordBinding.descriptionTitle,
+            typography.getValue().formatTitle(TranslationType.SOURCE, wordBinding.descriptionTitle,
                     rc.language.slug, rc.language.direction);
-            HtmlRenderer renderer = renderingProvider.createHtmlRenderer(span -> {
+            HtmlRenderer renderer = renderingProvider.getValue().createHtmlRenderer(span -> {
                     boolean result = false;
                     if (span instanceof ArticleLinkSpan link) {
                         String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
@@ -448,7 +445,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
             wordBinding.description.setText(renderer.render(description));
             wordBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
-            typography.formatSub(TranslationType.SOURCE, wordBinding.description,
+            typography.getValue().formatSub(TranslationType.SOURCE, wordBinding.description,
                     rc.language.slug, rc.language.direction);
 
             wordBinding.seeAlso.removeAllViews();
@@ -477,7 +474,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                                 onTranslationWordClick(rc.slug, relatedSlug,
                                         binding.resourcesDrawerCard.getLayoutParams().width)
                         );
-                        typography.formatSub(TranslationType.SOURCE, button, rc.language.slug,
+                        typography.getValue().formatSub(TranslationType.SOURCE, button, rc.language.slug,
                                 rc.language.direction);
                         wordBinding.seeAlso.addView(button);
                     }
@@ -509,9 +506,9 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                         examplesBinding.passage.setHtmlFromString(viewModel.getResourceContainer().readChunk(slugs[0], slugs[1]), true);
                         examplesBinding.getRoot().setOnClickListener(v -> scrollToChunk(slugs[0],
                                 slugs[1]));
-                        typography.formatSub(TranslationType.SOURCE, examplesBinding.reference,
+                        typography.getValue().formatSub(TranslationType.SOURCE, examplesBinding.reference,
                                 rc.language.slug, rc.language.direction);
-                        typography.formatSub(TranslationType.SOURCE, examplesBinding.passage,
+                        typography.getValue().formatSub(TranslationType.SOURCE, examplesBinding.passage,
                                 rc.language.slug, rc.language.direction);
                         wordBinding.examples.addView(examplesBinding.getRoot());
                     }
@@ -519,9 +516,9 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                         wordBinding.examplesTitle.setVisibility(View.VISIBLE);
                 }
             }
-            typography.formatTitle(TranslationType.SOURCE, wordBinding.seeAlsoTitle,
+            typography.getValue().formatTitle(TranslationType.SOURCE, wordBinding.seeAlsoTitle,
                     rc.language.slug, rc.language.direction);
-            typography.formatTitle(TranslationType.SOURCE, wordBinding.examplesTitle,
+            typography.getValue().formatTitle(TranslationType.SOURCE, wordBinding.examplesTitle,
                     rc.language.slug, rc.language.direction);
 
             binding.scrollingResourcesDrawerContent.removeAllViews();
@@ -549,7 +546,7 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
                 FragmentResourcesNoteBinding.inflate(requireActivity().getLayoutInflater());
 //            mCloseResourcesDrawerButton.setText(note.getTitle());
 
-        HtmlRenderer renderer = renderingProvider.createHtmlRenderer(span -> {
+        HtmlRenderer renderer = renderingProvider.getValue().createHtmlRenderer(span -> {
             boolean result = false;
             if (span instanceof ArticleLinkSpan link) {
                 String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
@@ -668,10 +665,10 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
         noteBinding.title.setText(note.title);
         Language sourceLanguage = viewModel.getSourceLanguage();
         if (sourceLanguage != null) {
-            typography.format(TranslationType.SOURCE, noteBinding.title, sourceLanguage.slug,
+            typography.getValue().format(TranslationType.SOURCE, noteBinding.title, sourceLanguage.slug,
                     sourceLanguage.direction);
             noteBinding.description.setText(renderer.render(note.body));
-            typography.formatSub(TranslationType.SOURCE, noteBinding.description,
+            typography.getValue().formatSub(TranslationType.SOURCE, noteBinding.description,
                     sourceLanguage.slug, sourceLanguage.direction);
             noteBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
         }
@@ -699,16 +696,16 @@ public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAd
 
         Language sourceLanguage = viewModel.getSourceLanguage();
         if (sourceLanguage != null) {
-            typography.formatTitle(TranslationType.SOURCE, questionBinding.questionTitle,
+            typography.getValue().formatTitle(TranslationType.SOURCE, questionBinding.questionTitle,
                     sourceLanguage.slug, sourceLanguage.direction);
-            typography.formatTitle(TranslationType.SOURCE, questionBinding.answerTitle,
+            typography.getValue().formatTitle(TranslationType.SOURCE, questionBinding.answerTitle,
                     sourceLanguage.slug, sourceLanguage.direction);
 
             questionBinding.question.setText(question.title);
-            typography.formatSub(TranslationType.SOURCE, questionBinding.question,
+            typography.getValue().formatSub(TranslationType.SOURCE, questionBinding.question,
                     sourceLanguage.slug, sourceLanguage.direction);
             questionBinding.answer.setText(question.body);
-            typography.formatSub(TranslationType.SOURCE, questionBinding.answer,
+            typography.getValue().formatSub(TranslationType.SOURCE, questionBinding.answer,
                     sourceLanguage.slug, sourceLanguage.direction);
         }
 

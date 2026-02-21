@@ -8,14 +8,12 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.SettingsActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
 
-class CreateRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+class CreateRepository(
+    private val context: Context,
     private val prefRepo: IPreferenceRepository,
     private val profile: Profile
 ) {

@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.AdapterView
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.udid
@@ -24,11 +23,10 @@ import com.door43.util.RuntimeWrapper
 import com.door43.util.StringUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 import java.text.DecimalFormat
 
-@AndroidEntryPoint
 class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener {
     private val adapter by lazy { ToolAdapter() }
     private var versionName: String? = null
@@ -36,7 +34,7 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     private lateinit var binding: ActivityDeveloperToolsBinding
-    private val viewModel: DeveloperViewModel by viewModels()
+    private val viewModel: DeveloperViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

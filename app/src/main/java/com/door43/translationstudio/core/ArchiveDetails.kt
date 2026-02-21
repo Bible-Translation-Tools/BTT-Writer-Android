@@ -14,7 +14,6 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.Locale
-import javax.inject.Inject
 
 /**
  * Holds details about the translation archive

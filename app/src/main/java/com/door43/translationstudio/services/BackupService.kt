@@ -19,23 +19,22 @@ import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.RepoUtils
-import dagger.hilt.android.AndroidEntryPoint
 import org.eclipse.jgit.api.errors.JGitInternalException
+import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.foreground.Foreground
 import org.unfoldingword.tools.logger.Logger
 import java.util.Timer
 import java.util.TimerTask
-import javax.inject.Inject
+import kotlin.getValue
 
 /**
  * This services runs in the background to provide automatic backups for translations.
  * For now this service is backup the translations to two locations for added peace of mind.
  */
-@AndroidEntryPoint
 class BackupService : Service(), Foreground.Listener {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var backupRC: BackupRC
-    @Inject lateinit var prefRepository: IPreferenceRepository
+    val translator: Translator by inject()
+    val backupRC: BackupRC by inject()
+    val prefRepository: IPreferenceRepository by inject()
 
     private val sTimer = Timer()
     private var isPaused = false

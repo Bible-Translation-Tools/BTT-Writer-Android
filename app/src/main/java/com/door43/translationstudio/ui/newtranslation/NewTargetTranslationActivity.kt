@@ -7,7 +7,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import com.door43.translationstudio.R
@@ -26,24 +25,23 @@ import com.door43.usecases.MergeTargetTranslation
 import com.door43.util.StringUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.models.TargetLanguage
-import javax.inject.Inject
 
-@AndroidEntryPoint
 class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.OnItemClickListener,
     ProjectListFragment.OnItemClickListener {
 
-    @Inject lateinit var translator: Translator
+    val translator: Translator by inject()
 
     private var fragment: Searchable? = null
     private var dialogShown = DialogShown.NONE
 
     private lateinit var binding: ActivityNewTargetTranslationBinding
 
-    private val viewModel: NewTargetTranslationModel by viewModels()
+    private val viewModel: NewTargetTranslationModel by viewModel()
 
     private val activityResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()

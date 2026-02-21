@@ -10,7 +10,6 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.translationstudio.App.Companion.showKeyboard
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
@@ -23,19 +22,18 @@ import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.
 import com.door43.translationstudio.ui.viewmodels.ChooseSourcesViewModel
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlin.math.min
 
 /**
  * Created by joel on 9/15/2015.
  */
-@AndroidEntryPoint
 class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
 
-    @Inject lateinit var typography: Typography
+    val typography: Typography by inject()
 
-    private val viewModel: ChooseSourcesViewModel by viewModels()
+    private val viewModel: ChooseSourcesViewModel by viewModel()
 
     private var clickListener: OnClickListener? = null
     private var progressDialog: ProgressHelper.ProgressDialog? = null

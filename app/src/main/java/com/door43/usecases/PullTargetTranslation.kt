@@ -12,7 +12,6 @@ import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.Manifest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.CheckoutConflictException
@@ -21,10 +20,9 @@ import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.eclipse.jgit.merge.MergeStrategy
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import javax.inject.Inject
 
-class PullTargetTranslation @Inject constructor(
-    @ApplicationContext private val context: Context,
+class PullTargetTranslation(
+    private val context: Context,
     private val submitNewLanguageRequests: SubmitNewLanguageRequests,
     private val getRepository: GetRepository,
     private val profile: Profile,

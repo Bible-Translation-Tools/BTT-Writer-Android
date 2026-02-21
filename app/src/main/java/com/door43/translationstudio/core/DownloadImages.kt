@@ -9,22 +9,20 @@ import com.door43.translationstudio.R
 import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.moveOrCopyQuietly
 import com.door43.util.Zip
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.tools.http.GetRequest
 import org.unfoldingword.tools.http.Request
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL
-import javax.inject.Inject
 
 /**
  * Created by blm on 12/28/16.  Revived from pre-resource container code.
  * This is a temporary solution to downloading images until a resource container solution
  * is ready.
  */
-class DownloadImages @Inject constructor(
-    @ApplicationContext private val context: Context,
+class DownloadImages(
+    private val context: Context,
     private val directoryProvider: IDirectoryProvider
 ) {
     data class Result(val success: Boolean, val imagesDir: File?)

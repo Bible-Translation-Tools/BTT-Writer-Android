@@ -10,20 +10,16 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.UploadCrashReport
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-@HiltViewModel
-class CrashReporterViewModel @Inject constructor(
-    private val application: Application
+class CrashReporterViewModel(
+    private val application: Application,
+    private val checkForLatestRelease: CheckForLatestRelease,
+    private val downloadLatestRelease: DownloadLatestRelease,
+    private val uploadCrashReport: UploadCrashReport
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var checkForLatestRelease: CheckForLatestRelease
-    @Inject lateinit var downloadLatestRelease: DownloadLatestRelease
-    @Inject lateinit var uploadCrashReport: UploadCrashReport
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

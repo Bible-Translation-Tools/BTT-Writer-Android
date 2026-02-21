@@ -16,18 +16,16 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
-import java.security.InvalidParameterException
 
-@AndroidEntryPoint
 class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
     private var fragment: PublishStepFragment? = null
     private var currentStep = 0
     private var publishFinished = false
     private var callingActivity = 0
 
-    private val viewModel: TargetTranslationViewModel by viewModels()
+    private val viewModel: TargetTranslationViewModel by viewModel()
     private lateinit var binding: ActivityPublishBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {

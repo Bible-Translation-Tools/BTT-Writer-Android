@@ -15,7 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.fragment.app.viewModels
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -33,10 +32,10 @@ import com.door43.translationstudio.ui.legal.LegalDocumentActivity
 import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.util.TTFAnalyzer
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import javax.inject.Inject
 
 /**
  * A [SettingsActivity] that presents a set of application settings. On
@@ -51,7 +50,6 @@ import javax.inject.Inject
  *
  * NOTE: if you add new preference categories be sure to update MainApplication to load their default values.
  */
-@AndroidEntryPoint
 class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,16 +72,15 @@ class SettingsActivity : AppCompatActivity() {
      * This fragment shows general preferences only. It is used when the
      * activity is showing a two-pane settings UI.
      */
-    @AndroidEntryPoint
     class GeneralPreferenceFragment : PreferenceFragmentCompat(),
         SharedPreferences.OnSharedPreferenceChangeListener {
 
-        @Inject lateinit var directoryProvider: IDirectoryProvider
-        @Inject lateinit var prefRepository: IPreferenceRepository
-        @Inject lateinit var assetsProvider: AssetsProvider
+        val directoryProvider: IDirectoryProvider by inject()
+        val prefRepository: IPreferenceRepository by inject()
+        val assetsProvider: AssetsProvider by inject()
 
         var progressDialog: ProgressHelper.ProgressDialog? = null
-        private val viewModel: SettingsViewModel by viewModels()
+        private val viewModel: SettingsViewModel by viewModel()
 
         private lateinit var openDirectory: ActivityResultLauncher<Uri?>
 

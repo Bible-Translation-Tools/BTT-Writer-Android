@@ -9,20 +9,19 @@ import com.door43.translationstudio.databinding.ActivityTermsBinding
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.legal.LegalDocumentActivity
 import com.door43.usecases.GogsLogout
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.taskmanager.ManagedTask
 import org.unfoldingword.tools.taskmanager.TaskManager
-import javax.inject.Inject
+import kotlin.getValue
 
 /**
  * This activity checks if the user has accepted the terms of use before continuing to load the app
  */
-@AndroidEntryPoint
 class TermsOfUseActivity : BaseActivity(), ManagedTask.OnFinishedListener {
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var logout: GogsLogout
+    val profile: Profile by inject()
+    val logout: GogsLogout by inject()
 
     private lateinit var binding: ActivityTermsBinding
 

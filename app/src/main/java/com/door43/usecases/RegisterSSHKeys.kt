@@ -10,15 +10,13 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.FileUtilities
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.PublicKey
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import javax.inject.Inject
 
-class RegisterSSHKeys @Inject constructor(
-    @ApplicationContext private val context: Context,
+class RegisterSSHKeys(
+    private val context: Context,
     private val profile: Profile,
     private val directoryProvider: IDirectoryProvider,
     private val prefRepository: IPreferenceRepository

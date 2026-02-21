@@ -27,18 +27,17 @@ import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.logger.Logger
-import javax.inject.Inject
+import kotlin.getValue
 import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
  * Displays detailed information about a target translation
  */
-@AndroidEntryPoint
 class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.ContributorEventListener {
-    @Inject lateinit var typography: Typography
+    val typography: Typography by inject()
     private var targetTranslation: TranslationItem? = null
 
     private var _binding: DialogTargetTranslationInfoBinding? = null

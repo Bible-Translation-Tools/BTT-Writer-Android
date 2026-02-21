@@ -3,15 +3,13 @@ package com.door43.usecases
 import android.content.Context
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.tools.http.Request
 import org.unfoldingword.tools.logger.GithubReporter
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import javax.inject.Inject
 
-class UploadCrashReport @Inject constructor(
-    @ApplicationContext private val context: Context,
+class UploadCrashReport(
+    private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val prefRepository: IPreferenceRepository
 ) {

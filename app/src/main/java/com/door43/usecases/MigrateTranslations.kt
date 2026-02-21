@@ -6,12 +6,10 @@ import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.util.FileUtilities
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import javax.inject.Inject
 
-class MigrateTranslations @Inject constructor(
-    @ApplicationContext private val context: Context,
+class MigrateTranslations(
+    private val context: Context,
     private val importProjects: ImportProjects,
     private val directoryProvider: IDirectoryProvider
 ) {

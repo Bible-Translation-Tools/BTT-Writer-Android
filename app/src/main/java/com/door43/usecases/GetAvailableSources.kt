@@ -6,9 +6,8 @@ import com.door43.translationstudio.core.BibleCodes
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import java.util.TreeMap
-import javax.inject.Inject
 
-class GetAvailableSources @Inject constructor(
+class GetAvailableSources(
     private val library: Door43Client
 ) {
     data class Result(

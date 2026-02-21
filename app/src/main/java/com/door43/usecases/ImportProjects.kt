@@ -13,19 +13,16 @@ import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.moveOrCopyQuietly
 import com.door43.util.FileUtilities.safeDelete
 import com.door43.util.Zip
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-import java.util.Locale
 import java.util.UUID
-import javax.inject.Inject
 
-class ImportProjects @Inject constructor(
-    @ApplicationContext private val context: Context,
+class ImportProjects(
+    private val context: Context,
     private val translator: Translator,
     private val backupRC: BackupRC,
     private val directoryProvider: IDirectoryProvider,

@@ -4,33 +4,30 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.door43.translationstudio.core.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListBinding
 import com.door43.translationstudio.ui.viewmodels.ValidationViewModel
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.security.InvalidParameterException
-import javax.inject.Inject
 
 /**
  * Created by joel on 9/20/2015.
  */
-@AndroidEntryPoint
 class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListener {
-    @Inject
-    lateinit var typography: Typography
-    @Inject
-    lateinit var renderingProvider: RenderingProvider
+
+    val typography: Typography by inject()
+    val renderingProvider: RenderingProvider by inject()
 
     private val adapter by lazy { ValidationAdapter(typography, renderingProvider) }
 
     private var _binding: FragmentPublishValidationListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ValidationViewModel by viewModels()
+    private val viewModel: ValidationViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,

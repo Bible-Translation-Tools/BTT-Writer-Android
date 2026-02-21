@@ -12,7 +12,6 @@ import android.view.WindowManager
 import android.widget.AdapterView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.closeKeyboard
 import com.door43.translationstudio.R
@@ -30,29 +29,28 @@ import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions.Companion.
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.usecases.CloneRepository
-import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import javax.inject.Inject
 import kotlin.math.min
 
 /**
  * Created by joel on 5/10/16.
  */
-@AndroidEntryPoint
 class ImportFromDoor43Dialog : DialogFragment() {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var targetTranslationMigrator: TargetTranslationMigrator
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var typography: Typography
+    val translator: Translator by inject()
+    val profile: Profile by inject()
+    val directoryProvider: IDirectoryProvider by inject()
+    val targetTranslationMigrator: TargetTranslationMigrator by inject()
+    val library: Door43Client by inject()
+    val typography: Typography by inject()
 
-    private val viewModel: ImportViewModel by viewModels()
+    private val viewModel: ImportViewModel by viewModel()
 
     private var targetTranslation: TargetTranslation? = null
     private var repositories = arrayListOf<RepositoryItem>()

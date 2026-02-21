@@ -9,14 +9,12 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.usecases.ExamineImportsForCollisions.Result
 import com.door43.util.FileUtilities.deleteQuietly
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import javax.inject.Inject
 
-class ExamineImportsForCollisions @Inject constructor(
-    @ApplicationContext private val context: Context,
+class ExamineImportsForCollisions(
+    private val context: Context,
     private val translator: Translator,
     private val directoryProvider: IDirectoryProvider,
     private val migrator: TargetTranslationMigrator,

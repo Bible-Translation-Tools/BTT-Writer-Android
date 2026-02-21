@@ -12,7 +12,6 @@ import com.door43.util.FileUtilities.readFileToString
 import com.door43.util.FileUtilities.safeDelete
 import com.door43.util.FileUtilities.writeStringToFile
 import com.door43.util.Manifest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -25,13 +24,12 @@ import java.io.File
 import java.io.IOException
 import java.util.Arrays
 import java.util.Locale
-import javax.inject.Inject
 
 /**
  * Created by joel on 11/4/2015.
  */
-class TargetTranslationMigrator @Inject constructor(
-    @ApplicationContext private val context: Context,
+class TargetTranslationMigrator(
+    private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val languageRequestRepository: ILanguageRequestRepository,
     private val library: Door43Client,

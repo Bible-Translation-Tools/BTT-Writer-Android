@@ -12,8 +12,6 @@ plugins {
     id "com.android.application"
     id "com.getkeepsafe.dexcount" version "4.0.0"
     id 'kotlin-android'
-    id 'kotlin-kapt'
-    id 'com.google.dagger.hilt.android'
 }
 
 android {
@@ -159,24 +157,10 @@ dependencies {
     implementation 'androidx.fragment:fragment-ktx:1.8.6'
     implementation 'commons-io:commons-io:2.8.0' // Do not upgrade, unless increase android sdk api version
 
-    // Hilt/Dagger dependencies
-    implementation 'com.google.dagger:hilt-android:2.52'
-    kapt 'com.google.dagger:hilt-compiler:2.52'
-    //kapt 'com.google.dagger:hilt-android-compiler:2.52'
-
-    androidTestImplementation  'com.google.dagger:hilt-android-testing:2.52'
-    kaptAndroidTest 'com.google.dagger:hilt-android-compiler:2.52'
-    androidTestAnnotationProcessor 'com.google.dagger:hilt-android-compiler:2.52'
-
-    testImplementation 'com.google.dagger:hilt-android-testing:2.52'
-    kaptTest 'com.google.dagger:hilt-android-compiler:2.52'
-    testAnnotationProcessor 'com.google.dagger:hilt-android-compiler:2.52'
-
     androidTestImplementation 'androidx.recyclerview:recyclerview:1.4.0'
     androidTestImplementation 'androidx.appcompat:appcompat:1.7.0'
     androidTestImplementation 'androidx.legacy:legacy-support-v4:1.0.0'
     androidTestImplementation 'com.google.android.material:material:1.12.0'
-    kapt 'androidx.annotation:annotation:1.9.1'
     androidTestImplementation 'org.hamcrest:hamcrest:3.0'
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test:rules:1.6.1'
@@ -184,6 +168,12 @@ dependencies {
     androidTestImplementation('androidx.test.espresso:espresso-contrib:3.6.1')
     androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
     androidTestImplementation "androidx.test.uiautomator:uiautomator:2.3.0"
+
+    // Koin
+    implementation(platform("io.insert-koin:koin-bom:4.1.1"))
+    implementation("io.insert-koin:koin-android")
+    implementation("io.insert-koin:koin-core-coroutines")
+    implementation("io.insert-koin:koin-android-compat")
 
     testImplementation 'junit:junit:4.13.2'
     androidTestUtil 'androidx.test:orchestrator:1.5.1'
@@ -199,14 +189,6 @@ dependencies {
     // JSON
     testImplementation "org.junit.jupiter:junit-jupiter:5.9.1"
     testImplementation "org.json:json:20230618"
-}
-
-kapt {
-    correctErrorTypes true
-}
-
-hilt {
-    enableAggregatingTask = true
 }
 
 tasks.register("copyDebugGithubToken") {

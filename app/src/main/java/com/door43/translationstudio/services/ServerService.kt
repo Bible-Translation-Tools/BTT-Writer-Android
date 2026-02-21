@@ -13,9 +13,9 @@ import com.door43.translationstudio.network.Connection
 import com.door43.translationstudio.network.Peer
 import com.door43.usecases.ExportProjects
 import com.door43.util.RSAEncryption
-import dagger.hilt.android.AndroidEntryPoint
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.io.BufferedInputStream
@@ -30,19 +30,18 @@ import java.net.Socket
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.util.UUID
-import javax.inject.Inject
+import kotlin.getValue
 
 /**
  * This class provides an exporting service (effectively a server) from which
  * other devices may browse and retrieve translations
  */
-@AndroidEntryPoint
 class ServerService : NetworkService() {
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var exportProjects: ExportProjects
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var directoryProvider: IDirectoryProvider
+    val translator: Translator by inject()
+    val library: Door43Client by inject()
+    val exportProjects: ExportProjects by inject()
+    val profile: Profile by inject()
+    val directoryProvider: IDirectoryProvider by inject()
 
     private val binder: IBinder = LocalBinder()
     private var listener: OnServerEventListener? = null

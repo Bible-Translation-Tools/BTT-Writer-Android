@@ -9,7 +9,6 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.devtools.ToolItem
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -17,15 +16,12 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.LogEntry
 import org.unfoldingword.tools.logger.Logger
 import java.io.RandomAccessFile
-import javax.inject.Inject
 
-@HiltViewModel
-class DeveloperViewModel @Inject constructor(
-    private val application: Application
+class DeveloperViewModel(
+    private val application: Application,
+    private val directoryProvider: IDirectoryProvider,
+    private val library: Door43Client
 ) : AndroidViewModel(application) {
-
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress

@@ -4,13 +4,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.ActivityCrashReporterBinding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 
 class CrashReporterActivity : BaseActivity() {
@@ -18,7 +18,7 @@ class CrashReporterActivity : BaseActivity() {
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     private lateinit var binding: ActivityCrashReporterBinding
-    private val viewModel: CrashReporterViewModel by viewModels()
+    private val viewModel: CrashReporterViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
