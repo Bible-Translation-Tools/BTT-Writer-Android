@@ -123,51 +123,49 @@ configurations {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.legacy:legacy-support-v13:1.0.0'
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.4.0'
-    implementation 'androidx.core:core-splashscreen:1.0.1'
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.201504261725-r'
-    implementation 'com.jcraft:jsch:0.1.55'
-    implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
-    implementation 'com.jpardogo.materialtabstrip:library:1.1.1'
-    implementation 'com.github.filippudak.progresspieview:library:1.0.4'
-    implementation 'org.apmem.tools:layouts:1.10'
-    implementation 'com.itextpdf:itextg:5.5.10'
-    implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation 'org.bibletranslationtools:gogs-client:1.7.5'
-    implementation 'org.unfoldingword.tools:task-manager:1.5.3'
-    implementation 'org.unfoldingword.tools:resource-container:0.7.19'
-    implementation('org.bibletranslationtools:logger:2.3.1') {
-        exclude group: 'org.unfoldingword.tools', module: 'http'
-    }
-    implementation 'org.unfoldingword.tools:event-buffer:1.0.2'
-    implementation 'org.unfoldingword.tools:foreground:0.1.0'
+    implementation libs.androidx.legacy.support.v13
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.legacy.support.v4
+    implementation libs.material
+    implementation libs.androidx.cardview
+    implementation libs.androidx.recyclerview
+    implementation libs.androidx.core.splashscreen
+    implementation libs.jgit
+    implementation libs.jsch
+    implementation libs.universal.image.loader
+    implementation libs.materialtabstrip
+    implementation libs.progresspieview
+    implementation libs.layouts
+    implementation libs.itextg
+    implementation libs.rebound
+    implementation libs.gogs.client
+    implementation libs.task.manager
+    implementation libs.resource.container
+    implementation libs.bible.logger
+    implementation libs.event.buffer
+    implementation libs.foreground
     implementation project(':html-textview')
     implementation project(':seekbarhint')
-    implementation 'com.google.firebase:firebase-appindexing:20.0.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'org.markdownj:markdownj-core:0.4'
-    implementation 'androidx.test.ext:junit:1.2.1'
+    implementation libs.firebase.appindexing
+    implementation libs.okhttp
+    implementation libs.markdownj
+    implementation libs.androidx.junit.ext
     implementation libs.androidx.ktx
-    implementation 'androidx.preference:preference-ktx:1.2.1'
-    implementation 'androidx.fragment:fragment-ktx:1.8.6'
-    implementation 'commons-io:commons-io:2.8.0' // Do not upgrade, unless increase android sdk api version
+    implementation libs.androidx.preference.ktx
+    implementation libs.androidx.fragment.ktx
+    implementation libs.commons.io // Do not upgrade, unless increase android sdk api version
 
-    androidTestImplementation 'androidx.recyclerview:recyclerview:1.4.0'
-    androidTestImplementation 'androidx.appcompat:appcompat:1.7.0'
-    androidTestImplementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    androidTestImplementation 'com.google.android.material:material:1.12.0'
-    androidTestImplementation 'org.hamcrest:hamcrest:3.0'
-    androidTestImplementation 'androidx.test:runner:1.6.2'
-    androidTestImplementation 'androidx.test:rules:1.6.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
-    androidTestImplementation('androidx.test.espresso:espresso-contrib:3.6.1')
-    androidTestImplementation "androidx.test.espresso:espresso-intents:3.6.1"
-    androidTestImplementation "androidx.test.uiautomator:uiautomator:2.3.0"
+    androidTestImplementation libs.androidx.recyclerview
+    androidTestImplementation libs.androidx.appcompat
+    androidTestImplementation libs.androidx.legacy.support.v4
+    androidTestImplementation libs.material
+    androidTestImplementation libs.hamcrest
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.androidx.test.rules
+    androidTestImplementation libs.androidx.test.espresso.core
+    androidTestImplementation libs.androidx.test.espresso.contrib
+    androidTestImplementation libs.androidx.test.espresso.intents
+    androidTestImplementation libs.androidx.test.uiautomator
 
     // Koin
     implementation(platform("io.insert-koin:koin-bom:4.1.1"))
@@ -175,20 +173,20 @@ dependencies {
     implementation("io.insert-koin:koin-core-coroutines")
     implementation("io.insert-koin:koin-android-compat")
 
-    testImplementation 'junit:junit:4.13.2'
-    androidTestUtil 'androidx.test:orchestrator:1.5.1'
+    testImplementation libs.junit
+    androidTestUtil libs.androidx.test.orchestrator
 
     // Mockk
-    testImplementation "io.mockk:mockk:1.13.13"
-    testImplementation "io.mockk:mockk-agent:1.13.13"
-    androidTestImplementation "io.mockk:mockk-android:1.13.13"
-    androidTestImplementation "io.mockk:mockk-agent:1.13.13"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
-    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    testImplementation libs.mockk
+    testImplementation libs.mockk.agent
+    androidTestImplementation libs.mockk.android
+    androidTestImplementation libs.mockk.agent
+    testImplementation libs.mockwebserver
+    androidTestImplementation libs.mockwebserver
 
     // JSON
-    testImplementation "org.junit.jupiter:junit-jupiter:5.9.1"
-    testImplementation "org.json:json:20230618"
+    testImplementation libs.junit.jupiter
+    implementation libs.json
 }
 
 tasks.register("copyDebugGithubToken") {

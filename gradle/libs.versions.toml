@@ -1,7 +1,128 @@
 [versions]
+# AndroidX Core
 ktx = "1.15.0"
+appcompat = "1.7.0"
+legacy-support-v4 = "1.0.0"
+legacy-support-v13 = "1.0.0"
+cardview = "1.0.0"
+recyclerview = "1.4.0"
+core-splashscreen = "1.0.1"
+preference-ktx = "1.2.1"
+fragment-ktx = "1.8.6"
+
+# Material Design
+material = "1.12.0"
+
+# Third-party Libraries
+jgit = "3.7.1.201504261725-r"
+jsch = "0.1.55"
+universal-image-loader = "1.9.5"
+materialtabstrip = "1.1.1"
+progresspieview = "1.0.4"
+layouts = "1.10"
+itextg = "5.5.10"
+rebound = "0.3.8"
+gogs-client = "1.7.5"
+task-manager = "1.5.3"
+resource-container = "0.7.19"
+logger-version = "2.3.1"
+event-buffer = "1.0.2"
+foreground = "0.1.0"
+firebase-appindexing = "20.0.0"
+okhttp = "4.12.0"
+markdownj = "0.4"
+commons-io = "2.8.0"
+
+# Testing
+junit = "4.13.2"
+junit-ext = "1.2.1"
+hamcrest = "3.0"
+test-runner = "1.6.2"
+test-rules = "1.6.1"
+espresso-core = "3.6.1"
+espresso-contrib = "3.6.1"
+espresso-intents = "3.6.1"
+uiautomator = "2.3.0"
+orchestrator = "1.5.1"
+mockk = "1.13.13"
+mockwebserver = "4.9.0"
+junit-jupiter = "5.9.1"
+json = "20230618"
 
 [libraries]
+# AndroidX Core
 androidx-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacy-support-v4" }
+androidx-legacy-support-v13 = { group = "androidx.legacy", name = "legacy-support-v13", version.ref = "legacy-support-v13" }
+androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
+androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preference-ktx" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment-ktx" }
+
+# Material Design
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Git/SSH
+jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
+jsch = { group = "com.jcraft", name = "jsch", version.ref = "jsch" }
+
+# Image Loading
+universal-image-loader = { group = "com.nostra13.universalimageloader", name = "universal-image-loader", version.ref = "universal-image-loader" }
+
+# UI Components
+materialtabstrip = { group = "com.jpardogo.materialtabstrip", name = "library", version.ref = "materialtabstrip" }
+progresspieview = { group = "com.github.filippudak.progresspieview", name = "library", version.ref = "progresspieview" }
+layouts = { group = "org.apmem.tools", name = "layouts", version.ref = "layouts" }
+rebound = { group = "com.facebook.rebound", name = "rebound", version.ref = "rebound" }
+
+# PDF
+itextg = { group = "com.itextpdf", name = "itextg", version.ref = "itextg" }
+
+# Bible Translation Tools
+gogs-client = { group = "org.bibletranslationtools", name = "gogs-client", version.ref = "gogs-client" }
+task-manager = { group = "org.unfoldingword.tools", name = "task-manager", version.ref = "task-manager" }
+resource-container = { group = "org.unfoldingword.tools", name = "resource-container", version.ref = "resource-container" }
+bible-logger = { group = "org.bibletranslationtools", name = "logger", version.ref = "logger-version" }
+event-buffer = { group = "org.unfoldingword.tools", name = "event-buffer", version.ref = "event-buffer" }
+foreground = { group = "org.unfoldingword.tools", name = "foreground", version.ref = "foreground" }
+
+# Firebase
+firebase-appindexing = { group = "com.google.firebase", name = "firebase-appindexing", version.ref = "firebase-appindexing" }
+
+# Networking
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
+
+# Markdown
+markdownj = { group = "org.markdownj", name = "markdownj-core", version.ref = "markdownj" }
+
+# Commons
+commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
+json = { group = "org.json", name = "json", version.ref = "json" }
+
+# Testing - JUnit
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit-ext = { group = "androidx.test.ext", name = "junit", version.ref = "junit-ext" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit-jupiter" }
+
+# Testing - Hamcrest
+hamcrest = { group = "org.hamcrest", name = "hamcrest", version.ref = "hamcrest" }
+
+# Testing - AndroidX Test
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "test-runner" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "test-rules" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
+androidx-test-espresso-contrib = { group = "androidx.test.espresso", name = "espresso-contrib", version.ref = "espresso-contrib" }
+androidx-test-espresso-intents = { group = "androidx.test.espresso", name = "espresso-intents", version.ref = "espresso-intents" }
+androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-test-orchestrator = { group = "androidx.test", name = "orchestrator", version.ref = "orchestrator" }
+
+# Testing - MockK
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
+mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 
 [plugins]
+# Plugins are defined in build.gradle with classpath or id syntax
