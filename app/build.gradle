@@ -152,7 +152,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'org.markdownj:markdownj-core:0.4'
     implementation 'androidx.test.ext:junit:1.2.1'
-    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation libs.androidx.ktx
     implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'androidx.fragment:fragment-ktx:1.8.6'
     implementation 'commons-io:commons-io:2.8.0' // Do not upgrade, unless increase android sdk api version
