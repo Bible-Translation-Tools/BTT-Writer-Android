@@ -1,0 +1,185 @@
+plugins {
+    id("com.android.application")
+    id("com.getkeepsafe.dexcount") version "4.0.0"
+    id("kotlin-android")
+}
+
+android {
+    namespace = "com.door43.translationstudio"
+    signingConfigs {
+        if (project.hasProperty("signIt")) {
+            create("release") {
+                storeFile = rootProject.file("bttkey.jks")
+                storePassword = System.getenv("KEYSTORE_PASS")
+                keyAlias = System.getenv("ALIAS_NAME")
+                keyPassword = System.getenv("ALIAS_PASS")
+                enableV2Signing = true
+            }
+        }
+    }
+    defaultConfig {
+        applicationId = "org.bibletranslationtools.writer.android"
+        minSdk = 22
+        compileSdk = 35
+        targetSdk = 35
+        versionCode = 40
+        versionName = "1.5.4"
+
+        testBuildType = "verify"
+        testInstrumentationRunner = "com.door43.translationstudio.CustomTestRunner"
+        testInstrumentationRunnerArguments += mapOf("clearPackageData" to "true")
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            testProguardFile("proguard-rules.pro")
+            if (project.hasProperty("signIt")) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+        debug {
+            isMinifyEnabled = false
+        }
+        create("verify") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".test"
+        }
+    }
+    // Output filename customization removed for AGP 8.x compatibility
+    // Default naming is used
+    packaging {
+        resources {
+            merges += listOf("plugin.properties")
+            excludes += listOf("/META-INF/*")
+        }
+    }
+    lint {
+        abortOnError = false
+        disable += listOf("MissingTranslation", "ExtraTranslation")
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
+    }
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+        animationsDisabled = true
+    }
+}
+
+configurations {
+    configureEach {
+        exclude(module = "httpclient")
+        exclude(module = "commons-logging")
+    }
+    create("cleanedAnnotations")
+}
+
+dependencies {
+    implementation(fileTree("libs") { include("*.jar") })
+    implementation(libs.androidx.legacy.support.v13)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.material)
+    implementation(libs.androidx.cardview)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.jgit)
+    implementation(libs.jsch)
+    implementation(libs.universal.image.loader)
+    implementation(libs.materialtabstrip)
+    implementation(libs.progresspieview)
+    implementation(libs.layouts)
+    implementation(libs.itextg)
+    implementation(libs.rebound)
+    implementation(libs.gogs.client)
+    implementation(libs.task.manager)
+    implementation(libs.resource.container)
+    implementation(libs.bible.logger)
+    implementation(libs.event.buffer)
+    implementation(libs.foreground)
+    implementation(project(":html-textview"))
+    implementation(project(":seekbarhint"))
+    implementation(libs.firebase.appindexing)
+    implementation(libs.okhttp)
+    implementation(libs.markdownj)
+    implementation(libs.androidx.junit.ext)
+    implementation(libs.androidx.ktx)
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.commons.io) // Do not upgrade, unless increase android sdk api version
+
+    androidTestImplementation(libs.androidx.recyclerview)
+    androidTestImplementation(libs.androidx.appcompat)
+    androidTestImplementation(libs.androidx.legacy.support.v4)
+    androidTestImplementation(libs.material)
+    androidTestImplementation(libs.hamcrest)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.test.espresso.contrib)
+    androidTestImplementation(libs.androidx.test.espresso.intents)
+    androidTestImplementation(libs.androidx.test.uiautomator)
+
+    // Koin
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.core.coroutines)
+    implementation(libs.koin.android.compat)
+
+    testImplementation(libs.junit)
+    androidTestUtil(libs.androidx.test.orchestrator)
+
+    // Mockk
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockk.agent)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.agent)
+    testImplementation(libs.mockwebserver)
+    androidTestImplementation(libs.mockwebserver)
+
+    // JSON
+    testImplementation(libs.junit.jupiter)
+    implementation(libs.org.json)
+}
+
+tasks.register<Copy>("copyDebugGithubToken") {
+    doLast {
+        val sourceFile = file("src/androidTest/assets/dummy_strings_private_app_pref.xml")
+        val destinationFile = file("src/androidTest/res/values/dummy_strings_private_app_pref.xml")
+
+        destinationFile.parentFile?.mkdirs()
+
+        if (sourceFile.exists()) {
+            destinationFile.outputStream().use { out ->
+                sourceFile.inputStream().use { inStream ->
+                    inStream.copyTo(out)
+                }
+            }
+            println("$destinationFile copied for Debug build")
+        }
+    }
+}
+
+tasks.register<Exec>("uiTests") {
+    commandLine("../gradlew", "connectedAndroidTest", "-Pandroid.testInstrumentationRunnerArguments.annotation=com.door43.translationstudio.UITest")
+}
+
+tasks.register<Exec>("integrationTests") {
+    commandLine("../gradlew", "connectedAndroidTest", "-Pandroid.testInstrumentationRunnerArguments.annotation=com.door43.translationstudio.IntegrationTest")
+}

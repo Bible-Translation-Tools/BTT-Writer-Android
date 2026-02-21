@@ -1,5 +1,6 @@
 [versions]
 # AndroidX Core
+koin-bom = "4.1.1"
 ktx = "1.15.0"
 appcompat = "1.7.0"
 legacy-support-v4 = "1.0.0"
@@ -62,6 +63,10 @@ androidx-preference-ktx = { group = "androidx.preference", name = "preference-kt
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment-ktx" }
 
 # Material Design
+koin-android = { module = "io.insert-koin:koin-android" }
+koin-android-compat = { module = "io.insert-koin:koin-android-compat" }
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
+koin-core-coroutines = { module = "io.insert-koin:koin-core-coroutines" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # Git/SSH
@@ -100,7 +105,7 @@ markdownj = { group = "org.markdownj", name = "markdownj-core", version.ref = "m
 
 # Commons
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
-json = { group = "org.json", name = "json", version.ref = "json" }
+org-json = { group = "org.json", name = "json", version.ref = "json" }
 
 # Testing - JUnit
 junit = { group = "junit", name = "junit", version.ref = "junit" }
