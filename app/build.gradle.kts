@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.application")
-    id("com.getkeepsafe.dexcount") version "4.0.0"
-    id("kotlin-android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.dexcount)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {

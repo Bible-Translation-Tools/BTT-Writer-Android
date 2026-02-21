@@ -309,7 +309,7 @@ class ClientService : NetworkService() {
                             file = File.createTempFile("p2p", name)
                             // download archive
                             val inputStream = DataInputStream(connection.socket.getInputStream())
-                            file.parentFile.mkdirs()
+                            file?.parentFile?.mkdirs()
                             file.createNewFile()
                             val out: OutputStream = FileOutputStream(file.absolutePath)
                             val buffer = ByteArray(8 * 1024)

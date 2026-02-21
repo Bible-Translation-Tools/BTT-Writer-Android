@@ -341,7 +341,7 @@ class ImportProjects(
         return dir
     }
 
-    data class ImportResults internal constructor(
+    data class ImportResults(
         @JvmField val importedSlug: String?,
         @JvmField val mergeConflict: Boolean,
         @JvmField val alreadyExists: Boolean
@@ -353,12 +353,12 @@ class ImportProjects(
             }
     }
 
-    data class ImportUsfmResult internal constructor(
+    data class ImportUsfmResult(
         val success: Boolean,
         val conflictingTargetTranslation: TargetTranslation? = null
     )
 
-    data class ImportSourceResult internal constructor(
+    data class ImportSourceResult(
         val success: Boolean,
         val hasConflict: Boolean,
         val error: String? = null,
@@ -370,7 +370,7 @@ class ImportProjects(
      * the human readable filePath
      * the success flag
      */
-    data class ImportUriResult internal constructor(
+    data class ImportUriResult(
         val filePath: Uri,
         val readablePath: String,
         val importedSlug: String?,

@@ -1,4 +1,9 @@
 [versions]
+# Build Plugins
+agp = "8.7.2"
+kotlin = "2.1.0"
+dexcount = "4.0.0"
+
 # AndroidX Core
 koin-bom = "4.1.1"
 ktx = "1.15.0"
@@ -130,4 +135,7 @@ mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" 
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 
 [plugins]
-# Plugins are defined in build.gradle with classpath or id syntax
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+dexcount = { id = "com.getkeepsafe.dexcount", version.ref = "dexcount" }
