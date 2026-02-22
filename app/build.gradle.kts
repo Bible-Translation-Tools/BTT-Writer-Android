@@ -112,7 +112,9 @@ dependencies {
     implementation(libs.gogs.client)
     implementation(libs.task.manager)
     implementation(libs.resource.container)
-    implementation(libs.bible.logger)
+    implementation(libs.bible.logger) {
+        exclude(group = "org.unfoldingword.tools", module = "http")
+    }
     implementation(libs.event.buffer)
     implementation(libs.foreground)
     implementation(project(":html-textview"))
