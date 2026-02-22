@@ -1,15 +1,17 @@
 package com.door43.translationstudio.usecases
 
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.res.Resources
 import android.provider.Settings
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.UploadCrashReport
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import junit.framework.TestCase.assertFalse
@@ -28,8 +30,7 @@ import java.io.File
 @IntegrationTest
 class UploadCrashReportTest : KoinAndroidTest() {
 
-    private val context = InstrumentationRegistry.getInstrumentation().context
-    private val assetsProvider: AssetsProvider by inject()
+    private val context: Context by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val prefRepository: IPreferenceRepository by inject()
 
@@ -38,9 +39,16 @@ class UploadCrashReportTest : KoinAndroidTest() {
     private lateinit var prefRepoMock: IPreferenceRepository
     private lateinit var crashDir: File
 
+    private lateinit var testContext: Context
+    private val mockResources = mockk<Resources>()
+
     @Before
     fun setUp() {
-        server.start()
+        testContext = object : ContextWrapper(context) {
+            override fun getResources(): Resources {
+                return mockResources
+            }
+        }
 
         crashDir = directoryProvider.createTempDir("crashes")
         Logger.registerGlobalExceptionHandler(crashDir)
@@ -52,13 +60,17 @@ class UploadCrashReportTest : KoinAndroidTest() {
             server.url("/issues").toString()
         }
 
+        every {
+            mockResources.getIdentifier("github_oauth2", "string", any())
+        } returns 12345
+        every { mockResources.getString(12345) } returns "fake_token"
+
         mockkStatic(Settings.Secure::class)
         every { Settings.Secure.getString(any(), any()) }.returns("test")
     }
 
     @After
     fun tearDown() {
-        server.shutdown()
         directoryProvider.clearCache()
     }
 
@@ -69,7 +81,7 @@ class UploadCrashReportTest : KoinAndroidTest() {
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
 
         val message = "Test crash report"
-        val uploadCrashReport = UploadCrashReport(context, directoryProvider, prefRepoMock)
+        val uploadCrashReport = UploadCrashReport(testContext, directoryProvider, prefRepoMock)
         val reported = uploadCrashReport.execute(message)
 
         assertTrue("Upload success when response code 200", reported)
@@ -102,7 +114,7 @@ class UploadCrashReportTest : KoinAndroidTest() {
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
 
         val message = "Test crash report"
-        val uploadCrashReport = UploadCrashReport(context, directoryProvider, prefRepoMock)
+        val uploadCrashReport = UploadCrashReport(testContext, directoryProvider, prefRepoMock)
         val reported = uploadCrashReport.execute(message)
 
         assertFalse("Upload failed when no crash files", reported)
@@ -115,7 +127,7 @@ class UploadCrashReportTest : KoinAndroidTest() {
         server.enqueue(MockResponse().setResponseCode(500))
 
         val message = "Test crash report"
-        val uploadCrashReport = UploadCrashReport(context, directoryProvider, prefRepoMock)
+        val uploadCrashReport = UploadCrashReport(testContext, directoryProvider, prefRepoMock)
         val reported = uploadCrashReport.execute(message)
 
         assertFalse("Upload fails when response code 500", reported)

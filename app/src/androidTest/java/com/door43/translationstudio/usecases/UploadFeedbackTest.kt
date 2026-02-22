@@ -1,14 +1,17 @@
 package com.door43.translationstudio.usecases
 
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.res.Resources
 import android.provider.Settings
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.UploadFeedback
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import junit.framework.TestCase.assertFalse
@@ -27,7 +30,7 @@ import org.unfoldingword.tools.logger.Logger
 @IntegrationTest
 class UploadFeedbackTest : KoinAndroidTest() {
 
-    private val context = InstrumentationRegistry.getInstrumentation().context
+    private val context: Context by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val prefRepository: IPreferenceRepository by inject()
 
@@ -35,11 +38,18 @@ class UploadFeedbackTest : KoinAndroidTest() {
 
     private lateinit var prefRepoMock: IPreferenceRepository
 
+    private lateinit var testContext: Context
+    private val mockResources = mockk<Resources>()
+
     @Before
     fun setUp() {
-        server.start()
-
         Logger.configure(directoryProvider.logFile, LogLevel.getLevel(0))
+
+        testContext = object : ContextWrapper(context) {
+            override fun getResources(): Resources {
+                return mockResources
+            }
+        }
 
         prefRepoMock = spyk(prefRepository)
         every {
@@ -48,13 +58,17 @@ class UploadFeedbackTest : KoinAndroidTest() {
             server.url("/issues").toString()
         }
 
+        every {
+            mockResources.getIdentifier("github_oauth2", "string", any())
+        } returns 12345
+        every { mockResources.getString(12345) } returns "fake_token"
+
         mockkStatic(Settings.Secure::class)
         every { Settings.Secure.getString(any(), any()) }.returns("test")
     }
 
     @After
     fun tearDown() {
-        server.shutdown()
         directoryProvider.clearCache()
     }
 
@@ -72,7 +86,7 @@ class UploadFeedbackTest : KoinAndroidTest() {
             directoryProvider.logFile.length() > 0
         )
 
-        val uploadFeedback = UploadFeedback(context, prefRepoMock, directoryProvider)
+        val uploadFeedback = UploadFeedback(testContext, prefRepoMock, directoryProvider)
         val notes = "This is a test note"
         val uploaded = uploadFeedback.execute(notes)
 
@@ -119,7 +133,7 @@ class UploadFeedbackTest : KoinAndroidTest() {
             directoryProvider.logFile.length() > 0
         )
 
-        val uploadFeedback = UploadFeedback(context, prefRepoMock, directoryProvider)
+        val uploadFeedback = UploadFeedback(testContext, prefRepoMock, directoryProvider)
         val notes = "This is a test note"
         val uploaded = uploadFeedback.execute(notes)
 

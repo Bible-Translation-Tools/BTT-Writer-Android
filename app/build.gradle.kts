@@ -49,6 +49,19 @@ android {
             matchingFallbacks += listOf("release", "debug")
             applicationIdSuffix = ".test"
         }
+        applicationVariants.all {
+            if (buildType.name == "release") {
+                outputs.all {
+                    val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+                    outputImpl.outputFileName = "release.apk"
+                }
+            } else {
+                mergeResourcesProvider.configure {
+                    // We specify 'project.tasks' to ensure it resolves the correct scope
+                    dependsOn(project.tasks.named("copyDebugGithubToken"))
+                }
+            }
+        }
     }
     // Output filename customization removed for AGP 8.x compatibility
     // Default naming is used
