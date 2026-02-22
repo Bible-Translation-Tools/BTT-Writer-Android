@@ -4,9 +4,8 @@ import android.content.res.AssetManager
 import androidx.test.platform.app.InstrumentationRegistry
 import com.door43.data.AssetsProvider
 import java.io.InputStream
-import javax.inject.Inject
 
-class TestAssetsProvider @Inject constructor() : AssetsProvider {
+class TestAssetsProvider : AssetsProvider {
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
 

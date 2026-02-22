@@ -4,39 +4,31 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.DownloadResourceContainers
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class DownloadResourceContainersTest {
+class DownloadResourceContainersTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
-    @Inject
-    lateinit var downloadResourceContainers: DownloadResourceContainers
-    @Inject
-    lateinit var library: Door43Client
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val downloadResourceContainers: DownloadResourceContainers by inject()
+    private val library: Door43Client by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is initialized via KoinTestApplication
     }
 
     @After

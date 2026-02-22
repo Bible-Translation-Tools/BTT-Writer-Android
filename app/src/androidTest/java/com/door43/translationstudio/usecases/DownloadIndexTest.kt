@@ -7,38 +7,30 @@ import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.DownloadIndex
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class DownloadIndexTest {
+class DownloadIndexTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject @ApplicationContext lateinit var appContext: Context
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var downloadIndex: DownloadIndex
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var assetsProvider: AssetsProvider
+    private val appContext: Context by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val downloadIndex: DownloadIndex by inject()
+    private val library: Door43Client by inject()
+    private val assetsProvider: AssetsProvider by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
         directoryProvider.clearCache()
     }
 

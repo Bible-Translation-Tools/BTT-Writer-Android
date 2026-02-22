@@ -15,13 +15,11 @@ import androidx.test.filters.LargeTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
-@HiltAndroidTest
 @UITest
 class QuestionnaireActivityTest : NewLanguageActivityUtils() {
 

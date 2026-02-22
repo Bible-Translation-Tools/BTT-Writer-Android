@@ -5,11 +5,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.usecases.UpdateCatalogs
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
@@ -20,34 +18,28 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.AfterClass
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Catalog
 import java.text.SimpleDateFormat
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class UpdateCatalogsTest {
+class UpdateCatalogsTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject @ApplicationContext lateinit var context: Context
-    @Inject lateinit var updateCatalogs: UpdateCatalogs
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var assetsProvider: AssetsProvider
+    private val appContext: Context by inject()
+    private val updateCatalogs: UpdateCatalogs by inject()
+    private val library: Door43Client by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val assetsProvider: AssetsProvider by inject()
 
     private val server = MockWebServer()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
         _directoryProvider = directoryProvider
 
         val dispatcher = object : Dispatcher() {
@@ -82,7 +74,7 @@ class UpdateCatalogsTest {
     fun testUpdateCatalogs() {
         prepareCatalogs()
 
-        val message = context.resources.getString(R.string.updating_languages)
+        val message = appContext.resources.getString(R.string.updating_languages)
         val result = updateCatalogs.execute(false, message)
 
         assertTrue("Update catalogs should succeed", result.success)

@@ -8,6 +8,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -17,9 +18,6 @@ import com.door43.usecases.CreateRepository
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.SearchGogsUsers
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -27,32 +25,27 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class CreateRepositoryTest {
+class CreateRepositoryTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    @ApplicationContext lateinit var appContext: Context
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var createRepository: CreateRepository
-    @Inject lateinit var searchGogsUsers: SearchGogsUsers
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var prefRepo: IPreferenceRepository
-    @Inject lateinit var gogsLogin: GogsLogin
+    private val appContext: Context by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
+    private val profile: Profile by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val createRepository: CreateRepository by inject()
+    private val searchGogsUsers: SearchGogsUsers by inject()
+    private val gogsLogin: GogsLogin by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val importProjects: ImportProjects by inject()
+    private val translator: Translator by inject()
 
     private lateinit var targetTranslation: TargetTranslation
 
@@ -60,12 +53,7 @@ class CreateRepositoryTest {
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
-        prefRepo.setDefaultPref(
-            SettingsActivity.KEY_PREF_GOGS_API,
-            server.url("/api").toString()
-        )
+        prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_GOGS_API, server.url("/api/").toString())
 
         targetTranslation = TestUtils.importTargetTranslation(
             library,

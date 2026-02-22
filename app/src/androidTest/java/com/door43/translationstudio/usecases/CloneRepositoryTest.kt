@@ -4,37 +4,29 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.CloneRepository
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import java.io.File
-import javax.inject.Inject
 
-@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class CloneRepositoryTest {
+class CloneRepositoryTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    lateinit var cloneRepository: CloneRepository
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
+    private val cloneRepository: CloneRepository by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
     }
 
     @After

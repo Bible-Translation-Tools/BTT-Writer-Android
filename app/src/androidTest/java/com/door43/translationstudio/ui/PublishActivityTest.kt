@@ -13,6 +13,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.UITest
@@ -24,46 +25,38 @@ import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Translator.Companion.EXTRA_TARGET_TRANSLATION_ID
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
-import com.door43.translationstudio.ui.UiTestUtils.checkRecyclerViewChild
 import com.door43.translationstudio.ui.UiTestUtils.checkListViewHasItemsCount
+import com.door43.translationstudio.ui.UiTestUtils.checkRecyclerViewChild
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.clickItemWithId
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.publish.PublishActivity.Companion.ACTIVITY_HOME
 import com.door43.translationstudio.ui.publish.PublishActivity.Companion.EXTRA_CALLING_ACTIVITY
 import com.door43.usecases.ImportProjects
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Matchers.containsString
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
-@HiltAndroidTest
 @UITest
-class PublishActivityTest {
+class PublishActivityTest : KoinAndroidTest() {
 
-    @Inject @ApplicationContext lateinit var context: Context
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var translator: Translator
-
-    @get:Rule
-    var hiltRule = HiltAndroidRule(this)
+    private val context: Context by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
+    private val importProjects: ImportProjects by inject()
+    private val profile: Profile by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val translator: Translator by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
     }
 
     @After

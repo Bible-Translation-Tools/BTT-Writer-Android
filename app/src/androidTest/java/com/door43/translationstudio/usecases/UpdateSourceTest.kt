@@ -7,12 +7,10 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.UpdateSource
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
@@ -23,35 +21,28 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import java.text.SimpleDateFormat
-import javax.inject.Inject
 
 
-@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class UpdateSourceTest {
+class UpdateSourceTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject @ApplicationContext lateinit var context: Context
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var updateSource: UpdateSource
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var assetsProvider: AssetsProvider
+    private val appContext: Context by inject()
+    private val library: Door43Client by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val updateSource: UpdateSource by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val assetsProvider: AssetsProvider by inject()
 
     private val server = MockWebServer()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
         _directoryProvider = directoryProvider
 
         val dispatcher = object : Dispatcher() {
@@ -98,7 +89,7 @@ class UpdateSourceTest {
         val url = server.url("/test")
         prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MEDIA_SERVER, url.toString())
 
-        val message = context.resources.getString(R.string.updating_sources)
+        val message = appContext.resources.getString(R.string.updating_sources)
         val result = updateSource.execute(message)
 
         assertTrue("Update source succeeded", result.success)

@@ -7,9 +7,8 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.UploadCrashReport
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.spyk
@@ -19,25 +18,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import javax.inject.Inject
 
-@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class UploadCrashReportTest {
-
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
+class UploadCrashReportTest : KoinAndroidTest() {
 
     private val context = InstrumentationRegistry.getInstrumentation().context
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var prefRepository: IPreferenceRepository
+    private val assetsProvider: AssetsProvider by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val prefRepository: IPreferenceRepository by inject()
 
     private val server = MockWebServer()
 
@@ -46,8 +40,6 @@ class UploadCrashReportTest {
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
         server.start()
 
         crashDir = directoryProvider.createTempDir("crashes")

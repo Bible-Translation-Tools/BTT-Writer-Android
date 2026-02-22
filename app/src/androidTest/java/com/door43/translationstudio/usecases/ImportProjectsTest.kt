@@ -1,19 +1,16 @@
 package com.door43.translationstudio.usecases
 
-import android.content.Context
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.usecases.ImportProjects
 import com.door43.util.Zip
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
@@ -21,29 +18,23 @@ import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class ImportProjectsTest {
+class ImportProjectsTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject @ApplicationContext lateinit var appContext: Context
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var assetsProvider: AssetsProvider
+    private val importProjects: ImportProjects by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val assetsProvider: AssetsProvider by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
     }
 
     @After

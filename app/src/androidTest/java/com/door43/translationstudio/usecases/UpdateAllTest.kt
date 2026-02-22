@@ -6,10 +6,9 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.UpdateAll
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
@@ -21,34 +20,28 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Catalog
 import java.text.SimpleDateFormat
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class UpdateAllTest {
+class UpdateAllTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject lateinit var updateAll: UpdateAll
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var prefRepository: IPreferenceRepository
-    @Inject lateinit var assetsProvider: AssetsProvider
+    private val updateAll: UpdateAll by inject()
+    private val library: Door43Client by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val assetsProvider: AssetsProvider by inject()
 
     private val server = MockWebServer()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
         _directoryProvider = directoryProvider
 
         val dispatcher = object : Dispatcher() {

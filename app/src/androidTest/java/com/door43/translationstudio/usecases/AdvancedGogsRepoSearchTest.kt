@@ -5,39 +5,31 @@ import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.AdvancedGogsRepoSearch
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import javax.inject.Inject
+import org.koin.core.component.inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class AdvancedGogsRepoSearchTest {
+class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    lateinit var advancedGogsRepoSearch: AdvancedGogsRepoSearch
-    @Inject
-    lateinit var prefRepository: IPreferenceRepository
+    private val advancedGogsRepoSearch: AdvancedGogsRepoSearch by inject()
+    private val prefRepository: IPreferenceRepository by inject()
 
     private val server = MockWebServer()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
         server.start()
 
         prefRepository.setDefaultPref(

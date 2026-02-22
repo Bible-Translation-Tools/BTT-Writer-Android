@@ -134,6 +134,9 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 
+# Testing - Koin
+koin-android-test = { group = "io.insert-koin", name = "koin-android-test", version.ref = "koin-bom" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }

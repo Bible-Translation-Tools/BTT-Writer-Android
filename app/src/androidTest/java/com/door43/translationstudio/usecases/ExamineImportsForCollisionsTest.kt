@@ -6,55 +6,50 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
 import com.door43.usecases.ExamineImportsForCollisions
 import com.door43.usecases.ImportProjects
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
+import com.door43.util.FileUtilities
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.FileOutputStream
-import javax.inject.Inject
 
-@HiltAndroidTest
+
+@androidx.annotation.RequiresApi
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class ExamineImportsForCollisionsTest {
+class ExamineImportsForCollisionsTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    @ApplicationContext lateinit var appContext: Context
-    @Inject lateinit var examineImportsForCollisions: ExamineImportsForCollisions
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var translator: Translator
+    private val appContext: Context by inject()
+    private val examineImportsForCollisions: ExamineImportsForCollisions by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
+    private val profile: Profile by inject()
+    private val importProjects: ImportProjects by inject()
+    private val translator: Translator by inject()
 
     private var tempFile: File? = null
 
     @Before
     fun setUp() {
-        hiltRule.inject()
     }
 
     @After
     fun tearDown() {
+        FileUtilities.deleteQuietly(tempFile)
         directoryProvider.clearCache()
         directoryProvider.deleteTranslations()
     }

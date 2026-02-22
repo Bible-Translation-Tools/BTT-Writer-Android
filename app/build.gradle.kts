@@ -60,6 +60,7 @@ android {
     }
     lint {
         abortOnError = false
+        checkReleaseBuilds = false
         disable += listOf("MissingTranslation", "ExtraTranslation")
     }
     compileOptions {
@@ -153,6 +154,9 @@ dependencies {
     androidTestImplementation(libs.mockk.agent)
     testImplementation(libs.mockwebserver)
     androidTestImplementation(libs.mockwebserver)
+
+    // Koin
+    androidTestImplementation(libs.koin.android.test)
 
     // JSON
     testImplementation(libs.junit.jupiter)

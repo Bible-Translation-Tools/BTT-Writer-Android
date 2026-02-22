@@ -1,7 +1,6 @@
 package com.door43.translationstudio.ui
 
 import android.app.Instrumentation
-import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
@@ -17,44 +16,32 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.App
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import javax.inject.Inject
+import org.koin.core.component.inject
 
 
 @RunWith(AndroidJUnit4::class)
-@HiltAndroidTest
 @UITest
-class ProfileActivityTest {
+class ProfileActivityTest : KoinAndroidTest() {
 
-    @Inject
-    @ApplicationContext
-    lateinit var appContext: Context
-
-    @get:Rule
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    lateinit var profile: Profile
+    private val profile: Profile by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
         Intents.init()
         mockkObject(App)
 

@@ -12,6 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Translator
@@ -19,52 +20,31 @@ import com.door43.translationstudio.ui.UiTestUtils.checkDialogContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
-import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import com.door43.util.FileUtilities.copyInputStreamToFile
 import com.door43.util.FileUtilities.deleteQuietly
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.unfoldingword.door43client.Door43Client
+import org.koin.core.component.inject
 import java.io.File
-import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
-@HiltAndroidTest
 @UITest
-class ImportUsfmActivityTest {
-    @Inject
-    @ApplicationContext
-    lateinit var appContext: Context
-
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
-
-    @Inject
-    lateinit var library: Door43Client
-
-    @Inject
-    lateinit var translator: Translator
-
-    @Inject
-    lateinit var assetsProvider: AssetsProvider
+class ImportUsfmActivityTest : KoinAndroidTest() {
+    private val appContext: Context by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val translator: Translator by inject()
+    private val assetsProvider: AssetsProvider by inject()
 
     private var testFile: File? = null
     private var tempDir: File? =  null
     private var targetTranslationID: String? = null
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
     }
 
     @After

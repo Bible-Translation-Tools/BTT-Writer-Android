@@ -20,6 +20,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.di.appModule
+import com.door43.di.prodDataModule
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
@@ -51,7 +52,7 @@ class App : Application() {
         startKoin {
             androidLogger(Level.DEBUG)
             androidContext(this@App)
-            modules(appModule)
+            modules(appModule, prodDataModule)
         }
 
         instance = this

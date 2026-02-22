@@ -24,14 +24,12 @@ import androidx.test.espresso.matcher.ViewMatchers.withHint
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import com.door43.data.IDirectoryProvider
 import com.door43.questionnaire.QuestionnaireActivity
 import com.door43.questionnaire.QuestionnairePager
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
 import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Description
 import org.hamcrest.Matcher
@@ -42,39 +40,28 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Before
-import org.junit.Rule
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Question
 import org.unfoldingword.door43client.models.Questionnaire
 import java.lang.reflect.Field
-import javax.inject.Inject
 
 /**
  * shared methods for QuestionnaireActivity UI testing
  */
-open class NewLanguageActivityUtils {
+open class NewLanguageActivityUtils : KoinAndroidTest() {
+
     private var resultCode: Field? = null
     private var resultData: Field? = null
     private var pager: QuestionnairePager? = null
     private var stringToBeTyped: String? = null
 
-    @Inject
-    @ApplicationContext
-    lateinit var appContext: Context
-
-    @Inject
-    lateinit var directoryProvider: IDirectoryProvider
-
-    @Inject
-    lateinit var library: Door43Client
-
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
+    protected val appContext: Context by inject()
+    private val library: Door43Client by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
+        // Koin is already initialized via KoinTestApplication
         stringToBeTyped = "Espresso"
 
         val questionnaires = library.index.getQuestionnaires()

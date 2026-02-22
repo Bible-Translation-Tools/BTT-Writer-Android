@@ -75,9 +75,7 @@ import org.koin.dsl.module
 import org.unfoldingword.door43client.Door43Client
 
 val appModule = module {
-    singleOf(::MainAssetsProvider).bind<AssetsProvider>()
     singleOf(::DirectoryProvider).bind<IDirectoryProvider>()
-    singleOf(::Door43Client)
 
     singleOf(::BackupRC)
     singleOf(::Translator)
@@ -153,4 +151,9 @@ val appModule = module {
     viewModelOf(::SettingsViewModel)
     viewModelOf(::LoginViewModel)
     viewModelOf(::NewTempLanguageViewModel)
+}
+
+val prodDataModule = module {
+    singleOf(::MainAssetsProvider).bind<AssetsProvider>()
+    singleOf(::Door43Client)
 }

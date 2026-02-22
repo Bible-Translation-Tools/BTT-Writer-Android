@@ -1,375 +1,418 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import static org.junit.Assert.assertEquals;
+import android.util.Log
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.data.AssetsProvider
+import com.door43.translationstudio.IntegrationTest
+import com.door43.usecases.ParseMergeConflicts.execute
+import com.door43.util.FileUtilities.readStreamToString
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.koin.test.KoinTest
+import org.koin.test.inject
+import org.unfoldingword.tools.logger.Logger
+import java.io.IOException
+import java.io.InputStream
+import java.util.Collections.emptyList
 
-import android.util.Log;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.door43.data.AssetsProvider;
-import com.door43.translationstudio.IntegrationTest;
-import com.door43.usecases.ParseMergeConflicts;
-import com.door43.util.FileUtilities;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.testing.HiltAndroidRule;
-import dagger.hilt.android.testing.HiltAndroidTest;
 
 /**
  * Created by blm on 7/25/16.
  */
-@HiltAndroidTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(AndroidJUnit4::class)
 @IntegrationTest
-public class MergeConflictsParseTest {
+class MergeConflictsParseTest : KoinTest {
 
-    @Rule
-    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
+    private val assetsProvider: AssetsProvider by inject()
 
-    @Inject
-    AssetsProvider assetsProvider;
+    private lateinit var testText: String
+    private lateinit var expectedText: String
+    private val expectedTexts = mutableListOf<String>()
+    private val parsedText = mutableListOf<String>()
+    private var expectedConflictCount: Int = 0
+    private var foundConflictCount: Int = 0
+    private var lastMergeConflictCards: List<CharSequence> = emptyList()
 
-    public static final String TAG = MergeConflictsParseTest.class.getSimpleName();
-    private String testText;
-    private String expectedText;
-    private final List<String> expectedTexts = new ArrayList<>();
-    private final List<String> parsedText = new ArrayList<>();
-    private int expectedConflictCount;
-    private int foundConflictCount;
-    private List<CharSequence> lastMergeConflictCards;
+    val TAG: String = MergeConflictsParseTest::class.java.getSimpleName()
 
     @Before
-    public void setUp() {
-        hiltRule.inject();
-        Logger.flush();
+    fun setUp() {
+        Logger.flush()
     }
 
     @Test
-    public void test01ProcessFullConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test01ProcessFullConflict() {
         //given
-        String testId = "merge/full_conflict";
-        expectedConflictCount = 2;
+        val testId = "merge/full_conflict"
+        expectedConflictCount = 2
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test01ProcessFullConflict");
+        verifyRenderText("test01ProcessFullConflict")
     }
 
     @Test
-    public void test02ProcessTwoConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test02ProcessTwoConflict() {
         //given
-        String testId = "merge/two_conflict";
-        expectedConflictCount = 2;
+        val testId = "merge/two_conflict"
+        expectedConflictCount = 2
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test02ProcessTwoConflict");
+        verifyRenderText("test02ProcessTwoConflict")
     }
 
     @Test
-    public void test03ProcessPartialConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test03ProcessPartialConflict() {
         //given
-        String testId = "merge/partial_conflict";
-        expectedConflictCount = 2;
+        val testId = "merge/partial_conflict"
+        expectedConflictCount = 2
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test03ProcessPartialConflict");
+        verifyRenderText("test03ProcessPartialConflict")
     }
 
     @Test
-    public void test04ProcessNestedHeadConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test04ProcessNestedHeadConflict() {
         //given
-        String testId = "merge/head_nested_conflict";
-        expectedConflictCount = 3;
+        val testId = "merge/head_nested_conflict"
+        expectedConflictCount = 3
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test04ProcessNestedHeadConflict");
+        verifyRenderText("test04ProcessNestedHeadConflict")
     }
 
     @Test
-    public void test05ProcessNestedTailConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test05ProcessNestedTailConflict() {
         //given
-        String testId = "merge/tail_nested_conflict";
-        expectedConflictCount = 3;
+        val testId = "merge/tail_nested_conflict"
+        expectedConflictCount = 3
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test05ProcessNestedTailConflict");
+        verifyRenderText("test05ProcessNestedTailConflict")
     }
 
     @Test
-    public void test06ProcessNotFullNestedConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test06ProcessNotFullNestedConflict() {
         //given
-        String testId = "merge/not_full_double_nested_conflict";
-        expectedConflictCount = 4;
+        val testId = "merge/not_full_double_nested_conflict"
+        expectedConflictCount = 4
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test06ProcessNotFullNestedConflict");
+        verifyRenderText("test06ProcessNotFullNestedConflict")
     }
 
     @Test
-    public void test07ProcessNotFullEndNestedConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test07ProcessNotFullEndNestedConflict() {
         //given
-        String testId = "merge/not_full_double_nested_conflict_end";
-        expectedConflictCount = 4;
+        val testId = "merge/not_full_double_nested_conflict_end"
+        expectedConflictCount = 4
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test07ProcessNotFullEndNestedConflict");
+        verifyRenderText("test07ProcessNotFullEndNestedConflict")
     }
 
     @Test
-    public void test08ProcessNoConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test08ProcessNoConflict() {
         //given
-        String testTextFile = "merge/partial_conflict_part1.data";
-        String expectTextFile = "merge/partial_conflict_part1.data";
-        expectedConflictCount = 1;
+        val testTextFile = "merge/partial_conflict_part1.data"
+        val expectTextFile = "merge/partial_conflict_part1.data"
+        expectedConflictCount = 1
 
         //when
-        doRenderMergeConflicts(testTextFile, expectTextFile);
+        doRenderMergeConflicts(testTextFile, expectTextFile)
 
         //then
-        verifyRenderText("test08ProcessNoConflict");
+        verifyRenderText("test08ProcessNoConflict")
     }
 
     @Test
-    public void test09DetectTwoMergeConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test09DetectTwoMergeConflict() {
         //given
-        String testFile = "merge/two_conflict_raw.data";
-        boolean expectedConflict = true;
+        val testFile = "merge/two_conflict_raw.data"
+        val expectedConflict = true
 
         //when
-        boolean conflicted = doDetectMergeConflict(testFile);
+        val conflicted = doDetectMergeConflict(testFile)
 
         //then
-        assertEquals(expectedConflict, conflicted);
+        assertEquals(expectedConflict, conflicted)
     }
 
     @Test
-    public void test10DetectFullMergeConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test10DetectFullMergeConflict() {
         //given
-        String testFile = "merge/full_conflict_raw.data";
-        boolean expectedConflict = true;
+        val testFile = "merge/full_conflict_raw.data"
+        val expectedConflict = true
 
         //when
-        boolean conflicted = doDetectMergeConflict(testFile);
+        val conflicted = doDetectMergeConflict(testFile)
 
         //then
-        assertEquals(expectedConflict, conflicted);
+        assertEquals(expectedConflict, conflicted)
     }
 
     @Test
-    public void test11DetectPartialMergeConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test11DetectPartialMergeConflict() {
         //given
-        String testFile = "merge/partial_conflict_raw.data";
-        boolean expectedConflict = true;
+        val testFile = "merge/partial_conflict_raw.data"
+        val expectedConflict = true
 
         //when
-        boolean conflicted = doDetectMergeConflict(testFile);
+        val conflicted = doDetectMergeConflict(testFile)
 
         //then
-        assertEquals(expectedConflict, conflicted);
+        assertEquals(expectedConflict, conflicted)
     }
 
     @Test
-    public void test12DetectNoMergeConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test12DetectNoMergeConflict() {
         //given
-        String testFile = "merge/two_conflict_part1.data";
-        boolean expectedConflict = false;
+        val testFile = "merge/two_conflict_part1.data"
+        val expectedConflict = false
 
         //when
-        boolean conflicted = doDetectMergeConflict(testFile);
+        val conflicted = doDetectMergeConflict(testFile)
 
         //then
-        assertEquals(expectedConflict, conflicted);
+        assertEquals(expectedConflict, conflicted)
     }
 
     @Test
-    public void test13ProcessFullFiveWayNestedConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test13ProcessFullFiveWayNestedConflict() {
         //given
-        String testId = "merge/full_five_way_nested";
-        expectedConflictCount = 5;
+        val testId = "merge/full_five_way_nested"
+        expectedConflictCount = 5
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test13ProcessFullFiveWayNestedConflict");
+        verifyRenderText("test13ProcessFullFiveWayNestedConflict")
     }
 
     @Test
-    public void test14ProcessNotFullFiveWayNestedConflict() throws Exception {
+    @Throws(Exception::class)
+    fun test14ProcessNotFullFiveWayNestedConflict() {
         //given
-        String testId = "merge/not_full_five_way_nested";
-        expectedConflictCount = 5;
+        val testId = "merge/not_full_five_way_nested"
+        expectedConflictCount = 5
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test14ProcessNotFullFiveWayNestedConflict");
+        verifyRenderText("test14ProcessNotFullFiveWayNestedConflict")
     }
 
     @Test
-    public void test15ProcessNotFullFiveWayNestedConflictComplex() throws Exception {
+    @Throws(Exception::class)
+    fun test15ProcessNotFullFiveWayNestedConflictComplex() {
         //given
-        String testId = "merge/not_full_five_way_nested_complex";
-        expectedConflictCount = 5;
+        val testId = "merge/not_full_five_way_nested_complex"
+        expectedConflictCount = 5
 
         //when
-        doRenderMergeConflicts(testId);
+        doRenderMergeConflicts(testId)
 
         //then
-        verifyRenderText("test15ProcessNotFullFiveWayNestedConflictComplex");
+        verifyRenderText("test15ProcessNotFullFiveWayNestedConflictComplex")
     }
 
-    private void verifyRenderText(String id) {
-
-        assertEquals("merge counts should be the same", expectedTexts.size(), parsedText.size());
+    private fun verifyRenderText(id: String?) {
+        assertEquals("merge counts should be the same", expectedTexts.size, parsedText.size)
 
         //sort to make sure in same order
-        Collections.sort(parsedText);
-        Collections.sort(expectedTexts);
+        parsedText.sort()
+        expectedTexts.sort()
 
-        for (int i = 0; i < parsedText.size(); i++) {
-            String got = parsedText.get(i);
-            String expected = expectedTexts.get(i);
-            verifyProcessedText(id + ": Conflict text " + i, expected, got);
+        for (i in parsedText.indices) {
+            val got: String = parsedText.get(i)!!
+            val expected = expectedTexts.get(i)
+            verifyProcessedText(id + ": Conflict text " + i, expected, got)
         }
     }
 
-    private void doRenderMergeConflicts(String testId) throws IOException {
-        for(int i = 0; i < expectedConflictCount; i++) {
-            String text = doRenderMergeConflict(testId, i + 1);
-            parsedText.add(text);
-            expectedTexts.add(expectedText);
+    @Throws(IOException::class)
+    private fun doRenderMergeConflicts(testId: String?) {
+        for (i in 0..<expectedConflictCount) {
+            val text = doRenderMergeConflict(testId, i + 1)
+            parsedText.add(text!!)
+            expectedTexts.add(expectedText)
         }
 
-        if(expectedConflictCount != foundConflictCount) {
-            for (int i = 0; i < lastMergeConflictCards.size(); i++) {
-                CharSequence conflict = lastMergeConflictCards.get(i);
-                Log.d(TAG, "conflict card " + i + ":\n" + conflict );
+        if (expectedConflictCount !== foundConflictCount) {
+            for (i in lastMergeConflictCards.indices) {
+                val conflict: CharSequence? = lastMergeConflictCards.get(i)
+                Log.d(TAG, "conflict card " + i + ":\n" + conflict)
             }
-            assertEquals("conflict count", expectedConflictCount, foundConflictCount);
+            assertEquals("conflict count", expectedConflictCount, foundConflictCount)
         }
     }
 
-    private void doRenderMergeConflicts(String testTextFile, String expectTextFile ) throws IOException {
-        String text = doRenderMergeConflict(1, testTextFile, expectTextFile );
-        parsedText.add(text);
-        expectedTexts.add(expectedText);
+    @Throws(IOException::class)
+    private fun doRenderMergeConflicts(testTextFile: String, expectTextFile: String) {
+        var text = doRenderMergeConflict(1, testTextFile, expectTextFile)
+        parsedText.add(text!!)
+        expectedTexts.add(expectedText)
 
-        if(lastMergeConflictCards.size() > 1) {
-            text = doRenderMergeConflict(2, testTextFile, expectTextFile);
-            parsedText.add(text);
-            expectedTexts.add(expectedText);
+        if (lastMergeConflictCards.size > 1) {
+            text = doRenderMergeConflict(2, testTextFile, expectTextFile)
+            parsedText.add(text!!)
+            expectedTexts.add(expectedText)
         }
     }
 
-    private boolean doDetectMergeConflict(String testFile) throws IOException {
-        InputStream testTextStream = assetsProvider.open(testFile);
-        testText = FileUtilities.readStreamToString(testTextStream);
-        Assert.assertNotNull(testText);
-        Assert.assertFalse(testText.isEmpty());
+    @Throws(IOException::class)
+    private fun doDetectMergeConflict(testFile: String): Boolean {
+        val testTextStream: InputStream = assetsProvider.open(testFile)
+        testText = readStreamToString(testTextStream)
+        assertNotNull(testText)
+        assertFalse(testText.isEmpty())
 
-        return MergeConflictsHandler.isMergeConflicted(testText);
+        return MergeConflictsHandler.isMergeConflicted(testText)
     }
 
-    private String doRenderMergeConflict(String testId, int sourceGroup) throws IOException {
-        String testTextFile = testId+ "_raw.data";
-        String expectTextFile = testId+ "_part" + sourceGroup + ".data";
-        return doRenderMergeConflict(sourceGroup, testTextFile, expectTextFile);
+    @Throws(IOException::class)
+    private fun doRenderMergeConflict(testId: String?, sourceGroup: Int): String? {
+        val testTextFile = testId + "_raw.data"
+        val expectTextFile = testId + "_part" + sourceGroup + ".data"
+        return doRenderMergeConflict(sourceGroup, testTextFile, expectTextFile)
     }
 
-    private String doRenderMergeConflict(int sourceGroup, String testTextFile, String expectTextFile) throws IOException {
-        InputStream testTextStream = assetsProvider.open(testTextFile);
-        testText = FileUtilities.readStreamToString(testTextStream);
-        Assert.assertNotNull(testText);
-        Assert.assertFalse(testText.isEmpty());
-        InputStream testExpectedStream = assetsProvider.open(expectTextFile);
-        expectedText = FileUtilities.readStreamToString(testExpectedStream);
-        Assert.assertNotNull(expectedText);
-        Assert.assertFalse(expectedText.isEmpty());
+    @Throws(IOException::class)
+    private fun doRenderMergeConflict(
+        sourceGroup: Int,
+        testTextFile: String,
+        expectTextFile: String
+    ): String? {
+        val testTextStream: InputStream = assetsProvider.open(testTextFile)
+        testText = readStreamToString(testTextStream)
+        assertNotNull(testText)
+        assertFalse(testText.isEmpty())
+        val testExpectedStream: InputStream = assetsProvider.open(expectTextFile)
+        expectedText = readStreamToString(testExpectedStream)
+        assertNotNull(expectedText)
+        assertFalse(expectedText.isEmpty())
 
-        lastMergeConflictCards = ParseMergeConflicts.INSTANCE.execute(testText);
-        foundConflictCount = lastMergeConflictCards.size();
-        if(foundConflictCount >= sourceGroup) {
-            return lastMergeConflictCards.get(sourceGroup - 1).toString();
+        lastMergeConflictCards = execute(testText)
+        foundConflictCount = lastMergeConflictCards.size
+        if (foundConflictCount >= sourceGroup) {
+            return lastMergeConflictCards.get(sourceGroup - 1).toString()
         }
-        return null;
+        return null
     }
 
-    private void verifyProcessedText(String id, String expectedText, String out) {
-        Assert.assertNotNull(id, out);
-        Assert.assertFalse(id, out.isEmpty());
-        if(!out.equals(expectedText)) {
-            Log.e(TAG, "error in: " + id);
-            if(out.length() != expectedText.length()) {
-                Log.e(TAG, "expected length " + expectedText.length() + " but got length " + out.length());
+    private fun verifyProcessedText(id: String?, expectedText: String, out: String) {
+        assertNotNull(id, out)
+        assertFalse(id, out.isEmpty())
+        if (out != expectedText) {
+            Log.e(TAG, "error in: " + id)
+            if (out.length != expectedText.length) {
+                Log.e(
+                    TAG,
+                    "expected length " + expectedText.length + " but got length " + out.length
+                )
             }
 
-            for( int ptr = 0; ; ptr++) {
-                if(ptr >= out.length()) {
-                    Log.e(TAG, "expected extra text at position " + ptr + ": '" + expectedText.substring(ptr) + "'");
-                    if (ptr < expectedText.length()) {
-                        Log.e(TAG, "character: '" + expectedText.charAt(ptr) + "', " + Character.codePointAt(expectedText, ptr) );
+            var ptr = 0
+            while (true) {
+                if (ptr >= out.length) {
+                    Log.e(
+                        TAG,
+                        "expected extra text at position " + ptr + ": '" + expectedText.substring(
+                            ptr
+                        ) + "'"
+                    )
+                    if (ptr < expectedText.length) {
+                        Log.e(
+                            TAG,
+                            "character: '" + expectedText.get(ptr) + "', " + Character.codePointAt(
+                                expectedText,
+                                ptr
+                            )
+                        )
                     }
-                    break;
+                    break
                 }
-                if(ptr >= expectedText.length()) {
-                    Log.e(TAG, "not expected extra text at position " + ptr + ": '" + out.substring(ptr) + "'");
-                    Log.e(TAG, "character: '" + out.charAt(ptr) + "', " + Character.codePointAt(out, ptr));
-                    break;
+                if (ptr >= expectedText.length) {
+                    Log.e(
+                        TAG,
+                        "not expected extra text at position " + ptr + ": '" + out.substring(ptr) + "'"
+                    )
+                    Log.e(
+                        TAG,
+                        "character: '" + out.get(ptr) + "', " + Character.codePointAt(out, ptr)
+                    )
+                    break
                 }
 
-                char cOut = out.charAt(ptr);
-                char cExpect = expectedText.charAt(ptr);
-                if(cOut != cExpect) {
-                    Log.e(TAG, "expected different at position " + ptr );
-                    Log.e(TAG, "expected sub match: '" + expectedText.substring(ptr) + "'");
-                    Log.e(TAG, "but got sub match: '" + out.substring(ptr) + "'");
-                    Log.e(TAG, "expected character: '" + expectedText.charAt(ptr) + "', " + Character.codePointAt(expectedText, ptr) );
-                    Log.e(TAG, "but got character: '" + out.charAt(ptr) + "', " + Character.codePointAt(out, ptr));
-                    Log.e(TAG, "expected: '" + expectedText + "'");
-                    Log.e(TAG, "but got: '" + out + "'");
-                    break;
+                val cOut = out.get(ptr)
+                val cExpect = expectedText.get(ptr)
+                if (cOut != cExpect) {
+                    Log.e(TAG, "expected different at position " + ptr)
+                    Log.e(TAG, "expected sub match: '" + expectedText.substring(ptr) + "'")
+                    Log.e(TAG, "but got sub match: '" + out.substring(ptr) + "'")
+                    Log.e(
+                        TAG,
+                        "expected character: '" + expectedText.get(ptr) + "', " + Character.codePointAt(
+                            expectedText,
+                            ptr
+                        )
+                    )
+                    Log.e(
+                        TAG,
+                        "but got character: '" + out.get(ptr) + "', " + Character.codePointAt(
+                            out,
+                            ptr
+                        )
+                    )
+                    Log.e(TAG, "expected: '" + expectedText + "'")
+                    Log.e(TAG, "but got: '" + out + "'")
+                    break
                 }
+                ptr++
             }
-            Log.e(TAG, "error in: " + id);
+            Log.e(TAG, "error in: " + id)
         }
-        if(!out.equals(expectedText)) {
-            assertEquals(id, out, expectedText);
+        if (out != expectedText) {
+            assertEquals(id, out, expectedText)
         }
     }
 }

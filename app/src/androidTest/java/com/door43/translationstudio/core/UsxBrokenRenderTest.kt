@@ -1,250 +1,281 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import android.util.Log;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.door43.data.AssetsProvider;
-import com.door43.translationstudio.IntegrationTest;
-import com.door43.translationstudio.ui.translate.ReviewModeAdapter;
-import com.door43.translationstudio.rendering.RenderingGroup;
-import com.door43.util.FileUtilities;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.inject.Inject;
-
-import dagger.hilt.android.testing.HiltAndroidRule;
-import dagger.hilt.android.testing.HiltAndroidTest;
+import android.util.Log
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.data.AssetsProvider
+import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.ui.translate.ReviewModeAdapter
+import com.door43.util.FileUtilities
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.koin.test.KoinTest
+import org.koin.test.inject
+import org.unfoldingword.tools.logger.Logger
+import java.io.IOException
 
 /**
  * Created by blm on 7/25/16.
  */
-@HiltAndroidTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(AndroidJUnit4::class)
 @IntegrationTest
-public class UsxBrokenRenderTest {
+class UsxBrokenRenderTest : KoinTest {
 
-    @Rule
-    public HiltAndroidRule hiltRule = new HiltAndroidRule(this);
+    private val assetsProvider: AssetsProvider by inject()
+    private val renderingProvider: RenderingProvider by inject()
 
-    @Inject
-    AssetsProvider assetsProvider;
-    @Inject
-    RenderingProvider renderingProvider;
-
-    public static final String TAG = UsxBrokenRenderTest.class.getSimpleName();
-    private String expectedText;
+    private var expectedText: String? = null
 
     @Before
-    public void setUp() {
-        Logger.flush();
-        hiltRule.inject();
+    fun setUp() {
+        Logger.flush()
     }
 
     @Test
-    public void test01ProcessMk_1_1() throws Exception {
+    @Throws(Exception::class)
+    fun test01ProcessMk_1_1() {
         //given
-        String search = null;
-        String testId = "usx/mk_1_1";
+        val search: String? = null
+        val testId = "usx/mk_1_1"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test02ProcessMk_7_6() throws Exception {
+    @Throws(Exception::class)
+    fun test02ProcessMk_7_6() {
         //given
-        String search = null;
-        String testId = "usx/mk_7_6";
+        val search: String? = null
+        val testId = "usx/mk_7_6"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test03ProcessMk_7_14() throws Exception {
+    @Throws(Exception::class)
+    fun test03ProcessMk_7_14() {
         //given
-        String search = null;
-        String testId = "usx/mk_7_14";
+        val search: String? = null
+        val testId = "usx/mk_7_14"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test04ProcessMk_11_24() throws Exception {
+    @Throws(Exception::class)
+    fun test04ProcessMk_11_24() {
         //given
-        String search = null;
-        String testId = "usx/mk_11_24";
+        val search: String? = null
+        val testId = "usx/mk_11_24"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test05ProcessMk_16_19() throws Exception {
+    @Throws(Exception::class)
+    fun test05ProcessMk_16_19() {
         //given
-        String search = null;
-        String testId = "usx/mk_16_19";
+        val search: String? = null
+        val testId = "usx/mk_16_19"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test06ProcessMk_1_1Search() throws Exception {
+    @Throws(Exception::class)
+    fun test06ProcessMk_1_1Search() {
         //given
-        String search = "</"; // make sure matching part of token does not break rendering
-        String testId = "usx/mk_1_1";
+        val search = "</" // make sure matching part of token does not break rendering
+        val testId = "usx/mk_1_1"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test07ProcessMk_7_6Search() throws Exception {
+    @Throws(Exception::class)
+    fun test07ProcessMk_7_6Search() {
         //given
-        String search = "</"; // make sure matching part of token does not break rendering
-        String testId = "usx/mk_7_6";
+        val search = "</" // make sure matching part of token does not break rendering
+        val testId = "usx/mk_7_6"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test08ProcessMk_7_14Search() throws Exception {
+    @Throws(Exception::class)
+    fun test08ProcessMk_7_14Search() {
         //given
-        String search = "</"; // make sure matching part of token does not break rendering
-        String testId = "usx/mk_7_14";
+        val search = "</" // make sure matching part of token does not break rendering
+        val testId = "usx/mk_7_14"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test09ProcessMk_11_24Search() throws Exception {
+    @Throws(Exception::class)
+    fun test09ProcessMk_11_24Search() {
         //given
-        String search = "</"; // make sure matching part of token does not break rendering
-        String testId = "usx/mk_11_24";
+        val search = "</" // make sure matching part of token does not break rendering
+        val testId = "usx/mk_11_24"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
     @Test
-    public void test10ProcessMk_16_19Search() throws Exception {
+    @Throws(Exception::class)
+    fun test10ProcessMk_16_19Search() {
         //given
-        String search = "</"; // make sure matching part of token does not break rendering
-        String testId = "usx/mk_16_19";
+        val search = "</" // make sure matching part of token does not break rendering
+        val testId = "usx/mk_16_19"
 
         //when
-        String out = doRender(search, testId);
+        val out = doRender(search, testId)
 
         //then
-        verifyProcessedText(expectedText, out);
+        verifyProcessedText(expectedText!!, out)
     }
 
-    private String doRender(String search, String testId) throws IOException {
-        String testTextFile = testId+ "_raw.data";
-        String expectTextFile = testId+ "_processed.data";
-        InputStream testTextStream = assetsProvider.open(testTextFile);
-        String testText = FileUtilities.readStreamToString(testTextStream);
-        Assert.assertNotNull(testText);
-        Assert.assertFalse(testText.isEmpty());
-        InputStream testExpectedStream = assetsProvider.open(expectTextFile);
-        expectedText = FileUtilities.readStreamToString(testExpectedStream);
-        Assert.assertNotNull(expectedText);
-        Assert.assertFalse(expectedText.isEmpty());
-        RenderingGroup renderingGroup = new RenderingGroup();
-        TranslationFormat format = TranslationFormat.USX;
+    @Throws(IOException::class)
+    private fun doRender(search: String?, testId: String?): String {
+        val testTextFile = testId + "_raw.data"
+        val expectTextFile = testId + "_processed.data"
+        val testTextStream = assetsProvider.open(testTextFile)
+        val testText: String = FileUtilities.readStreamToString(testTextStream)
+        Assert.assertNotNull(testText)
+        Assert.assertFalse(testText.isEmpty())
+        val testExpectedStream = assetsProvider.open(expectTextFile)
+        expectedText = FileUtilities.readStreamToString(testExpectedStream)
+        Assert.assertNotNull(expectedText)
+        Assert.assertFalse(expectedText!!.isEmpty())
+        val renderingGroup = RenderingGroup()
+        val format = TranslationFormat.USX
 
         renderingProvider.setupRenderingGroup(
-                format,
-                renderingGroup,
-                null,
-                null,
-                false
-        );
+            format,
+            renderingGroup,
+            null,
+            null,
+            false
+        )
 
-        if(search != null) {
-            renderingGroup.setSearchString(search, ReviewModeAdapter.HIGHLIGHT_COLOR);
+        if (search != null) {
+            renderingGroup.setSearchString(search, ReviewModeAdapter.HIGHLIGHT_COLOR)
         }
-        renderingGroup.init(testText);
-        return renderingGroup.start().toString();
+        renderingGroup.init(testText)
+        return renderingGroup.start().toString()
     }
 
-    private void verifyProcessedText(String expectedText, String out) {
-        Assert.assertNotNull(out);
-        Assert.assertFalse(out.isEmpty());
-        if(!out.equals(expectedText)) {
-            if(out.length() != expectedText.length()) {
-                Log.e(TAG, "expected length " + expectedText.length() + " but got length " + out.length());
+    private fun verifyProcessedText(expectedText: String, out: String?) {
+        Assert.assertNotNull(out)
+        Assert.assertFalse(out!!.isEmpty())
+        if (out != expectedText) {
+            if (out.length != expectedText.length) {
+                Log.e(
+                    TAG,
+                    "expected length " + expectedText.length + " but got length " + out.length
+                )
             }
 
-            for( int ptr = 0; ; ptr++) {
-                if(ptr >= out.length()) {
-                    Log.e(TAG, "expected extra text at position " + ptr + ": '" + expectedText.substring(ptr) + "'");
-                    if (ptr < expectedText.length()) {
-                        Log.e(TAG, "character: '" + expectedText.charAt(ptr) + "', " + Character.codePointAt(expectedText, ptr) );
+            var ptr = 0
+            while (true) {
+                if (ptr >= out.length) {
+                    Log.e(
+                        TAG,
+                        "expected extra text at position $ptr: '" + expectedText.substring(
+                            ptr
+                        ) + "'"
+                    )
+                    if (ptr < expectedText.length) {
+                        Log.e(
+                            TAG,
+                            "character: '" + expectedText[ptr] + "', " + Character.codePointAt(
+                                expectedText,
+                                ptr
+                            )
+                        )
                     }
-                    break;
+                    break
                 }
-                if(ptr >= expectedText.length()) {
-                    Log.e(TAG, "not expected extra text at position " + ptr + ": '" + out.substring(ptr) + "'");
-                    Log.e(TAG, "character: '" + out.charAt(ptr) + "', " + Character.codePointAt(out, ptr));
-                    break;
+                if (ptr >= expectedText.length) {
+                    Log.e(
+                        TAG,
+                        "not expected extra text at position " + ptr + ": '" + out.substring(ptr) + "'"
+                    )
+                    Log.e(
+                        TAG,
+                        "character: '" + out[ptr] + "', " + Character.codePointAt(out, ptr)
+                    )
+                    break
                 }
 
-                char cOut = out.charAt(ptr);
-                char cExpect = expectedText.charAt(ptr);
-                if(cOut != cExpect) {
-                    Log.e(TAG, "expected different at position " + ptr );
-                    Log.e(TAG, "expected: '" + expectedText.substring(ptr) + "'");
-                    Log.e(TAG, "but got: '" + out.substring(ptr) + "'");
-                    Log.e(TAG, "expected character: '" + expectedText.charAt(ptr) + "', " + Character.codePointAt(expectedText, ptr) );
-                    Log.e(TAG, "but got character: '" + out.charAt(ptr) + "', " + Character.codePointAt(out, ptr));
-                    break;
+                val cOut = out[ptr]
+                val cExpect = expectedText.get(ptr)
+                if (cOut != cExpect) {
+                    Log.e(TAG, "expected different at position $ptr")
+                    Log.e(TAG, "expected: '" + expectedText.substring(ptr) + "'")
+                    Log.e(TAG, "but got: '" + out.substring(ptr) + "'")
+                    Log.e(
+                        TAG,
+                        "expected character: '" + expectedText[ptr] + "', " + Character.codePointAt(
+                            expectedText,
+                            ptr
+                        )
+                    )
+                    Log.e(
+                        TAG,
+                        "but got character: '" + out[ptr] + "', " + Character.codePointAt(
+                            out,
+                            ptr
+                        )
+                    )
+                    break
                 }
+                ptr++
             }
         }
-        Assert.assertEquals(out, expectedText);
+        Assert.assertEquals(out, expectedText)
     }
 
 
+    companion object {
+        val TAG: String = UsxBrokenRenderTest::class.java.simpleName
+    }
 }

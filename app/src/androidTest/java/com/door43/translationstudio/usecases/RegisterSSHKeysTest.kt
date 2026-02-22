@@ -6,13 +6,12 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.RegisterSSHKeys
 import com.door43.util.FileUtilities
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
@@ -22,31 +21,25 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.gogsclient.User
-import javax.inject.Inject
 
-@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class RegisterSSHKeysTest {
+class RegisterSSHKeysTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject lateinit var registerSSHKeys: RegisterSSHKeys
-    @Inject lateinit var gogsLogin: GogsLogin
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var prefRepository: IPreferenceRepository
+    private val registerSSHKeys: RegisterSSHKeys by inject()
+    private val profile: Profile by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val prefRepository: IPreferenceRepository by inject()
 
     private val server = MockWebServer()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
         deleteSSHKeys()
 
         prefRepository.setDefaultPref(

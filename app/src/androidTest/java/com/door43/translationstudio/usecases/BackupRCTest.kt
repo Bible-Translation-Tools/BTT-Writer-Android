@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
@@ -14,49 +15,39 @@ import com.door43.usecases.BackupRC
 import com.door43.usecases.ImportProjects
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Translation
 import java.io.File
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class BackupRCTest {
+class BackupRCTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    @ApplicationContext lateinit var appContext: Context
-    @Inject lateinit var backupRC: BackupRC
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var assetProvider: AssetsProvider
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var translator: Translator
+    private val appContext: Context by inject()
+    private val backupRC: BackupRC by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
+    private val assetProvider: AssetsProvider by inject()
+    private val importProjects: ImportProjects by inject()
+    private val profile: Profile by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val translator: Translator by inject()
 
     private var tempDir: File? = null
     private lateinit var targetLanguage: TargetLanguage
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
         targetLanguage = library.index.getTargetLanguage("aae")
     }
 

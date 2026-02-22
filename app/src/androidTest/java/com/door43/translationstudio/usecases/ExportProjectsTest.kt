@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
@@ -18,50 +19,39 @@ import com.door43.usecases.ExportProjects
 import com.door43.usecases.ExportProjects.ExportType
 import com.door43.usecases.ImportProjects
 import com.door43.util.Zip
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.FileInputStream
-import javax.inject.Inject
 
-@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class ExportProjectsTest {
+class ExportProjectsTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    @ApplicationContext lateinit var appContext: Context
-    @Inject lateinit var exportProjects: ExportProjects
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var translator: Translator
+    private val appContext: Context by inject()
+    private val exportProjects: ExportProjects by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
+    private val profile: Profile by inject()
+    private val importProjects: ImportProjects by inject()
+    private val translator: Translator by inject()
 
     private var targetTranslation: TargetTranslation? = null
     private var targetLanguage: TargetLanguage? = null
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
         targetLanguage = library.index.getTargetLanguage("aa")
         targetTranslation = TestUtils.importTargetTranslation(
             library,

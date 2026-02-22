@@ -28,6 +28,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.UITest
@@ -48,9 +49,6 @@ import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.translate.review.ReviewHolder
 import com.door43.usecases.ImportProjects
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -58,28 +56,23 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.BeforeClass
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import javax.inject.Inject
 
 @RunWith(AndroidJUnit4::class)
-@HiltAndroidTest
 @LargeTest
 @UITest
-class TargetTranslationActivityTest {
+class TargetTranslationActivityTest : KoinAndroidTest() {
 
-    @get:Rule
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject @ApplicationContext lateinit var context: Context
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var translator: Translator
+    private val context: Context by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
+    private val importProjects: ImportProjects by inject()
+    private val profile: Profile by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val translator: Translator by inject()
 
     companion object {
         @JvmStatic
@@ -91,7 +84,7 @@ class TargetTranslationActivityTest {
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
     }
 
     @After

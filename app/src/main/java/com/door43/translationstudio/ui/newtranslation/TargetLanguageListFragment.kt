@@ -6,12 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
-import androidx.fragment.app.activityViewModels
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.FragmentLanguageListBinding
 import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.Searchable
 import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.unfoldingword.door43client.models.TargetLanguage
 
 /**
@@ -24,7 +24,7 @@ class TargetLanguageListFragment : BaseFragment(), Searchable {
     private var _binding: FragmentLanguageListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: NewTargetTranslationModel by activityViewModels()
+    private val viewModel: NewTargetTranslationModel by activityViewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,

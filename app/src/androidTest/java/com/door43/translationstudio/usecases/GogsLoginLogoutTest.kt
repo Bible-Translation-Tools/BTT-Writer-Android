@@ -6,15 +6,13 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.TestUtils.getTokenStub
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.GogsLogout
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
@@ -23,37 +21,29 @@ import junit.framework.TestCase.assertTrue
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.gogsclient.User
-import javax.inject.Inject
 
-@HiltAndroidTest
+
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class GogsLoginLogoutTest {
+class GogsLoginLogoutTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject @ApplicationContext lateinit var context: Context
-    @Inject lateinit var gogsLogin: GogsLogin
-    @Inject lateinit var gogsLogout: GogsLogout
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var prefRepository: IPreferenceRepository
+    private val appContext: Context by inject()
+    private val gogsLogin: GogsLogin by inject()
+    private val gogsLogout: GogsLogout by inject()
+    private val profile: Profile by inject()
+    private val prefRepository: IPreferenceRepository by inject()
 
     private val username = "test"
     private val server = MockWebServer()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-
-        prefRepository.setDefaultPref(
-            SettingsActivity.KEY_PREF_GOGS_API,
-            server.url("/api").toString()
-        )
+        server.start()
+        prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_GOGS_API, server.url("/api/").toString())
     }
 
     @Test
@@ -125,7 +115,7 @@ class GogsLoginLogoutTest {
 
     private fun createGetTokenResponse(): MockResponse {
         val body = """
-            [{"id": 1, "name": "${getTokenStub(context)}", "sha1": "${TestUtils.generateHash()}"}]
+            [{"id": 1, "name": "${getTokenStub(appContext)}", "sha1": "${TestUtils.generateHash()}"}]
         """.trimIndent()
 
         return MockResponse().setBody(body).setResponseCode(200)
@@ -133,7 +123,7 @@ class GogsLoginLogoutTest {
 
     private fun createTokenResponse(): MockResponse {
         val body = """
-            {"id": 1, "name": "${getTokenStub(context)}", "sha1": "${TestUtils.generateHash()}"}
+            {"id": 1, "name": "${getTokenStub(appContext)}", "sha1": "${TestUtils.generateHash()}"}
         """.trimIndent()
 
         return MockResponse().setBody(body).setResponseCode(201)

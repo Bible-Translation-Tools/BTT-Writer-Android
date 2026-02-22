@@ -13,28 +13,22 @@ import androidx.test.espresso.action.ViewActions.swipeUp
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-@HiltAndroidTest
 @UITest
-class SettingsActivityTest {
-
-    @get:Rule
-    var hiltRule = HiltAndroidRule(this)
+class SettingsActivityTest : KoinAndroidTest() {
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
     }
 
     @Test

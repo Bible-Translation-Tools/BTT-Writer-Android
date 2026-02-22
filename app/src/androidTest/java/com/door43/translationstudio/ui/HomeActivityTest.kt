@@ -15,6 +15,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Profile
@@ -24,32 +25,25 @@ import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import javax.inject.Inject
+import org.koin.core.component.inject
 
 @RunWith(AndroidJUnit4::class)
-@HiltAndroidTest
 @UITest
-class HomeActivityTest {
+class HomeActivityTest : KoinAndroidTest() {
 
-    @get:Rule
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject lateinit var profile: Profile
+    private val profile: Profile by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
         Intents.init()
 
         mockkStatic(FileProvider::class)

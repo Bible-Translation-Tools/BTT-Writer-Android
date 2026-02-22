@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -13,41 +14,32 @@ import com.door43.translationstudio.ui.translate.ReviewListItem
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.RenderHelps
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Link
-import javax.inject.Inject
 
-@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
-class RenderHelpsTest {
+class RenderHelpsTest : KoinAndroidTest() {
 
-    @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
-
-    @Inject
-    @ApplicationContext lateinit var appContext: Context
-    @Inject lateinit var importProjects: ImportProjects
-    @Inject lateinit var directoryProvider: IDirectoryProvider
-    @Inject lateinit var assetsProvider: AssetsProvider
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var translator: Translator
-    @Inject lateinit var profile: Profile
-    @Inject lateinit var renderHelps: RenderHelps
+    private val appContext: Context by inject()
+    private val importProjects: ImportProjects by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val library: Door43Client by inject()
+    private val translator: Translator by inject()
+    private val profile: Profile by inject()
+    private val renderHelps: RenderHelps by inject()
 
     @Before
     fun setUp() {
-        hiltRule.inject()
+        // Koin is already initialized via KoinTestApplication
     }
 
     @Test
