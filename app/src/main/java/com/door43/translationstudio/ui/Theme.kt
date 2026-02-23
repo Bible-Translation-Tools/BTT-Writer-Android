@@ -1,0 +1,165 @@
+package com.door43.translationstudio.ui
+
+import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+
+// --- Brand Colors ---
+val PrimaryBlueLight = Color(0xFF0250D3)
+val PrimaryBlueDark = Color(0xFF6A91D3)
+val PrimaryDarkBlue = Color(0xFF003389) // primary_dark light
+val PrimaryDarkBlueMuted = Color(0xFF445E89) // primary_dark dark
+val PrimaryLightBlue = Color(0xFFE2F0FF)
+
+// --- Accent (Secondary) Colors ---
+val AccentGreenLight = Color(0xFF00A56C)
+val AccentGreenDark = Color(0xFF52A588)
+
+// --- Backgrounds & Surfaces ---
+val BackgroundLight = Color(0xFFEFEFEF)
+val BackgroundDark = Color(0xFF1C1C1C)
+val SurfaceLight = Color(0xFFFFFFFF)
+val SurfaceDark = Color(0xFF272727)
+
+// --- Text Colors ---
+val TextPrimaryDark = Color(0xFF1C1C1C) // Used on light backgrounds
+val TextPrimaryLight = Color(0xFFD2D2D2) // Used on dark backgrounds
+val TextSecondaryDark = Color(0xFF888888)
+val TextSecondaryLight = Color(0xFFA4A4A4)
+val TextReverseLight = Color(0xFFFFFFFF)
+val TextReverseDark = Color(0xFF1C1C1C)
+
+// --- Borders & Extras ---
+val BorderLight = Color(0xFFDDDDDD)
+val BorderDark = Color(0xFF333333)
+val ErrorLight = Color(0xFFFF0000)
+val ErrorDark = Color(0xFFFF8080)
+
+private val LightColors = lightColorScheme(
+    primary = PrimaryBlueLight,
+    onPrimary = TextReverseLight,
+    primaryContainer = PrimaryLightBlue,
+    onPrimaryContainer = PrimaryDarkBlue,
+
+    secondary = AccentGreenLight,
+    onSecondary = TextReverseLight,
+
+    background = BackgroundLight,
+    onBackground = TextPrimaryDark,
+
+    surface = SurfaceLight, // Formerly card_background_color
+    onSurface = TextPrimaryDark, // Formerly dark_primary_text
+    surfaceVariant = BorderLight,
+    onSurfaceVariant = TextSecondaryDark,
+
+    error = ErrorLight,
+    onError = TextReverseLight
+)
+
+private val DarkColors = darkColorScheme(
+    primary = PrimaryBlueDark,
+    onPrimary = TextReverseDark,
+    primaryContainer = PrimaryDarkBlueMuted,
+    onPrimaryContainer = PrimaryLightBlue,
+
+    secondary = AccentGreenDark,
+    onSecondary = TextReverseDark,
+
+    background = BackgroundDark,
+    onBackground = TextPrimaryLight,
+
+    surface = SurfaceDark, // Formerly card_background_color
+    onSurface = TextPrimaryLight,
+    surfaceVariant = BorderDark,
+    onSurfaceVariant = TextSecondaryLight,
+
+    error = ErrorDark,
+    onError = TextReverseDark
+)
+
+val AppTypography = Typography(
+    titleLarge = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.sp
+    ),
+    titleMedium = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.15.sp
+    ),
+    titleSmall = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp,
+    ),
+
+    bodyLarge = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.5.sp
+    ),
+    bodyMedium = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.25.sp
+    ),
+
+    labelLarge = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
+    ),
+    labelMedium = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    )
+)
+
+@Composable
+fun AppTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colorScheme = when {
+        darkTheme -> DarkColors
+        else -> LightColors
+    }
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+        }
+    }
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = AppTypography,
+        shapes = Shapes(),
+        content = content
+    )
+}

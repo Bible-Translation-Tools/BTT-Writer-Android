@@ -9,10 +9,14 @@ import com.door43.repositories.LanguageRequestRepository
 import com.door43.repositories.PreferenceRepository
 import com.door43.translationstudio.DirectoryProvider
 import com.door43.translationstudio.MainAssetsProvider
+import com.door43.translationstudio.core.AndroidBackupController
+import com.door43.translationstudio.core.AndroidResourceProvider
 import com.door43.translationstudio.core.ArchiveImporter
+import com.door43.translationstudio.core.BackupController
 import com.door43.translationstudio.core.DownloadImages
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.RenderingProvider
+import com.door43.translationstudio.core.ResourceProvider
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
@@ -155,5 +159,7 @@ val appModule = module {
 
 val prodDataModule = module {
     singleOf(::MainAssetsProvider).bind<AssetsProvider>()
+    singleOf(::AndroidResourceProvider).bind<ResourceProvider>()
+    singleOf(::AndroidBackupController).bind<BackupController>()
     singleOf(::Door43Client)
 }

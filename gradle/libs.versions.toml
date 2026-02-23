@@ -3,6 +3,8 @@
 agp = "8.7.2"
 kotlin = "2.1.0"
 dexcount = "4.0.0"
+composeBom = "2026.02.00"
+activityCompose = "1.9.3"
 
 # AndroidX Core
 koin-bom = "4.1.1"
@@ -15,6 +17,7 @@ recyclerview = "1.4.0"
 core-splashscreen = "1.0.1"
 preference-ktx = "1.2.1"
 fragment-ktx = "1.8.6"
+lifecycleRuntime = "2.8.7"
 
 # Material Design
 material = "1.12.0"
@@ -68,11 +71,24 @@ androidx-preference-ktx = { group = "androidx.preference", name = "preference-kt
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment-ktx" }
 
 # Material Design
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Compose
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntime" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+
+# Koin
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-android-compat = { module = "io.insert-koin:koin-android-compat" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 koin-core-coroutines = { module = "io.insert-koin:koin-core-coroutines" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin-bom" }
 
 # Git/SSH
 jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
@@ -110,7 +126,6 @@ markdownj = { group = "org.markdownj", name = "markdownj-core", version.ref = "m
 
 # Commons
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
-org-json = { group = "org.json", name = "json", version.ref = "json" }
 
 # Testing - JUnit
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -142,3 +157,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 dexcount = { id = "com.getkeepsafe.dexcount", version.ref = "dexcount" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

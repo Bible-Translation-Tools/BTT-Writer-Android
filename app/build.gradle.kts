@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.dexcount)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -19,7 +20,7 @@ android {
     }
     defaultConfig {
         applicationId = "org.bibletranslationtools.writer.android"
-        minSdk = 22
+        minSdk = 26
         compileSdk = 35
         targetSdk = 35
         versionCode = 40
@@ -86,6 +87,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        compose = true
     }
     testOptions {
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
@@ -153,11 +155,27 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.intents)
     androidTestImplementation(libs.androidx.test.uiautomator)
 
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    //androidTestImplementation(composeBom)
+
+    // Add specific Compose dependencies (versions are managed by BOM)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.compose.material.icons.extended)
+
+    // Activity integration
+    implementation(libs.androidx.activity.compose)
+
     // Koin
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
     implementation(libs.koin.core.coroutines)
     implementation(libs.koin.android.compat)
+    implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit)
     androidTestUtil(libs.androidx.test.orchestrator)
@@ -175,7 +193,6 @@ dependencies {
 
     // JSON
     testImplementation(libs.junit.jupiter)
-    implementation(libs.org.json)
 }
 
 tasks.register<Copy>("copyDebugGithubToken") {
