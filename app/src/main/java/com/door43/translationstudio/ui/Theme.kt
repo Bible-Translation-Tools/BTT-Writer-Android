@@ -26,7 +26,9 @@ val PrimaryLightBlue = Color(0xFFE2F0FF)
 
 // --- Accent (Secondary) Colors ---
 val AccentGreenLight = Color(0xFF00A56C)
+val AccentLightGreenLight = Color(0xFFC0E9D6)
 val AccentGreenDark = Color(0xFF52A588)
+val AccentLightGreenDark = Color(0xFF8EA89E)
 
 // --- Backgrounds & Surfaces ---
 val BackgroundLight = Color(0xFFEFEFEF)
@@ -55,6 +57,7 @@ private val LightColors = lightColorScheme(
     onPrimaryContainer = PrimaryDarkBlue,
 
     secondary = AccentGreenLight,
+    onSecondaryContainer = AccentLightGreenLight,
     onSecondary = TextReverseLight,
 
     background = BackgroundLight,
@@ -76,6 +79,7 @@ private val DarkColors = darkColorScheme(
     onPrimaryContainer = PrimaryLightBlue,
 
     secondary = AccentGreenDark,
+    onSecondaryContainer = AccentLightGreenDark,
     onSecondary = TextReverseDark,
 
     background = BackgroundDark,

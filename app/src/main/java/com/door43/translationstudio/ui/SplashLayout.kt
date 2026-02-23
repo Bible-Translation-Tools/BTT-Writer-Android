@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,7 +30,7 @@ fun SplashLayout(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colorResource(id = R.color.background_color))
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -41,7 +42,7 @@ fun SplashLayout(
 
         Text(
             text = stringResource(id = R.string.welcome),
-            color = colorResource(id = R.color.dark_primary_text),
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.displaySmall
         )
@@ -50,11 +51,17 @@ fun SplashLayout(
 
         if (progressValue == null) {
             LinearProgressIndicator(
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                gapSize = 0.dp,
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
             LinearProgressIndicator(
                 progress = { progressValue / 100f },
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                gapSize = 0.dp,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -63,7 +70,7 @@ fun SplashLayout(
 
         Text(
             text = progressMessage.ifEmpty { stringResource(id = R.string.loading) },
-            color = colorResource(id = R.color.dark_secondary_text),
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 2,
             style = MaterialTheme.typography.bodyLarge
