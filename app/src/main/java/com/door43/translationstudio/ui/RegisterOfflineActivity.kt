@@ -1,48 +1,48 @@
 package com.door43.translationstudio.ui
 
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.databinding.ActivityRegisterOfflineBinding
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
+import com.door43.translationstudio.ui.profile.RegisterOfflineScreen
+import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
 import org.koin.android.ext.android.inject
-import kotlin.getValue
+import org.koin.androidx.compose.koinViewModel
 
 class RegisterOfflineActivity : AppCompatActivity() {
     val profile: Profile by inject()
 
-    private lateinit var binding: ActivityRegisterOfflineBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityRegisterOfflineBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        with(binding) {
-            account.cancelButton.setOnClickListener { finish() }
-            account.okButton.setOnClickListener {
-                val fullName = account.fullName.text.toString().trim()
-                if (fullName.isNotEmpty()) {
-                    ProfileActivity.showPrivacyNotice(this@RegisterOfflineActivity) { _, _ ->
-                        profile.login(fullName)
-                        finish()
-                    }
-                } else {
-                    // missing fields
-                    val snack = Snackbar.make(
-                        findViewById(android.R.id.content),
-                        resources.getString(R.string.complete_required_fields),
-                        Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-                    snack.show()
-                }
+        setContent {
+            val viewModel: SettingsViewModel = koinViewModel()
+            val model by viewModel.model.collectAsStateWithLifecycle()
+
+            val lightValue = resources.getString(R.string.theme_value_light)
+            val darkValue = resources.getString(R.string.theme_value_dark)
+            val isDarkTheme = when (model.currentThemeValue) {
+                lightValue -> false
+                darkValue -> true
+                else -> isSystemInDarkTheme()
             }
-            account.privacyNotice.setOnClickListener {
-                ProfileActivity.showPrivacyNotice(
-                    this@RegisterOfflineActivity, null
+
+            AppTheme(darkTheme = isDarkTheme) {
+                RegisterOfflineScreen(
+                    onCancel = { finish() },
+                    onShowPrivacyNotice = {
+                        ProfileActivity.showPrivacyNotice(this@RegisterOfflineActivity, null)
+                    },
+                    onContinue = { fullName ->
+                        ProfileActivity.showPrivacyNotice(this@RegisterOfflineActivity) { _, _ ->
+                            profile.login(fullName)
+                            finish()
+                        }
+                    }
                 )
             }
         }
