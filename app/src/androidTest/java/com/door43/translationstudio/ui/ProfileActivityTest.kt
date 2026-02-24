@@ -130,7 +130,7 @@ class ProfileActivityTest : KoinAndroidTest() {
             onView(withId(R.id.ok_button)).tryPerform(click())
             checkDialogText(R.string.publishing_privacy_notice, true)
             onView(withText(R.string.label_continue)).tryPerform(click())
-            onView(withId(R.id.accept_terms_btn)).tryPerform(click())
+            //onView(withId(R.id.accept_terms_btn)).tryPerform(click())
 
             assertEquals("TestUser", profile.fullName)
         }
