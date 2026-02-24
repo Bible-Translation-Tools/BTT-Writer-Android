@@ -16,6 +16,8 @@ import org.koin.androidx.compose.koinViewModel
  */
 class SplashScreenActivity : BaseActivity() {
 
+    override val isBootActivity: Boolean = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

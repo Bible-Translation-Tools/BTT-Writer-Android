@@ -14,6 +14,9 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 
 class CrashReporterActivity : BaseActivity() {
+
+    override val isBootActivity: Boolean = true
+
     private var notes = ""
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 

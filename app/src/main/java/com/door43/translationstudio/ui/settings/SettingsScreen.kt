@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.ProgressDialog
+import com.door43.translationstudio.ui.legal.LegalDocumentDialog
 import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -37,7 +38,6 @@ fun SettingsScreen(
     appVersion: String,
     onNavigateBack: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToLegal: (Int) -> Unit,
     onNavigateToDeveloperTools: () -> Unit
 ) {
     val model by viewModel.model.collectAsStateWithLifecycle()
@@ -60,6 +60,8 @@ fun SettingsScreen(
 
     var showBackupIntervalDialog by remember { mutableStateOf(false) }
     var showLoggingLevelDialog by remember { mutableStateOf(false) }
+
+    var openLegalDocumentId by remember { mutableStateOf<Int?>(null) }
 
     val openDirectoryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
@@ -265,8 +267,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_license_agreement),
-                    // Pass the actual raw file or string resource ID your activity expects
-                    onClick = { onNavigateToLegal(R.string.license_pdf) }
+                    onClick = { openLegalDocumentId = R.string.license_pdf }
                 )
             }
 
@@ -275,7 +276,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_statement_of_faith),
-                    onClick = { onNavigateToLegal(R.string.statement_of_faith) }
+                    onClick = { openLegalDocumentId = R.string.statement_of_faith }
                 )
             }
 
@@ -284,7 +285,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_translation_guidelines),
-                    onClick = { onNavigateToLegal(R.string.translation_guidlines) }
+                    onClick = { openLegalDocumentId = R.string.translation_guidlines }
                 )
             }
 
@@ -293,7 +294,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_software_licenses),
-                    onClick = { onNavigateToLegal(R.string.software_licenses) }
+                    onClick = { openLegalDocumentId = R.string.software_licenses }
                 )
             }
 
@@ -645,6 +646,13 @@ fun SettingsScreen(
                 showLoggingLevelDialog = false
             },
             onDismissRequest = { showLoggingLevelDialog = false }
+        )
+    }
+
+    openLegalDocumentId?.let { resourceId ->
+        LegalDocumentDialog(
+            htmlResourceId = resourceId,
+            onDismissRequest = { openLegalDocumentId = null }
         )
     }
 }

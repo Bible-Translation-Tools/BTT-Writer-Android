@@ -80,7 +80,7 @@ private val DarkColors = darkColorScheme(
 
     secondary = AccentGreenDark,
     onSecondaryContainer = AccentLightGreenDark,
-    onSecondary = TextReverseDark,
+    onSecondary = TextPrimaryLight,
 
     background = BackgroundDark,
     onBackground = TextPrimaryLight,

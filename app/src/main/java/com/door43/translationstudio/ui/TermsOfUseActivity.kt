@@ -2,100 +2,88 @@ package com.door43.translationstudio.ui
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.lifecycle.lifecycleScope
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.databinding.ActivityTermsBinding
 import com.door43.translationstudio.ui.home.HomeActivity
-import com.door43.translationstudio.ui.legal.LegalDocumentActivity
-import com.door43.usecases.GogsLogout
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.koin.android.ext.android.inject
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.TaskManager
-import kotlin.getValue
+import com.door43.translationstudio.ui.legal.TermsOfUseScreen
+import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
+import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 
-/**
- * This activity checks if the user has accepted the terms of use before continuing to load the app
- */
-class TermsOfUseActivity : BaseActivity(), ManagedTask.OnFinishedListener {
-    val profile: Profile by inject()
-    val logout: GogsLogout by inject()
+class TermsOfUseActivity : BaseActivity() {
 
-    private lateinit var binding: ActivityTermsBinding
+    override val isBootActivity: Boolean = true
+
+    private val viewModel: TermsOfUseViewModel by viewModel {
+        parametersOf(resources.getInteger(R.integer.terms_of_use_version))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val termsVersion = resources.getInteger(R.integer.terms_of_use_version)
-
-        if (!profile.loggedIn) {
-            finish()
-            return
-        }
-
-        if (termsVersion == profile.termsOfUseLastAccepted) {
-            // skip terms if already accepted
-            startMainActivity()
-        } else {
-            binding = ActivityTermsBinding.inflate(layoutInflater)
-            setContentView(binding.root)
-
-            with(binding) {
-                rejectTermsBtn.setOnClickListener { // log out
-                    lifecycleScope.launch {
-                        launch(Dispatchers.IO) {
-                            logout.execute()
-                            profile.logout()
-                        }
-                    }
-
-                    // return to login
-                    val intent = Intent(
-                        this@TermsOfUseActivity,
-                        ProfileActivity::class.java
-                    )
-                    startActivity(intent)
-                    finish()
-                }
-                acceptTermsBtn.setOnClickListener {
-                    profile.termsOfUseLastAccepted = termsVersion
-                    startMainActivity()
-                }
-                licenseBtn.setOnClickListener {
-                    showLicenseDialog(R.string.license_pdf)
-                }
-                translationGuidelinesBtn.setOnClickListener {
-                    showLicenseDialog(R.string.translation_guidlines)
-                }
-                statementOfFaithBtn.setOnClickListener {
-                    showLicenseDialog(R.string.statement_of_faith)
-                }
+        when (viewModel.initialState) {
+            TermsOfUseViewModel.InitialState.GO_HOME -> {
+                startActivity(Intent(this, HomeActivity::class.java))
+                finish()
+                return
+            }
+            TermsOfUseViewModel.InitialState.FINISH -> {
+                finish()
+                return
+            }
+            TermsOfUseViewModel.InitialState.SHOW_TERMS -> {
             }
         }
-    }
 
-    /**
-     * Continues to the splash screen where local resources will be loaded
-     */
-    private fun startMainActivity() {
-        val intent = Intent(this, HomeActivity::class.java)
-        startActivity(intent)
-        finish()
-    }
+        setContent {
+            val settingsViewModel: SettingsViewModel = koinViewModel()
+            val settingsModel by settingsViewModel.model.collectAsStateWithLifecycle()
 
-    /**
-     * Displays a license dialog with the given resource as the text
-     * @param stringResource the string resource to display in the dialog.
-     */
-    private fun showLicenseDialog(stringResource: Int) {
-        val intent = Intent(this, LegalDocumentActivity::class.java)
-        intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, stringResource)
-        startActivity(intent)
-    }
+            val lightValue = resources.getString(R.string.theme_value_light)
+            val darkValue = resources.getString(R.string.theme_value_dark)
+            val isDarkTheme = when (settingsModel.currentThemeValue) {
+                lightValue -> false
+                darkValue -> true
+                else -> isSystemInDarkTheme()
+            }
 
-    override fun onTaskFinished(task: ManagedTask) {
-        TaskManager.clearTask(task)
+            LaunchedEffect(Unit) {
+                viewModel.navigationEvent.collect { event ->
+                    when (event) {
+                        is TermsOfUseViewModel.NavigationEvent.NavigateToHome -> {
+                            startActivity(
+                                Intent(
+                                    this@TermsOfUseActivity,
+                                    HomeActivity::class.java
+                                )
+                            )
+                            finish()
+                        }
+                        is TermsOfUseViewModel.NavigationEvent.NavigateToLogin -> {
+                            startActivity(
+                                Intent(
+                                    this@TermsOfUseActivity,
+                                    ProfileActivity::class.java
+                                )
+                            )
+                            finish()
+                        }
+                    }
+                }
+            }
+
+            AppTheme(darkTheme = isDarkTheme) {
+                TermsOfUseScreen(
+                    onAccept = { viewModel.acceptTerms() },
+                    onReject = { viewModel.rejectTerms() }
+                )
+            }
+        }
     }
 }

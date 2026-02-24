@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
@@ -10,7 +9,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.devtools.DeveloperToolsActivity
-import com.door43.translationstudio.ui.legal.LegalDocumentActivity
 import com.door43.translationstudio.ui.settings.SettingsScreen
 import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -18,7 +16,7 @@ import org.koin.androidx.compose.koinViewModel
 /**
  * A [SettingsActivity] that presents a set of application settings.
  */
-class SettingsActivity : ComponentActivity() {
+class SettingsActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,12 +39,6 @@ class SettingsActivity : ComponentActivity() {
                     onNavigateBack = { finish() },
                     onNavigateToProfile = {
                         val intent = Intent(this, ProfileActivity::class.java)
-                        startActivity(intent)
-                    },
-                    onNavigateToLegal = { resourceId ->
-                        val intent = Intent(this, LegalDocumentActivity::class.java).apply {
-                            putExtra(LegalDocumentActivity.ARG_RESOURCE, resourceId)
-                        }
                         startActivity(intent)
                     },
                     onNavigateToDeveloperTools = {

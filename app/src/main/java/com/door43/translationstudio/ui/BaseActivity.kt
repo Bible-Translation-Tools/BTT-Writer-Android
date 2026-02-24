@@ -8,7 +8,6 @@ import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.foreground.Foreground
 import org.unfoldingword.tools.logger.Logger
-import kotlin.getValue
 
 /**
  * This should be extended by all activities in the app so that we can perform verification on
@@ -16,10 +15,13 @@ import kotlin.getValue
  *
  */
 abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
+
     private var foreground: Foreground? = null
 
     val directoryProvider: IDirectoryProvider by inject()
     val library: Door43Client by inject()
+
+    protected open val isBootActivity: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,44 +33,39 @@ abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
         }
     }
 
-    public override fun onResume() {
+    override fun onResume() {
         super.onResume()
 
         if (!isBootActivity) {
             val crashFiles = Logger.listStacktraces()
 
             if (crashFiles.isNotEmpty()) {
-                // restart
-                val intent = Intent(this, SplashScreenActivity::class.java)
+                val intent = Intent(this, SplashScreenActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
                 startActivity(intent)
                 finish()
             }
         }
     }
 
-    private val isBootActivity: Boolean
-        get() = (this is TermsOfUseActivity
-                || this is SplashScreenActivity
-                || this is CrashReporterActivity)
-
-    public override fun onDestroy() {
-        if (this.foreground != null) {
-            foreground!!.removeListener(this)
-        }
-        super.onDestroy()
-    }
-
     override fun onBecameForeground() {
-        // check if the index had been loaded
         if (!isBootActivity && !library.isLibraryDeployed) {
             Logger.w(this.javaClass.name, "The library was not deployed.")
-            // restart
-            val intent = Intent(this, SplashScreenActivity::class.java)
+
+            val intent = Intent(this, SplashScreenActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
             startActivity(intent)
             finish()
         }
     }
 
     override fun onBecameBackground() {
+    }
+
+    override fun onDestroy() {
+        foreground?.removeListener(this)
+        super.onDestroy()
     }
 }
