@@ -7,6 +7,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.splash.SplashScreen
 import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 

@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui
+package com.door43.translationstudio.ui.splash
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

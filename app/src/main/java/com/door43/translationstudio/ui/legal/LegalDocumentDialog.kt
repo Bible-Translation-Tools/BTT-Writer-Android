@@ -1,89 +1,68 @@
 package com.door43.translationstudio.ui.legal
 
-import android.content.DialogInterface
-import android.os.Bundle
-import android.text.Html
-import android.text.method.LinkMovementMethod
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import androidx.fragment.app.DialogFragment
-import com.door43.translationstudio.databinding.DialogLicenseBinding
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.door43.translationstudio.R
 
-/**
- * Created by joel on 10/23/2015.
- */
-class LegalDocumentDialog : DialogFragment() {
-    private var dismissListener: DialogInterface.OnDismissListener? = null
+@Composable
+fun LegalDocumentDialog(
+    htmlResourceId: Int,
+    onDismissRequest: () -> Unit
+) {
+    val htmlString = stringResource(id = htmlResourceId)
+    val parsedHtml = AnnotatedString.fromHtml(htmlString)
 
-    private var _binding: DialogLicenseBinding? = null
-    private val binding get() = _binding!!
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = parsedHtml,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                )
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val style = STYLE_NO_TITLE
-        val theme = 0
-        setStyle(style, theme)
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        val args = arguments
-        var resourceId = 0
-        if (args != null) {
-            resourceId = args.getInt(LegalDocumentActivity.ARG_RESOURCE, 0)
+                TextButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_close).uppercase(),
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
         }
-        if (resourceId == 0) {
-            dismiss()
-        }
-
-        // inflate the views
-        _binding = DialogLicenseBinding.inflate(inflater, container, false)
-
-        // validate the arguments
-        if (resourceId == 0) {
-            dismiss()
-        } else {
-            // load the string
-            val licenseString = resources.getString(resourceId)
-            binding.licenseText.text = Html.fromHtml(licenseString)
-            binding.licenseText.movementMethod = LinkMovementMethod.getInstance()
-        }
-
-        // enable button
-        binding.dismissLicenseBtn.setOnClickListener { this@LegalDocumentDialog.dismiss() }
-        return binding.root
-    }
-
-    override fun onStart() {
-        super.onStart()
-        // safety check
-        if (dialog == null) {
-            return
-        }
-        dialog?.window?.setLayout(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.MATCH_PARENT
-        )
-        // scroll to the top
-        binding.scrollView.smoothScrollTo(0, 0)
-    }
-
-    override fun onDismiss(dialogInterface: DialogInterface) {
-        dismissListener?.onDismiss(dialogInterface)
-        super.onDismiss(dialogInterface)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    fun setOnDismissListener(listener: DialogInterface.OnDismissListener?) {
-        dismissListener = listener
     }
 }
