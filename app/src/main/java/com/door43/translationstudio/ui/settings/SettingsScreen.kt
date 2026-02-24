@@ -415,8 +415,8 @@ fun SettingsScreen(
             entryValues = model.themeValues,
             selectedValue = model.currentThemeValue,
             onValueSelected = { newValue ->
-                viewModel.updateColorTheme(newValue)
                 showThemeDialog = false
+                viewModel.updateColorTheme(newValue)
             },
             onDismissRequest = { showThemeDialog = false }
         )

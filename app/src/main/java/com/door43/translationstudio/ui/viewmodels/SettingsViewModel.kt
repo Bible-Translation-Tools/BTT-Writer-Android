@@ -333,8 +333,6 @@ class SettingsViewModel(
     fun updateColorTheme(newValue: String) {
         prefRepository.setDefaultPref(KEY_PREF_COLOR_THEME, newValue)
 
-        App.updateColorTheme(newValue)
-
         val index = _model.value.themeValues.indexOf(newValue)
         val newName = _model.value.themeNames.getOrNull(index) ?: newValue
 

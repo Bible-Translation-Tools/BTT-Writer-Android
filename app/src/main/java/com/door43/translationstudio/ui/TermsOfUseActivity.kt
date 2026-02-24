@@ -3,16 +3,11 @@ package com.door43.translationstudio.ui
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.legal.TermsOfUseScreen
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
-import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
-import org.koin.androidx.compose.koinViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -42,17 +37,6 @@ class TermsOfUseActivity : BaseActivity() {
         }
 
         setContent {
-            val settingsViewModel: SettingsViewModel = koinViewModel()
-            val settingsModel by settingsViewModel.model.collectAsStateWithLifecycle()
-
-            val lightValue = resources.getString(R.string.theme_value_light)
-            val darkValue = resources.getString(R.string.theme_value_dark)
-            val isDarkTheme = when (settingsModel.currentThemeValue) {
-                lightValue -> false
-                darkValue -> true
-                else -> isSystemInDarkTheme()
-            }
-
             LaunchedEffect(Unit) {
                 viewModel.navigationEvent.collect { event ->
                     when (event) {

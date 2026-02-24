@@ -27,13 +27,13 @@ class SettingsActivity : BaseActivity() {
 
             val lightValue = resources.getString(R.string.theme_value_light)
             val darkValue = resources.getString(R.string.theme_value_dark)
-            val isDarkTheme = when (model.currentThemeValue) {
+            val isDark = when (model.currentThemeValue) {
                 lightValue -> false
                 darkValue -> true
                 else -> isSystemInDarkTheme()
             }
 
-            AppTheme(darkTheme = isDarkTheme) {
+            AppTheme(darkTheme = isDark) {
                 SettingsScreen(
                     appVersion = "${BuildConfig.VERSION_NAME} - ${BuildConfig.VERSION_CODE}",
                     onNavigateBack = { finish() },

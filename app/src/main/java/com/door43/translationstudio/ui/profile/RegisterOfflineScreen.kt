@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
@@ -31,7 +32,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -40,26 +40,27 @@ import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
 import kotlinx.coroutines.launch
 
+enum class PrivacyDialogMode { INFO, CONFIRM }
+
 @Composable
 fun RegisterOfflineScreen(
     onCancel: () -> Unit,
-    onShowPrivacyNotice: () -> Unit,
     onContinue: (String) -> Unit
 ) {
     var fullName by remember { mutableStateOf("") }
+    var dialogMode by remember { mutableStateOf<PrivacyDialogMode?>(null) }
     
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     
     val keyboardController = LocalSoftwareKeyboardController.current
-    val context = LocalContext.current
     val errorMessage = stringResource(R.string.complete_required_fields)
 
     val submitForm: () -> Unit = {
         val trimmedName = fullName.trim()
         if (trimmedName.isNotEmpty()) {
             keyboardController?.hide()
-            onContinue(trimmedName)
+            dialogMode = PrivacyDialogMode.CONFIRM
         } else {
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(message = errorMessage)
@@ -80,7 +81,7 @@ fun RegisterOfflineScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onShowPrivacyNotice() }
+                    .clickable { dialogMode = PrivacyDialogMode.INFO }
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
@@ -113,7 +114,7 @@ fun RegisterOfflineScreen(
                     .padding(top = 16.dp)
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -141,5 +142,14 @@ fun RegisterOfflineScreen(
                 }
             }
         }
+    }
+
+    dialogMode?.let { mode ->
+        PrivacyNoticeDialog(
+            onConfirm = if (mode == PrivacyDialogMode.CONFIRM) {
+                { onContinue(fullName.trim()) }
+            } else null,
+            onDismissRequest = { dialogMode = null }
+        )
     }
 }

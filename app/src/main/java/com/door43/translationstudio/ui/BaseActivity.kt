@@ -3,7 +3,13 @@ package com.door43.translationstudio.ui
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.door43.data.IDirectoryProvider
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
+import com.door43.translationstudio.R
 import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.foreground.Foreground
@@ -16,15 +22,24 @@ import org.unfoldingword.tools.logger.Logger
  */
 abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
 
-    private var foreground: Foreground? = null
-
-    val directoryProvider: IDirectoryProvider by inject()
-    val library: Door43Client by inject()
+    private val library: Door43Client by inject()
+    private val preRepository: IPreferenceRepository by inject()
 
     protected open val isBootActivity: Boolean = false
 
+    private var foreground: Foreground? = null
+    var isDarkTheme by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        updateIsDarkTheme(
+            preRepository.getDefaultPref(
+                SettingsActivity.KEY_PREF_COLOR_THEME,
+                getString(R.string.pref_default_color_theme)
+            )
+        )
+
         try {
             foreground = Foreground.get()
             foreground?.addListener(this)
@@ -35,6 +50,13 @@ abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
 
     override fun onResume() {
         super.onResume()
+
+        updateIsDarkTheme(
+            preRepository.getDefaultPref(
+                SettingsActivity.KEY_PREF_COLOR_THEME,
+                getString(R.string.pref_default_color_theme)
+            )
+        )
 
         if (!isBootActivity) {
             val crashFiles = Logger.listStacktraces()
@@ -67,5 +89,21 @@ abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
     override fun onDestroy() {
         foreground?.removeListener(this)
         super.onDestroy()
+    }
+
+    private fun updateIsDarkTheme(theme: String) {
+        val lightValue = resources.getString(R.string.theme_value_light)
+        val darkValue = resources.getString(R.string.theme_value_dark)
+        val systemValue = resources.getString(R.string.theme_value_system)
+
+        val (isDark, nightMode) = when (theme) {
+            lightValue -> false to AppCompatDelegate.MODE_NIGHT_NO
+            darkValue -> true to AppCompatDelegate.MODE_NIGHT_YES
+            systemValue -> true to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            else -> true to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+
+        AppCompatDelegate.setDefaultNightMode(nightMode)
+        isDarkTheme = isDark
     }
 }
