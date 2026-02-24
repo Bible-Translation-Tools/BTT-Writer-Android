@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -27,9 +25,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -55,12 +52,11 @@ fun LoginScreen(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var username by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
     
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var errorMessageId by remember { mutableIntStateOf(R.string.error) }
+    var errorMessageId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val model by viewModel.model.collectAsStateWithLifecycle()
 
@@ -74,7 +70,6 @@ fun LoginScreen(
                 } else {
                     R.string.internet_not_available
                 }
-                showErrorDialog = true
             }
         }
     }
@@ -88,7 +83,7 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState())
+            .imePadding()
     ) {
         Text(
             text = stringResource(R.string.server_account),
@@ -128,7 +123,7 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -164,13 +159,13 @@ fun LoginScreen(
         )
     }
 
-    if (showErrorDialog) {
+    errorMessageId?.let {
         AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
+            onDismissRequest = { errorMessageId = null },
             title = { Text(stringResource(R.string.error)) },
-            text = { Text(stringResource(errorMessageId)) },
+            text = { Text(stringResource(it)) },
             confirmButton = {
-                TextButton(onClick = { showErrorDialog = false }) {
+                TextButton(onClick = { errorMessageId = null }) {
                     Text(stringResource(R.string.label_ok))
                 }
             }
