@@ -1,15 +1,24 @@
 package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material.icons.outlined.Warning
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.devtools.ToolItem
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
@@ -17,28 +26,39 @@ import org.unfoldingword.tools.logger.LogEntry
 import org.unfoldingword.tools.logger.Logger
 import java.io.RandomAccessFile
 
+data class DeveloperModel(
+    val versionName: String = "",
+    val versionCode: String = "",
+    val udid: String = "",
+    val tools: List<ToolItem> = emptyList(),
+    val logs: List<LogEntry> = emptyList(),
+    val keysRegenerated: Boolean? = null,
+    val progress: ProgressHelper.Progress? = null
+)
+
+sealed class DeveloperEvent {
+    object ReadLog : DeveloperEvent()
+    object CheckSystemResources : DeveloperEvent()
+    object DeleteLibrary : DeveloperEvent()
+}
+
 class DeveloperViewModel(
     private val application: Application,
     private val directoryProvider: IDirectoryProvider,
     private val library: Door43Client
 ) : AndroidViewModel(application) {
 
-    private val _progress = MutableLiveData<ProgressHelper.Progress?>()
-    val progress: LiveData<ProgressHelper.Progress?> = _progress
+    private val _model = MutableStateFlow(DeveloperModel())
+    val model: StateFlow<DeveloperModel> = _model.asStateFlow()
 
-    private val _tools = MutableLiveData<List<ToolItem>>()
-    val tools: LiveData<List<ToolItem>> = _tools
-
-    private val _keysRegenerated = MutableLiveData<Boolean?>()
-    val keysRegenerated: LiveData<Boolean?> = _keysRegenerated
-
-    private val _logs = MutableLiveData<List<LogEntry>>()
-    val logs: LiveData<List<LogEntry>> = _logs
-
-    private var listener: ToolsListener? = null
+    private val _events = Channel<DeveloperEvent>()
+    val events = _events.receiveAsFlow()
 
     fun loadTools() {
-        _progress.value = ProgressHelper.Progress(application.getString(R.string.please_wait))
+        _model.update {
+            it.copy(progress = ProgressHelper.Progress(application.getString(R.string.please_wait)))
+        }
+
         viewModelScope.launch {
             val list = listOf(
                 getGenerateSSHKeysItem(),
@@ -47,13 +67,10 @@ class DeveloperViewModel(
                 checkSystemResourcesItem(),
                 deleteLibraryItem()
             )
-            _tools.value = list
+            _model.update {
+                it.copy(tools = list, progress = null)
+            }
         }
-        _progress.value = null
-    }
-
-    fun setListener(listener: ToolsListener) {
-        this.listener = listener
     }
 
     fun getTotalRam(): Long {
@@ -89,17 +106,25 @@ class DeveloperViewModel(
 
     fun readErrorLog() {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress(application.getString(R.string.reading_logs))
-            _logs.value = Logger.getLogEntries()
-            _progress.value = null
+            _model.update { it.copy(progress = ProgressHelper.Progress(application.getString(R.string.reading_logs))) }
+            val logs = withContext(Dispatchers.IO) {
+                Logger.getLogEntries()
+            }
+            _model.update {
+                it.copy(logs = logs, progress = null)
+            }
         }
+    }
+
+    fun clearKeysRegenerated() {
+        _model.update { it.copy(keysRegenerated = null) }
     }
 
     private fun getGenerateSSHKeysItem(): ToolItem {
         return ToolItem(
             application.getString(R.string.regenerate_ssh_keys),
             application.getString(R.string.regenerate_ssh_keys_hint),
-            R.drawable.ic_security_secondary_24dp,
+            Icons.Outlined.Security,
             action = ::generateSSHKeys
         )
     }
@@ -108,9 +133,11 @@ class DeveloperViewModel(
         return ToolItem(
             application.getString(R.string.read_debug_log),
             application.getString(R.string.read_debug_log_hint),
-            R.drawable.ic_description_secondary_24dp
+            Icons.Outlined.Description
         ) {
-            listener?.onReadLog()
+            viewModelScope.launch {
+                _events.send(DeveloperEvent.ReadLog)
+            }
         }
     }
 
@@ -118,7 +145,7 @@ class DeveloperViewModel(
         return ToolItem(
             application.getString(R.string.simulate_crash),
             "",
-            R.drawable.ic_warning_secondary_24dp
+            Icons.Outlined.Warning
         ) {
             throw IllegalStateException(application.getString(R.string.simulating_crash))
         }
@@ -128,9 +155,11 @@ class DeveloperViewModel(
         return ToolItem(
             application.getString(R.string.check_system_resources),
             application.getString(R.string.check_system_resources_hint),
-            R.drawable.ic_description_secondary_24dp
+            Icons.Outlined.Description
         ) {
-            listener?.onCheckSystemResources()
+            viewModelScope.launch {
+                _events.send(DeveloperEvent.CheckSystemResources)
+            }
         }
     }
 
@@ -138,7 +167,7 @@ class DeveloperViewModel(
         return ToolItem(
             application.getString(R.string.delete_library),
             application.getString(R.string.delete_library_hint),
-            R.drawable.ic_delete_secondary_24dp
+            Icons.Outlined.Delete
         ) {
             deleteLibrary()
         }
@@ -146,16 +175,18 @@ class DeveloperViewModel(
 
     private fun generateSSHKeys() {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress(application.getString(R.string.recreate_keys))
-            directoryProvider.generateSSHKeys()
-            _keysRegenerated.value = true
-            _progress.value = null
+            _model.update { it.copy(progress = ProgressHelper.Progress(application.getString(R.string.recreate_keys))) }
+            val generated = withContext(Dispatchers.IO) {
+                directoryProvider.generateSSHKeys()
+                true
+            }
+            _model.update { it.copy(keysRegenerated = generated, progress = null) }
         }
     }
 
     private fun deleteLibrary() {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress(application.getString(R.string.deleting_library))
+            _model.update { it.copy(progress = ProgressHelper.Progress(application.getString(R.string.deleting_library))) }
             withContext(Dispatchers.IO) {
                 try {
                     library.tearDown()
@@ -164,15 +195,9 @@ class DeveloperViewModel(
                     e.printStackTrace()
                 }
             }
-            listener?.onDeleteLibrary()
-            _progress.value = null
+            _model.update { it.copy(progress = null) }
+            _events.send(DeveloperEvent.DeleteLibrary)
         }
-    }
-
-    interface ToolsListener {
-        fun onReadLog()
-        fun onCheckSystemResources()
-        fun onDeleteLibrary()
     }
 
     companion object {
