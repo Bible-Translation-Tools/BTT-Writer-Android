@@ -18,7 +18,6 @@ import androidx.preference.PreferenceManager
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.data.setDefaultPref
 import com.door43.di.appModule
 import com.door43.di.prodDataModule
 import com.door43.translationstudio.ui.SettingsActivity
@@ -176,21 +175,6 @@ class App : Application() {
         fun udid(): String {
             return Build.MODEL.lowercase().replace(" ", "_")
         }
-
-        @JvmStatic
-        var deviceNetworkAlias: String
-            /**
-             * Returns the alias to be displayed when others see this device on the network
-             * @return
-             */
-            get() = prefs.getDefaultPref(SettingsActivity.KEY_PREF_DEVICE_ALIAS, "")
-            /**
-             * Sets the alias to be displayed when others see this device on the network
-             * @param alias
-             */
-            set(alias) {
-                prefs.setDefaultPref(SettingsActivity.KEY_PREF_DEVICE_ALIAS, alias)
-            }
 
         /**
          * shows the keyboard in the given activity and view

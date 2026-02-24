@@ -56,7 +56,6 @@ import java.security.InvalidParameterException
  * Created by joel on 10/5/2015.
  */
 class BackupDialog : DialogFragment() {
-    private var settingDeviceAlias = false
     private var dialogShown = DialogShown.NONE
     private var dialogMessage: String? = null
     private var accessFile: String? = null
@@ -143,8 +142,6 @@ class BackupDialog : DialogFragment() {
         setupObservers()
 
         if (savedInstanceState != null) {
-            // check if returning from device alias dialog
-            settingDeviceAlias = savedInstanceState.getBoolean(STATE_SETTING_DEVICE_ALIAS, false)
             dialogShown = DialogShown.fromInt(
                 savedInstanceState.getInt(
                     STATE_DIALOG_SHOWN,
@@ -462,30 +459,6 @@ class BackupDialog : DialogFragment() {
         showDialogFragment(dialog, Door43LoginDialog.TAG)
     }
 
-    private fun showDeviceNetworkAliasDialog() {
-        if (App.isNetworkAvailable) {
-            if (App.deviceNetworkAlias.isEmpty()) {
-                showDeviceNetworkAliasDialogSub()
-            } else {
-                showP2PDialog()
-            }
-        } else {
-            val snack = Snackbar.make(
-                requireActivity().findViewById(android.R.id.content),
-                R.string.internet_not_available,
-                Snackbar.LENGTH_LONG
-            )
-            ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-            snack.show()
-        }
-    }
-
-    private fun showDeviceNetworkAliasDialogSub() {
-        settingDeviceAlias = true
-        val dialog = DeviceNetworkAliasDialog()
-        showDialogFragment(dialog, "device-name-dialog")
-    }
-
     private fun showBackupResults(textResId: Int, fileUri: Uri?) {
         var message = resources.getString(textResId)
         if (fileUri != null) {
@@ -504,28 +477,10 @@ class BackupDialog : DialogFragment() {
     }
 
     override fun onResume() {
-        if (settingDeviceAlias && App.deviceNetworkAlias.isNotEmpty()) {
-            settingDeviceAlias = false
-            showP2PDialog()
-        }
-
         val userText = resources.getString(R.string.current_user, profile.currentUser)
         binding.currentUser.text = userText
 
         super.onResume()
-    }
-
-    /**
-     * Displays the dialog for p2p sharing
-     */
-    private fun showP2PDialog() {
-        val dialog = ShareWithPeerDialog()
-        val args = Bundle()
-        args.putInt(ShareWithPeerDialog.ARG_OPERATION_MODE, ShareWithPeerDialog.MODE_SERVER)
-        args.putString(ShareWithPeerDialog.ARG_TARGET_TRANSLATION, targetTranslation.id)
-        args.putString(ShareWithPeerDialog.ARG_DEVICE_ALIAS, App.deviceNetworkAlias)
-        dialog.arguments = args
-        showDialogFragment(dialog, "share-dialog")
     }
 
     /**
@@ -756,7 +711,6 @@ class BackupDialog : DialogFragment() {
 
     override fun onSaveInstanceState(out: Bundle) {
         // remember if the device alias dialog is open
-        out.putBoolean(STATE_SETTING_DEVICE_ALIAS, settingDeviceAlias)
         out.putInt(STATE_DO_MERGE, dialogShown.value)
         if (accessFile != null) {
             out.putString(STATE_ACCESS_FILE, accessFile)
@@ -804,7 +758,6 @@ class BackupDialog : DialogFragment() {
         const val TAG: String = "BackupDialog"
         const val ARG_TARGET_TRANSLATION_ID: String = "target_translation_id"
 
-        private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
         private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
         private const val STATE_DO_MERGE: String = "state_do_merge"
         private const val STATE_ACCESS_FILE: String = "state_access_file"

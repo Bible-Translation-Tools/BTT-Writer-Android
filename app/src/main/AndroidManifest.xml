@@ -31,18 +31,6 @@
         <service
             android:name=".services.BackupService"
             android:label="Backup Manager" />
-        <service
-            android:name=".services.BroadcastService"
-            android:label="Services Broadcaster" />
-        <service
-            android:name=".services.BroadcastListenerService"
-            android:label="Services Listener" />
-        <service
-            android:name=".services.ServerService"
-            android:label="Server Service" />
-        <service
-            android:name=".services.ClientService"
-            android:label="Client Service" />
 
         <activity
             android:name=".ui.TermsOfUseActivity"

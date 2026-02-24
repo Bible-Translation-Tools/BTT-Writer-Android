@@ -15,7 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
@@ -23,14 +22,10 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.DialogImportBinding
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.ImportUsfmActivity.Companion.EXTRA_USFM_IMPORT_URI
-import com.door43.translationstudio.ui.dialogs.DeviceNetworkAliasDialog
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.dialogs.ShareWithPeerDialog
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.util.FileUtilities
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
@@ -50,7 +45,6 @@ class ImportDialog : DialogFragment() {
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
-    private var settingDeviceAlias = false
     private var dialogShown: DialogShown = DialogShown.NONE
     private var dialogMessage: String? = null
     private var targetTranslationID: String? = null
@@ -130,11 +124,6 @@ class ImportDialog : DialogFragment() {
         )
 
         if (savedInstanceState != null) {
-            // check if returning from device alias dialog
-            settingDeviceAlias = savedInstanceState.getBoolean(
-                STATE_SETTING_DEVICE_ALIAS,
-                false
-            )
             dialogShown = DialogShown.fromInt(
                 savedInstanceState.getInt(
                     STATE_DIALOG_SHOWN,
@@ -196,29 +185,6 @@ class ImportDialog : DialogFragment() {
                 val dialog = ImportFromBackupDialog()
                 dialog.setOnItemSelected(::onBackupFileSelected)
                 showDialogFragment(dialog, ImportFromBackupDialog.TAG)
-            }
-
-            importFromDevice.setOnClickListener {
-                mergeSelection = MergeOptions.NONE
-                // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
-                if (App.isNetworkAvailable) {
-                    if (App.deviceNetworkAlias.isEmpty()) {
-                        // get device alias
-                        settingDeviceAlias = true
-                        val dialog = DeviceNetworkAliasDialog()
-                        showDialogFragment(dialog, "device-name-dialog")
-                    } else {
-                        showP2PDialog()
-                    }
-                } else {
-                    val snack = Snackbar.make(
-                        requireActivity().findViewById(android.R.id.content),
-                        R.string.internet_not_available,
-                        Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-                    snack.show()
-                }
             }
 
             dismissButton.setOnClickListener { dismiss() }
@@ -341,26 +307,6 @@ class ImportDialog : DialogFragment() {
 
     private fun onImportSourceText() {
         openDirectory.launch(null)
-    }
-
-    override fun onResume() {
-        if (settingDeviceAlias && App.deviceNetworkAlias.isNotEmpty()) {
-            settingDeviceAlias = false
-            showP2PDialog()
-        }
-        super.onResume()
-    }
-
-    /**
-     * Displays the p2p dialog
-     */
-    private fun showP2PDialog() {
-        val dialog = ShareWithPeerDialog()
-        val args = Bundle()
-        args.putInt(ShareWithPeerDialog.ARG_OPERATION_MODE, ShareWithPeerDialog.MODE_CLIENT)
-        args.putString(ShareWithPeerDialog.ARG_DEVICE_ALIAS, App.deviceNetworkAlias)
-        dialog.arguments = args
-        showDialogFragment(dialog, "share-dialog")
     }
 
     /**
@@ -506,7 +452,6 @@ class ImportDialog : DialogFragment() {
     }
 
     override fun onSaveInstanceState(out: Bundle) {
-        out.putBoolean(STATE_SETTING_DEVICE_ALIAS, settingDeviceAlias)
         out.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
         out.putString(STATE_DIALOG_MESSAGE, dialogMessage)
         out.putString(STATE_DIALOG_TRANSLATION_ID, targetTranslationID)
@@ -577,7 +522,6 @@ class ImportDialog : DialogFragment() {
 
         private const val IMPORT_TRANSLATION_MIME = "application/tstudio"
         private const val IMPORT_USFM_MIME = "text/usfm"
-        private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
         private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
         private const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
         private const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
