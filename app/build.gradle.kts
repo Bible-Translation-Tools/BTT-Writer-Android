@@ -193,6 +193,7 @@ dependencies {
 
     // JSON
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.json)
 }
 
 tasks.register<Copy>("copyDebugGithubToken") {
