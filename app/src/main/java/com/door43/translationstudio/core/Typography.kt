@@ -23,11 +23,10 @@ enum class TextStyleType(val sizeMultiplier: Float) {
 }
 
 class Typography(
-    private val prefRepository: IPreferenceRepository
+    private val prefRepository: IPreferenceRepository,
+    private val defaultTranslationTypeface: String,
+    private val defaultTypefaceSize: String
 ) {
-    private val defaultTypefaceSize: String = "18"
-    private val defaultTranslationTypeface: String = "NotoSans-Regular.ttf"
-
     private val languageSubstituteFonts = mapOf(
         "default" to "NotoSansMultiLanguage-Regular.ttf"
         // "gu" to "NotoSansGuLanguage-Regular.ttf"
@@ -77,7 +76,7 @@ class Typography(
     }
 
     fun getAssetPath(translationType: TranslationType): String {
-        return "fonts/${getFontName(translationType)}"
+        return "assets/fonts/${getFontName(translationType)}"
     }
 
     fun getStyle(translationType: TranslationType): String {

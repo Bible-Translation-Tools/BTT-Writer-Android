@@ -12,6 +12,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -78,7 +79,11 @@ fun DraftScreen(
    Scaffold(
         floatingActionButton = {
             if (draftData != null) {
-                FloatingActionButton(onClick = { showConfirmDialog = true }) {
+                FloatingActionButton(
+                    onClick = { showConfirmDialog = true },
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
+                ) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
                         contentDescription = "Import Draft"

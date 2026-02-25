@@ -1,5 +1,6 @@
 package com.door43.di
 
+import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.ILanguageRequestRepository
@@ -9,6 +10,7 @@ import com.door43.repositories.LanguageRequestRepository
 import com.door43.repositories.PreferenceRepository
 import com.door43.translationstudio.DirectoryProvider
 import com.door43.translationstudio.MainAssetsProvider
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.AndroidBackupController
 import com.door43.translationstudio.core.AndroidResourceProvider
 import com.door43.translationstudio.core.ArchiveImporter
@@ -134,7 +136,13 @@ val appModule = module {
     singleOf(::ValidateProject)
     singleOf(::GetAvailableSources)
     singleOf(::RenderingProvider)
-    singleOf(::Typography)
+    single {
+        // TODO Remove android dependency
+        val context: Context = get()
+        val defaultFontName = context.getString(R.string.pref_default_translation_typeface)
+        val defaultFontSize = context.getString(R.string.pref_default_typeface_size)
+        Typography(get(), defaultFontName, defaultFontSize)
+    }
     singleOf(::DownloadImages)
     singleOf(::UpdateApp)
 
