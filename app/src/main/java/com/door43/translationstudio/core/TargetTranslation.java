@@ -298,7 +298,7 @@ public class TargetTranslation {
                     if (version == PACKAGE_VERSION) {
                         return new TargetTranslation(targetTranslationDir);
                     } else {
-                        Logger.w(TargetTranslation.class.getName(), "Unsupported target translation version " + version + " in" + targetTranslationDir.getName());
+                        Logger.w(TargetTranslation.class.getName(), "Unsupported target translation version " + version + " in " + targetTranslationDir.getName());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
