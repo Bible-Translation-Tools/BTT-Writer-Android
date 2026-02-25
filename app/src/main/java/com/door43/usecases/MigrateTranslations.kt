@@ -5,6 +5,7 @@ import android.net.Uri
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -13,7 +14,8 @@ import javax.inject.Inject
 class MigrateTranslations @Inject constructor(
     @ApplicationContext private val context: Context,
     private val importProjects: ImportProjects,
-    private val directoryProvider: IDirectoryProvider
+    private val directoryProvider: IDirectoryProvider,
+    private val targetTranslationMigrator: TargetTranslationMigrator
 ) {
     fun execute(appDataFolder: Uri, progressListener: OnProgressListener? = null) {
         // Migrate translations
@@ -25,6 +27,8 @@ class MigrateTranslations @Inject constructor(
             tempTranslations,
             directoryProvider.translationsDir.name
         )
+
+        migrateTranslations(tempTranslations, progressListener)
         importTranslations(tempTranslations, progressListener)
 
         // Migrate backups
@@ -36,6 +40,22 @@ class MigrateTranslations @Inject constructor(
             directoryProvider.backupsDir.name
         )
         copyBackups(tempBackups, progressListener)
+    }
+
+    private fun migrateTranslations(translationsDir: File, progressListener: OnProgressListener? = null) {
+        if (translationsDir.isDirectory) {
+            translationsDir.listFiles()?.forEach { file ->
+                if (file.name == "cache") return@forEach
+                if (file.isDirectory) {
+                    progressListener?.onProgress(
+                        -1,
+                        100,
+                        context.getString(R.string.migrating_translation, file.name)
+                    )
+                    targetTranslationMigrator.migrate(file)
+                }
+            }
+        }
     }
 
     private fun importTranslations(translationsDir: File, progressListener: OnProgressListener? = null) {
