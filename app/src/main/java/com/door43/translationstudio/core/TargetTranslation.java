@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  */
 public class TargetTranslation {
     public static final String TAG = TargetTranslation.class.getSimpleName();
-    public static final int PACKAGE_VERSION = 7; // the version of the target translation implementation
+    public static final int PACKAGE_VERSION = 8; // the version of the target translation implementation
     public static final String LICENSE_FILE = "LICENSE.md";
 
     private static final String FIELD_PARENT_DRAFT = "parent_draft";
