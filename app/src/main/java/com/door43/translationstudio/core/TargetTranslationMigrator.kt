@@ -94,6 +94,7 @@ class TargetTranslationMigrator(
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
+                    v8(targetTranslationDir)
                 }
                 3 -> {
                     v3(targetTranslationDir)
@@ -101,23 +102,31 @@ class TargetTranslationMigrator(
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
+                    v8(targetTranslationDir)
                 }
                 4 -> {
                     v4(targetTranslationDir)
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
+                    v8(targetTranslationDir)
                 }
                 5 -> {
                     v5(targetTranslationDir)
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
+                    v8(targetTranslationDir)
                 }
                 6 -> {
                     v6(targetTranslationDir)
                     v7(targetTranslationDir)
+                    v8(targetTranslationDir)
                 }
-                7 -> v7(targetTranslationDir)
+                7 -> {
+                    v7(targetTranslationDir)
+                    v8(targetTranslationDir)
+                }
+                8 -> v8(targetTranslationDir)
                 else -> targetTranslationDir
             }
             if (!validateTranslationType(targetTranslationDir)) {
@@ -223,7 +232,43 @@ class TargetTranslationMigrator(
      * @throws Exception
      */
     @Throws(Exception::class)
+    private fun v8(path: File): File {
+        return path
+    }
+
+    /**
+     * Adds resource name
+     * @param path the path to the translation directory
+     * @return the path to the translation directory
+     * @throws Exception
+     */
+    @Throws(Exception::class)
     private fun v7(path: File): File {
+        val manifestFile = File(path, MANIFEST_FILE)
+        val manifest = JSONObject(readFileToString(manifestFile))
+        val resource = manifest.getJSONObject("resource")
+        val resourceId = resource.getString("id")
+        var resourceName = try {
+            resource.getString("name")
+        } catch (_: JSONException) {
+            null
+        }
+
+        if (resourceName == null) {
+            resourceName = when (resourceId) {
+                "reg" -> "Regular"
+                "obs" -> "Open Bible Stories"
+                "udb" -> "Unlocked Dynamic Bible"
+                "ulb" -> "Unlocked Literal Bible"
+                else -> resourceId
+            }
+            resource.put("name", resourceName)
+            manifest.put("resource", resource)
+        }
+        manifest.put("package_version", 8)
+
+        writeStringToFile(manifestFile, manifest.toString(2))
+
         return path
     }
 

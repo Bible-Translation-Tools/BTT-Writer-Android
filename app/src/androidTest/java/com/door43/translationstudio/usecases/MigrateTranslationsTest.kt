@@ -9,6 +9,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.MigrateTranslations
 import com.door43.util.FileUtilities
@@ -30,6 +31,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
     private val directoryProvider: IDirectoryProvider by inject()
     private val importProjects: ImportProjects by inject()
     private val assetsProvider: AssetsProvider by inject()
+    private val targetTranslationMigrator: TargetTranslationMigrator by inject()
 
     @Before
     fun setUp() {
@@ -49,7 +51,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
 
         val sourceDir = Uri.fromFile(directoryProvider.createTempDir("BTTWriter"))
 
-        MigrateTranslations(appContext, importProjects, directoryProvider)
+        MigrateTranslations(appContext, importProjects, directoryProvider, targetTranslationMigrator)
             .execute(sourceDir, progressListener)
 
         assertEquals("Completed!", progressMessage)
@@ -74,7 +76,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
             FileUtilities.copyDirectory(translationDir, File(bttWriterDir, "translations/aa_jud_text_reg"), null)
         }
 
-        MigrateTranslations(appContext, importProjects, directoryProvider)
+        MigrateTranslations(appContext, importProjects, directoryProvider, targetTranslationMigrator)
             .execute(sourceDir, progressListener)
 
         assertEquals("Completed!", progressMessage)
@@ -96,7 +98,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
             FileUtilities.copyInputStreamToFile(stream, tempFile)
         }
 
-        MigrateTranslations(appContext, importProjects, directoryProvider)
+        MigrateTranslations(appContext, importProjects, directoryProvider, targetTranslationMigrator)
             .execute(sourceDir, progressListener)
 
         val expectedMessage = appContext.getString(R.string.copying_file, "aa_jud_text_reg.tstudio")

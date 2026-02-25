@@ -1019,6 +1019,7 @@ Do you want to enable SD card access?  If so then:
     <string name="migrate_from_old_app">Migrate from Old App</string>
     <string name="migrate_from_old_app_description">Would you like to migrate from the old app data? You can do that later in Settings.</string>
     <string name="migrating_translations">Migrating translations</string>
+    <string name="migrating_translation">Migrating translation: <xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g></string>
     <string name="migrating_complete">Migration complete!</string>
     <string name="copying_file">Copying file: <xliff:g example="filename" id="name">%1$s</xliff:g></string>
     <string name="import_from_backup">Import from Backups</string>
