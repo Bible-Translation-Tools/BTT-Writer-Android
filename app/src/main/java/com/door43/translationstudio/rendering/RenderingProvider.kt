@@ -1,12 +1,9 @@
-package com.door43.translationstudio.core
+package com.door43.translationstudio.rendering
 
 import android.content.Context
-import com.door43.translationstudio.rendering.ClickableRenderingEngine
-import com.door43.translationstudio.rendering.Clickables
-import com.door43.translationstudio.rendering.DefaultRenderer
-import com.door43.translationstudio.rendering.HtmlRenderer
-import com.door43.translationstudio.rendering.LinkToHtmlRenderer
-import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.core.Frame
+import com.door43.translationstudio.core.FrameTranslation
+import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.ui.spannables.Span
 
 class RenderingProvider(

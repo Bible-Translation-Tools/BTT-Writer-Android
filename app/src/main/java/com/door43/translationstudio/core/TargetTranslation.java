@@ -13,6 +13,7 @@ import org.unfoldingword.tools.logger.Logger;
 
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
+import com.door43.translationstudio.rendering.RenderingProvider;
 import com.door43.util.NumericStringComparator;
 import com.door43.util.FileUtilities;
 import com.door43.util.Manifest;

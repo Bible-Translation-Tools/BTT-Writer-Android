@@ -35,7 +35,7 @@ import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.FrameTranslation;
 import com.door43.translationstudio.core.MergeConflictsHandler;
-import com.door43.translationstudio.core.RenderingProvider;
+import com.door43.translationstudio.rendering.RenderingProvider;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.Typography;

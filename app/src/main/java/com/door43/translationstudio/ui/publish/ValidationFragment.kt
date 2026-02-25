@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.door43.data.AssetsProvider
-import com.door43.translationstudio.core.RenderingProvider
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListBinding
 import com.door43.translationstudio.ui.viewmodels.ValidationViewModel

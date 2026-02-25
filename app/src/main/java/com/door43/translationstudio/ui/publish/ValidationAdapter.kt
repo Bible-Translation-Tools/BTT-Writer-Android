@@ -7,7 +7,7 @@ import android.view.ViewGroup.MarginLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import com.door43.data.AssetsProvider
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.RenderingProvider
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListItemBinding

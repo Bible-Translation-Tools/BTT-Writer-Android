@@ -28,7 +28,7 @@ import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.TypographyUtils;
 import com.door43.translationstudio.core.ContainerCache;
-import com.door43.translationstudio.core.RenderingProvider;
+import com.door43.translationstudio.rendering.RenderingProvider;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.Typography;

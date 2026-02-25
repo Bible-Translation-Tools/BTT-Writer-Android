@@ -27,7 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.RenderingProvider
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.ProgressDialog
 import com.door43.translationstudio.ui.spannables.NoteSpan

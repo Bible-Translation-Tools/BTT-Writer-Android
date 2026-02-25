@@ -5,7 +5,7 @@ import android.view.MenuItem
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import com.door43.translationstudio.core.RenderingProvider
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity

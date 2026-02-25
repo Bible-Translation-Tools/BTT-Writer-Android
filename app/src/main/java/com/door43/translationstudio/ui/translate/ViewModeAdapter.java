@@ -1,26 +1,20 @@
 package com.door43.translationstudio.ui.translate;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SectionIndexer;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.door43.data.AssetsProvider;
-import com.door43.translationstudio.core.RenderingProvider;
-import com.door43.translationstudio.core.TranslationType;
+import com.door43.translationstudio.rendering.RenderingProvider;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.databinding.RemovableTabBinding;
 import com.door43.translationstudio.ui.translate.review.SearchSubject;
 
 import java.util.ArrayList;

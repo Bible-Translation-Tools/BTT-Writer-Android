@@ -23,7 +23,7 @@ import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.TypographyUtils;
 import com.door43.translationstudio.core.Frame;
-import com.door43.translationstudio.core.RenderingProvider;
+import com.door43.translationstudio.rendering.RenderingProvider;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
