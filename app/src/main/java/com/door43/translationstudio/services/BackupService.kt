@@ -178,7 +178,7 @@ class BackupService : Service(), Foreground.Listener {
         // activity to open when clicked
         // TODO: instead of the home activity we need a backup activity where the user can view their backups.
         val notificationIntent = Intent(applicationContext, HomeActivity::class.java)
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         val intent = PendingIntent.getActivity(
             applicationContext,
             0,
@@ -190,14 +190,12 @@ class BackupService : Service(), Foreground.Listener {
         val channelId = "backup_notification"
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // For Android 8.0 and above, create a notification channel
-            val channelName = "Backup Notification"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val notificationChannel = NotificationChannel(channelId, channelName, importance)
+        // For Android 8.0 and above, create a notification channel
+        val channelName = "Backup Notification"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val notificationChannel = NotificationChannel(channelId, channelName, importance)
 
-            notificationManager.createNotificationChannel(notificationChannel)
-        }
+        notificationManager.createNotificationChannel(notificationChannel)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_notify_msg)

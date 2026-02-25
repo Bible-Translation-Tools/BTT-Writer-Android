@@ -1,14 +1,13 @@
 package com.door43.translationstudio.rendering;
 
-import android.os.Build;
 import android.text.TextUtils;
 
+import com.door43.translationstudio.ui.spannables.Span;
 import com.door43.translationstudio.ui.spannables.USFMChar;
 import com.door43.translationstudio.ui.spannables.USFMNoteSpan;
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
 import com.door43.translationstudio.ui.spannables.USXChar;
 import com.door43.translationstudio.ui.spannables.USXNoteSpan;
-import com.door43.translationstudio.ui.spannables.Span;
 import com.door43.translationstudio.ui.spannables.USXVerseSpan;
 
 import java.util.ArrayList;
@@ -236,11 +235,6 @@ public class USXtoUSFMConverter  {
         CharSequence out = "";
 
         CharSequence insert = "";
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.JELLY_BEAN) {
-            insert = "\n"; // this is a hack to get around bug in JellyBean in rendering multiple
-            // verses on a long line.  This hack messes up the paragraph formatting,
-            // but at least JellyBean becomes usable and doesn't crash.
-        }
 
         Pattern pattern = Pattern.compile(USXVerseSpan.PATTERN);
         Matcher matcher = pattern.matcher(in);

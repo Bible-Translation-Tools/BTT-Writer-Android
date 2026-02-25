@@ -117,17 +117,12 @@ class App : Application() {
              */
             get() {
                 val cm = instance.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val net = cm.activeNetwork ?: return false
-                    val actNet = cm.getNetworkCapabilities(net) ?: return false
-                    return when {
-                        actNet.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                        actNet.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                        else -> false
-                    }
-                } else {
-                    val activeNetwork = cm.activeNetworkInfo
-                    return activeNetwork != null && activeNetwork.isConnectedOrConnecting
+                val net = cm.activeNetwork ?: return false
+                val actNet = cm.getNetworkCapabilities(net) ?: return false
+                return when {
+                    actNet.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                    actNet.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                    else -> false
                 }
             }
 
