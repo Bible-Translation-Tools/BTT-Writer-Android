@@ -23,11 +23,12 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.App;
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.TypographyUtils;
 import com.door43.translationstudio.core.ContainerCache;
 import com.door43.translationstudio.core.RenderingProvider;
-import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
 import com.door43.translationstudio.core.Translator;
 import com.door43.translationstudio.core.Typography;
@@ -73,8 +74,8 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
     protected String chunkSlug;
 
     Lazy<Typography> typography = inject(Typography.class);
-
     Lazy<RenderingProvider> renderingProvider = inject(RenderingProvider.class);
+    Lazy<AssetsProvider> assetsProvider = inject(AssetsProvider.class);
 
     /**
      * Returns an instance of the adapter
@@ -622,7 +623,11 @@ public abstract class ViewModeFragment extends BaseFragment implements ViewModeA
         if(values.containsKey("language")) {
             String code = values.getAsString("language");
             String direction = values.getAsString("direction");
-            Typeface typeface = typography.getValue().getBestFontForLanguage(TranslationType.SOURCE, code, direction);
+            Typeface typeface = TypographyUtils.getBestFontForLanguage(
+                    typography.getValue(),
+                    assetsProvider.getValue(),
+                    code
+            );
             TextView view = findTab(layout, title);
             if(view != null) {
                 view.setTypeface(typeface, Typeface.NORMAL);

@@ -26,7 +26,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.TypographyUtils;
 import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.TranslationFormat;
 import com.door43.translationstudio.core.TranslationType;
@@ -72,6 +74,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
 
     public IReviewListItemBinding binding;
     private final Typography typography;
+    private final AssetsProvider assetsProvider;
 
     private final TextWatcher editableTextWatcher;
 
@@ -85,6 +88,7 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
     public ReviewHolder(
             IReviewListItemBinding binding,
             Typography typography,
+            AssetsProvider assetsProvider,
             OnReviewModeListener reviewModeListener
     ) {
         super(binding.getRoot());
@@ -93,6 +97,8 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         this.reviewModeListener = reviewModeListener;
 
         this.typography = typography;
+        this.assetsProvider = assetsProvider;
+
         context = binding.getRoot().getContext();
         inflater = LayoutInflater.from(context);
 
@@ -267,36 +273,52 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
         renderResourceCard(item);
 
         // set up fonts
-        typography.format(
-                TranslationType.SOURCE,
+        TypographyUtils.format(
                 binding.getSourceBody(),
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
                 item.source.language.slug,
                 item.source.language.direction
         );
         if (!item.getHasMergeConflicts()) {
-            typography.format(
-                    TranslationType.TARGET,
-                    binding.getTargetBody(),
-                    item.target.getTargetLanguage().slug,
-                    item.target.getTargetLanguage().direction
-            );
-            typography.format(
-                    TranslationType.TARGET,
-                    binding.getTargetEditableBody(),
-                    item.target.getTargetLanguage().slug,
-                    item.target.getTargetLanguage().direction
-            );
+            if (binding.getTargetBody() != null) {
+                TypographyUtils.format(
+                        binding.getTargetBody(),
+                        typography,
+                        assetsProvider,
+                        TranslationType.TARGET,
+                        item.target.getTargetLanguage().slug,
+                        item.target.getTargetLanguage().direction
+                );
+            }
+            if (binding.getTargetEditableBody() != null) {
+                TypographyUtils.format(
+                        binding.getTargetEditableBody(),
+                        typography,
+                        assetsProvider,
+                        TranslationType.TARGET,
+                        item.target.getTargetLanguage().slug,
+                        item.target.getTargetLanguage().direction
+                );
+            }
         } else {
-            typography.formatSub(
-                    TranslationType.TARGET,
-                    binding.getConflictText(),
-                    item.target.getTargetLanguage().slug,
-                    item.target.getTargetLanguage().direction
-            );
+            if (binding.getConflictText() != null) {
+                TypographyUtils.formatSub(
+                        binding.getConflictText(),
+                        typography,
+                        assetsProvider,
+                        TranslationType.TARGET,
+                        item.target.getTargetLanguage().slug,
+                        item.target.getTargetLanguage().direction
+                );
+            }
         }
-        typography.formatSub(
-                TranslationType.TARGET,
+        TypographyUtils.formatSub(
                 binding.getTargetTitle(),
+                typography,
+                assetsProvider,
+                TranslationType.TARGET,
                 item.target.getTargetLanguage().slug,
                 item.target.getTargetLanguage().direction
         );
@@ -647,9 +669,11 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     reviewModeListener.onNoteClick(note, getResourceCardWidth());
                 }
             });
-            typography.formatSub(
-                    TranslationType.SOURCE,
+            TypographyUtils.formatSub(
                     notesBinding.getRoot(),
+                    typography,
+                    assetsProvider,
+                    TranslationType.SOURCE,
                     language.slug,
                     language.direction
             );
@@ -672,7 +696,14 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     reviewModeListener.onWordClick(rcSlug, word, getResourceCardWidth());
                 }
             });
-            typography.formatSub(TranslationType.SOURCE, wordsBinding.getRoot(), language.slug, language.direction);
+            TypographyUtils.formatSub(
+                    wordsBinding.getRoot(),
+                    typography,
+                    assetsProvider,
+                    TranslationType.SOURCE,
+                    language.slug,
+                    language.direction
+            );
             binding.getResourceList().addView(wordsBinding.getRoot());
         }
     }
@@ -691,7 +722,14 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                     reviewModeListener.onQuestionClick(question, getResourceCardWidth());
                 }
             });
-            typography.formatSub(TranslationType.SOURCE, questionsBinding.getRoot(), language.slug, language.direction);
+            TypographyUtils.formatSub(
+                    questionsBinding.getRoot(),
+                    typography,
+                    assetsProvider,
+                    TranslationType.SOURCE,
+                    language.slug,
+                    language.direction
+            );
             binding.getResourceList().addView(questionsBinding.getRoot());
         }
     }
@@ -745,7 +783,16 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
                 marginInitialLeft = getLeftMargin(textView);
             }
 
-            typography.format(TranslationType.SOURCE, textView, language.slug, language.direction);
+            if (textView != null) {
+                TypographyUtils.format(
+                        textView,
+                        typography,
+                        assetsProvider,
+                        TranslationType.SOURCE,
+                        language.slug,
+                        language.direction
+                );
+            }
 
             final int selectedIndex = i;
             if (textView != null) {

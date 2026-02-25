@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
@@ -18,6 +19,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ListItem
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.SEARCH_SOURCE
@@ -40,7 +42,8 @@ class TargetTranslationViewModel(
     private val renderHelps: RenderHelps,
     private val library: Door43Client,
     private val prefRepository: IPreferenceRepository,
-    private val typography: Typography
+    private val typography: Typography,
+    private val assetsProvider: AssetsProvider
 ) : AndroidViewModel(application) {
 
     private val renderHelpJobs = arrayListOf<Job>()
@@ -342,10 +345,10 @@ class TargetTranslationViewModel(
      */
     private fun getFontForLanguageTab(translation: Translation, values: ContentValues) {
         //see if there is a special font for tab
-        val typeface = typography.getBestFontForLanguage(
-            TranslationType.SOURCE,
+        val typeface = getBestFontForLanguage(
+            typography,
+            assetsProvider,
             translation.language.slug,
-            translation.language.direction
         )
         if (typeface != Typeface.DEFAULT) {
             values.put("language", translation.language.slug);

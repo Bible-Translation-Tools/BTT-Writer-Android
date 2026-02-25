@@ -1,10 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -21,7 +18,9 @@ import android.widget.TextView;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.viewbinding.ViewBinding;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.TypographyUtils;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Typography;
 import com.door43.translationstudio.databinding.FragmentSelectSourceTranslationListDownloadItemBinding;
@@ -53,6 +52,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
 
     private final Context context;
     private final Typography typography;
+    private final AssetsProvider assetsProvider;
 
     private final Map<String, RCItem> data = new HashMap<>();
     private final List<String> selected = new ArrayList<>();
@@ -83,9 +83,14 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         }
     }
 
-    public ChooseSourceTranslationAdapter(Context context, Typography typography) {
+    public ChooseSourceTranslationAdapter(
+            Context context,
+            Typography typography,
+            AssetsProvider assetsProvider
+    ) {
         this.context = context;
         this.typography = typography;
+        this.assetsProvider = assetsProvider;
     }
 
     public void setItems(List<RCItem> items) {
@@ -456,9 +461,20 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      */
     private void setFontForLanguage(ViewHolder holder, RCItem item) {
         String code = item.sourceTranslation.language.slug;
-        typography.format(TranslationType.SOURCE, holder.titleView, code, item.sourceTranslation.language.direction);
+        TypographyUtils.format(
+                holder.titleView,
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                code,
+                item.sourceTranslation.language.direction
+        );
 
-        Typeface typeface = typography.getBestFontForLanguage(TranslationType.SOURCE, code, item.sourceTranslation.language.direction);
+        Typeface typeface = TypographyUtils.getBestFontForLanguage(
+                typography,
+                assetsProvider,
+                code
+        );
         if(typeface != Typeface.DEFAULT) {
             holder.titleView.setTypeface(typeface, Typeface.NORMAL);
         }

@@ -12,6 +12,7 @@ import android.view.WindowManager
 import android.widget.AdapterView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.closeKeyboard
 import com.door43.translationstudio.R
@@ -46,6 +47,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
     val translator: Translator by inject()
     val profile: Profile by inject()
     val directoryProvider: IDirectoryProvider by inject()
+    val assetsProvider: AssetsProvider by inject()
     val targetTranslationMigrator: TargetTranslationMigrator by inject()
     val library: Door43Client by inject()
     val typography: Typography by inject()
@@ -56,7 +58,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
     private var repositories = arrayListOf<RepositoryItem>()
     private var dialogShown = DialogShown.NONE
 
-    private val adapter by lazy { TranslationRepositoryAdapter(typography) }
+    private val adapter by lazy { TranslationRepositoryAdapter(typography, assetsProvider) }
     private var cloneHtmlUrl: String? = null
     private var mergeSelection = MergeOptions.NONE
     private var mergeConflicted = false

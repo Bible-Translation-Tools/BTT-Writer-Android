@@ -18,10 +18,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import com.door43.data.AssetsProvider
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
+import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.BackupDialog
 import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
@@ -29,7 +30,6 @@ import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
 import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.logger.Logger
-import kotlin.getValue
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -38,6 +38,7 @@ import kotlin.math.roundToInt
  */
 class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.ContributorEventListener {
     val typography: Typography by inject()
+    val assetsProvider: AssetsProvider by inject()
     private var targetTranslation: TranslationItem? = null
 
     private var _binding: DialogTargetTranslationInfoBinding? = null
@@ -83,10 +84,10 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
         targetTranslation?.let { item ->
             // set typeface for language
             val targetLanguage = item.translation.targetLanguage
-            val typeface = typography.getBestFontForLanguage(
-                TranslationType.SOURCE,
+            val typeface = getBestFontForLanguage(
+                typography,
+                assetsProvider,
                 targetLanguage.slug,
-                targetLanguage.direction
             )
 
             viewModel.getTranslationProgress(item.translation)

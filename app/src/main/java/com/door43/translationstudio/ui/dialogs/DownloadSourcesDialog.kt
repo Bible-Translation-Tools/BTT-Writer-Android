@@ -19,12 +19,13 @@ import android.widget.AdapterView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.door43.data.AssetsProvider
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.App.Companion.showKeyboard
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogDownloadSourcesBinding
+import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.FilterStep
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.SelectedState
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesAdapter.SelectionType
@@ -44,6 +45,7 @@ import kotlin.math.min
  */
 class DownloadSourcesDialog : DialogFragment() {
     val typography: Typography by inject()
+    val assetsProvider: AssetsProvider by inject()
 
     private lateinit var progressDialog: ProgressHelper.ProgressDialog
     private lateinit var adapter: DownloadSourcesAdapter
@@ -76,7 +78,7 @@ class DownloadSourcesDialog : DialogFragment() {
             false
         )
 
-        adapter = DownloadSourcesAdapter(typography)
+        adapter = DownloadSourcesAdapter(typography, assetsProvider)
 
         with(binding) {
             searchBackButton.setOnClickListener {
@@ -451,10 +453,10 @@ class DownloadSourcesDialog : DialogFragment() {
         if (enable) {
             val step = steps[stepIndex]
             if (step.language != null) {
-                typeface = typography.getBestFontForLanguage(
-                    TranslationType.SOURCE,
+                typeface = getBestFontForLanguage(
+                    typography,
+                    assetsProvider,
                     step.language.slug,
-                    step.language.direction
                 )
             }
         }

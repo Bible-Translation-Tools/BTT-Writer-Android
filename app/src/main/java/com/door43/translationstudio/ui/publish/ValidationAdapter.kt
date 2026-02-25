@@ -5,11 +5,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.recyclerview.widget.RecyclerView
+import com.door43.data.AssetsProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.RenderingProvider
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListItemBinding
+import com.door43.translationstudio.format
+import com.door43.translationstudio.formatSub
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
@@ -20,7 +23,8 @@ import com.door43.widget.ViewUtil
  */
 class ValidationAdapter(
     private val typography: Typography,
-    private val renderingProvider: RenderingProvider
+    private val renderingProvider: RenderingProvider,
+    private val assetsProvider: AssetsProvider
 ) : RecyclerView.Adapter<ValidationAdapter.ViewHolder>() {
 
     private val validations = arrayListOf<ValidationItem>()
@@ -65,9 +69,10 @@ class ValidationAdapter(
 
             // title
             holder.binding.title.text = item.title
-            typography.format(
+            holder.binding.title.format(
+                typography,
+                assetsProvider,
                 TranslationType.TARGET,
-                holder.binding.title,
                 item.titleLanguage.slug,
                 item.titleLanguage.direction
             )
@@ -118,9 +123,10 @@ class ValidationAdapter(
                     renderedText[position] = renderingGroup.start()
                 }
                 holder.binding.body.text = renderedText[position]
-                typography.formatSub(
+                holder.binding.body.formatSub(
+                    typography,
+                    assetsProvider,
                     TranslationType.TARGET,
-                    holder.binding.body,
                     item.bodyLanguage.slug,
                     item.bodyLanguage.direction
                 )

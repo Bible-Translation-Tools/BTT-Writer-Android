@@ -7,16 +7,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import com.door43.data.AssetsProvider
 import com.door43.translationstudio.core.BibleCodes
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentTargetTranslationListItemBinding
+import com.door43.translationstudio.getBestFontForLanguage
 
 
 /**
  * Created by joel on 9/3/2015.
  */
-class TargetTranslationAdapter(private val typography: Typography) : BaseAdapter() {
+class TargetTranslationAdapter(
+    private val typography: Typography,
+    private val assetsProvider: AssetsProvider
+) : BaseAdapter() {
 
     private val translations = arrayListOf<TranslationItem>()
     private var infoClickListener: OnInfoClickListener? = null
@@ -139,10 +144,10 @@ class TargetTranslationAdapter(private val typography: Typography) : BaseAdapter
 
         // set typeface for language
         val targetLanguage = targetTranslation.translation.targetLanguage
-        val typeface = typography.getBestFontForLanguage(
-            TranslationType.SOURCE,
+        val typeface = getBestFontForLanguage(
+            typography,
+            assetsProvider,
             targetLanguage.slug,
-            targetLanguage.direction
         )
         holder.binding.targetLanguage.setTypeface(typeface, Typeface.NORMAL)
 

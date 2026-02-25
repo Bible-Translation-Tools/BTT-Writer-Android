@@ -1,7 +1,8 @@
 package com.door43.translationstudio.ui.translate;
 
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.MotionEvent;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Created by joel on 9/8/2015.
@@ -10,7 +11,11 @@ public class ReadModeFragment extends ViewModeFragment {
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ReadModeAdapter(typography.getValue(), renderingProvider.getValue());
+        return new ReadModeAdapter(
+                typography.getValue(),
+                renderingProvider.getValue(),
+                assetsProvider.getValue()
+        );
     }
 
     /***

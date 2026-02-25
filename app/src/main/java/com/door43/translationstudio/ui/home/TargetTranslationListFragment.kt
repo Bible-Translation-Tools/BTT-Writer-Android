@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.fragment.app.activityViewModels
+import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
@@ -30,6 +31,7 @@ import kotlin.getValue
 class TargetTranslationListFragment : BaseFragment() {
     val prefRepository: IPreferenceRepository by inject()
     val typography: Typography by inject()
+    val assetsProvider: AssetsProvider by inject()
 
     private var listener: OnItemClickListener? = null
     private var sortProjectColumn = SortProjectColumnType.BibleOrder
@@ -56,7 +58,7 @@ class TargetTranslationListFragment : BaseFragment() {
 
         setupObservers()
 
-        adapter = TargetTranslationAdapter(typography)
+        adapter = TargetTranslationAdapter(typography, assetsProvider)
         adapter.setOnInfoClickListener(object : TargetTranslationAdapter.OnInfoClickListener {
             override fun onClick(item: TranslationItem) {
                 val ft = parentFragmentManager.beginTransaction()

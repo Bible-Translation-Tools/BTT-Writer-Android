@@ -1,5 +1,7 @@
 package com.door43.translationstudio.ui.dialogs;
 
+import static com.door43.translationstudio.TypographyUtils.getBestFontForLanguage;
+
 import android.content.Context;
 import android.graphics.Typeface;
 import androidx.appcompat.app.AlertDialog;
@@ -11,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.Typography;
@@ -73,9 +76,14 @@ public class DownloadSourcesAdapter extends BaseAdapter {
     private final Map<String, String> downloadErrors = new HashMap<>();
 
     private final Typography typography;
+    private final AssetsProvider assetsProvider;
 
-    public DownloadSourcesAdapter(Typography typography) {
+    public DownloadSourcesAdapter(
+            Typography typography,
+            AssetsProvider assetsProvider
+    ) {
         this.typography = typography;
+        this.assetsProvider = assetsProvider;
     }
 
     @Override
@@ -854,10 +862,10 @@ a     * @param task
             } else {
                 binding.itemIcon.setVisibility(View.GONE);
                 // if language selection, look up font
-                Typeface typeface = typography.getBestFontForLanguage(
-                        TranslationType.SOURCE,
-                        item.sourceTranslation.language.slug,
-                        item.sourceTranslation.language.direction
+                Typeface typeface = getBestFontForLanguage(
+                        typography,
+                        assetsProvider,
+                        item.sourceTranslation.language.slug
                 );
                 binding.title.setTypeface(typeface, Typeface.NORMAL);
             }

@@ -18,13 +18,14 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogPrintBinding
+import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.usecases.ExportProjects
 import com.door43.util.FileUtilities
@@ -44,6 +45,7 @@ class PrintDialog : DialogFragment() {
     val directoryProvider: IDirectoryProvider by inject()
     val library: Door43Client by inject()
     val typography: Typography by inject()
+    val assetsProvider: AssetsProvider by inject()
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
     private lateinit var targetTranslation: TargetTranslation
@@ -288,10 +290,10 @@ class PrintDialog : DialogFragment() {
         with(binding) {
             // set typeface for language
             val targetLanguage = targetTranslation.targetLanguage
-            val typeface = typography.getBestFontForLanguage(
-                TranslationType.SOURCE,
+            val typeface = getBestFontForLanguage(
+                typography,
+                assetsProvider,
                 targetLanguage.slug,
-                targetLanguage.direction
             )
             projectTitle.setTypeface(typeface, Typeface.NORMAL)
 

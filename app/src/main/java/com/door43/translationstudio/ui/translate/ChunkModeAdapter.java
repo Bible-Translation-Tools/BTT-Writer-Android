@@ -19,7 +19,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.TypographyUtils;
 import com.door43.translationstudio.core.Frame;
 import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationFormat;
@@ -47,9 +49,14 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     private static final int BOTTOM_ELEVATION = 2;
     private static final int TOP_ELEVATION = 3;
 
-    public ChunkModeAdapter(Typography typography, RenderingProvider renderingProvider) {
+    public ChunkModeAdapter(
+            Typography typography,
+            RenderingProvider renderingProvider,
+            AssetsProvider assetsProvider
+    ) {
         this.typography = typography;
         this.renderingProvider = renderingProvider;
+        this.assetsProvider = assetsProvider;
     }
 
     @Override
@@ -97,7 +104,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
     public ViewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         FragmentChunkListItemBinding binding = FragmentChunkListItemBinding.inflate(inflater, parent, false);
-        return new ViewHolder(binding, typography, this);
+        return new ViewHolder(binding, typography, assetsProvider, this);
     }
 
     @Override
@@ -474,10 +481,12 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
         private final OnChunkModeListener chunkModeListener;
         private final TabLayout.OnTabSelectedListener tabSelectedListener;
         private final Typography typography;
+        private final AssetsProvider assetsProvider;
 
         public ViewHolder(
                 FragmentChunkListItemBinding binding,
                 Typography typography,
+                AssetsProvider assetsProvider,
                 OnChunkModeListener chunkModeListener
         ) {
             super(binding.getRoot());
@@ -486,6 +495,7 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             context = binding.getRoot().getContext();
             this.chunkModeListener = chunkModeListener;
             this.typography = typography;
+            this.assetsProvider = assetsProvider;
 
             textWatcher = new TextWatcher() {
                 @Override
@@ -631,27 +641,35 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
             renderChunk(item);
 
             // set up fonts
-            typography.formatSub(
-                    TranslationType.SOURCE,
+            TypographyUtils.formatSub(
                     binding.sourceTranslationTitle,
-                    item.source.language.slug,
-                    item.source.language.direction
-            );
-            typography.format(
+                    typography,
+                    assetsProvider,
                     TranslationType.SOURCE,
-                    binding.sourceTranslationBody,
                     item.source.language.slug,
                     item.source.language.direction
             );
-            typography.formatSub(
-                    TranslationType.TARGET,
+            TypographyUtils.format(
+                    binding.sourceTranslationBody,
+                    typography,
+                    assetsProvider,
+                    TranslationType.SOURCE,
+                    item.source.language.slug,
+                    item.source.language.direction
+            );
+            TypographyUtils.formatSub(
                     binding.targetTranslationTitle,
+                    typography,
+                    assetsProvider,
+                    TranslationType.TARGET,
                     item.target.getTargetLanguage().slug,
                     item.target.getTargetLanguage().direction
             );
-            typography.format(
-                    TranslationType.TARGET,
+            TypographyUtils.format(
                     binding.targetTranslationBody,
+                    typography,
+                    assetsProvider,
+                    TranslationType.TARGET,
                     item.target.getTargetLanguage().slug,
                     item.target.getTargetLanguage().direction
             );

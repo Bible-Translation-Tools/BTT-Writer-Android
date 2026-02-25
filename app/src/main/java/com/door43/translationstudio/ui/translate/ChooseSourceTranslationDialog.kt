@@ -10,6 +10,7 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.door43.data.AssetsProvider
 import com.door43.translationstudio.App.Companion.showKeyboard
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
@@ -32,6 +33,7 @@ import kotlin.math.min
 class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
 
     val typography: Typography by inject()
+    val assetsProvider: AssetsProvider by inject()
 
     private val viewModel: ChooseSourcesViewModel by viewModel()
 
@@ -70,7 +72,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
             false
         )
 
-        adapter = ChooseSourceTranslationAdapter(requireContext(), typography)
+        adapter = ChooseSourceTranslationAdapter(requireContext(), typography, assetsProvider)
         adapter.setItemClickListener(this)
 
         with(binding) {

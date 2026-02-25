@@ -5,15 +5,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import com.door43.data.AssetsProvider
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentRestoreFromCloudListItemBinding
+import com.door43.translationstudio.getBestFontForLanguage
 
 /**
  * Displays a list of translation repositories in the cloud
  */
-class TranslationRepositoryAdapter(private val typography: Typography) : BaseAdapter() {
+class TranslationRepositoryAdapter(
+    private val typography: Typography,
+    private val assetsProvider: AssetsProvider,
+) : BaseAdapter() {
     private val items = arrayListOf<RepositoryItem>()
 
     override fun getCount(): Int {
@@ -102,10 +106,10 @@ class TranslationRepositoryAdapter(private val typography: Typography) : BaseAda
             binding.targetLanguageName.text = item.languageName
 
             // set default typeface for language
-            val typeface = typography.getBestFontForLanguage(
-                TranslationType.SOURCE,
+            val typeface = getBestFontForLanguage(
+                typography,
+                assetsProvider,
                 item.languageCode,
-                item.languageDirection
             )
             binding.targetLanguageName.setTypeface(typeface, Typeface.NORMAL)
 

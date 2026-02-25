@@ -30,6 +30,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.R;
 import com.door43.translationstudio.core.FileHistory;
 import com.door43.translationstudio.core.FrameTranslation;
@@ -102,17 +103,21 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     private OnRenderHelpsListener renderHelpsListener = null;
     private OnShowToastListener itemActionListener = null;
     private final RenderingProvider renderingProvider;
+    private final AssetsProvider assetsProvider;
 
     public ReviewModeAdapter(
             boolean openResources,
             boolean enableMergeConflictsFilter,
             Typography typography,
+            AssetsProvider assetsProvider,
             RenderingProvider renderingProvider
     ) {
         resourcesOpened = openResources;
         mergeConflictFilterOn = enableMergeConflictsFilter;
+
         this.typography = typography;
         this.renderingProvider = renderingProvider;
+        this.assetsProvider = assetsProvider;
     }
 
     @Override
@@ -281,7 +286,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         } else {
             binding = new ReviewListItemBinding(FragmentReviewListItemBinding.inflate(inflater, parent, false));
         }
-        return new ReviewHolder(binding, typography, this);
+        return new ReviewHolder(binding, typography, assetsProvider, this);
     }
 
     /**

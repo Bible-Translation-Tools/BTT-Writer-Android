@@ -15,6 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.core.RenderingProvider;
 import com.door43.translationstudio.core.TranslationType;
 import com.door43.translationstudio.core.TranslationViewMode;
@@ -41,6 +42,7 @@ public abstract class ViewModeAdapter<VH extends RecyclerView.ViewHolder> extend
     protected Context context;
     protected Typography typography;
     protected RenderingProvider renderingProvider;
+    protected AssetsProvider assetsProvider;
 
     protected final List<ListItem> items = new ArrayList<>();
     protected final List<ListItem> filteredItems = new ArrayList<>();

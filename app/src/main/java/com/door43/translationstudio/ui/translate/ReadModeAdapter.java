@@ -14,7 +14,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.door43.data.AssetsProvider;
 import com.door43.translationstudio.R;
+import com.door43.translationstudio.TypographyUtils;
 import com.door43.translationstudio.core.ChapterTranslation;
 import com.door43.translationstudio.core.ProjectTranslation;
 import com.door43.translationstudio.core.RenderingProvider;
@@ -52,9 +54,14 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
      */
     private List<ListItem> chunks = new ArrayList<>();
 
-    public ReadModeAdapter(Typography typography, RenderingProvider renderingProvider) {
+    public ReadModeAdapter(
+            Typography typography,
+            RenderingProvider renderingProvider,
+            AssetsProvider assetsProvider
+    ) {
         this.typography = typography;
         this.renderingProvider = renderingProvider;
+        this.assetsProvider = assetsProvider;
     }
 
     @Override
@@ -143,7 +150,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
     public ViewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         FragmentReadListItemBinding binding = FragmentReadListItemBinding.inflate(inflater, parent, false);
-        return new ViewHolder(binding, typography, this);
+        return new ViewHolder(binding, typography, assetsProvider, this);
     }
 
     @Override
@@ -448,6 +455,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
 
         private final OnReadModeListener readModeListener;
         private final Typography typography;
+        private final AssetsProvider assetsProvider;
         private final Context context;
         private final TabLayout.OnTabSelectedListener tabSelectedListener;
 
@@ -456,6 +464,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
         public ViewHolder(
                 FragmentReadListItemBinding binding,
                 Typography typography,
+                AssetsProvider assetsProvider,
                 OnReadModeListener readModeListener
         ) {
             super(binding.getRoot());
@@ -464,6 +473,7 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             context = binding.getRoot().getContext();
             this.readModeListener = readModeListener;
             this.typography = typography;
+            this.assetsProvider = assetsProvider;
 
             tabSelectedListener = new TabLayout.OnTabSelectedListener() {
                 @Override
@@ -636,33 +646,43 @@ public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder>
             renderSourceTabs(tabs, item.source.slug);
 
             // set up fonts
-            typography.formatTitle(
-                    TranslationType.SOURCE,
+            TypographyUtils.formatTitle(
                     binding.sourceTranslationHeading,
+                    typography,
+                    assetsProvider,
+                    TranslationType.SOURCE,
                     item.source.language.slug,
                     item.source.language.direction
             );
-            typography.formatTitle(
-                    TranslationType.SOURCE,
+            TypographyUtils.formatTitle(
                     binding.sourceTranslationTitle,
-                    item.source.language.slug,
-                    item.source.language.direction
-            );
-            typography.format(
+                    typography,
+                    assetsProvider,
                     TranslationType.SOURCE,
-                    binding.sourceTranslationBody,
                     item.source.language.slug,
                     item.source.language.direction
             );
-            typography.formatTitle(
-                    TranslationType.TARGET,
+            TypographyUtils.format(
+                    binding.sourceTranslationBody,
+                    typography,
+                    assetsProvider,
+                    TranslationType.SOURCE,
+                    item.source.language.slug,
+                    item.source.language.direction
+            );
+            TypographyUtils.formatTitle(
                     binding.targetTranslationTitle,
+                    typography,
+                    assetsProvider,
+                    TranslationType.TARGET,
                     item.target.getTargetLanguage().slug,
                     item.target.getTargetLanguage().direction
             );
-            typography.format(
-                    TranslationType.TARGET,
+            TypographyUtils.format(
                     binding.targetTranslationBody,
+                    typography,
+                    assetsProvider,
+                    TranslationType.TARGET,
                     item.target.getTargetLanguage().slug,
                     item.target.getTargetLanguage().direction
             );

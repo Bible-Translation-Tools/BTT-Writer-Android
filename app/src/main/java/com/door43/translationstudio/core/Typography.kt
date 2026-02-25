@@ -1,265 +1,86 @@
 package com.door43.translationstudio.core
 
-import android.content.Context
-import android.graphics.Typeface
-import android.util.TypedValue
-import android.widget.TextView
-import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.SettingsActivity
-import org.json.JSONObject
 
 /**
- * Created by joel on 9/11/2015.
+ * Created by mxaln on 2/25/2026.
  */
-class Typography(
-    private val context: Context,
-    private val prefRepository: IPreferenceRepository,
-    private val assetsProvider: AssetsProvider
+data class TextFormatConfig(
+    val fontAssetPath: String,
+    val fontSizeSp: Float,
+    val isBold: Boolean = false,
+    val directionString: String? = null
 ) {
-    // If you would override font used in tabs and language lists for a specific language code
-    // just add a language code and the font to the default configuration.
-    // For example:
-    // {
-    //      "gu" : "NotoSansGuLanguage-Regular.ttf",
-    //      "default" : "NotoSansMultiLanguage-Regular.ttf"
-    // }
-    private val languageSubstituteFontsJson = """
-        {
-            "default" : "NotoSansMultiLanguage-Regular.ttf"
-        }
-    """.trimIndent()
+    val isRtl: Boolean get() = directionString.equals("rtl", ignoreCase = true)
+}
 
-    private var languageSubstituteFonts: JSONObject? = null
-    private var defaultLanguageTypeface: Typeface? = null
+enum class TextStyleType(val sizeMultiplier: Float) {
+    NORMAL(1.0f),
+    TITLE(1.3f),
+    SUB(0.7f)
+}
 
-    /**
-     * Formats the text in the text view using the users preferences
-     * @param translationType
-     * @param view
-     * @param languageCode the spoken language of the text
-     * @param direction the reading direction of the text
-     */
-    fun format(
+class Typography(
+    private val prefRepository: IPreferenceRepository
+) {
+    private val defaultTypefaceSize: String = "18"
+    private val defaultTranslationTypeface: String = "NotoSans-Regular.ttf"
+
+    private val languageSubstituteFonts = mapOf(
+        "default" to "NotoSansMultiLanguage-Regular.ttf"
+        // "gu" to "NotoSansGuLanguage-Regular.ttf"
+    )
+
+    fun getFormatConfig(
         translationType: TranslationType,
-        view: TextView?,
-        languageCode: String?,
-        direction: String?
-    ) {
-        if (view != null) {
-            val typeface = getTypeface(translationType, languageCode, direction)
-            val fontSize = getFontSize(translationType)
+        style: TextStyleType = TextStyleType.NORMAL,
+        languageCode: String? = null,
+        direction: String? = null
+    ): TextFormatConfig {
+        val baseFontSize = getFontSize(translationType)
+        val fontName = languageSubstituteFonts[languageCode] ?: getFontName(translationType)
 
-            view.setTypeface(typeface, Typeface.NORMAL)
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
-        }
+        return TextFormatConfig(
+            fontAssetPath = "fonts/$fontName",
+            fontSizeSp = baseFontSize * style.sizeMultiplier,
+            isBold = style == TextStyleType.TITLE,
+            directionString = direction
+        )
     }
 
-    /**
-     * Formats the text in the text view using the users preferences.
-     * Titles are a little larger than normal text and bold
-     *
-     * @param translationType
-     * @param view
-     * @param languageCode the spoken language of the text
-     * @param direction the reading direction of the text
-     */
-    fun formatTitle(
-        translationType: TranslationType,
-        view: TextView?,
-        languageCode: String?,
-        direction: String?
-    ) {
-        if (view != null) {
-            val typeface = getTypeface(translationType, languageCode, direction)
-            val fontSize = getFontSize(translationType) * 1.3f
-
-            view.setTypeface(typeface, Typeface.BOLD)
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
-        }
-    }
-
-    /**
-     * Formats the text in the text view using the users preferences.
-     * Sub text is a little smaller than normal text
-     *
-     * @param translationType
-     * @param view
-     * @param languageCode the spoken language of the text
-     * @param direction the reading direction of the text
-     */
-    fun formatSub(
-        translationType: TranslationType,
-        view: TextView?,
-        languageCode: String?,
-        direction: String?
-    ) {
-        if (view != null) {
-            val typeface = getTypeface(translationType, languageCode, direction)
-            val fontSize = getFontSize(translationType) * .7f
-
-            view.setTypeface(typeface, Typeface.NORMAL)
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize)
-        }
-    }
-
-    /**
-     * Returns a subset of user preferences (currently, just the size) as a CSS style tag.
-     * @param translationType
-     * @return Valid HTML, for prepending to unstyled HTML text
-     */
-    fun getStyle(translationType: TranslationType): CharSequence {
-        return ("<style type=\"text/css\">"
-                + "body {"
-                + "  font-size: " + getFontSize(translationType) + ";"
-                + "}"
-                + "</style>")
-    }
-
-    /**
-     * Returns the font size chosen by the user
-     * @param translationType
-     * @return
-     */
     fun getFontSize(translationType: TranslationType): Float {
-        val typefaceSize = if ((translationType == TranslationType.SOURCE)) {
+        val prefKey = if (translationType == TranslationType.SOURCE) {
             SettingsActivity.KEY_PREF_SOURCE_TYPEFACE_SIZE
         } else {
             SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE_SIZE
         }
         return prefRepository.getDefaultPref(
-            typefaceSize,
-            context.resources.getString(R.string.pref_default_typeface_size)
+            prefKey,
+            defaultTypefaceSize
         ).toFloat()
     }
 
-    /**
-     * Returns the path to the font asset
-     * @param translationType
-     * @return
-     */
+    private fun getFontName(translationType: TranslationType): String {
+        val prefKey = if (translationType == TranslationType.SOURCE) {
+            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE
+        } else {
+            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE
+        }
+        return prefRepository.getDefaultPref(prefKey, defaultTranslationTypeface)
+    }
+
+    fun getBestFontPathForLanguage(languageCode: String?): String {
+        val fontName = languageSubstituteFonts[languageCode] ?: languageSubstituteFonts["default"]
+        return "fonts/$fontName"
+    }
+
     fun getAssetPath(translationType: TranslationType): String {
-        val selectedTypeface = if ((translationType == TranslationType.SOURCE)) {
-            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE
-        } else {
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE
-        }
-        val fontName = prefRepository.getDefaultPref(
-            selectedTypeface,
-            context.resources.getString(R.string.pref_default_translation_typeface)
-        )
-        return "assets/fonts/$fontName"
+        return "fonts/${getFontName(translationType)}"
     }
 
-    /**
-     * Returns the typeface chosen by the user
-     * @param translationType
-     * @param languageCode the spoken language
-     * @param direction the reading direction
-     * @return
-     */
-    fun getTypeface(
-        translationType: TranslationType,
-        languageCode: String?,
-        direction: String?
-    ): Typeface {
-        val selectedTypeface = if ((translationType == TranslationType.SOURCE)) {
-            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE
-        } else {
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE
-        }
-        val fontName = prefRepository.getDefaultPref(
-            selectedTypeface,
-            context.resources.getString(R.string.pref_default_translation_typeface)
-        )
-
-        val typeface = getTypeface(translationType, fontName, languageCode, direction)
-        return typeface
-    }
-
-    /**
-     * Returns the typeface by font name
-     * @param translationType
-     * @param languageCode the spoken language
-     * @param direction the reading direction
-     * @return
-     */
-    fun getTypeface(
-        translationType: TranslationType?,
-        fontName: String?,
-        languageCode: String?,
-        direction: String?
-    ): Typeface {
-        // TODO: provide graphite support
-//        File fontFile = new File(context.getCacheDir(), "assets/fonts" + fontName);
-//        if(!fontFile.exists()) {
-//            fontFile.getParentFile().mkdirs();
-//            try {
-//                Util.writeStream(context.getResourceSlugs().getAssets().open("fonts/" + fontName), fontFile);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                return;
-//            }
-//        }
-//        if (sEnableGraphite) {
-//            TTFAnalyzer analyzer = new TTFAnalyzer();
-//            String fontname = analyzer.getTtfFontName(font.getAbsolutePath());
-//            if (fontname != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO && Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
-//                // assets container, font asset, font name, rtl, language, feats (what's this for????)
-//                int translationRTL = l.getDirection() == Language.Direction.RightToLeft ? 1 : 0;
-//                try {
-//                            customTypeface = (Typeface) Graphite.addFontResource(mContext.getAssets(), "fonts/" + typeFace, fontname, translationRTL, l.getId(), "");
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    customTypeface = Typeface.createFromFile(font);
-//                }
-//            } else {
-//                customTypeface = Typeface.createFromFile(font);
-//            }
-//        }
-
-        var typeface = Typeface.DEFAULT
-        try {
-            typeface = Typeface.createFromAsset(assetsProvider.manager, "fonts/$fontName")
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return typeface
-    }
-
-    /**
-     * get the font to use for language code. This is the font to be used in tabs and language lists.
-     *
-     * @param translationType
-     * @param code
-     * @param direction
-     * @return Typeface for font, or Typeface.DEFAULT on error
-     */
-    fun getBestFontForLanguage(
-        translationType: TranslationType?,
-        code: String?,
-        direction: String?
-    ): Typeface? {
-        // substitute language font by lookup
-        if (languageSubstituteFonts == null) {
-            try {
-                languageSubstituteFonts = JSONObject(languageSubstituteFontsJson)
-                val defaultSubstituteFont = languageSubstituteFonts!!.optString("default", null)
-                defaultLanguageTypeface =
-                    getTypeface(translationType, defaultSubstituteFont, code, direction)
-            } catch (e: Exception) {
-            }
-        }
-        if (languageSubstituteFonts != null) {
-            val substituteFont = languageSubstituteFonts!!.optString(code, "")
-            return if (substituteFont.isNotEmpty()) {
-                getTypeface(translationType, substituteFont, code, direction)
-            } else {
-                defaultLanguageTypeface
-            }
-        }
-        return Typeface.DEFAULT
+    fun getStyle(translationType: TranslationType): String {
+        return "<style type=\"text/css\">body { font-size: ${getFontSize(translationType)}; }</style>"
     }
 }

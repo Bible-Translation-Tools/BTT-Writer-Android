@@ -13,7 +13,11 @@ public class ChunkModeFragment extends ViewModeFragment {
 
     @Override
     ViewModeAdapter generateAdapter() {
-        return new ChunkModeAdapter(typography.getValue(), renderingProvider.getValue());
+        return new ChunkModeAdapter(
+                typography.getValue(),
+                renderingProvider.getValue(),
+                assetsProvider.getValue()
+        );
     }
 
     /***
