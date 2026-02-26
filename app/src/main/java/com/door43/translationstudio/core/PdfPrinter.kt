@@ -98,7 +98,7 @@ class PdfPrinter(
         headingFont = Font(baseFont, targetLanguageFontSize * 1.4f, Font.BOLD)
         underlineBodyFont = Font(baseFont, targetLanguageFontSize, Font.UNDERLINE)
         subFont = Font(baseFont, targetLanguageFontSize, Font.ITALIC)
-        superScriptFont = Font(baseFont, targetLanguageFontSize * 0.9f)
+        superScriptFont = Font(baseFont, targetLanguageFontSize * 0.9f, Font.BOLD)
         superScriptFont.setColor(94, 94, 94)
 
         licenseBaseFont =
@@ -178,7 +178,7 @@ class PdfPrinter(
                     c.id,
                     ignoreCase = true
                 )
-            ) { // ignore front text as not human readable
+            ) { // ignore front text as not human-readable
                 // write chapter title
                 val title = chapterTitle(c)
                 val chunk = Chunk(title, headingFont).setLocalGoto(title)
@@ -749,7 +749,7 @@ class PdfPrinter(
     }
 
     /**
-     * get next html tag from start pos
+     * get next HTML tag from start pos
      * @param text
      * @param startPos
      * @return
@@ -798,7 +798,7 @@ class PdfPrinter(
     )
 
     /**
-     * class for keeping track of an html tag that was found, it's name, it's contents, and position
+     * class for keeping track of a HTML tag that was found, it's name, it's contents, and position
      */
     private class FoundHtml(
         var html: String,
@@ -937,7 +937,19 @@ class PdfPrinter(
 
             when {
                 // Footnotes
-                marker == "f" && !isCloser -> startFootnote()
+                marker == "f" && !isCloser -> {
+                    val chunks = currentParagraph.chunks
+                    // Trim text before the footnote
+                    if (chunks.isNotEmpty()) {
+                        val lastIndex = chunks.lastIndex
+                        val lastChunk = chunks[lastIndex]
+                        val modifiedChunk = Chunk(lastChunk.content.trim(), lastChunk.font)
+                        chunks[lastIndex] = modifiedChunk
+                        currentParagraph.clear()
+                        chunks.forEach { currentParagraph.add(it) }
+                    }
+                    startFootnote()
+                }
 
                 // Verses
                 marker == "v" && argument.isNotEmpty() -> handleVerse(argument)
@@ -1028,11 +1040,14 @@ class PdfPrinter(
             val index = footnotes.size + 1
             val id = "$chapterId-$index"
 
-            val chunk = Chunk(index.toString(), footnoteFont).apply {
+            val chunk = Chunk("$index", footnoteFont).apply {
                 textRise = targetLanguageFontSize / 2.5f
+                setUnderline(0.1f, 2.5f)
                 setLocalGoto("footnote-$id")
             }
+            val spacer = Chunk(" ")
             currentParagraph.add(chunk)
+            currentParagraph.add(spacer)
         }
 
         private fun handleFootnoteMarker(marker: String, isCloser: Boolean, argument: String) {
@@ -1046,7 +1061,8 @@ class PdfPrinter(
         }
 
         private fun captureFootnote(rawContent: String) {
-            val clean = rawContent.replaceFirst(Regex("^\\s*\\S+\\s*"), "")
+            val clean = rawContent
+                .replaceFirst(Regex("^\\s*\\S+\\s*"), "")
                 .trim()
             if (clean.isNotEmpty()) {
                 footnotes.add(clean)
