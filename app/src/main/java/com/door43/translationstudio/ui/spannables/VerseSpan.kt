@@ -1,29 +1,19 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-/**
- * Created by blm on 3/7/16.
- */
-public class VerseSpan extends Span {
-
-    VerseSpan(CharSequence humanReadable, CharSequence machineReadable) {
-        super(humanReadable, machineReadable);
-    }
+open class VerseSpan internal constructor(
+    humanReadable: CharSequence,
+    machineReadable: CharSequence
+) : Span(humanReadable, machineReadable) {
 
     /**
      * Returns the start verse number
-     * @return
      */
-    public int getStartVerseNumber() {
-        return -1;
-    }
+    open val startVerseNumber: Int
+        get() = -1
 
     /**
      * Returns the end verse number
-     * @return
      */
-    public int getEndVerseNumber() {
-        return -1;
-    }
-
-
+    open val endVerseNumber: Int
+        get() = -1
 }

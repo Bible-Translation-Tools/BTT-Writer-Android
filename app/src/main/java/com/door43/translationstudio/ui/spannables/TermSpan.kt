@@ -1,39 +1,36 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import androidx.core.content.ContextCompat
+import com.door43.translationstudio.R
 
-import com.door43.translationstudio.R;
+class TermSpan(
+    val termId: String,
+    text: String
+) : Span(text, text) {
 
-/**
- * Created by joel on 10/31/2014.
- */
-public class TermSpan extends Span {
-    private SpannableStringBuilder mSpannable;
-    private final String mTermId;
-    public static final String PATTERN = "<keyterm>(((?!</keyterm>).)*)</keyterm>";
+    private var spannable: SpannableStringBuilder? = null
 
-    public TermSpan(String id, String text) {
-        super(text, text);
-        mTermId = id;
+    companion object {
+        const val PATTERN = "<keyterm>(((?!</keyterm>).)*)</keyterm>"
     }
 
-    @Override
-    public SpannableStringBuilder render() {
-        if(mSpannable == null) {
-            mSpannable = super.render();
+    override fun render(): SpannableStringBuilder {
+        if (spannable == null) {
+            val s = super.render()
             // apply custom styles
-            mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.accent)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            context?.let { ctx ->
+                s.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.accent)),
+                    0,
+                    s.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            spannable = s
         }
-        return mSpannable;
-    }
-
-    /**
-     * Returns the id of the term
-     * @return
-     */
-    public String getTermId() {
-        return mTermId;
+        return spannable!!
     }
 }

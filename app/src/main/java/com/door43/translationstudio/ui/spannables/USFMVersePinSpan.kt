@@ -1,60 +1,58 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.ImageSpan;
-import android.text.style.RelativeSizeSpan;
-import android.view.LayoutInflater;
+import android.annotation.SuppressLint
+import android.graphics.drawable.BitmapDrawable
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
+import android.text.style.RelativeSizeSpan
+import android.view.LayoutInflater
+import androidx.core.content.ContextCompat
+import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding
+import com.door43.widget.ViewUtil
 
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding;
-import com.door43.widget.ViewUtil;
+class USFMVersePinSpan : USFMVerseSpan {
 
-/**
- * Created by joel on 10/1/2015.
- */
-public class USFMVersePinSpan extends USFMVerseSpan {
+    private var spannable: SpannableStringBuilder? = null
 
-    private SpannableStringBuilder mSpannable;
+    constructor(verse: String) : super(verse)
 
-    public USFMVersePinSpan(String verse) {
-        super(verse);
-    }
-
-    public USFMVersePinSpan(int verse) {
-        super(verse);
-    }
+    constructor(verse: Int) : super(verse)
 
     @SuppressLint("SetTextI18n")
-    @Override
-    public SpannableStringBuilder render() {
-        if(mSpannable == null) {
-            mSpannable = super.render();
-            // apply custom styles
-            mSpannable.setSpan(new RelativeSizeSpan(0.8f), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.white)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    override fun render(): SpannableStringBuilder {
+        if (spannable == null) {
+            val s = super.render()
 
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            FragmentVerseMarkerBinding binding = FragmentVerseMarkerBinding.inflate(inflater);
+            context?.let { ctx ->
+                // apply custom styles
+                s.setSpan(RelativeSizeSpan(0.8f), 0, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                s.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.white)),
+                    0,
+                    s.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
 
-            if(getEndVerseNumber() > 0) {
-                binding.verse.setText(getStartVerseNumber() + "-" + getEndVerseNumber());
-            } else {
-                binding.verse.setText("" + getStartVerseNumber());
+                val inflater = LayoutInflater.from(ctx)
+                val binding = FragmentVerseMarkerBinding.inflate(inflater)
+
+                if (endVerseNumber > 0) {
+                    binding.verse.text = "$startVerseNumber-$endVerseNumber"
+                } else {
+                    binding.verse.text = "$startVerseNumber"
+                }
+
+                val image = ViewUtil.convertToBitmap(binding.root)
+                val background = BitmapDrawable(ctx.resources, image)
+                background.setBounds(0, 0, background.minimumWidth, background.minimumHeight)
+                s.setSpan(ImageSpan(background), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
-            Bitmap image = ViewUtil.convertToBitmap(binding.getRoot());
-            BitmapDrawable background = new BitmapDrawable(context.getResources(), image);
-            background.setBounds(0, 0, background.getMinimumWidth(), background.getMinimumHeight());
-            mSpannable.setSpan(new ImageSpan(background), 0, mSpannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
+            spannable = s
         }
-        return mSpannable;
+        return spannable!!
     }
 }
-

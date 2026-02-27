@@ -1,45 +1,46 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import java.util.regex.Pattern;
+import java.util.regex.Pattern
 
 /**
  * Represents a char element according to the usx specification
  * See http://dbl.ubs-icap.org:8090/display/DBLDOCS/USX#USX-char
  */
-public class USXChar {
-    // passage styles (custom tag not defined in USX)
-    public static final String STYLE_PASSAGE_TEXT = "pt";
+class USXChar(style: String, val value: CharSequence) {
 
-    // footnote styles
-    public static final String STYLE_FOOTNOTE_REFERENCE = "fr";
-    public static final String STYLE_FOOTNOTE_TEXT = "ft";
-    public static final String STYLE_FOOTNOTE_KEYWORD = "fk";
-    public static final String STYLE_FOOTNOTE_QUOTATION = "fq";
-    public static final String STYLE_FOOTNOTE_ALT_QUOTATION = "fqa";
-    public static final String STYLE_FOOTNOTE_LABEL = "fl";
-    public static final String STYLE_FOOTNOTE_PARAGRAPH = "fp";
-    public static final String STYLE_FOOTNOTE_VERSE = "fv";
-    public static final String STYLE_FOOTNOTE_DEUTEROCANONICAL_APOCRYPHA = "fdc";
-    public static final String PATTERN = "<char\\s+((?:(?!>).)*)\\s*>\\s*((?:(?!(?:<\\/char>)).)*)\\s*<\\/char>";
-    public static final Integer CHAR_ATTRIBUTES_GROUP = 1;
-    public static final Integer CHAR_TEXT_GROUP = 2;
+    val style: String = style.trim().lowercase()
 
-    // selah styles
-    public static final String STYLE_SELAH = "qs";
+    companion object {
+        // passage styles (custom tag not defined in USX)
+        const val STYLE_PASSAGE_TEXT = "pt"
 
-    public final String style;
-    public final CharSequence value;
+        // footnote styles
+        const val STYLE_FOOTNOTE_REFERENCE = "fr"
+        const val STYLE_FOOTNOTE_TEXT = "ft"
+        const val STYLE_FOOTNOTE_KEYWORD = "fk"
+        const val STYLE_FOOTNOTE_QUOTATION = "fq"
+        const val STYLE_FOOTNOTE_ALT_QUOTATION = "fqa"
+        const val STYLE_FOOTNOTE_LABEL = "fl"
+        const val STYLE_FOOTNOTE_PARAGRAPH = "fp"
+        const val STYLE_FOOTNOTE_VERSE = "fv"
+        const val STYLE_FOOTNOTE_DEUTEROCANONICAL_APOCRYPHA = "fdc"
 
-    public USXChar(String style, CharSequence value) {
-        this.style = style.trim().toLowerCase();
-        this.value = value;
-    }
+        const val PATTERN = "<char\\s+((?:(?!>).)*)\\s*>\\s*((?:(?!(?:<\\/char>)).)*)\\s*<\\/char>"
+        const val CHAR_ATTRIBUTES_GROUP = 1
+        const val CHAR_TEXT_GROUP = 2
 
-    /**
-     * Returns the compiled pattern to match this char
-     * @return
-     */
-    public static Pattern getPattern(String style) {
-        return Pattern.compile("<char\\s+style=\"" + style + "\"\\s*>\\s*(((?!</char>).)*)</char>", Pattern.DOTALL);
+        // selah styles
+        const val STYLE_SELAH = "qs"
+
+        /**
+         * Returns the compiled pattern to match this char
+         */
+        @JvmStatic
+        fun getPattern(style: String): Pattern {
+            return Pattern.compile(
+                "<char\\s+style=\"$style\"\\s*>\\s*(((?!</char>).)*)</char>",
+                Pattern.DOTALL
+            )
+        }
     }
 }

@@ -355,7 +355,7 @@ class ReviewModeFragment : ViewModeFragment(),
                                 span.chapterId
                             }
                             val title = "${rc.readChunk("front", "title")} $chapterId:$verseTitle"
-                            span.title = title
+                            span.setTitle(title)
                             result = chunk.isNotEmpty()
                         }
                         is TranslationWordLinkSpan -> {
@@ -372,7 +372,7 @@ class ReviewModeFragment : ViewModeFragment(),
                                         if (linkMatch.find()) {
                                             title = linkMatch.group(1) ?: title
                                         }
-                                        span.setTitle(title)
+                                        span.title = title
                                         result = true
                                     }
                                 }
@@ -585,7 +585,7 @@ class ReviewModeFragment : ViewModeFragment(),
                                     if (linkMatch.find()) {
                                         title = linkMatch.group(1) ?: title
                                     }
-                                    span.setTitle(title)
+                                    span.title = title
                                     result = true
                                 }
                             }

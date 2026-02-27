@@ -1,33 +1,27 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
 /**
  * abstract base class for NoteSpans
  */
-public abstract class NoteSpan extends Span {
+abstract class NoteSpan : Span() {
 
     /**
      * returns the caller
-     * @return
      */
-    public abstract String getCaller();
+    abstract val caller: String
 
     /**
      * Returns the type of note this is
-     * @return
      */
-    public abstract String getStyle();
+    abstract val style: String
 
     /**
      * Returns the notes regarding the passage
-     * @return
      */
-    public abstract CharSequence getNotes();
+    abstract val notes: CharSequence
 
     /**
      * Returns the text upon which the notes are made
-     * @return
      */
-    public abstract CharSequence getPassage();
-
-
+    abstract val passage: CharSequence
 }

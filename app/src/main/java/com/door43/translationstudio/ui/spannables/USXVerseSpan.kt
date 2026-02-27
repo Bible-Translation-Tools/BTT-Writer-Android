@@ -1,149 +1,143 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
+import androidx.core.content.ContextCompat
+import com.door43.translationstudio.R
+import java.util.regex.Pattern
 
-import com.door43.translationstudio.R;
+open class USXVerseSpan : VerseSpan {
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+    private var _startVerseNumber: Int = 0
+    final override val startVerseNumber: Int
+        get() = _startVerseNumber
 
-/**
- * Created by joel on 1/27/2015.
- * TODO: we need to provide support for rendering with a range of verses as well as provide accessor methods to the ranged verse numbers
- */
-public class USXVerseSpan extends VerseSpan {
-    public static final String PATTERN = "<verse\\s+number=\"(\\d+(-\\d+)?)\"\\s+style=\"v\"\\s*/>";
-    private int mStartVerseNumber = 0;
-    private int mEndVerseNumber = 0;
-//    private int mVerseNumber = -1;
-    private SpannableStringBuilder mSpannable;
+    private var _endVerseNumber: Int = 0
+    final override val endVerseNumber: Int
+        get() = _endVerseNumber
+
+    private var spannable: SpannableStringBuilder? = null
+
+    companion object {
+        const val PATTERN = "<verse\\s+number=\"(\\d+(-\\d+)?)\"\\s+style=\"v\"\\s*/>"
+
+        /**
+         * Parses a usx string into a verse span
+         * @param usx the USX string
+         * @return the parsed USXVerseSpan or null
+         */
+        @JvmStatic
+        fun parseVerse(usx: String): USXVerseSpan? {
+            val pattern = Pattern.compile(PATTERN)
+            val matcher = pattern.matcher(usx)
+            while (matcher.find()) {
+                val group = matcher.group(1)
+                if (group != null) {
+                    return USXVerseSpan(group)
+                }
+            }
+            return null
+        }
+
+        /**
+         * Returns the range of verses that a chunk of text spans
+         *
+         * @param text the text to search
+         * @return IntArray of size 0 if no verses, size 1 if one verse, size 2 if a range of verses
+         */
+        @JvmStatic
+        fun getVerseRange(text: CharSequence): IntArray {
+            // locate verse range
+            val pattern = Pattern.compile(PATTERN)
+            val matcher = pattern.matcher(text)
+            var numVerses = 0
+            var startVerse = 0
+            var endVerse = 0
+            var verse: USXVerseSpan? = null
+
+            while (matcher.find()) {
+                val group = matcher.group(1) ?: continue
+                verse = USXVerseSpan(group)
+
+                if (numVerses == 0) {
+                    // first verse
+                    startVerse = verse.startVerseNumber
+                    endVerse = verse.endVerseNumber
+                }
+                numVerses++
+            }
+
+            if (verse != null) {
+                endVerse = if (verse.endVerseNumber > 0) {
+                    verse.endVerseNumber
+                } else {
+                    verse.startVerseNumber
+                }
+            }
+
+            return when {
+                startVerse <= 0 || endVerse <= 0 -> IntArray(0) // no verse range
+                startVerse == endVerse -> intArrayOf(startVerse) // single verse
+                else -> intArrayOf(startVerse, endVerse) // verse range
+            }
+        }
+    }
 
     /**
      * Creates a new verse span of either a single verse or range of verses
-     * @param verse
+     * @param verse the verse string
      */
-    public USXVerseSpan(String verse) {
-        super(verse, "<verse number=\""+verse+"\" style=\"v\" />");
-        String[] verses = verse.split("-");
-        if(verses.length == 2) {
+    constructor(verse: String) : super(verse, "<verse number=\"$verse\" style=\"v\" />") {
+        val verses = verse.split("-")
+        if (verses.size == 2) {
             // range of verses
-            mStartVerseNumber = Integer.parseInt(verses[0]);
-            mEndVerseNumber = Integer.parseInt(verses[1]);
+            _startVerseNumber = verses[0].toIntOrNull() ?: 0
+            _endVerseNumber = verses[1].toIntOrNull() ?: 0
         } else {
             // single verse
-            mStartVerseNumber = Integer.parseInt(verse);
+            _startVerseNumber = verse.toIntOrNull() ?: 0
         }
     }
 
     /**
      * Creates a new verse span
-     * @param verse
+     * @param verse the verse number
      */
-    public USXVerseSpan(int verse) {
-        super(verse+"", "<verse number=\""+verse+"\" style=\"v\" />");
-        mStartVerseNumber = verse;
+    constructor(verse: Int) : super(verse.toString(), "<verse number=\"$verse\" style=\"v\" />") {
+        _startVerseNumber = verse
     }
 
     /**
      * Creates a verse span over a range of verses
-     * @param startVerse
-     * @param endVerse
+     * @param startVerse the starting verse
+     * @param endVerse the ending verse
      */
-    public USXVerseSpan(int startVerse, int endVerse) {
-        super(startVerse+"-"+endVerse, "<verse number=\""+startVerse+"-"+endVerse+"\" style=\"v\" />");
-        mStartVerseNumber = startVerse;
-        mEndVerseNumber = endVerse;
-    }
-
-    /**
-     * Returns the start verse number
-     * @return
-     */
-    public int getStartVerseNumber() {
-        return mStartVerseNumber;
-    }
-
-    /**
-     * Returns the end verse number
-     * @return
-     */
-    public int getEndVerseNumber() {
-        return mEndVerseNumber;
+    constructor(startVerse: Int, endVerse: Int) : super("$startVerse-$endVerse", "<verse number=\"$startVerse-$endVerse\" style=\"v\" />") {
+        _startVerseNumber = startVerse
+        _endVerseNumber = endVerse
     }
 
     /**
      * Generates the spannable.
      * This provides caching so we can look up the span in the text later
-     * @return
      */
-    @Override
-    public SpannableStringBuilder render() {
-        if(mSpannable == null) {
-            mSpannable = super.render();
-            // apply custom styles
-            mSpannable.setSpan(new RelativeSizeSpan(0.8f), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.gray)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return mSpannable;
-    }
-
-    /**
-     * Parses a usx string into a verse span
-     * @param usx
-     * @return
-     */
-    public static USXVerseSpan parseVerse(String usx) {
-        Pattern pattern = Pattern.compile(PATTERN);
-        Matcher matcher = pattern.matcher(usx);
-        while(matcher.find()) {
-            return new USXVerseSpan(matcher.group(1));
-        }
-        return null;
-    }
-
-    /**
-     * Returns the range of verses that a chunk of text spans
-     *
-     * @param text
-     * @return int[0] if no verses, int[1] if one verse, int[2] if a range of verses
-     */
-    public static int[] getVerseRange(CharSequence text) {
-        // locate verse range
-        Pattern pattern = Pattern.compile(USXVerseSpan.PATTERN);
-        Matcher matcher = pattern.matcher(text);
-        int numVerses = 0;
-        int startVerse = 0;
-        int endVerse = 0;
-        USXVerseSpan verse = null;
-        while(matcher.find()) {
-            verse = new USXVerseSpan(matcher.group(1));
-
-            if(numVerses == 0) {
-                // first verse
-                startVerse = verse.getStartVerseNumber();
-                endVerse = verse.getEndVerseNumber();
+    override fun render(): SpannableStringBuilder {
+        if (spannable == null) {
+            val s = super.render()
+            context?.let { ctx ->
+                // apply custom styles
+                s.setSpan(RelativeSizeSpan(0.8f), 0, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                s.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.gray)),
+                    0,
+                    s.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
             }
-            numVerses ++;
+            spannable = s
         }
-        if(verse != null) {
-            if(verse.getEndVerseNumber() > 0) {
-                endVerse = verse.getEndVerseNumber();
-            } else {
-                endVerse = verse.getStartVerseNumber();
-            }
-        }
-        if(startVerse <= 0 || endVerse <= 0) {
-            // no verse range
-            return new int[0];
-        } else if(startVerse == endVerse) {
-            // single verse
-            return new int[]{startVerse};
-        } else {
-            // verse range
-            return new int[]{startVerse, endVerse};
-        }
+        return spannable!!
     }
 }

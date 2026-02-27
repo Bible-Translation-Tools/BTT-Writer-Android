@@ -1,145 +1,107 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import androidx.core.content.ContextCompat
+import com.door43.translationstudio.R
+import org.unfoldingword.tools.logger.Logger
+import java.util.regex.Pattern
 
-import org.unfoldingword.tools.logger.Logger;
-import com.door43.translationstudio.R;
+class PassageLinkSpan(
+    title: String,
+    var address: String
+) : Span(title, address) {
 
-import java.util.regex.Pattern;
+    private var spannable: SpannableStringBuilder? = null
 
-/**
- * Created by joel on 2/18/2015.
- */
-public class PassageLinkSpan extends Span {
-    // e.g. [[:en:bible:notes:gen:01:03|1:5]]
-    public static final Pattern PATTERN = Pattern.compile("\\[\\[:(((?!\\]\\]).)*)\\|(((?!\\]\\]).)*)\\]\\]");//\\[\\[:((?!\\]\\])(.*)\\|(.*))\\]\\]");
-    private static String mTitle;
-    private static String mAddress;
-    private SpannableStringBuilder mSpannable;
-    private String mLanguageId;
-    private String mProjectId;
-    private String mChapterId;
-    private String mFrameId;
+    private var _title: String = title
+    fun getTitle(): String = _title
 
-    /**
-     * Creates a new passage link
-     * @param title the title of the link e.g. 1:5
-     * @param address the address to the link e.g. en:bible:notes:gen:01:03
-     */
-    public PassageLinkSpan(String title, String address) {
-        super(title, address);
-        mTitle = title;
-        mAddress = address;
-        explodeAddress(address);
+    var languageId: String? = null
+        private set
+
+    var projectId: String? = null
+        private set
+
+    lateinit var chapterId: String
+        private set
+
+    lateinit var frameId: String
+        private set
+
+    companion object {
+        // e.g. [[:en:bible:notes:gen:01:03|1:5]]
+        val PATTERN: Pattern = Pattern.compile("\\[\\[:(((?!]]).)*)\\|(((?!]]).)*)]]") //\\[\\[:((?!\\]\\])(.*)\\|(.*))\\]\\]"
+    }
+
+    init {
+        explodeAddress(address)
     }
 
     /**
      * Changes the title of the passage link
-     * @param title
+     * @param title the new title
      */
-    public void setTitle(String title) {
-        setHumanReadable(title);
+    fun setTitle(title: String) {
+        this._title = title
+        setHumanReadable(title)
     }
 
-    @Override
-    public SpannableStringBuilder render() {
-        if(mSpannable == null) {
-            mSpannable = super.render();
+    override fun render(): SpannableStringBuilder {
+        if (spannable == null) {
+            val s = super.render()
             // apply custom styles
-            mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.accent)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return mSpannable;
-    }
-
-    /**
-     * Returns the project id from the address
-     * @return
-     */
-    public String getProjectId() {
-        return mProjectId;
-    }
-
-    /**
-     * Returns teh chapter id from the address
-     * @return
-     */
-    public String getChapterId() {
-        return mChapterId;
-    }
-
-    /**
-     * Returns the frame id from the address
-     * @return
-     */
-    public String getFrameId() {
-        return mFrameId;
-    }
-
-    /**
-     * Returns the language id from the address
-     * @return
-     */
-    public String getLanguageId() {
-        return mLanguageId;
-    }
-
-    /**
-     * Breaks the address apart into it's components
-     * @param address
-     */
-    private void explodeAddress(String address) {
-        String[] parts = address.split(":");
-        if(parts.length == 6 && parts[1].equals("bible")) {
-            // example: en:bible:notes:gen:03:04
-            mLanguageId = parts[0];
-
-            mProjectId = parts[3];
-            mChapterId = parts[4];
-            mFrameId = parts[5];
-        } else if(parts.length == 5 && parts[3].equals("frames")) {
-            // example: en:obs:notes:frames:01-11
-            String[] chapterFrame = parts[4].split("-");
-            if(chapterFrame.length == 2) {
-                mLanguageId = parts[0];
-                mProjectId = parts[1];
-                mChapterId = chapterFrame[0];
-                mFrameId = chapterFrame[1];
+            context?.let { ctx ->
+                s.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.accent)),
+                    0,
+                    s.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
             }
+            spannable = s
+        }
+        return spannable!!
+    }
 
+    /**
+     * Breaks the address apart into its components
+     * @param address the link address to explode
+     */
+    private fun explodeAddress(address: String) {
+        val parts = address.split(":")
+        if (parts.size == 6 && parts[1] == "bible") {
+            // example: en:bible:notes:gen:03:04
+            languageId = parts[0]
+            projectId = parts[3]
+            chapterId = parts[4]
+            frameId = parts[5]
+        } else if (parts.size == 5 && parts[3] == "frames") {
+            // example: en:obs:notes:frames:01-11
+            val chapterFrame = parts[4].split("-")
+            if (chapterFrame.size == 2) {
+                languageId = parts[0]
+                projectId = parts[1]
+                chapterId = chapterFrame[0]
+                frameId = chapterFrame[1]
+            }
         } else {
-            Logger.w(this.getClass().getName(), "invalid passage link address "+address);
+            Logger.w(this.javaClass.name, "invalid passage link address $address")
         }
     }
 
-//    /**
-//     * Returns the human readable name of the link
-//     * @param rawLink
-//     * @return
-//     */
-//    public void parseLink(String rawLink) {
-//        Matcher matcher = PATTERN.matcher(rawLink);
-//        while(matcher.find()) {
-//            mTitle = matcher.group(3);
-//            mAddress = matcher.group(2);
-//            explodeAddress(mAddress);
-//        }
-//    }
-
-    /**
-     * Returns the link title
-     * @return
-     */
-    public String getTitle() {
-        return mTitle;
-    }
-
-    /**
-     * Returns the link address
-     * @return
-     */
-    public String getAddress() {
-        return mAddress;
-    }
+    // /**
+    //  * Returns the human-readable name of the link
+    //  * @param rawLink
+    //  * @return
+    //  */
+    // fun parseLink(rawLink: String) {
+    //     val matcher = PATTERN.matcher(rawLink)
+    //     while(matcher.find()) {
+    //         title = matcher.group(3)
+    //         address = matcher.group(2)
+    //         explodeAddress(address)
+    //     }
+    // }
 }

@@ -65,7 +65,7 @@ public class LinkRenderer extends RenderingEngine {
      * @return
      */
     private CharSequence renderPassageLink(CharSequence in) {
-        return renderLink(in, PassageLinkSpan.PATTERN, new OnCreateLink() {
+        return renderLink(in, PassageLinkSpan.Companion.getPATTERN(), new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 return new PassageLinkSpan(matcher.group(3), matcher.group(2));
@@ -79,7 +79,7 @@ public class LinkRenderer extends RenderingEngine {
      * @return
      */
     private CharSequence renderTranslationAcademyLink(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.ADDRESS_PATTERN, new OnCreateLink() {
+        return renderLink(in, ArticleLinkSpan.Companion.getADDRESS_PATTERN(), new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 return ArticleLinkSpan.parse(matcher.group(3), matcher.group(2));

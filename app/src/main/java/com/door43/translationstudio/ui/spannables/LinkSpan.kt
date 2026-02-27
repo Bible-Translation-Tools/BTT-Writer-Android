@@ -1,67 +1,41 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import androidx.core.content.ContextCompat
+import com.door43.translationstudio.R
 
-import com.door43.translationstudio.R;
+class LinkSpan(
+    val title: String,
+    val address: String,
+    val type: String
+) : Span(title, address) {
 
-/**
- * Created by joel on 12/2/2015.
- */
-public class LinkSpan extends Span {
-
-    private final String title;
-    private final String address;
-    private final String type;
-    private SpannableStringBuilder spannable;
-
-    public LinkSpan(String title, String address, String type) {
-        super(title, address);
-        this.title = title;
-        this.address = address;
-        this.type = type;
-    }
+    private var spannable: SpannableStringBuilder? = null
 
     /**
      * Changes the title of the link
-     * @param title
+     * @param newTitle the new title to be set
      */
-    public void setTitle(String title) {
-        setHumanReadable(title);
+    fun setTitle(newTitle: String) {
+        setHumanReadable(newTitle)
     }
 
-    @Override
-    public SpannableStringBuilder render() {
-        if(this.spannable == null) {
-            this.spannable = super.render();
+    override fun render(): SpannableStringBuilder {
+        if (spannable == null) {
+            val s = super.render()
             // apply custom styles
-            this.spannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.accent)), 0, this.spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            context?.let { ctx ->
+                s.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.accent)),
+                    0,
+                    s.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            spannable = s
         }
-        return this.spannable;
-    }
-
-    /**
-     * Returns the link title
-     * @return
-     */
-    public String getTitle() {
-        return this.title;
-    }
-
-    /**
-     * Returns the link address
-     * @return
-     */
-    public String getAddress() {
-        return this.address;
-    }
-
-    /**
-     * Returns the link type
-     * @return
-     */
-    public String getType() {
-        return this.type;
+        return spannable!!
     }
 }

@@ -1,29 +1,27 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.content.Context;
-import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.SpannedString;
-import android.view.View;
-import android.widget.TextView;
+import android.content.Context
+import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.SpannedString
+import android.view.View
+import android.widget.TextView
+import com.door43.widget.LongClickableSpan
 
-import androidx.annotation.NonNull;
+abstract class Span {
+    var humanReadable: CharSequence = ""
+        protected set
 
-import com.door43.widget.LongClickableSpan;
+    var machineReadable: CharSequence = ""
+        protected set
 
-/**
- * Created by joel on 1/28/2015.
- */
-public abstract class Span {
-    private CharSequence mHumanReadable;
-    private CharSequence mMachineReadable;
-    private Boolean mClickable = true;
-    private OnClickListener mClickListener;
-    private Bundle extras;
+    var isClickable: Boolean = true
+    var onClickListener: OnClickListener? = null
+    var extras: Bundle? = null
 
-    protected Context context;
+    protected var context: Context? = null
 
     /**
      * Creates a new empty span.
@@ -31,29 +29,17 @@ public abstract class Span {
      * some processing before fully initializing.
      * You should manually call init() if using this constructor
      */
-    public Span() {
-        init("", "");
+    constructor() {
+        init("", "")
     }
 
     /**
      * Creates a new span
-     * @param humanReadable the human readable title of the span
-     * @param machineReadable the machine readable definition of the span
+     * @param humanReadable the human-readable title of the span
+     * @param machineReadable the machine-readable definition of the span
      */
-    Span(CharSequence humanReadable, CharSequence machineReadable) {
-        init(humanReadable, machineReadable);
-    }
-
-    public Bundle getExtras() {
-        return this.extras;
-    }
-
-    public void setExtras(Bundle extras) {
-        this.extras = extras;
-    }
-
-    public void setClickable(boolean clickable) {
-        this.mClickable = clickable;
+    internal constructor(humanReadable: CharSequence, machineReadable: CharSequence) {
+        init(humanReadable, machineReadable)
     }
 
     /**
@@ -61,97 +47,79 @@ public abstract class Span {
      * @param humanReadable
      * @param machineReadable
      */
-    protected void init(CharSequence humanReadable, CharSequence machineReadable) {
-        mHumanReadable = humanReadable;
-        mMachineReadable = machineReadable;
+    protected fun init(humanReadable: CharSequence, machineReadable: CharSequence) {
+        this.humanReadable = humanReadable
+        this.machineReadable = machineReadable
     }
 
-    /**
-     * Sets the click listener on this span
-     * @param listener
-     */
-    public void setOnClickListener(OnClickListener listener) {
-        mClickListener = listener;
-    }
-
-    protected void setHumanReadable(String text) {
-        mHumanReadable = text;
+    protected fun setHumanReadable(text: String) {
+        this.humanReadable = text
     }
 
     /**
      * Generates the span and hooks up the click listener.
-     * @return
      */
-    public SpannableStringBuilder render() {
-        SpannableStringBuilder spannable;
-        if(mHumanReadable != null && !mHumanReadable.toString().isEmpty()) {
-            spannable = new SpannableStringBuilder(mHumanReadable);
+    open fun render(): SpannableStringBuilder {
+        val spannable = if (humanReadable.toString().isNotEmpty()) {
+            SpannableStringBuilder(humanReadable)
         } else {
-            spannable = new SpannableStringBuilder(mMachineReadable);
+            SpannableStringBuilder(machineReadable)
         }
-        if (spannable.length() > 0) {
-            spannable.setSpan(new SpannedString(mMachineReadable), 0, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-            if (mClickable) {
-                LongClickableSpan clickSpan = new LongClickableSpan() {
-                    @Override
-                    public void onLongClick(@NonNull View view) {
-                        if(mClickListener != null) {
-                            TextView tv = (TextView)view;
-                            Spanned s = (Spanned)tv.getText();
-                            int start = s.getSpanStart(this);
-                            int end = s.getSpanEnd(this);
-                            mClickListener.onLongClick(view, Span.this, start, end);
+        if (spannable.isNotEmpty()) {
+            spannable.setSpan(
+                SpannedString(machineReadable),
+                0,
+                spannable.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
+            if (isClickable) {
+                val clickSpan = object : LongClickableSpan() {
+                    override fun onLongClick(view: View) {
+                        onClickListener?.let {
+                            val tv = view as TextView
+                            val s = tv.text as Spanned
+                            val start = s.getSpanStart(this)
+                            val end = s.getSpanEnd(this)
+                            it.onLongClick(view, this@Span, start, end)
                         }
                     }
 
-                    @Override
-                    public void onClick(@NonNull View view) {
-                        if (mClickListener != null) {
-                            TextView tv = (TextView)view;
-                            Spanned s = (Spanned)tv.getText();
-                            int start = s.getSpanStart(this);
-                            int end = s.getSpanEnd(this);
-                            mClickListener.onClick(view, Span.this, start, end);
+                    override fun onClick(view: View) {
+                        onClickListener?.let {
+                            val tv = view as TextView
+                            val s = tv.text as Spanned
+                            val start = s.getSpanStart(this)
+                            val end = s.getSpanEnd(this)
+                            it.onClick(view, this@Span, start, end)
                         }
                     }
-                };
-                spannable.setSpan(clickSpan, 0, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                spannable.setSpan(
+                    clickSpan,
+                    0,
+                    spannable.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
             }
         }
-        return spannable;
-    }
-
-    /**
-     * Returns the machine readable source of this span
-     * @return
-     */
-    public CharSequence getMachineReadable() {
-        return mMachineReadable;
-    }
-
-    /**
-     * Returns the human readable title of this span
-     * @return
-     */
-    public CharSequence getHumanReadable() {
-        return mHumanReadable;
+        return spannable
     }
 
     /**
      * Returns the span as a CharSequence
-     * @return
      */
-    public CharSequence toCharSequence(Context context) {
-        this.context = context;
-        return render();
+    fun toCharSequence(context: Context): CharSequence {
+        this.context = context
+        return render()
     }
 
     /**
      * Custom click listener when span is clicked
      */
-    public interface OnClickListener {
-        void onClick(View view, Span span, int start, int end);
-        void onLongClick(View view, Span span, int start, int end);
+    interface OnClickListener {
+        fun onClick(view: View, span: Span, start: Int, end: Int)
+        fun onLongClick(view: View, span: Span, start: Int, end: Int)
     }
 }

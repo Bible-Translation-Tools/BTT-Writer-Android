@@ -1,27 +1,23 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder;
+import android.text.SpannableStringBuilder
 
-public class USFMParagraphSpan extends ParagraphSpan {
+class USFMParagraphSpan : ParagraphSpan("\n", "\\p ") {
 
-    public static final String PATTERN = "\\\\p\\W?";
+    private var spannable: SpannableStringBuilder? = null
 
-    private SpannableStringBuilder mSpannable;
-
-    public USFMParagraphSpan() {
-        super("\n", "\\p ");
+    companion object {
+        const val PATTERN = "\\\\p\\W?"
     }
 
     /**
      * Generates the spannable.
      * This provides caching so we can look up the span in the text later
-     * @return
      */
-    @Override
-    public SpannableStringBuilder render() {
-        if(mSpannable == null) {
-            mSpannable = super.render();
+    override fun render(): SpannableStringBuilder {
+        if (spannable == null) {
+            spannable = super.render()
         }
-        return mSpannable;
+        return spannable!!
     }
 }

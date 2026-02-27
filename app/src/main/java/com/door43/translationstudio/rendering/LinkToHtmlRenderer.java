@@ -51,7 +51,7 @@ public class LinkToHtmlRenderer extends RenderingEngine {
      * @return
      */
     private CharSequence renderPassageLink(CharSequence in) {
-        return renderLink(in, SCHEME_CHUNK, PassageLinkSpan.PATTERN, new OnCreateLink() {
+        return renderLink(in, SCHEME_CHUNK, PassageLinkSpan.Companion.getPATTERN(), new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 return new PassageLinkSpan(matcher.group(3), matcher.group(2));
@@ -66,7 +66,7 @@ public class LinkToHtmlRenderer extends RenderingEngine {
      * @return
      */
     public CharSequence renderTranslationAcademyAddress(CharSequence in) {
-        return renderLink(in, SCHEME_TA, ArticleLinkSpan.ADDRESS_PATTERN, new OnCreateLink() {
+        return renderLink(in, SCHEME_TA, ArticleLinkSpan.Companion.getADDRESS_PATTERN(), new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 String title = matcher.group(4);
@@ -85,7 +85,7 @@ public class LinkToHtmlRenderer extends RenderingEngine {
      * @return
      */
     public CharSequence renderTranslationAcademyLink(CharSequence in) {
-        return renderLink(in, SCHEME_TA, ArticleLinkSpan.LINK_PATTERN, new OnCreateLink() {
+        return renderLink(in, SCHEME_TA, ArticleLinkSpan.Companion.getLINK_PATTERN(), new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 String title = matcher.group(6);

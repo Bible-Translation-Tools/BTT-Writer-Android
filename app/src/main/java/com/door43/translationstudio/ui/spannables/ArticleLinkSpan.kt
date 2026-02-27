@@ -1,106 +1,86 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import androidx.core.content.ContextCompat
+import com.door43.translationstudio.R
+import org.unfoldingword.tools.logger.Logger
+import java.util.regex.Pattern
 
-import org.unfoldingword.tools.logger.Logger;
+open class ArticleLinkSpan protected constructor(
+    private val title: String,
+    val sourceLanguageSlug: String,
+    val volume: String,
+    val section: String,
+    val slug: String
+) : Span() {
 
-import com.door43.translationstudio.R;
+    private val address: String = buildAddress(sourceLanguageSlug, volume, section, slug)
+    private var spannable: SpannableStringBuilder? = null
 
-import java.util.regex.Pattern;
-
-/**
- * Created by joel on 12/2/2015.
- */
-public class ArticleLinkSpan extends Span {
-    // e.g. [[en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
-    // or [[:en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
-    public static final Pattern ADDRESS_PATTERN = Pattern.compile("\\[\\[:?(([-a-zA-Z0-9]+:ta:[-_a-z0-9]+:[-_a-z0-9]+:[-_a-z0-9]+)( *\\|(((?!]]).)+))?)]]");
-    // e.g <a href="/en/ta/vol1/translate/figs_intro" title="en:ta:vol1:translate:figs_intro">Figures of Speech</a>
-    public static final Pattern LINK_PATTERN = Pattern.compile("<a(((?!</a>).)*)href=\"/?([-a-zA-Z0-9]+/ta/[-_a-z0-9]+/[-_a-z0-9]+/[-_a-z0-9]+)/?\"(((?!</a>).)*)>\\s*(((?!</a>).)*)\\s*</a>");
-    private final String title;
-    private final String address;
-    private SpannableStringBuilder mSpannable;
-    private String sourceLanguageSlug;
-    private String volume;
-    private String slug;
-    private String section;
-
-    /**
-     *
-     * @param title
-     * @param sourceLanguageSlug
-     * @param volume
-     * @param section
-     * @param slug
-     */
-    protected ArticleLinkSpan(String title, String sourceLanguageSlug, String volume, String section, String slug) {
-        this.title = title;
-        this.address = buildAddress(sourceLanguageSlug, volume, section, slug);
-        this.sourceLanguageSlug = sourceLanguageSlug;
-        this.volume = volume;
-        this.section = section;
-        this.slug = slug;
-        init(this.title, address);
+    init {
+        init(this.title, address)
     }
 
-    @Override
-    public SpannableStringBuilder render() {
-        if(mSpannable == null) {
-            mSpannable = super.render();
+    override fun render(): SpannableStringBuilder {
+        if (spannable == null) {
+            val s = super.render()
             // apply custom styles
-            mSpannable.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.accent)), 0, mSpannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            context?.let { ctx ->
+                s.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.accent)),
+                    0,
+                    s.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            spannable = s
         }
-        return mSpannable;
+        return spannable!!
     }
 
-    private String buildAddress(String sourceLanguageSlug, String volume, String manual, String id) {
+    private fun buildAddress(sourceLanguageSlug: String, volume: String, manual: String, id: String): String {
         // example: en:ta:vol2:translate:figs_euphemism
-        return sourceLanguageSlug + ":ta:" + volume + ":" + manual + ":" + id;
+        return "$sourceLanguageSlug:ta:$volume:$manual:$id"
     }
 
     /**
      * Changes the title of the passage link
      * @param title
      */
-    public void setTitle(String title) {
-        setHumanReadable(title);
-        mSpannable = null;
+    fun setTitle(title: String) {
+        setHumanReadable(title)
+        spannable = null
     }
 
-    public static ArticleLinkSpan parse(String address) {
-        return parse("", address);
-    }
+    companion object {
+        // e.g. [[en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
+        // or [[:en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
+        val ADDRESS_PATTERN: Pattern = Pattern.compile("\\[\\[:?(([-a-zA-Z0-9]+:ta:[-_a-z0-9]+:[-_a-z0-9]+:[-_a-z0-9]+)( *\\|(((?!]]).)+))?)]]")
 
-    public static ArticleLinkSpan parse(String title, String address) {
-        String[] parts = address.split(":");
-        if(parts.length == 5) {
-            // example: en:ta:vol2:translate:figs_euphemism
-            String sourceLanguageSlug = parts[0];
-            String taVolume = parts[2];
-            String taManual = parts[3];
-            String taId = parts[4].replace("_", "-");
-            return new ArticleLinkSpan(title, sourceLanguageSlug, taVolume, taManual, taId);
-        } else {
-            Logger.w(ArticleLinkSpan.class.getName(), "invalid translation academy link address " + address);
+        // e.g <a href="/en/ta/vol1/translate/figs_intro" title="en:ta:vol1:translate:figs_intro">Figures of Speech</a>
+        val LINK_PATTERN: Pattern = Pattern.compile("<a(((?!</a>).)*)href=\"/?([-a-zA-Z0-9]+/ta/[-_a-z0-9]+/[-_a-z0-9]+/[-_a-z0-9]+)/?\"(((?!</a>).)*)>\\s*(((?!</a>).)*)\\s*</a>")
+
+        @JvmStatic
+        fun parse(address: String): ArticleLinkSpan? {
+            return parse("", address)
         }
-        return null;
-    }
 
-    public String getSourceLanguageSlug() {
-        return sourceLanguageSlug;
-    }
-
-    public String getVolume() {
-        return volume;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public String getSection() {
-        return section;
+        @JvmStatic
+        fun parse(title: String, address: String): ArticleLinkSpan? {
+            val parts = address.split(":")
+            if (parts.size == 5) {
+                // example: en:ta:vol2:translate:figs_euphemism
+                val sourceLanguageSlug = parts[0]
+                val taVolume = parts[2]
+                val taManual = parts[3]
+                val taId = parts[4].replace("_", "-")
+                return ArticleLinkSpan(title, sourceLanguageSlug, taVolume, taManual, taId)
+            } else {
+                Logger.w(ArticleLinkSpan::class.java.name, "invalid translation academy link address $address")
+            }
+            return null
+        }
     }
 }

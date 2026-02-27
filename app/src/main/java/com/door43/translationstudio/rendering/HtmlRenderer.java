@@ -96,7 +96,7 @@ public class HtmlRenderer extends RenderingEngine {
      * @return
      */
     private CharSequence renderPassageLink(CharSequence in) {
-        return renderLink(in, PassageLinkSpan.PATTERN, "p", new OnCreateLink() {
+        return renderLink(in, PassageLinkSpan.Companion.getPATTERN(), "p", new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 return new PassageLinkSpan(matcher.group(3), matcher.group(1));
@@ -112,7 +112,7 @@ public class HtmlRenderer extends RenderingEngine {
      * @return
      */
     private CharSequence renderShortReferenceLink(CharSequence in) {
-        return renderLink(in, ShortReferenceSpan.PATTERN, "sr", new OnCreateLink() {
+        return renderLink(in, ShortReferenceSpan.Companion.getPATTERN(), "sr", new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 return new ShortReferenceSpan(matcher.group(0));
@@ -127,7 +127,7 @@ public class HtmlRenderer extends RenderingEngine {
      * @return
      */
     public CharSequence renderTranslationAcademyAddress(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.ADDRESS_PATTERN, "ta", new OnCreateLink() {
+        return renderLink(in, ArticleLinkSpan.Companion.getADDRESS_PATTERN(), "ta", new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 String title = matcher.group(4);
@@ -146,7 +146,7 @@ public class HtmlRenderer extends RenderingEngine {
      * @return
      */
     public CharSequence renderTranslationAcademyLink(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.LINK_PATTERN, "ta", new OnCreateLink() {
+        return renderLink(in, ArticleLinkSpan.Companion.getLINK_PATTERN(), "ta", new OnCreateLink() {
             @Override
             public Span onCreate(Matcher matcher) {
                 String title = matcher.group(6);

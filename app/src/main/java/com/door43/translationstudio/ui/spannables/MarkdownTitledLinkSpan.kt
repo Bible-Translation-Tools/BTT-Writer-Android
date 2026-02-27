@@ -1,27 +1,13 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-import java.util.regex.Pattern;
+import java.util.regex.Pattern
 
-/**
- * Created by joel on 2/24/17.
- */
-
-public class MarkdownTitledLinkSpan extends Span {
-    public static final Pattern PATTERN = Pattern.compile("\\[(((?!\\]).)*)\\]\\(((((?!\\\\)).)*)\\)");
-    private final String mAddress;
-    private final String mTitle;
-
-    public MarkdownTitledLinkSpan(String title, String address) {
-        super(title, address);
-        mTitle = title;
-        mAddress = address;
-    }
-
-    public String getTitle() {
-        return mTitle;
-    }
-
-    public String getAddress() {
-        return mAddress;
+class MarkdownTitledLinkSpan(val title: String, val address: String) : Span(
+    title,
+    address
+) {
+    companion object {
+        @JvmField
+        val PATTERN: Pattern = Pattern.compile("\\[(((?!]).)*)]\\(((((?!\\\\)).)*)\\)")
     }
 }

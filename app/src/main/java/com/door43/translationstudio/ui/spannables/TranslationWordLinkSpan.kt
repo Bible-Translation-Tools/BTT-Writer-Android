@@ -1,18 +1,13 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-/**
- * Created by joel on 2/24/17.
- */
-public class TranslationWordLinkSpan extends Span {
-    private String title;
+class TranslationWordLinkSpan(
+    title: String,
+    id: String
+) : Span(title, id) {
 
-    public TranslationWordLinkSpan(String title, String id) {
-        super(title, id);
-        this.title = title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-        setHumanReadable(title);
-    }
+    var title: String = title
+        set(value) {
+            field = value
+            setHumanReadable(value)
+        }
 }

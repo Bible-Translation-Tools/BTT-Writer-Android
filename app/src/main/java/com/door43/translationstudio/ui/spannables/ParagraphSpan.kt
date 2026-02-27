@@ -1,9 +1,10 @@
-package com.door43.translationstudio.ui.spannables;
+package com.door43.translationstudio.ui.spannables
 
-public class ParagraphSpan extends Span {
-
-    ParagraphSpan(CharSequence humanReadable, CharSequence machineReadable) {
-        super(humanReadable, machineReadable);
-        super.setClickable(false);
+open class ParagraphSpan internal constructor(
+    humanReadable: CharSequence,
+    machineReadable: CharSequence
+) : Span(humanReadable, machineReadable) {
+    init {
+        super.isClickable = false
     }
 }
