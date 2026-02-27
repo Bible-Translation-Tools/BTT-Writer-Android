@@ -15,14 +15,13 @@ import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ListItem
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity.SEARCH_SOURCE
+import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers

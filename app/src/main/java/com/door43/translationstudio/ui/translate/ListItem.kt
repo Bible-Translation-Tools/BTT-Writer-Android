@@ -88,7 +88,7 @@ abstract class ListItem(
         get() = target.projectTranslation
     val ct: ChapterTranslation
         get() = target.getChapterTranslation(chapterSlug)
-    val ft: FrameTranslation?
+    val ft: FrameTranslation
         get() = target.getFrameTranslation(
             chapterSlug,
             chunkSlug,

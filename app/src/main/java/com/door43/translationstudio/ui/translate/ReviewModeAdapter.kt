@@ -1,212 +1,189 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import android.annotation.SuppressLint;
-import android.content.ClipData;
-import android.content.ContentValues;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.Editable;
-import android.text.Html;
-import android.text.Layout;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.SpannedString;
-import android.text.TextUtils;
-import android.text.style.BackgroundColorSpan;
-import android.text.style.ForegroundColorSpan;
-import android.util.Log;
-import android.view.DragEvent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.Html
+import android.text.Layout
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.SpannedString
+import android.text.TextUtils
+import android.text.style.BackgroundColorSpan
+import android.text.style.ForegroundColorSpan
+import android.util.Log
+import android.view.DragEvent
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.RecyclerView
+import com.door43.data.AssetsProvider
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.FrameTranslation
+import com.door43.translationstudio.core.MergeConflictsHandler
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.databinding.FragmentFootnotePromptBinding
+import com.door43.translationstudio.databinding.FragmentReviewListItemBinding
+import com.door43.translationstudio.databinding.FragmentReviewListItemMergeConflictBinding
+import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding
+import com.door43.translationstudio.rendering.ClickableRenderingEngine
+import com.door43.translationstudio.rendering.Clickables
+import com.door43.translationstudio.rendering.DefaultRenderer
+import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.ui.spannables.NoteSpan
+import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.ui.spannables.USFMNoteSpan
+import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.translationstudio.ui.spannables.VerseSpan
+import com.door43.translationstudio.ui.translate.review.OnReviewModeListener
+import com.door43.translationstudio.ui.translate.review.ReviewHolder
+import com.door43.translationstudio.ui.translate.review.SearchSubject
+import com.door43.util.ColorUtil
+import com.door43.widget.ViewUtil
+import com.google.android.material.tabs.TabLayout
+import org.eclipse.jgit.revwalk.RevCommit
+import org.unfoldingword.resourcecontainer.Link
+import org.unfoldingword.tools.logger.Logger
+import org.unfoldingword.tools.taskmanager.ThreadableUI
+import java.io.IOException
+import java.util.regex.Pattern
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.recyclerview.widget.RecyclerView;
+open class ReviewModeAdapter(
+    openResources: Boolean,
+    enableMergeConflictsFilter: Boolean,
+    typography: Typography,
+    assetsProvider: AssetsProvider,
+    renderingProvider: RenderingProvider
+) : ViewModeAdapter<ReviewHolder>(), OnReviewModeListener {
 
-import com.door43.data.AssetsProvider;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.FileHistory;
-import com.door43.translationstudio.core.FrameTranslation;
-import com.door43.translationstudio.core.MergeConflictsHandler;
-import com.door43.translationstudio.rendering.RenderingProvider;
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.databinding.FragmentFootnotePromptBinding;
-import com.door43.translationstudio.databinding.FragmentReviewListItemBinding;
-import com.door43.translationstudio.databinding.FragmentReviewListItemMergeConflictBinding;
-import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding;
-import com.door43.translationstudio.rendering.ClickableRenderingEngine;
-import com.door43.translationstudio.rendering.Clickables;
-import com.door43.translationstudio.rendering.DefaultRenderer;
-import com.door43.translationstudio.rendering.RenderingGroup;
-import com.door43.translationstudio.ui.spannables.NoteSpan;
-import com.door43.translationstudio.ui.spannables.Span;
-import com.door43.translationstudio.ui.spannables.USFMNoteSpan;
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
-import com.door43.translationstudio.ui.spannables.VerseSpan;
-import com.door43.translationstudio.ui.translate.review.OnReviewModeListener;
-import com.door43.translationstudio.ui.translate.review.ReviewHolder;
-import com.door43.translationstudio.ui.translate.review.SearchSubject;
-import com.door43.util.ColorUtil;
-import com.door43.widget.ViewUtil;
-import com.google.android.material.tabs.TabLayout;
-
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.unfoldingword.resourcecontainer.Link;
-import org.unfoldingword.tools.logger.Logger;
-import org.unfoldingword.tools.taskmanager.ThreadableUI;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements OnReviewModeListener {
-    private static final String TAG = ReviewModeAdapter.class.getSimpleName();
-
-    public interface OnRenderHelpsListener {
-        void onRenderHelps(ListItem item);
+    interface OnRenderHelpsListener {
+        fun onRenderHelps(item: ListItem)
     }
 
-    public interface OnShowToastListener {
-        void onShowToast(String message);
-        void onShowToast(int resId);
+    interface OnShowToastListener {
+        fun onShowToast(message: String)
+        fun onShowToast(resId: Int)
     }
 
-    public static final int HIGHLIGHT_COLOR = Color.YELLOW;
-    public static final int VIEW_TYPE_NORMAL = 0;
-    public static final int VIEW_TYPE_CONFLICT = 1;
+    companion object {
+        private val TAG = ReviewModeAdapter::class.java.simpleName
+        const val HIGHLIGHT_COLOR = Color.YELLOW
+        const val VIEW_TYPE_NORMAL = 0
+        const val VIEW_TYPE_CONFLICT = 1
 
-    private CharSequence searchText = null;
-    private SearchSubject searchSubject = null;
-    private boolean haveMergeConflict = false;
-    private boolean mergeConflictFilterOn;
-    private int chunkSearchMatchesCounter = 0;
-    private int searchPosition = 0;
-    private int searchSubPositionItems = 0;
-    private boolean searchingTarget = true;
-    private int numberOfChunkMatches = -1;
-    private HashSet<Integer> visiblePositions = new HashSet<>();
-    private boolean mergeConflictSummaryDisplayed = false;
-    private boolean resourcesOpened;
+        private val USFM_CONSECUTIVE_VERSE_MARKERS =
+            Pattern.compile("\\\\v\\s(\\d+(-\\d+)?)\\s*\\\\v\\s(\\d+(-\\d+)?)")
 
-    private OnRenderHelpsListener renderHelpsListener = null;
-    private OnShowToastListener itemActionListener = null;
-    private final RenderingProvider renderingProvider;
-    private final AssetsProvider assetsProvider;
+        private val USFM_VERSE_MARKER =
+            Pattern.compile(USFMVerseSpan.PATTERN)
 
-    public ReviewModeAdapter(
-            boolean openResources,
-            boolean enableMergeConflictsFilter,
-            Typography typography,
-            AssetsProvider assetsProvider,
-            RenderingProvider renderingProvider
+        private val CONSECUTIVE_VERSE_MARKERS =
+            Pattern.compile("(<verse [^>]+/>\\s*){2}")
+
+        private val VERSE_MARKER =
+            Pattern.compile("<verse\\s+number=\"(\\d+)\"[^>]*>")
+    }
+
+    private var searchText: CharSequence? = null
+    private var searchSubject: SearchSubject? = null
+    private var haveMergeConflict = false
+    private var mergeConflictFilterOn: Boolean
+    private var chunkSearchMatchesCounter = 0
+    private var searchPosition = 0
+    private var searchSubPositionItems = 0
+    private var searchingTarget = true
+    private var numberOfChunkMatches = -1
+    private var visiblePositions = HashSet<Int>()
+    private var mergeConflictSummaryDisplayed = false
+    private var resourcesOpened: Boolean
+
+    var renderHelpsListener: OnRenderHelpsListener? = null
+    var itemActionListener: OnShowToastListener? = null
+
+    init {
+        this.resourcesOpened = openResources
+        this.mergeConflictFilterOn = enableMergeConflictsFilter
+        this.typography = typography
+        this.renderingProvider = renderingProvider
+        this.assetsProvider = assetsProvider
+    }
+
+    override fun initializeListItems(
+        listItems: List<ListItem>,
+        startingChapter: String,
+        startingChunk: String
     ) {
-        resourcesOpened = openResources;
-        mergeConflictFilterOn = enableMergeConflictsFilter;
-
-        this.typography = typography;
-        this.renderingProvider = renderingProvider;
-        this.assetsProvider = assetsProvider;
+        super.initializeListItems(listItems, startingChapter, startingChunk)
+        setResourcesOpened(resourcesOpened)
+        filter(searchText, searchSubject, searchPosition)
+        triggerNotifyDataSetChanged()
+        updateMergeConflict()
     }
 
-    @Override
-    protected void initializeListItems(
-            List<ListItem> listItems,
-            String startingChapter,
-            String startingChunk
-    ) {
-        super.initializeListItems(listItems, startingChapter, startingChunk);
-
-        setResourcesOpened(resourcesOpened);
-        filter(searchText, searchSubject, searchPosition);
-        triggerNotifyDataSetChanged();
-        updateMergeConflict();
+    override fun createListItem(item: ListItem): ReviewListItem {
+        return item.toType(::ReviewListItem) as ReviewListItem
     }
 
-    @Override
-    public ReviewListItem createListItem(ListItem item) {
-        return item.toType(ReviewListItem::new);
+    override fun onNoteClick(note: TranslationHelp, resourceCardWidth: Int) {
+        onClickListener?.onTranslationNoteClick(note, resourceCardWidth)
     }
 
-    @Override
-    public void onNoteClick(TranslationHelp note, int resourceCardWidth) {
-        if (getListener() != null) {
-            getListener().onTranslationNoteClick(note, resourceCardWidth);
-        }
+    override fun onWordClick(resourceContainerSlug: String, word: Link, resourceCardWidth: Int) {
+        onClickListener?.onTranslationWordClick(
+            resourceContainerSlug,
+            word.chapter,
+            resourceCardWidth
+        )
     }
 
-    @Override
-    public void onWordClick(String resourceContainerSlug, Link word, int resourceCardWidth) {
-        if (getListener() != null) {
-            getListener().onTranslationWordClick(
-                    resourceContainerSlug,
-                    word.chapter,
-                    resourceCardWidth
-            );
-        }
+    override fun onQuestionClick(question: TranslationHelp, resourceCardWidth: Int) {
+        onClickListener?.onTranslationQuestionClick(question, resourceCardWidth)
     }
 
-    @Override
-    public void onQuestionClick(TranslationHelp question, int resourceCardWidth) {
-        if (getListener() != null) {
-            getListener().onTranslationQuestionClick(question, resourceCardWidth);
-        }
-    }
-
-    @Override
-    public void onResourceTabNotesSelected(ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onResourceTabNotesSelected(holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-            holder.showNotes(item.source.language);
+            val item = filteredItems[position] as ReviewListItem
+            holder.showNotes(item.source.language)
         }
     }
 
-    @Override
-    public void onResourceTabWordsSelected(ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onResourceTabWordsSelected(holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-            holder.showWords(item.source.language);
+            val item = filteredItems[position] as ReviewListItem
+            holder.showWords(item.source.language)
         }
     }
 
-    @Override
-    public void onResourceTabQuestionsSelected(ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onResourceTabQuestionsSelected(holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-            holder.showQuestions(item.source.language);
+            val item = filteredItems[position] as ReviewListItem
+            holder.showQuestions(item.source.language)
         }
     }
 
-    @Override
-    public void onSourceTranslationTabClick(String sourceTranslationId) {
-        if (getListener() != null) {
-            getListener().onSourceTranslationTabClick(sourceTranslationId);
-        }
+    override fun onSourceTranslationTabClick(sourceTranslationId: String) {
+        onClickListener?.onSourceTranslationTabClick(sourceTranslationId)
     }
 
-    @Override
-    public void onNewSourceTranslationTabClick() {
-        if (getListener() != null) {
-            getListener().onNewSourceTranslationTabClick();
-        }
+    override fun onNewSourceTranslationTabClick() {
+        onClickListener?.onNewSourceTranslationTabClick()
     }
 
-    @Override
-    public void onTapResourceCard() {
+    override fun onTapResourceCard() {
         //if (!mResourcesOpened) openResources();
     }
 
@@ -214,79 +191,72 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * check all cards for merge conflicts to see if we should show warning.
      * Runs as background task.
      */
-    private void updateMergeConflict() {
-        doCheckForMergeConflict();
+    private fun updateMergeConflict() {
+        doCheckForMergeConflict()
     }
 
-    @Override
-    public String getFocusedChunkSlug(int position) {
-        if (position >= 0 && position < filteredItems.size()) {
-            return filteredItems.get(position).chunkSlug;
-        }
-        return null;
+    override fun getFocusedChunkSlug(position: Int): String {
+        return if (position in 0 until filteredItems.size) {
+            filteredItems[position].chunkSlug
+        } else ""
     }
 
-    @Override
-    public String getFocusedChapterSlug(int position) {
-        if (position >= 0 && position < filteredItems.size()) {
-            return filteredItems.get(position).chapterSlug;
-        }
-        return null;
+    override fun getFocusedChapterSlug(position: Int): String {
+        return if (position in 0 until filteredItems.size) {
+            filteredItems[position].chapterSlug
+        } else ""
     }
 
-    @Override
-    public int getItemPosition(String chapterSlug, String chunkSlug) {
-        ListItem item = getItem(chapterSlug, chunkSlug);
-        return filteredItems.indexOf(item);
+    override fun getItemPosition(chapterSlug: String, chunkSlug: String): Int {
+        val item = getItem(chapterSlug, chunkSlug)
+        return filteredItems.indexOf(item)
     }
 
-    @Override
-    public ListItem getItem(String chapterSlug, String chunkSlug) {
-        for (ListItem item : filteredItems) {
-            if (chapterSlug.equals(item.chapterSlug) && chunkSlug.equals(item.chunkSlug)) {
-                return item;
+    override fun getItem(chapterSlug: String, chunkSlug: String): ListItem? {
+        for (item in filteredItems) {
+            if (chapterSlug == item.chapterSlug && chunkSlug == item.chunkSlug) {
+                return item
             }
         }
-        return null;
+        return null
     }
 
-    @Override
-    public void setResourcesOpened(boolean status) {
-        resourcesOpened = status;
-        for (ListItem item : items) {
-            ((ReviewListItem) item).resourcesOpened = status;
+    override fun setResourcesOpened(status: Boolean) {
+        resourcesOpened = status
+        for (item in items) {
+            (item as ReviewListItem).resourcesOpened = status
         }
-        triggerNotifyDataSetChanged();
+        triggerNotifyDataSetChanged()
     }
 
-    @Override
-    public ReviewListItem getItem(int position) {
-        return (ReviewListItem) super.getItem(position);
+    override fun getItem(position: Int): ReviewListItem? {
+        return super.getItem(position) as? ReviewListItem
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        ListItem item = getItem(position);
+    override fun getItemViewType(position: Int): Int {
+        val item = getItem(position)
         if (item != null) {
-            boolean conflicted = item.getHasMergeConflicts();
+            val conflicted = item.hasMergeConflicts
             if (conflicted) {
-                showMergeConflictIcon(true, mergeConflictFilterOn);
-                return VIEW_TYPE_CONFLICT;
+                showMergeConflictIcon(true, mergeConflictFilterOn)
+                return VIEW_TYPE_CONFLICT
             }
         }
-        return VIEW_TYPE_NORMAL;
+        return VIEW_TYPE_NORMAL
     }
 
-    @Override
-    public ReviewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
-        IReviewListItemBinding binding;
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        if (viewType == VIEW_TYPE_CONFLICT) {
-            binding = new ReviewListItemMergeConflictBinding(FragmentReviewListItemMergeConflictBinding.inflate(inflater, parent, false));
+    override fun onCreateManagedViewHolder(parent: ViewGroup, viewType: Int): ReviewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = if (viewType == VIEW_TYPE_CONFLICT) {
+            ReviewListItemMergeConflictBinding(
+                FragmentReviewListItemMergeConflictBinding.inflate(inflater, parent, false)
+            )
         } else {
-            binding = new ReviewListItemBinding(FragmentReviewListItemBinding.inflate(inflater, parent, false));
+            ReviewListItemBinding(
+                FragmentReviewListItemBinding.inflate(inflater, parent, false)
+            )
         }
-        return new ReviewHolder(binding, typography, assetsProvider, this);
+        return ReviewHolder(binding, typography, assetsProvider, this)
     }
 
     /**
@@ -294,1510 +264,1286 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      *
      * @param range the position that left the screen
      */
-    @Override
-    protected void onVisiblePositionsChanged(int[] range) {
+    override fun onVisiblePositionsChanged(range: IntArray) {
         // constrain the upper bound
-        if (range[1] >= filteredItems.size()) range[1] = filteredItems.size() - 1;
-        if (range[0] >= filteredItems.size()) range[0] = filteredItems.size() - 1;
+        if (range[1] >= filteredItems.size) range[1] = filteredItems.size - 1
+        if (range[0] >= filteredItems.size) range[0] = filteredItems.size - 1
 
-        HashSet<Integer> visible = new HashSet<>();
+        val visible = HashSet<Int>()
         // record visible positions;
-        for (int i = range[0]; i < range[1]; i++) {
-            visible.add(i);
+        for (i in range[0] until range[1]) {
+            visible.add(i)
         }
         // notify not-visible
-        this.visiblePositions.removeAll(visible);
-        for (Integer i : this.visiblePositions) {
+        this.visiblePositions.removeAll(visible)
+        for (i in this.visiblePositions) {
             // TODO Check if there is a need to cancel render tasks for hidden items
             // runTaskGarbageCollection(i);
         }
 
-        this.visiblePositions = visible;
+        this.visiblePositions = visible
     }
 
-    @Override
-    public void markAllChunksDone() {
-        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                .setTitle(R.string.project_checklist_title)
-                .setMessage(Html.fromHtml(context.getString(R.string.project_checklist_body)))
-                .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                    int marked = 0;
-                    int total = filteredItems.size();
-                    for (ListItem item : filteredItems) {
-                        try {
-                            markChunkCompleted(item, item.target.getFormat());
-                            marked++;
-                        } catch (Exception e) {
-                            String msg = String.format(
-                                    "There was an error in markAllChunksDone. Translation: " +
-                                            "%s, chapter: %s, chunk: %s. Error: %s",
-                                    item.target.getId(),
-                                    item.chapterSlug,
-                                    item.chunkSlug,
-                                    e.getMessage());
-                            Logger.e(TAG, msg);
-                        }
-                    }
-
+    @Suppress("DEPRECATION")
+    override fun markAllChunksDone() {
+        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+            .setTitle(R.string.project_checklist_title)
+            .setMessage(Html.fromHtml(context.getString(R.string.project_checklist_body)))
+            .setPositiveButton(R.string.confirm) { _, _ ->
+                var marked = 0
+                val total = filteredItems.size
+                for (item in filteredItems) {
                     try {
-                        filteredItems.get(0).target.commit();
-
-                        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                                .setTitle(R.string.result)
-                                .setMessage(String.format(context.getString(R.string.mark_chunks_done_result), marked, total))
-                                .setPositiveButton(R.string.label_ok, null)
-                                .show();
-
-                    } catch (Exception e) {
-                        Logger.e(TAG,
-                                "Failed to commit translation of " + filteredItems.get(0).target.getId(), e);
+                        markChunkCompleted(item, item.target.format)
+                        marked++
+                    } catch (e: Exception) {
+                        val msg = String.format(
+                            "There was an error in markAllChunksDone. Translation: " +
+                                    "%s, chapter: %s, chunk: %s. Error: %s",
+                            item.target.id,
+                            item.chapterSlug,
+                            item.chunkSlug,
+                            e.message
+                        )
+                        Logger.e(TAG, msg)
                     }
+                }
 
-                    triggerNotifyDataSetChanged();
-                })
-                .setNegativeButton(R.string.title_cancel, null)
-                .show();
+                try {
+                    filteredItems[0].target.commit()
+
+                    AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                        .setTitle(R.string.result)
+                        .setMessage(String.format(context.getString(R.string.mark_chunks_done_result), marked, total))
+                        .setPositiveButton(R.string.label_ok, null)
+                        .show()
+
+                } catch (e: Exception) {
+                    Logger.e(TAG, "Failed to commit translation of ${filteredItems[0].target.id}", e)
+                }
+
+                triggerNotifyDataSetChanged()
+            }
+            .setNegativeButton(R.string.title_cancel, null)
+            .show()
     }
 
-    @Override
-    public void onBindManagedViewHolder(final ReviewHolder holder, final int position) {
-        final ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        holder.bind(item);
+    override fun onBindManagedViewHolder(holder: ReviewHolder, position: Int) {
+        val item = filteredItems[position] as ReviewListItem
+        holder.bind(item)
     }
 
-    @Override
-    public void onEditorToggle(ReviewHolder holder) {
-        Handler handler = new Handler(Looper.getMainLooper());
+    override fun onEditorToggle(holder: ReviewHolder) {
+        val handler = Handler(Looper.getMainLooper())
 
-        final int position = holder.getBindingAdapterPosition();
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        item.isEditing = !item.isEditing;
+        val item = filteredItems[position] as ReviewListItem
+        item.isEditing = !item.isEditing
 
-        EditText view;
         if (item.isEditing) {
-            view = holder.getBinding().getTargetEditableBody();
+            val view = holder.binding.targetEditableBody
             if (view != null) {
-                item.renderedTargetText = this.renderTargetText(holder, item, true);
-                view.setText(item.renderedTargetText);
+                item.renderedTargetText = this.renderTargetText(holder, item, true)
+                view.setText(item.renderedTargetText)
 
-                handler.post(() -> {
-                    if (getListener() != null) {
-                        getListener().showKeyboard(view);
-                    }
-                    view.requestFocus();
-                });
+                handler.post {
+                    onClickListener?.showKeyboard(view)
+                    view.requestFocus()
+                }
             }
         } else {
-            view = holder.getBinding().getTargetBody();
+            val view = holder.binding.targetBody
             if (view != null) {
                 // re-render for verse mode
-                item.renderedTargetText = renderTargetText(holder, item);
-                view.setText(item.renderedTargetText);
+                item.renderedTargetText = renderTargetText(holder, item)
+                view.setText(item.renderedTargetText)
 
-                handler.post(() -> {
-                    if (getListener() != null) {
-                        getListener().closeKeyboard();
-                    }
-                    view.requestFocus();
-                });
+                handler.post {
+                    onClickListener?.closeKeyboard()
+                    view.requestFocus()
+                }
             }
         }
 
-        addMissingVerses(holder);
-        holder.rebuildControls(item);
+        addMissingVerses(holder)
+        holder.rebuildControls(item)
     }
 
-    @Override
-    public void onApplyChangedText(CharSequence s, ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onApplyChangedText(s: CharSequence, holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        applyChangedText(s, item);
+        val item = filteredItems[position] as ReviewListItem
+        applyChangedText(s, item)
 
         // commit immediately if editing history
-        FileHistory history = item.getFileHistory();
-        if (history != null && !history.isAtHead()) {
-            history.reset();
-            holder.rebuildControls(item);
+        val history = item.fileHistory
+        if (history != null && !history.isAtHead) {
+            history.reset()
+            holder.rebuildControls(item)
         }
     }
 
-    @Override
-    public void onUndoTextInTarget(ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onUndoTextInTarget(holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        undoTextInTarget(holder, item);
+        val item = filteredItems[position] as ReviewListItem
+        undoTextInTarget(holder, item)
     }
 
-    @Override
-    public void onRedoTextInTarget(ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onRedoTextInTarget(holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        redoTextInTarget(holder, item);
+        val item = filteredItems[position] as ReviewListItem
+        redoTextInTarget(holder, item)
     }
 
-    @Override
-    public void onDoneSwitchClicked(ReviewHolder holder, boolean checked) {
-        int position = holder.getBindingAdapterPosition();
+    @Suppress("DEPRECATION")
+    override fun onDoneSwitchClicked(holder: ReviewHolder, checked: Boolean) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
+        val item = filteredItems[position] as ReviewListItem
         if (checked) {
-            if (item.isEditing && holder.getBinding().getTargetEditableBody() != null) {
+            if (item.isEditing && holder.binding.targetEditableBody != null) {
                 // make sure to capture verse marker changes before dialog is displayed
-                Editable changes = holder.getBinding().getTargetEditableBody().getText();
-                item.renderedTargetText = changes;
+                val changes: Editable? = holder.binding.targetEditableBody?.text
+                item.renderedTargetText = changes
                 if (changes != null) {
-                    item.setTargetText(Translator.compileTranslation(changes));
+                    item.targetText = Translator.compileTranslation(changes)
                 }
             }
 
-            new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                    .setTitle(R.string.chunk_checklist_title)
-                    .setMessage(Html.fromHtml(context.getString(R.string.chunk_checklist_body)))
-                    .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                        try {
-                            markChunkCompleted(item, item.target.getFormat());
-                            item.target.commit();
-                        } catch (Exception e) {
-                            Logger.e(TAG, "Failed to commit translation of " + item.target.getId(), e);
-                            if (itemActionListener != null) {
-                                itemActionListener.onShowToast(e.getMessage());
-                            }
-                        }
-                        triggerNotifyDataSetChanged();
-                    })
-                    .setNegativeButton(R.string.title_cancel, (dialog, which) -> {
-                        // off if not accepted
-                        if (holder.getBinding().getDoneSwitch() != null) {
-                            holder.getBinding().getDoneSwitch().setChecked(false); // force back
-                        }
-                    })
-                    .show();
+            AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                .setTitle(R.string.chunk_checklist_title)
+                .setMessage(Html.fromHtml(context.getString(R.string.chunk_checklist_body)))
+                .setPositiveButton(R.string.confirm) { _, _ ->
+                    try {
+                        markChunkCompleted(item, item.target.format)
+                        item.target.commit()
+                    } catch (e: Exception) {
+                        Logger.e(TAG, "Failed to commit translation of ${item.target.id}", e)
+                        itemActionListener?.onShowToast(e.message ?: "Error")
+                    }
+                    triggerNotifyDataSetChanged()
+                }
+                .setNegativeButton(R.string.title_cancel) { _, _ ->
+                    // off if not accepted
+                    holder.binding.doneSwitch?.isChecked = false // force back
+                }
+                .show()
         } else {
-            reOpenItem(item);
+            reOpenItem(item)
         }
     }
 
-    @Override
-    public void onCreateFootnoteAtSelection(ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onCreateFootnoteAtSelection(holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        createFootnoteAtSelection(holder, item);
+        val item = filteredItems[position] as ReviewListItem
+        createFootnoteAtSelection(holder, item)
     }
 
     /**
      * Generate spannable for source text. Will add click listener for notes if supported
-     *
-     * @param item review list item
-     * @return rendered text
      */
-    @Override
-    public CharSequence onRenderSourceText(ReviewListItem item) {
-        RenderingGroup renderingGroup = new RenderingGroup();
-        boolean enableSearch = searchText != null && searchSubject == SearchSubject.SOURCE;
+    override fun onRenderSourceText(item: ReviewListItem): CharSequence {
+        val renderingGroup = RenderingGroup()
+        val enableSearch = searchText != null && searchSubject == SearchSubject.SOURCE
 
-        if (Clickables.isClickableFormat(item.getSourceTranslationFormat())) {
-            Span.OnClickListener noteClickListener = new Span.OnClickListener() {
-                @Override
-                public void onClick(View view, Span span, int start, int end) {
-                    if (span instanceof NoteSpan) {
-                        onSourceFootnoteClick(item, (NoteSpan) span, start, end);
+        if (Clickables.isClickableFormat(item.sourceTranslationFormat)) {
+            val noteClickListener = object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    if (span is NoteSpan) {
+                        onSourceFootnoteClick(item, span, start, end)
                     }
                 }
 
-                @Override
-                public void onLongClick(View view, Span span, int start, int end) {
-                }
-            };
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
+            }
             renderingProvider.setupRenderingGroup(
-                    item.getSourceTranslationFormat(),
-                    renderingGroup,
-                    null,
-                    noteClickListener,
-                    false
-            );
+                item.sourceTranslationFormat,
+                renderingGroup,
+                null,
+                noteClickListener,
+                false
+            )
         } else {
-            renderingGroup.addEngine(new DefaultRenderer(null));
+            renderingGroup.addEngine(DefaultRenderer(null))
         }
 
         if (enableSearch) {
-            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR);
+            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR)
         }
 
-        renderingGroup.init(item.getSourceText());
-        CharSequence results = renderingGroup.start();
-        item.hasMissingVerses = renderingGroup.isAddedMissingVerse();
-        return results;
+        renderingGroup.init(item.sourceText)
+        val results = renderingGroup.start()
+        item.hasMissingVerses = renderingGroup.isAddedMissingVerse
+        return results ?: ""
     }
 
-    @Override
-    public void onSearchItemUpdated(int position, TextView view, boolean isTarget) {
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        int selectPosition = checkForSelectedSearchItem(item, position, isTarget);
+    override fun onSearchItemUpdated(position: Int, view: TextView, isTarget: Boolean) {
+        val item = filteredItems[position] as ReviewListItem
+        val selectPosition = checkForSelectedSearchItem(item, position, isTarget)
 
         if (isTarget) {
-            item.refreshSearchHighlightTarget = false;
-            selectCurrentSearchItem(position, selectPosition, view);
+            item.refreshSearchHighlightTarget = false
+            selectCurrentSearchItem(position, selectPosition, view)
         } else {
-            item.refreshSearchHighlightSource = false;
-            selectCurrentSearchItem(position, selectPosition, view);
+            item.refreshSearchHighlightSource = false
+            selectCurrentSearchItem(position, selectPosition, view)
         }
     }
 
-    @Override
-    public void onMergeConflictItemCancel(int position) {
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        item.mergeItemSelected = -1;
-        notifyItemChanged(position);
+    override fun onMergeConflictItemCancel(position: Int) {
+        val item = filteredItems[position] as ReviewListItem
+        item.mergeItemSelected = -1
+        notifyItemChanged(position)
     }
 
-    @Override
-    public void onMergeConflictItemConfirm(int position) {
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        if (item.mergeItemSelected >= 0 && item.mergeItemSelected < item.mergeItems.size()) {
-            CharSequence selectedText = item.mergeItems.get(item.mergeItemSelected);
-            applyNewCompiledText(selectedText.toString(), item);
-            item.setTargetText(selectedText.toString());
-            reOpenItem(item);
-            item.setHasMergeConflicts(MergeConflictsHandler.isMergeConflicted(selectedText));
-            item.mergeItemSelected = -1;
-            item.isEditing = false;
+    override fun onMergeConflictItemConfirm(position: Int) {
+        val item = filteredItems[position] as ReviewListItem
+        if (item.mergeItemSelected >= 0 && item.mergeItemSelected < item.mergeItems.size) {
+            val selectedText = item.mergeItems[item.mergeItemSelected]
+            applyNewCompiledText(selectedText.toString(), item)
+            item.targetText = selectedText.toString()
+            reOpenItem(item)
+            item.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(selectedText)
+            item.mergeItemSelected = -1
+            item.isEditing = false
 
-            // if in merge conflict mode and merge
-            // conflicts resolved, remove item
-            if (!item.getHasMergeConflicts() && mergeConflictFilterOn) {
-                filteredItems.remove(item);
+            // if in merge conflict mode and merge conflicts resolved, remove item
+            if (!item.hasMergeConflicts && mergeConflictFilterOn) {
+                filteredItems.remove(item)
             }
-            notifyItemChanged(position);
-            updateMergeConflict();
+            notifyItemChanged(position)
+            updateMergeConflict()
         }
     }
 
-    @Override
-    public CharSequence onRenderTargetText(ReviewHolder holder, ReviewListItem item, boolean editable) {
-        return renderTargetText(holder, item, editable);
+    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem, editable: Boolean): CharSequence {
+        return renderTargetText(holder, item, editable)
     }
 
-    @Override
-    public CharSequence onRenderTargetText(ReviewHolder holder, ReviewListItem item) {
-        return renderTargetText(holder, item);
+    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem): CharSequence {
+        return renderTargetText(holder, item)
     }
 
-    @Override
-    public void onAddMissingVerses(ReviewHolder holder) {
-        addMissingVerses(holder);
+    override fun onAddMissingVerses(holder: ReviewHolder) {
+        addMissingVerses(holder)
     }
 
-    @Override
-    public void onRenderHelps(ReviewListItem item) {
-        if (item.resourcesOpened && renderHelpsListener != null) {
-            renderHelpsListener.onRenderHelps(item);
+    override fun onRenderHelps(item: ReviewListItem) {
+        if (item.resourcesOpened) {
+            renderHelpsListener?.onRenderHelps(item)
         }
     }
 
     /**
      * if missing verses were found during render, then add them
-     *
-     * @param holder review holder
      */
-    private void addMissingVerses(ReviewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    private fun addMissingVerses(holder: ReviewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ReviewListItem item = (ReviewListItem) filteredItems.get(position);
-        if (item.hasMissingVerses && !item.isComplete()) {
-            Log.i(TAG, "Adding Missing verses to: " + item.getTargetText());
-            if (!item.getTargetText().isEmpty()) {
-                String translation = applyChangedText(item.renderedTargetText, item);
-                Log.i(TAG, "Added Missing verses: " + translation);
-                item.hasMissingVerses = false;
-                item.renderedTargetText = null; // force re-rendering of target text
+        val item = filteredItems[position] as ReviewListItem
+        if (item.hasMissingVerses && !item.isComplete) {
+            Log.i(TAG, "Adding Missing verses to: " + item.targetText)
+            if (item.targetText.isNotEmpty()) {
+                val translation = applyChangedText(item.renderedTargetText, item)
+                Log.i(TAG, "Added Missing verses: $translation")
+                item.hasMissingVerses = false
+                item.renderedTargetText = null // force re-rendering of target text
 
-                holder.itemView.post(() -> notifyItemChanged(position));
+                holder.itemView.post { notifyItemChanged(position) }
             }
         }
     }
 
     /**
-     * check if we have a selected search item in this chunk,
-     * returns position if found, -1 if not found
-     *
-     * @param item review list item
-     * @param position list item position
-     * @param target true if searching target text
-     * @return list item position if found, -1 if not found
+     * check if we have a selected search item in this chunk
      */
-    private int checkForSelectedSearchItem(ReviewListItem item, int position, boolean target) {
-        int selectPosition = -1;
-        if (item.hasSearchText && (position == searchPosition)) {
+    private fun checkForSelectedSearchItem(item: ReviewListItem, position: Int, target: Boolean): Int {
+        var selectPosition = -1
+        if (item.hasSearchText && position == searchPosition) {
             if (searchSubPositionItems < 0) { // if we haven't counted items yet
-                findSearchItemInChunkAndPreselect(item, target);
-                Log.i(TAG,
-                        "Re-rendering, Found search items in chunk " + position + ": " + searchSubPositionItems);
-            } else if (searchSubPositionItems > 0) { // if we have counted items then find the
-                // number selected
-                int searchSubPosition = 0;
-                MatchResults results = getMatchItemN(item, searchText, searchSubPosition, target);
+                findSearchItemInChunkAndPreselect(item, target)
+                Log.i(TAG, "Re-rendering, Found search items in chunk $position: $searchSubPositionItems")
+            } else if (searchSubPositionItems > 0) { // if we have counted items then find the number selected
+                val searchSubPos = 0
+                val results = getMatchItemN(item, searchText, searchSubPos, target)
                 if (results.foundLocation >= 0) {
-                    Log.i(TAG,
-                            "Highlight at position: " + position + " : " + results.foundLocation);
-                    selectPosition = results.foundLocation;
+                    Log.i(TAG, "Highlight at position: $position : ${results.foundLocation}")
+                    selectPosition = results.foundLocation
                 } else {
-                    Log.i(TAG, "Highlight failed for position: " + position + "; chunk position: "
-                            + searchSubPosition + "; chunk count: " + searchSubPositionItems);
+                    Log.i(TAG, "Highlight failed for position: $position; chunk position: $searchSubPos; chunk count: $searchSubPositionItems")
                 }
-                checkIfAtSearchLimits();
+                checkIfAtSearchLimits()
             }
         }
-        return selectPosition;
+        return selectPosition
     }
 
     /**
      * highlight the current selected search text item at position
-     *
-     * @param position       - list item position
-     * @param selectPosition - search item position
-     * @param view           - search item view
      */
-    private void selectCurrentSearchItem(final int position, int selectPosition, TextView view) {
+    private fun selectCurrentSearchItem(position: Int, selectPosition: Int, view: TextView) {
         if (selectPosition >= 0) {
-
-            Layout layout = view.getLayout();
+            val layout: Layout? = view.layout
             if (layout != null) {
-                int lineNumberForLocation = layout.getLineForOffset(selectPosition);
-                int baseline = layout.getLineBaseline(lineNumberForLocation);
-                int ascent = layout.getLineAscent(lineNumberForLocation);
+                val lineNumberForLocation = layout.getLineForOffset(selectPosition)
+                val baseline = layout.getLineBaseline(lineNumberForLocation)
+                val ascent = layout.getLineAscent(lineNumberForLocation)
 
-                final int verticalOffset = baseline + ascent;
-                Log.i(TAG,
-                        "set position for " + selectPosition + ", scroll to y=" + verticalOffset);
+                val verticalOffset = baseline + ascent
+                Log.i(TAG, "set position for $selectPosition, scroll to y=$verticalOffset")
 
-                Handler hand = new Handler(Looper.getMainLooper());
-                hand.post(() -> {
-                    Log.i(TAG,
-                            "selectCurrentSearchItem position= " + position + ", offset=" + (-verticalOffset));
-                    onSetSelectedPosition(position, -verticalOffset);
-                });
+                val hand = Handler(Looper.getMainLooper())
+                hand.post {
+                    Log.i(TAG, "selectCurrentSearchItem position= $position, offset=${-verticalOffset}")
+                    onSetSelectedPosition(position, -verticalOffset)
+                }
             } else {
-                Logger.e(TAG, "cannot get layout for position: " + position);
+                Logger.e(TAG, "cannot get layout for position: $position")
             }
         }
     }
 
     /**
      * mark item as not done
-     *
-     * @param item review list item
      */
-    private void reOpenItem(ListItem item) {
-        boolean opened;
-        if (item.isChapterReference()) {
-            opened = item.target.reopenChapterReference(item.chapterSlug);
-        } else if (item.isChapterTitle()) {
-            opened = item.target.reopenChapterTitle(item.chapterSlug);
-        } else if (item.isProjectTitle()) {
-            opened = item.target.openProjectTitle();
-        } else {
-            opened = item.target.reopenFrame(item.chapterSlug, item.chunkSlug);
+    private fun reOpenItem(item: ListItem) {
+        val opened = when {
+            item.isChapterReference -> item.target.reopenChapterReference(item.chapterSlug)
+            item.isChapterTitle -> item.target.reopenChapterTitle(item.chapterSlug)
+            item.isProjectTitle -> item.target.openProjectTitle()
+            else -> item.target.reopenFrame(item.chapterSlug, item.chunkSlug)
         }
+
         if (opened) {
-            item.renderedTargetText = null;
-            item.setComplete(false);
-            triggerNotifyItemChanged(filteredItems.indexOf(item));
+            (item as ReviewListItem).renderedTargetText = null
+            item.isComplete = false
+            triggerNotifyItemChanged(filteredItems.indexOf(item))
         }
     }
 
     /**
-     * create a new footnote at selected position in target text.  Displays an edit dialog to
-     * enter footnote data.
-     *
-     * @param holder review holder
-     * @param item review list item
+     * create a new footnote at selected position in target text.
      */
-    private void createFootnoteAtSelection(final ReviewHolder holder, final ReviewListItem item) {
-        final EditText editText = holder.getEditText(item.isEditing);
-        int endPos = editText.getSelectionEnd();
+    private fun createFootnoteAtSelection(holder: ReviewHolder, item: ReviewListItem) {
+        val editText = holder.getEditText(item.isEditing) ?: return
+        var endPos = editText.selectionEnd
         if (endPos < 0) {
-            endPos = 0;
+            endPos = 0
         }
-        final int insertPos = endPos;
-        editFootnote("", holder, item, insertPos, insertPos);
+        val insertPos = endPos
+        editFootnote("", holder, item, insertPos, insertPos)
     }
 
     /**
      * edit contents of footnote at specified position
-     *
-     * @param initialNote initial note
-     * @param holder      review holder
-     * @param item        review list item
-     * @param footnotePos position of footnote
-     * @param footnoteEndPos end position of footnote
      */
-    private void editFootnote(
-            CharSequence initialNote,
-            final ReviewHolder holder,
-            final ReviewListItem item,
-            final int footnotePos,
-            final int footnoteEndPos
+    private fun editFootnote(
+        initialNote: CharSequence,
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        footnotePos: Int,
+        footnoteEndPos: Int
     ) {
-        final EditText editText = holder.getEditText(item.isEditing);
-        final CharSequence original = editText.getText();
+        val editText = holder.getEditText(item.isEditing) ?: return
+        val original = editText.text
 
-        LayoutInflater inflater = LayoutInflater.from(context);
-        FragmentFootnotePromptBinding footnoteBinding = FragmentFootnotePromptBinding.inflate(inflater);
+        val inflater = LayoutInflater.from(context)
+        val footnoteBinding = FragmentFootnotePromptBinding.inflate(inflater)
 
-        footnoteBinding.footnoteText.setText(initialNote);
+        footnoteBinding.footnoteText.setText(initialNote)
+
         // pop up note prompt
-        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                .setTitle(R.string.title_add_footnote)
-                .setPositiveButton(R.string.label_ok, (dialog, which) -> {
-                    CharSequence footnote = footnoteBinding.footnoteText.getText();
-                    boolean validated = verifyAndReplaceFootnote(
-                            footnote,
-                            original,
-                            footnotePos,
-                            footnoteEndPos,
-                            holder,
-                            item,
-                            editText
-                    );
-                    if (validated) {
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton(R.string.title_cancel, (dialog, which) -> dialog.dismiss())
-                .setView(footnoteBinding.getRoot())
-                .show();
+        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+            .setTitle(R.string.title_add_footnote)
+            .setPositiveButton(R.string.label_ok) { dialog, _ ->
+                val footnote = footnoteBinding.footnoteText.text
+                val validated = verifyAndReplaceFootnote(
+                    footnote,
+                    original,
+                    footnotePos,
+                    footnoteEndPos,
+                    holder,
+                    item,
+                    editText
+                )
+                if (validated) {
+                    dialog.dismiss()
+                }
+            }
+            .setNegativeButton(R.string.title_cancel) { dialog, _ -> dialog.dismiss() }
+            .setView(footnoteBinding.root)
+            .show()
     }
 
     /**
-     * insert footnote into EditText or remove footnote from EditText if both footnote and
-     * footnoteTitleText are null
-     *
-     * @param footnote    footnote text
-     * @param original    original text
-     * @param insertPos   insert position
-     * @param insertEndPos insert end position
-     * @param holder      review holder
-     * @param item        review list item
-     * @param editText    edit text
+     * insert footnote into EditText or remove footnote from EditText
      */
-    private boolean verifyAndReplaceFootnote(
-            CharSequence footnote,
-            CharSequence original,
-            int insertPos,
-            final int insertEndPos,
-            final ReviewHolder holder,
-            final ReviewListItem item,
-            EditText editText
-    ) {
+    private fun verifyAndReplaceFootnote(
+        footnote: CharSequence?,
+        original: CharSequence,
+        insertPos: Int,
+        insertEndPos: Int,
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        editText: EditText
+    ): Boolean {
         // sanity checks
-        if ((null == footnote) || (footnote.length() <= 0)) {
-            warnDialog(R.string.title_footnote_invalid, R.string.footnote_message_empty);
-            return false;
+        if (footnote.isNullOrEmpty()) {
+            warnDialog(R.string.title_footnote_invalid, R.string.footnote_message_empty)
+            return false
         }
 
-        placeFootnote(footnote, original, insertPos, insertEndPos, holder, item, editText);
-        return true;
+        placeFootnote(footnote, original, insertPos, insertEndPos, holder, item, editText)
+        return true
     }
 
     /**
      * display warning dialog
-     *
-     * @param titleID    title
-     * @param messageID message
      */
-    private void warnDialog(int titleID, int messageID) {
-        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                .setTitle(titleID)
-                .setMessage(messageID)
-                .setPositiveButton(R.string.dismiss, null)
-                .show();
+    private fun warnDialog(titleID: Int, messageID: Int) {
+        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+            .setTitle(titleID)
+            .setMessage(messageID)
+            .setPositiveButton(R.string.dismiss, null)
+            .show()
     }
 
     /**
-     * insert footnote into EditText or remove footnote from EditText if both footnote and
-     * footnoteTitleText are null
-     *
-     * @param footnote footnote text
-     * @param original original text
-     * @param start    start position
-     * @param end      end position
-     * @param holder   review holder
-     * @param item     review list item
-     * @param editText edit text
+     * insert footnote into EditText or remove footnote from EditText
      */
-    private void placeFootnote(
-            CharSequence footnote,
-            CharSequence original,
-            int start,
-            final int end,
-            final ReviewHolder holder,
-            final ReviewListItem item,
-            EditText editText
+    private fun placeFootnote(
+        footnote: CharSequence?,
+        original: CharSequence,
+        start: Int,
+        end: Int,
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        editText: EditText
     ) {
-        CharSequence footnotecode = "";
-        if (footnote != null) {
+        var footnotecode: CharSequence = ""
+        var actualFootnote = footnote
+        if (actualFootnote != null) {
             // sanity checks
-            if (footnote.length() <= 0) {
-                footnote = context.getResources().getString(R.string.footnote_label);
+            if (actualFootnote.isEmpty()) {
+                actualFootnote = context.resources.getString(R.string.footnote_label)
             }
 
-            USFMNoteSpan footnoteSpannable = USFMNoteSpan.generateFootnote(footnote);
-            footnotecode = footnoteSpannable.getMachineReadable();
+            val footnoteSpannable = USFMNoteSpan.generateFootnote(actualFootnote)
+            footnotecode = footnoteSpannable.machineReadable
         }
 
-        CharSequence newText = TextUtils.concat(
-                original.subSequence(0, start),
-                footnotecode,
-                original.subSequence(end, original.length())
-        );
-        editText.setText(newText);
+        val newText = TextUtils.concat(
+            original.subSequence(0, start),
+            footnotecode,
+            original.subSequence(end, original.length)
+        )
+        editText.setText(newText)
 
-        item.renderedTargetText = newText;
-        item.setTargetText(Translator.compileTranslation(editText.getText())); // get XML for footnote
-        item.target.applyFrameTranslation(item.getFt(), item.getTargetText()); // save change
+        item.renderedTargetText = newText
+        item.targetText = Translator.compileTranslation(editText.text) // get XML for footnote
+        item.target.applyFrameTranslation(item.ft, item.targetText) // save change
 
         // generate spannable again adding
-        if (item.isComplete() || item.isEditing) {
-            item.renderedTargetText = this.renderTargetText(holder, item, true);
+        if (item.isComplete || item.isEditing) {
+            item.renderedTargetText = this.renderTargetText(holder, item, true)
         } else {
             item.renderedTargetText = renderTargetText(
-                    item.getTargetText(),
-                    item.getTargetTranslationFormat(),
-                    item.getFt(),
-                    holder,
-                    item
-            );
+                item.targetText,
+                item.targetTranslationFormat,
+                item.ft,
+                holder,
+                item
+            )
         }
-        editText.setText(item.renderedTargetText);
-        editText.setSelection(editText.length(), editText.length());
+        editText.setText(item.renderedTargetText)
+        editText.setSelection(editText.length(), editText.length())
     }
 
     /**
      * save changed text to item,  first see if it needs to be compiled
-     *
-     * @param s    A string or editable
-     * @param item Review list item
-     *
-     * @return compiled text
      */
-    private String applyChangedText(CharSequence s, ReviewListItem item) {
-        String translation;
-        if (s == null) {
-            return null;
-        } else if (s instanceof Editable) {
-            translation = Translator.compileTranslation((Editable) s);
-        } else if (s instanceof SpannedString) {
-            translation = Translator.compileTranslationSpanned((SpannedString) s);
-        } else {
-            translation = s.toString();
+    private fun applyChangedText(s: CharSequence?, item: ReviewListItem): String? {
+        val translation: String = when (s) {
+            null -> return null
+            is Editable -> Translator.compileTranslation(s)
+            is SpannedString -> Translator.compileTranslationSpanned(s)
+            else -> s.toString()
         }
 
-        applyNewCompiledText(translation, item);
-        return translation;
+        applyNewCompiledText(translation, item)
+        return translation
     }
 
     /**
      * save new text to item
-     *
-     * @param translation translation
-     * @param item        review list item
      */
-    private void applyNewCompiledText(String translation, ListItem item) {
-        translation = translation.replaceAll("\\s*\\R\\s*", "\n");
+    private fun applyNewCompiledText(translation: String, item: ListItem) {
+        val cleanTranslation = translation.replace("\\s*\\R\\s*".toRegex(), "\n")
 
-        item.setTargetText(translation);
-        if (item.isChapterReference()) {
-            item.target.applyChapterReferenceTranslation(item.getCt(), translation);
-        } else if (item.isChapterTitle()) {
-            item.target.applyChapterTitleTranslation(item.getCt(), translation);
-        } else if (item.isProjectTitle()) {
-            try {
-                item.target.applyProjectTitleTranslation(translation);
-            } catch (IOException e) {
-                Logger.e(ReviewModeAdapter.class.getName(), "Failed to save the project title " +
-                        "translation", e);
+        item.targetText = cleanTranslation
+        when {
+            item.isChapterReference -> item.target.applyChapterReferenceTranslation(item.ct, cleanTranslation)
+            item.isChapterTitle -> item.target.applyChapterTitleTranslation(item.ct, cleanTranslation)
+            item.isProjectTitle -> {
+                try {
+                    item.target.applyProjectTitleTranslation(cleanTranslation)
+                } catch (e: IOException) {
+                    Logger.e(ReviewModeAdapter::class.java.name, "Failed to save the project title translation", e)
+                }
             }
-        } else if (item.isChunk()) {
-            item.target.applyFrameTranslation(item.getFt(), translation);
+            item.isChunk -> item.target.applyFrameTranslation(item.ft, cleanTranslation)
         }
     }
 
     /**
      * restore the text from previous commit for fragment
-     *
-     * @param holder Review holder
-     * @param item Review list item
      */
-    private void undoTextInTarget(final ReviewHolder holder, final ReviewListItem item) {
-        if (holder.getBinding().getUndoButton() != null)
-            holder.getBinding().getUndoButton().setVisibility(View.INVISIBLE);
-        if (holder.getBinding().getRedoButton() != null)
-            holder.getBinding().getRedoButton().setVisibility(View.INVISIBLE);
+    private fun undoTextInTarget(holder: ReviewHolder, item: ReviewListItem) {
+        holder.binding.undoButton?.visibility = View.INVISIBLE
+        holder.binding.redoButton?.visibility = View.INVISIBLE
 
-        final FileHistory history = item.getFileHistory();
-        ThreadableUI thread = new ThreadableUI(context) {
-            RevCommit commit = null;
+        val history = item.fileHistory
+        val thread = object : ThreadableUI(context) {
+            var commit: RevCommit? = null
 
-            @Override
-            public void onStop() {
-            }
+            override fun onStop() {}
 
-            @Override
-            public void run() {
+            override fun run() {
                 // commit changes before viewing history
                 if (history != null) {
-                    if (history.isAtHead()) {
-                        if (!item.target.isClean()) {
+                    if (history.isAtHead) {
+                        if (!item.target.isClean) {
                             try {
-                                item.target.commitSync();
-                                history.loadCommits();
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                                item.target.commitSync()
+                                history.loadCommits()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
                             }
                         }
                     }
                     // get previous
-                    commit = history.previous();
+                    commit = history.previous()
                 }
             }
 
-            @Override
-            public void onPostExecute() {
+            override fun onPostExecute() {
                 if (history != null) {
                     if (commit != null) {
-                        String text = null;
+                        var text: String? = null
                         try {
-                            text = history.read(commit);
-                        } catch (IllegalStateException e) {
-                            Logger.w(TAG, "Undo is past end of history for specific file", e);
-                            text = ""; // graceful recovery
-                        } catch (Exception e) {
-                            Logger.w(TAG, "Undo Read Exception", e);
+                            text = history.read(commit)
+                        } catch (e: IllegalStateException) {
+                            Logger.w(TAG, "Undo is past end of history for specific file", e)
+                            text = "" // graceful recovery
+                        } catch (e: Exception) {
+                            Logger.w(TAG, "Undo Read Exception", e)
                         }
 
                         // save and update ui
                         if (text != null) {
-                            // TRICKY: prevent history from getting rolled back soon after the user
-                            // views it
-                            restartAutoCommitTimer();
-                            applyChangedText(text, item);
+                            // TRICKY: prevent history from getting rolled back soon after the user views it
+                            restartAutoCommitTimer()
+                            applyChangedText(text, item)
 
-                            if (getListener() != null) getListener().closeKeyboard();
-                            item.setHasMergeConflicts(MergeConflictsHandler.isMergeConflicted(text));
-                            triggerNotifyDataSetChanged();
-                            updateMergeConflict();
+                            onClickListener?.closeKeyboard()
+                            item.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(text)
+                            triggerNotifyDataSetChanged()
+                            updateMergeConflict()
 
-                            if (holder.getBinding().getTargetEditableBody() != null) {
-                                holder.removeTextChangeListener();
-                                holder.getBinding().getTargetEditableBody().setText(item.renderedTargetText);
-                                holder.attachTextChangeListener();
+                            holder.binding.targetEditableBody?.let {
+                                holder.removeTextChangeListener()
+                                it.setText(item.renderedTargetText)
+                                holder.attachTextChangeListener()
                             }
                         }
                     }
 
-                    if (holder.getBinding().getRedoButton() != null && holder.getBinding().getUndoButton() != null) {
-                        if (history.hasNext()) {
-                            holder.getBinding().getRedoButton().setVisibility(View.VISIBLE);
-                        } else {
-                            holder.getBinding().getRedoButton().setVisibility(View.GONE);
-                        }
-                        if (history.hasPrevious()) {
-                            holder.getBinding().getUndoButton().setVisibility(View.VISIBLE);
-                        } else {
-                            holder.getBinding().getUndoButton().setVisibility(View.GONE);
-                        }
+                    if (holder.binding.redoButton != null && holder.binding.undoButton != null) {
+                        holder.binding.redoButton?.visibility = if (history.hasNext()) View.VISIBLE else View.GONE
+                        holder.binding.undoButton?.visibility = if (history.hasPrevious()) View.VISIBLE else View.GONE
                     }
                 }
             }
-        };
-        thread.start();
+        }
+        thread.start()
     }
 
     /**
      * restore the text from later commit for fragment
-     *
-     * @param holder Review holder
-     * @param item Review list item
      */
-    private void redoTextInTarget(final ReviewHolder holder, final ReviewListItem item) {
-        if (holder.getBinding().getUndoButton() != null)
-            holder.getBinding().getUndoButton().setVisibility(View.INVISIBLE);
-        if (holder.getBinding().getRedoButton() != null)
-            holder.getBinding().getRedoButton().setVisibility(View.INVISIBLE);
+    private fun redoTextInTarget(holder: ReviewHolder, item: ReviewListItem) {
+        holder.binding.undoButton?.visibility = View.INVISIBLE
+        holder.binding.redoButton?.visibility = View.INVISIBLE
 
-        final FileHistory history = item.getFileHistory();
-        ThreadableUI thread = new ThreadableUI(context) {
-            RevCommit commit = null;
+        val history = item.fileHistory
+        val thread = object : ThreadableUI(context) {
+            var commit: RevCommit? = null
 
-            @Override
-            public void onStop() {
+            override fun onStop() {}
 
-            }
-
-            @Override
-            public void run() {
+            override fun run() {
                 if (history != null) {
-                    commit = history.next();
+                    commit = history.next()
                 }
             }
 
-            @Override
-            public void onPostExecute() {
+            override fun onPostExecute() {
                 if (history != null) {
                     if (commit != null) {
-                        String text = null;
+                        var text: String? = null
                         try {
-                            text = history.read(commit);
-                        } catch (IllegalStateException e) {
-                            Logger.w(TAG, "Redo is past end of history for specific file", e);
-                            text = ""; // graceful recovery
-                        } catch (Exception e) {
-                            Logger.w(TAG, "Redo Read Exception", e);
+                            text = history.read(commit)
+                        } catch (e: IllegalStateException) {
+                            Logger.w(TAG, "Redo is past end of history for specific file", e)
+                            text = "" // graceful recovery
+                        } catch (e: Exception) {
+                            Logger.w(TAG, "Redo Read Exception", e)
                         }
 
                         // save and update ui
                         if (text != null) {
-                            // TRICKY: prevent history from getting rolled back soon after the user
-                            // views it
-                            restartAutoCommitTimer();
-                            applyChangedText(text, item);
+                            // TRICKY: prevent history from getting rolled back soon after the user views it
+                            restartAutoCommitTimer()
+                            applyChangedText(text, item)
 
-                            if (getListener() != null) getListener().closeKeyboard();
-                            item.setHasMergeConflicts(MergeConflictsHandler.isMergeConflicted(text));
-                            triggerNotifyDataSetChanged();
-                            updateMergeConflict();
+                            onClickListener?.closeKeyboard()
+                            item.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(text)
+                            triggerNotifyDataSetChanged()
+                            updateMergeConflict()
 
-                            if (holder.getBinding().getTargetEditableBody() != null) {
-                                holder.removeTextChangeListener();
-                                holder.getBinding().getTargetEditableBody().setText(item.renderedTargetText);
-                                holder.attachTextChangeListener();
+                            holder.binding.targetEditableBody?.let {
+                                holder.removeTextChangeListener()
+                                it.setText(item.renderedTargetText)
+                                holder.attachTextChangeListener()
                             }
                         }
                     }
 
-                    if (holder.getBinding().getRedoButton() != null && holder.getBinding().getUndoButton() != null) {
-                        if (history.hasNext()) {
-                            holder.getBinding().getRedoButton().setVisibility(View.VISIBLE);
-                        } else {
-                            holder.getBinding().getRedoButton().setVisibility(View.GONE);
-                        }
-                        if (history.hasPrevious()) {
-                            holder.getBinding().getUndoButton().setVisibility(View.VISIBLE);
-                        } else {
-                            holder.getBinding().getUndoButton().setVisibility(View.GONE);
-                        }
+                    if (holder.binding.redoButton != null && holder.binding.undoButton != null) {
+                        holder.binding.redoButton?.visibility = if (history.hasNext()) View.VISIBLE else View.GONE
+                        holder.binding.undoButton?.visibility = if (history.hasPrevious()) View.VISIBLE else View.GONE
                     }
                 }
             }
-        };
-        thread.start();
+        }
+        thread.start()
     }
-
-    private static final Pattern USFM_CONSECUTIVE_VERSE_MARKERS =
-            Pattern.compile("\\\\v\\s(\\d+(-\\d+)?)\\s*\\\\v\\s(\\d+(-\\d+)?)");
-
-    private static final Pattern USFM_VERSE_MARKER =
-            Pattern.compile(USFMVerseSpan.PATTERN);
-
-    private static final Pattern CONSECUTIVE_VERSE_MARKERS =
-            Pattern.compile("(<verse [^>]+/>\\s*){2}");
-
-    private static final Pattern VERSE_MARKER =
-            Pattern.compile("<verse\\s+number=\"(\\d+)\"[^>]*>");
 
     /**
      * Performs some validation, and commits changes if ready.
      *
      * @throws IllegalStateException If there is an error with the chunk
      */
-    private void markChunkCompleted(final ListItem item, TranslationFormat format) throws IllegalStateException {
+    private fun markChunkCompleted(item: ListItem, format: TranslationFormat) {
         // Check for empty translation.
-        if (item.getTargetText().isEmpty()) {
-            throw new IllegalStateException(context.getString(R.string.translate_first));
+        if (item.targetText.isEmpty()) {
+            throw java.lang.IllegalStateException(context.getString(R.string.translate_first))
         }
 
-        Matcher matcher;
-        int lowVerse = -1;
-        int highVerse = 999999999;
-        int[] range = RenderingProvider.Companion.getVerseRange(item.getTargetText(), item.getTargetTranslationFormat());
-        if (range.length > 0) {
-            lowVerse = range[0];
-            highVerse = lowVerse;
-            if (range.length > 1) {
-                highVerse = range[1];
+        var lowVerse = -1
+        var highVerse = 999999999
+        val range = RenderingProvider.getVerseRange(item.targetText, item.targetTranslationFormat)
+        if (range.isNotEmpty()) {
+            lowVerse = range[0]
+            highVerse = lowVerse
+            if (range.size > 1) {
+                highVerse = range[1]
             }
         }
 
         // Check for contiguous verse numbers.
-        if (format == TranslationFormat.USFM) {
-            matcher = USFM_CONSECUTIVE_VERSE_MARKERS.matcher(item.getTargetText());
+        var matcher = if (format == TranslationFormat.USFM) {
+            USFM_CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText)
         } else {
-            matcher = CONSECUTIVE_VERSE_MARKERS.matcher(item.getTargetText());
+            CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText)
         }
         if (matcher.find()) {
-            throw new IllegalStateException(context.getString(R.string.consecutive_verse_markers));
+            throw java.lang.IllegalStateException(context.getString(R.string.consecutive_verse_markers))
         }
 
         // check for invalid verse markers
-        int error = 0;
-        if (format == TranslationFormat.USFM) {
-            matcher = USFM_VERSE_MARKER.matcher(item.getTargetText());
+        var error = 0
+        matcher = if (format == TranslationFormat.USFM) {
+            USFM_VERSE_MARKER.matcher(item.targetText)
         } else {
-            matcher = VERSE_MARKER.matcher(item.getTargetText());
+            VERSE_MARKER.matcher(item.targetText)
         }
-        int[] sourceVerseRange = RenderingProvider.Companion.getVerseRange(item.getSourceText(), item.getSourceTranslationFormat());
-        if (sourceVerseRange.length > 0) {
-            int min = sourceVerseRange[0];
-            int max = min;
-            if (sourceVerseRange.length == 2) max = sourceVerseRange[1];
+        val sourceVerseRange = RenderingProvider.getVerseRange(item.sourceText, item.sourceTranslationFormat)
+        if (sourceVerseRange.isNotEmpty()) {
+            val min = sourceVerseRange[0]
+            var max = min
+            if (sourceVerseRange.size == 2) max = sourceVerseRange[1]
             while (matcher.find()) {
-                String verseStr = matcher.group(1);
-                int verse = -1;
+                val verseStr = matcher.group(1)
+                var verse = -1
                 if (verseStr != null) {
                     try {
-                        verse = Integer.parseInt(verseStr);
-                    } catch (Exception ignored) {
-                    }
+                        verse = verseStr.toInt()
+                    } catch (ignored: Exception) {}
                 }
                 if (verse < min || verse > max) {
-                    error = R.string.outofrange_verse_marker;
-                    break;
+                    error = R.string.outofrange_verse_marker
+                    break
                 }
             }
         }
         if (error > 0) {
-            throw new IllegalStateException(context.getString(error));
+            throw java.lang.IllegalStateException(context.getString(error))
         }
 
         // Check for out-of-order verse markers.
-        if (format == TranslationFormat.USFM) {
-            matcher = USFM_VERSE_MARKER.matcher(item.getTargetText());
+        matcher = if (format == TranslationFormat.USFM) {
+            USFM_VERSE_MARKER.matcher(item.targetText)
         } else {
-            matcher = VERSE_MARKER.matcher(item.getTargetText());
+            VERSE_MARKER.matcher(item.targetText)
         }
-        int lastVerseSeen = 0;
+        var lastVerseSeen = 0
         while (matcher.find()) {
-            String verseStr = matcher.group(1);
-            int currentVerse = -1;
+            val verseStr = matcher.group(1)
+            var currentVerse = -1
             if (verseStr != null) {
                 try {
-                    currentVerse = Integer.parseInt(verseStr);
-                } catch (Exception ignored) {
-                }
+                    currentVerse = verseStr.toInt()
+                } catch (ignored: Exception) {}
             }
             if (currentVerse <= lastVerseSeen) {
-                if (currentVerse == lastVerseSeen) {
-                    error = R.string.duplicate_verse_marker;
+                error = if (currentVerse == lastVerseSeen) {
+                    R.string.duplicate_verse_marker
                 } else {
-                    error = R.string.outoforder_verse_markers;
+                    R.string.outoforder_verse_markers
                 }
-                break;
-            } else if ((currentVerse < lowVerse) || (currentVerse > highVerse)) {
-                error = R.string.outofrange_verse_marker;
-                break;
+                break
+            } else if (currentVerse < lowVerse || currentVerse > highVerse) {
+                error = R.string.outofrange_verse_marker
+                break
             } else {
-                lastVerseSeen = currentVerse;
+                lastVerseSeen = currentVerse
             }
         }
         if (error > 0) {
-            throw new IllegalStateException(context.getString(error));
+            throw java.lang.IllegalStateException(context.getString(error))
         }
 
         // Everything looks good so far.
-        boolean success;
-        if (item.isChapterReference()) {
-            success = item.target.finishChapterReference(item.chapterSlug);
-        } else if (item.isChapterTitle()) {
-            success = item.target.finishChapterTitle(item.chapterSlug);
-        } else if (item.isProjectTitle()) {
-            success = item.target.closeProjectTitle();
-        } else {
-            success = item.target.finishFrame(item.chapterSlug, item.chunkSlug);
+        val success = when {
+            item.isChapterReference -> item.target.finishChapterReference(item.chapterSlug)
+            item.isChapterTitle -> item.target.finishChapterTitle(item.chapterSlug)
+            item.isProjectTitle -> item.target.closeProjectTitle()
+            else -> item.target.finishFrame(item.chapterSlug, item.chunkSlug)
         }
 
         if (!success) {
-            // TODO: Use a more accurate (if potentially more opaque) error message.
-            throw new IllegalStateException(context.getString(R.string.failed_to_commit_chunk));
+            throw java.lang.IllegalStateException(context.getString(R.string.failed_to_commit_chunk))
         } else {
-            item.setComplete(true);
+            item.isComplete = true
         }
 
-        item.isEditing = false;
-        item.renderedTargetText = null;
+        (item as ReviewListItem).isEditing = false
+        item.renderedTargetText = null
     }
 
-    private CharSequence renderTargetText(final ReviewHolder holder, final ReviewListItem item) {
+    private fun renderTargetText(holder: ReviewHolder, item: ReviewListItem): CharSequence {
         return renderTargetText(
-                item.getTargetText(),
-                item.getTargetTranslationFormat(),
-                item.getFt(),
-                holder,
-                item
-        );
+            item.targetText,
+            item.targetTranslationFormat,
+            item.ft,
+            holder,
+            item
+        )
     }
 
     /**
      * generate spannable for target text.  Will add click listener for notes and verses if they
      * are supported
-     *
-     * @param text text
-     * @param format translation format
-     * @param frameTranslation frame translation
-     * @param holder review holder
-     * @param item review list item
-     * @return rendered target text
      */
-    private CharSequence renderTargetText(
-            String text,
-            TranslationFormat format,
-            final FrameTranslation frameTranslation,
-            final ReviewHolder holder,
-            final ReviewListItem item
-    ) {
-        RenderingGroup renderingGroup = new RenderingGroup();
-        boolean enableSearch = searchText != null &&
-                searchSubject != null &&
-                searchSubject == SearchSubject.TARGET;
+    @SuppressLint("SetTextI18n")
+    private fun renderTargetText(
+        text: String?,
+        format: TranslationFormat,
+        frameTranslation: FrameTranslation,
+        holder: ReviewHolder?,
+        item: ReviewListItem
+    ): CharSequence {
+        val renderingGroup = RenderingGroup()
+        val enableSearch = searchText != null && searchSubject != null && searchSubject == SearchSubject.TARGET
 
         if (Clickables.isClickableFormat(format)) {
-            Span.OnClickListener verseClickListener = new Span.OnClickListener() {
-                @Override
-                public void onClick(View view, Span span, int start, int end) {
-                    itemActionListener.onShowToast(R.string.long_click_to_drag);
+            val verseClickListener = object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    itemActionListener?.onShowToast(R.string.long_click_to_drag)
                 }
 
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void onLongClick(final View view, Span span, int start, int end) {
-                    toggleDisableItems(true, item);
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {
+                    toggleDisableItems(true, item)
 
-                    ClipData dragData = ClipData.newPlainText(
-                            item.chapterSlug + "-" + item.chunkSlug,
-                            span.getMachineReadable()
-                    );
-                    final VerseSpan pin = ((VerseSpan) span);
+                    val dragData = ClipData.newPlainText(
+                        "${item.chapterSlug}-${item.chunkSlug}",
+                        span.machineReadable
+                    )
+                    val pin = span as VerseSpan
 
                     // create drag shadow
-                    LayoutInflater inflater = (LayoutInflater) context.getSystemService(
-                            Context.LAYOUT_INFLATER_SERVICE
-                    );
-                    FragmentVerseMarkerBinding markerBinding = FragmentVerseMarkerBinding.inflate(inflater);
+                    val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                    val markerBinding = FragmentVerseMarkerBinding.inflate(inflater)
 
-                    if (pin.getEndVerseNumber() > 0) {
-                        markerBinding.verse.setText(pin.getStartVerseNumber() + "-" + pin.getEndVerseNumber());
+                    if (pin.endVerseNumber > 0) {
+                        markerBinding.verse.text = "${pin.startVerseNumber}-${pin.endVerseNumber}"
                     } else {
-                        markerBinding.verse.setText(pin.getStartVerseNumber() + "");
+                        markerBinding.verse.text = "${pin.startVerseNumber}"
                     }
-                    Bitmap shadow = ViewUtil.convertToBitmap(markerBinding.getRoot());
-                    View.DragShadowBuilder myShadow = CustomDragShadowBuilder.fromBitmap(context, shadow);
+                    val shadow = ViewUtil.convertToBitmap(markerBinding.root)
+                    val myShadow = CustomDragShadowBuilder.fromBitmap(context, shadow)
 
-                    int[] spanRange = {start, end};
-                    view.startDrag(dragData,  // the data to be dragged
-                            myShadow,  // the drag shadow builder
-                            spanRange,      // no need to use local data
-                            0          // flags (not currently used, set to 0)
-                    );
-                    view.setOnDragListener(new View.OnDragListener() {
-                        private boolean hasEntered = false;
+                    val spanRange = intArrayOf(start, end)
+                    @Suppress("DEPRECATION")
+                    view.startDrag(
+                        dragData,  // the data to be dragged
+                        myShadow,  // the drag shadow builder
+                        spanRange, // local state data
+                        0          // flags
+                    )
 
-                        @Override
-                        public boolean onDrag(View v, DragEvent e) {
-                            EditText editText = ((EditText) v);
-                            if (e.getAction() == DragEvent.ACTION_DRAG_STARTED) {
-                                // delete old span
-                                if (e.getLocalState() instanceof int[] spanRange && spanRange.length >= 2) {
-                                    CharSequence in = editText.getText();
-                                    if (spanRange[0] < in.length() && spanRange[1] < in.length()) {
-                                        CharSequence out = TextUtils.concat(
-                                                in.subSequence(0, spanRange[0]),
-                                                in.subSequence(spanRange[1], in.length())
-                                        );
-                                        editText.setText(out);
+                    view.setOnDragListener(object : View.OnDragListener {
+                        private var hasEntered = false
+
+                        override fun onDrag(v: View, e: DragEvent): Boolean {
+                            val editText = v as EditText
+                            when (e.action) {
+                                DragEvent.ACTION_DRAG_STARTED -> {
+                                    // delete old span
+                                    val localSpanRange = e.localState as? IntArray
+                                    if (localSpanRange != null && localSpanRange.size >= 2) {
+                                        val input = editText.text
+                                        if (localSpanRange[0] < input.length && localSpanRange[1] < input.length) {
+                                            val out = TextUtils.concat(
+                                                input.subSequence(0, localSpanRange[0]),
+                                                input.subSequence(localSpanRange[1], input.length)
+                                            )
+                                            editText.setText(out)
+                                        }
                                     }
                                 }
-                            } else if (e.getAction() == DragEvent.ACTION_DROP) {
-                                int offset = editText.getOffsetForPosition(e.getX(), e.getY());
-                                CharSequence text = editText.getText();
-                                offset = closestSpotForVerseMarker(offset, text);
+                                DragEvent.ACTION_DROP -> {
+                                    var offset = editText.getOffsetForPosition(e.x, e.y)
+                                    var currentText: CharSequence = editText.text
+                                    offset = closestSpotForVerseMarker(offset, currentText)
 
-                                if (offset >= 0) {
-                                    // insert the verse at the offset
-                                    text = TextUtils.concat(
-                                            text.subSequence(0, offset),
+                                    currentText = if (offset >= 0) {
+                                        // insert the verse at the offset
+                                        TextUtils.concat(
+                                            currentText.subSequence(0, offset),
                                             pin.toCharSequence(context),
-                                            text.subSequence(offset, text.length())
-                                    );
-                                } else {
-                                    // place the verse back at the beginning
-                                    text = TextUtils.concat(pin.toCharSequence(context), text);
-                                }
+                                            currentText.subSequence(offset, currentText.length)
+                                        )
+                                    } else {
+                                        // place the verse back at the beginning
+                                        TextUtils.concat(pin.toCharSequence(context), currentText)
+                                    }
 
-                                SpannableString noHighlightText = resetHighlightColor(text);
-                                editText.setText(noHighlightText);
+                                    val noHighlightText = resetHighlightColor(currentText)
+                                    editText.setText(noHighlightText)
 
-                                String translation = Translator.compileTranslation(editText.getText());
-                                item.target.applyFrameTranslation(frameTranslation, translation);
-                                item.setTargetText(translation);
-                                item.renderedTargetText = renderTargetText(
+                                    val translation = Translator.compileTranslation(editText.text)
+                                    item.target.applyFrameTranslation(frameTranslation, translation)
+                                    item.targetText = translation
+                                    item.renderedTargetText = renderTargetText(
                                         translation,
-                                        item.getTargetTranslationFormat(),
+                                        item.targetTranslationFormat,
                                         frameTranslation,
                                         holder,
                                         item
-                                );
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_ENDED) {
-                                toggleDisableItems(false, null);
-                                v.setOnDragListener(null);
-                                editText.setSelection(editText.getSelectionEnd());
-                                // reset verse if dragged off the view
-                                // TODO: 10/5/2015 perhaps we should confirm with the user?
-                                if (!hasEntered) {
-                                    // place the verse back at the beginning
-                                    CharSequence text = editText.getText();
-                                    text = TextUtils.concat(pin.toCharSequence(context), text);
-                                    editText.setText(text);
-                                    String translation = Translator.compileTranslation(editText.getText());
-                                    item.target.applyFrameTranslation(frameTranslation, translation);
-                                    item.renderedTargetText = renderTargetText(
+                                    )
+                                }
+                                DragEvent.ACTION_DRAG_ENDED -> {
+                                    toggleDisableItems(false, null)
+                                    v.setOnDragListener(null)
+                                    editText.setSelection(editText.selectionEnd)
+                                    // reset verse if dragged off the view
+                                    if (!hasEntered) {
+                                        // place the verse back at the beginning
+                                        var currentText: CharSequence = editText.text
+                                        currentText = TextUtils.concat(pin.toCharSequence(context), currentText)
+                                        editText.setText(currentText)
+                                        val translation = Translator.compileTranslation(editText.text)
+                                        item.target.applyFrameTranslation(frameTranslation, translation)
+                                        item.renderedTargetText = renderTargetText(
                                             translation,
-                                            item.getTargetTranslationFormat(),
+                                            item.targetTranslationFormat,
                                             frameTranslation,
                                             holder,
                                             item
-                                    );
+                                        )
+                                    }
                                 }
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
-                                hasEntered = true;
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_EXITED) {
-                                hasEntered = false;
-                                editText.setSelection(editText.getSelectionEnd());
-                                SpannableString noHighlightText = resetHighlightColor(editText.getText());
-                                editText.setText(noHighlightText);
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
-                                int offset = editText.getOffsetForPosition(e.getX(), e.getY());
-                                if (offset >= 0 && offset < editText.getText().length() - 1) {
-                                    CharSequence txt = editText.getText();
-                                    SpannableString str = highlightWordAt(offset, txt);
-                                    editText.setText(str);
-                                } else {
-                                    editText.setSelection(editText.getSelectionEnd());
+                                DragEvent.ACTION_DRAG_ENTERED -> {
+                                    hasEntered = true
+                                }
+                                DragEvent.ACTION_DRAG_EXITED -> {
+                                    hasEntered = false
+                                    editText.setSelection(editText.selectionEnd)
+                                    val noHighlightText = resetHighlightColor(editText.text)
+                                    editText.setText(noHighlightText)
+                                }
+                                DragEvent.ACTION_DRAG_LOCATION -> {
+                                    val offset = editText.getOffsetForPosition(e.x, e.y)
+                                    if (offset >= 0 && offset < editText.text.length - 1) {
+                                        val txt = editText.text
+                                        val str = highlightWordAt(offset, txt)
+                                        editText.setText(str)
+                                    } else {
+                                        editText.setSelection(editText.selectionEnd)
+                                    }
                                 }
                             }
-                            return true;
+                            return true
                         }
-                    });
+                    })
                 }
-            };
+            }
 
-            Span.OnClickListener noteClickListener = new Span.OnClickListener() {
-                @Override
-                public void onClick(View view, Span span, int start, int end) {
-                    if (span instanceof NoteSpan) {
-                        showFootnote(holder, item, (NoteSpan) span, start, end, true);
+            val noteClickListener = object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    if (span is NoteSpan) {
+                        holder?.let {
+                            showFootnote(it, item, span, start, end, true)
+                        }
                     }
                 }
 
-                @Override
-                public void onLongClick(View view, Span span, int start, int end) {
-                }
-            };
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
+            }
 
-            ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
-                    format,
-                    renderingGroup,
-                    verseClickListener,
-                    noteClickListener,
-                    true
-            );
+            val renderer = renderingProvider.setupRenderingGroup(
+                format,
+                renderingGroup,
+                verseClickListener,
+                noteClickListener,
+                true
+            ) as ClickableRenderingEngine
 
-            int[] verseRange = RenderingProvider.Companion.getVerseRange(
-                    item.getSourceText(),
-                    item.getSourceTranslationFormat()
-            );
-            renderer.setPopulateVerseMarkers(verseRange);
+            val verseRange = RenderingProvider.getVerseRange(
+                item.sourceText,
+                item.sourceTranslationFormat
+            )
+            renderer.setPopulateVerseMarkers(verseRange)
         } else {
-            renderingGroup.addEngine(new DefaultRenderer(null));
+            renderingGroup.addEngine(DefaultRenderer(null))
         }
 
         if (enableSearch) {
-            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR);
+            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR)
         }
 
-        if ((text != null) && !text.trim().isEmpty()) {
-            renderingGroup.init(text);
-            CharSequence results = renderingGroup.start();
-            item.hasMissingVerses = renderingGroup.isAddedMissingVerse();
-            return results;
+        if (!text.isNullOrBlank()) {
+            renderingGroup.init(text)
+            val results = renderingGroup.start()
+            item.hasMissingVerses = renderingGroup.isAddedMissingVerse
+            return results ?: ""
         } else {
-            return "";
+            return ""
         }
     }
 
     /**
      * Find the closest position to drop verse marker. Weighted toward beginning of word.
-     *
-     * @param offset - initial drop position
-     * @param text   - edit text
-     * @return closest position to drop verse marker
      */
-    private int closestSpotForVerseMarker(int offset, CharSequence text) {
-        if (offset <= 0) {
-            return 0;
+    private fun closestSpotForVerseMarker(offset: Int, text: CharSequence): Int {
+        var currentOffset = offset
+        if (currentOffset <= 0) {
+            return 0
         }
 
-        if (offset >= text.length()) {
-            offset = text.length() - 1;
+        if (currentOffset >= text.length) {
+            currentOffset = text.length - 1
         }
 
-        while (offset > 0 && isWhitespace(text.charAt(offset))) {
-            offset--;
+        while (currentOffset > 0 && isWhitespace(text[currentOffset])) {
+            currentOffset--
         }
 
-        while (offset > 0 && !isWhitespace(text.charAt(offset))) {
-            offset--;
+        while (currentOffset > 0 && !isWhitespace(text[currentOffset])) {
+            currentOffset--
         }
 
-        while (offset > 0 && isFootNote(text, offset)) {
-            offset--;
+        while (currentOffset > 0 && isFootNote(text, currentOffset)) {
+            currentOffset--
         }
 
-        return (offset > 0) ? offset + 1 : offset;
+        return if (currentOffset > 0) currentOffset + 1 else currentOffset
     }
 
-    private boolean isFootNote(CharSequence text, int offset) {
-        Pattern pattern = Pattern.compile(USFMNoteSpan.PATTERN);
-        Matcher matcher = pattern.matcher(text);
+    private fun isFootNote(text: CharSequence, offset: Int): Boolean {
+        val pattern = Pattern.compile(USFMNoteSpan.PATTERN)
+        val matcher = pattern.matcher(text)
         while (matcher.find()) {
             if (offset >= matcher.start() && offset < matcher.end()) {
-                return true;
+                return true
             }
         }
-        return false;
+        return false
     }
 
-    /**
-     * test if character is whitespace
-     *
-     * @param c character
-     * @return true if whitespace
-     */
-    private boolean isWhitespace(char c) {
-        return (c == ' ') || (c == '\t') || (c == '\n') || (c == '\r');
+    private fun isWhitespace(c: Char): Boolean {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r'
     }
 
-    private SpannableString resetHighlightColor(CharSequence text) {
-        SpannableString noHighlightText = new SpannableString(text);
-        BackgroundColorSpan background = new BackgroundColorSpan(Color.TRANSPARENT);
-        ForegroundColorSpan foreground = new ForegroundColorSpan(
-                ColorUtil.getColor(context, R.color.dark_primary_text)
-        );
+    private fun resetHighlightColor(text: CharSequence): SpannableString {
+        val noHighlightText = SpannableString(text)
+        val background = BackgroundColorSpan(Color.TRANSPARENT)
+        val foreground = ForegroundColorSpan(
+            ColorUtil.getColor(context, R.color.dark_primary_text)
+        )
 
         noHighlightText.setSpan(
-                background,
-                0,
-                text.length(),
-                Spanned.SPAN_INCLUSIVE_INCLUSIVE
-        );
+            background,
+            0,
+            text.length,
+            Spanned.SPAN_INCLUSIVE_INCLUSIVE
+        )
         noHighlightText.setSpan(
-                foreground,
-                0,
-                text.length(),
-                0
-        );
-        return noHighlightText;
+            foreground,
+            0,
+            text.length,
+            0
+        )
+        return noHighlightText
     }
 
     /**
      * Highlights one word based on the given position (index) of the original string.
-     *
-     * @param position the drop position (index) to highlight
-     * @param text     the original string
-     * @return a SpannableString with the highlighted range added
      */
-    private SpannableString highlightWordAt(final int position, CharSequence text) {
-        int start = closestSpotForVerseMarker(position, text);
-        int end = start + 1;
+    private fun highlightWordAt(position: Int, text: CharSequence): SpannableString {
+        val start = closestSpotForVerseMarker(position, text)
+        var end = start + 1
         // move end position toward the end of word (if currently not)
-        while (end < text.length() && !isWhitespace(text.charAt(end))) {
-            end++;
+        while (end < text.length && !isWhitespace(text[end])) {
+            end++
         }
-        SpannableString str = resetHighlightColor(text);
-        BackgroundColorSpan bgColor = new BackgroundColorSpan(
-                ColorUtil.getColor(context, R.color.highlight_background_color)
-        );
-        str.setSpan(bgColor, start, end, 0);
-        ForegroundColorSpan fgColor = new ForegroundColorSpan(
-                ColorUtil.getColor(context, R.color.highlighted_foreground_color)
-        );
-        str.setSpan(fgColor, start, end, 0);
-        return str;
+        val str = resetHighlightColor(text)
+        val bgColor = BackgroundColorSpan(
+            ColorUtil.getColor(context, R.color.highlight_background_color)
+        )
+        str.setSpan(bgColor, start, end, 0)
+        val fgColor = ForegroundColorSpan(
+            ColorUtil.getColor(context, R.color.highlighted_foreground_color)
+        )
+        str.setSpan(fgColor, start, end, 0)
+        return str
     }
 
     /**
-     * display selected footnote in dialog. If editable, then it adds options to delete and edit
-     * the footnote
-     *
-     * @param holder review holder
-     * @param item review list item
-     * @param span note span
-     * @param editable if true then allow editing
+     * display selected footnote in dialog.
      */
-    private void showFootnote(
-            final ReviewHolder holder,
-            final ReviewListItem item,
-            final NoteSpan span,
-            final int start,
-            final int end,
-            boolean editable
+    private fun showFootnote(
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        span: NoteSpan,
+        start: Int,
+        end: Int,
+        editable: Boolean
     ) {
-        CharSequence marker = span.getPassage();
-        CharSequence title = context.getResources().getText(R.string.title_footnote);
-        if (!marker.toString().isEmpty()) {
-            title = title + ": " + marker;
+        val marker = span.passage
+        var title: CharSequence = context.resources.getText(R.string.title_footnote)
+        if (marker.toString().isNotEmpty()) {
+            title = "$title: $marker"
         }
-        CharSequence message = span.getNotes();
+        val message = span.notes
 
-        if (editable && !item.isComplete()) {
-            new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                    .setTitle(title)
-                    .setMessage(message)
-                    .setPositiveButton(R.string.dismiss, null)
-                    .setNeutralButton(R.string.edit,
-                            (dialog, which) -> editFootnote(span.getNotes(), holder, item, start, end))
-
-                    .setNegativeButton(R.string.label_delete,
-                            (dialog, which) -> deleteFootnote(span.getNotes(), holder, item, start, end))
-                    .show();
+        if (editable && !item.isComplete) {
+            AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.dismiss, null)
+                .setNeutralButton(R.string.edit) { _, _ -> editFootnote(span.notes, holder, item, start, end) }
+                .setNegativeButton(R.string.label_delete) { _, _ -> deleteFootnote(span.notes, holder, item, start, end) }
+                .show()
 
         } else {
-            new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                    .setTitle(title)
-                    .setMessage(message)
-                    .setPositiveButton(R.string.dismiss, null)
-                    .show();
+            AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.dismiss, null)
+                .show()
         }
     }
 
     /**
      * prompt to confirm removal of specific footnote at position
-     *
-     * @param note note text
-     * @param holder review holder
-     * @param item review list item
-     * @param start start position
-     * @param end end position
      */
-    private void deleteFootnote(
-            CharSequence note,
-            final ReviewHolder holder,
-            final ReviewListItem item,
-            final int start,
-            final int end
+    private fun deleteFootnote(
+        note: CharSequence,
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        start: Int,
+        end: Int
     ) {
-        final EditText editText = holder.getEditText(item.isEditing);
-        final CharSequence original = editText.getText();
+        val editText = holder.getEditText(item.isEditing) ?: return
+        val original = editText.text
 
-        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                .setTitle(R.string.footnote_confirm_delete)
-                .setMessage(note)
-                .setPositiveButton(R.string.label_delete, (dialog, which) -> placeFootnote(null,
-                        original, start, end, holder, item, editText))
-                .setNegativeButton(R.string.title_cancel, null)
-                .show();
+        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+            .setTitle(R.string.footnote_confirm_delete)
+            .setMessage(note)
+            .setPositiveButton(R.string.label_delete) { _, _ ->
+                placeFootnote(null, original, start, end, holder, item, editText)
+            }
+            .setNegativeButton(R.string.title_cancel, null)
+            .show()
     }
 
     /**
      * generate spannable for source text.  Will add click listener for notes if supported
-     * <p>
-     * Currently this is also used when rendering the target text when not editable.
-     *
-     * @param holder Review holder
-     * @param item Review list item
-     * @param editable Editable
-     * @return rendered text
      */
-    private CharSequence renderTargetText(
-            final ReviewHolder holder,
-            final ReviewListItem item,
-            final boolean editable
-    ) {
-        RenderingGroup renderingGroup = new RenderingGroup();
-        boolean enableSearch = searchText != null && searchSubject != null;
+    private fun renderTargetText(
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        editable: Boolean
+    ): CharSequence {
+        val renderingGroup = RenderingGroup()
+        var enableSearch = searchText != null && searchSubject != null
         if (editable) {
             // make sure we are searching target
-            enableSearch &= searchSubject == SearchSubject.TARGET;
+            enableSearch = enableSearch && searchSubject == SearchSubject.TARGET
         }
-        if (Clickables.isClickableFormat(item.getTargetTranslationFormat())) {
-            Span.OnClickListener noteClickListener = new Span.OnClickListener() {
-                @Override
-                public void onClick(View view, Span span, int start, int end) {
-                    if (span instanceof NoteSpan) {
-                        showFootnote(holder, item, (NoteSpan) span, start, end, editable);
+        if (Clickables.isClickableFormat(item.targetTranslationFormat)) {
+            val noteClickListener = object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    if (span is NoteSpan) {
+                        showFootnote(holder, item, span, start, end, editable)
                     }
                 }
 
-                @Override
-                public void onLongClick(View view, Span span, int start, int end) {
-                }
-            };
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
+            }
 
             renderingProvider.setupRenderingGroup(
-                    item.getTargetTranslationFormat(),
-                    renderingGroup,
-                    null,
-                    noteClickListener,
-                    false
-            );
+                item.targetTranslationFormat,
+                renderingGroup,
+                null,
+                noteClickListener,
+                false
+            )
 
             if (editable) {
-                if (!item.isComplete()) {
-                    renderingGroup.setVersesEnabled(false);
-                    renderingGroup.setParagraphsEnabled(false);
+                if (!item.isComplete) {
+                    renderingGroup.setVersesEnabled(false)
+                    renderingGroup.setParagraphsEnabled(false)
                 }
             }
         } else {
-            renderingGroup.addEngine(new DefaultRenderer(null));
+            renderingGroup.addEngine(DefaultRenderer(null))
         }
 
         if (enableSearch) {
-            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR);
+            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR)
         }
 
-        renderingGroup.init(item.getTargetText());
-        CharSequence results = renderingGroup.start();
-        item.hasMissingVerses = renderingGroup.isAddedMissingVerse();
-        return results;
+        renderingGroup.init(item.targetText)
+        val results = renderingGroup.start()
+        item.hasMissingVerses = renderingGroup.isAddedMissingVerse
+        return results ?: ""
     }
 
-    @Override
-    public int getItemCount() {
-        return filteredItems.size();
+    override fun getItemCount(): Int {
+        return filteredItems.size
     }
 
     /**
      * show or hide the merge conflict icon
-     *
-     * @param showMergeConflict if true then show merge conflict icon
-     * @param mergeConflictFilterMode if true then filter merge conflicts
      */
-    private void showMergeConflictIcon(
-            final boolean showMergeConflict,
-            boolean mergeConflictFilterMode
+    private fun showMergeConflictIcon(
+        showMergeConflict: Boolean,
+        mergeConflictFilterMode: Boolean
     ) {
-        final boolean mergeConflictFilterEnabled = showMergeConflict && mergeConflictFilterMode;
-        if ((showMergeConflict != haveMergeConflict) || (mergeConflictFilterEnabled != mergeConflictFilterOn)) {
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(() -> {
-                OnEventListener listener = getListener();
-                if (listener != null) {
-                    listener.onEnableMergeConflict(showMergeConflict, mergeConflictFilterEnabled);
-                }
-            });
+        val mergeConflictFilterEnabled = showMergeConflict && mergeConflictFilterMode
+        if (showMergeConflict != haveMergeConflict || mergeConflictFilterEnabled != mergeConflictFilterOn) {
+            val hand = Handler(Looper.getMainLooper())
+            hand.post {
+                onClickListener?.onEnableMergeConflict(showMergeConflict, mergeConflictFilterEnabled)
+            }
         }
-        haveMergeConflict = showMergeConflict;
-        mergeConflictFilterOn = mergeConflictFilterEnabled;
+        haveMergeConflict = showMergeConflict
+        mergeConflictFilterOn = mergeConflictFilterEnabled
     }
 
-    @Override
-    public Object[] getSections() {
-        return filteredChapters.toArray();
+    override fun getSections(): Array<Any> {
+        return filteredChapters.toTypedArray()
     }
 
-    @Override
-    public int getPositionForSection(int sectionIndex) {
+    override fun getPositionForSection(sectionIndex: Int): Int {
         // not used
-        return sectionIndex;
+        return sectionIndex
     }
 
-    @Override
-    public int getSectionForPosition(int position) {
-        if (position >= 0 && position < filteredItems.size()) {
-            ListItem item = filteredItems.get(position);
-            return filteredChapters.indexOf(item.chapterSlug);
-        } else {
-            return -1;
+    override fun getSectionForPosition(position: Int): Int {
+        if (position in 0 until filteredItems.size) {
+            val item = filteredItems[position]
+            return filteredChapters.indexOf(item.chapterSlug)
         }
+        return -1
     }
 
-    @Override
-    public void onSourceFootnoteClick(ReviewListItem item, NoteSpan span, int start, int end) {
-        int position = filteredItems.indexOf(item);
-        if (getListener() == null) return;
-        ReviewHolder holder = (ReviewHolder) getListener().getVisibleViewHolder(position);
-        if (holder == null) return;
-        showFootnote(holder, item, span, start, end, false);
+    override fun onSourceFootnoteClick(item: ReviewListItem, span: NoteSpan, start: Int, end: Int) {
+        val position = filteredItems.indexOf(item)
+        if (onClickListener == null) return
+        val holder = onClickListener?.getVisibleViewHolder(position) as? ReviewHolder ?: return
+        showFootnote(holder, item, span, start, end, false)
     }
 
     /**
      * for returning multiple values in the text search results
      */
-    private static class MatchResults {
-        final private int foundLocation;
-        final private int numberFound;
-        final private boolean needRender;
-
-        public MatchResults(int foundLocation, int numberFound, boolean needRender) {
-            this.foundLocation = foundLocation;
-            this.numberFound = numberFound;
-            this.needRender = needRender;
-        }
-    }
+    private data class MatchResults(
+        val foundLocation: Int,
+        val numberFound: Int,
+        val needRender: Boolean
+    )
 
     /**
-     * move to next (forward/previous) search item. If current position has matches, then it will
-     * first try to move to the next item within the chunk. Otherwise it will find the next
-     * chunk with text.
-     *
-     * @param forward if true then find next instance (moving down the page), otherwise will find
-     *                previous (moving up the page)
+     * move to next (forward/previous) search item.
      */
-    @Override
-    public void onMoveSearch(boolean forward) {
-        Log.i(TAG, "onMoveSearch position " + searchPosition + " forward=" + forward);
+    override fun onMoveSearch(next: Boolean) {
+        Log.i(TAG, "onMoveSearch position $searchPosition forward=$next")
 
-        int foundPos = findNextMatchChunk(forward);
+        val foundPos = findNextMatchChunk(next)
         if (foundPos >= 0) {
-            Log.i(TAG, "onMoveSearch foundPos=" + foundPos);
-            searchPosition = foundPos;
-            searchSubPositionItems = -1;
+            Log.i(TAG, "onMoveSearch foundPos=$foundPos")
+            searchPosition = foundPos
+            searchSubPositionItems = -1
 
-            onSearching(false, numberOfChunkMatches, false, false);
+            onSearching(doingSearch = false, numberOfChunkMatches = numberOfChunkMatches, atEnd = false, atStart = false)
 
-            ReviewListItem item = getItem(searchPosition);
+            val item = getItem(searchPosition)
             if (item != null) {
-                findSearchItemInChunkAndPreselect(item, searchingTarget);
+                findSearchItemInChunkAndPreselect(item, searchingTarget)
             }
 
-            if (getListener() != null) {
-                Log.i(TAG, "onMoveSearch position=" + foundPos);
-                getListener().onSetSelectedPosition(foundPos, 0); // coarse scrolling
-            }
+            Log.i(TAG, "onMoveSearch position=$foundPos")
+            onClickListener?.onSetSelectedPosition(foundPos, 0) // coarse scrolling
         } else { // not found, clear last selection
-            Log.i(TAG, "onMoveSearch at limit = " + searchPosition);
-            showAtLimit(forward);
-            if (forward) {
-                searchPosition++;
+            Log.i(TAG, "onMoveSearch at limit = $searchPosition")
+            showAtLimit(next)
+            if (next) {
+                searchPosition++
             } else {
-                searchPosition--;
+                searchPosition--
             }
         }
     }
@@ -1805,448 +1551,382 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
     /**
      * check if current highlight is at either limit (forward or back)
      */
-    private void checkIfAtSearchLimits() {
-        checkIfAtSearchLimit(true);
-        checkIfAtSearchLimit(false);
+    private fun checkIfAtSearchLimits() {
+        checkIfAtSearchLimit(true)
+        checkIfAtSearchLimit(false)
     }
 
     /**
      * check if current highlight is at limit
-     *
-     * @param forward if true then we are at limit, otherwise we are at start
      */
-    private void checkIfAtSearchLimit(boolean forward) {
-        int nextPos = findNextMatchChunk(forward);
+    private fun checkIfAtSearchLimit(forward: Boolean) {
+        val nextPos = findNextMatchChunk(forward)
         if (nextPos < 0) {
-            showAtLimit(forward);
+            showAtLimit(forward)
         }
     }
 
     /**
      * indicate that we are at limit
-     *
-     * @param forward if true then we are at limit, otherwise we are at start
      */
-    private void showAtLimit(boolean forward) {
+    private fun showAtLimit(forward: Boolean) {
         if (forward) {
-            onSearching(false, numberOfChunkMatches, true, numberOfChunkMatches == 0);
+            onSearching(doingSearch = false, numberOfChunkMatches = numberOfChunkMatches, atEnd = true, atStart = numberOfChunkMatches == 0)
         } else {
-            onSearching(false, numberOfChunkMatches, numberOfChunkMatches == 0, true);
+            onSearching(doingSearch = false, numberOfChunkMatches = numberOfChunkMatches, atEnd = numberOfChunkMatches == 0, atStart = true)
         }
     }
 
     /**
      * get next match item
-     *
-     * @param forward if true then find next instance (moving down the page), otherwise will find
-     *                previous (moving up the page)
-     * @return position of next match item
      */
-    private int findNextMatchChunk(boolean forward) {
-        int foundPos = -1;
+    private fun findNextMatchChunk(forward: Boolean): Int {
+        var foundPos = -1
         if (forward) {
-            int start = Math.max(searchPosition, -1);
-            for (int i = start + 1; i < filteredItems.size(); i++) {
-                ReviewListItem item = (ReviewListItem) getItem(i);
-                if (item.hasSearchText) {
-                    foundPos = i;
-                    break;
+            val start = Math.max(searchPosition, -1)
+            for (i in start + 1 until filteredItems.size) {
+                val item = getItem(i)
+                if (item?.hasSearchText == true) {
+                    foundPos = i
+                    break
                 }
             }
         } else { // previous
-            int start = Math.min(searchPosition, filteredItems.size());
-            for (int i = start - 1; i >= 0; i--) {
-                ReviewListItem item = (ReviewListItem) getItem(i);
-                if (item.hasSearchText) {
-                    foundPos = i;
-                    break;
+            val start = Math.min(searchPosition, filteredItems.size)
+            for (i in start - 1 downTo 0) {
+                val item = getItem(i)
+                if (item?.hasSearchText == true) {
+                    foundPos = i
+                    break
                 }
             }
         }
-        return foundPos;
+        return foundPos
     }
 
     /**
-     * gets the number of string matches within chunk and selects next item if going forward, or
-     * the last item if going backward
-     *
-     * @param item review list item
-     * @param target if true searching target card
+     * gets the number of string matches within chunk and selects next item
      */
-    private void findSearchItemInChunkAndPreselect(ReviewListItem item, boolean target) {
-        MatchResults results = getMatchItemN(item, searchText, 1000, target); // get item count
-        searchSubPositionItems = results.numberFound;
-        int searchSubPosition = 0;
+    private fun findSearchItemInChunkAndPreselect(item: ReviewListItem, target: Boolean) {
+        val results = getMatchItemN(item, searchText, 1000, target) // get item count
+        searchSubPositionItems = results.numberFound
+        val searchSubPosition = 0
         if (results.needRender) {
-            searchSubPositionItems = -1; // this will flag to get count after render completes
+            searchSubPositionItems = -1 // this will flag to get count after render completes
         } else {
             if (results.numberFound <= 0) {
-                item.hasSearchText = false;
+                item.hasSearchText = false
             }
-            checkIfAtSearchLimits();
+            checkIfAtSearchLimits()
         }
-        item.selectItemNum = searchSubPosition;
+        item.selectItemNum = searchSubPosition
     }
 
     /**
      * search text to find the nth item (matchNumb) of the search string
-     *
-     * @param item review list item
-     * @param match - search string
-     * @param matchNumb - number of item to locate (0 based)
-     * @param target    - if true searching target card
-     * @return object containing position of match (-1 if not found), number of items actually
-     * found (if less), and a flag that indicates that text needs to be rendered
      */
-    private MatchResults getMatchItemN(
-            ReviewListItem item,
-            CharSequence match,
-            int matchNumb,
-            boolean target
-    ) {
-        String matcher = match.toString();
-        int length = matcher.length();
+    private fun getMatchItemN(
+        item: ReviewListItem,
+        match: CharSequence?,
+        matchNumb: Int,
+        target: Boolean
+    ): MatchResults {
+        val matcher = match?.toString() ?: ""
+        val length = matcher.length
 
-        CharSequence text = searchingTarget ? item.renderedTargetText : item.renderedSourceText;
-        boolean needRender = (text == null);
+        val text = if (searchingTarget) item.renderedTargetText else item.renderedSourceText
+        val needRender = text == null
 
-        boolean matcherEmpty = (matcher.isEmpty());
-        if (matcherEmpty || needRender || (matchNumb < 0)
-                || (target != searchingTarget)) {
-            return new MatchResults(-1, -1, needRender);
+        val matcherEmpty = matcher.isEmpty()
+        if (matcherEmpty || needRender || matchNumb < 0 || target != searchingTarget) {
+            return MatchResults(-1, -1, needRender)
         }
 
-        Log.i(TAG, "getMatchItemN() Search started: " + matcher);
+        Log.i(TAG, "getMatchItemN() Search started: $matcher")
 
-        int searchStartLocation = 0;
-        int count = 0;
-        int pos;
-        String textLowerCase = text.toString().toLowerCase();
+        var searchStartLocation = 0
+        var count = 0
+        var pos: Int
+        val textLowerCase = text.toString().lowercase()
 
         while (true) {
-            pos = textLowerCase.indexOf(matcher, searchStartLocation);
+            pos = textLowerCase.indexOf(matcher, searchStartLocation)
             if (pos < 0) { // not found
-                break;
+                break
             }
-            searchStartLocation = pos + length;
+            searchStartLocation = pos + length
             if (++count > matchNumb) {
-                return new MatchResults(pos, count, false);
+                return MatchResults(pos, count, false)
             }
         }
 
         // failed, return number of items
-        return new MatchResults(-1, count, false);
-        // actually found
+        return MatchResults(-1, count, false)
     }
 
     /**
      * technically no longer a filter but now a search that flags items containing search string
-     *
-     * @param constraint      if null, filter will be reset
-     * @param subject         if null, filter will be reset
-     * @param initialPosition - initial position
      */
-    @Override
-    public void filter(CharSequence constraint, SearchSubject subject, final int initialPosition) {
+    override fun filter(constraint: CharSequence?, subject: SearchSubject?, initialPosition: Int) {
         if (constraint != null) {
-            searchText = constraint.toString().toLowerCase().trim();
-            searchSubject = subject;
-            searchingTarget = subject == SearchSubject.TARGET || subject == SearchSubject.BOTH;
+            searchText = constraint.toString().lowercase().trim()
+            searchSubject = subject
+            searchingTarget = subject == SearchSubject.TARGET || subject == SearchSubject.BOTH
 
-            searchItems(initialPosition);
+            searchItems(initialPosition)
         } else {
-            searchText = "";
-            searchSubject = null;
+            searchText = ""
+            searchSubject = null
 
-            for (ListItem item : filteredItems) {
-                ReviewListItem reviewItem = (ReviewListItem) item;
+            for (item in filteredItems) {
+                val reviewItem = item as ReviewListItem
                 // Item will be re-rendered with default text (without highlights)
                 if (reviewItem.hasSearchText) {
-                    reviewItem.hasSearchText = false;
-                    reviewItem.renderedSourceText = null;
-                    reviewItem.renderedTargetText = null;
+                    reviewItem.hasSearchText = false
+                    reviewItem.renderedSourceText = null
+                    reviewItem.renderedTargetText = null
                 }
             }
-            triggerNotifyDataSetChanged();
+            triggerNotifyDataSetChanged()
         }
     }
 
     /**
      * notify listener of search state changes
-     *
-     * @param doingSearch          - search is currently processing
-     * @param numberOfChunkMatches - number of chunks that have the search string
-     * @param atEnd                - we are at last search item highlighted
-     * @param atStart              - we are at first search item highlighted
      */
-    private void onSearching(
-            boolean doingSearch,
-            int numberOfChunkMatches,
-            boolean atEnd,
-            boolean atStart
+    private fun onSearching(
+        doingSearch: Boolean,
+        numberOfChunkMatches: Int,
+        atEnd: Boolean,
+        atStart: Boolean
     ) {
-        if (getListener() != null) {
-            getListener().onSearching(doingSearch, numberOfChunkMatches, atEnd, atStart);
-            this.numberOfChunkMatches = numberOfChunkMatches;
-        }
+        onClickListener?.onSearching(doingSearch, numberOfChunkMatches, atEnd, atStart)
+        this.numberOfChunkMatches = numberOfChunkMatches
     }
 
     /**
      * Sets the position where the list should start when first built
-     *
-     * @param startPosition - the position to start
      */
-    @Override
-    protected void setListStartPosition(int startPosition) {
-        super.setListStartPosition(startPosition);
-        searchPosition = startPosition;
+    override fun updateListStartPosition(startPosition: Int) {
+        super.startPosition = startPosition
+        searchPosition = startPosition
     }
 
-    @Override
-    public boolean hasFilter() {
-        return true;
+    override fun hasFilter(): Boolean {
+        return true
     }
 
     /**
      * enable/disable merge conflict filter in adapter
-     *
-     * @param enableFilter - if true, then will enable filter
-     * @param forceMergeConflict - if true, then will initialize merge conflict flag to true
      */
-    @Override
-    public void setMergeConflictFilter(boolean enableFilter, boolean forceMergeConflict) {
+    override fun setMergeConflictFilter(enableFilter: Boolean, forceMergeConflict: Boolean) {
         // If items are not initialized, don't apply merge filter
-        if (items.isEmpty()) return;
+        if (items.isEmpty()) return
 
         if (forceMergeConflict) {
             // initialize merge conflict flag to true
-            haveMergeConflict = true;
+            haveMergeConflict = true
         }
         // update display and status flags
-        showMergeConflictIcon(haveMergeConflict, enableFilter);
+        showMergeConflictIcon(haveMergeConflict, enableFilter)
 
         if (!haveMergeConflict || !enableFilter) {
             // if no merge conflict or filter off, then remove filter
-            filteredItems.clear();
-            filteredItems.addAll(items);
-            filteredChapters.clear();
-            filteredChapters.addAll(chapters);
+            filteredItems.clear()
+            filteredItems.addAll(items)
+            filteredChapters.clear()
+            filteredChapters.addAll(chapters)
 
             if (mergeConflictFilterOn) {
-                mergeConflictFilterOn = false;
-                triggerNotifyDataSetChanged();
+                mergeConflictFilterOn = false
+                triggerNotifyDataSetChanged()
             }
-            return;
+            return
         }
 
-        mergeConflictFilterOn = true;
+        mergeConflictFilterOn = true
 
-        CharSequence filterConstraint = "true"; // will filter if string is not null
-        showMergeConflictIcon(true, true);
+        val filterConstraint: CharSequence = "true" // will filter if string is not null
+        showMergeConflictIcon(true, true)
 
-        MergeConflictFilter filter = getMergeConflictFilter();
-        filter.filter(filterConstraint);
+        val filter = getMergeConflictFilter()
+        filter.filter(filterConstraint)
     }
 
-    private @NonNull MergeConflictFilter getMergeConflictFilter() {
-        MergeConflictFilter filter = new MergeConflictFilter(items);
-        filter.setListener(new MergeConflictFilter.OnMatchListener() {
-            @Override
-            public void onMatch(@NonNull ListItem item) {
+    private fun getMergeConflictFilter(): MergeConflictFilter {
+        val filter = MergeConflictFilter(items)
+        filter.setListener(object : MergeConflictFilter.OnMatchListener {
+            override fun onMatch(item: ListItem) {
                 if (!filteredChapters.contains(item.chapterSlug)) {
-                    filteredChapters.add(item.chapterSlug);
+                    filteredChapters.add(item.chapterSlug)
                 }
             }
 
-            @Override
-            public void onFinished(
-                    @NonNull CharSequence constraint,
-                    @NonNull ArrayList<ListItem> results
+            override fun onFinished(
+                constraint: CharSequence,
+                results: ArrayList<ListItem>
             ) {
-                filteredItems.clear();
-                filteredItems.addAll(results);
-                updateMergeConflict();
-                triggerNotifyDataSetChanged();
-                checkForConflictSummary(filteredItems.size(), items.size());
+                filteredItems.clear()
+                filteredItems.addAll(results)
+                updateMergeConflict()
+                triggerNotifyDataSetChanged()
+                checkForConflictSummary(filteredItems.size, items.size)
             }
-        });
-        return filter;
+        })
+        return filter
     }
 
-    @Override
-    public void doCheckForMergeConflict() {
-        int conflictCount = getConflictsCount();
-        boolean mergeConflictFound = conflictCount > 0;
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(() -> {
-            boolean doMergeFiltering = mergeConflictFound && mergeConflictFilterOn;
-            final boolean conflictCountChanged = conflictCount != filteredItems.size();
-            final boolean needToUpdateFilter = (doMergeFiltering != mergeConflictFilterOn) || conflictCountChanged;
+    override fun doCheckForMergeConflict() {
+        val conflictCount = conflictsCount
+        val mergeConflictFound = conflictCount > 0
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            val doMergeFiltering = mergeConflictFound && mergeConflictFilterOn
+            val conflictCountChanged = conflictCount != filteredItems.size
+            val needToUpdateFilter = doMergeFiltering != mergeConflictFilterOn || conflictCountChanged
 
-            checkForConflictSummary(conflictCount, items.size());
+            checkForConflictSummary(conflictCount, items.size)
 
-            filter(searchText, searchSubject, searchPosition); // update search filter
+            filter(searchText, searchSubject ?: SearchSubject.TARGET, searchPosition) // update search filter
 
-            showMergeConflictIcon(mergeConflictFound, mergeConflictFilterOn);
+            showMergeConflictIcon(mergeConflictFound, mergeConflictFilterOn)
             if (needToUpdateFilter) {
-                setMergeConflictFilter(mergeConflictFilterOn, false);
+                setMergeConflictFilter(mergeConflictFilterOn, false)
             }
-        });
+        }
     }
 
     /**
      * check if we are supposed to pop up summary
-     *
-     * @param conflictCount - number of conflicts
-     * @param itemCount - number of items
      */
-    protected void checkForConflictSummary(final int conflictCount, int itemCount) {
-        if (showMergeSummary && (itemCount > 0) && (conflictCount > 0)) { // wait till after
-            // items have been loaded
-            showMergeSummary = false; // we just show the merge summary once
+    protected fun checkForConflictSummary(conflictCount: Int, itemCount: Int) {
+        if (showMergeSummary && itemCount > 0 && conflictCount > 0) {
+            showMergeSummary = false // we just show the merge summary once
 
-            Handler hand = new Handler(Looper.getMainLooper());
-            hand.post(() -> {
-                String message = context.getString(R.string.merge_summary, conflictCount);
-                mergeConflictSummaryDisplayed = true;
+            val hand = Handler(Looper.getMainLooper())
+            hand.post {
+                val message = context.getString(R.string.merge_summary, conflictCount)
+                mergeConflictSummaryDisplayed = true
 
                 // pop up merge conflict summary
-                new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.merge_complete_title)
-                        .setMessage(message)
-                        .setPositiveButton(R.string.label_close,
-                                (dialog, which) -> mergeConflictSummaryDisplayed = false)
-                        .setCancelable(false)
-                        .show();
-            });
+                AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                    .setTitle(R.string.merge_complete_title)
+                    .setMessage(message)
+                    .setPositiveButton(R.string.label_close) { _, _ -> mergeConflictSummaryDisplayed = false }
+                    .setCancelable(false)
+                    .show()
+            }
         }
     }
 
     /**
      * returns true if merge conflict summary dialog is being displayed.
-     *
-     * @return - true if merge conflict summary dialog is being displayed
      */
-    @Override
-    public boolean isMergeConflictSummaryDisplayed() {
-        return mergeConflictSummaryDisplayed;
+    override fun isMergeConflictSummaryDisplayed(): Boolean {
+        return mergeConflictSummaryDisplayed
     }
 
-    public void setOnRenderHelpsListener(OnRenderHelpsListener listener) {
-        this.renderHelpsListener = listener;
+    fun setOnRenderHelpsListener(listener: OnRenderHelpsListener?) {
+        this.renderHelpsListener = listener
     }
 
-    public void setOnItemActionListener(OnShowToastListener listener) {
-        this.itemActionListener = listener;
+    fun setOnItemActionListener(listener: OnShowToastListener?) {
+        this.itemActionListener = listener
     }
 
-    @Override
-    public void onNotifyItemChanged(int position) {
-        notifyItemChanged(position);
+    override fun onNotifyItemChanged(position: Int) {
+        notifyItemChanged(position)
     }
 
-    @Override
-    public View onCreateRemovableTabLayout(String tag, String title) {
-        if (getListener() != null) {
-            return getListener().onCreateRemovableTabLayout(tag, title);
-        }
-        return null;
+    override fun onCreateRemovableTabLayout(tag: String, title: String): View? {
+        return onClickListener?.onCreateRemovableTabLayout(tag, title)
     }
 
-    @Override
-    public void onApplyLanguageTypefaceToTab(TabLayout layout, ContentValues values, String title) {
-        if (getListener() != null) {
-            getListener().onApplyLanguageTypefaceToTab(layout, values, title);
-        }
+    override fun onApplyLanguageTypefaceToTab(layout: TabLayout, values: ContentValues, title: String) {
+        onClickListener?.onApplyLanguageTypefaceToTab(layout, values, title)
     }
 
-    private void searchItems(final int initialPosition) {
-        final String matcher = searchText.toString();
-        boolean matcherEmpty = matcher.isEmpty();
+    private fun searchItems(initialPosition: Int) {
+        val matcher = searchText.toString()
+        val matcherEmpty = matcher.isEmpty()
 
         if (matcher.isEmpty() && chunkSearchMatchesCounter == 0) {
             // TRICKY: don't run search if query is empty and there are not already matches
-            return;
+            return
         }
 
-        Log.i(TAG, "filter(): Search started: " + matcher);
+        Log.i(TAG, "filter(): Search started: $matcher")
 
-        onSearching(true, 0, true, true);
+        onSearching(doingSearch = true, numberOfChunkMatches = 0, atEnd = true, atStart = true)
 
-        chunkSearchMatchesCounter = 0;
-        for (ListItem item : filteredItems) {
-            ReviewListItem reviewItem = (ReviewListItem) item;
-            boolean match = false;
+        chunkSearchMatchesCounter = 0
+        for (item in filteredItems) {
+            val reviewItem = item as ReviewListItem
+            var match = false
 
             if (!matcherEmpty) {
                 if (searchingTarget) {
-                    boolean foundMatch;
-
-                    foundMatch = reviewItem.getTargetText().toLowerCase().contains(matcher);
-                    if (foundMatch) { // if match, it could be in markup, so we
-                        // double check by rendering and searching that
-                        CharSequence text = renderTargetText(
-                                reviewItem.getTargetText(),
-                                reviewItem.getTargetTranslationFormat(),
-                                reviewItem.getFt(),
-                                null,
-                                reviewItem
-                        );
-                        foundMatch = text.toString().toLowerCase().contains(matcher);
+                    var foundMatch = reviewItem.targetText.lowercase().contains(matcher)
+                    if (foundMatch) { // if matched, it could be in markup, so we
+                        // double-check by rendering and searching that
+                        val text = renderTargetText(
+                            reviewItem.targetText,
+                            reviewItem.targetTranslationFormat,
+                            reviewItem.ft,
+                            null,
+                            reviewItem
+                        )
+                        foundMatch = text.toString().lowercase().contains(matcher)
                     }
-                    match = foundMatch;
+                    match = foundMatch
                 } else {
-                    boolean foundMatch;
+                    var foundMatch: Boolean
                     if (reviewItem.renderedSourceText != null) {
-                        foundMatch = reviewItem.renderedSourceText.toString().toLowerCase()
-                                .contains(matcher);
+                        foundMatch = reviewItem.renderedSourceText.toString().lowercase().contains(matcher)
                     } else {
-                        foundMatch = reviewItem.getSourceText().toLowerCase().contains(matcher);
+                        foundMatch = reviewItem.sourceText.lowercase().contains(matcher)
                         if (foundMatch) { // if match, it could be in markup, so we
                             // double check by rendering and searching that
-                            CharSequence text = onRenderSourceText(reviewItem);
-                            foundMatch = text.toString().toLowerCase().contains(matcher);
+                            val text = onRenderSourceText(reviewItem)
+                            foundMatch = text.toString().lowercase().contains(matcher)
                         }
                     }
-                    match = foundMatch;
+                    match = foundMatch
                 }
             }
 
             if (reviewItem.hasSearchText && !match) { // check for search match cleared
-                reviewItem.renderedTargetText = null;  // re-render target
-                reviewItem.renderedSourceText = null;  // re-render source
-                triggerNotifyItemChanged(reviewItem);
+                reviewItem.renderedTargetText = null  // re-render target
+                reviewItem.renderedSourceText = null  // re-render source
+                triggerNotifyItemChanged(reviewItem)
             }
 
-            reviewItem.hasSearchText = match;
+            reviewItem.hasSearchText = match
             if (match) {
-                reviewItem.renderedTargetText = null;  // re-render target
-                reviewItem.renderedSourceText = null;  // re-render source
-                chunkSearchMatchesCounter++;
-                triggerNotifyItemChanged(reviewItem);
+                reviewItem.renderedTargetText = null  // re-render target
+                reviewItem.renderedSourceText = null  // re-render source
+                chunkSearchMatchesCounter++
+                triggerNotifyItemChanged(reviewItem)
             }
         }
 
-        searchPosition = initialPosition;
-        layoutBuildNumber++; // force redraw of displayed cards
-        boolean zeroItemsFound = chunkSearchMatchesCounter <= 0;
-        onSearching(false, chunkSearchMatchesCounter, zeroItemsFound, zeroItemsFound);
+        searchPosition = initialPosition
+        layoutBuildNumber++ // force redraw of displayed cards
+        val zeroItemsFound = chunkSearchMatchesCounter <= 0
+        onSearching(doingSearch = false, numberOfChunkMatches = chunkSearchMatchesCounter, atEnd = zeroItemsFound, atStart = zeroItemsFound)
         if (!zeroItemsFound) {
-            checkIfAtSearchLimits();
+            checkIfAtSearchLimits()
         }
     }
 
     /**
      * Disable/Enable items
-     *
-     * @param disable       - disable or enable
-     * @param itemToExclude - item to exclude from disabling/enabling
      */
-    private void toggleDisableItems(Boolean disable, @Nullable ListItem itemToExclude) {
-        for (ListItem i : filteredItems) {
-            if (itemToExclude == i) continue;
-            i.isDisabled = disable;
+    private fun toggleDisableItems(disable: Boolean, itemToExclude: ListItem?) {
+        for (i in filteredItems) {
+            if (itemToExclude === i) continue
+            i.isDisabled = disable
         }
-        triggerNotifyDataSetChanged();
+        triggerNotifyDataSetChanged()
     }
 }

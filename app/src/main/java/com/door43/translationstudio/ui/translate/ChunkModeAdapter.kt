@@ -1,220 +1,194 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import static com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS;
-
-import android.content.ContentValues;
-import android.content.Context;
-import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.widget.EditText;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.door43.data.AssetsProvider;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.TypographyUtils;
-import com.door43.translationstudio.core.Frame;
-import com.door43.translationstudio.rendering.RenderingProvider;
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.core.TranslationType;
-import com.door43.translationstudio.core.TranslationViewMode;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.databinding.FragmentChunkListItemBinding;
-import com.door43.translationstudio.rendering.ClickableRenderingEngine;
-import com.door43.translationstudio.rendering.Clickables;
-import com.door43.translationstudio.rendering.DefaultRenderer;
-import com.door43.translationstudio.rendering.RenderingGroup;
-import com.door43.translationstudio.ui.spannables.NoteSpan;
-import com.door43.translationstudio.ui.spannables.Span;
-import com.door43.widget.ViewUtil;
-import com.google.android.material.tabs.TabLayout;
-
-import java.io.IOException;
-import java.util.List;
+import android.content.ContentValues
+import android.content.Context
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextUtils
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.animation.Animation
+import android.widget.EditText
+import android.widget.FrameLayout
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.RecyclerView
+import com.door43.data.AssetsProvider
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Frame
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.databinding.FragmentChunkListItemBinding
+import com.door43.translationstudio.format
+import com.door43.translationstudio.formatSub
+import com.door43.translationstudio.rendering.ClickableRenderingEngine
+import com.door43.translationstudio.rendering.Clickables
+import com.door43.translationstudio.rendering.DefaultRenderer
+import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.ui.spannables.NoteSpan
+import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS
+import com.door43.widget.ViewUtil
+import com.google.android.material.tabs.TabLayout
+import java.io.IOException
 
 /**
  * Created by joel on 9/9/2015.
  */
-public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolder> implements OnChunkModeListener {
-    private static final int BOTTOM_ELEVATION = 2;
-    private static final int TOP_ELEVATION = 3;
+class ChunkModeAdapter(
+    typography: Typography,
+    renderingProvider: RenderingProvider,
+    assetsProvider: AssetsProvider
+) : ViewModeAdapter<ChunkModeAdapter.ViewHolder>(), OnChunkModeListener {
 
-    public ChunkModeAdapter(
-            Typography typography,
-            RenderingProvider renderingProvider,
-            AssetsProvider assetsProvider
-    ) {
-        this.typography = typography;
-        this.renderingProvider = renderingProvider;
-        this.assetsProvider = assetsProvider;
+    companion object {
+        private const val BOTTOM_ELEVATION = 2f
+        private const val TOP_ELEVATION = 3f
     }
 
-    @Override
-    public void initializeListItems(
-            List<ListItem> listItems,
-            String startingChapter,
-            String startingChunk
-    ) {
-        super.initializeListItems(listItems, startingChapter, startingChunk);
-
-        triggerNotifyDataSetChanged();
-        updateMergeConflict();
+    init {
+        this.typography = typography
+        this.renderingProvider = renderingProvider
+        this.assetsProvider = assetsProvider
     }
 
-    @Override
-    public ChunkListItem createListItem(ListItem item) {
-        return item.toType(ChunkListItem::new);
+    override fun initializeListItems(
+        listItems: List<ListItem>,
+        startingChapter: String,
+        startingChunk: String
+    ) {
+        super.initializeListItems(listItems, startingChapter, startingChunk)
+        triggerNotifyDataSetChanged()
+        updateMergeConflict()
+    }
+
+    override fun createListItem(item: ListItem): ChunkListItem {
+        return item.toType(::ChunkListItem)
     }
 
     /**
      * Check all cards for merge conflicts to see if we should show warning.
      * Runs as background task.
      */
-    private void updateMergeConflict() {
-        doCheckForMergeConflict();
+    private fun updateMergeConflict() {
+        doCheckForMergeConflict()
     }
 
-    @Override
-    public String getFocusedChunkSlug(int position) {
-        if (position >= 0 && position < filteredItems.size()) {
-            return filteredItems.get(position).chunkSlug;
-        }
-        return null;
-    }
-
-    @Override
-    public String getFocusedChapterSlug(int position) {
-        if (position > 0 && position < filteredItems.size()) {
-            return filteredItems.get(position).chapterSlug;
-        }
-        return null;
-    }
-
-    @Override
-    public ViewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        FragmentChunkListItemBinding binding = FragmentChunkListItemBinding.inflate(inflater, parent, false);
-        return new ViewHolder(binding, typography, assetsProvider, this);
-    }
-
-    @Override
-    public void onBindManagedViewHolder(final ViewHolder holder, final int position) {
-        final ChunkListItem item = (ChunkListItem) filteredItems.get(position);
-        holder.bind(item);
-    }
-
-    @Override
-    public boolean onCheckForPromptToEditDoneTargetCard(ViewHolder holder) {
-        return checkForPromptToEditDoneTargetCard(holder);
-    }
-
-    @Override
-    public void onOpenTargetTranslationCard(ViewHolder holder) {
-        openTargetTranslationCard(holder, false);
-    }
-
-    @Override
-    public void onCloseTargetTranslationCard(ViewHolder holder) {
-        closeTargetTranslationCard(holder, true);
-    }
-
-    @Override
-    public void onEditTarget(EditText target, int position) {
-        final ListItem item = filteredItems.get(position);
-        editTarget(target, item);
-    }
-
-    @Override
-    public View onCreateRemovableTabLayout(String tag, String title) {
-        if (getListener() != null) {
-            return getListener().onCreateRemovableTabLayout(tag, title);
-        }
-        return null;
-    }
-
-    @Override
-    public void onApplyLanguageTypefaceToTab(TabLayout layout, ContentValues values, String title) {
-        if (getListener() != null) {
-            getListener().onApplyLanguageTypefaceToTab(layout, values, title);
+    override fun getFocusedChunkSlug(position: Int): String {
+        return if (position in 0 until filteredItems.size) {
+            filteredItems[position].chunkSlug
+        } else {
+            ""
         }
     }
 
-    @Override
-    public void onSourceTranslationTabClick(String sourceId) {
-        if (getListener() != null) {
-            getListener().onSourceTranslationTabClick(sourceId);
+    override fun getFocusedChapterSlug(position: Int): String {
+        return if (position > 0 && position < filteredItems.size) {
+            filteredItems[position].chapterSlug
+        } else {
+            ""
         }
     }
 
-    @Override
-    public void onNewSourceTranslationTabClick() {
-        if (getListener() != null) {
-            getListener().onNewSourceTranslationTabClick();
-        }
+    override fun onCreateManagedViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = FragmentChunkListItemBinding.inflate(inflater, parent, false)
+        return ViewHolder(binding, typography, assetsProvider, this)
     }
 
-    @Override
-    public void onTextChanged(CharSequence s, int start, int before, int count, int itemPosition) {
-        ChunkListItem item = (ChunkListItem) filteredItems.get(itemPosition);
-        String translation = Translator.compileTranslation((Editable) s);
+    override fun onBindManagedViewHolder(holder: ViewHolder, position: Int) {
+        val item = filteredItems[position] as ChunkListItem
+        holder.bind(item)
+    }
 
-        if (item.isProjectTitle()) {
+    override fun onCheckForPromptToEditDoneTargetCard(holder: ViewHolder): Boolean {
+        return checkForPromptToEditDoneTargetCard(holder)
+    }
+
+    override fun onOpenTargetTranslationCard(holder: ViewHolder) {
+        openTargetTranslationCard(holder, false)
+    }
+
+    override fun onCloseTargetTranslationCard(holder: ViewHolder) {
+        closeTargetTranslationCard(holder, true)
+    }
+
+    override fun onEditTarget(target: EditText, position: Int) {
+        val item = filteredItems[position]
+        editTarget(target, item)
+    }
+
+    override fun onCreateRemovableTabLayout(tag: String, title: String): View? {
+        return onClickListener?.onCreateRemovableTabLayout(tag, title)
+    }
+
+    override fun onApplyLanguageTypefaceToTab(layout: TabLayout, values: ContentValues, title: String) {
+        onClickListener?.onApplyLanguageTypefaceToTab(layout, values, title)
+    }
+
+    override fun onSourceTranslationTabClick(sourceId: String) {
+        onClickListener?.onSourceTranslationTabClick(sourceId)
+    }
+
+    override fun onNewSourceTranslationTabClick() {
+        onClickListener?.onNewSourceTranslationTabClick()
+    }
+
+    override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int, itemPosition: Int) {
+        val item = filteredItems[itemPosition] as ChunkListItem
+        val translation = Translator.compileTranslation(s as Editable)
+
+        if (item.isProjectTitle) {
             try {
-                item.target.applyProjectTitleTranslation(translation);
-            } catch (IOException e) {
-                e.printStackTrace();
+                item.target.applyProjectTitleTranslation(translation)
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-        } else if (item.isChapterTitle()) {
+        } else if (item.isChapterTitle) {
             item.target.applyChapterTitleTranslation(
-                    item.target.getChapterTranslation(item.chapterSlug),
-                    translation
-            );
-        } else if (item.isChapterReference()) {
+                item.target.getChapterTranslation(item.chapterSlug),
+                translation
+            )
+        } else if (item.isChapterReference) {
             item.target.applyChapterReferenceTranslation(
-                    item.target.getChapterTranslation(item.chapterSlug),
-                    translation
-            );
+                item.target.getChapterTranslation(item.chapterSlug),
+                translation
+            )
         } else {
             item.target.applyFrameTranslation(
-                    item.target.getFrameTranslation(
-                            item.chapterSlug,
-                            item.chunkSlug,
-                            item.getTargetTranslationFormat()
-                    ),
-                    translation
-            );
+                item.target.getFrameTranslation(
+                    item.chapterSlug,
+                    item.chunkSlug,
+                    item.targetTranslationFormat
+                ),
+                translation
+            )
         }
 
         item.renderedTargetText = renderText(
-                translation,
-                item.getTargetTranslationFormat()
-        );
+            translation,
+            item.targetTranslationFormat
+        )
     }
 
-    @Override
-    public void onConflictButtonClicked(int position) {
-        ChunkListItem item = (ChunkListItem) filteredItems.get(position);
-        Bundle args = new Bundle();
-        args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true);
-        args.putString(Translator.EXTRA_CHAPTER_ID, item.chapterSlug);
-        args.putString(Translator.EXTRA_FRAME_ID, item.chunkSlug);
+    override fun onConflictButtonClicked(position: Int) {
+        val item = filteredItems[position] as ChunkListItem
+        val args = Bundle()
+        args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true)
+        args.putString(Translator.EXTRA_CHAPTER_ID, item.chapterSlug)
+        args.putString(Translator.EXTRA_FRAME_ID, item.chunkSlug)
 
-        getListener().openTranslationMode(TranslationViewMode.REVIEW, args);
+        onClickListener?.openTranslationMode(TranslationViewMode.REVIEW, args)
     }
 
-    @Override
-    public CharSequence onRenderText(String text, TranslationFormat format) {
-        return renderText(text, format);
+    override fun onRenderText(text: String, format: TranslationFormat): CharSequence {
+        return renderText(text, format)
     }
 
     /**
@@ -223,23 +197,21 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      *
      * @param target target edit text
      */
-    private void editTarget(final EditText target, final ListItem item) {
+    private fun editTarget(target: EditText, item: ListItem) {
         // flag that chunk is open for edit
-        if (item.isChapterReference()) {
-            item.target.reopenChapterReference(item.chapterSlug);
-        } else if (item.isChapterTitle()) {
-            item.target.reopenChapterTitle(item.chapterSlug);
-        } else if (item.isProjectTitle()) {
-            item.target.openProjectTitle();
+        if (item.isChapterReference) {
+            item.target.reopenChapterReference(item.chapterSlug)
+        } else if (item.isChapterTitle) {
+            item.target.reopenChapterTitle(item.chapterSlug)
+        } else if (item.isProjectTitle) {
+            item.target.openProjectTitle()
         } else {
-            item.target.reopenFrame(item.chapterSlug, item.chunkSlug);
+            item.target.reopenFrame(item.chapterSlug, item.chunkSlug)
         }
 
         // set focus on edit text
-        target.requestFocus();
-        if (getListener() != null) {
-            getListener().showKeyboard(target);
-        }
+        target.requestFocus()
+        onClickListener?.showKeyboard(target)
     }
 
     /**
@@ -247,20 +219,20 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      *
      * @param holder chunk view holder
      */
-    private boolean checkForPromptToEditDoneTargetCard(final ViewHolder holder) {
-        // if page is already in front and they are tapping on it, then see if they want to open for edit
-        int position = holder.getBindingAdapterPosition();
+    private fun checkForPromptToEditDoneTargetCard(holder: ViewHolder): Boolean {
+        // if page is already in front, and they are tapping on it, then see if they want to open for edit
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return false;
+            return false
         }
-        ChunkListItem item = (ChunkListItem) filteredItems.get(position);
+        val item = filteredItems[position] as ChunkListItem
 
-        if (item.isComplete()) {
-            promptToEditDoneChunk(holder, item);
-            return true;
+        if (item.isComplete) {
+            promptToEditDoneChunk(holder, item)
+            return true
         }
 
-        return false;
+        return false
     }
 
     /**
@@ -269,64 +241,61 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      * @param holder chunk view holder
      * @param item list item
      */
-    public void promptToEditDoneChunk(final ViewHolder holder, final ListItem item) {
-        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                .setTitle(R.string.chunk_done_title)
-                .setMessage(R.string.chunk_done_prompt)
-                .setPositiveButton(R.string.edit, (dialog, which) -> {
-                    holder.binding.targetTranslationBody.setEnabled(true);
-                    holder.binding.targetTranslationBody.setFocusable(true);
-                    holder.binding.targetTranslationBody.setFocusableInTouchMode(true);
-                    holder.binding.targetTranslationBody.setEnableLines(true);
+    fun promptToEditDoneChunk(holder: ViewHolder, item: ListItem) {
+        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+            .setTitle(R.string.chunk_done_title)
+            .setMessage(R.string.chunk_done_prompt)
+            .setPositiveButton(R.string.edit) { _, _ ->
+                holder.binding.targetTranslationBody.isEnabled = true
+                holder.binding.targetTranslationBody.isFocusable = true
+                holder.binding.targetTranslationBody.isFocusableInTouchMode = true
+                holder.binding.targetTranslationBody.setEnableLines(true)
 
-                    item.setComplete(false);
-                    editTarget(holder.binding.targetTranslationBody, item);
-                })
-                .setNegativeButton(R.string.dismiss, null)
-                .show();
+                item.isComplete = false
+                editTarget(holder.binding.targetTranslationBody, item)
+            }
+            .setNegativeButton(R.string.dismiss, null)
+            .show()
     }
 
-    private CharSequence renderText(String text, TranslationFormat format) {
-        RenderingGroup renderingGroup = new RenderingGroup();
+    private fun renderText(text: String, format: TranslationFormat): CharSequence {
+        val renderingGroup = RenderingGroup()
 
         if (Clickables.isClickableFormat(format)) {
             // TODO: add click listeners for verses and notes
-            Span.OnClickListener noteClickListener = new Span.OnClickListener() {
-                @Override
-                public void onClick(View view, Span span, int start, int end) {
-                    if (span instanceof NoteSpan) {
-                        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                                .setTitle(R.string.title_footnote)
-                                .setMessage(((NoteSpan) span).getNotes())
-                                .setPositiveButton(R.string.dismiss, null)
-                                .show();
+            val noteClickListener = object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    if (span is NoteSpan) {
+                        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                            .setTitle(R.string.title_footnote)
+                            .setMessage(span.notes)
+                            .setPositiveButton(R.string.dismiss, null)
+                            .show()
                     }
                 }
-                @Override
-                public void onLongClick(View view, Span span, int start, int end) {
-                }
-            };
-            ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
-                    format,
-                    renderingGroup,
-                    null,
-                    noteClickListener,
-                    true
-            );
-            renderer.setVersesEnabled(false);
-            renderer.setParagraphsEnabled(false);
+
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
+            }
+            val renderer = renderingProvider.setupRenderingGroup(
+                format,
+                renderingGroup,
+                null,
+                noteClickListener,
+                true
+            ) as ClickableRenderingEngine
+            renderer.setVersesEnabled(false)
+            renderer.setParagraphsEnabled(false)
         } else {
             // TODO: add note click listener
-            renderingGroup.addEngine(new DefaultRenderer(null));
+            renderingGroup.addEngine(DefaultRenderer(null))
         }
 
-        renderingGroup.init(text);
-        return renderingGroup.start();
+        renderingGroup.init(text)
+        return renderingGroup.start() ?: ""
     }
 
-    @Override
-    public int getItemCount() {
-        return filteredItems.size();
+    override fun getItemCount(): Int {
+        return filteredItems.size
     }
 
     /**
@@ -334,8 +303,8 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      *
      * @param holder chunk view holder
      */
-    public void clearSelectionFromTarget(ViewHolder holder) {
-        holder.binding.targetTranslationBody.clearFocus();
+    fun clearSelectionFromTarget(holder: ViewHolder) {
+        holder.binding.targetTranslationBody.clearFocus()
     }
 
     /**
@@ -344,10 +313,10 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      * @param holder holder
      * @param swipeLeft true if moving left to right
      */
-    public void toggleTargetTranslationCard(final ViewHolder holder, final boolean swipeLeft) {
-        closeTargetTranslationCard(holder, !swipeLeft);
-        openTargetTranslationCard(holder, !swipeLeft);
-        holder.enableClicksIfChunkIsDone();
+    fun toggleTargetTranslationCard(holder: ViewHolder, swipeLeft: Boolean) {
+        closeTargetTranslationCard(holder, !swipeLeft)
+        openTargetTranslationCard(holder, !swipeLeft)
+        holder.enableClicksIfChunkIsDone()
     }
 
     /**
@@ -356,46 +325,36 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      * @param holder chunk view holder
      * @param leftToRight true if moving left to right
      */
-    public void closeTargetTranslationCard(final ViewHolder holder, final boolean leftToRight) {
-        int position = holder.getBindingAdapterPosition();
+    fun closeTargetTranslationCard(holder: ViewHolder, leftToRight: Boolean) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        ChunkListItem item = (ChunkListItem) filteredItems.get(position);
+        val item = filteredItems[position] as ChunkListItem
 
         if (item.isTargetCardOpen) {
-            clearSelectionFromTarget(holder);
+            clearSelectionFromTarget(holder)
 
             ViewUtil.animateSwapCards(
-                    holder.binding.targetTranslationCard,
-                    holder.binding.sourceTranslationCard,
-                    TOP_ELEVATION, BOTTOM_ELEVATION,
-                    leftToRight,
-                    new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
-                        }
+                holder.binding.targetTranslationCard,
+                holder.binding.sourceTranslationCard,
+                TOP_ELEVATION, BOTTOM_ELEVATION,
+                leftToRight,
+                object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation) {}
 
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            item.isTargetCardOpen = false;
-                            if (getListener() != null) {
-                                getListener().closeKeyboard();
-                            }
-                            holder.setCardStatus(item.isComplete(), true);
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-
-                        }
+                    override fun onAnimationEnd(animation: Animation) {
+                        item.isTargetCardOpen = false
+                        onClickListener?.closeKeyboard()
+                        holder.setCardStatus(item.isComplete, true)
                     }
-            );
-            if (getListener() != null) {
-                getListener().closeKeyboard();
-            }
+
+                    override fun onAnimationRepeat(animation: Animation) {}
+                }
+            )
+            onClickListener?.closeKeyboard()
             // re-enable new tab button
-            holder.binding.newTabButton.setEnabled(true);
+            holder.binding.newTabButton.isEnabled = true
         }
     }
 
@@ -405,302 +364,251 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
      * @param holder chunk view holder
      * @param leftToRight true if moving left to right
      */
-    public void openTargetTranslationCard(final ViewHolder holder, final boolean leftToRight) {
-        int position = holder.getBindingAdapterPosition();
+    fun openTargetTranslationCard(holder: ViewHolder, leftToRight: Boolean) {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return;
+            return
         }
-        final ChunkListItem item = (ChunkListItem) filteredItems.get(position);
+        val item = filteredItems[position] as ChunkListItem
 
         if (!item.isTargetCardOpen) {
             ViewUtil.animateSwapCards(
-                    holder.binding.sourceTranslationCard,
-                    holder.binding.targetTranslationCard,
-                    TOP_ELEVATION, BOTTOM_ELEVATION,
-                    leftToRight,
-                    new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
-                            holder.setCardStatus(item.isComplete(), false);
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            item.isTargetCardOpen = true;
-                            if (getListener() != null) {
-                                getListener().closeKeyboard();
-                            }
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-                        }
+                holder.binding.sourceTranslationCard,
+                holder.binding.targetTranslationCard,
+                TOP_ELEVATION, BOTTOM_ELEVATION,
+                leftToRight,
+                object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation) {
+                        holder.setCardStatus(item.isComplete, false)
                     }
-            );
-            if (getListener() != null) {
-                getListener().closeKeyboard();
-            }
+
+                    override fun onAnimationEnd(animation: Animation) {
+                        item.isTargetCardOpen = true
+                        onClickListener?.closeKeyboard()
+                    }
+
+                    override fun onAnimationRepeat(animation: Animation) {}
+                }
+            )
+            onClickListener?.closeKeyboard()
             // disable new tab button so we don't accidentally open it
-            holder.binding.newTabButton.setEnabled(false);
+            holder.binding.newTabButton.isEnabled = false
         }
     }
 
-    @Override
-    public Object[] getSections() {
-        return filteredChapters.toArray();
+    override fun getSections(): Array<Any> {
+        return filteredChapters.toTypedArray()
     }
 
-    @Override
-    public int getPositionForSection(int sectionIndex) {
+    override fun getPositionForSection(sectionIndex: Int): Int {
         // not used
-        return sectionIndex;
+        return sectionIndex
     }
 
-    @Override
-    public int getSectionForPosition(int position) {
-        if (position >= 0 && position < filteredItems.size()) {
-            ListItem item = filteredItems.get(position);
-            return filteredChapters.indexOf(item.chapterSlug);
-        } else {
-            return -1;
+    override fun getSectionForPosition(position: Int): Int {
+        if (position in 0 until filteredItems.size) {
+            val item = filteredItems[position]
+            return filteredChapters.indexOf(item.chapterSlug)
         }
+        return -1
     }
 
-    @Override
-    public void markAllChunksDone() {
-    }
+    override fun markAllChunksDone() {}
 
-    @Override
-    public void setResourcesOpened(boolean status) {
-    }
+    override fun setResourcesOpened(status: Boolean) {}
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public FragmentChunkListItemBinding binding;
-        public TextWatcher textWatcher;
-        private final Context context;
-        private final OnChunkModeListener chunkModeListener;
-        private final TabLayout.OnTabSelectedListener tabSelectedListener;
-        private final Typography typography;
-        private final AssetsProvider assetsProvider;
+    class ViewHolder(
+        val binding: FragmentChunkListItemBinding,
+        private val typography: Typography,
+        private val assetsProvider: AssetsProvider,
+        private val chunkModeListener: OnChunkModeListener?
+    ) : RecyclerView.ViewHolder(binding.root) {
 
-        public ViewHolder(
-                FragmentChunkListItemBinding binding,
-                Typography typography,
-                AssetsProvider assetsProvider,
-                OnChunkModeListener chunkModeListener
-        ) {
-            super(binding.getRoot());
-            this.binding = binding;
+        var textWatcher: TextWatcher
+        private val context: Context = binding.root.context
+        private val tabSelectedListener: TabLayout.OnTabSelectedListener
 
-            context = binding.getRoot().getContext();
-            this.chunkModeListener = chunkModeListener;
-            this.typography = typography;
-            this.assetsProvider = assetsProvider;
+        init {
+            textWatcher = object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
 
-            textWatcher = new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (chunkModeListener != null) {
-                        int position = getBindingAdapterPosition();
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                    chunkModeListener?.let {
+                        val position = bindingAdapterPosition
                         if (position != RecyclerView.NO_POSITION) {
-                            chunkModeListener.onTextChanged(s, start, before, count, position);
+                            it.onTextChanged(s, start, before, count, position)
                         }
                     }
                 }
 
-                @Override
-                public void afterTextChanged(Editable s) {
+                override fun afterTextChanged(s: Editable) {}
+            }
 
+            tabSelectedListener = object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    val sourceTranslationId = tab.tag as String
+                    chunkModeListener?.onSourceTranslationTabClick(sourceTranslationId)
                 }
-            };
 
-            tabSelectedListener = new TabLayout.OnTabSelectedListener() {
-                @Override
-                public void onTabSelected(TabLayout.Tab tab) {
-                    final String sourceTranslationId = (String) tab.getTag();
-                    if (chunkModeListener != null) {
-                        chunkModeListener.onSourceTranslationTabClick(sourceTranslationId);
+                override fun onTabUnselected(tab: TabLayout.Tab) {}
+
+                override fun onTabReselected(tab: TabLayout.Tab) {}
+            }
+
+            itemView.post {
+                binding.targetTranslationCard.setOnTouchListener { _, event ->
+                    // for touches on card other than edit area
+                    if (MotionEvent.ACTION_UP == event.action) {
+                        return@setOnTouchListener chunkModeListener?.onCheckForPromptToEditDoneTargetCard(this@ViewHolder) ?: false
                     }
+                    false
                 }
-
-                @Override
-                public void onTabUnselected(TabLayout.Tab tab) {
-                }
-
-                @Override
-                public void onTabReselected(TabLayout.Tab tab) {
-                }
-            };
-
-            itemView.post(() -> {
-                binding.targetTranslationCard.setOnTouchListener((v, event) -> { // for touches on card other than edit area
-                    if (MotionEvent.ACTION_UP == event.getAction()) {
-                        if (chunkModeListener != null) {
-                            return chunkModeListener.onCheckForPromptToEditDoneTargetCard(this);
-                        }
-                    }
-                    return false;
-                });
 
                 //for touches on edit area
-                binding.targetTranslationBody.setOnTouchListener((v, event) -> {
-                    if (MotionEvent.ACTION_UP == event.getAction()) {
-                        if (chunkModeListener != null) {
-                            return chunkModeListener.onCheckForPromptToEditDoneTargetCard(this);
-                        }
+                binding.targetTranslationBody.setOnTouchListener { _, event ->
+                    if (MotionEvent.ACTION_UP == event.action) {
+                        return@setOnTouchListener chunkModeListener?.onCheckForPromptToEditDoneTargetCard(this@ViewHolder) ?: false
                     }
-                    return false;
-                });
+                    false
+                }
 
-                binding.targetTranslationCard.setOnClickListener(v -> {
-                    if (chunkModeListener != null) {
-                        chunkModeListener.onOpenTargetTranslationCard(this);
+                binding.targetTranslationCard.setOnClickListener {
+                    chunkModeListener?.let { listener ->
+                        listener.onOpenTargetTranslationCard(this@ViewHolder)
 
                         // Accept clicks anywhere on card as if they were on the text box --
                         // but only if the text is actually editable (i.e., not yet done).
-                        if (binding.targetTranslationBody.isEnabled()) {
-                            int position = getBindingAdapterPosition();
+                        if (binding.targetTranslationBody.isEnabled) {
+                            val position = bindingAdapterPosition
                             if (position != RecyclerView.NO_POSITION) {
-                                chunkModeListener.onEditTarget(binding.targetTranslationBody, position);
+                                listener.onEditTarget(binding.targetTranslationBody, position)
                             }
                         } else {
                             // if marked as done (disabled for edit), enable to allow capture of click events, but do not make it focusable so they can't edit
-                            enableClicksIfChunkIsDone();
+                            enableClicksIfChunkIsDone()
                         }
                     }
-                });
+                }
 
-                binding.sourceTranslationCard.setOnClickListener(v -> {
-                    if (chunkModeListener != null) {
-                        chunkModeListener.onCloseTargetTranslationCard(this);
-                    }
-                });
+                binding.sourceTranslationCard.setOnClickListener {
+                    chunkModeListener?.onCloseTargetTranslationCard(this@ViewHolder)
+                }
 
-                binding.newTabButton.setOnClickListener(v -> {
-                    if (chunkModeListener != null) {
-                        chunkModeListener.onNewSourceTranslationTabClick();
-                    }
-                });
+                binding.newTabButton.setOnClickListener {
+                    chunkModeListener?.onNewSourceTranslationTabClick()
+                }
 
-                binding.conflictButton.setOnClickListener(v -> {
-                    if (chunkModeListener != null) {
-                        int position = getBindingAdapterPosition();
+                binding.conflictButton.setOnClickListener {
+                    chunkModeListener?.let { listener ->
+                        val position = bindingAdapterPosition
                         if (position != RecyclerView.NO_POSITION) {
-                            chunkModeListener.onConflictButtonClicked(position);
+                            listener.onConflictButtonClicked(position)
                         }
                     }
-                });
-            });
+                }
+            }
         }
 
-        public void bind(ChunkListItem item) {
-            int cardMargin = context.getResources().getDimensionPixelSize(R.dimen.card_margin);
-            int stackedCardMargin = context.getResources().getDimensionPixelSize(R.dimen.stacked_card_margin);
+        fun bind(item: ChunkListItem) {
+            val cardMargin = context.resources.getDimensionPixelSize(R.dimen.card_margin)
+            val stackedCardMargin = context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
             if (item.isTargetCardOpen) {
                 // target on top
-                binding.sourceTranslationCard.setElevation(BOTTOM_ELEVATION);
-                binding.targetTranslationCard.setElevation(TOP_ELEVATION);
-                binding.targetTranslationCard.bringToFront();
-                CardView.LayoutParams targetParams = (CardView.LayoutParams) binding.targetTranslationCard.getLayoutParams();
-                targetParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin);
-                binding.targetTranslationCard.setLayoutParams(targetParams);
-                CardView.LayoutParams sourceParams = (CardView.LayoutParams) binding.sourceTranslationCard.getLayoutParams();
-                sourceParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin);
-                binding.sourceTranslationCard.setLayoutParams(sourceParams);
-                ((View) binding.targetTranslationCard.getParent()).requestLayout();
-                ((View) binding.targetTranslationCard.getParent()).invalidate();
+                binding.sourceTranslationCard.cardElevation = BOTTOM_ELEVATION
+                binding.targetTranslationCard.cardElevation = TOP_ELEVATION
+                binding.targetTranslationCard.bringToFront()
+                val targetParams = binding.targetTranslationCard.layoutParams as FrameLayout.LayoutParams
+                targetParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin)
+                binding.targetTranslationCard.layoutParams = targetParams
+                val sourceParams = binding.sourceTranslationCard.layoutParams as FrameLayout.LayoutParams
+                sourceParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin)
+                binding.sourceTranslationCard.layoutParams = sourceParams
+                (binding.targetTranslationCard.parent as View).requestLayout()
+                (binding.targetTranslationCard.parent as View).invalidate()
 
                 // disable new tab button so we don't accidentally open it
-                binding.newTabButton.setEnabled(false);
+                binding.newTabButton.isEnabled = false
             } else {
                 // source on top
-                binding.targetTranslationCard.setElevation(BOTTOM_ELEVATION);
-                binding.sourceTranslationCard.setElevation(TOP_ELEVATION);
-                binding.sourceTranslationCard.bringToFront();
-                CardView.LayoutParams sourceParams = (CardView.LayoutParams) binding.sourceTranslationCard.getLayoutParams();
-                sourceParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin);
-                binding.sourceTranslationCard.setLayoutParams(sourceParams);
-                CardView.LayoutParams targetParams = (CardView.LayoutParams) binding.targetTranslationCard.getLayoutParams();
-                targetParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin);
-                binding.targetTranslationCard.setLayoutParams(targetParams);
-                ((View) binding.sourceTranslationCard.getParent()).requestLayout();
-                ((View) binding.sourceTranslationCard.getParent()).invalidate();
+                binding.targetTranslationCard.cardElevation = BOTTOM_ELEVATION
+                binding.sourceTranslationCard.cardElevation = TOP_ELEVATION
+                binding.sourceTranslationCard.bringToFront()
+                val sourceParams = binding.sourceTranslationCard.layoutParams as FrameLayout.LayoutParams
+                sourceParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin)
+                binding.sourceTranslationCard.layoutParams = sourceParams
+                val targetParams = binding.targetTranslationCard.layoutParams as FrameLayout.LayoutParams
+                targetParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin)
+                binding.targetTranslationCard.layoutParams = targetParams
+                (binding.sourceTranslationCard.parent as View).requestLayout()
+                (binding.sourceTranslationCard.parent as View).invalidate()
 
                 // re-enable new tab button
-                binding.newTabButton.setEnabled(true);
+                binding.newTabButton.isEnabled = true
             }
 
             // load tabs
-            List<ContentValues> tabs = item.getTabs();
-            renderSourceTabs(tabs, item.source.slug);
+            val tabs = item.tabs
+            renderSourceTabs(tabs, item.source.slug)
 
-            renderChunk(item);
+            renderChunk(item)
 
             // set up fonts
-            TypographyUtils.formatSub(
-                    binding.sourceTranslationTitle,
-                    typography,
-                    assetsProvider,
-                    TranslationType.SOURCE,
-                    item.source.language.slug,
-                    item.source.language.direction
-            );
-            TypographyUtils.format(
-                    binding.sourceTranslationBody,
-                    typography,
-                    assetsProvider,
-                    TranslationType.SOURCE,
-                    item.source.language.slug,
-                    item.source.language.direction
-            );
-            TypographyUtils.formatSub(
-                    binding.targetTranslationTitle,
-                    typography,
-                    assetsProvider,
-                    TranslationType.TARGET,
-                    item.target.getTargetLanguage().slug,
-                    item.target.getTargetLanguage().direction
-            );
-            TypographyUtils.format(
-                    binding.targetTranslationBody,
-                    typography,
-                    assetsProvider,
-                    TranslationType.TARGET,
-                    item.target.getTargetLanguage().slug,
-                    item.target.getTargetLanguage().direction
-            );
+            binding.sourceTranslationTitle.formatSub(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                item.source.language.slug,
+                item.source.language.direction
+            )
+            binding.sourceTranslationBody.format(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                item.source.language.slug,
+                item.source.language.direction
+            )
+            binding.targetTranslationTitle.formatSub(
+                typography,
+                assetsProvider,
+                TranslationType.TARGET,
+                item.target.targetLanguage.slug,
+                item.target.targetLanguage.direction
+            )
+            binding.targetTranslationBody.format(
+                typography,
+                assetsProvider,
+                TranslationType.TARGET,
+                item.target.targetLanguage.slug,
+                item.target.targetLanguage.direction
+            )
 
             //////
             // set up card UI for merge conflicts
-            if (item.getHasMergeConflicts()) {
-                binding.conflictButton.setVisibility(View.VISIBLE);
-                binding.conflictFrame.setVisibility(View.VISIBLE);
-                binding.targetTranslationBody.setVisibility(View.GONE);
+            if (item.hasMergeConflicts) {
+                binding.conflictButton.visibility = View.VISIBLE
+                binding.conflictFrame.visibility = View.VISIBLE
+                binding.targetTranslationBody.visibility = View.GONE
             } else {
-                binding.conflictFrame.setVisibility(View.GONE);
-                binding.targetTranslationBody.setVisibility(View.VISIBLE);
+                binding.conflictFrame.visibility = View.GONE
+                binding.targetTranslationBody.visibility = View.VISIBLE
             }
 
-            ViewUtil.makeLinksClickable(binding.sourceTranslationBody);
+            ViewUtil.makeLinksClickable(binding.sourceTranslationBody)
 
-            if (tabs.size() >= MAX_SOURCE_ITEMS) {
-                binding.newTabButton.setVisibility(View.GONE);
+            if (tabs.size >= MAX_SOURCE_ITEMS) {
+                binding.newTabButton.visibility = View.GONE
             } else {
-                binding.newTabButton.setVisibility(View.VISIBLE);
+                binding.newTabButton.visibility = View.VISIBLE
             }
         }
 
         /**
          * if chunk that is marked done, then enable click event
          */
-        public void enableClicksIfChunkIsDone() {
-            if (!binding.targetTranslationBody.isEnabled()) {
-                binding.targetTranslationBody.setEnabled(true);
-                binding.targetTranslationBody.setFocusable(false);
+        fun enableClicksIfChunkIsDone() {
+            if (!binding.targetTranslationBody.isEnabled) {
+                binding.targetTranslationBody.isEnabled = true
+                binding.targetTranslationBody.isFocusable = false
             }
         }
 
@@ -709,119 +617,119 @@ public class ChunkModeAdapter extends ViewModeAdapter<ChunkModeAdapter.ViewHolde
          *
          * @param item chunk list item
          */
-        private void renderChunk(ChunkListItem item) {
-            removeTextChangeListener();
+        private fun renderChunk(item: ChunkListItem) {
+            removeTextChangeListener()
 
             // render source text
             if (item.renderedSourceText == null && chunkModeListener != null) {
                 item.renderedSourceText = chunkModeListener.onRenderText(
-                        item.getSourceText(),
-                        item.getSourceTranslationFormat()
-                );
+                    item.sourceText,
+                    item.sourceTranslationFormat
+                )
             }
-            binding.sourceTranslationBody.setText(item.renderedSourceText);
+            binding.sourceTranslationBody.setText(item.renderedSourceText)
 
             // render target text
             if (item.renderedTargetText == null && chunkModeListener != null) {
                 item.renderedTargetText = chunkModeListener.onRenderText(
-                        item.getTargetText(),
-                        item.getTargetTranslationFormat()
-                );
+                    item.targetText,
+                    item.targetTranslationFormat
+                )
             }
-            binding.targetTranslationBody.setText(TextUtils.concat(item.renderedTargetText, "\n"));
+            binding.targetTranslationBody.setText(TextUtils.concat(item.renderedTargetText, "\n"))
 
             // render source title
-            if (item.isProjectTitle()) {
-                binding.sourceTranslationTitle.setText("");
-            } else if (item.isChapter()) {
-                binding.sourceTranslationTitle.setText(item.source.project.name.trim());
+            if (item.isProjectTitle) {
+                binding.sourceTranslationTitle.text = ""
+            } else if (item.isChapter) {
+                binding.sourceTranslationTitle.text = item.source.project.name.trim()
             } else {
                 // TODO: we should read the title from a cache instead of doing file io again
-                String title = item.source.readChunk(item.chapterSlug, "title").trim();
+                var title = item.source.readChunk(item.chapterSlug, "title").trim()
                 if (title.isEmpty()) {
-                    try {
-                        title = item.source.project.name.trim() + " " + Integer.parseInt(item.chapterSlug);
-                    } catch (Exception e) {
-                        title = item.source.project.name.trim() + " " + item.chapterSlug;
+                    title = try {
+                        "${item.source.project.name.trim()} ${item.chapterSlug.toInt()}"
+                    } catch (e: Exception) {
+                        "${item.source.project.name.trim()} ${item.chapterSlug}"
                     }
                 }
-                String verseSpan = Frame.parseVerseTitle(item.getSourceText(), item.getSourceTranslationFormat());
+                val verseSpan = Frame.parseVerseTitle(item.sourceText, item.sourceTranslationFormat)
                 if (verseSpan.isEmpty()) {
-                    try {
-                        title += ":" + Integer.parseInt(item.chunkSlug);
-                    } catch (Exception e) {
-                        title += ":" + item.chunkSlug;
+                    title += try {
+                        ":${item.chunkSlug.toInt()}"
+                    } catch (e: Exception) {
+                        ":${item.chunkSlug}"
                     }
                 } else {
-                    title += ":" + verseSpan;
+                    title += ":$verseSpan"
                 }
-                binding.sourceTranslationTitle.setText(title);
+                binding.sourceTranslationTitle.text = title
             }
 
             // render target title
-            binding.targetTranslationTitle.setText(item.getTargetTitle());
+            binding.targetTranslationTitle.text = item.targetTitle
 
             // indicate complete
-            setCardStatus(item.isComplete(), true);
+            setCardStatus(item.isComplete, true)
 
-            attachTextChangeListener();
+            attachTextChangeListener()
         }
 
-        public void attachTextChangeListener() {
-            binding.targetTranslationBody.removeTextChangedListener(textWatcher);
-            binding.targetTranslationBody.addTextChangedListener(textWatcher);
+        fun attachTextChangeListener() {
+            binding.targetTranslationBody.removeTextChangedListener(textWatcher)
+            binding.targetTranslationBody.addTextChangedListener(textWatcher)
         }
 
-        public void removeTextChangeListener() {
-            binding.targetTranslationBody.removeTextChangedListener(textWatcher);
+        fun removeTextChangeListener() {
+            binding.targetTranslationBody.removeTextChangedListener(textWatcher)
         }
 
-        private void setCardStatus(boolean finished, boolean closed) {
+        fun setCardStatus(finished: Boolean, closed: Boolean) {
             if (closed) {
-                binding.targetTranslationBody.setEnableLines(false);
+                binding.targetTranslationBody.setEnableLines(false)
                 if (finished) {
-                    binding.targetTranslationInnerCard.setBackgroundResource(R.color.card_background_color);
+                    binding.targetTranslationInnerCard.setBackgroundResource(R.color.card_background_color)
                 } else {
-                    binding.targetTranslationInnerCard.setBackgroundResource(R.drawable.paper_repeating);
+                    binding.targetTranslationInnerCard.setBackgroundResource(R.drawable.paper_repeating)
                 }
             } else {
-                binding.targetTranslationBody.setEnableLines(true);
-                binding.targetTranslationInnerCard.setBackgroundResource(R.color.card_background_color);
+                binding.targetTranslationBody.setEnableLines(true)
+                binding.targetTranslationInnerCard.setBackgroundResource(R.color.card_background_color)
             }
         }
 
-        private void renderSourceTabs(List<ContentValues> tabs, String sourceSlug) {
-            binding.sourceTranslationTabs.removeOnTabSelectedListener(tabSelectedListener);
-            binding.sourceTranslationTabs.removeAllTabs();
+        private fun renderSourceTabs(tabs: List<ContentValues>, sourceSlug: String) {
+            binding.sourceTranslationTabs.removeOnTabSelectedListener(tabSelectedListener)
+            binding.sourceTranslationTabs.removeAllTabs()
 
-            for (ContentValues values : tabs) {
-                String tag = values.getAsString("tag");
-                String title = values.getAsString("title");
+            for (values in tabs) {
+                val tag = values.getAsString("tag")
+                val title = values.getAsString("title")
 
-                if (chunkModeListener != null) {
-                    View tabLayout = chunkModeListener.onCreateRemovableTabLayout(tag, title);
+                chunkModeListener?.let { listener ->
+                    val tabLayout = listener.onCreateRemovableTabLayout(tag, title)
 
                     if (tabLayout != null) {
-                        TabLayout.Tab tab = binding.sourceTranslationTabs.newTab();
-                        tab.setTag(tag);
-                        tab.setCustomView(tabLayout);
-                        binding.sourceTranslationTabs.addTab(tab);
+                        val tab = binding.sourceTranslationTabs.newTab()
+                        tab.tag = tag
+                        tab.customView = tabLayout
+                        binding.sourceTranslationTabs.addTab(tab)
                     }
 
-                    chunkModeListener.onApplyLanguageTypefaceToTab(binding.sourceTranslationTabs, values, title);
+                    listener.onApplyLanguageTypefaceToTab(binding.sourceTranslationTabs, values, title)
                 }
             }
 
             // select correct tab
-            for (int i = 0; i < binding.sourceTranslationTabs.getTabCount(); i++) {
-                TabLayout.Tab tab = binding.sourceTranslationTabs.getTabAt(i);
-                if (sourceSlug.equals(tab.getTag())) {
-                    tab.select();
-                    break;
+            for (i in 0 until binding.sourceTranslationTabs.tabCount) {
+                val tab = binding.sourceTranslationTabs.getTabAt(i)
+                if (sourceSlug == tab?.tag) {
+                    tab.select()
+                    break
                 }
             }
 
-            binding.sourceTranslationTabs.addOnTabSelectedListener(tabSelectedListener);
+            binding.sourceTranslationTabs.addOnTabSelectedListener(tabSelectedListener)
         }
     }
 }

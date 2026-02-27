@@ -1,732 +1,633 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.os.Bundle;
-import android.view.GestureDetector;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-
-import androidx.appcompat.app.AlertDialog;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.door43.data.AssetsProvider;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.TypographyUtils;
-import com.door43.translationstudio.core.ChapterTranslation;
-import com.door43.translationstudio.core.ProjectTranslation;
-import com.door43.translationstudio.rendering.RenderingProvider;
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.core.TranslationType;
-import com.door43.translationstudio.core.TranslationViewMode;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.databinding.FragmentReadListItemBinding;
-import com.door43.translationstudio.rendering.ClickableRenderingEngine;
-import com.door43.translationstudio.rendering.Clickables;
-import com.door43.translationstudio.rendering.RenderingGroup;
-import com.door43.translationstudio.ui.spannables.NoteSpan;
-import com.door43.translationstudio.ui.spannables.Span;
-import com.door43.widget.ViewUtil;
-import com.google.android.material.tabs.TabLayout;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.content.ContentValues
+import android.content.Context
+import android.os.Bundle
+import android.view.GestureDetector
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.animation.Animation
+import android.widget.FrameLayout
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.RecyclerView
+import com.door43.data.AssetsProvider
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.databinding.FragmentReadListItemBinding
+import com.door43.translationstudio.format
+import com.door43.translationstudio.formatTitle
+import com.door43.translationstudio.rendering.ClickableRenderingEngine
+import com.door43.translationstudio.rendering.Clickables
+import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.ui.spannables.NoteSpan
+import com.door43.translationstudio.ui.spannables.Span
+import com.door43.widget.ViewUtil
+import com.google.android.material.tabs.TabLayout
 
 /**
  * Created by joel on 9/9/2015.
  */
-public class ReadModeAdapter extends ViewModeAdapter<ReadModeAdapter.ViewHolder> implements OnReadModeListener {
-    private static final int BOTTOM_ELEVATION = 2;
-    private static final int TOP_ELEVATION = 3;
+class ReadModeAdapter(
+    typography: Typography,
+    renderingProvider: RenderingProvider,
+    assetsProvider: AssetsProvider
+) : ViewModeAdapter<ReadModeAdapter.ViewHolder>(), OnReadModeListener {
 
-    private CharSequence[] renderedTargetBody = new CharSequence[0];
-    private CharSequence[] renderedSourceBody = new CharSequence[0];
-
-    private boolean[] targetStateOpen = new boolean[0];
+    private var renderedTargetBody: Array<CharSequence?> = emptyArray()
+    private var renderedSourceBody: Array<CharSequence?> = emptyArray()
+    private var targetStateOpen: BooleanArray = BooleanArray(0)
 
     /**
      * Reference to the list of all items (chunks)
      */
-    private List<ListItem> chunks = new ArrayList<>();
+    private val chunks = ArrayList<ListItem>()
 
-    public ReadModeAdapter(
-            Typography typography,
-            RenderingProvider renderingProvider,
-            AssetsProvider assetsProvider
-    ) {
-        this.typography = typography;
-        this.renderingProvider = renderingProvider;
-        this.assetsProvider = assetsProvider;
+    companion object {
+        private const val BOTTOM_ELEVATION = 2f
+        private const val TOP_ELEVATION = 3f
     }
 
-    @Override
-    public void initializeListItems(
-            List<ListItem> listItems,
-            String startingChapter,
-            String startingChunk
+    init {
+        this.typography = typography
+        this.renderingProvider = renderingProvider
+        this.assetsProvider = assetsProvider
+    }
+
+    override fun initializeListItems(
+        listItems: List<ListItem>,
+        startingChapter: String,
+        startingChunk: String
     ) {
-        layoutBuildNumber++; // force resetting of fonts
-        chunks.clear();
-        chapters.clear();
-        items.clear();
+        layoutBuildNumber++ // force resetting of fonts
+        chunks.clear()
+        chapters.clear()
+        items.clear()
 
-        setListStartPosition(0);
-        boolean foundStartingChapter = false;
+        startPosition = 0
+        var foundStartingChapter = false
 
-        for (ListItem item: listItems) {
-            if (!foundStartingChapter && item.chapterSlug.equals(startingChapter)) {
-                setListStartPosition(items.size());
-                foundStartingChapter = true;
+        for (item in listItems) {
+            if (!foundStartingChapter && item.chapterSlug == startingChapter) {
+                startPosition = items.size
+                foundStartingChapter = true
             }
             if (!chapters.contains(item.chapterSlug)) {
-                chapters.add(item.chapterSlug);
-                items.add(createListItem(item));
+                chapters.add(item.chapterSlug)
+                items.add(createListItem(item))
             }
         }
 
-        chunks.addAll(listItems);
+        chunks.addAll(listItems)
 
-        targetStateOpen = new boolean[chapters.size()];
-        renderedSourceBody = new CharSequence[chapters.size()];
-        renderedTargetBody = new CharSequence[chapters.size()];
+        targetStateOpen = BooleanArray(chapters.size)
+        renderedSourceBody = arrayOfNulls(chapters.size)
+        renderedTargetBody = arrayOfNulls(chapters.size)
 
-        triggerNotifyDataSetChanged();
-        updateMergeConflict();
+        triggerNotifyDataSetChanged()
+        updateMergeConflict()
     }
 
-    @Override
-    public ReadListItem createListItem(ListItem item) {
-        return item.toType(ReadListItem::new);
+    override fun createListItem(item: ListItem): ReadListItem {
+        return item.toType(::ReadListItem)
     }
 
     /**
      * check all cards for merge conflicts to see if we should show warning. Runs as background task.
      */
-    private void updateMergeConflict() {
-        doCheckForMergeConflict();
+    private fun updateMergeConflict() {
+        doCheckForMergeConflict()
     }
 
-    @Override
-    protected int getConflictsCount() {
-        int conflictsCount = 0;
-        for (ListItem item : chunks) {
-            if(item.getHasMergeConflicts()) {
-                conflictsCount++;
+    override val conflictsCount: Int
+        get() {
+            var count = 0
+            for (item in chunks) {
+                if (item.hasMergeConflicts) {
+                    count++
+                }
             }
+            return count
         }
-        return conflictsCount;
+
+    override fun getFocusedChunkSlug(position: Int): String {
+        return ""
     }
 
-    @Override
-    public String getFocusedChunkSlug(int position) {
-        return null;
-    }
-
-    @Override
-    public String getFocusedChapterSlug(int position) {
-        if(position >= 0 && position < chapters.size()) {
-            return chapters.get(position);
+    override fun getFocusedChapterSlug(position: Int): String {
+        return if (position in 0 until chapters.size) {
+            chapters[position]
         } else {
-            return null;
+            ""
         }
     }
 
-    @Override
-    public int getItemPosition(String chapterSlug, String chunkSlug) {
-        return chapters.indexOf(chapterSlug);
+    override fun getItemPosition(chapterSlug: String, chunkSlug: String): Int {
+        return chapters.indexOf(chapterSlug)
     }
 
-    @Override
-    public ListItem getItem(String chapterSlug, String chunkSlug) {
-        return items.get(getItemPosition(chapterSlug, chunkSlug));
+    override fun getItem(chapterSlug: String, chunkSlug: String): ListItem? {
+        val position = getItemPosition(chapterSlug, chunkSlug)
+        return if (position >= 0) items[position] else null
     }
 
-    @Override
-    public ViewHolder onCreateManagedViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        FragmentReadListItemBinding binding = FragmentReadListItemBinding.inflate(inflater, parent, false);
-        return new ViewHolder(binding, typography, assetsProvider, this);
+    override fun onCreateManagedViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = FragmentReadListItemBinding.inflate(inflater, parent, false)
+        return ViewHolder(binding, typography, assetsProvider, this)
     }
 
-    @Override
-    public void markAllChunksDone() {}
+    override fun markAllChunksDone() {}
 
-    @Override
-    public void onOpenTargetTranslationCard(ViewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onOpenTargetTranslationCard(holder: ViewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            openTargetTranslationCard(holder, position, false);
+            openTargetTranslationCard(holder, position, false)
         }
     }
 
-    @Override
-    public void onCloseTargetTranslationCard(ViewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onCloseTargetTranslationCard(holder: ViewHolder) {
+        val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            closeTargetTranslationCard(holder, position, true);
+            closeTargetTranslationCard(holder, position, true)
         }
     }
 
-    @Override
-    public void onNewSourceTranslationTabClick() {
-        if (getListener() != null) {
-            getListener().onNewSourceTranslationTabClick();
-        }
+    override fun onNewSourceTranslationTabClick() {
+        onClickListener?.onNewSourceTranslationTabClick()
     }
 
-    @Override
-    public CharSequence onRenderSourceText(ReadModeAdapter.ViewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onRenderSourceText(holder: ViewHolder): CharSequence {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return "";
+            return ""
         }
-        ReadListItem item = (ReadListItem) items.get(position);
+        val item = items[position] as ReadListItem
 
-        String sourceChapterBody = item.getSourceText();
-        TranslationFormat bodyFormat = TranslationFormat.parse(item.source.contentMimeType);
-        RenderingGroup sourceRendering = new RenderingGroup();
+        val sourceChapterBody = item.sourceText
+        val bodyFormat = TranslationFormat.parse(item.source.contentMimeType)
+        val sourceRendering = RenderingGroup()
 
         if (Clickables.isClickableFormat(bodyFormat)) {
-            Span.OnClickListener noteClickListener = new Span.OnClickListener() {
-                @Override
-                public void onClick(View view, Span span, int start, int end) {
-                    if(span instanceof NoteSpan) {
-                        showFootnote((NoteSpan)span);
+            val noteClickListener = object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    if (span is NoteSpan) {
+                        showFootnote(span, holder.binding.root.context)
                     }
                 }
-                @Override
-                public void onLongClick(View view, Span span, int start, int end) {
-                }
-            };
-            ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
-                    bodyFormat,
-                    sourceRendering,
-                    null,
-                    noteClickListener,
-                    true
-            );
+
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
+            }
+            val renderer = renderingProvider.setupRenderingGroup(
+                bodyFormat,
+                sourceRendering,
+                null,
+                noteClickListener,
+                true
+            ) as ClickableRenderingEngine
             // In read mode (and only in read mode), pull leading major section headings out for
             // display above chapter headings.
-            renderer.setSuppressLeadingMajorSectionHeadings(true);
-            CharSequence heading = renderer.getLeadingMajorSectionHeading(sourceChapterBody);
-            holder.binding.sourceTranslationHeading.setText(heading);
-            holder.binding.sourceTranslationHeading.setVisibility(heading.length() > 0 ? View.VISIBLE : View.GONE);
+            renderer.setSuppressLeadingMajorSectionHeadings(true)
+            val heading = renderer.getLeadingMajorSectionHeading(sourceChapterBody)
+            holder.binding.sourceTranslationHeading.setText(heading)
+            holder.binding.sourceTranslationHeading.visibility = if (heading.isNotEmpty()) View.VISIBLE else View.GONE
         } else {
-            sourceRendering.addEngine(renderingProvider.createDefaultRenderer());
+            sourceRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
-        sourceRendering.init(sourceChapterBody);
-        renderedSourceBody[position] = sourceRendering.start();
+        sourceRendering.init(sourceChapterBody)
+        renderedSourceBody[position] = sourceRendering.start()
 
-        return renderedSourceBody[position];
+        return renderedSourceBody[position] ?: ""
     }
 
-    @Override
-    public CharSequence onRenderTargetText(ViewHolder holder) {
-        int position = holder.getBindingAdapterPosition();
+    override fun onRenderTargetText(holder: ViewHolder): CharSequence {
+        val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
-            return "";
+            return ""
         }
-        ReadListItem item = (ReadListItem) items.get(position);
+        val item = items[position] as ReadListItem
 
-        TranslationFormat bodyFormat = item.target.getFormat();
-        String chapterBody = item.getTargetText();
-        RenderingGroup targetRendering = new RenderingGroup();
+        val bodyFormat = item.target.format
+        val chapterBody = item.targetText
+        val targetRendering = RenderingGroup()
 
-        if(Clickables.isClickableFormat(bodyFormat)) {
-            Span.OnClickListener noteClickListener = new Span.OnClickListener() {
-                @Override
-                public void onClick(View view, Span span, int start, int end) {
-                    if(span instanceof NoteSpan) {
-                        showFootnote((NoteSpan)span);
+        if (Clickables.isClickableFormat(bodyFormat)) {
+            val noteClickListener = object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    if (span is NoteSpan) {
+                        showFootnote(span, holder.binding.root.context)
                     }
                 }
-                @Override
-                public void onLongClick(View view, Span span, int start, int end) {
-                }
-            };
-            ClickableRenderingEngine renderer = renderingProvider.setupRenderingGroup(
-                    bodyFormat,
-                    targetRendering,
-                    null,
-                    noteClickListener,
-                    true
-            );
-            renderer.setVersesEnabled(true);
+
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
+            }
+            val renderer = renderingProvider.setupRenderingGroup(
+                bodyFormat,
+                targetRendering,
+                null,
+                noteClickListener,
+                true
+            ) as ClickableRenderingEngine
+            renderer.setVersesEnabled(true)
         } else {
-            targetRendering.addEngine(renderingProvider.createDefaultRenderer());
+            targetRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
-        targetRendering.init(chapterBody);
-        renderedTargetBody[position] = targetRendering.start();
+        targetRendering.init(chapterBody)
+        renderedTargetBody[position] = targetRendering.start()
 
-        return renderedTargetBody[position];
+        return renderedTargetBody[position] ?: ""
     }
 
-    @Override
-    public void onOpenTranslationMode(String chapterSlug) {
-        Bundle args = new Bundle();
-        args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true);
-        args.putString(Translator.EXTRA_CHAPTER_ID, chapterSlug);
-        if (getListener() != null) {
-            getListener().openTranslationMode(TranslationViewMode.CHUNK, args);
-        }
+    override fun onOpenTranslationMode(chapterSlug: String) {
+        val args = Bundle()
+        args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true)
+        args.putString(Translator.EXTRA_CHAPTER_ID, chapterSlug)
+        onClickListener?.openTranslationMode(TranslationViewMode.CHUNK, args)
     }
 
-    @Override
-    public View onCreateRemovableTabLayout(String tag, String title) {
-        if (getListener() != null) {
-            return getListener().onCreateRemovableTabLayout(tag, title);
-        }
-        return null;
+    override fun onCreateRemovableTabLayout(tag: String, title: String): View? {
+        return onClickListener?.onCreateRemovableTabLayout(tag, title)
     }
 
-    @Override
-    public void onApplyLanguageTypefaceToTab(TabLayout layout, ContentValues values, String title) {
-        if (getListener() != null) {
-            getListener().onApplyLanguageTypefaceToTab(layout, values, title);
-        }
+    override fun onApplyLanguageTypefaceToTab(layout: TabLayout, values: ContentValues, title: String) {
+        onClickListener?.onApplyLanguageTypefaceToTab(layout, values, title)
     }
 
-    @Override
-    public void onSourceTranslationTabClick(String sourceId) {
-        if (getListener() != null) {
-            getListener().onSourceTranslationTabClick(sourceId);
-        }
+    override fun onSourceTranslationTabClick(sourceId: String) {
+        onClickListener?.onSourceTranslationTabClick(sourceId)
     }
 
     /**
      * get the chapter for the position, or null if not found
-     * @param position
-     * @return
      */
-    public String getChapterForPosition(int position) {
-        if(position < 0) {
-            position = 0;
-        } else if(position >= chapters.size()) {
-            position = chapters.size() - 1;
+    fun getChapterForPosition(position: Int): String {
+        var pos = position
+        if (pos < 0) {
+            pos = 0
+        } else if (pos >= chapters.size) {
+            pos = chapters.size - 1
         }
-        return chapters.get(position);
+        return chapters[pos]
     }
 
-    @Override
-    public void onBindManagedViewHolder(final ViewHolder holder, final int position) {
-        final ReadListItem item = (ReadListItem) items.get(position);
-        boolean targetOpen = targetStateOpen[position];
-        String chapterSlug = chapters.get(position);
-        CharSequence renderedSourceText = renderedSourceBody[position];
-        CharSequence renderedTargetText = renderedTargetBody[position];
+    override fun onBindManagedViewHolder(holder: ViewHolder, position: Int) {
+        val item = items[position] as ReadListItem
+        val targetOpen = targetStateOpen[position]
+        val chapterSlug = chapters[position]
+        val renderedSourceText = renderedSourceBody[position]
+        val renderedTargetText = renderedTargetBody[position]
 
-        holder.bind(item, targetOpen, chapterSlug, renderedSourceText, renderedTargetText);
+        holder.bind(item, targetOpen, chapterSlug, renderedSourceText, renderedTargetText)
     }
 
-    @Override
-    public int getItemCount() {
-        return chapters.size();
+    override fun getItemCount(): Int {
+        return chapters.size
     }
 
     /**
      * Toggle the target translation card between front and back
-     * @param holder
-     * @param position
-     * @param swipeLeft
-     * @return true if action was taken, else false
      */
-    public void toggleTargetTranslationCard(final ViewHolder holder, final int position, final boolean swipeLeft) {
+    fun toggleTargetTranslationCard(holder: ViewHolder, position: Int, swipeLeft: Boolean) {
         if (targetStateOpen[position]) {
-            closeTargetTranslationCard( holder, position, !swipeLeft);
-            return;
+            closeTargetTranslationCard(holder, position, !swipeLeft)
+            return
         }
-        openTargetTranslationCard( holder, position, !swipeLeft);
+        openTargetTranslationCard(holder, position, !swipeLeft)
     }
 
     /**
      * Moves the target translation card to the back
-     * @param holder
-     * @param position
-     * @param leftToRight
      */
-    public void closeTargetTranslationCard(final ViewHolder holder, final int position, final boolean leftToRight) {
+    fun closeTargetTranslationCard(holder: ViewHolder, position: Int, leftToRight: Boolean) {
         if (targetStateOpen[position]) {
-            ViewUtil.animateSwapCards(holder.binding.targetTranslationCard, holder.binding.sourceTranslationCard, TOP_ELEVATION, BOTTOM_ELEVATION, leftToRight, new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
+            ViewUtil.animateSwapCards(
+                holder.binding.targetTranslationCard,
+                holder.binding.sourceTranslationCard,
+                TOP_ELEVATION,
+                BOTTOM_ELEVATION,
+                leftToRight,
+                object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation) {}
 
+                    override fun onAnimationEnd(animation: Animation) {
+                        targetStateOpen[position] = false
+                    }
+
+                    override fun onAnimationRepeat(animation: Animation) {}
                 }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    targetStateOpen[position] = false;
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-
-                }
-            });
+            )
 
             // re-enable new tab button
-            holder.binding.newTabButton.setEnabled(true);
+            holder.binding.newTabButton.isEnabled = true
         }
     }
 
     /**
      * Moves the target translation to the top
-     * @param holder
-     * @param position
-     * @param leftToRight
      */
-    public void openTargetTranslationCard(final ViewHolder holder, final int position, final boolean leftToRight) {
+    fun openTargetTranslationCard(holder: ViewHolder, position: Int, leftToRight: Boolean) {
         if (!targetStateOpen[position]) {
             ViewUtil.animateSwapCards(
-                    holder.binding.sourceTranslationCard,
-                    holder.binding.targetTranslationCard,
-                    TOP_ELEVATION,
-                    BOTTOM_ELEVATION,
-                    leftToRight,
-                    new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
+                holder.binding.sourceTranslationCard,
+                holder.binding.targetTranslationCard,
+                TOP_ELEVATION,
+                BOTTOM_ELEVATION,
+                leftToRight,
+                object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation) {}
 
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            targetStateOpen[position] = true;
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-
-                        }
+                    override fun onAnimationEnd(animation: Animation) {
+                        targetStateOpen[position] = true
                     }
-            );
+
+                    override fun onAnimationRepeat(animation: Animation) {}
+                }
+            )
 
             // disable new tab button so we don't accidentally open it
-            holder.binding.newTabButton.setEnabled(false);
+            holder.binding.newTabButton.isEnabled = false
         }
     }
 
     /**
      * display selected footnote in dialog.
-     *
-     * @param span note span
      */
-    private void showFootnote(final NoteSpan span) {
-        CharSequence marker = span.getPassage();
-        CharSequence title = context.getResources().getText(R.string.title_footnote);
-        if (!marker.toString().isEmpty()) {
-            title = title + ": " + marker;
+    private fun showFootnote(span: NoteSpan, context: Context) {
+        val marker = span.passage
+        var title: CharSequence = context.resources.getText(R.string.title_footnote)
+        if (marker.toString().isNotEmpty()) {
+            title = "$title: $marker"
         }
-        CharSequence message = span.getNotes();
+        val message = span.notes
 
-        new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton(R.string.dismiss, null)
-                .show();
+        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(R.string.dismiss, null)
+            .show()
     }
 
-    @Override
-    public Object[] getSections() {
-        return chapters.toArray();
+    override fun getSections(): Array<Any> {
+        return chapters.toTypedArray()
     }
 
-    @Override
-    public int getPositionForSection(int sectionIndex) {
+    override fun getPositionForSection(sectionIndex: Int): Int {
         // not used
-        return sectionIndex;
+        return sectionIndex
     }
 
-    @Override
-    public int getSectionForPosition(int position) {
-        return position;
+    override fun getSectionForPosition(position: Int): Int {
+        return position
     }
 
-    @Override
-    public void setResourcesOpened(boolean status) {
-    }
+    override fun setResourcesOpened(status: Boolean) {}
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public final FragmentReadListItemBinding binding;
+    class ViewHolder(
+        val binding: FragmentReadListItemBinding,
+        private val typography: Typography,
+        private val assetsProvider: AssetsProvider,
+        private val readModeListener: OnReadModeListener?
+    ) : RecyclerView.ViewHolder(binding.root) {
 
-        private final OnReadModeListener readModeListener;
-        private final Typography typography;
-        private final AssetsProvider assetsProvider;
-        private final Context context;
-        private final TabLayout.OnTabSelectedListener tabSelectedListener;
+        private val context: Context = binding.root.context
+        private val tabSelectedListener: TabLayout.OnTabSelectedListener
+        private var chapterSlug: String? = null
 
-        private String chapterSlug;
-
-        public ViewHolder(
-                FragmentReadListItemBinding binding,
-                Typography typography,
-                AssetsProvider assetsProvider,
-                OnReadModeListener readModeListener
-        ) {
-            super(binding.getRoot());
-            this.binding = binding;
-
-            context = binding.getRoot().getContext();
-            this.readModeListener = readModeListener;
-            this.typography = typography;
-            this.assetsProvider = assetsProvider;
-
-            tabSelectedListener = new TabLayout.OnTabSelectedListener() {
-                @Override
-                public void onTabSelected(TabLayout.Tab tab) {
-                    final String sourceTranslationId = (String) tab.getTag();
-                    if (readModeListener != null) {
-                        readModeListener.onSourceTranslationTabClick(sourceTranslationId);
-                    }
+        init {
+            tabSelectedListener = object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    val sourceTranslationId = tab.tag as String
+                    readModeListener?.onSourceTranslationTabClick(sourceTranslationId)
                 }
 
-                @Override
-                public void onTabUnselected(TabLayout.Tab tab) {
+                override fun onTabUnselected(tab: TabLayout.Tab) {}
+
+                override fun onTabReselected(tab: TabLayout.Tab) {}
+            }
+
+            itemView.post {
+                binding.targetTranslationCard.setOnClickListener {
+                    readModeListener?.onOpenTargetTranslationCard(this@ViewHolder)
                 }
 
-                @Override
-                public void onTabReselected(TabLayout.Tab tab) {
+                binding.sourceTranslationCard.setOnClickListener {
+                    readModeListener?.onCloseTargetTranslationCard(this@ViewHolder)
                 }
-            };
 
-            itemView.post(() -> {
-                binding.targetTranslationCard.setOnClickListener(v -> {
-                    if (readModeListener != null) {
-                        readModeListener.onOpenTargetTranslationCard(this);
-                    }
-                });
+                binding.newTabButton.setOnClickListener {
+                    readModeListener?.onNewSourceTranslationTabClick()
+                }
 
-                binding.sourceTranslationCard.setOnClickListener(v -> {
-                    if (readModeListener != null) {
-                        readModeListener.onCloseTargetTranslationCard(this);
-                    }
-                });
-
-                binding.newTabButton.setOnClickListener(v -> {
-                    if (readModeListener != null) {
-                        readModeListener.onNewSourceTranslationTabClick();
-                    }
-                });
-
-                final GestureDetector detector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-                    @Override
-                    public boolean onSingleTapUp(MotionEvent e) {
+                val detector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+                    override fun onSingleTapUp(e: MotionEvent): Boolean {
                         if (readModeListener != null && chapterSlug != null) {
-                            readModeListener.onOpenTranslationMode(chapterSlug);
+                            readModeListener.onOpenTranslationMode(chapterSlug!!)
                         }
-                        return true;
+                        return true
                     }
-                });
-                binding.beginTranslatingButton.setOnTouchListener((v, event) -> detector.onTouchEvent(event));
-            });
+                })
+
+                binding.beginTranslatingButton.setOnTouchListener { _, event ->
+                    detector.onTouchEvent(event)
+                }
+            }
         }
 
-        public void bind(
-                ReadListItem item,
-                boolean isTargetOpen,
-                String chapterSlug,
-                CharSequence renderedSourceText,
-                CharSequence renderedTargetText
+        fun bind(
+            item: ReadListItem,
+            isTargetOpen: Boolean,
+            chapterSlug: String,
+            renderedSourceText: CharSequence?,
+            renderedTargetText: CharSequence?
         ) {
-            int cardMargin = context.getResources().getDimensionPixelSize(R.dimen.card_margin);
-            int stackedCardMargin = context.getResources().getDimensionPixelSize(R.dimen.stacked_card_margin);
-            this.chapterSlug = chapterSlug;
+            val cardMargin = context.resources.getDimensionPixelSize(R.dimen.card_margin)
+            val stackedCardMargin = context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
+            this.chapterSlug = chapterSlug
 
-            if(isTargetOpen) {
+            if (isTargetOpen) {
                 // target on top
-                binding.sourceTranslationCard.setElevation(BOTTOM_ELEVATION);
-                binding.targetTranslationCard.setElevation(TOP_ELEVATION);
-                binding.targetTranslationCard.bringToFront();
-                CardView.LayoutParams targetParams = (CardView.LayoutParams)binding.targetTranslationCard.getLayoutParams();
-                targetParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin);
-                binding.targetTranslationCard.setLayoutParams(targetParams);
-                CardView.LayoutParams sourceParams = (CardView.LayoutParams)binding.sourceTranslationCard.getLayoutParams();
-                sourceParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin);
-                binding.sourceTranslationCard.setLayoutParams(sourceParams);
-                ((View) binding.targetTranslationCard.getParent()).requestLayout();
-                ((View) binding.targetTranslationCard.getParent()).invalidate();
+                binding.sourceTranslationCard.cardElevation = BOTTOM_ELEVATION
+                binding.targetTranslationCard.cardElevation = TOP_ELEVATION
+                binding.targetTranslationCard.bringToFront()
+                val targetParams = binding.targetTranslationCard.layoutParams as FrameLayout.LayoutParams
+                targetParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin)
+                binding.targetTranslationCard.layoutParams = targetParams
+                val sourceParams = binding.sourceTranslationCard.layoutParams as FrameLayout.LayoutParams
+                sourceParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin)
+                binding.sourceTranslationCard.layoutParams = sourceParams
+                (binding.targetTranslationCard.parent as View).requestLayout()
+                (binding.targetTranslationCard.parent as View).invalidate()
 
                 // disable new tab button so we don't accidentally open it
-                binding.newTabButton.setEnabled(false);
+                binding.newTabButton.isEnabled = false
             } else {
                 // source on top
-                binding.targetTranslationCard.setElevation(BOTTOM_ELEVATION);
-                binding.sourceTranslationCard.setElevation(TOP_ELEVATION);
-                binding.sourceTranslationCard.bringToFront();
-                CardView.LayoutParams sourceParams = (CardView.LayoutParams)binding.sourceTranslationCard.getLayoutParams();
-                sourceParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin);
-                binding.sourceTranslationCard.setLayoutParams(sourceParams);
-                CardView.LayoutParams targetParams = (CardView.LayoutParams)binding.targetTranslationCard.getLayoutParams();
-                targetParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin);
-                binding.targetTranslationCard.setLayoutParams(targetParams);
-                ((View) binding.sourceTranslationCard.getParent()).requestLayout();
-                ((View) binding.sourceTranslationCard.getParent()).invalidate();
+                binding.targetTranslationCard.cardElevation = BOTTOM_ELEVATION
+                binding.sourceTranslationCard.cardElevation = TOP_ELEVATION
+                binding.sourceTranslationCard.bringToFront()
+                val sourceParams = binding.sourceTranslationCard.layoutParams as FrameLayout.LayoutParams
+                sourceParams.setMargins(cardMargin, cardMargin, stackedCardMargin, stackedCardMargin)
+                binding.sourceTranslationCard.layoutParams = sourceParams
+                val targetParams = binding.targetTranslationCard.layoutParams as FrameLayout.LayoutParams
+                targetParams.setMargins(stackedCardMargin, stackedCardMargin, cardMargin, cardMargin)
+                binding.targetTranslationCard.layoutParams = targetParams
+                (binding.sourceTranslationCard.parent as View).requestLayout()
+                (binding.sourceTranslationCard.parent as View).invalidate()
 
                 // re-enable new tab button
-                binding.newTabButton.setEnabled(true);
+                binding.newTabButton.isEnabled = true
             }
 
             // render the source chapter body
-            CharSequence sourceText = renderedSourceText;
-            if(sourceText == null) {
-                if (readModeListener != null) {
-                    sourceText = readModeListener.onRenderSourceText(this);
-                } else {
-                    sourceText = "";
-                }
+            var sourceText = renderedSourceText
+            if (sourceText == null) {
+                sourceText = readModeListener?.onRenderSourceText(this) ?: ""
             }
 
-            binding.sourceTranslationBody.setText(sourceText);
-            ViewUtil.makeLinksClickable(binding.sourceTranslationBody);
-            binding.sourceTranslationTitle.setText(item.getChapterTitle());
+            binding.sourceTranslationBody.setText(sourceText)
+            ViewUtil.makeLinksClickable(binding.sourceTranslationBody)
+            binding.sourceTranslationTitle.setText(item.chapterTitle)
 
             // render the target chapter body
-            CharSequence targetText = renderedTargetText;
-            if(targetText == null) {
-                if (readModeListener != null) {
-                    targetText = readModeListener.onRenderTargetText(this);
-                } else {
-                    targetText = "";
-                }
+            var targetText = renderedTargetText
+            if (targetText == null) {
+                targetText = readModeListener?.onRenderTargetText(this) ?: ""
             }
 
             // display begin translation button
-            if(targetText.toString().trim().isEmpty()) {
-                binding.beginTranslatingButton.setVisibility(View.VISIBLE);
+            if (targetText.toString().trim().isEmpty()) {
+                binding.beginTranslatingButton.visibility = View.VISIBLE
             } else {
-                binding.beginTranslatingButton.setVisibility(View.GONE);
+                binding.beginTranslatingButton.visibility = View.GONE
             }
 
-            binding.targetTranslationBody.setText(targetText);
-            ViewUtil.makeLinksClickable(binding.targetTranslationBody);
+            binding.targetTranslationBody.setText(targetText)
+            ViewUtil.makeLinksClickable(binding.targetTranslationBody)
 
-            String targetCardTitle = "";
+            var targetCardTitle = ""
 
             // look for translated chapter title first
-            final ChapterTranslation chapterTranslation = item.target.getChapterTranslation(chapterSlug);
-            if(null != chapterTranslation) {
-                targetCardTitle = chapterTranslation.title.trim();
+            val chapterTranslation = item.target.getChapterTranslation(chapterSlug)
+            if (chapterTranslation != null) {
+                targetCardTitle = chapterTranslation.title.trim()
             }
 
             // if no target chapter title translation, fall back to source chapter title
-            if (targetCardTitle.isEmpty() && !item.getChapterTitle().trim().isEmpty()) {
-                targetCardTitle = item.getChapterTitle().trim();
+            if (targetCardTitle.isEmpty() && item.chapterTitle.trim().isNotEmpty()) {
+                targetCardTitle = item.chapterTitle.trim()
             }
 
             if (targetCardTitle.isEmpty()) { // if no chapter titles, fall back to project title, try translated title first
-                ProjectTranslation projTrans = item.target.getProjectTranslation();
-                if(!projTrans.getTitle().trim().isEmpty()) {
-                    try {
-                        targetCardTitle = projTrans.getTitle().trim() + " " + Integer.parseInt(chapterSlug);
-                    } catch (Exception e) {
-                        targetCardTitle = projTrans.getTitle().trim() + " " + chapterSlug;
+                val projTrans = item.target.projectTranslation
+                if (projTrans.title.trim().isNotEmpty()) {
+                    targetCardTitle = try {
+                        "${projTrans.title.trim()} ${chapterSlug.toInt()}"
+                    } catch (e: Exception) {
+                        "${projTrans.title.trim()} $chapterSlug"
                     }
                 }
             }
 
             if (targetCardTitle.isEmpty()) { // fall back to project source title
-                targetCardTitle = item.source.readChunk("front", "title").trim();
-                if(!chapterSlug.equals("front")) {
-                    try {
-                        targetCardTitle += " " + Integer.parseInt(chapterSlug);
-                    } catch (Exception e) {
-                        targetCardTitle += " " + chapterSlug;
+                targetCardTitle = item.source.readChunk("front", "title").trim()
+                if (chapterSlug != "front") {
+                    targetCardTitle += try {
+                        " ${chapterSlug.toInt()}"
+                    } catch (e: Exception) {
+                        " $chapterSlug"
                     }
                 }
             }
 
-            binding.targetTranslationTitle.setText(targetCardTitle + " - " + item.target.getTargetLanguage().name);
+            binding.targetTranslationTitle.setText("$targetCardTitle - ${item.target.targetLanguage.name}")
 
             // load tabs
-            var tabs = item.getTabs();
-            renderSourceTabs(tabs, item.source.slug);
+            val tabs = item.tabs
+            renderSourceTabs(tabs, item.source.slug)
 
             // set up fonts
-            TypographyUtils.formatTitle(
-                    binding.sourceTranslationHeading,
-                    typography,
-                    assetsProvider,
-                    TranslationType.SOURCE,
-                    item.source.language.slug,
-                    item.source.language.direction
-            );
-            TypographyUtils.formatTitle(
-                    binding.sourceTranslationTitle,
-                    typography,
-                    assetsProvider,
-                    TranslationType.SOURCE,
-                    item.source.language.slug,
-                    item.source.language.direction
-            );
-            TypographyUtils.format(
-                    binding.sourceTranslationBody,
-                    typography,
-                    assetsProvider,
-                    TranslationType.SOURCE,
-                    item.source.language.slug,
-                    item.source.language.direction
-            );
-            TypographyUtils.formatTitle(
-                    binding.targetTranslationTitle,
-                    typography,
-                    assetsProvider,
-                    TranslationType.TARGET,
-                    item.target.getTargetLanguage().slug,
-                    item.target.getTargetLanguage().direction
-            );
-            TypographyUtils.format(
-                    binding.targetTranslationBody,
-                    typography,
-                    assetsProvider,
-                    TranslationType.TARGET,
-                    item.target.getTargetLanguage().slug,
-                    item.target.getTargetLanguage().direction
-            );
+            binding.sourceTranslationHeading.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                item.source.language.slug,
+                item.source.language.direction
+            )
+            binding.sourceTranslationTitle.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                item.source.language.slug,
+                item.source.language.direction
+            )
+            binding.sourceTranslationBody.format(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                item.source.language.slug,
+                item.source.language.direction
+            )
+            binding.targetTranslationTitle.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.TARGET,
+                item.target.targetLanguage.slug,
+                item.target.targetLanguage.direction
+            )
+            binding.targetTranslationBody.format(
+                typography,
+                assetsProvider,
+                TranslationType.TARGET,
+                item.target.targetLanguage.slug,
+                item.target.targetLanguage.direction
+            )
 
-            if (tabs.size() >= ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS) {
-                binding.newTabButton.setVisibility(View.GONE);
+            if (tabs.size >= ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS) {
+                binding.newTabButton.visibility = View.GONE
             } else {
-                binding.newTabButton.setVisibility(View.VISIBLE);
+                binding.newTabButton.visibility = View.VISIBLE
             }
         }
 
-        private void renderSourceTabs(List<ContentValues> tabs, String sourceSlug) {
-            binding.sourceTranslationTabs.removeOnTabSelectedListener(tabSelectedListener);
-            binding.sourceTranslationTabs.removeAllTabs();
+        private fun renderSourceTabs(tabs: List<ContentValues>, sourceSlug: String) {
+            binding.sourceTranslationTabs.removeOnTabSelectedListener(tabSelectedListener)
+            binding.sourceTranslationTabs.removeAllTabs()
 
-            for(ContentValues values:tabs) {
-                String tag = values.getAsString("tag");
-                String title = values.getAsString("title");
+            for (values in tabs) {
+                val tag = values.getAsString("tag")
+                val title = values.getAsString("title")
 
-                if (readModeListener != null) {
-                    View tabLayout = readModeListener.onCreateRemovableTabLayout(tag, title);
+                readModeListener?.let { listener ->
+                    val tabLayout = listener.onCreateRemovableTabLayout(tag, title)
 
                     if (tabLayout != null) {
-                        TabLayout.Tab tab = binding.sourceTranslationTabs.newTab();
-                        tab.setTag(tag);
-                        tab.setCustomView(tabLayout);
-                        binding.sourceTranslationTabs.addTab(tab);
+                        val tab = binding.sourceTranslationTabs.newTab()
+                        tab.tag = tag
+                        tab.customView = tabLayout
+                        binding.sourceTranslationTabs.addTab(tab)
                     }
 
-                    readModeListener.onApplyLanguageTypefaceToTab(binding.sourceTranslationTabs, values, title);
+                    listener.onApplyLanguageTypefaceToTab(binding.sourceTranslationTabs, values, title)
                 }
             }
 
             // select correct tab
-            for(int i = 0; i < binding.sourceTranslationTabs.getTabCount(); i ++) {
-                TabLayout.Tab tab = binding.sourceTranslationTabs.getTabAt(i);
-                if(sourceSlug.equals(tab.getTag())) {
-                    tab.select();
-                    break;
+            for (i in 0 until binding.sourceTranslationTabs.tabCount) {
+                val tab = binding.sourceTranslationTabs.getTabAt(i)
+                if (sourceSlug == tab?.tag) {
+                    tab.select()
+                    break
                 }
             }
 
             // hook up listener
-            binding.sourceTranslationTabs.setOnTabSelectedListener(tabSelectedListener);
+            binding.sourceTranslationTabs.addOnTabSelectedListener(tabSelectedListener)
         }
     }
 }

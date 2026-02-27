@@ -1,14 +1,13 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import android.content.ContentValues;
-import android.view.View;
+import android.content.ContentValues
+import android.view.View
+import com.google.android.material.tabs.TabLayout
 
-import com.google.android.material.tabs.TabLayout;
-
-public interface OnViewModeListener {
-    void onSourceRemoveButtonClicked(String sourceTranslationId);
-    void onSourceTranslationTabClick(String sourceTranslationId);
-    void onNewSourceTranslationTabClick();
-    View onCreateRemovableTabLayout(String tag, String title);
-    void onApplyLanguageTypefaceToTab(TabLayout layout, ContentValues values, String title);
+interface OnViewModeListener {
+    fun onSourceRemoveButtonClicked(sourceTranslationId: String)
+    fun onSourceTranslationTabClick(sourceTranslationId: String)
+    fun onNewSourceTranslationTabClick()
+    fun onCreateRemovableTabLayout(tag: String, title: String): View?
+    fun onApplyLanguageTypefaceToTab(layout: TabLayout, values: ContentValues, title: String)
 }

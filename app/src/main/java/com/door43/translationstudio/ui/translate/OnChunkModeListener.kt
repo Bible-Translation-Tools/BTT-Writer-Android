@@ -1,15 +1,14 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import android.widget.EditText;
+import android.widget.EditText
+import com.door43.translationstudio.core.TranslationFormat
 
-import com.door43.translationstudio.core.TranslationFormat;
-
-public interface OnChunkModeListener extends OnAdapterListener {
-    boolean onCheckForPromptToEditDoneTargetCard(ChunkModeAdapter.ViewHolder holder);
-    void onOpenTargetTranslationCard(ChunkModeAdapter.ViewHolder holder);
-    void onCloseTargetTranslationCard(ChunkModeAdapter.ViewHolder holder);
-    void onEditTarget(EditText target, int position);
-    void onTextChanged(CharSequence s, int start, int before, int count, int itemPosition);
-    void onConflictButtonClicked(int position);
-    CharSequence onRenderText(String text, TranslationFormat format);
+interface OnChunkModeListener : OnAdapterListener {
+    fun onCheckForPromptToEditDoneTargetCard(holder: ChunkModeAdapter.ViewHolder): Boolean
+    fun onOpenTargetTranslationCard(holder: ChunkModeAdapter.ViewHolder)
+    fun onCloseTargetTranslationCard(holder: ChunkModeAdapter.ViewHolder)
+    fun onEditTarget(target: EditText, position: Int)
+    fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int, itemPosition: Int)
+    fun onConflictButtonClicked(position: Int)
+    fun onRenderText(text: String, format: TranslationFormat): CharSequence
 }

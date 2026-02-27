@@ -72,8 +72,8 @@ object ViewUtil {
     fun animateSwapCards(
         topCard: View,
         bottomCard: View,
-        topCardElevation: Int,
-        bottomCardElevation: Int,
+        topCardElevation: Float,
+        bottomCardElevation: Float,
         leftToRight: Boolean,
         listener: Animation.AnimationListener?
     ) {

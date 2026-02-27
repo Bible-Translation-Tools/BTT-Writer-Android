@@ -1,9 +1,9 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-public interface OnReadModeListener extends OnAdapterListener {
-    void onOpenTargetTranslationCard(ReadModeAdapter.ViewHolder holder);
-    void onCloseTargetTranslationCard(ReadModeAdapter.ViewHolder holder);
-    CharSequence onRenderSourceText(ReadModeAdapter.ViewHolder holder);
-    CharSequence onRenderTargetText(ReadModeAdapter.ViewHolder holder);
-    void onOpenTranslationMode(String chapterSlug);
+interface OnReadModeListener : OnAdapterListener {
+    fun onOpenTargetTranslationCard(holder: ReadModeAdapter.ViewHolder)
+    fun onCloseTargetTranslationCard(holder: ReadModeAdapter.ViewHolder)
+    fun onRenderSourceText(holder: ReadModeAdapter.ViewHolder): CharSequence
+    fun onRenderTargetText(holder: ReadModeAdapter.ViewHolder): CharSequence
+    fun onOpenTranslationMode(chapterSlug: String)
 }

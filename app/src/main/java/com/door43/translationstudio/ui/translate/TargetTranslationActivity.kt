@@ -1,309 +1,288 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import static org.koin.android.compat.ViewModelCompat.getViewModel;
-import static org.koin.java.KoinJavaComponent.inject;
+import android.content.Context
+import android.content.Intent
+import android.graphics.Rect
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.Layout
+import android.text.TextWatcher
+import android.util.Log
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.PopupMenu
+import android.widget.SeekBar
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.App
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.databinding.ActivityTargetTranslationDetailBinding
+import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.dialogs.BackupDialog
+import com.door43.translationstudio.ui.dialogs.FeedbackDialog
+import com.door43.translationstudio.ui.dialogs.PrintDialog
+import com.door43.translationstudio.ui.draft.DraftActivity
+import com.door43.translationstudio.ui.publish.PublishActivity
+import com.door43.translationstudio.ui.translate.review.SearchSubject
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
+import com.door43.widget.VerticalSeekBar
+import com.door43.widget.VerticalSeekBarHint
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import it.moondroid.seekbarhint.library.SeekBarHint
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.unfoldingword.tools.logger.Logger
+import java.util.Timer
+import java.util.TimerTask
 
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Rect;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.Editable;
-import android.text.Layout;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.PopupMenu;
-import android.widget.SeekBar;
-import android.widget.Spinner;
-import android.widget.TextView;
+class TargetTranslationActivity : BaseActivity(),
+    ViewModeFragment.OnEventListener,
+    FirstTabFragment.OnEventListener,
+    AdapterView.OnItemSelectedListener {
 
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
+    private val prefRepository: IPreferenceRepository by inject()
+    private val viewModel: TargetTranslationViewModel by viewModel()
 
-import com.door43.data.IPreferenceRepository;
-import com.door43.translationstudio.App;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.core.TranslationViewMode;
-import com.door43.translationstudio.core.Translator;
-import com.door43.translationstudio.databinding.ActivityTargetTranslationDetailBinding;
-import com.door43.translationstudio.ui.BaseActivity;
-import com.door43.translationstudio.ui.SettingsActivity;
-import com.door43.translationstudio.ui.dialogs.BackupDialog;
-import com.door43.translationstudio.ui.dialogs.FeedbackDialog;
-import com.door43.translationstudio.ui.dialogs.PrintDialog;
-import com.door43.translationstudio.ui.draft.DraftActivity;
-import com.door43.translationstudio.ui.publish.PublishActivity;
-import com.door43.translationstudio.ui.translate.review.SearchSubject;
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
-import com.door43.widget.VerticalSeekBar;
-import com.door43.widget.VerticalSeekBarHint;
-import com.door43.widget.ViewUtil;
-import com.google.android.material.snackbar.Snackbar;
+    private lateinit var binding: ActivityTargetTranslationDetailBinding
 
-import org.unfoldingword.tools.logger.Logger;
+    private var fragment: Fragment? = null
+    private var graduations: ViewGroup? = null
+    private var commitTimer = Timer()
+    private var searchEnabled = false
+    private var searchTextWatcher: TextWatcher? = null
+    private var searchTimerTask: SearchTimerTask? = null
+    private var searchTimer: Timer? = null
+    private var searchString: String? = null
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+    private val enableGrids = false
+    private var seekbarMultiplier = 1 // allows for more granularity in setting position if cards are few
+    private var haveMergeConflict = false
+    private var mergeConflictFilterEnabled = false
+    private var foundTextFormat: Int = 0
+    private var searchAtEnd = false
+    private var searchAtStart = false
+    private var numberOfChunkMatches = 0
+    private var searchResumed = false
+    private var showConflictSummary = false
 
-import it.moondroid.seekbarhint.library.SeekBarHint;
-import kotlin.Lazy;
+    companion object {
+        private const val TAG = "TranslationActivity"
+        private const val COMMIT_INTERVAL = 2 * 60 * 1000L // commit changes every 2 minutes
+        const val SEARCH_START_DELAY = 1000L
+        const val STATE_SEARCH_ENABLED = "state_search_enabled"
+        const val STATE_SEARCH_TEXT = "state_search_text"
+        const val STATE_HAVE_MERGE_CONFLICT = "state_have_merge_conflict"
+        const val STATE_MERGE_CONFLICT_FILTER_ENABLED = "state_merge_conflict_filter_enabled"
+        const val STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED = "state_merge_conflict_summary_displayed"
+        const val STATE_FILTER_MERGE_CONFLICTS = "state_filter_merge_conflicts"
+        const val SEARCH_SOURCE = "search_source"
+        const val STATE_SEARCH_AT_END = "state_search_at_end"
+        const val STATE_SEARCH_AT_START = "state_search_at_start"
+        const val STATE_SEARCH_FOUND_CHUNKS = "state_search_found_chunks"
+        const val RESULT_DO_UPDATE = 42
+    }
 
-public class TargetTranslationActivity extends BaseActivity implements ViewModeFragment.OnEventListener, FirstTabFragment.OnEventListener, Spinner.OnItemSelectedListener {
-
-    Lazy<IPreferenceRepository> prefRepository = inject(IPreferenceRepository.class);
-
-    private TargetTranslationViewModel viewModel;
-    private ActivityTargetTranslationDetailBinding binding;
-
-    private static final String TAG = "TranslationActivity";
-
-    private static final long COMMIT_INTERVAL = 2 * 60 * 1000; // commit changes every 2 minutes
-    public static final int SEARCH_START_DELAY = 1000;
-    public static final String STATE_SEARCH_ENABLED = "state_search_enabled";
-    public static final String STATE_SEARCH_TEXT = "state_search_text";
-    public static final String STATE_HAVE_MERGE_CONFLICT = "state_have_merge_conflict";
-    public static final String STATE_MERGE_CONFLICT_FILTER_ENABLED = "state_merge_conflict_filter_enabled";
-    public static final String STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED = "state_merge_conflict_summary_displayed";
-    public static final String STATE_FILTER_MERGE_CONFLICTS = "state_filter_merge_conflicts";
-    public static final String SEARCH_SOURCE = "search_source";
-    public static final String STATE_SEARCH_AT_END = "state_search_at_end";
-    public static final String STATE_SEARCH_AT_START = "state_search_at_start";
-    public static final String STATE_SEARCH_FOUND_CHUNKS = "state_search_found_chunks";
-    public static final int RESULT_DO_UPDATE = 42;
-
-    private Fragment fragment;
-    private ViewGroup graduations;
-    private Timer commitTimer = new Timer();
-    private boolean searchEnabled = false;
-    private TextWatcher searchTextWatcher;
-    private SearchTimerTask searchTimerTask;
-    private Timer searchTimer;
-    private String searchString;
-
-    private final boolean enableGrids = false;
-    private int seekbarMultiplier = 1; // allows for more granularity in setting position if cards are few
-    private boolean haveMergeConflict = false;
-    private boolean mergeConflictFilterEnabled = false;
-    private int foundTextFormat;
-    private boolean searchAtEnd = false;
-    private boolean searchAtStart = false;
-    private int numberOfChunkMatches = 0;
-    private boolean searchResumed = false;
-    private boolean showConflictSummary = false;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        binding = ActivityTargetTranslationDetailBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityTargetTranslationDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // validate parameters
-        Bundle args = getIntent().getExtras();
-        assert args != null;
+        val args = intent.extras
+        requireNotNull(args)
 
-        String targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null);
-        mergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false);
+        val targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null)
+        mergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false)
 
-        viewModel = getViewModel(this, TargetTranslationViewModel.class);
-
-        TargetTranslation translation = viewModel.getTargetTranslation(targetTranslationId);
+        val translation = viewModel.getTargetTranslation(targetTranslationId)
         if (translation == null) {
             Logger.e(
-                    TAG,
-                    "A valid target translation id is required. Received " + targetTranslationId + " but the translation could not be found"
-            );
-            finish();
-            return;
+                TAG,
+                "A valid target translation id is required. Received $targetTranslationId but the translation could not be found"
+            )
+            finish()
+            return
         }
 
-        if(savedInstanceState == null) {
+        if (savedInstanceState == null) {
             // reset cached values
-            ViewModeFragment.reset();
+            ViewModeFragment.reset()
         }
 
         // open used source translations by default
-        viewModel.openUsedSourceTranslations();
+        viewModel.openUsedSourceTranslations()
 
         // notify user that a draft translation exists the first time activity starts
-        if(savedInstanceState == null &&
-                viewModel.draftIsAvailable() &&
-                viewModel.getTargetTranslation().numTranslated() == 0
+        if (savedInstanceState == null &&
+            viewModel.draftIsAvailable() &&
+            viewModel.targetTranslation.numTranslated() == 0
         ) {
-            Snackbar snack = Snackbar
-                    .make(
-                        findViewById(android.R.id.content),
-                        R.string.draft_translation_exists,
-                        Snackbar.LENGTH_LONG
-                    )
-                    .setAction(R.string.preview, v -> {
-                        Intent intent = new Intent(this, DraftActivity.class);
-                        intent.putExtra(
-                                DraftActivity.EXTRA_TARGET_TRANSLATION_ID,
-                                viewModel.getTargetTranslation().getId()
-                        );
-                        startActivity(intent);
-                    });
-            ViewUtil.setSnackBarTextColor(snack, getResources().getColor(R.color.light_primary_text));
-            snack.show();
+            val snack = Snackbar.make(
+                findViewById(android.R.id.content),
+                R.string.draft_translation_exists,
+                Snackbar.LENGTH_LONG
+            ).setAction(R.string.preview) {
+                val intent = Intent(this, DraftActivity::class.java)
+                intent.putExtra(
+                    DraftActivity.EXTRA_TARGET_TRANSLATION_ID,
+                    viewModel.targetTranslation.id
+                )
+                startActivity(intent)
+            }
+            ViewUtil.setSnackBarTextColor(
+                snack,
+                ContextCompat.getColor(this, R.color.light_primary_text)
+            )
+            snack.show()
         }
 
         // manual location settings
-        int modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1);
-        if (modeIndex > 0 && modeIndex < TranslationViewMode.values().length) {
-            viewModel.setLastViewMode(modeIndex);
+        val modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1)
+        if (modeIndex > 0 && modeIndex < TranslationViewMode.entries.size) {
+            viewModel.setLastViewMode(TranslationViewMode.entries[modeIndex])
         }
 
-        binding.searchPane.downSearch.setOnClickListener(v -> moveSearch(true));
-        binding.searchPane.upSearch.setOnClickListener(v -> moveSearch(false));
+        binding.searchPane.downSearch.setOnClickListener { moveSearch(true) }
+        binding.searchPane.upSearch.setOnClickListener { moveSearch(false) }
 
-        foundTextFormat = R.string.found_in_chunks;
+        foundTextFormat = R.string.found_in_chunks
 
         // inject fragments
-        if (findViewById(R.id.fragment_container) != null) {
+        if (findViewById<View>(R.id.fragment_container) != null) {
             if (savedInstanceState != null) {
-                fragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
             } else {
-                TranslationViewMode viewMode = viewModel.getLastViewMode();
-                switch (viewMode) {
-                    case READ:
-                        fragment = new ReadModeFragment();
-                        break;
-                    case CHUNK:
-                        fragment = new ChunkModeFragment();
-                        break;
-                    case REVIEW:
-                        fragment = new ReviewModeFragment();
-                        break;
+                fragment = when (viewModel.getLastViewMode()) {
+                    TranslationViewMode.READ -> ReadModeFragment()
+                    TranslationViewMode.CHUNK -> ChunkModeFragment()
+                    TranslationViewMode.REVIEW -> ReviewModeFragment()
                 }
-                fragment.setArguments(getIntent().getExtras());
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .add(R.id.fragment_container, fragment)
-                        .commit();
+                fragment?.arguments = intent.extras
+                supportFragmentManager
+                    .beginTransaction()
+                    .add(R.id.fragment_container, fragment!!)
+                    .commit()
                 // TODO: animate
                 // TODO: update menu
             }
         }
 
-        setUpSeekBar();
+        setUpSeekBar()
 
         // set up menu items
-        buildMenu();
+        buildMenu()
 
-        binding.translatorSidebar.warnMergeConflict.setOnClickListener(v -> {
-            mergeConflictFilterEnabled = !mergeConflictFilterEnabled; // toggle filter state
-            setMergeConflictFilter(); // update displayed state
-            openTranslationMode(TranslationViewMode.REVIEW, null); // make sure we are in review mode
-        });
+        binding.translatorSidebar.warnMergeConflict.setOnClickListener {
+            mergeConflictFilterEnabled = !mergeConflictFilterEnabled // toggle filter state
+            setMergeConflictFilter() // update displayed state
+            openTranslationMode(TranslationViewMode.REVIEW, null) // make sure we are in review mode
+        }
 
-        binding.translatorSidebar.actionRead.setOnClickListener(v -> {
-            removeSearchBar();
-            openTranslationMode(TranslationViewMode.READ, null);
-        });
+        binding.translatorSidebar.actionRead.setOnClickListener {
+            removeSearchBar()
+            openTranslationMode(TranslationViewMode.READ, null)
+        }
 
-        binding.translatorSidebar.actionChunk.setOnClickListener(v -> {
-            removeSearchBar();
-            openTranslationMode(TranslationViewMode.CHUNK, null);
-        });
+        binding.translatorSidebar.actionChunk.setOnClickListener {
+            removeSearchBar()
+            openTranslationMode(TranslationViewMode.CHUNK, null)
+        }
 
-        binding.translatorSidebar.actionReview.setOnClickListener(v -> {
-            removeSearchBar();
-            mergeConflictFilterEnabled = false;
-            setMergeConflictFilter();
-            openTranslationMode(TranslationViewMode.REVIEW, null);
-        });
+        binding.translatorSidebar.actionReview.setOnClickListener {
+            removeSearchBar()
+            mergeConflictFilterEnabled = false
+            setMergeConflictFilter()
+            openTranslationMode(TranslationViewMode.REVIEW, null)
+        }
 
-        if(savedInstanceState != null) {
-            searchEnabled = savedInstanceState.getBoolean(STATE_SEARCH_ENABLED, false);
-            searchResumed = searchEnabled;
-            searchAtEnd = savedInstanceState.getBoolean(STATE_SEARCH_AT_END, false);
-            searchAtStart = savedInstanceState.getBoolean(STATE_SEARCH_AT_START, false);
-            numberOfChunkMatches = savedInstanceState.getInt(STATE_SEARCH_FOUND_CHUNKS, 0);
-            searchString = savedInstanceState.getString(STATE_SEARCH_TEXT, null);
-            haveMergeConflict = savedInstanceState.getBoolean(STATE_HAVE_MERGE_CONFLICT, false);
-            mergeConflictFilterEnabled = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, false);
-            showConflictSummary = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED, false);
+        if (savedInstanceState != null) {
+            searchEnabled = savedInstanceState.getBoolean(STATE_SEARCH_ENABLED, false)
+            searchResumed = searchEnabled
+            searchAtEnd = savedInstanceState.getBoolean(STATE_SEARCH_AT_END, false)
+            searchAtStart = savedInstanceState.getBoolean(STATE_SEARCH_AT_START, false)
+            numberOfChunkMatches = savedInstanceState.getInt(STATE_SEARCH_FOUND_CHUNKS, 0)
+            searchString = savedInstanceState.getString(STATE_SEARCH_TEXT, null)
+            haveMergeConflict = savedInstanceState.getBoolean(STATE_HAVE_MERGE_CONFLICT, false)
+            mergeConflictFilterEnabled = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, false)
+            showConflictSummary = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED, false)
         } else {
-            showConflictSummary = mergeConflictFilterEnabled;
+            showConflictSummary = mergeConflictFilterEnabled
         }
 
-        setupSidebarModeIcons();
-        setSearchBarVisibility(searchEnabled);
-        if(searchEnabled) {
-            setSearchSpinner(true, numberOfChunkMatches, searchAtEnd, searchAtStart); // restore initial state
+        setupSidebarModeIcons()
+        setSearchBarVisibility(searchEnabled)
+        if (searchEnabled) {
+            setSearchSpinner(true, numberOfChunkMatches, searchAtEnd, searchAtStart) // restore initial state
         }
 
-        restartAutoCommitTimer();
+        restartAutoCommitTimer()
     }
 
     /**
      * enable/disable merge conflict filter in adapter
      */
-    private void setMergeConflictFilter() {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(() -> {
-            if(fragment instanceof ViewModeFragment viewModeFragment) {
-                viewModeFragment.setShowMergeSummary(showConflictSummary);
-                viewModeFragment.setMergeConflictFilter(
-                        mergeConflictFilterEnabled,
-                        false
-                );
+    private fun setMergeConflictFilter() {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            val currentFragment = fragment
+            if (currentFragment is ViewModeFragment) {
+                currentFragment.setShowMergeSummary(showConflictSummary)
+                currentFragment.setMergeConflictFilter(mergeConflictFilterEnabled, false)
             }
-            onEnableMergeConflict(haveMergeConflict, mergeConflictFilterEnabled);
-        });
+            onEnableMergeConflict(haveMergeConflict, mergeConflictFilterEnabled)
+        }
     }
 
     /**
      * called by adapter to set state for merge conflict icon
      */
-    @Override
-    public void onEnableMergeConflict(boolean showConflicted, boolean active) {
-        haveMergeConflict = showConflicted;
-        mergeConflictFilterEnabled = active;
-        binding.translatorSidebar.warnMergeConflict.setVisibility(showConflicted ? View.VISIBLE : View.GONE);
-        if(mergeConflictFilterEnabled) {
-            binding.translatorSidebar.warnMergeConflict.setImageResource(R.drawable.ic_warning_white_24dp);
-            final int highlightedColor = getResources().getColor(R.color.primary_dark);
-            binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor);
+    override fun onEnableMergeConflict(showConflicted: Boolean, active: Boolean) {
+        haveMergeConflict = showConflicted
+        mergeConflictFilterEnabled = active
+        binding.translatorSidebar.warnMergeConflict.visibility = if (showConflicted) View.VISIBLE else View.GONE
+        if (mergeConflictFilterEnabled) {
+            binding.translatorSidebar.warnMergeConflict.setImageResource(R.drawable.ic_warning_white_24dp)
+            val highlightedColor = ContextCompat.getColor(this, R.color.primary_dark)
+            binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor)
         } else {
-            binding.translatorSidebar.warnMergeConflict.setImageResource(R.drawable.ic_warning_inactive_24dp);
-            binding.translatorSidebar.warnMergeConflict.setBackgroundDrawable(null); // clear any previous background highlighting
+            binding.translatorSidebar.warnMergeConflict.setImageResource(R.drawable.ic_warning_inactive_24dp)
+            binding.translatorSidebar.warnMergeConflict.background = null // clear any previous background highlighting
         }
     }
 
-    private void setUpSeekBar() {
-        if(enableGrids) {
-            graduations = binding.translatorSidebar.actionSeekGraduations;
+    private fun setUpSeekBar() {
+        if (enableGrids) {
+            graduations = binding.translatorSidebar.actionSeekGraduations
         }
-        SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        seekBar.setMax(100);
-        seekBar.setProgress(computePositionFromProgress(0));
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-//                progress = handleItemCountIfChanged(progress);
-                int correctedProgress = correctProgress(progress);
-                correctedProgress = limitRange(correctedProgress, 0, seekBar.getMax() - 1);
-                int position = correctedProgress / seekbarMultiplier;
-                int percentage = 0;
+        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+        seekBar.max = 100
+        seekBar.progress = computePositionFromProgress(0)
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                var correctedProgress = correctProgress(progress)
+                correctedProgress = limitRange(correctedProgress, 0, seekBar.max - 1)
+                val position = correctedProgress / seekbarMultiplier
+                var percentage = 0
 
-                if(seekbarMultiplier > 1) { // if we need some granularity, calculate fractional amount
-                    int fractional = correctedProgress - position * seekbarMultiplier;
-                    if(fractional != 0) {
-                        percentage = 100 * fractional / seekbarMultiplier;
+                if (seekbarMultiplier > 1) { // if we need some granularity, calculate fractional amount
+                    val fractional = correctedProgress - position * seekbarMultiplier
+                    if (fractional != 0) {
+                        percentage = 100 * fractional / seekbarMultiplier
                     }
                 }
 
@@ -311,572 +290,546 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
 
                 // If this change was initiated by a click on a UI element (rather than as a result
                 // of updates within the program), then update the view accordingly.
-                if (fragment instanceof ViewModeFragment && fromUser) {
-                    ((ViewModeFragment) fragment).onScrollProgressUpdate(position, percentage);
+                val currentFragment = fragment
+                if (currentFragment is ViewModeFragment && fromUser) {
+                    currentFragment.onScrollProgressUpdate(position, percentage)
                 }
 
-                closeKeyboard();
+                closeKeyboard()
             }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                if(graduations != null) {
-                    graduations.animate().alpha(1.f);
-                }
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+                graduations?.animate()?.alpha(1f)
             }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                if(graduations != null) {
-                    graduations.animate().alpha(0.f);
-                }
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                graduations?.animate()?.alpha(0f)
             }
-        });
+        })
 
-        if(seekBar instanceof SeekBarHint) {
-            ((SeekBarHint) seekBar).setOnProgressChangeListener((seekBarHint, progress) ->
-                    getFormattedChapter(progress));
+        if (seekBar is SeekBarHint) {
+            seekBar.setOnProgressChangeListener { _, progress -> getFormattedChapter(progress) }
         }
 
-        if(seekBar instanceof VerticalSeekBarHint) {
-            ((VerticalSeekBarHint) seekBar).setOnProgressChangeListener((seekBarHint, progress) -> getFormattedChapter(progress));
+        if (seekBar is VerticalSeekBarHint) {
+            seekBar.setOnProgressChangeListener { _, progress -> getFormattedChapter(progress) }
         }
     }
 
     /**
      * clips value to within range min to max
-     * @param value
-     * @param min
-     * @param max
-     * @return
      */
-    private int limitRange(int value, int min, int max) {
-        int newValue = value;
-        if(newValue < min) {
-            newValue = min;
-        } else
-        if(newValue > max) {
-            newValue = max;
+    private fun limitRange(value: Int, min: Int, max: Int): Int {
+        var newValue = value
+        if (newValue < min) {
+            newValue = min
+        } else if (newValue > max) {
+            newValue = max
         }
-        return newValue;
+        return newValue
     }
 
     /**
      * get chapter string to display
-     * @param progress
-     * @return
      */
-    private String getFormattedChapter(int progress) {
-        int position = computePositionFromProgress(progress);
-        String chapter = getChapterSlug(position);
-        String displayedText = " " + chapter + " ";
-        return displayedText;
+    private fun getFormattedChapter(progress: Int): String {
+        val position = computePositionFromProgress(progress)
+        val chapter = getChapterSlug(position)
+        return " $chapter "
     }
 
-    public void onSaveInstanceState(Bundle out) {
-        out.putBoolean(STATE_SEARCH_ENABLED, searchEnabled);
-        String searchText = getFilterText();
-        if(searchEnabled) {
-            out.putString(STATE_SEARCH_TEXT, searchText);
-            out.putBoolean(STATE_SEARCH_AT_END, searchAtEnd);
-            out.putBoolean(STATE_SEARCH_AT_START, searchAtStart);
-            out.putInt(STATE_SEARCH_FOUND_CHUNKS, numberOfChunkMatches);
+    override fun onSaveInstanceState(out: Bundle) {
+        out.putBoolean(STATE_SEARCH_ENABLED, searchEnabled)
+        val searchText = getFilterText()
+        if (searchEnabled) {
+            out.putString(STATE_SEARCH_TEXT, searchText)
+            out.putBoolean(STATE_SEARCH_AT_END, searchAtEnd)
+            out.putBoolean(STATE_SEARCH_AT_START, searchAtStart)
+            out.putInt(STATE_SEARCH_FOUND_CHUNKS, numberOfChunkMatches)
         }
-        out.putBoolean(STATE_HAVE_MERGE_CONFLICT, haveMergeConflict);
-        out.putBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, mergeConflictFilterEnabled);
-        if(fragment instanceof ViewModeFragment) {
+        out.putBoolean(STATE_HAVE_MERGE_CONFLICT, haveMergeConflict)
+        out.putBoolean(STATE_MERGE_CONFLICT_FILTER_ENABLED, mergeConflictFilterEnabled)
+        val currentFragment = fragment
+        if (currentFragment is ViewModeFragment) {
             out.putBoolean(
-                    STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED,
-                    ((ViewModeFragment) fragment).ismMergeConflictSummaryDisplayed()
-            );
+                STATE_MERGE_CONFLICT_SUMMARY_DISPLAYED,
+                currentFragment.ismMergeConflictSummaryDisplayed()
+            )
         }
-        super.onSaveInstanceState(out);
+        super.onSaveInstanceState(out)
     }
 
-    private void buildMenu() {
-        binding.translatorSidebar.actionMore.setOnClickListener(v -> {
-            PopupMenu moreMenu = new PopupMenu(TargetTranslationActivity.this, v);
-            ViewUtil.forcePopupMenuIcons(moreMenu);
-            moreMenu.getMenuInflater().inflate(R.menu.menu_target_translation_detail, moreMenu.getMenu());
+    private fun buildMenu() {
+        binding.translatorSidebar.actionMore.setOnClickListener { v ->
+            val moreMenu = PopupMenu(this@TargetTranslationActivity, v)
+            ViewUtil.forcePopupMenuIcons(moreMenu)
+            moreMenu.menuInflater.inflate(R.menu.menu_target_translation_detail, moreMenu.menu)
 
             // display menu item for draft translations
-            MenuItem draftsMenuItem = moreMenu.getMenu().findItem(R.id.action_drafts_available);
-            draftsMenuItem.setVisible(viewModel.draftIsAvailable());
+            val draftsMenuItem = moreMenu.menu.findItem(R.id.action_drafts_available)
+            draftsMenuItem.isVisible = viewModel.draftIsAvailable()
 
-            MenuItem searchMenuItem = moreMenu.getMenu().findItem(R.id.action_search);
-            boolean searchSupported = isSearchSupported();
-            searchMenuItem.setVisible(searchSupported);
+            val searchMenuItem = moreMenu.menu.findItem(R.id.action_search)
+            val searchSupported = isSearchSupported()
+            searchMenuItem.isVisible = searchSupported
 
-            MenuItem markAllChunksItem = moreMenu.getMenu().findItem(R.id.mark_chunks_done);
-            boolean markAllChunksSupported = isMarkAllChunksSupported();
-            markAllChunksItem.setVisible(markAllChunksSupported);
+            val markAllChunksItem = moreMenu.menu.findItem(R.id.mark_chunks_done)
+            val markAllChunksSupported = isMarkAllChunksSupported()
+            markAllChunksItem.isVisible = markAllChunksSupported
 
-            moreMenu.setOnMenuItemClickListener(item -> {
-                int itemId = item.getItemId();
-                if (itemId == R.id.action_translations) {
-                    finish();
-                    return true;
-                } else if (itemId == R.id.action_publish) {
-                    Intent publishIntent = new Intent(TargetTranslationActivity.this, PublishActivity.class);
-                    publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                    publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION);
-                    startActivity(publishIntent);
-                    // TRICKY: we may move back and forth between the publisher and translation activities
-                    // so we finish to avoid filling the stack.
-                    finish();
-                    return true;
-                } else if (itemId == R.id.action_drafts_available) {
-                    Intent intent = new Intent(TargetTranslationActivity.this, DraftActivity.class);
-                    intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                    startActivity(intent);
-                    return true;
-                } else if (itemId == R.id.action_backup) {
-                    FragmentTransaction backupFt = getSupportFragmentManager().beginTransaction();
-                    Fragment backupPrev = getSupportFragmentManager().findFragmentByTag(BackupDialog.TAG);
-                    if (backupPrev != null) {
-                        backupFt.remove(backupPrev);
+            moreMenu.setOnMenuItemClickListener { item: MenuItem ->
+                when (item.itemId) {
+                    R.id.action_translations -> {
+                        finish()
+                        true
                     }
-                    backupFt.addToBackStack(null);
-
-                    BackupDialog backupDialog = new BackupDialog();
-                    Bundle args = new Bundle();
-                    args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                    backupDialog.setArguments(args);
-                    backupDialog.show(backupFt, BackupDialog.TAG);
-                    return true;
-                } else if (itemId == R.id.action_print) {
-                    FragmentTransaction printFt = getSupportFragmentManager().beginTransaction();
-                    Fragment printPrev = getSupportFragmentManager().findFragmentByTag("printDialog");
-                    if (printPrev != null) {
-                        printFt.remove(printPrev);
+                    R.id.action_publish -> {
+                        val publishIntent = Intent(this@TargetTranslationActivity, PublishActivity::class.java)
+                        publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
+                        publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION)
+                        startActivity(publishIntent)
+                        // TRICKY: we may move back and forth between the publisher and translation activities
+                        // so we finish to avoid filling the stack.
+                        finish()
+                        true
                     }
-                    printFt.addToBackStack(null);
-
-                    PrintDialog printDialog = new PrintDialog();
-                    Bundle printArgs = new Bundle();
-                    printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-                    printDialog.setArguments(printArgs);
-                    printDialog.show(printFt, "printDialog");
-                    return true;
-                } else if (itemId == R.id.action_feedback) {
-                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                    Fragment prev = getSupportFragmentManager().findFragmentByTag("bugDialog");
-                    if (prev != null) {
-                        ft.remove(prev);
+                    R.id.action_drafts_available -> {
+                        val intent = Intent(this@TargetTranslationActivity, DraftActivity::class.java)
+                        intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
+                        startActivity(intent)
+                        true
                     }
-                    ft.addToBackStack(null);
+                    R.id.action_backup -> {
+                        val backupFt = supportFragmentManager.beginTransaction()
+                        val backupPrev = supportFragmentManager.findFragmentByTag(BackupDialog.TAG)
+                        if (backupPrev != null) {
+                            backupFt.remove(backupPrev)
+                        }
+                        backupFt.addToBackStack(null)
 
-                    FeedbackDialog dialog = new FeedbackDialog();
-                    dialog.show(ft, "bugDialog");
-                    return true;
-                } else if (itemId == R.id.action_settings) {
-                    Intent settingsIntent = new Intent(
-                            TargetTranslationActivity.this,
-                            SettingsActivity.class
-                    );
-                    startActivity(settingsIntent);
-                    return true;
-                } else if (itemId == R.id.action_search) {
-                    setSearchBarVisibility(true);
-                    return true;
-                } else if (itemId == R.id.mark_chunks_done) {
-                    ((ViewModeFragment) fragment).markAllChunksDone();
-                    return true;
-                } else {
-                    return false;
+                        val backupDialog = BackupDialog()
+                        val args = Bundle()
+                        args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
+                        backupDialog.arguments = args
+                        backupDialog.show(backupFt, BackupDialog.TAG)
+                        true
+                    }
+                    R.id.action_print -> {
+                        val printFt = supportFragmentManager.beginTransaction()
+                        val printPrev = supportFragmentManager.findFragmentByTag("printDialog")
+                        if (printPrev != null) {
+                            printFt.remove(printPrev)
+                        }
+                        printFt.addToBackStack(null)
+
+                        val printDialog = PrintDialog()
+                        val printArgs = Bundle()
+                        printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
+                        printDialog.arguments = printArgs
+                        printDialog.show(printFt, "printDialog")
+                        true
+                    }
+                    R.id.action_feedback -> {
+                        val ft = supportFragmentManager.beginTransaction()
+                        val prev = supportFragmentManager.findFragmentByTag("bugDialog")
+                        if (prev != null) {
+                            ft.remove(prev)
+                        }
+                        ft.addToBackStack(null)
+
+                        val dialog = FeedbackDialog()
+                        dialog.show(ft, "bugDialog")
+                        true
+                    }
+                    R.id.action_settings -> {
+                        val settingsIntent = Intent(this@TargetTranslationActivity, SettingsActivity::class.java)
+                        startActivity(settingsIntent)
+                        true
+                    }
+                    R.id.action_search -> {
+                        setSearchBarVisibility(true)
+                        true
+                    }
+                    R.id.mark_chunks_done -> {
+                        (fragment as? ViewModeFragment)?.markAllChunksDone()
+                        true
+                    }
+                    else -> false
                 }
-            });
-            moreMenu.show();
-        });
+            }
+            moreMenu.show()
+        }
     }
 
     /**
      * hide search bar and clear search text
      */
-    private void removeSearchBar() {
-        setSearchBarVisibility(false);
-        setFilterText(null);
-        filter(null); // clear search filter
+    private fun removeSearchBar() {
+        setSearchBarVisibility(false)
+        setFilterText(null)
+        filter(null) // clear search filter
     }
 
     /**
      * method to see if searching is supported
      */
-    public boolean isSearchSupported() {
-        if(fragment instanceof ViewModeFragment) {
-            return ((ViewModeFragment) fragment).hasFilter();
+    private fun isSearchSupported(): Boolean {
+        val currentFragment = fragment
+        return if (currentFragment is ViewModeFragment) {
+            currentFragment.hasFilter()
+        } else {
+            false
         }
-        return false;
     }
 
     /**
      * Check to see if marking all chunks done is supported
      */
-    public boolean isMarkAllChunksSupported() {
-        return fragment instanceof ReviewModeFragment;
+    private fun isMarkAllChunksSupported(): Boolean {
+        return fragment is ReviewModeFragment
     }
 
     /**
      * change state of search bar
      * @param show - if true set visible
      */
-    private void setSearchBarVisibility(boolean show) {
+    private fun setSearchBarVisibility(show: Boolean) {
         // toggle search bar
-        int visibility = View.GONE;
-        if(show) {
-            visibility = View.VISIBLE;
-        } else {
-            App.closeKeyboard(TargetTranslationActivity.this);
-            setSearchSpinner(false, 0, true, true);
+        val visibility = if (show) View.VISIBLE else View.GONE
+        if (!show) {
+            App.closeKeyboard(this@TargetTranslationActivity)
+            setSearchSpinner(doingSearch = false, numberOfChunkMatches = 0, atEnd = true, atStart = true)
         }
 
-        binding.searchPane.getRoot().setVisibility(visibility);
-        searchEnabled = show;
+        binding.searchPane.root.visibility = visibility
+        searchEnabled = show
 
-        if(searchTextWatcher != null) {
-            binding.searchPane.searchText.removeTextChangedListener(searchTextWatcher); // remove old listener
-            searchTextWatcher = null;
+        if (searchTextWatcher != null) {
+            binding.searchPane.searchText.removeTextChangedListener(searchTextWatcher) // remove old listener
+            searchTextWatcher = null
         }
 
-        if(show) {
-            searchTextWatcher = new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-                @Override
-                public void afterTextChanged(Editable s) {
-                    if(searchTimer != null) {
-                        searchTimer.cancel();
-                    }
+        if (show) {
+            searchTextWatcher = object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable) {
+                    searchTimer?.cancel()
 
-                    searchTimer = new Timer();
-                    searchTimerTask = new SearchTimerTask(TargetTranslationActivity.this, s);
-                    searchTimer.schedule(searchTimerTask, SEARCH_START_DELAY);
+                    searchTimer = Timer()
+                    searchTimerTask = SearchTimerTask(this@TargetTranslationActivity, s)
+                    searchTimer?.schedule(searchTimerTask, SEARCH_START_DELAY)
                 }
-            };
+            }
 
-            binding.searchPane.searchText.addTextChangedListener(searchTextWatcher);
-            if(searchResumed) {
+            binding.searchPane.searchText.addTextChangedListener(searchTextWatcher)
+            if (searchResumed) {
                 // we don't have a way to reliably determine the state of the soft keyboard
                 //   so we don't initially show the keyboard on resume.  This should be less
                 //   annoying than always popping up the keyboard on resume
-                searchResumed = false;
+                searchResumed = false
             } else {
-                setFocusOnTextSearchEdit();
+                setFocusOnTextSearchEdit()
             }
         } else {
-            filter(null); // clear search filter
+            filter(null) // clear search filter
         }
 
-        if(searchString != null) { // restore after rotate
-            binding.searchPane.searchText.setText(searchString);
-            if(show) {
-                filter(searchString);
+        if (searchString != null) { // restore after rotate
+            binding.searchPane.searchText.setText(searchString)
+            if (show) {
+                filter(searchString)
             }
-            searchString = null;
+            searchString = null
         }
 
-        binding.searchPane.closeSearch.setOnClickListener(v -> removeSearchBar());
+        binding.searchPane.closeSearch.setOnClickListener { removeSearchBar() }
 
-        List<String> types = new ArrayList<String>();
-        types.add(this.getResources().getString(R.string.search_source));
-        types.add(this.getResources().getString(R.string.search_translation));
-        ArrayAdapter<String> typesAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, types);
-        typesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.searchPane.searchType.setAdapter(typesAdapter);
+        val types = ArrayList<String>()
+        types.add(resources.getString(R.string.search_source))
+        types.add(resources.getString(R.string.search_translation))
+        val typesAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, types)
+        typesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.searchPane.searchType.adapter = typesAdapter
 
         // restore last search type
-        String lastSearchSourceStr = prefRepository.getValue().getDefaultPref(SEARCH_SOURCE, SearchSubject.SOURCE.name().toUpperCase(), String.class);
-        SearchSubject lastSearchSource = SearchSubject.SOURCE;
+        val lastSearchSourceStr = prefRepository.getDefaultPref(SEARCH_SOURCE, SearchSubject.SOURCE.name.uppercase(), String::class.javaObjectType)
+        var lastSearchSource = SearchSubject.SOURCE
         try {
-            lastSearchSource = SearchSubject.valueOf(lastSearchSourceStr.toUpperCase());
-        } catch(Exception e) {
-            e.printStackTrace();
+            lastSearchSource = SearchSubject.valueOf(lastSearchSourceStr.uppercase())
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        binding.searchPane.searchType.setSelection(lastSearchSource.ordinal());
-        binding.searchPane.searchType.setOnItemSelectedListener(this);
+        binding.searchPane.searchType.setSelection(lastSearchSource.ordinal)
+        binding.searchPane.searchType.onItemSelectedListener = this
     }
 
     /**
      * this seems crazy that we have to do a delay within a delay, but it is the only thing that works
-     *   to bring up keyboard.  Guessing that it is because there is so much redrawing that is
-     *   happening on bringing up the search bar.
+     * to bring up keyboard.  Guessing that it is because there is so much redrawing that is
+     * happening on bringing up the search bar.
      */
-    @Deprecated
-    private void setFocusOnTextSearchEdit() {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(() -> {
-            binding.searchPane.searchText.setFocusableInTouchMode(true);
-            binding.searchPane.searchText.requestFocus();
+    @Deprecated("Find a better way to request focus and show keyboard")
+    private fun setFocusOnTextSearchEdit() {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            binding.searchPane.searchText.isFocusableInTouchMode = true
+            binding.searchPane.searchText.requestFocus()
 
-            Handler hand1 = new Handler(Looper.getMainLooper());
-            hand1.post(() -> App.showKeyboard(
-                    TargetTranslationActivity.this,
+            val hand1 = Handler(Looper.getMainLooper())
+            hand1.post {
+                App.showKeyboard(
+                    this@TargetTranslationActivity,
                     binding.searchPane.searchText
-            ));
-        });
+                )
+            }
+        }
     }
 
     /**
      * notify listener of search state changes
-     * @param doingSearch - search is currently processing
-     * @param numberOfChunkMatches - number of chunks that have the search string
-     * @param atEnd - we are at last search item
-     * @param atStart - we are at first search item
      */
-    private void setSearchSpinner(boolean doingSearch, int numberOfChunkMatches, boolean atEnd, boolean atStart) {
-        searchAtEnd = atEnd;
-        searchAtStart = atStart;
-        this.numberOfChunkMatches = numberOfChunkMatches;
-        binding.searchPane.searchProgress.setVisibility(doingSearch ? View.VISIBLE : View.GONE);
+    private fun setSearchSpinner(doingSearch: Boolean, numberOfChunkMatches: Int, atEnd: Boolean, atStart: Boolean) {
+        searchAtEnd = atEnd
+        searchAtStart = atStart
+        this.numberOfChunkMatches = numberOfChunkMatches
+        binding.searchPane.searchProgress.visibility = if (doingSearch) View.VISIBLE else View.GONE
 
-        boolean showSearchNavigation = !doingSearch && (numberOfChunkMatches > 0);
-        int searchVisibility = showSearchNavigation ? View.VISIBLE : View.INVISIBLE;
-        binding.searchPane.downSearch.setVisibility(atEnd ? View.INVISIBLE : searchVisibility);
-        binding.searchPane.upSearch.setVisibility(atStart ? View.INVISIBLE : searchVisibility);
+        val showSearchNavigation = !doingSearch && numberOfChunkMatches > 0
+        val searchVisibility = if (showSearchNavigation) View.VISIBLE else View.INVISIBLE
+        binding.searchPane.downSearch.visibility = if (atEnd) View.INVISIBLE else searchVisibility
+        binding.searchPane.upSearch.visibility = if (atStart) View.INVISIBLE else searchVisibility
 
-        String msg = getResources().getString(foundTextFormat, numberOfChunkMatches);
-        binding.searchPane.found.setVisibility( !doingSearch ? View.VISIBLE : View.INVISIBLE);
-        binding.searchPane.found.setText(msg);
+        val msg = resources.getString(foundTextFormat, numberOfChunkMatches)
+        binding.searchPane.found.visibility = if (!doingSearch) View.VISIBLE else View.INVISIBLE
+        binding.searchPane.found.text = msg
     }
 
     /**
      * called if search type is changed
-     * @param parent
-     * @param view
-     * @param pos
-     * @param id
      */
-    public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-        filter(getFilterText());  // do search with search string in edit control
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+        filter(getFilterText())  // do search with search string in edit control
     }
 
     /**
      * called if no search type is selected
-     * @param parent
      */
-    public void onNothingSelected(AdapterView<?> parent) {
+    override fun onNothingSelected(parent: AdapterView<*>?) {
         // do nothing
     }
 
     /**
      * get the type of search
      */
-    private SearchSubject getFilterSubject() {
-        int pos = binding.searchPane.searchType.getSelectedItemPosition();
-        if(pos == 0) {
-            return SearchSubject.SOURCE;
+    private fun getFilterSubject(): SearchSubject {
+        val pos = binding.searchPane.searchType.selectedItemPosition
+        if (pos == 0) {
+            return SearchSubject.SOURCE
         }
-        return SearchSubject.TARGET;
+        return SearchSubject.TARGET
     }
 
     /**
      * get search text in search bar
      */
-    private String getFilterText() {
-        return binding.searchPane.searchText.getText().toString();
+    private fun getFilterText(): String {
+        return binding.searchPane.searchText.text.toString()
     }
 
     /**
      * set search text in search bar
      */
-    private void setFilterText(String text) {
-        binding.searchPane.searchText.setText(text);
+    private fun setFilterText(text: String?) {
+        binding.searchPane.searchText.setText(text)
     }
-
 
     /**
      * Filters the list, currently it just marks chunks with text
-     * @param constraint
      */
-    public void filter(final String constraint) {
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(() -> {
-            if((fragment != null) && (fragment instanceof ViewModeFragment)) {
+    fun filter(constraint: String?) {
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            val currentFragment = fragment
+            if (currentFragment is ViewModeFragment) {
                 // preserve current search type
-                SearchSubject subject = getFilterSubject();
-                viewModel.saveSearchSource(subject.name().toUpperCase());
-                ((ViewModeFragment) fragment).filter(constraint, subject);
+                val subject = getFilterSubject()
+                viewModel.saveSearchSource(subject.name.uppercase())
+                currentFragment.filter(constraint ?: "", subject)
             }
-        });
+        }
     }
 
     /**
      * move to next/previous search item
-     * @param next if true then find next, otherwise will find previous
      */
-    public void moveSearch(final boolean next) {
-        App.closeKeyboard(this);
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(() -> {
-            if((fragment != null) && (fragment instanceof ViewModeFragment)) {
-                ((ViewModeFragment) fragment).onMoveSearch(next);
+    private fun moveSearch(next: Boolean) {
+        App.closeKeyboard(this)
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            val currentFragment = fragment
+            if (currentFragment is ViewModeFragment) {
+                currentFragment.onMoveSearch(next)
             }
-        });
+        }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        notifyDatasetChanged();
-        buildMenu();
+    override fun onResume() {
+        super.onResume()
+        notifyDatasetChanged()
+        buildMenu()
         //setMergeConflictFilter(mMergeConflictFilterEnabled, mMergeConflictFilterEnabled); // restore last state
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
+    override fun onPause() {
+        super.onPause()
 
-        if(fragment instanceof ViewModeFragment) {
-            showConflictSummary = ((ViewModeFragment) fragment).ismMergeConflictSummaryDisplayed(); // update current state
+        val currentFragment = fragment
+        if (currentFragment is ViewModeFragment) {
+            showConflictSummary = currentFragment.ismMergeConflictSummaryDisplayed() // update current state
         }
     }
 
-    public void closeKeyboard() {
-        if (fragment instanceof ViewModeFragment) {
-            boolean enteringSearchText = searchEnabled && (binding.searchPane.searchText.hasFocus());
-            if(!enteringSearchText) { // we don't want to close keyboard if we are entering search text
-                ((ViewModeFragment) fragment).closeKeyboard();
+    fun closeKeyboard() {
+        val currentFragment = fragment
+        if (currentFragment is ViewModeFragment) {
+            val enteringSearchText = searchEnabled && binding.searchPane.searchText.hasFocus()
+            if (!enteringSearchText) { // we don't want to close keyboard if we are entering search text
+                currentFragment.closeKeyboard()
             }
         }
     }
 
-    public void checkIfCursorStillOnScreen() {
-        Rect cursorPos = getCursorPositionOnScreen();
+    private fun checkIfCursorStillOnScreen() {
+        val cursorPos = getCursorPositionOnScreen()
         if (cursorPos != null) {
-            View scrollView = findViewById(R.id.fragment_container);
+            val scrollView = findViewById<View>(R.id.fragment_container)
             if (scrollView != null) {
-                boolean visible = true;
+                var visible = true
 
-                Rect scrollBounds = new Rect();
-                scrollView.getHitRect(scrollBounds);
+                val scrollBounds = Rect()
+                scrollView.getHitRect(scrollBounds)
 
                 if (cursorPos.top < scrollBounds.top) {
-                    visible = false;
+                    visible = false
                 } else if (cursorPos.bottom > scrollBounds.bottom) {
-                    visible = false;
+                    visible = false
                 }
 
                 if (!visible) {
-                    closeKeyboard();
+                    closeKeyboard()
                 }
             }
         }
     }
 
-    public Rect getCursorPositionOnScreen() {
-        View focusedView = getCurrentFocus();
+    private fun getCursorPositionOnScreen(): Rect? {
+        val focusedView = currentFocus
         if (focusedView != null) {
             // get view position on screen
-            int[] l = new int[2];
-            focusedView.getLocationOnScreen(l);
-            int focusedViewX = l[0];
-            int focusedViewY = l[1];
+            val l = IntArray(2)
+            focusedView.getLocationOnScreen(l)
+            val focusedViewX = l[0]
+            val focusedViewY = l[1]
 
-            if (focusedView instanceof EditText editText) {
+            if (focusedView is EditText) {
                 // getting relative cursor position
-                int pos = editText.getSelectionStart();
-                Layout layout = editText.getLayout();
+                val pos = focusedView.selectionStart
+                val layout: Layout? = focusedView.layout
                 if (layout != null) {
-                    int line = layout.getLineForOffset(pos);
-                    int baseline = layout.getLineBaseline(line);
-                    int ascent = layout.getLineAscent(line);
+                    val line = layout.getLineForOffset(pos)
+                    val baseline = layout.getLineBaseline(line)
+                    val ascent = layout.getLineAscent(line)
 
                     // convert relative positions to absolute position
-                    int x = focusedViewX + (int) layout.getPrimaryHorizontal(pos);
-                    int bottomY = focusedViewY + baseline;
-                    int y = bottomY + ascent;
+                    val x = focusedViewX + layout.getPrimaryHorizontal(pos).toInt()
+                    val bottomY = focusedViewY + baseline
+                    val y = bottomY + ascent
 
-                    return new Rect(x, y, x, bottomY); // ignore width of cursor for now
+                    return Rect(x, y, x, bottomY) // ignore width of cursor for now
                 }
             }
         }
 
-        return null;
+        return null
     }
 
-    @Override
-    public void onScrollProgress(int position) {
+    override fun onScrollProgress(progress: Int) {
         // TODO: 2/16/17 record scroll position
-        int progress = computeProgressFromPosition(position);
-        SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        seekBar.setProgress(progress);
-        checkIfCursorStillOnScreen();
+        val computedProgress = computeProgressFromPosition(progress)
+        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+        seekBar.progress = computedProgress
+        checkIfCursorStillOnScreen()
     }
 
-    @Override
-    public void onDataSetChanged(int count) {
-        SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        int initialMax = seekBar.getMax();
-        int initialProgress = seekBar.getProgress();
+    override fun onDataSetChanged(count: Int) {
+        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+        val initialMax = seekBar.max
+        val initialProgress = seekBar.progress
 
-        count = setSeekbarMax(count);
-        int newMax = seekBar.getMax();
-        if(initialMax != newMax) { // if seekbar maximum has changed
+        val newCount = setSeekbarMax(count)
+        val newMax = seekBar.max
+        if (initialMax != newMax && initialMax > 0) { // if seekbar maximum has changed
             // adjust proportionally
-            int newProgress = newMax * initialProgress / initialMax;
-            seekBar.setProgress(newProgress);
+            val newProgress = newMax * initialProgress / initialMax
+            seekBar.progress = newProgress
         }
-        closeKeyboard();
-        setupGraduations();
+        closeKeyboard()
+        setupGraduations()
     }
 
     /**
      * get number of items in adapter
-     * @return
      */
-    private int getItemCount() {
-        if((fragment != null) && (fragment instanceof ViewModeFragment)) {
-            return ((ViewModeFragment) fragment).getItemCount();
+    private fun getItemCount(): Int {
+        val currentFragment = fragment
+        if (currentFragment is ViewModeFragment) {
+            return currentFragment.getItemCount()
         }
-        return 0;
+        return 0
     }
 
     /**
      * sets seekbar maximum based on item count, and add granularity if item count is small
-     * @param itemCount
-     * @return
      */
-    private int setSeekbarMax(int itemCount) {
-        final int minimumSteps = 300;
+    private fun setSeekbarMax(itemCount: Int): Int {
+        val minimumSteps = 300
+        var count = itemCount
 
-        Log.i(TAG,"setSeekbarMax: itemCount=" + itemCount);
+        Log.i(TAG, "setSeekbarMax: itemCount=$count")
 
-        if(itemCount < 1) { // sanity check
-            itemCount = 1;
+        if (count < 1) { // sanity check
+            count = 1
         }
 
-        if(itemCount < minimumSteps) {  // increase step size if number of cards is small, this gives more granularity in positioning
-            seekbarMultiplier = (int) (minimumSteps / itemCount) + 1;
+        seekbarMultiplier = if (count < minimumSteps) {  // increase step size if number of cards is small, this gives more granularity in positioning
+            (minimumSteps / count) + 1
         } else {
-            seekbarMultiplier = 1;
+            1
         }
 
-        SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        int newMax = itemCount * seekbarMultiplier;
-        int oldMax = seekBar.getMax();
-        if(newMax != oldMax) {
-            Log.i(TAG,"setSeekbarMax: oldMax=" + oldMax + ", newMax=" + newMax + ", mSeekbarMultiplier=" + seekbarMultiplier);
-            seekBar.setMax(newMax);
+        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+        val newMax = count * seekbarMultiplier
+        val oldMax = seekBar.max
+        if (newMax != oldMax) {
+            Log.i(TAG, "setSeekbarMax: oldMax=$oldMax, newMax=$newMax, mSeekbarMultiplier=$seekbarMultiplier")
+            seekBar.max = newMax
         } else {
-            Log.i(TAG, "setSeekbarMax: max unchanged=" + oldMax);
+            Log.i(TAG, "setSeekbarMax: max unchanged=$oldMax")
         }
-        return itemCount;
+        return count
     }
 
     /**
      * initialize text on graduations if enabled
      */
-    private void setupGraduations() {
-        if(enableGrids) {
-            SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-            final int numCards = seekBar.getMax() / seekbarMultiplier;
+    private fun setupGraduations() {
+        if (enableGrids && graduations != null) {
+            val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+            val numCards = seekBar.max / seekbarMultiplier
 
-            String maxChapterStr = getChapterSlug(numCards - 1);
-            int maxChapter = Integer.valueOf(maxChapterStr);
+            val maxChapterStr = getChapterSlug(numCards - 1)
+            val maxChapter = maxChapterStr.toIntOrNull() ?: 0
 
             // Set up visibility of the graduation bar.
             // Display graduations evenly spaced by number of chapters (but not more than the number
@@ -884,294 +837,269 @@ public class TargetTranslationActivity extends BaseActivity implements ViewModeF
             // Also, show nothing unless we're in read mode, since the other modes are indexed by
             // frame, not by chapter, so displaying either frame numbers or chapter numbers would be
             // nonsensical.
-            int numVisibleGraduations = Math.min(numCards, graduations.getChildCount());
+            var numVisibleGraduations = Math.min(numCards, graduations!!.childCount)
 
-            if ((maxChapter > 0) && (maxChapter < numVisibleGraduations)) {
-                numVisibleGraduations = maxChapter;
+            if (maxChapter in 1 until numVisibleGraduations) {
+                numVisibleGraduations = maxChapter
             }
 
             if (numVisibleGraduations < 2) {
-                numVisibleGraduations = 0;
+                numVisibleGraduations = 0
             }
 
             // Set up the visible chapters.
-            for (int i = 0; i < numVisibleGraduations; ++i) {
-                ViewGroup container = (ViewGroup) graduations.getChildAt(i);
-                container.setVisibility(View.VISIBLE);
-                TextView text = (TextView) container.getChildAt(1);
+            for (i in 0 until numVisibleGraduations) {
+                val container = graduations!!.getChildAt(i) as ViewGroup
+                container.visibility = View.VISIBLE
+                val text = container.getChildAt(1) as TextView
 
-                int position = i * (numCards - 1) / (numVisibleGraduations - 1);
-                String chapter = getChapterSlug(position);
-                text.setText(chapter);
+                val position = i * (numCards - 1) / (numVisibleGraduations - 1)
+                val chapter = getChapterSlug(position)
+                text.text = chapter
             }
 
             // Undisplay the invisible chapters.
-            for (int i = numVisibleGraduations; i < graduations.getChildCount(); ++i) {
-                graduations.getChildAt(i).setVisibility(View.GONE);
+            for (i in numVisibleGraduations until graduations!!.childCount) {
+                graduations!!.getChildAt(i).visibility = View.GONE
             }
         }
     }
 
     /**
      * get the chapter slug for the position
-     * @param position
-     * @return
      */
-    private String getChapterSlug(int position) {
-        if( (fragment != null) && (fragment instanceof ViewModeFragment)) {
-            return ((ViewModeFragment) fragment).getChapterSlug(position);
+    private fun getChapterSlug(position: Int): String {
+        val currentFragment = fragment
+        if (currentFragment is ViewModeFragment) {
+            return currentFragment.getChapterSlug(position)
         }
-        return Integer.toString(position + 1);
+        return (position + 1).toString()
     }
 
     /**
      * user has selected to update sources
      */
-    public void onUpdateSources() {
-        setResult(RESULT_DO_UPDATE);
-        finish();
+    override fun onUpdateSources() {
+        setResult(RESULT_DO_UPDATE)
+        finish()
     }
 
-    private boolean displaySeekBarAsInverted() {
-        return binding.translatorSidebar.actionSeek instanceof VerticalSeekBar;
+    private fun displaySeekBarAsInverted(): Boolean {
+        return binding.translatorSidebar.actionSeek is VerticalSeekBar
     }
 
-    private int computeProgressFromPosition(int position) {
-        SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        int correctedProgress = correctProgress(position * seekbarMultiplier);
-        int progress = limitRange(correctedProgress, 0, seekBar.getMax());
-        return progress;
+    private fun computeProgressFromPosition(position: Int): Int {
+        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+        val correctedProgress = correctProgress(position * seekbarMultiplier)
+        return limitRange(correctedProgress, 0, seekBar.max)
     }
 
-    private int computePositionFromProgress(int progress) {
-        SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        int correctedProgress = correctProgress(progress);
-        correctedProgress = limitRange(correctedProgress, 0, seekBar.getMax() - 1);
-        int position = correctedProgress / seekbarMultiplier;
-        return position;
+    private fun computePositionFromProgress(progress: Int): Int {
+        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+        var correctedProgress = correctProgress(progress)
+        correctedProgress = limitRange(correctedProgress, 0, seekBar.max - 1)
+        return correctedProgress / seekbarMultiplier
     }
 
     /**
      * if seekbar is inverted, this will correct the progress
-     * @param progress
-     * @return
      */
-    private int correctProgress(int progress) {
-        SeekBar seekBar = (SeekBar) binding.translatorSidebar.actionSeek;
-        return displaySeekBarAsInverted() ? seekBar.getMax() - progress : progress;
+    private fun correctProgress(progress: Int): Int {
+        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+        return if (displaySeekBarAsInverted()) seekBar.max - progress else progress
     }
 
-    @Override
-    public void onNoSourceTranslations() {
-        if (!(fragment instanceof FirstTabFragment)) {
-            fragment = new FirstTabFragment();
-            fragment.setArguments(getIntent().getExtras());
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
-            buildMenu();
+    override fun onNoSourceTranslations() {
+        if (fragment !is FirstTabFragment) {
+            val newFragment = FirstTabFragment()
+            newFragment.arguments = intent.extras
+            fragment = newFragment
+            supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
+            buildMenu()
         }
     }
 
-    @Override
-    public void openTranslationMode(TranslationViewMode mode, Bundle extras) {
-        Bundle fragmentExtras = new Bundle();
-        fragmentExtras.putAll(getIntent().getExtras());
+    override fun openTranslationMode(mode: TranslationViewMode, extras: Bundle?) {
+        val fragmentExtras = Bundle()
+        intent.extras?.let { fragmentExtras.putAll(it) }
         if (extras != null) {
-            fragmentExtras.putAll(extras);
+            fragmentExtras.putAll(extras)
         }
 
         // close the keyboard when switching between modes
-        if (getCurrentFocus() != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        val focusedView = currentFocus
+        if (focusedView != null) {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(focusedView.windowToken, 0)
         } else {
-            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         }
 
-        viewModel.setLastViewMode(mode);
-        setupSidebarModeIcons();
+        viewModel.setLastViewMode(mode)
+        setupSidebarModeIcons()
 
-        switch (mode) {
-            case READ:
-                if (!(fragment instanceof ReadModeFragment)) {
-                    fragment = new ReadModeFragment();
-                    fragment.setArguments(fragmentExtras);
-
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+        when (mode) {
+            TranslationViewMode.READ -> {
+                if (fragment !is ReadModeFragment) {
+                    val newFragment = ReadModeFragment()
+                    newFragment.arguments = fragmentExtras
+                    fragment = newFragment
+                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
                     // TODO: animate
                     // TODO: update menu
                 }
-                break;
-            case CHUNK:
-                if (!(fragment instanceof ChunkModeFragment)) {
-                    fragment = new ChunkModeFragment();
-                    fragment.setArguments(fragmentExtras);
-
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+            }
+            TranslationViewMode.CHUNK -> {
+                if (fragment !is ChunkModeFragment) {
+                    val newFragment = ChunkModeFragment()
+                    newFragment.arguments = fragmentExtras
+                    fragment = newFragment
+                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
                     // TODO: animate
                     // TODO: update menu
                 }
-                break;
-            case REVIEW:
-                if (!(fragment instanceof ReviewModeFragment)) {
-                    fragmentExtras.putBoolean(STATE_FILTER_MERGE_CONFLICTS, mergeConflictFilterEnabled);
-                    fragment = new ReviewModeFragment();
-                    fragment.setArguments(fragmentExtras);
-
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+            }
+            TranslationViewMode.REVIEW -> {
+                if (fragment !is ReviewModeFragment) {
+                    fragmentExtras.putBoolean(STATE_FILTER_MERGE_CONFLICTS, mergeConflictFilterEnabled)
+                    val newFragment = ReviewModeFragment()
+                    newFragment.arguments = fragmentExtras
+                    fragment = newFragment
+                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
                     // TODO: animate
                     // TODO: update menu
                 }
-                break;
+            }
         }
     }
 
     /**
      * Restart scheduled translation commits
      */
-    public void restartAutoCommitTimer() {
-        commitTimer.cancel();
-        commitTimer = new Timer();
-        commitTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
+    override fun restartAutoCommitTimer() {
+        commitTimer.cancel()
+        commitTimer = Timer()
+        commitTimer.schedule(object : TimerTask() {
+            override fun run() {
                 try {
-                    viewModel.getTargetTranslation().commit();
-                } catch (Exception e) {
-                    Logger.e(TargetTranslationActivity.class.getName(), "Failed to commit the latest translation of " + viewModel.getTargetTranslation().getId(), e);
+                    viewModel.targetTranslation?.commit()
+                } catch (e: Exception) {
+                    Logger.e(TargetTranslationActivity::class.java.name, "Failed to commit the latest translation of ${viewModel.targetTranslation?.id}", e)
                 }
             }
-        }, COMMIT_INTERVAL, COMMIT_INTERVAL);
+        }, COMMIT_INTERVAL, COMMIT_INTERVAL)
     }
 
     /**
      * callback on search state changes
-     * @param doingSearch - search is currently processing
-     * @param numberOfChunkMatches - number of chunks that have the search string
-     * @param atEnd - we are at last search item highlighted
-     * @param atStart - we are at first search item highlighted
      */
-    @Override
-    public void onSearching(boolean doingSearch, int numberOfChunkMatches, boolean atEnd, boolean atStart) {
-        setSearchSpinner(doingSearch, numberOfChunkMatches, atEnd, atStart);
+    override fun onSearching(doingSearch: Boolean, numberOfChunkMatches: Int, atEnd: Boolean, atStart: Boolean) {
+        setSearchSpinner(doingSearch, numberOfChunkMatches, atEnd, atStart)
     }
 
-    @Override
-    public void onHasSourceTranslations() {
-        TranslationViewMode viewMode = viewModel.getLastViewMode();
-        if (viewMode == TranslationViewMode.READ) {
-            fragment = new ReadModeFragment();
-        } else if (viewMode == TranslationViewMode.CHUNK) {
-            fragment = new ChunkModeFragment();
-        } else if (viewMode == TranslationViewMode.REVIEW) {
-            fragment = new ReviewModeFragment();
+    override fun onHasSourceTranslations() {
+        val newFragment = when (viewModel.getLastViewMode()) {
+            TranslationViewMode.READ -> ReadModeFragment()
+            TranslationViewMode.CHUNK -> ChunkModeFragment()
+            TranslationViewMode.REVIEW -> ReviewModeFragment()
         }
-        fragment.setArguments(getIntent().getExtras());
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
+        newFragment.arguments = intent.extras
+        fragment = newFragment
+        supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
         // TODO: animate
         // TODO: update menu
     }
 
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        if (fragment instanceof ViewModeFragment) {
-            if (!((ViewModeFragment) fragment).onTouchEvent(event)) {
-                return super.dispatchTouchEvent(event);
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        val currentFragment = fragment
+        return if (currentFragment is ViewModeFragment) {
+            if (!currentFragment.onTouchEvent(event)) {
+                super.dispatchTouchEvent(event)
             } else {
-                return true;
+                true
             }
         } else {
-            return super.dispatchTouchEvent(event);
+            super.dispatchTouchEvent(event)
         }
     }
 
-    @Override
-    public void onDestroy() {
-        commitTimer.cancel();
+    override fun onDestroy() {
+        commitTimer.cancel()
         try {
-            viewModel.getTargetTranslation().commit();
-        } catch (Exception e) {
-            Logger.e(this.getClass().getName(), "Failed to commit changes before closing translation", e);
+            viewModel.targetTranslation?.commit()
+        } catch (e: Exception) {
+            Logger.e(this.javaClass.name, "Failed to commit changes before closing translation", e)
         }
-        App.closeKeyboard(TargetTranslationActivity.this);
-        super.onDestroy();
+        App.closeKeyboard(this)
+        super.onDestroy()
     }
 
     /**
      * Causes the activity to tell the fragment it needs to reload
      */
-    public void notifyDatasetChanged() {
-        if (fragment instanceof ViewModeFragment && ((ViewModeFragment) fragment).getAdapter() != null) {
-            ((ViewModeFragment) fragment).getAdapter().triggerNotifyDataSetChanged();
+    fun notifyDatasetChanged() {
+        val currentFragment = fragment
+        if (currentFragment is ViewModeFragment && currentFragment.getAdapter() != null) {
+            currentFragment.getAdapter()?.triggerNotifyDataSetChanged()
         }
     }
 
     /**
      * Causes the activity to tell the fragment that everything needs to be redrawn
      */
-    public void redrawTarget() {
-        if (fragment instanceof ViewModeFragment) {
-            ((ViewModeFragment) fragment).onResume();
+    fun redrawTarget() {
+        val currentFragment = fragment
+        if (currentFragment is ViewModeFragment) {
+            currentFragment.onResume()
         }
     }
 
     /**
      * Updates the visual state of all the sidebar icons to match the application's current mode.
-     *
-     * Call this when creating the activity or when changing modes.
      */
-    private void setupSidebarModeIcons() {
-        TranslationViewMode viewMode = viewModel.getLastViewMode();
+    private fun setupSidebarModeIcons() {
+        val viewMode = viewModel.getLastViewMode()
 
         // Set the non-highlighted icons by default.
-        binding.translatorSidebar.actionReview.setImageResource(R.drawable.ic_view_week_inactive_24dp);
-        binding.translatorSidebar.actionChunk.setImageResource(R.drawable.ic_content_copy_inactive_24dp);
-        binding.translatorSidebar.actionRead.setImageResource(R.drawable.ic_subject_inactive_24dp);
+        binding.translatorSidebar.actionReview.setImageResource(R.drawable.ic_view_week_inactive_24dp)
+        binding.translatorSidebar.actionChunk.setImageResource(R.drawable.ic_content_copy_inactive_24dp)
+        binding.translatorSidebar.actionRead.setImageResource(R.drawable.ic_subject_inactive_24dp)
 
         // Clear the highlight background.
-        //
-        // This is more properly done with setBackground(), but that requires a higher API
-        // level than this application's minimum. Equivalently use setBackgroundDrawable(),
-        // which is deprecated, instead.
-        binding.translatorSidebar.actionReview.setBackground(null);
-        binding.translatorSidebar.actionChunk.setBackground(null);
-        binding.translatorSidebar.actionRead.setBackground(null);
+        binding.translatorSidebar.actionReview.background = null
+        binding.translatorSidebar.actionChunk.background = null
+        binding.translatorSidebar.actionRead.background = null
 
         // For the active view, set the correct icon, and highlight the background.
-        final int highlightedColor = getResources().getColor(R.color.primary_dark);
-        switch (viewMode) {
-            case READ:
-                binding.translatorSidebar.actionRead.setImageResource(R.drawable.ic_subject_white_24dp);
-                binding.translatorSidebar.actionRead.setBackgroundColor(highlightedColor);
-                break;
-            case CHUNK:
-                binding.translatorSidebar.actionChunk.setImageResource(R.drawable.ic_content_copy_white_24dp);
-                binding.translatorSidebar.actionChunk.setBackgroundColor(highlightedColor);
-                break;
-            case REVIEW:
-                if(mergeConflictFilterEnabled) {
-                    binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor); // highlight background of the conflict icon
-                    onEnableMergeConflict(true, true);
+        val highlightedColor = ContextCompat.getColor(this, R.color.primary_dark)
+        when (viewMode) {
+            TranslationViewMode.READ -> {
+                binding.translatorSidebar.actionRead.setImageResource(R.drawable.ic_subject_white_24dp)
+                binding.translatorSidebar.actionRead.setBackgroundColor(highlightedColor)
+            }
+            TranslationViewMode.CHUNK -> {
+                binding.translatorSidebar.actionChunk.setImageResource(R.drawable.ic_content_copy_white_24dp)
+                binding.translatorSidebar.actionChunk.setBackgroundColor(highlightedColor)
+            }
+            TranslationViewMode.REVIEW -> {
+                if (mergeConflictFilterEnabled) {
+                    binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor) // highlight background of the conflict icon
+                    onEnableMergeConflict(showConflicted = true, active = true)
                 } else {
-                    binding.translatorSidebar.actionReview.setBackgroundColor(highlightedColor);
-                    binding.translatorSidebar.actionReview.setImageResource(R.drawable.ic_view_week_white_24dp);
+                    binding.translatorSidebar.actionReview.setBackgroundColor(highlightedColor)
+                    binding.translatorSidebar.actionReview.setImageResource(R.drawable.ic_view_week_white_24dp)
                 }
-                break;
+            }
+            else -> {}
         }
     }
 
-    private class SearchTimerTask extends TimerTask {
-
-        private TargetTranslationActivity activity;
-        private Editable searchString;
-
-        public SearchTimerTask(TargetTranslationActivity activity, Editable searchString) {
-            this.activity = activity;
-            this.searchString = searchString;
-        }
-
-        @Override
-        public void run() {
-            activity.filter(searchString.toString());
+    private inner class SearchTimerTask(
+        private val activity: TargetTranslationActivity,
+        private val searchString: Editable
+    ) : TimerTask() {
+        override fun run() {
+            activity.filter(searchString.toString())
         }
     }
 }

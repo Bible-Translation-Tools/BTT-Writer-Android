@@ -2,6 +2,8 @@ package com.door43.translationstudio.core;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.eclipse.jgit.api.ResetCommand;
@@ -637,7 +639,7 @@ public class TargetTranslation {
      * @param format
      * @return
      */
-    public FrameTranslation getFrameTranslation(String chapterId, String frameId, TranslationFormat format) {
+    public @NonNull FrameTranslation getFrameTranslation(String chapterId, String frameId, TranslationFormat format) {
         File frameFile = getFrameFile(chapterId, frameId);
         if(frameFile.exists()) {
             try {

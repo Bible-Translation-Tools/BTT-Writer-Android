@@ -1,909 +1,835 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_ENABLE_TM_LINKS;
-import static com.door43.translationstudio.ui.SettingsActivity.KEY_PREF_TM_URL;
-import static org.koin.java.KoinJavaComponent.inject;
-
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.ContextThemeWrapper;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-
-import com.door43.data.IPreferenceRepository;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.TypographyUtils;
-import com.door43.translationstudio.core.Frame;
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.core.TranslationType;
-import com.door43.translationstudio.core.Util;
-import com.door43.translationstudio.databinding.FragmentResourcesExampleItemBinding;
-import com.door43.translationstudio.databinding.FragmentResourcesNoteBinding;
-import com.door43.translationstudio.databinding.FragmentResourcesQuestionBinding;
-import com.door43.translationstudio.databinding.FragmentResourcesWordBinding;
-import com.door43.translationstudio.databinding.FragmentWordsIndexListBinding;
-import com.door43.translationstudio.rendering.HtmlRenderer;
-import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
-import com.door43.translationstudio.ui.spannables.LinkSpan;
-import com.door43.translationstudio.ui.spannables.PassageLinkSpan;
-import com.door43.translationstudio.ui.spannables.ShortReferenceSpan;
-import com.door43.translationstudio.ui.spannables.Span;
-import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan;
-import com.door43.translationstudio.ui.translate.review.ReviewHolder;
-import com.door43.util.StringUtilities;
-import com.door43.widget.ViewUtil;
-import com.google.android.material.snackbar.Snackbar;
-
-import org.sufficientlysecure.htmltextview.LocalLinkMovementMethod;
-import org.unfoldingword.resourcecontainer.Language;
-import org.unfoldingword.resourcecontainer.Link;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import kotlin.Lazy;
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.ContextThemeWrapper
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.widget.ArrayAdapter
+import android.widget.Button
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Frame
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Util
+import com.door43.translationstudio.databinding.FragmentResourcesExampleItemBinding
+import com.door43.translationstudio.databinding.FragmentResourcesNoteBinding
+import com.door43.translationstudio.databinding.FragmentResourcesQuestionBinding
+import com.door43.translationstudio.databinding.FragmentResourcesWordBinding
+import com.door43.translationstudio.databinding.FragmentWordsIndexListBinding
+import com.door43.translationstudio.format
+import com.door43.translationstudio.formatSub
+import com.door43.translationstudio.formatTitle
+import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
+import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
+import com.door43.translationstudio.ui.spannables.ArticleLinkSpan
+import com.door43.translationstudio.ui.spannables.LinkSpan
+import com.door43.translationstudio.ui.spannables.PassageLinkSpan
+import com.door43.translationstudio.ui.spannables.ShortReferenceSpan
+import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
+import com.door43.translationstudio.ui.translate.review.ReviewHolder
+import com.door43.util.StringUtilities
+import com.door43.widget.ViewUtil
+import com.google.android.material.snackbar.Snackbar
+import org.koin.android.ext.android.inject
+import org.sufficientlysecure.htmltextview.LocalLinkMovementMethod
+import org.unfoldingword.resourcecontainer.Link
+import org.unfoldingword.tools.taskmanager.ManagedTask
+import java.util.Arrays
+import java.util.Collections
+import java.util.regex.Pattern
 
 /**
  * Created by joel on 9/8/2015.
  */
-public class ReviewModeFragment extends ViewModeFragment implements ReviewModeAdapter.OnRenderHelpsListener,
-        ReviewModeAdapter.OnShowToastListener {
+class ReviewModeFragment : ViewModeFragment(),
+    ReviewModeAdapter.OnRenderHelpsListener,
+    ReviewModeAdapter.OnShowToastListener {
 
-    Lazy<IPreferenceRepository> prefRepository = inject(IPreferenceRepository.class);
+    private val prefRepository: IPreferenceRepository by inject()
 
-    private static final String STATE_RESOURCES_OPEN = "state_resources_open";
-    private static final String STATE_RESOURCES_DRAWER_OPEN = "state_resources_drawer_open";
-    private static final String STATE_WORD_ID = "state_word_id";
-    private static final String STATE_HELP_TITLE = "state_help_title";
-    private static final String STATE_HELP_BODY = "state_help_body";
-    private static final String STATE_HELP_TYPE = "state_help_type";
-
-    private boolean resourcesOpen = false;
-    private boolean resourcesDrawerOpen = false;
-    private String translationWordId;
-
-    private boolean enableTmLinks = false;
-
-    private TranslationHelp translationQuestion = null;
-    private TranslationHelp translationNote = null;
-
-    private boolean resourcesOpened = false;
-    private boolean enableMergeConflictsFilter = false;
-
-    @Override
-    ViewModeAdapter generateAdapter() {
-        return new ReviewModeAdapter(
-                resourcesOpen,
-                enableMergeConflictsFilter,
-                typography.getValue(),
-                assetsProvider.getValue(),
-                renderingProvider.getValue()
-        );
+    companion object {
+        private const val STATE_RESOURCES_OPEN = "state_resources_open"
+        private const val STATE_RESOURCES_DRAWER_OPEN = "state_resources_drawer_open"
+        private const val STATE_WORD_ID = "state_word_id"
+        private const val STATE_HELP_TITLE = "state_help_title"
+        private const val STATE_HELP_BODY = "state_help_body"
+        private const val STATE_HELP_TYPE = "state_help_type"
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        Bundle args = getArguments();
+    private var resourcesOpen = false
+    private var resourcesDrawerOpen = false
+    private var translationWordId: String? = null
+
+    private var enableTmLinks = false
+
+    private var translationQuestion: TranslationHelp? = null
+    private var translationNote: TranslationHelp? = null
+
+    private var resourcesOpened = false
+    private var enableMergeConflictsFilter = false
+
+    override fun generateAdapter(): ViewModeAdapter<*> {
+        return ReviewModeAdapter(
+            resourcesOpen,
+            enableMergeConflictsFilter,
+            typography,
+            assetsProvider,
+            renderingProvider
+        )
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val args = arguments
         if (args != null) {
             enableMergeConflictsFilter = args.getBoolean(
-                    TargetTranslationActivity.STATE_FILTER_MERGE_CONFLICTS,
-                    false
-            );
+                TargetTranslationActivity.STATE_FILTER_MERGE_CONFLICTS,
+                false
+            )
         }
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState)
     }
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         if (savedInstanceState != null) {
-            resourcesOpen = savedInstanceState.getBoolean(STATE_RESOURCES_OPEN, false);
-            resourcesDrawerOpen = savedInstanceState.getBoolean(STATE_RESOURCES_DRAWER_OPEN, false);
+            resourcesOpen = savedInstanceState.getBoolean(STATE_RESOURCES_OPEN, false)
+            resourcesDrawerOpen = savedInstanceState.getBoolean(STATE_RESOURCES_DRAWER_OPEN, false)
 
             if (savedInstanceState.containsKey(STATE_WORD_ID)) {
-                translationWordId = savedInstanceState.getString(STATE_WORD_ID);
+                translationWordId = savedInstanceState.getString(STATE_WORD_ID)
             } else if (savedInstanceState.containsKey(STATE_HELP_TYPE)) {
-                String type = savedInstanceState.getString(STATE_HELP_TYPE);
-                TranslationHelp help = new TranslationHelp(
-                        savedInstanceState.getString(STATE_HELP_TITLE),
-                        savedInstanceState.getString(STATE_HELP_BODY)
-                );
-                if (type != null && type.equals("tn")) {
-                    translationNote = help;
-                } else if (type != null && type.equals("tq")) {
-                    translationQuestion = help;
+                val type = savedInstanceState.getString(STATE_HELP_TYPE)
+                val help = TranslationHelp(
+                    savedInstanceState.getString(STATE_HELP_TITLE) ?: "",
+                    savedInstanceState.getString(STATE_HELP_BODY) ?: ""
+                )
+                if (type == "tn") {
+                    translationNote = help
+                } else if (type == "tq") {
+                    translationQuestion = help
                 }
             }
         }
 
-        ReviewModeAdapter adapter = (ReviewModeAdapter) getAdapter();
-        adapter.setOnRenderHelpsListener(this);
-        adapter.setOnItemActionListener(this);
+        val adapter = getAdapter() as? ReviewModeAdapter
+        adapter?.setOnRenderHelpsListener(this)
+        adapter?.setOnItemActionListener(this)
 
-        return super.onCreateView(inflater, container, savedInstanceState);
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    @Override
-    protected void setupObservers() {
-        super.setupObservers();
+    override fun setupObservers() {
+        super.setupObservers()
 
-        viewModel.getRenderHelpsResult().observe(getViewLifecycleOwner(), result -> {
-            if (result != null) renderHelpsResult(result.getItem(), result.getHelps());
-        });
+        viewModel.renderHelpsResult.observe(viewLifecycleOwner) { result ->
+            if (result != null) {
+                renderHelpsResult(result.item, result.helps)
+            }
+        }
     }
 
-    @Override
-    public void onTaskFinished(final ManagedTask task) {
-        super.onTaskFinished(task);
+    override fun onTaskFinished(task: ManagedTask) {
+        super.onTaskFinished(task)
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        enableTmLinks = prefRepository.getValue().getDefaultPref(
-                KEY_PREF_ENABLE_TM_LINKS,
-                false,
-                Boolean.class
-        );
+    override fun onResume() {
+        super.onResume()
+        enableTmLinks = prefRepository.getDefaultPref(
+            KEY_PREF_ENABLE_TM_LINKS,
+            false,
+            Boolean::class.javaObjectType
+        )
     }
 
-    @Override
-    protected void onPrepareView(final View rootView) {
-        binding.closeResourcesDrawerBtn.setOnClickListener(v -> closeResourcesDrawer());
+    override fun onPrepareView(rootView: View) {
+        binding.closeResourcesDrawerBtn.setOnClickListener { closeResourcesDrawer() }
 
         // open the drawer on rotate
         if (resourcesDrawerOpen && resourcesOpen) {
-            ViewTreeObserver viewTreeObserver = rootView.getViewTreeObserver();
-            if (viewTreeObserver.isAlive()) {
-                viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        ReviewHolder sample = (ReviewHolder) getViewHolderSample();
+            val viewTreeObserver = rootView.viewTreeObserver
+            if (viewTreeObserver.isAlive) {
+                viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        rootView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                        val sample = getViewHolderSample() as? ReviewHolder
                         if (sample != null) {
                             if (translationNote != null) {
-                                onTranslationNoteClick(translationNote,
-                                        sample.getResourceCardWidth());
+                                onTranslationNoteClick(
+                                    translationNote!!,
+                                    sample.getResourceCardWidth()
+                                )
                             } else if (translationWordId != null) {
-                                onTranslationWordClick(
-                                        viewModel.getResourceContainer().slug,
-                                        translationWordId,
+                                viewModel.resourceContainer?.slug?.let { slug ->
+                                    onTranslationWordClick(
+                                        slug,
+                                        translationWordId!!,
                                         sample.getResourceCardWidth()
-                                );
+                                    )
+                                }
                             } else if (translationQuestion != null) {
-                                onTranslationQuestionClick(translationQuestion,
-                                        sample.getResourceCardWidth());
+                                onTranslationQuestionClick(
+                                    translationQuestion!!,
+                                    sample.getResourceCardWidth()
+                                )
                             }
                         }
                     }
-                });
+                })
             }
         }
-        closeResourcesDrawer();
+        closeResourcesDrawer()
     }
 
-    @Override
-    protected void onRightSwipe(MotionEvent e1, MotionEvent e2) {
+    override fun onRightSwipe(e1: MotionEvent, e2: MotionEvent) {
         if (resourcesDrawerOpen) {
-            closeResourcesDrawer();
+            closeResourcesDrawer()
         } else {
             if (getAdapter() != null) {
-                closeResources();
+                closeResources()
             }
         }
     }
 
-    @Override
-    protected void onLeftSwipe(MotionEvent e1, MotionEvent e2) {
+    override fun onLeftSwipe(e1: MotionEvent, e2: MotionEvent) {
         if (getAdapter() != null) {
-            openResources();
+            openResources()
         }
     }
 
     /**
      * Checks if the resources are open
-     *
-     * @return
      */
-    public boolean isResourcesOpen() {
-        return resourcesOpened;
+    fun isResourcesOpen(): Boolean {
+        return resourcesOpened
     }
 
-    private void openResourcesDrawer(int width) {
-        resourcesDrawerOpen = true;
-        ViewGroup.LayoutParams params = binding.resourcesDrawerCard.getLayoutParams();
-        params.width = width;
-        binding.resourcesDrawerCard.setLayoutParams(params);
+    private fun openResourcesDrawer(width: Int) {
+        resourcesDrawerOpen = true
+        val params = binding.resourcesDrawerCard.layoutParams
+        params.width = width
+        binding.resourcesDrawerCard.layoutParams = params
         // TODO: animate in
     }
 
-    private void closeResourcesDrawer() {
-        resourcesDrawerOpen = false;
-        ViewGroup.LayoutParams params = binding.resourcesDrawerCard.getLayoutParams();
-        params.width = 0;
-        binding.resourcesDrawerCard.setLayoutParams(params);
+    private fun closeResourcesDrawer() {
+        resourcesDrawerOpen = false
+        val params = binding.resourcesDrawerCard.layoutParams
+        params.width = 0
+        binding.resourcesDrawerCard.layoutParams = params
         // TODO: animate
     }
 
-    @Override
-    public void onTranslationWordClick(String resourceContainerSlug, String chapterSlug,
-                                       int width) {
-        renderTranslationWord(resourceContainerSlug, chapterSlug);
-        openResourcesDrawer(width);
+    override fun onTranslationWordClick(resourceContainerSlug: String, chapterSlug: String, width: Int) {
+        renderTranslationWord(resourceContainerSlug, chapterSlug)
+        openResourcesDrawer(width)
     }
 
-    @Override
-    public void onTranslationManualClick(String section, String slug) {
-        String baseUrl = prefRepository.getValue().getDefaultPref(
-                KEY_PREF_TM_URL,
-                getString(R.string.pref_default_tm_url),
-                String.class
-        );
-        String url = baseUrl + "?section=" + section + "#" + slug;
+    override fun onTranslationManualClick(section: String, slug: String) {
+        val baseUrl = prefRepository.getDefaultPref(
+            KEY_PREF_TM_URL,
+            getString(R.string.pref_default_tm_url),
+            String::class.javaObjectType
+        )
+        val url = "$baseUrl?section=$section#$slug"
 
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        startActivity(browserIntent);
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        startActivity(browserIntent)
     }
 
-    @Override
-    public void onTranslationNoteClick(TranslationHelp note, int width) {
-        renderTranslationNote(note);
-        openResourcesDrawer(width);
+    override fun onTranslationNoteClick(note: TranslationHelp, width: Int) {
+        renderTranslationNote(note)
+        openResourcesDrawer(width)
     }
 
-    @Override
-    public void onTranslationQuestionClick(TranslationHelp question, int width) {
-        renderTranslationQuestion(question);
-        openResourcesDrawer(width);
+    override fun onTranslationQuestionClick(question: TranslationHelp, width: Int) {
+        renderTranslationQuestion(question)
+        openResourcesDrawer(width)
     }
 
-    @Override
-    public void markAllChunksDone() {
-        getAdapter().markAllChunksDone();
+    override fun markAllChunksDone() {
+        getAdapter()?.markAllChunksDone()
     }
 
     /**
      * Prepares the resources drawer with the translation words index
      */
-    private void renderTranslationWordsIndex(String resourceContainerSlug) {
-        binding.scrollingResourcesDrawerContent.setVisibility(View.GONE);
-        binding.resourcesDrawerContent.setVisibility(View.VISIBLE);
+    private fun renderTranslationWordsIndex(resourceContainerSlug: String) {
+        binding.scrollingResourcesDrawerContent.visibility = View.GONE
+        binding.resourcesDrawerContent.visibility = View.VISIBLE
 
-        FragmentWordsIndexListBinding wordsIndexListBinding =
-                FragmentWordsIndexListBinding.inflate(requireActivity().getLayoutInflater());
+        val wordsIndexListBinding = FragmentWordsIndexListBinding.inflate(requireActivity().layoutInflater)
 
-        binding.resourcesDrawerContent.removeAllViews();
-        binding.resourcesDrawerContent.addView(wordsIndexListBinding.list);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireActivity(),
-                R.layout.list_clickable_text
-        );
-        final ResourceContainer rc = viewModel.getResourceContainer(resourceContainerSlug);
+        binding.resourcesDrawerContent.removeAllViews()
+        binding.resourcesDrawerContent.addView(wordsIndexListBinding.list)
+        val adapter = ArrayAdapter<String>(
+            requireActivity(),
+            R.layout.list_clickable_text
+        )
+        val rc = viewModel.getResourceContainer(resourceContainerSlug)
         if (rc != null) {
-            String[] chapters = rc.chapters();
-            final List<String> words = Arrays.asList(chapters);
-            Collections.sort(words);
-            Pattern titlePattern = Pattern.compile("#(.*)");
-            for (String slug : words) {
+            val chapters = rc.chapters()
+            val words = Arrays.asList(*chapters)
+            Collections.sort(words)
+            val titlePattern = Pattern.compile("#(.*)")
+            for (slug in words) {
                 // get title and add to adapter
-                Matcher match = titlePattern.matcher(rc.readChunk(slug, "01"));
+                val match = titlePattern.matcher(rc.readChunk(slug, "01"))
                 if (match.find()) {
-                    adapter.add(match.group(1));
+                    adapter.add(match.group(1))
                 } else {
-                    adapter.add(slug);
+                    adapter.add(slug)
                 }
             }
-            wordsIndexListBinding.list.setAdapter(adapter);
-            wordsIndexListBinding.list.setOnItemClickListener((parent, view, position, id) -> {
-                String slug = words.get(position);
-                renderTranslationWord(rc.slug, slug);
-            });
+            wordsIndexListBinding.list.adapter = adapter
+            wordsIndexListBinding.list.setOnItemClickListener { _, _, position, _ ->
+                val slug = words[position]
+                renderTranslationWord(rc.slug, slug)
+            }
         }
     }
 
     /**
      * Prepares the resources drawer with the translation word
-     *
-     * @param resourceContainerSlug
-     * @param chapterSlug
      */
-    private void renderTranslationWord(String resourceContainerSlug, String chapterSlug) {
-        translationWordId = chapterSlug;
-        final ResourceContainer rc = viewModel.getResourceContainer(resourceContainerSlug);
+    @Suppress("UNCHECKED_CAST")
+    private fun renderTranslationWord(resourceContainerSlug: String, chapterSlug: String) {
+        translationWordId = chapterSlug
+        val rc = viewModel.getResourceContainer(resourceContainerSlug)
 
         if (rc != null) {
-            binding.resourcesDrawerContent.setVisibility(View.GONE);
-            binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
-            binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
+            binding.resourcesDrawerContent.visibility = View.GONE
+            binding.scrollingResourcesDrawerContent.visibility = View.VISIBLE
+            binding.scrollingResourcesDrawerContent.scrollTo(0, 0)
 
-            FragmentResourcesWordBinding wordBinding =
-                    FragmentResourcesWordBinding.inflate(requireActivity().getLayoutInflater());
+            val wordBinding = FragmentResourcesWordBinding.inflate(requireActivity().layoutInflater)
 
-            wordBinding.wordsIndex.setOnClickListener(v -> renderTranslationWordsIndex(resourceContainerSlug));
-            String word = rc.readChunk(chapterSlug, "01");
-            Pattern pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)");
-            Matcher match = pattern.matcher(word);
-            String description = "";
+            wordBinding.wordsIndex.setOnClickListener { renderTranslationWordsIndex(resourceContainerSlug) }
+            val word = rc.readChunk(chapterSlug, "01")
+            val pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)")
+            val match = pattern.matcher(word)
+            var description = ""
             if (match.find()) {
-                wordBinding.wordTitle.setText(match.group(1));
-                description = match.group(2);
-                // TODO: 10/12/16 load the description title. This should be read from the config
-                //  maybe?
-                wordBinding.descriptionTitle.setText("Description");
+                wordBinding.wordTitle.text = match.group(1)
+                description = match.group(2) ?: ""
+                // TODO: 10/12/16 load the description title. This should be read from the config maybe?
+                wordBinding.descriptionTitle.text = "Description"
             }
-            TypographyUtils.formatTitle(
-                    wordBinding.descriptionTitle,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    rc.language.slug,
-                    rc.language.direction
-            );
-            HtmlRenderer renderer = renderingProvider.getValue().createHtmlRenderer(span -> {
-                    boolean result = false;
-                    if (span instanceof ArticleLinkSpan link) {
-                        String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
-                        link.setTitle(title);
-                        result = enableTmLinks;
-                    } else if (span instanceof PassageLinkSpan link) {
-                        String chunk = rc.readChunk(link.getChapterId(), link.getFrameId());
-                        String verseTitle = Frame.parseVerseTitle(chunk,
-                                TranslationFormat.parse(rc.contentMimeType));
-                        String chapterId;
-                        try {
-                            chapterId = String.valueOf(Integer.parseInt(link.getChapterId()));
-                        } catch (Exception e) {
-                            chapterId = link.getChapterId();
+            wordBinding.descriptionTitle.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                rc.language.slug,
+                rc.language.direction
+            )
+            val renderer = renderingProvider.createHtmlRenderer(
+                { span ->
+                    var result = false
+                    when (span) {
+                        is ArticleLinkSpan -> {
+                            val title = getString(R.string.tm_title, span.section, span.slug)
+                            span.setTitle(title)
+                            result = enableTmLinks
                         }
-                        String title = rc.readChunk("front", "title") + " " + chapterId + ":" + verseTitle;
-                        link.setTitle(title);
-                        result = !chunk.isEmpty();
-                    } else if (span instanceof TranslationWordLinkSpan) {
-                        ResourceContainer currentRC = getSelectedResourceContainer();
-                        if (currentRC != null) {
-                            Pattern titlePattern = Pattern.compile("#(.*)");
-                            ResourceContainer closestRc =
-                                    viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
+                        is PassageLinkSpan -> {
+                            val chunk = rc.readChunk(span.chapterId, span.frameId)
+                            val verseTitle = Frame.parseVerseTitle(
+                                chunk,
+                                TranslationFormat.parse(rc.contentMimeType)
+                            )
+                            val chapterId = try {
+                                span.chapterId.toInt().toString()
+                            } catch (e: Exception) {
+                                span.chapterId
+                            }
+                            val title = "${rc.readChunk("front", "title")} $chapterId:$verseTitle"
+                            span.title = title
+                            result = chunk.isNotEmpty()
+                        }
+                        is TranslationWordLinkSpan -> {
+                            val currentRC = getSelectedResourceContainer()
+                            if (currentRC != null) {
+                                val titlePattern = Pattern.compile("#(.*)")
+                                val closestRc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
 
-                            if (closestRc != null) {
-                                String closestWord =
-                                        closestRc.readChunk(span.getMachineReadable().toString(), "01");
-                                if (!closestWord.isEmpty()) {
-                                    Matcher linkMatch =
-                                            titlePattern.matcher(closestWord.trim());
-                                    String title = span.getMachineReadable().toString();
-                                    if (linkMatch.find()) {
-                                        title = linkMatch.group(1);
+                                if (closestRc != null) {
+                                    val closestWord = closestRc.readChunk(span.machineReadable.toString(), "01")
+                                    if (closestWord.isNotEmpty()) {
+                                        val linkMatch = titlePattern.matcher(closestWord.trim())
+                                        var title = span.machineReadable.toString()
+                                        if (linkMatch.find()) {
+                                            title = linkMatch.group(1) ?: title
+                                        }
+                                        span.setTitle(title)
+                                        result = true
                                     }
-                                    ((TranslationWordLinkSpan) span).setTitle(title);
-                                    result = true;
                                 }
                             }
                         }
                     }
-                    return result;
-                }, new Span.OnClickListener() {
-                    @Override
-                    public void onClick(View view, Span span, int start, int end) {
-                        String type = ((LinkSpan) span).getType();
-                        switch (type) {
-                            case "ta" -> {
-                                String url = span.getMachineReadable().toString();
-                                ArticleLinkSpan link = ArticleLinkSpan.parse(url);
+                    result
+                },
+                object : Span.OnClickListener {
+                    override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                        when (val type = (span as LinkSpan).type) {
+                            "ta" -> {
+                                val url = span.machineReadable.toString()
+                                val link = ArticleLinkSpan.parse(url)
                                 if (link != null) {
-                                    onTranslationManualClick(link.getSection(), link.getSlug());
+                                    onTranslationManualClick(link.section, link.slug)
                                 }
                             }
-                            case "p" -> {
-                                String url = span.getMachineReadable().toString();
-                                PassageLinkSpan link = new PassageLinkSpan("", url);
-                                scrollToChunk(link.getChapterId(), link.getFrameId());
+                            "p" -> {
+                                val url = span.machineReadable.toString()
+                                val link = PassageLinkSpan("", url)
+                                scrollToChunk(link.chapterId, link.frameId)
                             }
-                            case "m" -> {
+                            "m" -> {
                                 // markdown link
-                                final String url = span.getMachineReadable().toString();
-                                new AlertDialog.Builder(requireActivity(),
-                                        R.style.AppTheme_Dialog)
-                                        .setTitle(R.string.view_online)
-                                        .setMessage(R.string.use_internet_confirmation)
-                                        .setNegativeButton(R.string.title_cancel, null)
-                                        .setPositiveButton(R.string.label_continue,
-                                                (dialogInterface, i) -> {
-                                            Intent intent = new Intent(Intent.ACTION_VIEW,
-                                                    Uri.parse(url));
-                                            startActivity(intent);
-                                        })
-                                        .show();
+                                val url = span.machineReadable.toString()
+                                AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                                    .setTitle(R.string.view_online)
+                                    .setMessage(R.string.use_internet_confirmation)
+                                    .setNegativeButton(R.string.title_cancel, null)
+                                    .setPositiveButton(R.string.label_continue) { _, _ ->
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        startActivity(intent)
+                                    }
+                                    .show()
                             }
-                            case "tw" -> {
+                            "tw" -> {
                                 // translation word
-                                ResourceContainer currentRC = getSelectedResourceContainer();
+                                val currentRC = getSelectedResourceContainer()
                                 if (currentRC != null) {
-                                    ResourceContainer rc =
-                                            viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw");
-                                    if (rc != null) {
-                                        onTranslationWordClick(rc.slug,
-                                                span.getMachineReadable().toString(),
-                                                binding.resourcesDrawerCard.getLayoutParams().width);
+                                    val localRc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
+                                    if (localRc != null) {
+                                        onTranslationWordClick(
+                                            localRc.slug,
+                                            span.machineReadable.toString(),
+                                            binding.resourcesDrawerCard.layoutParams.width
+                                        )
                                     }
                                 }
                             }
                         }
                     }
 
-                    @Override
-                    public void onLongClick(View view, Span span, int start, int end) {
-
-                    }
+                    override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
                 }
-            );
+            )
 
-            wordBinding.description.setText(renderer.render(description));
-            wordBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
-            TypographyUtils.formatSub(
-                    wordBinding.description,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    rc.language.slug,
-                    rc.language.direction
-            );
+            wordBinding.description.text = renderer.render(description)
+            wordBinding.description.movementMethod = LocalLinkMovementMethod.getInstance()
+            wordBinding.description.formatSub(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                rc.language.slug,
+                rc.language.direction
+            )
 
-            wordBinding.seeAlso.removeAllViews();
-            wordBinding.seeAlsoTitle.setVisibility(View.GONE);
-            wordBinding.examples.removeAllViews();
-            wordBinding.examplesTitle.setVisibility(View.GONE);
+            wordBinding.seeAlso.removeAllViews()
+            wordBinding.seeAlsoTitle.visibility = View.GONE
+            wordBinding.examples.removeAllViews()
+            wordBinding.examplesTitle.visibility = View.GONE
 
             if (rc.config != null && rc.config.containsKey(chapterSlug)) {
-                Map chapterConfig = (Map<String, List<String>>) rc.config.get(chapterSlug);
+                val chapterConfig = rc.config[chapterSlug] as Map<String, List<String>>
                 if (chapterConfig.containsKey("see_also")) {
-                    Pattern titlePattern = Pattern.compile("#(.*)");
-                    List<String> relatedSlugs = (List<String>) chapterConfig.get("see_also");
-                    for (final String relatedSlug : relatedSlugs) {
-                        // TODO: 10/12/16 the words need to have their title placed into a
-                        //  "title" file instead of being inline in the chunk
-                        String relatedWord = rc.readChunk(relatedSlug, "01");
-                        Matcher linkMatch = titlePattern.matcher(relatedWord.trim());
-                        String relatedTitle = relatedSlug;
+                    val titlePattern = Pattern.compile("#(.*)")
+                    val relatedSlugs = chapterConfig["see_also"] ?: emptyList()
+                    for (relatedSlug in relatedSlugs) {
+                        // TODO: 10/12/16 the words need to have their title placed into a "title" file instead of being inline in the chunk
+                        val relatedWord = rc.readChunk(relatedSlug, "01")
+                        val linkMatch = titlePattern.matcher(relatedWord.trim())
+                        var relatedTitle = relatedSlug
                         if (linkMatch.find()) {
-                            relatedTitle = linkMatch.group(1);
+                            relatedTitle = linkMatch.group(1) ?: relatedTitle
                         }
-                        Button button = new Button(new ContextThemeWrapper(requireActivity(),
-                                R.style.Widget_Button_Tag), null, R.style.Widget_Button_Tag);
-                        button.setText(relatedTitle);
-                        button.setOnClickListener(v ->
-                                onTranslationWordClick(rc.slug, relatedSlug,
-                                        binding.resourcesDrawerCard.getLayoutParams().width)
-                        );
-                        TypographyUtils.formatSub(
-                                button,
-                                typography.getValue(),
-                                assetsProvider.getValue(),
-                                TranslationType.SOURCE,
-                                rc.language.slug,
-                                rc.language.direction
-                        );
-                        wordBinding.seeAlso.addView(button);
+                        val button = Button(
+                            ContextThemeWrapper(requireActivity(), R.style.Widget_Button_Tag),
+                            null,
+                            R.style.Widget_Button_Tag
+                        )
+                        button.text = relatedTitle
+                        button.setOnClickListener {
+                            onTranslationWordClick(
+                                rc.slug, relatedSlug,
+                                binding.resourcesDrawerCard.layoutParams.width
+                            )
+                        }
+                        button.formatSub(
+                            typography,
+                            assetsProvider,
+                            TranslationType.SOURCE,
+                            rc.language.slug,
+                            rc.language.direction
+                        )
+                        wordBinding.seeAlso.addView(button)
                     }
-                    if (!relatedSlugs.isEmpty())
-                        wordBinding.seeAlsoTitle.setVisibility(View.VISIBLE);
+                    if (relatedSlugs.isNotEmpty()) {
+                        wordBinding.seeAlsoTitle.visibility = View.VISIBLE
+                    }
                 }
                 if (chapterConfig.containsKey("examples")) {
-                    List<String> exampleSlugs = (List<String>) chapterConfig.get("examples");
-                    for (String exampleSlug : exampleSlugs) {
-                        final String[] slugs = exampleSlug.split("-");
-                        if (slugs.length != 2) continue;
+                    val exampleSlugs = chapterConfig["examples"] ?: emptyList()
+                    for (exampleSlug in exampleSlugs) {
+                        val slugs = exampleSlug.split("-")
+                        if (slugs.size != 2) continue
 
-                        String projectTitle = viewModel.getResourceContainer().readChunk("front",
-                                "title");
+                        val projectTitle = viewModel.resourceContainer?.readChunk("front", "title") ?: ""
 
                         // get verse title
-                        String verseTitle = StringUtilities.formatNumber(slugs[1]);
-                        if (viewModel.getResourceContainer().contentMimeType.equals("text/usfm")) {
+                        var verseTitle = StringUtilities.formatNumber(slugs[1])
+                        if (viewModel.resourceContainer?.contentMimeType == "text/usfm") {
                             verseTitle = Frame.parseVerseTitle(
-                                    viewModel.getResourceContainer().readChunk(slugs[0], slugs[1]),
-                                    TranslationFormat.parse(viewModel.getResourceContainer().contentMimeType)
-                            );
+                                viewModel.resourceContainer!!.readChunk(slugs[0], slugs[1]),
+                                TranslationFormat.parse(viewModel.resourceContainer!!.contentMimeType)
+                            )
                         }
 
-                        FragmentResourcesExampleItemBinding examplesBinding =
-                                FragmentResourcesExampleItemBinding.inflate(requireActivity().getLayoutInflater());
+                        val examplesBinding = FragmentResourcesExampleItemBinding.inflate(requireActivity().layoutInflater)
 
-                        examplesBinding.reference.setText(projectTitle.trim() + " " + StringUtilities.formatNumber(slugs[0]) + ":" + verseTitle);
-                        examplesBinding.passage.setHtmlFromString(viewModel.getResourceContainer().readChunk(slugs[0], slugs[1]), true);
-                        examplesBinding.getRoot().setOnClickListener(v -> scrollToChunk(slugs[0],
-                                slugs[1]));
-                        TypographyUtils.formatSub(
-                                examplesBinding.reference,
-                                typography.getValue(),
-                                assetsProvider.getValue(),
-                                TranslationType.SOURCE,
-                                rc.language.slug,
-                                rc.language.direction
-                        );
-                        TypographyUtils.formatSub(
-                                examplesBinding.passage,
-                                typography.getValue(),
-                                assetsProvider.getValue(),
-                                TranslationType.SOURCE,
-                                rc.language.slug,
-                                rc.language.direction
-                        );
-                        wordBinding.examples.addView(examplesBinding.getRoot());
+                        examplesBinding.reference.text = "${projectTitle.trim()} ${StringUtilities.formatNumber(slugs[0])}:$verseTitle"
+                        examplesBinding.passage.setHtmlFromString(viewModel.resourceContainer?.readChunk(slugs[0], slugs[1]) ?: "", true)
+                        examplesBinding.root.setOnClickListener { scrollToChunk(slugs[0], slugs[1]) }
+
+                        examplesBinding.reference.formatSub(
+                            typography,
+                            assetsProvider,
+                            TranslationType.SOURCE,
+                            rc.language.slug,
+                            rc.language.direction
+                        )
+                        examplesBinding.passage.formatSub(
+                            typography,
+                            assetsProvider,
+                            TranslationType.SOURCE,
+                            rc.language.slug,
+                            rc.language.direction
+                        )
+                        wordBinding.examples.addView(examplesBinding.root)
                     }
-                    if (!exampleSlugs.isEmpty())
-                        wordBinding.examplesTitle.setVisibility(View.VISIBLE);
+                    if (exampleSlugs.isNotEmpty()) {
+                        wordBinding.examplesTitle.visibility = View.VISIBLE
+                    }
                 }
             }
-            TypographyUtils.formatTitle(
-                    wordBinding.seeAlsoTitle,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    rc.language.slug,
-                    rc.language.direction
-            );
-            TypographyUtils.formatTitle(
-                    wordBinding.examplesTitle,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    rc.language.slug,
-                    rc.language.direction
-            );
+            wordBinding.seeAlsoTitle.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                rc.language.slug,
+                rc.language.direction
+            )
+            wordBinding.examplesTitle.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                rc.language.slug,
+                rc.language.direction
+            )
 
-            binding.scrollingResourcesDrawerContent.removeAllViews();
-            binding.scrollingResourcesDrawerContent.addView(wordBinding.getRoot());
+            binding.scrollingResourcesDrawerContent.removeAllViews()
+            binding.scrollingResourcesDrawerContent.addView(wordBinding.root)
         }
     }
 
     /**
      * Prepares the resources drawer with the translation note
-     *
-     * @param note
      */
-    private void renderTranslationNote(TranslationHelp note) {
-        translationNote = note;
-        translationWordId = null;
+    private fun renderTranslationNote(note: TranslationHelp) {
+        translationNote = note
+        translationWordId = null
 
-        final ResourceContainer sourceTranslation = getSelectedResourceContainer();
-//        TranslationNote note = null;//getPreferredNote(sourceTranslation, chapterId, frameId,
-//        noteId);
-        binding.resourcesDrawerContent.setVisibility(View.GONE);
-        binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
-        binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
+        binding.resourcesDrawerContent.visibility = View.GONE
+        binding.scrollingResourcesDrawerContent.visibility = View.VISIBLE
+        binding.scrollingResourcesDrawerContent.scrollTo(0, 0)
 
-        FragmentResourcesNoteBinding noteBinding =
-                FragmentResourcesNoteBinding.inflate(requireActivity().getLayoutInflater());
-//            mCloseResourcesDrawerButton.setText(note.getTitle());
+        val noteBinding = FragmentResourcesNoteBinding.inflate(requireActivity().layoutInflater)
 
-        HtmlRenderer renderer = renderingProvider.getValue().createHtmlRenderer(span -> {
-            boolean result = false;
-            if (span instanceof ArticleLinkSpan link) {
-                String title = getString(R.string.tm_title, link.getSection(), link.getSlug());
-                link.setTitle(title);
-                result = enableTmLinks;
-            } else if (span instanceof PassageLinkSpan) {
-//                        PassageLinkSpan link = (PassageLinkSpan)span;
-//                        String chapterID = link.getChapterId();
-                // TODO: 3/30/2016 rather than assuming passage links are always referring to the
-                //  current source translation we need to support links to other source translations
-//                        Frame frame = library.getFrame(sourceTranslation, chapterID, link
-//                        .getFrameId());
-//                        if(frame != null) {
-//                            String chapter = (chapterID != null) ? String.valueOf(Integer
-//                            .parseInt(chapterID)) : ""; // handle null chapter ID
-//                            String title = sourceTranslation.getProjectTitle() + " " + chapter
-//                            + ":" + frame.getTitle();
-//                            link.setTitle(title);
-//                            return library.getFrame(sourceTranslation, chapterID, link
-//                            .getFrameId()) != null;
-//                            return false;
-//                        } else {
-//                            return false;
-//                        }
-            } else if (span instanceof TranslationWordLinkSpan) {
-                ResourceContainer currentRC = getSelectedResourceContainer();
-                if (currentRC != null) {
-                    Pattern titlePattern = Pattern.compile("#(.*)");
-                    ResourceContainer rc =
-                            viewModel.getClosestResourceContainer(currentRC.language.slug, "bible"
-                                    , "tw");
-                    if (rc != null) {
-                        String word = rc.readChunk(span.getMachineReadable().toString(), "01");
-                        if (!word.isEmpty()) {
-                            Matcher linkMatch = titlePattern.matcher(word.trim());
-                            String title = span.getMachineReadable().toString();
-                            if (linkMatch.find()) {
-                                title = linkMatch.group(1);
+        val renderer = renderingProvider.createHtmlRenderer(
+            { span ->
+                var result = false
+                when (span) {
+                    is ArticleLinkSpan -> {
+                        val title = getString(R.string.tm_title, span.section, span.slug)
+                        span.setTitle(title)
+                        result = enableTmLinks
+                    }
+                    is PassageLinkSpan -> {
+                        // Not implemented in original Java code
+                    }
+                    is TranslationWordLinkSpan -> {
+                        val currentRC = getSelectedResourceContainer()
+                        if (currentRC != null) {
+                            val titlePattern = Pattern.compile("#(.*)")
+                            val rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
+                            if (rc != null) {
+                                val word = rc.readChunk(span.machineReadable.toString(), "01")
+                                if (word.isNotEmpty()) {
+                                    val linkMatch = titlePattern.matcher(word.trim())
+                                    var title = span.machineReadable.toString()
+                                    if (linkMatch.find()) {
+                                        title = linkMatch.group(1) ?: title
+                                    }
+                                    span.setTitle(title)
+                                    result = true
+                                }
                             }
-                            ((TranslationWordLinkSpan) span).setTitle(title);
-                            result = true;
                         }
+                    }
+                    is ShortReferenceSpan -> {
+                        // Not implemented fully in original Java code
                     }
                 }
-            } else if (span instanceof ShortReferenceSpan) {
-//                        ShortReferenceSpan link = (ShortReferenceSpan)span;
-//                        String chapterId = link.getChapter();
-//                        String chunkId = link.getVerse();
-                // TODO: 3/7/17 validate
-            }
-            return result;
-        }, new Span.OnClickListener() {
-            @Override
-            public void onClick(View view, Span span, int start, int end) {
-                String type = ((LinkSpan) span).getType();
-                switch (type) {
-                    case "ta" -> {
-                        String url = span.getMachineReadable().toString();
-                        ArticleLinkSpan link = ArticleLinkSpan.parse(url);
-                        if (link != null) {
-                            onTranslationManualClick(link.getSection(), link.getSlug());
+                result
+            },
+            object : Span.OnClickListener {
+                override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                    when (val type = (span as LinkSpan).type) {
+                        "ta" -> {
+                            val url = span.machineReadable.toString()
+                            val link = ArticleLinkSpan.parse(url)
+                            if (link != null) {
+                                onTranslationManualClick(link.section, link.slug)
+                            }
                         }
-                    }
-                    case "p" -> {
-                        String url = span.getMachineReadable().toString();
-                        PassageLinkSpan link = new PassageLinkSpan("", url);
-                        scrollToChunk(link.getChapterId(), link.getFrameId());
-                    }
-                    case "m" -> {
-                        // markdown link
-                        final String url = span.getMachineReadable().toString();
-                        new AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+                        "p" -> {
+                            val url = span.machineReadable.toString()
+                            val link = PassageLinkSpan("", url)
+                            scrollToChunk(link.chapterId, link.frameId)
+                        }
+                        "m" -> {
+                            // markdown link
+                            val url = span.machineReadable.toString()
+                            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                                 .setTitle(R.string.view_online)
                                 .setMessage(R.string.use_internet_confirmation)
                                 .setNegativeButton(R.string.title_cancel, null)
-                                .setPositiveButton(R.string.label_continue,
-                                        new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialogInterface, int i) {
-                                                Intent intent = new Intent(Intent.ACTION_VIEW,
-                                                        Uri.parse(url));
-                                                startActivity(intent);
-                                            }
-                                        })
-                                .show();
-                    }
-                    case "tw" -> {
-                        // translation word
-                        ResourceContainer currentRC = getSelectedResourceContainer();
-                        if (currentRC != null) {
-                            ResourceContainer rc =
-                                    viewModel.getClosestResourceContainer(currentRC.language.slug
-                                            , "bible", "tw");
-                            if (rc != null) {
-                                onTranslationWordClick(rc.slug,
-                                        span.getMachineReadable().toString(),
-                                        binding.resourcesDrawerCard.getLayoutParams().width);
+                                .setPositiveButton(R.string.label_continue) { _, _ ->
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    startActivity(intent)
+                                }
+                                .show()
+                        }
+                        "tw" -> {
+                            // translation word
+                            val currentRC = getSelectedResourceContainer()
+                            if (currentRC != null) {
+                                val rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
+                                if (rc != null) {
+                                    onTranslationWordClick(
+                                        rc.slug,
+                                        span.machineReadable.toString(),
+                                        binding.resourcesDrawerCard.layoutParams.width
+                                    )
+                                }
                             }
                         }
-                    }
-                    case "sr" -> {
-                        // reference
-                        ShortReferenceSpan link =
-                                new ShortReferenceSpan(span.getMachineReadable().toString());
-                        scrollToVerse(link.getChapter(), link.getVerse());
+                        "sr" -> {
+                            // reference
+                            val link = ShortReferenceSpan(span.machineReadable.toString())
+                            scrollToVerse(link.chapter, link.verse)
+                        }
                     }
                 }
+
+                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
             }
+        )
 
-            @Override
-            public void onLongClick(View view, Span span, int start, int end) {
-
-            }
-        });
-
-        noteBinding.title.setText(note.title);
-        Language sourceLanguage = viewModel.getSourceLanguage();
+        noteBinding.title.text = note.title
+        val sourceLanguage = viewModel.getSourceLanguage()
         if (sourceLanguage != null) {
-            TypographyUtils.format(
-                    noteBinding.title,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    sourceLanguage.slug,
-                    sourceLanguage.direction
-            );
-            noteBinding.description.setText(renderer.render(note.body));
-            TypographyUtils.formatSub(
-                    noteBinding.description,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    sourceLanguage.slug,
-                    sourceLanguage.direction
-            );
-            noteBinding.description.setMovementMethod(LocalLinkMovementMethod.getInstance());
+            noteBinding.title.format(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                sourceLanguage.slug,
+                sourceLanguage.direction
+            )
+            noteBinding.description.text = renderer.render(note.body)
+            noteBinding.description.formatSub(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                sourceLanguage.slug,
+                sourceLanguage.direction
+            )
+            noteBinding.description.movementMethod = LocalLinkMovementMethod.getInstance()
         }
 
-        binding.scrollingResourcesDrawerContent.removeAllViews();
-        binding.scrollingResourcesDrawerContent.addView(noteBinding.getRoot());
+        binding.scrollingResourcesDrawerContent.removeAllViews()
+        binding.scrollingResourcesDrawerContent.addView(noteBinding.root)
     }
 
     /**
      * Prepares the resources drawer with the translation question
-     *
-     * @param question the question to be displayed
      */
-    private void renderTranslationQuestion(TranslationHelp question) {
-        translationWordId = null;
-        translationQuestion = question;
+    private fun renderTranslationQuestion(question: TranslationHelp) {
+        translationWordId = null
+        translationQuestion = question
 
-        binding.resourcesDrawerContent.setVisibility(View.GONE);
-        binding.scrollingResourcesDrawerContent.setVisibility(View.VISIBLE);
-        binding.scrollingResourcesDrawerContent.scrollTo(0, 0);
+        binding.resourcesDrawerContent.visibility = View.GONE
+        binding.scrollingResourcesDrawerContent.visibility = View.VISIBLE
+        binding.scrollingResourcesDrawerContent.scrollTo(0, 0)
 
-        FragmentResourcesQuestionBinding questionBinding =
-                FragmentResourcesQuestionBinding.inflate(requireActivity().getLayoutInflater());
-//            mCloseResourcesDrawerButton.setText(question.getQuestion());
+        val questionBinding = FragmentResourcesQuestionBinding.inflate(requireActivity().layoutInflater)
 
-        Language sourceLanguage = viewModel.getSourceLanguage();
+        val sourceLanguage = viewModel.getSourceLanguage()
         if (sourceLanguage != null) {
-            TypographyUtils.formatTitle(
-                    questionBinding.questionTitle,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    sourceLanguage.slug,
-                    sourceLanguage.direction
-            );
-            TypographyUtils.formatTitle(
-                    questionBinding.answerTitle,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    sourceLanguage.slug,
-                    sourceLanguage.direction
-            );
+            questionBinding.questionTitle.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                sourceLanguage.slug,
+                sourceLanguage.direction
+            )
+            questionBinding.answerTitle.formatTitle(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                sourceLanguage.slug,
+                sourceLanguage.direction
+            )
 
-            questionBinding.question.setText(question.title);
-            TypographyUtils.formatSub(
-                    questionBinding.question,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    sourceLanguage.slug,
-                    sourceLanguage.direction
-            );
-            questionBinding.answer.setText(question.body);
-            TypographyUtils.formatSub(
-                    questionBinding.answer,
-                    typography.getValue(),
-                    assetsProvider.getValue(),
-                    TranslationType.SOURCE,
-                    sourceLanguage.slug,
-                    sourceLanguage.direction
-            );
+            questionBinding.question.text = question.title
+            questionBinding.question.formatSub(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                sourceLanguage.slug,
+                sourceLanguage.direction
+            )
+            questionBinding.answer.text = question.body
+            questionBinding.answer.formatSub(
+                typography,
+                assetsProvider,
+                TranslationType.SOURCE,
+                sourceLanguage.slug,
+                sourceLanguage.direction
+            )
         }
 
-        binding.scrollingResourcesDrawerContent.removeAllViews();
-        binding.scrollingResourcesDrawerContent.addView(questionBinding.getRoot());
+        binding.scrollingResourcesDrawerContent.removeAllViews()
+        binding.scrollingResourcesDrawerContent.addView(questionBinding.root)
     }
 
-    private void renderHelpsResult(ListItem item, Map<String, Object> helps) {
+    @Suppress("UNCHECKED_CAST")
+    private fun renderHelpsResult(item: ListItem, helps: Map<String, Any>) {
         // skip if resources are closed
-        if (!isResourcesOpen()) return;
+        if (!isResourcesOpen()) return
 
-        final List<TranslationHelp> notes = (List<TranslationHelp>) helps.get("notes");
-        final List<Link> words = (List<Link>) helps.get("words");
-        final List<TranslationHelp> questions = (List<TranslationHelp>) helps.get("questions");
+        val notes = helps["notes"] as? List<TranslationHelp> ?: emptyList()
+        val words = helps["words"] as? List<Link> ?: emptyList()
+        val questions = helps["questions"] as? List<TranslationHelp> ?: emptyList()
 
-        final int position = getAdapter().filteredItems.indexOf(item);
+        val adapter = getAdapter() as? ReviewModeAdapter ?: return
+        val position = adapter.filteredItems.indexOf(item)
 
-        Handler hand = new Handler(Looper.getMainLooper());
-        hand.post(() -> {
-            ReviewHolder holder = (ReviewHolder) getVisibleViewHolder(position);
+        val hand = Handler(Looper.getMainLooper())
+        hand.post {
+            val holder = getVisibleViewHolder(position) as? ReviewHolder
             if (holder != null) {
-                holder.setResources(item.source.language, notes, questions, words);
+                holder.setResources(item.source.language, notes, questions, words)
                 // TODO: 2/28/17 select the correct tab
             } else {
-                getAdapter().notifyItemChanged(position);
+                adapter.notifyItemChanged(position)
             }
-        });
+        }
     }
 
-    @Override
-    public void onRenderHelps(ListItem item) {
-        viewModel.renderHelps(item);
+    override fun onRenderHelps(item: ListItem) {
+        viewModel.renderHelps(item)
     }
 
-    @Override
-    public void onShowToast(String message) {
-        showToast(message);
+    override fun onShowToast(message: String) {
+        showToast(message)
     }
 
-    @Override
-    public void onShowToast(int message) {
-        showToast(getString(message));
+    override fun onShowToast(message: Int) {
+        showToast(getString(message))
     }
 
-    private void showToast(String message) {
-        Snackbar snack = Snackbar.make(
-                requireActivity().findViewById(android.R.id.content),
-                message,
-                Snackbar.LENGTH_SHORT
-        );
+    private fun showToast(message: String) {
+        val snack = Snackbar.make(
+            requireActivity().findViewById(android.R.id.content),
+            message,
+            Snackbar.LENGTH_SHORT
+        )
         ViewUtil.setSnackBarTextColor(
-                snack,
-                requireActivity().getResources().getColor(R.color.light_primary_text)
-        );
-        snack.show();
+            snack,
+            ContextCompat.getColor(requireContext(), R.color.light_primary_text)
+        )
+        snack.show()
     }
 
     /**
      * opens the resources view
      */
-    public void openResources() {
+    fun openResources() {
         if (!resourcesOpened) {
-            resourcesOpened = true;
-            getAdapter().setResourcesOpened(true);
+            resourcesOpened = true
+            getAdapter()?.setResourcesOpened(true)
         }
     }
 
     /**
      * closes the resources view
      */
-    public void closeResources() {
+    fun closeResources() {
         if (resourcesOpened) {
-            resourcesOpened = false;
-            getAdapter().setResourcesOpened(false);
-            viewModel.cancelRenderJobs();
+            resourcesOpened = false
+            getAdapter()?.setResourcesOpened(false)
+            viewModel.cancelRenderJobs()
         }
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle out) {
-        out.putBoolean(STATE_RESOURCES_OPEN, isResourcesOpen());
-        out.putBoolean(STATE_RESOURCES_DRAWER_OPEN, resourcesDrawerOpen);
+    override fun onSaveInstanceState(out: Bundle) {
+        out.putBoolean(STATE_RESOURCES_OPEN, isResourcesOpen())
+        out.putBoolean(STATE_RESOURCES_DRAWER_OPEN, resourcesDrawerOpen)
         if (translationWordId != null) {
-            out.putString(STATE_WORD_ID, translationWordId);
+            out.putString(STATE_WORD_ID, translationWordId)
         } else {
-            out.remove(STATE_WORD_ID);
+            out.remove(STATE_WORD_ID)
         }
         if (translationNote != null) {
-            out.putString(STATE_HELP_TITLE, translationNote.title);
-            out.putString(STATE_HELP_BODY, translationNote.body);
-            out.putString(STATE_HELP_TYPE, "tn");
+            out.putString(STATE_HELP_TITLE, translationNote!!.title)
+            out.putString(STATE_HELP_BODY, translationNote!!.body)
+            out.putString(STATE_HELP_TYPE, "tn")
         } else if (translationQuestion != null) {
-            out.putString(STATE_HELP_TITLE, translationQuestion.title);
-            out.putString(STATE_HELP_BODY, translationQuestion.body);
-            out.putString(STATE_HELP_TYPE, "tq");
+            out.putString(STATE_HELP_TITLE, translationQuestion!!.title)
+            out.putString(STATE_HELP_BODY, translationQuestion!!.body)
+            out.putString(STATE_HELP_TYPE, "tq")
         } else {
-            out.remove(STATE_HELP_TITLE);
-            out.remove(STATE_HELP_BODY);
-            out.remove(STATE_HELP_TYPE);
+            out.remove(STATE_HELP_TITLE)
+            out.remove(STATE_HELP_BODY)
+            out.remove(STATE_HELP_TYPE)
         }
-        super.onSaveInstanceState(out);
+        super.onSaveInstanceState(out)
     }
 
-    @Override
-    public String getVerseChunk(String chapter, String verse) {
-        return Util.mapVerseToChunk(viewModel.getResourceContainer(), chapter, verse);
+    override fun getVerseChunk(chapterSlug: String, verseSlug: String): String {
+        return Util.mapVerseToChunk(viewModel.resourceContainer, chapterSlug, verseSlug)
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
+    override fun onStop() {
+        super.onStop()
         if (resourcesDrawerOpen) {
-            closeResourcesDrawer();
+            closeResourcesDrawer()
         }
     }
 }
