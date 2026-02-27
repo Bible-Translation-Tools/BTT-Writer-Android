@@ -1,170 +1,157 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import static org.koin.android.compat.ViewModelCompat.getViewModel;
-
-import android.content.Context;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-
-import com.door43.translationstudio.core.TargetTranslation;
-import com.door43.translationstudio.databinding.FragmentFirstTabBinding;
-import com.door43.translationstudio.ui.BaseFragment;
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel;
-
-import org.json.JSONException;
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.util.List;
+import android.content.Context
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import com.door43.translationstudio.databinding.FragmentFirstTabBinding
+import com.door43.translationstudio.ui.BaseFragment
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
+import org.json.JSONException
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.unfoldingword.tools.logger.Logger
 
 /**
  * Gives some instructions when no source text has been selected
  */
-public class FirstTabFragment extends BaseFragment implements ChooseSourceTranslationDialog.OnClickListener {
+class FirstTabFragment : BaseFragment(), ChooseSourceTranslationDialog.OnClickListener {
 
-    private OnEventListener listener;
-    private TargetTranslationViewModel viewModel;
+    private var listener: OnEventListener? = null
 
-    private FragmentFirstTabBinding binding;
+    private val viewModel: TargetTranslationViewModel by activityViewModel()
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = FragmentFirstTabBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+    private var _binding: FragmentFirstTabBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentFirstTabBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        Bundle args = getArguments();
-        assert args != null;
+        val args = arguments
+        requireNotNull(args)
 
-        viewModel = getViewModel(requireActivity(), TargetTranslationViewModel.class);
-
-        setupObservers();
+        setupObservers()
 
         try {
-            Project p = viewModel.getProject();
-            binding.sourceTranslationTitle.setText(
-                    p.name + " - " + viewModel.getTargetTranslation().getTargetLanguageName()
-            );
-        } catch (Exception e) {
+            val p = viewModel.getProject()
+            binding.sourceTranslationTitle.text = "${p.name} - ${viewModel.targetTranslation.targetLanguageName}"
+        } catch (e: Exception) {
             Logger.e(
-                    FirstTabFragment.class.getSimpleName(),
-                    "Error getting resource container for '" + viewModel.getTargetTranslation().getId() + "'",
-                    e
-            );
+                FirstTabFragment::class.java.simpleName,
+                "Error getting resource container for '${viewModel.targetTranslation.id}'",
+                e
+            )
         }
 
-        View.OnClickListener clickListener = v -> {
-            FragmentTransaction ft = getParentFragmentManager().beginTransaction();
-            Fragment prev = getParentFragmentManager().findFragmentByTag("tabsDialog");
+        val clickListener = View.OnClickListener {
+            val ft = parentFragmentManager.beginTransaction()
+            val prev = parentFragmentManager.findFragmentByTag("tabsDialog")
             if (prev != null) {
-                ft.remove(prev);
+                ft.remove(prev)
             }
-            ft.addToBackStack(null);
+            ft.addToBackStack(null)
 
-            ChooseSourceTranslationDialog dialog = new ChooseSourceTranslationDialog();
-            Bundle args1 = new Bundle();
-            args1.putString(ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID, viewModel.getTargetTranslation().getId());
-            dialog.setOnClickListener(FirstTabFragment.this);
-            dialog.setArguments(args1);
-            dialog.show(ft, "tabsDialog");
-        };
+            val dialog = ChooseSourceTranslationDialog()
+            val args1 = Bundle()
+            args1.putString(
+                ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID,
+                viewModel.targetTranslation.id
+            )
+            dialog.setOnClickListener(this@FirstTabFragment)
+            dialog.arguments = args1
+            dialog.show(ft, "tabsDialog")
+        }
 
-        binding.newTabButton.setOnClickListener(clickListener);
-        binding.secondaryNewTabButton.setOnClickListener(clickListener);
+        binding.newTabButton.setOnClickListener(clickListener)
+        binding.secondaryNewTabButton.setOnClickListener(clickListener)
 
         // attach to tabs dialog
-        if(savedInstanceState != null) {
-            ChooseSourceTranslationDialog dialog = (ChooseSourceTranslationDialog) getParentFragmentManager().findFragmentByTag("tabsDialog");
-            if(dialog != null) {
-                dialog.setOnClickListener(this);
+        if (savedInstanceState != null) {
+            val dialog = parentFragmentManager.findFragmentByTag("tabsDialog") as? ChooseSourceTranslationDialog
+            dialog?.setOnClickListener(this)
+        }
+    }
+
+    private fun setupObservers() {
+        viewModel.listItems.observe(viewLifecycleOwner) { items ->
+            if (items.isNotEmpty()) {
+                listener?.onHasSourceTranslations()
             }
         }
     }
 
-    private void setupObservers() {
-        viewModel.getListItems().observe(getViewLifecycleOwner(), items -> {
-            if (!items.isEmpty() && listener != null) {
-                listener.onHasSourceTranslations();
-            }
-        });
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         try {
-            this.listener = (OnEventListener) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context + " must implement FirstTabFragment.OnEventListener");
+            this.listener = context as OnEventListener
+        } catch (e: ClassCastException) {
+            throw ClassCastException("$context must implement FirstTabFragment.OnEventListener")
         }
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     /**
      * user has selected to update sources
      */
-    public void onUpdateSources() {
-        if(listener != null) listener.onUpdateSources();
+    override fun onUpdateSources() {
+        listener?.onUpdateSources()
     }
 
-    @Override
-    public void onCancelTabsDialog(String targetTranslationId) {
+    override fun onCancelTabsDialog(targetTranslationId: String) {}
 
-    }
-
-    @Override
-    public void onConfirmTabsDialog(@NonNull List<String> sourceTranslationIds) {
-        String[] oldSourceTranslationIds = viewModel.getOpenSourceTranslations();
-        for(String id:oldSourceTranslationIds) {
-            viewModel.removeOpenSourceTranslation(id);
+    override fun onConfirmTabsDialog(sourceTranslationIds: List<String>) {
+        val oldSourceTranslationIds = viewModel.getOpenSourceTranslations()
+        for (id in oldSourceTranslationIds) {
+            viewModel.removeOpenSourceTranslation(id)
         }
 
-        if(!sourceTranslationIds.isEmpty()) {
+        if (sourceTranslationIds.isNotEmpty()) {
             // save open source language tabs
-            for(String slug:sourceTranslationIds) {
-                Translation t = viewModel.getTranslation(slug);
-                int modifiedAt = viewModel.getResourceContainerLastModified(t);
-                try {
-                    viewModel.addOpenSourceTranslation(slug);
-                    TargetTranslation targetTranslation = viewModel.getTargetTranslation();
+            for (slug in sourceTranslationIds) {
+                val t = viewModel.getTranslation(slug)
+                if (t != null) {
+                    val modifiedAt = viewModel.getResourceContainerLastModified(t)
                     try {
-                        targetTranslation.addSourceTranslation(t, modifiedAt);
-                    } catch (JSONException e) {
-                        Logger.e(this.getClass().getName(), "Failed to record source translation (" + slug + ") usage in the target translation " + targetTranslation.getId(), e);
+                        viewModel.addOpenSourceTranslation(slug)
+                        val targetTranslation = viewModel.targetTranslation
+                        try {
+                            targetTranslation.addSourceTranslation(t, modifiedAt)
+                        } catch (e: JSONException) {
+                            Logger.e(
+                                this.javaClass.name,
+                                "Failed to record source translation ($slug) usage in the target translation ${targetTranslation.id}",
+                                e
+                            )
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
             }
 
             // redirect back to previous mode
-            if(listener != null) listener.onHasSourceTranslations();
+            listener?.onHasSourceTranslations()
         }
     }
 
-    public interface OnEventListener {
-        void onHasSourceTranslations();
+    interface OnEventListener {
+        fun onHasSourceTranslations()
 
         /**
          * user has selected to update sources
          */
-        void onUpdateSources();
+        fun onUpdateSources()
     }
 }

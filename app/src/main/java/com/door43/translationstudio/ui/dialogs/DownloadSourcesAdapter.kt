@@ -1,525 +1,430 @@
-package com.door43.translationstudio.ui.dialogs;
+package com.door43.translationstudio.ui.dialogs
 
-import static com.door43.translationstudio.TypographyUtils.getBestFontForLanguage;
-
-import android.content.Context;
-import android.graphics.Typeface;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.viewbinding.ViewBinding;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-
-import com.door43.data.AssetsProvider;
-import com.door43.translationstudio.R;
-import com.door43.translationstudio.core.TranslationType;
-import com.door43.translationstudio.core.Typography;
-import com.door43.translationstudio.core.Util;
-import com.door43.translationstudio.databinding.FragmentSelectDownloadSourceItemBinding;
-import com.door43.translationstudio.databinding.FragmentSelectFilterItemBinding;
-import com.door43.usecases.GetAvailableSources;
-import com.door43.widget.ViewUtil;
-
-import org.json.JSONObject;
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.Language;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
+import android.content.Context
+import android.graphics.Typeface
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
+import androidx.viewbinding.ViewBinding
+import com.door43.data.AssetsProvider
+import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.core.Util
+import com.door43.translationstudio.databinding.FragmentSelectDownloadSourceItemBinding
+import com.door43.translationstudio.databinding.FragmentSelectFilterItemBinding
+import com.door43.translationstudio.getBestFontForLanguage
+import com.door43.usecases.GetAvailableSources
+import com.door43.widget.ViewUtil
+import org.json.JSONObject
+import org.unfoldingword.door43client.models.Translation
+import org.unfoldingword.resourcecontainer.Language
+import org.unfoldingword.tools.logger.Logger
+import java.util.Collections
 
 /**
  * Created by blm on 12/1/16.
  */
+class DownloadSourcesAdapter(
+    private val typography: Typography,
+    private val assetsProvider: AssetsProvider
+) : BaseAdapter() {
 
-public class DownloadSourcesAdapter extends BaseAdapter {
+    companion object {
+        val TAG: String = DownloadSourcesAdapter::class.java.simpleName
+        const val TYPE_ITEM_FILTER_SELECTION = 0
+        const val TYPE_ITEM_SOURCE_SELECTION = 1
 
-    public static final String TAG = DownloadSourcesAdapter.class.getSimpleName();
-    public static final int TYPE_ITEM_FILTER_SELECTION = 0;
-    public static final int TYPE_ITEM_SOURCE_SELECTION = 1;
-    private Context context;
-    private List<String> selected = new ArrayList<>();
-    private List<String> downloaded = new ArrayList<>();
-    private List<ViewItem> items = new ArrayList<>();
-    private List<Translation> availableSources;
-    private Map<String,List<Integer>> byLanguage;
-    private Map<String,List<Integer>> otBooks;
-    private Map<String,List<Integer>> ntBooks;
-    private Map<String,List<Integer>> otherBooks;
-
-    // 02/20/2017 - for now we are disabling updating of TA since a major change coming up could break the app
-    private static final int[] bookTypeNameList = {
+        // 02/20/2017 - for now we are disabling updating of TA since a major change coming up could break the app
+        private val bookTypeNameList = intArrayOf(
             R.string.old_testament_label,
             R.string.new_testament_label,
             R.string.other_label
-    }; // removed R.string.ta_label to disable updating TA
-    private static final int[] bookTypeIconList = {
+        ) // removed R.string.ta_label to disable updating TA
+
+        private val bookTypeIconList = intArrayOf(
             R.drawable.ic_library_books_black_24dp,
             R.drawable.ic_library_books_black_24dp,
             R.drawable.ic_local_library_black_24dp
-    };
-
-    private SelectionType selectionType = SelectionType.language;
-    private List<DownloadSourcesAdapter.FilterStep> steps;
-    private String languageFilter;
-    private String bookFilter;
-    private String search = null;
-    private final Map<String, String> downloadErrors = new HashMap<>();
-
-    private final Typography typography;
-    private final AssetsProvider assetsProvider;
-
-    public DownloadSourcesAdapter(
-            Typography typography,
-            AssetsProvider assetsProvider
-    ) {
-        this.typography = typography;
-        this.assetsProvider = assetsProvider;
+        )
     }
 
-    @Override
-    public int getCount() {
-        return items.size();
+    private var context: Context? = null
+    var selected = mutableListOf<String>()
+    var downloaded = mutableListOf<String>()
+    var items = mutableListOf<ViewItem>()
+        private set
+
+    private var availableSources: List<Translation>? = null
+    private var byLanguage: Map<String, List<Int>>? = null
+    private var otBooks: Map<String, List<Int>>? = null
+    private var ntBooks: Map<String, List<Int>>? = null
+    private var otherBooks: Map<String, List<Int>>? = null
+
+    private var selectionType = SelectionType.language
+    private var steps: List<FilterStep>? = null
+    private var languageFilter: String? = null
+    private var bookFilter: String? = null
+    private var search: String? = null
+    private val downloadErrors = mutableMapOf<String, String>()
+
+    override fun getCount(): Int {
+        return items.size
     }
 
     /**
      * Loads source lists from task results
-a     * @param task
      */
-    public void setData(GetAvailableSources.Result result) {
-        availableSources = result.getSources();
-        Logger.i(TAG, "Found " + availableSources.size() + " sources");
+    fun setData(result: GetAvailableSources.Result) {
+        availableSources = result.sources
+        Logger.i(TAG, "Found ${availableSources?.size} sources")
 
-        byLanguage = result.getByLanguage();
-        otBooks = result.getOtBooks();
-        ntBooks = result.getNtBooks();
-        otherBooks = result.getOtherBooks();
-        selected = new ArrayList<>(); // clear selections
-        initializeSelections();
+        byLanguage = result.byLanguage
+        otBooks = result.otBooks
+        ntBooks = result.ntBooks
+        otherBooks = result.otherBooks
+        selected = mutableListOf() // clear selections
+        initializeSelections()
     }
 
     /**
      * loads the filter stages (e.g. filter by language, and then by category)
-     * @param steps
-     * @param search - string to search for
      * @param restore - if true then don't reset selection list
      */
-    public void setFilterSteps(List<DownloadSourcesAdapter.FilterStep> steps, String search, boolean restore) {
-        this.steps = steps;
-        this.search = search;
-        if(!restore) {
-            selected = new ArrayList<>(); // clear selections
+    fun setFilterSteps(steps: List<FilterStep>?, search: String?, restore: Boolean) {
+        this.steps = steps
+        this.search = search
+        if (!restore) {
+            selected = mutableListOf() // clear selections
         }
-        initializeSelections();
+        initializeSelections()
     }
 
     /**
      * loads the filter stages (e.g. filter by language, and then by category)
-     * @param search - string to search for
      */
-    public void setSearch(String search) {
-        this.search = search;
-        initializeSelections();
+    fun setSearch(search: String?) {
+        this.search = search
+        initializeSelections()
     }
 
-    @Override
-    public ViewItem getItem(int position) {
-        return items.get(position);
+    override fun getItem(position: Int): ViewItem {
+        return items[position]
     }
 
-    @Override
-    public long getItemId(int position) {
-        return position;
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        return switch (selectionType) {
-            case source_filtered_by_language, source_filtered_by_book -> TYPE_ITEM_SOURCE_SELECTION;
-            default -> TYPE_ITEM_FILTER_SELECTION;
-        };
-    }
-
-    @Override
-    public int getViewTypeCount() {
-        return 2;
-    }
-
-    public List<String> getSelected() {
-        return selected;
-    }
-
-    public List<String> getDownloaded() {
-        return downloaded;
-    }
-
-    public void setSelected(List<String> mSelected) {
-        this.selected = mSelected;
-    }
-
-    public void setDownloaded(List<String> mDownloaded) {
-        this.downloaded = mDownloaded;
-    }
-
-    public JSONObject getDownloadErrorMessages() {
-        return new JSONObject(downloadErrors);
-    }
-
-    public void setDownloadErrorMessages(String jsonDownloadErrorMessagesStr) {
-        downloadErrors.clear();
-        try {
-            JSONObject jsonMessages = new JSONObject(jsonDownloadErrorMessagesStr);
-            Iterator<?> keySet = jsonMessages.keys();
-            while (keySet.hasNext()) {
-                String key = (String) keySet.next();
-                Object value = jsonMessages.get(key);
-                downloadErrors.put(key, value.toString());
-            }
-        } catch (Exception e) {
-            Logger.w("DownloadSourcesAdapter", "Error parsing download error messages", e);
+    override fun getItemViewType(position: Int): Int {
+        return when (selectionType) {
+            SelectionType.source_filtered_by_language, SelectionType.source_filtered_by_book -> TYPE_ITEM_SOURCE_SELECTION
+            else -> TYPE_ITEM_FILTER_SELECTION
         }
     }
 
-    public SelectedState getSelectedState() {
-        boolean allSelected = true;
-        boolean noneSelected = true;
-        for (ViewItem item : items) {
-            if(!item.downloaded) { // ignore items already downloaded
-                if (item.selected) {
-                    noneSelected = false;
-                } else {
-                    allSelected = false;
+    override fun getViewTypeCount(): Int {
+        return 2
+    }
+
+    fun getDownloadErrorMessages(): JSONObject {
+        return JSONObject(downloadErrors)
+    }
+
+    fun setDownloadErrorMessages(jsonDownloadErrorMessagesStr: String) {
+        downloadErrors.clear()
+        try {
+            val jsonMessages = JSONObject(jsonDownloadErrorMessagesStr)
+            val keySet: MutableIterator<*> = jsonMessages.keys()
+            while (keySet.hasNext()) {
+                val key = keySet.next() as String
+                val value = jsonMessages.get(key)
+                downloadErrors[key] = value.toString()
+            }
+        } catch (e: java.lang.Exception) {
+            Logger.w("DownloadSourcesAdapter", "Error parsing download error messages", e)
+        }
+    }
+
+    val selectedState: SelectedState
+        get() {
+            var allSelected = true
+            var noneSelected = true
+            for (item in items) {
+                if (!item.downloaded) { // ignore items already downloaded
+                    if (item.selected) {
+                        noneSelected = false
+                    } else {
+                        allSelected = false
+                    }
                 }
             }
-        }
 
-        if(noneSelected) {
-            return SelectedState.none;
-        } else if(allSelected) {
-            return SelectedState.all;
+            return when {
+                noneSelected -> SelectedState.none
+                allSelected -> SelectedState.all
+                else -> SelectedState.not_empty
+            }
         }
-        return SelectedState.not_empty;
-    }
-
-    public List<ViewItem> getItems() {
-        return items;
-    }
 
     /**
      * Resorts the data
      */
-    public void initializeSelections() {
+    fun initializeSelections() {
+        bookFilter = null // clear filters
+        languageFilter = null
 
-        bookFilter = null; // clear filters
-        languageFilter = null;
-
-        if((steps == null) // make sure we have data to sort
-            || (steps.isEmpty())
-            || (availableSources == null)
-            || (availableSources.isEmpty()) ){
-            return;
+        if (steps.isNullOrEmpty() || availableSources.isNullOrEmpty()) {
+            return
         }
 
-        selectionType = steps.get(steps.size()-1).selection;
+        val safeSteps = steps!!
+        selectionType = safeSteps[safeSteps.size - 1].selection
 
-        for (int i = 0; i < steps.size() - 1; i++) { // iterate through previous steps to extract filters
-            FilterStep step = steps.get(i);
-            switch (step.selection) {
-                case language:
-                    languageFilter = step.filter;
-                    break;
-                case oldTestament:
-                case newTestament:
-                case other_book:
-                case book_type:
-                    bookFilter = step.filter;
-                    break;
+        for (i in 0 until safeSteps.size - 1) { // iterate through previous steps to extract filters
+            val step = safeSteps[i]
+            when (step.selection) {
+                SelectionType.language -> languageFilter = step.filter
+                SelectionType.oldTestament, SelectionType.newTestament, SelectionType.other_book, SelectionType.book_type -> bookFilter = step.filter
+                else -> {}
             }
         }
 
-        switch (selectionType) {
-            case source_filtered_by_language:
-                getSourcesForLanguageAndCategory();
-                break;
-
-            case source_filtered_by_book:
-                getSourcesForBook();
-                break;
-
-            case oldTestament:
-                getBooksInCategory(otBooks, false);
-                break;
-
-            case newTestament:
-                getBooksInCategory(ntBooks, false);
-                break;
-
-            case other_book:
-                getBooksInCategory(otherBooks, true);
-                break;
-
-            case book_type:
-                getCategories();
-                break;
-
-            case language:
-            default:
-                getLanguages();
-                break;
+        when (selectionType) {
+            SelectionType.source_filtered_by_language -> getSourcesForLanguageAndCategory()
+            SelectionType.source_filtered_by_book -> getSourcesForBook()
+            SelectionType.oldTestament -> getBooksInCategory(otBooks, false)
+            SelectionType.newTestament -> getBooksInCategory(ntBooks, false)
+            SelectionType.other_book -> getBooksInCategory(otherBooks, true)
+            SelectionType.book_type -> getCategories()
+            SelectionType.language -> getLanguages()
         }
-        notifyDataSetChanged();
+        notifyDataSetChanged()
     }
 
     /**
      * create list of languages available in sources
      */
-    private void getLanguages() {
-        items = new ArrayList<>();
-        for (String key : byLanguage.keySet()) {
-            List<Integer> items = byLanguage.get(key);
-            if((items != null)  && (!items.isEmpty())) {
-                int index = items.get(0);
-                if((index >= 0) && (index < availableSources.size())) {
-                    Translation sourceTranslation = availableSources.get(index);
-                    String title = sourceTranslation.language.name + "  (" + sourceTranslation.language.slug + ")";
-                    ViewItem newItem = new ViewItem(title, sourceTranslation.language.slug, sourceTranslation, false, false);
-                    this.items.add(newItem);
+    private fun getLanguages() {
+        items = mutableListOf()
+        byLanguage?.let { langMap ->
+            for (key in langMap.keys) {
+                val indices = langMap[key]
+                if (!indices.isNullOrEmpty()) {
+                    val index = indices[0]
+                    if (index >= 0 && index < availableSources!!.size) {
+                        val sourceTranslation = availableSources!![index]
+                        val title = "${sourceTranslation.language.name}  (${sourceTranslation.language.slug})"
+                        val newItem = ViewItem(title, sourceTranslation.language.slug, sourceTranslation, false, false)
+                        items.add(newItem)
+                    }
                 }
             }
         }
-        if((search != null) && !search.isEmpty()) {
-            List<ViewItem> filteredItems = new ArrayList<>();
+
+        if (!search.isNullOrEmpty()) {
+            val filteredItems = mutableListOf<ViewItem>()
+            val searchStr = search!!
 
             // filter by language code
-            for (ViewItem item : items) {
-                String code = item.sourceTranslation.language.slug;
-                if(code.length() >= search.length()) {
-                    if (code.substring(0, search.length()).equalsIgnoreCase(search)) {
-                        filteredItems.add(item);
+            for (item in items) {
+                val code = item.sourceTranslation?.language?.slug ?: ""
+                if (code.length >= searchStr.length) {
+                    if (code.substring(0, searchStr.length).equals(searchStr, ignoreCase = true)) {
+                        filteredItems.add(item)
                     }
                 }
             }
 
             // filter by language name
-            for (ViewItem item : items) {
-                String name = item.sourceTranslation.language.name;
-                if(name.length() >= search.length()) {
-                    if (name.substring(0, search.length()).equalsIgnoreCase(search)) {
+            for (item in items) {
+                val name = item.sourceTranslation?.language?.name ?: ""
+                if (name.length >= searchStr.length) {
+                    if (name.substring(0, searchStr.length).equals(searchStr, ignoreCase = true)) {
                         if (!filteredItems.contains(item)) { // prevent duplicates
-                            filteredItems.add(item);
+                            filteredItems.add(item)
                         }
                     }
                 }
             }
 
-            items = filteredItems;
+            items = filteredItems
         }
     }
 
     /**
      * get list of categories (OT, NT, other).  If language has been selected, only
-     *      return categories that contain the language.
+     * return categories that contain the language.
      */
-    private void getCategories() {
-        items = new ArrayList<>();
-        for(int i = 0; i < bookTypeNameList.length; i++) {
-            int id = bookTypeNameList[i];
-            if(languageFilter != null) {
-                boolean found;
-                if (id == R.string.old_testament_label) {
-                    found = isLanguageInCategory(byLanguage, otBooks);
-                } else if (id == R.string.new_testament_label) {
-                    found = isLanguageInCategory(byLanguage, ntBooks);
-                } else {
-                    found = isLanguageInCategory(byLanguage, otherBooks);
+    private fun getCategories() {
+        items = mutableListOf()
+        for (i in bookTypeNameList.indices) {
+            val id = bookTypeNameList[i]
+            if (languageFilter != null) {
+                val found = when (id) {
+                    R.string.old_testament_label -> isLanguageInCategory(byLanguage, otBooks)
+                    R.string.new_testament_label -> isLanguageInCategory(byLanguage, ntBooks)
+                    else -> isLanguageInCategory(byLanguage, otherBooks)
                 }
-                if(!found) { // if category is not found, skip
-                    continue;
+                if (!found) { // if category is not found, skip
+                    continue
                 }
             }
-            String title = context.getResources().getString(id);
-            ViewItem newItem = new ViewItem(title, Integer.toString(id), null, false, false);
-            newItem.icon = bookTypeIconList[i];
-            items.add(newItem);
+            val title = context?.resources?.getString(id) ?: ""
+            val newItem = ViewItem(title, id.toString(), null, false, false)
+            newItem.icon = bookTypeIconList[i]
+            items.add(newItem)
         }
     }
 
     /**
      * check if category (OT, NT, other) contains the selected language
-     * @param sortSet
-     * @param category
-     * @return
      */
-    private boolean isLanguageInCategory(Map<String, List<Integer>> sortSet, Map<String, List<Integer>> category) {
-        boolean found = false;
-        if(sortSet.containsKey(languageFilter)) {
-            List<Integer> items = sortSet.get(languageFilter);
-            for (Integer index : items) {
-                if ((index >= 0) && (index < availableSources.size())) {
-                    Translation sourceTranslation = availableSources.get(index);
+    private fun isLanguageInCategory(sortSet: Map<String, List<Int>>?, category: Map<String, List<Int>>?): Boolean {
+        var found = false
+        if (sortSet != null && category != null && sortSet.containsKey(languageFilter)) {
+            val indices = sortSet[languageFilter] ?: emptyList()
+            for (index in indices) {
+                if (index >= 0 && index < availableSources!!.size) {
+                    val sourceTranslation = availableSources!![index]
                     if (category.containsKey(sourceTranslation.project.slug)) {
-                        found = true;
-                        break;
+                        found = true
+                        break
                     }
                 }
             }
         }
-        return found;
+        return found
     }
 
     /**
      * create list of source selections that match book
      */
-    private void getSourcesForBook() {
-        List<Integer> sourceList = null;
-        items = new ArrayList<>();
+    private fun getSourcesForBook() {
+        var sourceList: List<Int>? = null
+        items = mutableListOf()
 
         // first get book list for selected book type
-        if(ntBooks.containsKey(bookFilter)) {
-            sourceList = ntBooks.get(bookFilter);
+        if (ntBooks?.containsKey(bookFilter) == true) {
+            sourceList = ntBooks!![bookFilter]
         }
-        if(sourceList == null) {
-            if(otBooks.containsKey(bookFilter)) {
-                sourceList = otBooks.get(bookFilter);
-            }
+        if (sourceList == null && otBooks?.containsKey(bookFilter) == true) {
+            sourceList = otBooks!![bookFilter]
         }
-        if(sourceList == null) {
-            if(otherBooks.containsKey(bookFilter)) {
-                sourceList = otherBooks.get(bookFilter);
+        if (sourceList == null && otherBooks?.containsKey(bookFilter) == true) {
+            sourceList = otherBooks!![bookFilter]
+        }
+
+        if (sourceList == null) {
+            return
+        }
+
+        for (index in sourceList) {
+            if (index >= 0 && index < availableSources!!.size) {
+                val source = availableSources!![index]
+                val filter = source.resourceContainerSlug
+                val language = "${source.language.name}  (${source.language.slug})"
+                val project = "${source.resource.name}  (${source.resource.slug})"
+                addNewViewItem(language, project, filter, source)
             }
         }
 
-        if(sourceList == null) {
-            return;
-        }
-
-        for (Integer index : sourceList) {
-            if ((index >= 0) && (index < availableSources.size())) {
-                Translation source = availableSources.get(index);
-                String filter = source.resourceContainerSlug;
-                String language = source.language.name + "  (" + source.language.slug + ")";
-                String project = source.resource.name + "  (" + source.resource.slug + ")";
-                addNewViewItem(language, project, filter, source);
-            }
-        }
-
-        // sort by language code
-        Collections.sort(items, new Comparator<ViewItem>() { // do numeric sort
-            @Override
-            public int compare(ViewItem lhs, ViewItem rhs) {
-                return lhs.filter.compareTo(rhs.filter);
-            }
-        });
+        // sort by language code (do numeric sort)
+        Collections.sort(items, Comparator { lhs, rhs -> lhs.filter.compareTo(rhs.filter) })
     }
 
     /**
      * create new view item, apply previous state info, and add to list
-     * @param title1
-     * @param title2
-     * @param filter
-     * @param source
      */
-    private void addNewViewItem(String title1, String title2, String filter, Translation source) {
-        ViewItem newItem = new ViewItem(title1, title2, filter, source, false, false);
+    private fun addNewViewItem(title1: String, title2: String, filter: String, source: Translation) {
+        val newItem = ViewItem(title1, title2, filter, source, false, false)
 
-        if(selected.contains(newItem.containerSlug)) {
-            newItem.selected = true;
+        if (selected.contains(newItem.containerSlug)) {
+            newItem.selected = true
         }
-        if(downloaded.contains(newItem.containerSlug)) {
-            newItem.downloaded = true;
+        if (downloaded.contains(newItem.containerSlug)) {
+            newItem.downloaded = true
         }
-        if(downloadErrors.containsKey(newItem.containerSlug)) {
-            newItem.error = true;
-            newItem.errorMessage = downloadErrors.get(newItem.containerSlug);
+        if (downloadErrors.containsKey(newItem.containerSlug)) {
+            newItem.error = true
+            newItem.errorMessage = downloadErrors[newItem.containerSlug]
         }
-        items.add(newItem);
+        items.add(newItem)
     }
 
     /**
      * gets the selection type based on filter
-     * @param categoryFilter
-     * @return
      */
-    public SelectionType getCategoryForFilter(String categoryFilter) {
-        int bookTypeSelected = Util.strToInt(categoryFilter, R.string.other_label);
-        SelectionType type;
-        if (bookTypeSelected == R.string.old_testament_label) {
-            type = SelectionType.oldTestament;
-        } else if (bookTypeSelected == R.string.new_testament_label) {
-            type = SelectionType.newTestament;
-        } else {
-            type = SelectionType.other_book;
+    fun getCategoryForFilter(categoryFilter: String?): SelectionType {
+        val bookTypeSelected = Util.strToInt(categoryFilter, R.string.other_label)
+        return when (bookTypeSelected) {
+            R.string.old_testament_label -> SelectionType.oldTestament
+            R.string.new_testament_label -> SelectionType.newTestament
+            else -> SelectionType.other_book
         }
-        return type;
     }
 
     /**
      * create list of source selections that match language and category
      */
-    private void getSourcesForLanguageAndCategory() {
-        Map<String, List<Integer>> sortSet;
-        items = new ArrayList<>();
+    private fun getSourcesForLanguageAndCategory() {
+        items = mutableListOf()
 
         //get book list for category
-        SelectionType category = getCategoryForFilter(bookFilter);
-        sortSet = switch (category) {
-            case oldTestament -> otBooks;
-            case newTestament -> ntBooks;
-            default -> otherBooks;
-        };
+        val category = getCategoryForFilter(bookFilter)
+        val sortSet = when (category) {
+            SelectionType.oldTestament -> otBooks
+            SelectionType.newTestament -> ntBooks
+            else -> otherBooks
+        }
 
-        for (String key : byLanguage.keySet()) {
-            if(languageFilter != null) {
-                if(!key.equals(languageFilter)) { // skip over language if not matching filter
-                    continue;
+        byLanguage?.let { langMap ->
+            for (key in langMap.keys) {
+                if (languageFilter != null && key != languageFilter) {
+                    continue // skip over language if not matching filter
                 }
-            }
-            List<Integer> items = byLanguage.get(key);
-            if((items != null)  && (!items.isEmpty())) {
-                for (Integer index : items) {
-                    if ((index >= 0) && (index < availableSources.size())) {
-                        Translation source = availableSources.get(index);
 
-                        if(sortSet != null) {
-                            if(!sortSet.containsKey(source.project.slug)) { // if not in right category then skip
-                                continue;
+                val indices = langMap[key]
+                if (!indices.isNullOrEmpty()) {
+                    for (index in indices) {
+                        if (index >= 0 && index < availableSources!!.size) {
+                            val source = availableSources!![index]
+
+                            if (sortSet != null && !sortSet.containsKey(source.project.slug)) {
+                                continue // if not in right category then skip
                             }
-                        }
 
-                        String filter = source.resourceContainerSlug;
-                        String project = source.project.name + "  (" + source.project.slug + ")";
-                        String resource = source.resource.name + "  (" + source.resource.slug + ")";
-                        addNewViewItem(project, resource, filter, source);
+                            val filter = source.resourceContainerSlug
+                            val project = "${source.project.name}  (${source.project.slug})"
+                            val resource = "${source.resource.name}  (${source.resource.slug})"
+                            addNewViewItem(project, resource, filter, source)
+                        }
                     }
                 }
-            }
-            if(languageFilter != null) { // if filtering by specific language, then done
-                break;
+                if (languageFilter != null) { // if filtering by specific language, then done
+                    break
+                }
             }
         }
 
-        if(sortSet != null) {
-            List<ViewItem> unOrdered = items;
-            items = new ArrayList<>();
+        if (sortSet != null) {
+            val unOrdered = items
+            items = mutableListOf()
 
-            for (String book : sortSet.keySet() ) {
-                for (int i = 0; i < unOrdered.size(); i++) {
-                    ViewItem viewItem = unOrdered.get(i);
-                    Translation sourceTranslation = viewItem.sourceTranslation;
-                    if(book.equals(sourceTranslation.project.slug)) {
-                        items.add(viewItem);
-                        unOrdered.remove(viewItem);
-                        i--;
+            for (book in sortSet.keys) {
+                var i = 0
+                while (i < unOrdered.size) {
+                    val viewItem = unOrdered[i]
+                    val sourceTranslation = viewItem.sourceTranslation
+                    if (book == sourceTranslation?.project?.slug) {
+                        items.add(viewItem)
+                        unOrdered.removeAt(i)
+                        i--
                     }
+                    i++
                 }
             }
         }
@@ -527,277 +432,237 @@ a     * @param task
 
     /**
      * create ordered list based on category, optionally sort
-     * @param bookType
-     * @param sort
      */
-    private void getBooksInCategory(Map<String, List<Integer>> bookType, boolean sort) {
-        items = new ArrayList<>();
-        for (String key : bookType.keySet()) {
-            List<Integer> items = bookType.get(key);
-            if((items != null)  && (!items.isEmpty())) {
-                int index;
-                Translation sourceTranslation = null;
-                String title = null;
-                String filter = null;
-                for (int i = 0; i < items.size(); i++) {
-                    index = items.get(i);
-                    sourceTranslation = availableSources.get(index);
-                    filter = sourceTranslation.project.slug;
-                    title = sourceTranslation.project.name + "  (" + filter + ")";
-                    if(sourceTranslation.language.slug.equals("en")) {
-                        break;
+    private fun getBooksInCategory(bookType: Map<String, List<Int>>?, sort: Boolean) {
+        items = mutableListOf()
+        if (bookType != null) {
+            for (key in bookType.keys) {
+                val indices = bookType[key]
+                if (!indices.isNullOrEmpty()) {
+                    var index: Int
+                    var sourceTranslation: Translation? = null
+                    var title: String? = null
+                    var filter: String? = null
+                    for (i in indices.indices) {
+                        index = indices[i]
+                        sourceTranslation = availableSources!![index]
+                        filter = sourceTranslation.project.slug
+                        title = "${sourceTranslation.project.name}  ($filter)"
+                        if (sourceTranslation.language.slug == "en") {
+                            break
+                        }
                     }
-                }
 
-                ViewItem newItem = new ViewItem(title, filter, sourceTranslation, false, false);
-                this.items.add(newItem);
+                    val newItem = ViewItem(title ?: "", filter ?: "", sourceTranslation,
+                        selected = false,
+                        downloaded = false
+                    )
+                    items.add(newItem)
+                }
             }
         }
 
-        if(sort) {
-            // do numeric sort
-            // do numeric sort
-            Collections.sort(items, (lhs, rhs) -> lhs.title.toString().compareTo(rhs.title.toString()));
+        if (sort) {
+            items.sortWith(Comparator { lhs, rhs ->
+                lhs.title.toString().compareTo(rhs.title.toString())
+            })
         }
     }
 
-    @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
-        context = parent.getContext();
-        final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        context = parent.context
+        val inflater = LayoutInflater.from(parent.context)
 
-        int rowType = getItemViewType(position);
-        final ViewItem item = getItem(position);
+        val rowType = getItemViewType(position)
+        val item = getItem(position)
 
-        BaseViewHolder viewHolder;
+        val viewHolder: BaseViewHolder
+        var view = convertView
 
-        if (convertView == null) {
+        if (view == null) {
             if (rowType == TYPE_ITEM_FILTER_SELECTION) {
-                FragmentSelectFilterItemBinding binding = FragmentSelectFilterItemBinding.inflate(
-                        inflater,
-                        parent,
-                        false
-                );
-                viewHolder = new FilterViewHolder(binding);
+                val binding = FragmentSelectFilterItemBinding.inflate(inflater, parent, false)
+                viewHolder = FilterViewHolder(binding)
             } else {
-                FragmentSelectDownloadSourceItemBinding binding = FragmentSelectDownloadSourceItemBinding.inflate(
-                        inflater,
-                        parent,
-                        false
-                );
-                viewHolder = new DownloadSourceViewHolder(binding);
+                val binding = FragmentSelectDownloadSourceItemBinding.inflate(inflater, parent, false)
+                viewHolder = DownloadSourceViewHolder(binding)
             }
-            viewHolder.binding.getRoot().setTag(viewHolder);
+            view = viewHolder.binding.root
+            view.tag = viewHolder
         } else {
-            viewHolder = (BaseViewHolder) convertView.getTag();
+            viewHolder = view.tag as BaseViewHolder
         }
 
-        viewHolder.bind(item);
+        viewHolder.bind(item)
 
-        return viewHolder.binding.getRoot();
+        return view
     }
 
     /**
      * toggle selection state for item
-     * @param position
      */
-    public void toggleSelection(int position) {
-        if(getItem(position).selected) {
-            deselect(position);
+    fun toggleSelection(position: Int) {
+        if (getItem(position).selected) {
+            deselect(position)
         } else {
-            select(position);
+            select(position)
         }
-        notifyDataSetChanged();
+        notifyDataSetChanged()
     }
 
-    public void select(int position) {
-        ViewItem item = getItem(position);
-        if(item != null) {
-            if(!item.downloaded) {
-                item.selected = true;
-                if (!selected.contains(item.containerSlug)) { // make sure we don't add entry twice (particularly during select all)
-                    selected.add(item.containerSlug);
+    fun select(position: Int) {
+        val item = getItem(position)
+        if (!item.downloaded) {
+            item.selected = true
+            item.containerSlug?.let {
+                if (!selected.contains(it)) { // make sure we don't add entry twice
+                    selected.add(it)
                 }
             }
         }
     }
 
-    public void deselect(int position) {
-        ViewItem item = getItem(position);
-        if(item != null) {
-            item.selected = false;
-            selected.remove(item.containerSlug);
+    fun deselect(position: Int) {
+        val item = getItem(position)
+        item.selected = false
+        item.containerSlug?.let {
+            selected.remove(it)
         }
     }
 
     /**
      * search items for position that matches slug
-     * @param slug
-     * @return
      */
-    public int findPosition(String slug) {
-        for (int i = 0; i < items.size(); i++) {
-            ViewItem item = items.get(i);
-            if(item.containerSlug.equals(slug)) {
-                return i;
+    fun findPosition(slug: String): Int {
+        for (i in items.indices) {
+            if (items[i].containerSlug == slug) {
+                return i
             }
         }
-        return -1;
+        return -1
     }
 
     /**
      * marks an item as downloaded
-     * @param position
      */
-    public void markItemDownloaded(int position) {
-        ViewItem item = getItem(position);
-        if(item != null) {
-            item.downloaded = true;
-            item.error = false;
-            deselect(position);
+    fun markItemDownloaded(position: Int) {
+        val item = getItem(position)
+        item.downloaded = true
+        item.error = false
+        deselect(position)
 
-            if(!downloaded.contains(item.containerSlug)) {
-                downloaded.add(item.containerSlug);
+        item.containerSlug?.let {
+            if (!downloaded.contains(it)) {
+                downloaded.add(it)
             }
-            downloadErrors.remove(item.containerSlug);
+            downloadErrors.remove(it)
         }
     }
 
     /**
      * marks an item as error
-     * @param position
      */
-    public void markItemError(int position, String message) {
-        ViewItem item = getItem(position);
-        if(item != null) {
-            item.error = true;
-            item.errorMessage = message;
+    fun markItemError(position: Int, message: String) {
+        val item = getItem(position)
+        item.error = true
+        item.errorMessage = message
 
-            downloadErrors.put(item.containerSlug, message);
-            downloaded.remove(item.containerSlug);
+        item.containerSlug?.let {
+            downloadErrors[it] = message
+            downloaded.remove(it)
         }
     }
 
     /**
      * used to force selection of all or none of the items
-     * @param selectAll
-     * @param selectNone
      */
-    public void forceSelection(boolean selectAll, boolean selectNone) {
-        if(selectAll) {
-            for (int i = 0; i < items.size(); i++) {
-                select(i);
+    fun forceSelection(selectAll: Boolean, selectNone: Boolean) {
+        if (selectAll) {
+            for (i in items.indices) {
+                select(i)
             }
         }
-        if(selectNone) {
-            for (int i = 0; i < items.size(); i++) {
-                deselect(i);
+        if (selectNone) {
+            for (i in items.indices) {
+                deselect(i)
             }
         }
-        notifyDataSetChanged();
+        notifyDataSetChanged()
     }
 
-    public static class ViewItem {
-        public final CharSequence title;
-        public final CharSequence title2;
-        public final String containerSlug;
-        public final Translation sourceTranslation;
-        public boolean selected;
-        public boolean downloaded;
-        public boolean error;
-        public int icon;
-        public String filter;
-        public String errorMessage;
+    class ViewItem(
+        val title: CharSequence,
+        val title2: CharSequence?,
+        val filter: String,
+        val sourceTranslation: Translation?,
+        var selected: Boolean,
+        var downloaded: Boolean
+    ) {
+        val containerSlug: String? = sourceTranslation?.resourceContainerSlug
+        var error: Boolean = false
+        var icon: Int = 0
+        var errorMessage: String? = null
 
-        // two text field version
-        public ViewItem(CharSequence title, CharSequence title2, String filter, Translation sourceTranslation, boolean selected, boolean downloaded) {
-            this.title = title;
-            this.title2 = title2;
-            this.selected = selected;
-            this.sourceTranslation = sourceTranslation;
-            if (sourceTranslation != null) {
-                this.containerSlug = sourceTranslation.resourceContainerSlug;
-            } else {
-                this.containerSlug = null;
-            }
-            this.downloaded = downloaded;
-            this.filter = filter;
-            error = false;
-            icon = 0;
-        }
-
-        // single text field version
-        public ViewItem(CharSequence title, String filter, Translation sourceTranslation, boolean selected, boolean downloaded) {
-            this(title, null, filter, sourceTranslation, selected, downloaded);
-        }
+        constructor(title: CharSequence, filter: String, sourceTranslation: Translation?, selected: Boolean, downloaded: Boolean) :
+                this(title, null, filter, sourceTranslation, selected, downloaded)
     }
 
-    public static class FilterStep {
-        public final SelectionType selection;
-        public String label;
-        public String old_label;
-        public String filter;
-        public Language language;
+    class FilterStep(val selection: SelectionType, var label: String) {
+        lateinit var oldLabel: String
+        var filter: String? = null
+        var language: Language? = null
 
-        public FilterStep(SelectionType selection, String label) {
-            this.selection = selection;
-            this.label = label;
-            filter = null;
-            old_label = null;
-            language = null;
+        private constructor(selection: SelectionType, label: String, filter: String?, oldLabel: String) : this(selection, label) {
+            this.filter = filter
+            this.oldLabel = oldLabel
         }
 
-        private FilterStep(SelectionType selection, String label, String filter, String old_label) {
-            this.selection = selection;
-            this.label = label;
-            this.filter = filter;
-            this.old_label = old_label;
-        }
-
-        public JSONObject toJson() {
-            try {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.putOpt("selection", selection.getValue());
-                jsonObject.putOpt("label", label);
-                jsonObject.putOpt("old_label", old_label);
-                jsonObject.putOpt("filter", filter);
-
-                return jsonObject;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
+        fun toJson(): JSONObject? {
+            return try {
+                val jsonObject = JSONObject()
+                jsonObject.putOpt("selection", selection.value)
+                jsonObject.putOpt("label", label)
+                jsonObject.putOpt("old_label", oldLabel)
+                jsonObject.putOpt("filter", filter)
+                jsonObject
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             }
         }
 
-        static FilterStep generate(JSONObject jsonObject) {
-            try {
-                SelectionType selection = SelectionType.fromInt((int) getOpt(jsonObject,"selection"));
-                String label = (String) getOpt(jsonObject,"label");
-                String old_label = (String) getOpt(jsonObject,"old_label");
-                String filter = (String) getOpt(jsonObject,"filter");
-                return new FilterStep( selection, label, filter, old_label);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        static Object getOpt(JSONObject json, String key) {
-            try {
-                if(json.has(key)) {
-                    return json.get(key);
+        companion object {
+            fun generate(jsonObject: JSONObject): FilterStep? {
+                return try {
+                    val selectionInt = getOpt(jsonObject, "selection") as Int
+                    val selection = SelectionType.fromInt(selectionInt) ?: return null
+                    val label = getOpt(jsonObject, "label") as String
+                    val oldLabel = getOpt(jsonObject, "old_label") as String
+                    val filter = getOpt(jsonObject, "filter") as? String
+                    FilterStep(selection, label, filter, oldLabel)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-            return null;
+
+            private fun getOpt(json: JSONObject, key: String): Any? {
+                return try {
+                    if (json.has(key)) {
+                        json.get(key)
+                    } else null
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+            }
         }
     }
 
     /**
      * enum that keeps track of current state of USFM import
      */
-    public enum SelectionType {
+    enum class SelectionType(val value: Int) {
         language(0),
         oldTestament(1),
         newTestament(2),
@@ -806,111 +671,78 @@ a     * @param task
         source_filtered_by_language(5),
         source_filtered_by_book(6);
 
-        private int _value;
-
-        SelectionType(int Value) {
-            this._value = Value;
-        }
-
-        public int getValue() {
-            return _value;
-        }
-
-        public static SelectionType fromInt(int i) {
-            for (SelectionType b : SelectionType.values()) {
-                if (b.getValue() == i) {
-                    return b;
-                }
+        companion object {
+            fun fromInt(i: Int): SelectionType? {
+                return entries.find { it.value == i }
             }
-            return null;
         }
     }
 
-    public enum SelectedState {
+    enum class SelectedState {
         all,
         none,
-        not_empty;
+        not_empty
     }
 
-    private abstract static class BaseViewHolder {
-        ViewBinding binding;
-
-        public BaseViewHolder(ViewBinding binding) {
-            this.binding = binding;
-        }
-
-        public abstract void bind(ViewItem item);
+    private abstract inner class BaseViewHolder(val binding: ViewBinding) {
+        abstract fun bind(item: ViewItem)
     }
 
-    private class FilterViewHolder extends BaseViewHolder {
-        private final FragmentSelectFilterItemBinding binding;
-
-        public FilterViewHolder(FragmentSelectFilterItemBinding binding) {
-            super(binding);
-            this.binding = binding;
-        }
-
-        @Override
-        public void bind(ViewItem item) {
+    private inner class FilterViewHolder(private val filterBinding: FragmentSelectFilterItemBinding) : BaseViewHolder(filterBinding) {
+        override fun bind(item: ViewItem) {
             // make sure this is reset to default
-            binding.title.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
-            binding.title.setText(item.title);
+            filterBinding.title.setTypeface(Typeface.DEFAULT, Typeface.NORMAL)
+            filterBinding.title.text = item.title
 
-            if(selectionType == SelectionType.book_type) {
-                binding.itemIcon.setImageDrawable(AppCompatResources.getDrawable(context, item.icon));
-                binding.itemIcon.setVisibility(View.VISIBLE);
+            if (selectionType == SelectionType.book_type) {
+                context?.let { ctx ->
+                    filterBinding.itemIcon.setImageDrawable(AppCompatResources.getDrawable(ctx, item.icon))
+                }
+                filterBinding.itemIcon.visibility = View.VISIBLE
             } else {
-                binding.itemIcon.setVisibility(View.GONE);
+                filterBinding.itemIcon.visibility = View.GONE
                 // if language selection, look up font
-                Typeface typeface = getBestFontForLanguage(
-                        typography,
-                        assetsProvider,
-                        item.sourceTranslation.language.slug
-                );
-                binding.title.setTypeface(typeface, Typeface.NORMAL);
+                val typeface = getBestFontForLanguage(
+                    typography,
+                    assetsProvider,
+                    item.sourceTranslation?.language?.slug
+                )
+                filterBinding.title.setTypeface(typeface, Typeface.NORMAL)
             }
         }
     }
 
-    private static class DownloadSourceViewHolder extends BaseViewHolder {
-        private final FragmentSelectDownloadSourceItemBinding binding;
-
-        public DownloadSourceViewHolder(FragmentSelectDownloadSourceItemBinding binding) {
-            super(binding);
-            this.binding = binding;
-        }
-
-        @Override
-        public void bind(ViewItem item) {
-            Context context = binding.getRoot().getContext();
+    private inner class DownloadSourceViewHolder(private val downloadBinding: FragmentSelectDownloadSourceItemBinding) : BaseViewHolder(downloadBinding) {
+        override fun bind(item: ViewItem) {
+            val ctx = downloadBinding.root.context
 
             // make sure this is reset to default
-            binding.title.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
-            binding.title.setText(item.title);
-            binding.title2.setText((item.title2 != null) ? item.title2 : "");
-            binding.errorIcon.setVisibility(item.error ? View.VISIBLE : View.GONE);
+            downloadBinding.title.setTypeface(Typeface.DEFAULT, Typeface.NORMAL)
+            downloadBinding.title.text = item.title
+            downloadBinding.title2.text = item.title2 ?: ""
+            downloadBinding.errorIcon.visibility = if (item.error) View.VISIBLE else View.GONE
 
-            if(item.error) {
-                binding.errorIcon.setOnClickListener(v -> {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                            .setTitle(R.string.download_failed)
-                            .setMessage(R.string.check_network_connection)
-                            .setPositiveButton(R.string.label_close, null);
-                    if(item.errorMessage != null) {
-                        builder.setMessage(item.errorMessage);
+            if (item.error) {
+                downloadBinding.errorIcon.setOnClickListener {
+                    val builder = AlertDialog.Builder(ctx, R.style.AppTheme_Dialog)
+                        .setTitle(R.string.download_failed)
+                        .setMessage(R.string.check_network_connection)
+                        .setPositiveButton(R.string.label_close, null)
+                    if (item.errorMessage != null) {
+                        builder.setMessage(item.errorMessage)
                     }
-                    builder.show();
-                });
+                    builder.show()
+                }
             }
-            if(item.downloaded) { // display with a green check
-                binding.itemIcon.setBackgroundResource(R.drawable.ic_done_black_24dp);
-                ViewUtil.tintViewDrawable(binding.itemIcon, context.getResources().getColor(R.color.completed));
+            if (item.downloaded) { // display with a green check
+                downloadBinding.itemIcon.setBackgroundResource(R.drawable.ic_done_black_24dp)
+                ViewUtil.tintViewDrawable(downloadBinding.itemIcon, ContextCompat.getColor(ctx, R.color.completed))
             } else if (item.selected) { // display checked box
-                binding.itemIcon.setBackgroundResource(R.drawable.ic_check_box_black_24dp);
-                ViewUtil.tintViewDrawable(binding.itemIcon, context.getResources().getColor(R.color.accent));
+                downloadBinding.itemIcon.setBackgroundResource(R.drawable.ic_check_box_black_24dp)
+                ViewUtil.tintViewDrawable(downloadBinding.itemIcon, ContextCompat.getColor(ctx, R.color.accent))
             } else { // display unchecked box
-                binding.itemIcon.setBackgroundResource(R.drawable.ic_check_box_outline_blank_black_24dp);
-                ViewUtil.tintViewDrawable(binding.itemIcon, context.getResources().getColor(R.color.dark_primary_text));
+                downloadBinding.itemIcon.setBackgroundResource(R.drawable.ic_check_box_outline_blank_black_24dp)
+                ViewUtil.tintViewDrawable(downloadBinding.itemIcon, ContextCompat.getColor(ctx, R.color.dark_primary_text))
             }
         }
     }

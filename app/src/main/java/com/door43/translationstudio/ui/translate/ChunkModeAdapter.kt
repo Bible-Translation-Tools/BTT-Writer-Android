@@ -33,7 +33,7 @@ import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.spannables.NoteSpan
 import com.door43.translationstudio.ui.spannables.Span
-import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS
+import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Companion.MAX_SOURCE_ITEMS
 import com.door43.widget.ViewUtil
 import com.google.android.material.tabs.TabLayout
 import java.io.IOException

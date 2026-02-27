@@ -4,10 +4,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.door43.data.AssetsProvider
 import com.door43.translationstudio.R
-import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListItemBinding
@@ -16,6 +16,7 @@ import com.door43.translationstudio.formatSub
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.widget.ViewUtil
 
 /**
@@ -52,15 +53,15 @@ class ValidationAdapter(
             holder.binding.nextLayout.visibility = View.GONE
             holder.binding.cardContainer.visibility = View.VISIBLE
 
-            // validation item
             val item = validations[position]
 
-            // margin
+            holder.binding.stackedCard.visibility = if (item.isRange) View.VISIBLE else View.GONE
+
+            val isFrame = item is ValidationItem.ValidFrame || item is ValidationItem.InvalidFrame
             val p = holder.binding.cardContainer.layoutParams as MarginLayoutParams
-            val stackedCardMargin = context.resources.getDimensionPixelSize(
-                R.dimen.stacked_card_margin
-            )
-            if (item.isFrame) {
+            val stackedCardMargin = context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
+
+            if (isFrame) {
                 p.setMargins(stackedCardMargin, 0, 0, 0)
             } else {
                 p.setMargins(0, 0, 0, 0)
@@ -69,81 +70,83 @@ class ValidationAdapter(
 
             // title
             holder.binding.title.text = item.title
-            holder.binding.title.format(
-                typography,
-                assetsProvider,
-                TranslationType.TARGET,
-                item.titleLanguage.slug,
-                item.titleLanguage.direction
-            )
-
-            // icon
-            if (item.isValid) {
-                if (item.isRange) {
-                    holder.binding.icon.setBackgroundResource(R.drawable.ic_done_all_black_24dp)
-                } else {
-                    holder.binding.icon.setBackgroundResource(R.drawable.ic_done_black_24dp)
-                }
-                ViewUtil.tintViewDrawable(
-                    holder.binding.icon,
-                    context.resources.getColor(R.color.completed)
-                )
-            } else {
-                holder.binding.icon.setBackgroundResource(R.drawable.ic_report_black_24dp)
-                ViewUtil.tintViewDrawable(holder.binding.icon, context.resources.getColor(R.color.warning))
-            }
-
-            // stack
-            if (item.isRange) {
-                holder.binding.stackedCard.visibility = View.VISIBLE
-            } else {
-                holder.binding.stackedCard.visibility = View.GONE
-            }
-
-            // body
-            if (item.isFrame && !item.isValid) {
-                holder.binding.icon.visibility = View.GONE
-                holder.binding.reviewButton.visibility = View.VISIBLE
-                holder.binding.body.visibility = View.VISIBLE
-                if (renderedText[position] == null) {
-                    val renderingGroup = RenderingGroup()
-                    val format = item.bodyFormat
-                    if (Clickables.isClickableFormat(format)) {
-                        renderingProvider.setupRenderingGroup(
-                            format,
-                            renderingGroup,
-                            null,
-                            null,
-                            true
-                        )
-                    } else {
-                        renderingGroup.addEngine(DefaultRenderer(null))
-                    }
-                    renderingGroup.init(item.body)
-                    renderedText[position] = renderingGroup.start()
-                }
-                holder.binding.body.text = renderedText[position]
-                holder.binding.body.formatSub(
+            item.titleLanguage?.let { lang ->
+                holder.binding.title.format(
                     typography,
                     assetsProvider,
                     TranslationType.TARGET,
-                    item.bodyLanguage.slug,
-                    item.bodyLanguage.direction
+                    lang.slug,
+                    lang.direction
                 )
-            } else {
-                holder.binding.body.visibility = View.GONE
-                holder.binding.reviewButton.visibility = View.GONE
-                holder.binding.icon.visibility = View.VISIBLE
             }
 
-            holder.binding.reviewButton.setOnClickListener {
-                listener?.onClickReview(item.targetTranslationId, item.chapterId, item.frameId)
+            when (item) {
+                is ValidationItem.ValidFrame,
+                is ValidationItem.ValidGroup -> {
+                    // isValid = true
+                    val iconRes = if (item.isRange) R.drawable.ic_done_all_black_24dp else R.drawable.ic_done_black_24dp
+                    holder.binding.icon.setBackgroundResource(iconRes)
+                    ViewUtil.tintViewDrawable(holder.binding.icon, ContextCompat.getColor(context, R.color.completed))
+
+                    holder.binding.body.visibility = View.GONE
+                    holder.binding.reviewButton.visibility = View.GONE
+                    holder.binding.icon.visibility = View.VISIBLE
+                }
+                is ValidationItem.InvalidGroup -> {
+                    // isValid = false, isFrame = false
+                    holder.binding.icon.setBackgroundResource(R.drawable.ic_report_black_24dp)
+                    ViewUtil.tintViewDrawable(holder.binding.icon, ContextCompat.getColor(context, R.color.warning))
+
+                    holder.binding.body.visibility = View.GONE
+                    holder.binding.reviewButton.visibility = View.GONE
+                    holder.binding.icon.visibility = View.VISIBLE
+                }
+
+                is ValidationItem.InvalidFrame -> {
+                    // isValid = false, isFrame = true
+                    holder.binding.icon.visibility = View.GONE
+                    holder.binding.reviewButton.visibility = View.VISIBLE
+                    holder.binding.body.visibility = View.VISIBLE
+
+                    if (renderedText[position] == null) {
+                        val renderingGroup = RenderingGroup()
+                        val format = item.bodyFormat
+                        if (format != null && Clickables.isClickableFormat(format)) {
+                            renderingProvider.setupRenderingGroup(
+                                format,
+                                renderingGroup,
+                                null,
+                                null,
+                                true
+                            )
+                        } else {
+                            renderingGroup.addEngine(DefaultRenderer(null))
+                        }
+                        renderingGroup.init(item.body)
+                        renderedText[position] = renderingGroup.start()
+                    }
+                    holder.binding.body.text = renderedText[position]
+
+                    item.bodyLanguage?.let { lang ->
+                        holder.binding.body.formatSub(
+                            typography,
+                            assetsProvider,
+                            TranslationType.TARGET,
+                            lang.slug,
+                            lang.direction
+                        )
+                    }
+
+                    holder.binding.reviewButton.setOnClickListener {
+                        listener?.onClickReview(item.targetTranslationId, item.chapterId, item.frameId)
+                    }
+                }
             }
         }
     }
 
     override fun getItemCount(): Int {
-        return if (validations.size > 0) {
+        return if (validations.isNotEmpty()) {
             // leave room for the next button
             validations.size + 1
         } else {

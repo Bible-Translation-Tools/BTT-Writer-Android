@@ -1,61 +1,59 @@
-package com.door43.translationstudio.ui.translate;
+package com.door43.translationstudio.ui.translate
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.view.View;
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Point
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.view.View.DragShadowBuilder
 
 /**
  * Created by joel on 10/4/2015.
  */
-public class CustomDragShadowBuilder extends View.DragShadowBuilder {
-    private Drawable shadow;
+class CustomDragShadowBuilder private constructor() : DragShadowBuilder() {
+    private lateinit var shadow: Drawable
 
-    private CustomDragShadowBuilder() {
-        super();
+    override fun onDrawShadow(canvas: Canvas) {
+        shadow.draw(canvas)
     }
 
-    public static View.DragShadowBuilder fromResource(Context context, int drawableId) {
-        CustomDragShadowBuilder builder = new CustomDragShadowBuilder();
+    override fun onProvideShadowMetrics(shadowSize: Point, shadowTouchPoint: Point) {
+        shadowSize.x = shadow.minimumWidth
+        shadowSize.y = shadow.minimumHeight
 
-        builder.shadow = context.getResources().getDrawable(drawableId, null);
-        if (builder.shadow == null) {
-            throw new NullPointerException("Drawable from id is null");
+        shadowTouchPoint.x = (shadowSize.x / 2)
+        shadowTouchPoint.y = (shadowSize.y + 36)
+    }
+
+    companion object {
+        fun fromResource(context: Context, drawableId: Int): DragShadowBuilder {
+            val builder = CustomDragShadowBuilder()
+
+            builder.shadow = context.resources.getDrawable(drawableId, null)
+
+            builder.shadow.setBounds(
+                0,
+                0,
+                builder.shadow.minimumWidth,
+                builder.shadow.minimumHeight
+            )
+
+            return builder
         }
 
-        builder.shadow.setBounds(0, 0, builder.shadow.getMinimumWidth(), builder.shadow.getMinimumHeight());
+        fun fromBitmap(context: Context, bmp: Bitmap): DragShadowBuilder {
+            val builder = CustomDragShadowBuilder()
 
-        return builder;
-    }
+            builder.shadow = BitmapDrawable(context.resources, bmp)
+            builder.shadow.setBounds(
+                0,
+                0,
+                builder.shadow.minimumWidth,
+                builder.shadow.minimumHeight
+            )
 
-    public static View.DragShadowBuilder fromBitmap(Context context, Bitmap bmp) {
-        if (bmp == null) {
-            throw new IllegalArgumentException("Bitmap cannot be null");
+            return builder
         }
-
-        CustomDragShadowBuilder builder = new CustomDragShadowBuilder();
-
-        builder.shadow = new BitmapDrawable(context.getResources(), bmp);
-        builder.shadow.setBounds(0, 0, builder.shadow.getMinimumWidth(), builder.shadow.getMinimumHeight());
-
-        return builder;
-    }
-
-    @Override
-    public void onDrawShadow(Canvas canvas) {
-        shadow.draw(canvas);
-    }
-
-    @Override
-    public void onProvideShadowMetrics(Point shadowSize, Point shadowTouchPoint) {
-        shadowSize.x = shadow.getMinimumWidth();
-        shadowSize.y = shadow.getMinimumHeight();
-
-        shadowTouchPoint.x = (int)(shadowSize.x / 2);
-        shadowTouchPoint.y = (int)(shadowSize.y + 36);
     }
 }

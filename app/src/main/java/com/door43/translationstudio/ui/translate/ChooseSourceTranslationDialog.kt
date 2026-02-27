@@ -123,9 +123,10 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
                 val resourceContainerSlugs = arrayListOf<String>()
                 for (i in 0 until count) {
                     if (adapter.isSelectableItem(i)) {
-                        val item = adapter.getItem(i)
-                        if (item.selected) {
-                            resourceContainerSlugs.add(item.containerSlug)
+                        adapter.getItem(i)?.let { item ->
+                            if (item.selected) {
+                                resourceContainerSlugs.add(item.containerSlug!!)
+                            }
                         }
                     }
                 }
@@ -234,7 +235,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
             .setTitle(R.string.title_download_source_language)
             .setMessage(message)
             .setPositiveButton(R.string.confirm) { _, _ ->
-                viewModel.downloadResourceContainer(item.sourceTranslation, position)
+                viewModel.downloadResourceContainer(item.sourceTranslation!!, position)
             }
             .setNegativeButton(R.string.no) { _, _ ->
                 if (item.downloaded) {

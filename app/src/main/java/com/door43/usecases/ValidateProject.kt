@@ -79,7 +79,7 @@ class ValidateProject(
                 ) {
                     chapterIsValid = false
                     frameValidations.add(
-                        ValidationItem.generateInvalidFrame(
+                        ValidationItem.InvalidFrame(
                             getChunkTitle(
                                 container,
                                 chapterSlug,
@@ -103,7 +103,7 @@ class ValidateProject(
                 ) {
                     chapterIsValid = false
                     frameValidations.add(
-                        ValidationItem.generateInvalidFrame(
+                        ValidationItem.InvalidFrame(
                             getChunkTitle(
                                 container,
                                 chapterSlug,
@@ -166,7 +166,7 @@ class ValidateProject(
                                 frameTitle += ":$frameStartVerse-$frameEndVerse"
 
                                 frameValidations.add(
-                                    ValidationItem.generateValidFrame(
+                                    ValidationItem.ValidFrame(
                                         frameTitle,
                                         sourceLanguage,
                                         true
@@ -187,7 +187,7 @@ class ValidateProject(
                                     frameTitle += "-$frameEndVerse"
                                 }
                                 frameValidations.add(
-                                    ValidationItem.generateValidFrame(
+                                    ValidationItem.ValidFrame(
                                         frameTitle,
                                         sourceLanguage,
                                         false
@@ -211,7 +211,7 @@ class ValidateProject(
                             }
 
                             frameValidations.add(
-                                ValidationItem.generateInvalidFrame(
+                                ValidationItem.InvalidFrame(
                                     frameTitle,
                                     sourceLanguage,
                                     frameTranslation.body,
@@ -244,7 +244,7 @@ class ValidateProject(
                             val chapterTitle = "$projectTitle $lastChapter-$prevChapter"
 
                             chapterValidations.add(
-                                ValidationItem.generateValidGroup(
+                                ValidationItem.ValidFrame(
                                     chapterTitle,
                                     sourceLanguage,
                                     true
@@ -256,7 +256,7 @@ class ValidateProject(
                             val chapterTitle = "$projectTitle $lastChapter"
 
                             chapterValidations.add(
-                                ValidationItem.generateValidGroup(
+                                ValidationItem.ValidGroup(
                                     chapterTitle,
                                     sourceLanguage,
                                     false
@@ -277,7 +277,7 @@ class ValidateProject(
                         chapterTitle = String.format(hasWarnings, chapterTitle.trim())
 
                         chapterValidations.add(
-                            ValidationItem.generateInvalidGroup(
+                            ValidationItem.InvalidGroup(
                                 chapterTitle,
                                 sourceLanguage
                             )
@@ -294,7 +294,7 @@ class ValidateProject(
                 validations.addAll(chapterValidations)
             } else {
                 validations.add(
-                    ValidationItem.generateValidGroup(projectTitle, sourceLanguage, true)
+                    ValidationItem.ValidGroup(projectTitle, sourceLanguage, true)
                 )
             }
         }

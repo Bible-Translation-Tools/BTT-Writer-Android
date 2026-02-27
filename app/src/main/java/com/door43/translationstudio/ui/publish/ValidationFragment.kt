@@ -73,7 +73,6 @@ class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListe
                 adapter.setValidations(validations)
                 binding.validationItems.visibility = View.VISIBLE
                 binding.loadingLayout.visibility = View.GONE
-                // TODO: animate
             }
         }
     }

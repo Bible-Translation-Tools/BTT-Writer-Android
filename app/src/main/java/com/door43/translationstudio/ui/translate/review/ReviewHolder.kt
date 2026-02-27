@@ -33,7 +33,7 @@ import com.door43.translationstudio.databinding.FragmentMergeCardBinding
 import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding
 import com.door43.translationstudio.format
 import com.door43.translationstudio.formatSub
-import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.MAX_SOURCE_ITEMS
+import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Companion.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.IReviewListItemBinding
 import com.door43.translationstudio.ui.translate.ReviewListItem
 import com.door43.translationstudio.ui.translate.ReviewModeAdapter

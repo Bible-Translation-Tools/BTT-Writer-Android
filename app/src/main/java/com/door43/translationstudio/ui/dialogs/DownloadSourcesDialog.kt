@@ -91,19 +91,19 @@ class DownloadSourcesDialog : DialogFragment() {
             }
             selectAll.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    adapter.forceSelection(true, false)
+                    adapter.forceSelection(selectAll = true, selectNone = false)
                     onSelectionChanged()
                 }
             }
             unselectAll.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    adapter.forceSelection(false, true)
+                    adapter.forceSelection(selectAll = false, selectNone = true)
                     onSelectionChanged()
                 }
             }
             downloadButton.setOnClickListener {
                 val selected = adapter.selected
-                if (selected != null && selected.isNotEmpty()) {
+                if (selected.isNotEmpty()) {
                     if (isNetworkAvailable) {
                         viewModel.downloadSources(selected)
                     } else {
@@ -122,7 +122,7 @@ class DownloadSourcesDialog : DialogFragment() {
                         searchString = null
                         val currentStep = steps[steps.size - 1]
                         val item = adapter.getItem(position)
-                        currentStep.old_label = currentStep.label
+                        currentStep.oldLabel = currentStep.label
                         currentStep.label = item.title.toString()
                         currentStep.filter = item.filter
                         currentStep.language = item.sourceTranslation?.language
@@ -195,8 +195,9 @@ class DownloadSourcesDialog : DialogFragment() {
                 val stepsArray = JSONArray(stepsArrayJson)
                 for (i in 0 until stepsArray.length()) {
                     val jsonObject = stepsArray[i] as JSONObject
-                    val step = FilterStep.generate(jsonObject)
-                    steps.add(step)
+                    FilterStep.generate(jsonObject)?.let { step ->
+                        steps.add(step)
+                    }
                 }
             } catch (e: JSONException) {
                 e.printStackTrace()
@@ -310,7 +311,7 @@ class DownloadSourcesDialog : DialogFragment() {
         out.putStringArrayList(STATE_DOWNLOADED_LIST, adapter.downloaded as ArrayList<String>)
         out.putString(
             STATE_DOWNLOADED_ERROR_MESSAGES,
-            adapter.downloadErrorMessages.toString()
+            adapter.getDownloadErrorMessages().toString()
         )
         super.onSaveInstanceState(out)
     }
@@ -345,7 +346,7 @@ class DownloadSourcesDialog : DialogFragment() {
         steps.remove(lastStep)
         lastStep = steps[steps.size - 1]
         lastStep.filter = null
-        lastStep.label = lastStep.old_label
+        lastStep.label = lastStep.oldLabel
     }
 
     /**
@@ -452,11 +453,11 @@ class DownloadSourcesDialog : DialogFragment() {
         val enable = (stepIndex < steps.size) && (stepIndex >= 0)
         if (enable) {
             val step = steps[stepIndex]
-            if (step.language != null) {
+            step.language?.let { language ->
                 typeface = getBestFontForLanguage(
                     typography,
                     assetsProvider,
-                    step.language.slug,
+                    language.slug,
                 )
             }
         }
@@ -584,7 +585,7 @@ class DownloadSourcesDialog : DialogFragment() {
                 if (pos >= 0) {
                     adapter.markItemError(
                         pos,
-                        result.failureMessages[translationID]
+                        result.failureMessages[translationID]!!
                     )
                 }
             }
