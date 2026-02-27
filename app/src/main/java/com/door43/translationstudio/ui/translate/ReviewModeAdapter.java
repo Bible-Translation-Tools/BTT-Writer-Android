@@ -378,7 +378,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
         EditText view;
         if (item.isEditing) {
-            view = holder.binding.getTargetEditableBody();
+            view = holder.getBinding().getTargetEditableBody();
             if (view != null) {
                 item.renderedTargetText = this.renderTargetText(holder, item, true);
                 view.setText(item.renderedTargetText);
@@ -391,7 +391,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 });
             }
         } else {
-            view = holder.binding.getTargetBody();
+            view = holder.getBinding().getTargetBody();
             if (view != null) {
                 // re-render for verse mode
                 item.renderedTargetText = renderTargetText(holder, item);
@@ -455,9 +455,9 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         }
         ReviewListItem item = (ReviewListItem) filteredItems.get(position);
         if (checked) {
-            if (item.isEditing && holder.binding.getTargetEditableBody() != null) {
+            if (item.isEditing && holder.getBinding().getTargetEditableBody() != null) {
                 // make sure to capture verse marker changes before dialog is displayed
-                Editable changes = holder.binding.getTargetEditableBody().getText();
+                Editable changes = holder.getBinding().getTargetEditableBody().getText();
                 item.renderedTargetText = changes;
                 if (changes != null) {
                     item.setTargetText(Translator.compileTranslation(changes));
@@ -481,8 +481,8 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     })
                     .setNegativeButton(R.string.title_cancel, (dialog, which) -> {
                         // off if not accepted
-                        if (holder.binding.getDoneSwitch() != null) {
-                            holder.binding.getDoneSwitch().setChecked(false); // force back
+                        if (holder.getBinding().getDoneSwitch() != null) {
+                            holder.getBinding().getDoneSwitch().setChecked(false); // force back
                         }
                     })
                     .show();
@@ -948,10 +948,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item Review list item
      */
     private void undoTextInTarget(final ReviewHolder holder, final ReviewListItem item) {
-        if (holder.binding.getUndoButton() != null)
-            holder.binding.getUndoButton().setVisibility(View.INVISIBLE);
-        if (holder.binding.getRedoButton() != null)
-            holder.binding.getRedoButton().setVisibility(View.INVISIBLE);
+        if (holder.getBinding().getUndoButton() != null)
+            holder.getBinding().getUndoButton().setVisibility(View.INVISIBLE);
+        if (holder.getBinding().getRedoButton() != null)
+            holder.getBinding().getRedoButton().setVisibility(View.INVISIBLE);
 
         final FileHistory history = item.getFileHistory();
         ThreadableUI thread = new ThreadableUI(context) {
@@ -1006,24 +1006,24 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                             triggerNotifyDataSetChanged();
                             updateMergeConflict();
 
-                            if (holder.binding.getTargetEditableBody() != null) {
+                            if (holder.getBinding().getTargetEditableBody() != null) {
                                 holder.removeTextChangeListener();
-                                holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                                holder.getBinding().getTargetEditableBody().setText(item.renderedTargetText);
                                 holder.attachTextChangeListener();
                             }
                         }
                     }
 
-                    if (holder.binding.getRedoButton() != null && holder.binding.getUndoButton() != null) {
+                    if (holder.getBinding().getRedoButton() != null && holder.getBinding().getUndoButton() != null) {
                         if (history.hasNext()) {
-                            holder.binding.getRedoButton().setVisibility(View.VISIBLE);
+                            holder.getBinding().getRedoButton().setVisibility(View.VISIBLE);
                         } else {
-                            holder.binding.getRedoButton().setVisibility(View.GONE);
+                            holder.getBinding().getRedoButton().setVisibility(View.GONE);
                         }
                         if (history.hasPrevious()) {
-                            holder.binding.getUndoButton().setVisibility(View.VISIBLE);
+                            holder.getBinding().getUndoButton().setVisibility(View.VISIBLE);
                         } else {
-                            holder.binding.getUndoButton().setVisibility(View.GONE);
+                            holder.getBinding().getUndoButton().setVisibility(View.GONE);
                         }
                     }
                 }
@@ -1039,10 +1039,10 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
      * @param item Review list item
      */
     private void redoTextInTarget(final ReviewHolder holder, final ReviewListItem item) {
-        if (holder.binding.getUndoButton() != null)
-            holder.binding.getUndoButton().setVisibility(View.INVISIBLE);
-        if (holder.binding.getRedoButton() != null)
-            holder.binding.getRedoButton().setVisibility(View.INVISIBLE);
+        if (holder.getBinding().getUndoButton() != null)
+            holder.getBinding().getUndoButton().setVisibility(View.INVISIBLE);
+        if (holder.getBinding().getRedoButton() != null)
+            holder.getBinding().getRedoButton().setVisibility(View.INVISIBLE);
 
         final FileHistory history = item.getFileHistory();
         ThreadableUI thread = new ThreadableUI(context) {
@@ -1086,24 +1086,24 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                             triggerNotifyDataSetChanged();
                             updateMergeConflict();
 
-                            if (holder.binding.getTargetEditableBody() != null) {
+                            if (holder.getBinding().getTargetEditableBody() != null) {
                                 holder.removeTextChangeListener();
-                                holder.binding.getTargetEditableBody().setText(item.renderedTargetText);
+                                holder.getBinding().getTargetEditableBody().setText(item.renderedTargetText);
                                 holder.attachTextChangeListener();
                             }
                         }
                     }
 
-                    if (holder.binding.getRedoButton() != null && holder.binding.getUndoButton() != null) {
+                    if (holder.getBinding().getRedoButton() != null && holder.getBinding().getUndoButton() != null) {
                         if (history.hasNext()) {
-                            holder.binding.getRedoButton().setVisibility(View.VISIBLE);
+                            holder.getBinding().getRedoButton().setVisibility(View.VISIBLE);
                         } else {
-                            holder.binding.getRedoButton().setVisibility(View.GONE);
+                            holder.getBinding().getRedoButton().setVisibility(View.GONE);
                         }
                         if (history.hasPrevious()) {
-                            holder.binding.getUndoButton().setVisibility(View.VISIBLE);
+                            holder.getBinding().getUndoButton().setVisibility(View.VISIBLE);
                         } else {
-                            holder.binding.getUndoButton().setVisibility(View.GONE);
+                            holder.getBinding().getUndoButton().setVisibility(View.GONE);
                         }
                     }
                 }

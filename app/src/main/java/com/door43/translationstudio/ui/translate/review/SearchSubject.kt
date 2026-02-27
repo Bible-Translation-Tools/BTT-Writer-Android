@@ -1,9 +1,9 @@
-package com.door43.translationstudio.ui.translate.review;
+package com.door43.translationstudio.ui.translate.review
 
 /**
  * Represents the subject available for searching
  */
-public enum SearchSubject {
+enum class SearchSubject {
     SOURCE,
     TARGET,
     BOTH
