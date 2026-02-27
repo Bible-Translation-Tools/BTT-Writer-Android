@@ -75,7 +75,7 @@ class ValidateProject(
                 val chapterTranslation = targetTranslation.getChapterTranslation(chapterSlug)
                 if (MergeConflictsHandler.isMergeConflicted(chapterTranslation.title) ||
                     chunks.contains("title") &&
-                    !chapterTranslation.isTitleFinished
+                    !chapterTranslation.titleFinished
                 ) {
                     chapterIsValid = false
                     frameValidations.add(
@@ -99,7 +99,7 @@ class ValidateProject(
 
                 if (MergeConflictsHandler.isMergeConflicted(chapterTranslation.reference) ||
                     chunks.contains("reference") &&
-                    !chapterTranslation.isReferenceFinished
+                    !chapterTranslation.referenceFinished
                 ) {
                     chapterIsValid = false
                     frameValidations.add(
@@ -135,7 +135,7 @@ class ValidateProject(
                     )
                     val chunkText = container.readChunk(chapterSlug, chunkSlug)
                     // TODO: also validate the checking questions
-                    val finishedOrEmpty = frameTranslation.isFinished || chunkText.isEmpty()
+                    val finishedOrEmpty = frameTranslation.finished || chunkText.isEmpty()
                     val mergeConflicted = MergeConflictsHandler.isMergeConflicted(frameTranslation.body)
                     val isLastChunk = j == chunks.size - 1
 

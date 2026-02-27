@@ -177,17 +177,18 @@ class ChooseSourcesViewModel(
             )
             var hasUpdates = false
             try {
-                val container = ContainerCache.cache(library, item.containerSlug)
-                val lastModified: Int = library.getResourceContainerLastModified(
-                    container.language.slug,
-                    container.project.slug,
-                    container.resource.slug
-                )
-                hasUpdates = (lastModified > container.modifiedAt)
-                Log.i(
-                    this::class.java.simpleName,
-                    "Checking for updates on " + item.containerSlug + " finished, needs updates: " + hasUpdates
-                )
+                ContainerCache.cache(library, item.containerSlug!!)?.let { container ->
+                    val lastModified: Int = library.getResourceContainerLastModified(
+                        container.language.slug,
+                        container.project.slug,
+                        container.resource.slug
+                    )
+                    hasUpdates = (lastModified > container.modifiedAt)
+                    Log.i(
+                        this::class.java.simpleName,
+                        "Checking for updates on " + item.containerSlug + " finished, needs updates: " + hasUpdates
+                    )
+                }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }

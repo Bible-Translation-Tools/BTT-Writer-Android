@@ -89,17 +89,17 @@ public class MergeConflictsHandler {
 
         ChapterTranslation[] chapters = targetTranslation.getChapterTranslations();
         for(ChapterTranslation ct:chapters) {
-            if(isMergeConflicted(ct.title)) {
+            if(isMergeConflicted(ct.getTitle())) {
                 return true;
             }
 
-            if(isMergeConflicted(ct.reference)) {
+            if(isMergeConflicted(ct.getReference())) {
                 return true;
             }
 
-            FrameTranslation[] frames = targetTranslation.getFrameTranslations(ct.id, TranslationFormat.DEFAULT);
+            FrameTranslation[] frames = targetTranslation.getFrameTranslations(ct.getId(), TranslationFormat.DEFAULT);
             for (FrameTranslation frame : frames) {
-                if (isMergeConflicted(frame.body)) {
+                if (isMergeConflicted(frame.getBody())) {
                     return true;
                 }
             }

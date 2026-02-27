@@ -1,228 +1,177 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import org.unfoldingword.door43client.Door43Client;
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.ContainerTools;
-import org.unfoldingword.resourcecontainer.Language;
-import org.unfoldingword.resourcecontainer.Link;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.resourcecontainer.errors.InvalidRCException;
-import org.unfoldingword.tools.logger.Logger;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.resourcecontainer.ContainerTools
+import org.unfoldingword.resourcecontainer.Language
+import org.unfoldingword.resourcecontainer.Link
+import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.resourcecontainer.errors.InvalidRCException
+import org.unfoldingword.tools.logger.Logger
+import java.util.Collections
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Provides a cache of resource containers.
  * This should usually only be used to load source containers since they will not change very often.
  */
-public class ContainerCache {
+object ContainerCache {
     /**
      * A map of cached containers
      */
-    private Map<String, ResourceContainer> resourceContainers = new ConcurrentHashMap<>();
+    private val resourceContainers = ConcurrentHashMap<String, ResourceContainer>()
 
     /**
-     * A base for the synchronized list below
-      */
-    private List<String> inspected_list = new ArrayList<>();
-
-    /**
-     * A list of container slugs that have already been searched for
+     * A set of container slugs that have already been searched for
      */
-    private List<String> inspectedContainers = Collections.synchronizedList(inspected_list);
+    private val inspectedContainers: MutableSet<String> =
+        Collections.synchronizedSet(mutableSetOf<String>())
 
     /**
-     * A base for the synchronized list below
+     * A set of container slugs that are currently being inspected
      */
-    private List<String> inspecting_list = new ArrayList<>();
-
-    /**
-     * A list of container slugs that are currently being inspected
-     */
-    private List<String> loadingContainers = Collections.synchronizedList(inspecting_list);
-
-    private static ContainerCache sInstance = null;
-
-    static {
-        sInstance = new ContainerCache();
-    }
+    private val loadingContainers: MutableSet<String> =
+        Collections.synchronizedSet(mutableSetOf<String>())
 
     /**
      * Empties the cache
      */
-    public static void empty() {
-        sInstance.resourceContainers.clear();
-        sInstance.inspectedContainers.clear();
+    fun empty() {
+        resourceContainers.clear()
+        inspectedContainers.clear()
+        loadingContainers.clear()
     }
 
     /**
-     * Caches resource container if it exists
+     * Caches resource container if it exists.
      * If the container has already been cached it will not touch the disk.
-     *
-     * @param client
-     * @param resourceContainerSlug
-     * @return
      */
-    public static ResourceContainer cache(Door43Client client, String resourceContainerSlug) {
+    fun cache(client: Door43Client, resourceContainerSlug: String): ResourceContainer? {
         // wait for other threads
-        waitForLoadingContainers(resourceContainerSlug);
+        waitForLoadingContainers(resourceContainerSlug)
 
         // check cache
-        if (sInstance.resourceContainers.containsKey(resourceContainerSlug)) {
-            return sInstance.resourceContainers.get(resourceContainerSlug);
-        }
+        resourceContainers[resourceContainerSlug]?.let { return it }
 
         // load from disk once
-        if(!sInstance.inspectedContainers.contains(resourceContainerSlug)) {
+        if (!inspectedContainers.contains(resourceContainerSlug)) {
             // flag as loading
-            sInstance.loadingContainers.add(resourceContainerSlug);
+            loadingContainers.add(resourceContainerSlug)
             try {
-                ResourceContainer rc = client.open(resourceContainerSlug);
-                sInstance.resourceContainers.put(rc.slug, rc);
-                return rc;
-            } catch (InvalidRCException e) {
-                Logger.w("ContainerCache", "Deleting corrupt RC " + resourceContainerSlug, e);
+                val rc = client.open(resourceContainerSlug)
+                resourceContainers[rc.slug] = rc
+                return rc
+            } catch (e: InvalidRCException) {
+                Logger.w("ContainerCache", "Deleting corrupt RC $resourceContainerSlug", e)
                 // delete invalid container
-                client.delete(resourceContainerSlug);
-            } catch (Exception e) {
-                Logger.w("ContainerCache", "Failed to open the RC " + resourceContainerSlug, e);
+                client.delete(resourceContainerSlug)
+            } catch (e: Exception) {
+                Logger.w("ContainerCache", "Failed to open the RC $resourceContainerSlug", e)
             } finally {
-                // fag as inspected
-                sInstance.inspectedContainers.add(resourceContainerSlug);
+                // flag as inspected
+                inspectedContainers.add(resourceContainerSlug)
                 // remove loading flag
-                sInstance.loadingContainers.remove(resourceContainerSlug);
+                loadingContainers.remove(resourceContainerSlug)
             }
         }
-        return null;
+        return null
     }
 
     /**
      * Looks up a resource container from the cache or loads a new one from the disk.
      * If an exact match cannot be found for the given language then the closest matching resource container for the project
      * will be cached and returned.
-     *
-     * @param client
-     * @param languageSlug the desired language or null. If null the default system language will be used.
-     * @param projectSlug
-     * @param resourceSlug
-     * @return If the container can not be found null is returned.
      */
-    public static ResourceContainer cacheClosest(Door43Client client, String languageSlug, String projectSlug, String resourceSlug) {
-        if(languageSlug == null || languageSlug.isEmpty()) languageSlug = Locale.getDefault().getLanguage();
+    fun cacheClosest(client: Door43Client, languageSlug: String?, projectSlug: String, resourceSlug: String): ResourceContainer? {
+        val lang = if (languageSlug.isNullOrEmpty()) Locale.getDefault().language else languageSlug
 
         // search for translation
-        List<Translation> translations = client.index.findTranslations(languageSlug, projectSlug, resourceSlug, null, null, 0, -1);
-        if (translations.size() == 0) {
+        var translations = client.index.findTranslations(lang, projectSlug, resourceSlug, null, null, 0, -1)
+        if (translations.isEmpty()) {
             // search for similar translations
-            translations = client.index.findTranslations(null, projectSlug, resourceSlug, null, null, 0, -1);
+            translations = client.index.findTranslations(null, projectSlug, resourceSlug, null, null, 0, -1)
         }
 
         // return first successful cache
-        for (Translation translation : translations) {
-            ResourceContainer rc = cache(client, translation.resourceContainerSlug);
-            if(rc != null) return rc;
+        for (translation in translations) {
+            val rc = cache(client, translation.resourceContainerSlug)
+            if (rc != null) return rc
         }
-        return null;
+        return null
     }
 
     /**
      * Puts the thread to sleep while the container is loading
-     * @param containerSlug the translation to load
      */
-    private static void waitForLoadingContainers(String containerSlug) {
-        while (sInstance.loadingContainers.contains(containerSlug)) {
+    private fun waitForLoadingContainers(containerSlug: String) {
+        while (loadingContainers.contains(containerSlug)) {
             try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                Thread.currentThread().interrupt();
+                Thread.sleep(500)
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                break
             }
         }
     }
 
     /**
      * Looks up a resource container from the cache without hitting the disk
-     * @return
      */
-    public static ResourceContainer get(String containerSlug) {
-        waitForLoadingContainers(containerSlug);
-        if(sInstance.resourceContainers.containsKey(containerSlug)) {
-            return sInstance.resourceContainers.get(containerSlug);
-        }
-        return null;
+    fun get(containerSlug: String): ResourceContainer? {
+        waitForLoadingContainers(containerSlug)
+        return resourceContainers[containerSlug]
     }
 
     /**
      * Parses an array of links and caches the needed resource containers.
      * Links that have a matching container will be returned.
-     *
-     * TRICKY: we technically should not be caching the closest match, however since only
-     * english RCs have links this won't matter for the rc0.1 specification
-     *
-     * @param client
-     * @param linkData
-     * @return
      */
-    @Deprecated
-    public static List<Link> cacheClosestFromLinks(Door43Client client, List<String> linkData) {
-        List<Link> links = new ArrayList<>();
-        for(String rawLink:linkData) {
+    @Deprecated("TRICKY: only english RCs have links, this won't matter for rc0.1 spec")
+    fun cacheClosestFromLinks(client: Door43Client, linkData: List<String>): List<Link> {
+        val links = mutableListOf<Link>()
+        for (rawLink in linkData) {
             try {
-                Link link = Link.parseLink(rawLink);
-                ResourceContainer container = ContainerCache.cacheClosest(client, link.language, link.project, link.resource);
-                if(container != null) {
-                    links.add(link);
+                val link = Link.parseLink(rawLink)
+                val container = cacheClosest(client, link.language, link.project, link.resource)
+                if (container != null) {
+                    links.add(link)
                 } else {
-                    Logger.w("ContainerCache", "RC not found for link " + rawLink);
+                    Logger.w("ContainerCache", "RC not found for link $rawLink")
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
-        return links;
+        return links
     }
 
     /**
      * Same as cacheClosestFromLinks except it requires an exact match.
-     * Some links may not specify a language. The language parameter will be used in those cases.
-     *
-     * @param client
-     * @param linkData
-     * @param language the language to use if not defined in the link.
-     * @return
      */
-    public static List<Link> cacheFromLinks(Door43Client client, List<String> linkData, Language language) {
-        List<Link> links = new ArrayList<>();
-        for(String rawLink:linkData) {
+    fun cacheFromLinks(client: Door43Client, linkData: List<String>, language: Language): List<Link> {
+        val links = mutableListOf<Link>()
+        for (rawLink in linkData) {
             try {
-                Link link = Link.parseLink(rawLink);
-                String lang = link.language;
-                if(lang == null) lang = language.slug;
-                ResourceContainer container = ContainerCache.cache(client, ContainerTools.makeSlug(lang, link.project, link.resource));
-                if(container != null) {
-                    links.add(link);
+                val link = Link.parseLink(rawLink)
+                val lang = link.language ?: language.slug
+                val container = cache(client, ContainerTools.makeSlug(lang, link.project, link.resource))
+                if (container != null) {
+                    links.add(link)
                 } else {
-                    Logger.w("ContainerCache", "RC not found for link " + rawLink);
+                    Logger.w("ContainerCache", "RC not found for link $rawLink")
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
-        return links;
+        return links
     }
 
     /**
      * Removes a resource container from the cache
-     * @param resourceContainerSlug the slug of the resource container that will be removed
      */
-    public static void remove(String resourceContainerSlug) {
-        // TODO: 2/8/17 this could be slow since these are synchronized lists.
-        sInstance.resourceContainers.remove(resourceContainerSlug);
-        sInstance.inspectedContainers.remove(resourceContainerSlug);
+    fun remove(resourceContainerSlug: String) {
+        resourceContainers.remove(resourceContainerSlug)
+        inspectedContainers.remove(resourceContainerSlug)
     }
 }

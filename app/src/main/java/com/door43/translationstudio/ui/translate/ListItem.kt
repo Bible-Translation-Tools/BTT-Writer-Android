@@ -109,9 +109,9 @@ abstract class ListItem(
                 else -> {
                     // chapter stuff
                     when (chunkSlug) {
-                        "title" -> ct.isTitleFinished
-                        "reference" -> ct.isReferenceFinished
-                        else -> ft?.isFinished == true
+                        "title" -> ct.titleFinished
+                        "reference" -> ct.referenceFinished
+                        else -> ft.finished
                     }
                 }
             }

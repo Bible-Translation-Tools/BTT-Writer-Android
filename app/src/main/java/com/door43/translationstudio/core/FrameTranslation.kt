@@ -1,71 +1,33 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
 /**
  * Represents a translation of a frame
  */
-public class FrameTranslation {
-    public final String id;
-    public final String body;
-    private final String chapterId;
-    private final boolean finished;
-    private final TranslationFormat format;
+data class FrameTranslation(
+    val id: String,
+    /** Returns the id of the chapter to which this frame belongs */
+    val chapterId: String,
+    val body: String,
+    /** Returns the format of the text */
+    val format: TranslationFormat,
+    /** Returns true if the translation is finished */
+    val finished: Boolean
+) {
 
-    public FrameTranslation(String frameId, String chapterId, String body, TranslationFormat format, boolean finished) {
-        this.chapterId = chapterId;
-        this.body = body;
-        this.format = format;
-        this.id = frameId;
-        this.finished = finished;
-    }
-
-    /**
-     * Returns the title of the frame translation
-     * @return
-     */
-    public String getTitle() {
-        // get verse range
-        int[] verses = Frame.getVerseRange(body, format);
-        String title;
-        if (verses.length == 1) {
-            title = verses[0] + "";
-        } else if (verses.length == 2) {
-            title = verses[0] + "-" + verses[1];
-        } else {
-            title = Integer.parseInt(id) + "";
+    /** Returns the complex chapter-frame id */
+    val title: String
+        get() {
+            // get verse range
+            val verses = Frame.getVerseRange(body, format)
+            return when (verses.size) {
+                1 -> "${verses[0]}"
+                2 -> "${verses[0]}-${verses[1]}"
+                else -> "${id.toIntOrNull() ?: id}"
+            }
         }
-        return title;
-    }
 
-    /**
-     * Returns the complex chapter-frame id
-     * @return
-     */
-    public String getComplexId() {
-        return chapterId + "-" + id;
-    }
-
-    /**
-     * Returns the id of the chapter to which this frame belongs
-     * @return
-     */
-    public String getChapterId() {
-        return chapterId;
-    }
-
-    /**
-     * Returns the format of the text
-     * @return
-     */
-    public TranslationFormat getFormat() {
-        return format;
-    }
-
-    /**
-     * Checks if the translation is finished
-     * @return
-     */
-    public boolean isFinished() {
-        return finished;
-    }
+    /** Returns the complex chapter-frame id */
+    val complexId: String
+        get() = "$chapterId-$id"
 
 }

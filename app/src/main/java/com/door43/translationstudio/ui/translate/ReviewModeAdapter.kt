@@ -382,7 +382,7 @@ open class ReviewModeAdapter(
 
         // commit immediately if editing history
         val history = item.fileHistory
-        if (history != null && !history.isAtHead) {
+        if (history != null && !history.atHead) {
             history.reset()
             holder.rebuildControls(item)
         }
@@ -828,28 +828,28 @@ open class ReviewModeAdapter(
 
             override fun run() {
                 // commit changes before viewing history
-                if (history != null) {
-                    if (history.isAtHead) {
+                history?.let { historyNotNull ->
+                    if (historyNotNull.atHead) {
                         if (!item.target.isClean) {
                             try {
                                 item.target.commitSync()
-                                history.loadCommits()
+                                historyNotNull.loadCommits()
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }
                         }
                     }
                     // get previous
-                    commit = history.previous()
+                    commit = historyNotNull.previous()
                 }
             }
 
             override fun onPostExecute() {
-                if (history != null) {
-                    if (commit != null) {
+                history?.let { historyNotNull ->
+                    commit?.let { commitNotNull ->
                         var text: String? = null
                         try {
-                            text = history.read(commit)
+                            text = historyNotNull.read(commitNotNull)
                         } catch (e: IllegalStateException) {
                             Logger.w(TAG, "Undo is past end of history for specific file", e)
                             text = "" // graceful recovery
@@ -877,8 +877,10 @@ open class ReviewModeAdapter(
                     }
 
                     if (holder.binding.redoButton != null && holder.binding.undoButton != null) {
-                        holder.binding.redoButton?.visibility = if (history.hasNext()) View.VISIBLE else View.GONE
-                        holder.binding.undoButton?.visibility = if (history.hasPrevious()) View.VISIBLE else View.GONE
+                        holder.binding.redoButton?.visibility =
+                            if (historyNotNull.hasNext()) View.VISIBLE else View.GONE
+                        holder.binding.undoButton?.visibility =
+                            if (historyNotNull.hasPrevious()) View.VISIBLE else View.GONE
                     }
                 }
             }
@@ -906,11 +908,11 @@ open class ReviewModeAdapter(
             }
 
             override fun onPostExecute() {
-                if (history != null) {
-                    if (commit != null) {
+                history?.let { historyNotnull ->
+                    commit?.let { commitNotNull ->
                         var text: String? = null
                         try {
-                            text = history.read(commit)
+                            text = historyNotnull.read(commitNotNull)
                         } catch (e: IllegalStateException) {
                             Logger.w(TAG, "Redo is past end of history for specific file", e)
                             text = "" // graceful recovery
@@ -938,8 +940,10 @@ open class ReviewModeAdapter(
                     }
 
                     if (holder.binding.redoButton != null && holder.binding.undoButton != null) {
-                        holder.binding.redoButton?.visibility = if (history.hasNext()) View.VISIBLE else View.GONE
-                        holder.binding.undoButton?.visibility = if (history.hasPrevious()) View.VISIBLE else View.GONE
+                        holder.binding.redoButton?.visibility =
+                            if (historyNotnull.hasNext()) View.VISIBLE else View.GONE
+                        holder.binding.undoButton?.visibility =
+                            if (historyNotnull.hasPrevious()) View.VISIBLE else View.GONE
                     }
                 }
             }

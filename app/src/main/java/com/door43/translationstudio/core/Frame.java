@@ -10,7 +10,6 @@ import org.json.JSONObject;
 /**
  * Created by joel on 8/26/2015.
  */
-@Deprecated
 public class Frame {
 
     public final String body;

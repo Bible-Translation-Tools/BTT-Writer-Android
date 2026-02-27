@@ -166,7 +166,7 @@ class PdfPrinter(
         table.horizontalAlignment = Element.ALIGN_CENTER
 
         for (c in translation.chapterTranslations) {
-            if (!includeIncomplete && !c.isTitleFinished && !sourceContainer?.readChunk(
+            if (!includeIncomplete && !c.titleFinished && !sourceContainer?.readChunk(
                     c.id,
                     "title"
                 ).isNullOrEmpty()
@@ -383,7 +383,7 @@ class PdfPrinter(
 
             val chapter0 = (Util.strToInt(c.id, 0) == 0)
             if (!chapter0) { // if chapter 00, then skip title since that was already printed as first page.
-                if (includeIncomplete || c.isTitleFinished || sourceContainer!!.readChunk(
+                if (includeIncomplete || c.titleFinished || sourceContainer!!.readChunk(
                         c.id,
                         "title"
                     ).isEmpty()
@@ -397,7 +397,7 @@ class PdfPrinter(
             val frameList = sortFrameTranslations(frames)
             for (i in frameList.indices) {
                 val f = frameList[i]
-                if (includeIncomplete || f.isFinished) {
+                if (includeIncomplete || f.finished) {
                     if (includeMedia
                         && this.format == TranslationFormat.MARKDOWN
                         && imagesDir != null
@@ -436,7 +436,7 @@ class PdfPrinter(
             }
 
             // chapter reference
-            if ((includeIncomplete || c.isReferenceFinished) && c.reference.isNotEmpty()) {
+            if ((includeIncomplete || c.referenceFinished) && c.reference.isNotEmpty()) {
                 addBidiTextToTable(16, " ", this.bodyFont, table)
                 addBidiTextToTable(16, c.reference, subFont, table)
             }

@@ -1,39 +1,30 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+object BibleCodes {
 
-/**
- * Created by blm on 12/21/16.
- */
+    private val ntBookList = listOf(
+        "mat", "mrk", "luk", "jhn", "act", "rom", "1co", "2co",
+        "gal", "eph", "php", "col", "1th", "2th", "1ti", "2ti",
+        "tit", "phm", "heb", "jas", "1pe", "2pe", "1jn", "2jn",
+        "3jn", "jud", "rev"
+    )
 
-public class BibleCodes {
+    private val otBookList = listOf(
+        "gen", "exo", "lev", "num", "deu", "jos", "jdg", "rut",
+        "1sa", "2sa", "1ki", "2ki", "1ch", "2ch", "ezr", "neh",
+        "est", "job", "psa", "pro", "ecc", "sng", "isa", "jer",
+        "lam", "ezk", "dan", "hos", "jol", "amo", "oba", "jon",
+        "mic", "nah", "hab", "zep", "hag", "zec", "mal"
+    )
 
-    private static final List<String> ntBookList =  Arrays.asList(
-            "mat" , "mrk", "luk", "jhn", "act", "rom", "1co", "2co",
-            "gal", "eph", "php", "col", "1th", "2th", "1ti", "2ti",
-            "tit", "phm", "heb", "jas", "1pe", "2pe", "1jn", "2jn",
-            "3jn", "jud", "rev");
-    private static final List<String> otBookList = Arrays.asList(
-            "gen" , "exo", "lev", "num", "deu", "jos", "jdg", "rut",
-            "1sa", "2sa", "1ki", "2ki", "1ch", "2ch", "ezr", "neh",
-            "est", "job", "psa", "pro", "ecc", "sng", "isa", "jer",
-            "lam", "ezk", "dan", "hos", "jol", "amo", "oba", "jon",
-            "mic", "nam", "hab", "zep", "hag", "zec", "mal");
+    @JvmStatic
+    fun getNtBooks(): Array<String> = ntBookList.toTypedArray()
 
-    static public String[] getNtBooks() {
-        return ntBookList.toArray(new String[ntBookList.size()]);
-    }
+    @JvmStatic
+    fun getOtBooks(): Array<String> = otBookList.toTypedArray()
 
-    static public String[] getOtBooks() {
-        return otBookList.toArray(new String[otBookList.size()]);
-    }
-
-    static public String[] getBibleBooks() {
-        List<String> bible = new ArrayList<>();
-        bible.addAll(otBookList);
-        bible.addAll(ntBookList);
-        return bible.toArray(new String[bible.size()]);
+    @JvmStatic
+    fun getBibleBooks(): Array<String> {
+        return (otBookList + ntBookList).toTypedArray()
     }
 }

@@ -1,33 +1,33 @@
-package com.door43.translationstudio.core.entity;
+package com.door43.translationstudio.core.entity
 
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.Language;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
+import org.unfoldingword.door43client.models.Translation
+import org.unfoldingword.resourcecontainer.Language
+import org.unfoldingword.resourcecontainer.Project
+import org.unfoldingword.resourcecontainer.Resource
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
-public class SourceTranslation extends Translation {
+class SourceTranslation : Translation {
 
-    private int modifiedTimestamp = -1;
+    var modifiedTimestamp: Int = -1
+        private set
 
-    public SourceTranslation(Language language, Project project, Resource resource) {
-        super(language, project, resource);
+    constructor(language: Language, project: Project, resource: Resource) : super(language, project, resource)
+
+    constructor(container: ResourceContainer) : super(container)
+
+    constructor(translation: Translation, modifiedTimestamp: Int) : super(
+        translation.language,
+        translation.project,
+        translation.resource
+    ) {
+        this.modifiedTimestamp = modifiedTimestamp
     }
 
-    public SourceTranslation(ResourceContainer container) {
-        super(container);
-    }
-
-    public SourceTranslation(Translation translation, int modifiedTimestamp) {
-        super(translation.language, translation.project, translation.resource);
-        this.modifiedTimestamp = modifiedTimestamp;
-    }
-
-    public int getModifiedTimestamp() {
-        return modifiedTimestamp;
-    }
-
-    public void setModifiedTime(int timestamp) {
-        modifiedTimestamp = timestamp;
+    /**
+     * Set the modified time for this source translation
+     * @param timestamp the new modified timestamp
+     */
+    fun setModifiedTime(timestamp: Int) {
+        modifiedTimestamp = timestamp
     }
 }
