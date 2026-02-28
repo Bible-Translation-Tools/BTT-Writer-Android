@@ -165,7 +165,7 @@ class PdfPrinter(
         table.widthPercentage = 100f
         table.horizontalAlignment = Element.ALIGN_CENTER
 
-        for (c in translation.chapterTranslations) {
+        for (c in translation.getChapterTranslations()) {
             if (!includeIncomplete && !c.titleFinished && !sourceContainer?.readChunk(
                     c.id,
                     "title"
@@ -247,16 +247,16 @@ class PdfPrinter(
      * @param document
      */
     private fun addMetaData(document: Document) {
-        val projectTranslation = translation.projectTranslation
+        val projectTranslation = translation.getProjectTranslation()
         document.addTitle(projectTranslation.title)
         document.addSubject(projectTranslation.description)
-        for (ns in translation.contributors) {
+        for (ns in translation.getContributors()) {
             document.addAuthor(ns.name)
             document.addCreator(ns.name)
         }
         document.addCreationDate()
         document.addLanguage(translation.targetLanguageName)
-        document.addKeywords("format=" + format.getName())
+        document.addKeywords("format=" + format.title)
     }
 
     /**
@@ -277,7 +277,7 @@ class PdfPrinter(
         table.addCell(spacerCell)
 
         // book title
-        val projectTranslation = translation.projectTranslation
+        val projectTranslation = translation.getProjectTranslation()
         var title = projectTranslation.title
         if (title.isEmpty()) {
             val project = library.index.getProject(
@@ -367,7 +367,7 @@ class PdfPrinter(
      */
     @Throws(DocumentException::class, IOException::class)
     private fun addContent(document: Document) {
-        val chapterTranslations = translation.chapterTranslations
+        val chapterTranslations = translation.getChapterTranslations()
 //        val chapterCount = chapterTranslations.size + 1
 //        val increments = 1.0 / chapterCount
 //        var progress = 0.0

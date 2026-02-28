@@ -1,9 +1,9 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
 /**
  * Represents different visual modes within the translation activity
  */
-public enum TranslationViewMode {
+enum class TranslationViewMode {
     READ,
     CHUNK,
     REVIEW

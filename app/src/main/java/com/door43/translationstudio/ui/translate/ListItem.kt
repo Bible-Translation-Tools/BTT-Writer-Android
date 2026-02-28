@@ -85,7 +85,7 @@ abstract class ListItem(
         get() = target.format
 
     val pt: ProjectTranslation
-        get() = target.projectTranslation
+        get() = target.getProjectTranslation()
     val ct: ChapterTranslation
         get() = target.getChapterTranslation(chapterSlug)
     val ft: FrameTranslation
@@ -129,7 +129,7 @@ abstract class ListItem(
             _fileHistory = when {
                 isChapterReference -> target.getChapterReferenceHistory(ct)
                 isChapterTitle -> target.getChapterTitleHistory(ct)
-                isProjectTitle -> target.projectTitleHistory
+                isProjectTitle -> target.getProjectTitleHistory()
                 isChunk -> target.getFrameHistory(ft)
                 else -> null
             }

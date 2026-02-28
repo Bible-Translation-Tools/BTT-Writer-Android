@@ -885,12 +885,12 @@ class ProcessUSFM {
                 context,
                 profile.nativeSpeaker,
                 TranslationFormat.USFM,
-                targetLanguage,
-                projectId,
+                targetLanguage!!,
+                projectId!!,
                 ResourceType.TEXT,
                 resourceSlug,
                 pInfo,
-                projectFolder
+                projectFolder!!
             )
         } catch (e: Exception) {
             addError(R.string.file_write_error)

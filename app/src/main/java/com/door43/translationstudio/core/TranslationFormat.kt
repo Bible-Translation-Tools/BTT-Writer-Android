@@ -1,59 +1,41 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
 /**
  * Represents different text formats
  */
-public enum TranslationFormat {
+enum class TranslationFormat(val title: String) {
     USFM("usfm"),
     MARKDOWN("markdown"),
     UNKNOWN("txt"),
-    @Deprecated
+    @Deprecated("Use specific format")
     DEFAULT("default"),
-    @Deprecated
+    @Deprecated("Legacy USX support")
     USX("usx");
 
-    TranslationFormat(String s) {
-        mName = s;
-    }
+    override fun toString(): String = title
 
-    private final String mName;
-
-    public String getName() {
-        return mName;
-    }
-
-    @Override
-    public String toString() {
-        return mName;
-    }
-
-    /**
-     * Returns a format by it's name
-     * @param name
-     * @return
-     */
-    public static TranslationFormat get(String name) {
-        if(name != null) {
-            for (TranslationFormat f : TranslationFormat.values()) {
-                if (f.getName().equals(name.toLowerCase())) {
-                    return f;
-                }
-            }
+    companion object {
+        /**
+         * Returns a format by its name
+         * @param name the name of the format
+         * @return the matching TranslationFormat or null
+         */
+        @JvmStatic
+        fun get(name: String): TranslationFormat {
+            val searchName = name.lowercase()
+            return entries.find { it.title == searchName } ?: UNKNOWN
         }
-        return null;
-    }
 
-    public static TranslationFormat parse(String mimeType) {
-        switch(mimeType) {
-            case "text/usfm":
-                return USFM;
-            case "text/markdown":
-                return MARKDOWN;
-            case "text/usx":
-                return USX;
-            default:
-                // you are crazy!!!
-                return UNKNOWN;
+        /**
+         * Parses a mimeType into a TranslationFormat
+         */
+        fun parse(mimeType: String?): TranslationFormat {
+            return when (mimeType) {
+                "text/usfm" -> USFM
+                "text/markdown" -> MARKDOWN
+                "text/usx" -> USX
+                else -> UNKNOWN
+            }
         }
     }
 }

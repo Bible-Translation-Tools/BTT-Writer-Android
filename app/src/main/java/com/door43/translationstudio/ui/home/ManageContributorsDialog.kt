@@ -53,14 +53,16 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
         val args = requireArguments()
         val targetTranslationId = args.getString(EXTRA_TARGET_TRANSLATION_ID)
 
-        targetTranslation = translator.getTargetTranslation(targetTranslationId)!!
+        targetTranslation = targetTranslationId?.let {
+            translator.getTargetTranslation(it)
+        }!!
 
         // auto add profile
         targetTranslation.addContributor(profile.nativeSpeaker)
 
         with (binding) {
             adapter.setDisplayNext(false)
-            adapter.setContributors(targetTranslation.contributors)
+            adapter.setContributors(targetTranslation.getContributors())
             adapter.setOnClickListener(this@ManageContributorsDialog)
 
             recyclerView.layoutManager = LinearLayoutManager(activity)
@@ -69,7 +71,7 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
         }
 
         onNativeSpeakerDialogClick = View.OnClickListener {
-            adapter.setContributors(targetTranslation.contributors)
+            adapter.setContributors(targetTranslation.getContributors())
         }
 
         // re-attach to dialogs

@@ -1,25 +1,18 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import android.os.Handler;
-import android.os.Looper;
-
-import com.door43.usecases.ParseMergeConflicts;
-
-import org.unfoldingword.tools.taskmanager.ManagedTask;
-import org.unfoldingword.tools.taskmanager.TaskManager;
-
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import android.os.Handler
+import android.os.Looper
+import com.door43.usecases.ParseMergeConflicts
+import org.unfoldingword.tools.taskmanager.ManagedTask
+import org.unfoldingword.tools.taskmanager.TaskManager
+import java.util.regex.Pattern
 
 /**
  * Created by blm on 11/22/16.
  */
-
-public class MergeConflictsHandler {
-    public static final String mergeConflictHead = "<<<<<<< HEAD.*\\n";
-    public static Pattern mergeConflictPatternHead = Pattern.compile(mergeConflictHead);
-
+object MergeConflictsHandler {
+    const val MERGE_CONFLICT_HEAD = "<<<<<<< HEAD.*\\n"
+    val mergeConflictPatternHead: Pattern = Pattern.compile(MERGE_CONFLICT_HEAD)
 
     /**
      * Split the merge conflict into a list of the options
@@ -27,8 +20,9 @@ public class MergeConflictsHandler {
      * @param text
      * @return
      */
-    static public List<CharSequence> getMergeConflictItems(String text) {
-        return ParseMergeConflicts.INSTANCE.execute(text);
+    fun getMergeConflictItems(text: String): List<CharSequence> {
+        // Assuming ParseMergeConflicts is a Kotlin object or has a static execute method
+        return ParseMergeConflicts.execute(text)
     }
 
     /**
@@ -37,12 +31,9 @@ public class MergeConflictsHandler {
      * @param text
      * @return
      */
-    static public CharSequence getMergeConflictItemsHead(String text) {
-        List<CharSequence> items = getMergeConflictItems(text);
-        if(items.isEmpty()) {
-            return null;
-        }
-        return items.get(0);
+    fun getMergeConflictItemsHead(text: String): CharSequence? {
+        val items = getMergeConflictItems(text)
+        return if (items.isEmpty()) null else items[0]
     }
 
     /**
@@ -51,12 +42,12 @@ public class MergeConflictsHandler {
      * @param text
      * @return
      */
-    static public boolean isMergeConflicted(CharSequence text) {
-        if (text != null && text.length() > 0) {
-            Matcher matcher = mergeConflictPatternHead.matcher(text);
-            return matcher.find();
+    fun isMergeConflicted(text: CharSequence?): Boolean {
+        if (!text.isNullOrEmpty()) {
+            val matcher = mergeConflictPatternHead.matcher(text)
+            return matcher.find()
         }
-        return false;
+        return false
     }
 
     /**
@@ -65,47 +56,40 @@ public class MergeConflictsHandler {
      * @param targetTranslationId
      * @return
      */
-    static public boolean isTranslationMergeConflicted(
-            String targetTranslationId,
-            Translator translator
-    ) {
-        if(targetTranslationId == null) {
-            return false;
+    fun isTranslationMergeConflicted(
+        targetTranslationId: String?,
+        translator: Translator
+    ): Boolean {
+        if (targetTranslationId == null) {
+            return false
         }
 
-        TargetTranslation targetTranslation = translator.getTargetTranslation(targetTranslationId);
-        if(targetTranslation == null) {
-            return false;
+        val targetTranslation = translator.getTargetTranslation(targetTranslationId) ?: return false
+
+        val pt = targetTranslation.getProjectTranslation()
+        if (isMergeConflicted(pt.title)) {
+            return true
         }
 
-        ProjectTranslation pt = targetTranslation.getProjectTranslation();
-        if(pt == null) {
-            return false;
-        }
-
-        if(isMergeConflicted(pt.getTitle())) {
-            return true;
-        }
-
-        ChapterTranslation[] chapters = targetTranslation.getChapterTranslations();
-        for(ChapterTranslation ct:chapters) {
-            if(isMergeConflicted(ct.getTitle())) {
-                return true;
+        val chapters = targetTranslation.getChapterTranslations()
+        for (ct in chapters) {
+            if (isMergeConflicted(ct.title)) {
+                return true
             }
 
-            if(isMergeConflicted(ct.getReference())) {
-                return true;
+            if (isMergeConflicted(ct.reference)) {
+                return true
             }
 
-            FrameTranslation[] frames = targetTranslation.getFrameTranslations(ct.getId(), TranslationFormat.DEFAULT);
-            for (FrameTranslation frame : frames) {
-                if (isMergeConflicted(frame.getBody())) {
-                    return true;
+            val frames = targetTranslation.getFrameTranslations(ct.id, TranslationFormat.DEFAULT)
+            for (frame in frames) {
+                if (isMergeConflicted(frame.body)) {
+                    return true
                 }
             }
         }
 
-        return false;
+        return false
     }
 
     /**
@@ -113,44 +97,43 @@ public class MergeConflictsHandler {
      * @param targetTranslationId
      * @param listener
      */
-    public static void backgroundTestForConflictedChunks(
-            final String targetTranslationId,
-            final Translator translator,
-            final OnMergeConflictListener listener
-            ) {
-        ManagedTask task = new ManagedTask() {
-            @Override
-            public void start() {
+    fun backgroundTestForConflictedChunks(
+        targetTranslationId: String,
+        translator: Translator,
+        listener: OnMergeConflictListener
+    ) {
+        val task = object : ManagedTask() {
+            override fun start() {
                 try {
-                    if(interrupted()) return;
-                    boolean conflicted = MergeConflictsHandler.isTranslationMergeConflicted(targetTranslationId, translator);
-                    setResult(conflicted);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    if (interrupted()) return
+                    val conflicted = isTranslationMergeConflicted(targetTranslationId, translator)
+                    result = conflicted
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
-        };
-        task.addOnFinishedListener(task1 -> {
-            TaskManager.clearTask(task1);
-            boolean conflicted = false;
-            if(task1.getResult() != null) conflicted = (boolean) task1.getResult();
-            if(!task1.isCanceled()) {
-                Handler hand = new Handler(Looper.getMainLooper());
-                final boolean finalConflicted = conflicted;
-                hand.post(() -> {
-                    if(finalConflicted) {
-                        listener.onMergeConflict(targetTranslationId);
+        }
+
+        task.addOnFinishedListener { task1 ->
+            TaskManager.clearTask(task1)
+            val conflicted = (task1.result as? Boolean) ?: false
+
+            if (!task1.isCanceled) {
+                val hand = Handler(Looper.getMainLooper())
+                hand.post {
+                    if (conflicted) {
+                        listener.onMergeConflict(targetTranslationId)
                     } else {
-                        listener.onNoMergeConflict(targetTranslationId);
+                        listener.onNoMergeConflict(targetTranslationId)
                     }
-                });
+                }
             }
-        });
-        TaskManager.addTask(task);
+        }
+        TaskManager.addTask(task)
     }
 
-    public interface OnMergeConflictListener {
-        void onNoMergeConflict(String targetTranslationId);
-        void onMergeConflict(String targetTranslationId);
+    interface OnMergeConflictListener {
+        fun onNoMergeConflict(targetTranslationId: String)
+        fun onMergeConflict(targetTranslationId: String)
     }
 }

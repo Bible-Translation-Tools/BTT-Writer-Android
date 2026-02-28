@@ -138,7 +138,7 @@ class TargetTranslationMigrator(
         }
         if (migratedDir != null) {
             // import new language requests
-            val tt = TargetTranslation.open(targetTranslationDir, null)
+            val tt = TargetTranslation.open(targetTranslationDir)
             if (tt != null) {
                 val newRequest = tt.getNewLanguageRequest(context)
                 if (newRequest != null) {
@@ -442,7 +442,7 @@ class TargetTranslationMigrator(
             val resourceType = ResourceType.get(typeId)
             typeJson.put("id", typeId)
             if (resourceType != null) {
-                typeJson.put("name", resourceType.getName())
+                typeJson.put("name", resourceType.title)
             } else {
                 typeJson.put("name", "")
             }
@@ -450,7 +450,7 @@ class TargetTranslationMigrator(
         }
 
         // update project
-        // NOTE: this was actually in v3 but we missed it so we need to catch it here
+        // NOTE: this was actually in v3, but we missed it so we need to catch it here
         if (manifest.has("project_id")) {
             val projectId = manifest.getString("project_id")
             manifest.remove("project_id")

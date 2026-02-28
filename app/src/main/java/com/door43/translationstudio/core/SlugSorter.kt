@@ -1,113 +1,63 @@
-package com.door43.translationstudio.core;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+package com.door43.translationstudio.core
 
 /**
  * A utility for sorting slugs in resource container.
- * TRICKY: we sort slightly differently that defined in the spec
+ * TRICKY: we sort slightly differently than defined in the spec
  * to ease the translation process.
- *
  */
-public class SlugSorter {
+class SlugSorter {
 
-    /**
-     * Sorts the slugs
-     * @param slugs the sorted slugs
-     * @return
-     */
-    public List<String> sort(List<String> slugs) {
-        Collections.sort(slugs, new SlugComparator());
-        return slugs;
+    private companion object {
+        const val NUMERIC_WEIGHT = 6
+        const val NON_NUMERIC_WEIGHT = 7
     }
 
     /**
-     * Sorts the slugs
-     * @param slugs the sorted slugs
-     * @return
+     * Sorts the slugs in place and returns the list
+     * @param slugs the list of slugs to sort
      */
-    public List<String> sort(String[] slugs) {
-        return sort(Arrays.asList(slugs));
-    }
-}
+    fun sort(slugs: MutableList<String>): List<String> {
+        slugs.sortWith(Comparator { left, right ->
+            val leftWeight = getWeight(left)
+            val rightWeight = getWeight(right)
 
-/**
- * Do all the sorting
- */
-class SlugComparator implements Comparator<String>
-{
-    private static final int NUMERIC_WEIGHT = 6;
-    private static final int NON_NUMERIC_WEIGHT = 7;
-
-    public int compare(String left, String right) {
-        int leftWeight = getWeight(left);
-        int rightWeight = getWeight(right);
-
-        if(leftWeight > rightWeight) return 1;
-        if(leftWeight < rightWeight) return -1;
-
-        // sort numeric
-        if(leftWeight == NUMERIC_WEIGHT) {
-            return compare(Integer.parseInt(left), Integer.parseInt(right));
-        }
-
-        // sort non-numeric
-        if(leftWeight == NON_NUMERIC_WEIGHT){
-            return left.compareTo(right);
-        }
-
-        // default top
-        return 0;
+            when {
+                leftWeight != rightWeight -> leftWeight.compareTo(rightWeight)
+                leftWeight == NUMERIC_WEIGHT -> {
+                    val leftInt = left.toIntOrNull() ?: 0
+                    val rightInt = right.toIntOrNull() ?: 0
+                    leftInt.compareTo(rightInt)
+                }
+                leftWeight == NON_NUMERIC_WEIGHT -> left.compareTo(right)
+                else -> 0
+            }
+        })
+        return slugs
     }
 
     /**
-     * Compares the sort order of two ints
-     * @param left
-     * @param right
-     * @return
+     * Sorts an array of slugs and returns as a list
      */
-    int compare(int left, int right) {
-        if(left > right) return 1;
-        if(left < right) return -1;
-        return 0;
+    fun sort(slugs: Array<String>): List<String> {
+        return sort(slugs.toMutableList())
     }
 
     /**
      * Returns the relative weight of the slug sort.
      * Smaller values float to the top.
-     *
-     * @param slug the slug
-     * @return the weight
      */
-    int getWeight(String slug) {
-        switch(slug) {
-            case "front":
-                return 1;
-            case "title":
-                return 2;
-            case "sub-title":
-                return 3;
-            case "intro":
-                return 4;
-            case "reference":
-                return 5;
-            case "summary":
-                // numeric: 6
-                // non-numeric: 7
-                return 8;
-            case "back":
-                return 9;
-        }
-
-        try {
-            // numeric
-            Integer.valueOf(slug);
-            return NUMERIC_WEIGHT;
-        } catch (NumberFormatException e) {
-            // non-numeric
-            return NON_NUMERIC_WEIGHT;
+    private fun getWeight(slug: String): Int {
+        return when (slug) {
+            "front" -> 1
+            "title" -> 2
+            "sub-title" -> 3
+            "intro" -> 4
+            "reference" -> 5
+            "summary" -> 8
+            "back" -> 9
+            else -> {
+                if (slug.toIntOrNull() != null) NUMERIC_WEIGHT else NON_NUMERIC_WEIGHT
+            }
         }
     }
 }

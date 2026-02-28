@@ -403,8 +403,10 @@ class ImportDialog : DialogFragment() {
      * restore original version
      */
     private fun resetToMasterBackup() {
-        val mTargetTranslation = translator.getTargetTranslation(targetTranslationID)
-        mTargetTranslation?.resetToMasterBackup()
+        targetTranslationID?.let { id ->
+            val mTargetTranslation = translator.getTargetTranslation(id)
+            mTargetTranslation?.resetToMasterBackup()
+        }
     }
 
     /**

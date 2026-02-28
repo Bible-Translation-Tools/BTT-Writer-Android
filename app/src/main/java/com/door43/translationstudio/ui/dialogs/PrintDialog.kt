@@ -297,23 +297,25 @@ class PrintDialog : DialogFragment() {
             )
             projectTitle.setTypeface(typeface, Typeface.NORMAL)
 
-            var title = targetTranslation.projectTranslation.title.replace("\n+$".toRegex(), "")
+            var title = targetTranslation.getProjectTranslation().title.replace("\n+$".toRegex(), "")
             if (title.isEmpty()) {
-                val sourceContainer = ContainerCache.cacheClosest(
-                    library,
-                    null,
-                    targetTranslation.projectId,
-                    targetTranslation.resourceSlug
-                )
-                if (sourceContainer != null) {
-                    title = sourceContainer.readChunk("front", "title")
-                        .replace("\n+$".toRegex(), "")
+                targetTranslation.resourceSlug?.let { resourceSlug ->
+                    val sourceContainer = ContainerCache.cacheClosest(
+                        library,
+                        null,
+                        targetTranslation.projectId,
+                        resourceSlug
+                    )
+                    if (sourceContainer != null) {
+                        title = sourceContainer.readChunk("front", "title")
+                            .replace("\n+$".toRegex(), "")
+                    }
                 }
             }
             if (title.isEmpty()) {
                 title = targetTranslation.projectId
             }
-            projectTitle.text = title + " - " + targetTranslation.targetLanguageName
+            projectTitle.text = "$title - ${targetTranslation.targetLanguageName}"
 
             val isObsProject = targetTranslation.isObsProject
             if (isObsProject) {

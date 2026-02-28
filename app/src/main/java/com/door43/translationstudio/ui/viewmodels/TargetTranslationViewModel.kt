@@ -62,7 +62,7 @@ class TargetTranslationViewModel(
     private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
     val progress: LiveData<ProgressHelper.Progress?> = _progress
 
-    fun getTargetTranslation(translationID: String?): TargetTranslation? {
+    fun getTargetTranslation(translationID: String): TargetTranslation? {
         _targetTranslation = translator.getTargetTranslation(translationID)
         return _targetTranslation
     }
@@ -382,7 +382,7 @@ class TargetTranslationViewModel(
                 "front" -> {
                     // project stuff
                     if (chunkSlug == "title") {
-                        target.projectTranslation.title
+                        target.getProjectTranslation().title
                     } else ""
                 }
                 "back" -> ""

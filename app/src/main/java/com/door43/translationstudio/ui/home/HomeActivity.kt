@@ -268,21 +268,23 @@ class HomeActivity : BaseActivity(),
                 hand.post {
                     val success = result.isSuccess
                     if (success && result.mergeConflict) {
-                        MergeConflictsHandler.backgroundTestForConflictedChunks(
-                            result.importedSlug,
-                            translator,
-                            object : OnMergeConflictListener {
-                                override fun onNoMergeConflict(targetTranslationId: String) {
-                                    showImportResults(
-                                        examineImportsResult?.contentUri.toString(),
-                                        examineImportsResult?.projectsFound,
-                                        success
-                                    )
-                                }
-                                override fun onMergeConflict(targetTranslationId: String) {
-                                    showMergeConflict(targetTranslationId)
-                                }
-                            })
+                        result.importedSlug?.let { slug ->
+                            MergeConflictsHandler.backgroundTestForConflictedChunks(
+                                slug,
+                                translator,
+                                object : OnMergeConflictListener {
+                                    override fun onNoMergeConflict(targetTranslationId: String) {
+                                        showImportResults(
+                                            examineImportsResult?.contentUri.toString(),
+                                            examineImportsResult?.projectsFound,
+                                            success
+                                        )
+                                    }
+                                    override fun onMergeConflict(targetTranslationId: String) {
+                                        showMergeConflict(targetTranslationId)
+                                    }
+                                })
+                        }
                     } else {
                         showImportResults(
                             examineImportsResult?.contentUri.toString(),
@@ -821,7 +823,9 @@ class HomeActivity : BaseActivity(),
             val targetTranslationId = result.data?.getStringExtra(
                 NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
             )
-            val existingTranslation = viewModel.getTargetTranslation(targetTranslationId)
+            val existingTranslation = targetTranslationId?.let {
+                viewModel.getTargetTranslation(it)
+            }
             if (existingTranslation != null) {
                 val project = viewModel.getProject(existingTranslation)
 

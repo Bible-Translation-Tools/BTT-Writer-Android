@@ -830,7 +830,7 @@ open class ReviewModeAdapter(
                 // commit changes before viewing history
                 history?.let { historyNotNull ->
                     if (historyNotNull.atHead) {
-                        if (!item.target.isClean) {
+                        if (!item.target.isClean()) {
                             try {
                                 item.target.commitSync()
                                 historyNotNull.loadCommits()

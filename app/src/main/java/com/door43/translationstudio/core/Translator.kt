@@ -145,13 +145,13 @@ class Translator (
      * @return A new or existing Target Translation
      */
     fun createTargetTranslation(
-        nativeSpeaker: NativeSpeaker?,
+        nativeSpeaker: NativeSpeaker,
         targetLanguage: TargetLanguage,
-        projectSlug: String?,
-        resourceType: ResourceType?,
-        resourceSlug: String?,
+        projectSlug: String,
+        resourceType: ResourceType,
+        resourceSlug: String,
         translationFormat: TranslationFormat
-    ): TargetTranslation? {
+    ): TargetTranslation {
         // TRICKY: force deprecated formats to use new formats
         var format = translationFormat
         if (format == TranslationFormat.USX) {
@@ -186,13 +186,13 @@ class Translator (
                 e.printStackTrace()
             }
         }
-        return targetTranslation
+        return targetTranslation!!
     }
 
     private fun setTargetTranslationAuthor(targetTranslation: TargetTranslation?) {
         if (profile.loggedIn && targetTranslation != null) {
-            var name = profile.fullName
-            var email: String? = ""
+            var name = profile.fullName ?: ""
+            var email = ""
             profile.gogsUser?.let {
                 name = it.fullName
                 email = it.email
@@ -206,11 +206,11 @@ class Translator (
      * @param targetTranslationId
      * @return
      */
-    fun getTargetTranslation(targetTranslationId: String?): TargetTranslation? {
-        return targetTranslationId?.let {
+    fun getTargetTranslation(targetTranslationId: String): TargetTranslation? {
+        return targetTranslationId.let {
             val targetTranslationDir = File(path, targetTranslationId)
             val targetTranslation = TargetTranslation.open(targetTranslationDir) {
-                // Try to backup and delete corrupt project
+                // Try to back up and delete corrupt project
                 try {
                     backupRC.backupTargetTranslation(targetTranslationDir)
                     deleteTargetTranslation(targetTranslationDir)
@@ -252,9 +252,9 @@ class Translator (
      * @return
      */
     fun importDraftTranslation(
-        nativeSpeaker: NativeSpeaker?,
+        nativeSpeaker: NativeSpeaker,
         draftTranslation: ResourceContainer,
-    ): TargetTranslation? {
+    ): TargetTranslation {
         val targetLanguage = library.index.getTargetLanguage(draftTranslation.language.slug)
         // TRICKY: for now android only supports "regular" or "obs" "text" translations
         // TODO: we should technically check if the project contains more than one resource
@@ -276,38 +276,36 @@ class Translator (
         val convertToUSFM = format == TranslationFormat.USX
 
         try {
-            if (translation != null) {
-                // commit local changes to history
-                translation.commitSync()
+            // commit local changes to history
+            translation.commitSync()
 
-                // begin import
-                translation.applyProjectTitleTranslation(
-                    draftTranslation.readChunk("front", "title")
+            // begin import
+            translation.applyProjectTitleTranslation(
+                draftTranslation.readChunk("front", "title")
+            )
+            for (cSlug in draftTranslation.chapters()) {
+                val ct = translation.getChapterTranslation(cSlug)
+                translation.applyChapterTitleTranslation(
+                    ct,
+                    draftTranslation.readChunk(cSlug, "title")
                 )
-                for (cSlug in draftTranslation.chapters()) {
-                    val ct = translation.getChapterTranslation(cSlug)
-                    translation.applyChapterTitleTranslation(
-                        ct,
-                        draftTranslation.readChunk(cSlug, "title")
+                translation.applyChapterReferenceTranslation(
+                    ct,
+                    draftTranslation.readChunk(cSlug, "reference")
+                )
+                for (fSlug in draftTranslation.chunks(cSlug)) {
+                    val body = draftTranslation.readChunk(cSlug, fSlug)
+                    val text = if (convertToUSFM) USXtoUSFMConverter.doConversion(body)
+                        .toString() else body
+                    translation.applyFrameTranslation(
+                        translation.getFrameTranslation(cSlug, fSlug, format),
+                        text
                     )
-                    translation.applyChapterReferenceTranslation(
-                        ct,
-                        draftTranslation.readChunk(cSlug, "reference")
-                    )
-                    for (fSlug in draftTranslation.chunks(cSlug)) {
-                        val body = draftTranslation.readChunk(cSlug, fSlug)
-                        val text = if (convertToUSFM) USXtoUSFMConverter.doConversion(body)
-                            .toString() else body
-                        translation.applyFrameTranslation(
-                            translation.getFrameTranslation(cSlug, fSlug, format),
-                            text
-                        )
-                    }
                 }
-                // TODO: 3/23/2016 also import the front and back matter along with project title
-                translation.setParentDraft(draftTranslation)
-                translation.commitSync()
             }
+            // TODO: 3/23/2016 also import the front and back matter along with project title
+            translation.setParentDraft(draftTranslation)
+            translation.commitSync()
         } catch (e: IOException) {
             Logger.e(this.javaClass.name, "Failed to import target translation", e)
             // TODO: 1/20/2016 revert changes
@@ -324,7 +322,7 @@ class Translator (
     fun getConflictingTargetTranslation(file: File): TargetTranslation? {
         var conflictingTranslation: TargetTranslation? = null
 
-        val targetTranslation = TargetTranslation.open(file, null)
+        val targetTranslation = TargetTranslation.open(file)
         if (targetTranslation != null) {
             // TRICKY: the correct id is pulled from the manifest to avoid propagating bad folder names
             val targetTranslationId = targetTranslation.id

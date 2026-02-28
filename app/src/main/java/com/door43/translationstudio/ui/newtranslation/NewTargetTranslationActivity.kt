@@ -146,12 +146,12 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
     private fun restoreDialogs() {
         when (dialogShown) {
             DialogShown.RENAME_CONFLICT -> {
-                val sourceTargetTranslation = viewModel.getTargetTranslation(
-                    viewModel.targetTranslationId
-                )
-                val destTargetTranslation = viewModel.getTargetTranslation(
-                    viewModel.newTargetTranslationId
-                )
+                val sourceTargetTranslation = viewModel.targetTranslationId?.let {
+                    viewModel.getTargetTranslation(it)
+                }
+                val destTargetTranslation = viewModel.newTargetTranslationId?.let {
+                    viewModel.getTargetTranslation(it)
+                }
                 if(sourceTargetTranslation != null && destTargetTranslation != null) {
                     showTargetTranslationConflict(sourceTargetTranslation, destTargetTranslation)
                 }
@@ -264,37 +264,44 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
             // TODO: animate
             invalidateOptionsMenu()
         } else { // just change the target language
-            viewModel.getTargetTranslation(viewModel.targetTranslationId)?.let { sourceTargetTranslation ->
-                // if nothing to do then skip
-                if (targetLanguage.slug == sourceTargetTranslation.targetLanguage?.slug) {
-                    setResult(RESULT_OK)
-                    finish()
-                    return
-                }
+            viewModel.targetTranslationId?.let { targetTranslationId ->
+                viewModel.getTargetTranslation(targetTranslationId)?.let { sourceTargetTranslation ->
+                    // if nothing to do then skip
+                    if (targetLanguage.slug == sourceTargetTranslation.targetLanguage.slug) {
+                        setResult(RESULT_OK)
+                        finish()
+                        return
+                    }
 
-                // check for project conflict
-                val projectId = sourceTargetTranslation.projectId
-                val resourceSlug = sourceTargetTranslation.resourceSlug
+                    // check for project conflict
+                    val projectId = sourceTargetTranslation.projectId
+                    val resourceSlug = sourceTargetTranslation.resourceSlug
 
-                val existingTranslation = viewModel.selectedTargetLanguage?.let { selected ->
-                    viewModel.getTargetTranslation(
-                        TargetTranslation.generateTargetTranslationId(
-                            selected.slug, projectId, ResourceType.TEXT, resourceSlug
+                    val existingTranslation = viewModel.selectedTargetLanguage?.let { selected ->
+                        viewModel.getTargetTranslation(
+                            TargetTranslation.generateTargetTranslationId(
+                                selected.slug, projectId, ResourceType.TEXT, resourceSlug
+                            )
                         )
-                    )
-                }
+                    }
 
-                if (existingTranslation != null) {
-                    showTargetTranslationConflict(sourceTargetTranslation, existingTranslation)
-                } else { // no existing translation so change language and move
-                    val originalTargetTranslationId = sourceTargetTranslation.id
-                    sourceTargetTranslation.changeTargetLanguage(viewModel.selectedTargetLanguage)
-                    viewModel.normalizeTargetTranslationPath(sourceTargetTranslation)
-                    val newSourceTargetTranslationID = sourceTargetTranslation.id
-                    viewModel.moveTargetTranslationAppSettings(
-                        originalTargetTranslationId,
-                        newSourceTargetTranslationID
-                    )
+                    if (existingTranslation != null) {
+                        showTargetTranslationConflict(sourceTargetTranslation, existingTranslation)
+                    } else { // no existing translation so change language and move
+                        val originalTargetTranslationId = sourceTargetTranslation.id
+                        viewModel.selectedTargetLanguage?.let {
+                            sourceTargetTranslation.changeTargetLanguage(it)
+                        }
+                        viewModel.normalizeTargetTranslationPath(sourceTargetTranslation)
+                        val newSourceTargetTranslationID = sourceTargetTranslation.id
+                        viewModel.moveTargetTranslationAppSettings(
+                            originalTargetTranslationId,
+                            newSourceTargetTranslationID
+                        )
+                        setResult(RESULT_OK)
+                        finish()
+                    }
+                } ?: run {
                     setResult(RESULT_OK)
                     finish()
                 }

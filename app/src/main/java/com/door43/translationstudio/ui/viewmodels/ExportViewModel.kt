@@ -303,7 +303,7 @@ class ExportViewModel(
         }
     }
 
-    fun getTargetTranslationName(translationId: String?): String {
+    fun getTargetTranslationName(translationId: String): String {
         return translator.getTargetTranslation(translationId)?.let { targetTranslation ->
             val sourceTranslation = library.index.getTranslation(targetTranslation.id)
             return if (sourceTranslation != null) {

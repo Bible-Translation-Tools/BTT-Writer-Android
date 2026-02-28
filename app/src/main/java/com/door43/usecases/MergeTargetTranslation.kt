@@ -30,7 +30,7 @@ class MergeTargetTranslation(
 
         try {
             val mergeConflict = !destinationTranslation.merge(sourceTranslation.path) {
-                // Try to backup and delete corrupt project
+                // Try to back up and delete corrupt project
                 try {
                     backupRC.backupTargetTranslation(sourceTranslation.path)
                     translator.deleteTargetTranslation(sourceTranslation.path)

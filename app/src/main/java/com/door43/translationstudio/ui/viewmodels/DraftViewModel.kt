@@ -4,11 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.R
-import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.spannables.Span
 import com.door43.usecases.ImportDraft
@@ -51,19 +51,21 @@ class DraftViewModel (
 
     fun loadDraftTranslations(targetTranslationId: String?) {
         viewModelScope.launch {
-            translator.getTargetTranslation(targetTranslationId)?.let { targetTranslation ->
-                val translations = library.index.findTranslations(
-                    targetTranslation.targetLanguage.slug,
-                    targetTranslation.projectId,
-                    null,
-                    "book",
-                    null,
-                    0,
-                    -1
-                ).filter { it.resource.slug != "udb" }
+            targetTranslationId?.let { id ->
+                translator.getTargetTranslation(id)?.let { targetTranslation ->
+                    val translations = library.index.findTranslations(
+                        targetTranslation.targetLanguage.slug,
+                        targetTranslation.projectId,
+                        null,
+                        "book",
+                        null,
+                        0,
+                        -1
+                    ).filter { it.resource.slug != "udb" }
 
-                _model.update {
-                    it.copy(draftTranslations = translations)
+                    _model.update {
+                        it.copy(draftTranslations = translations)
+                    }
                 }
             }
         }

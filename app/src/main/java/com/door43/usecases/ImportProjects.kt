@@ -153,10 +153,9 @@ class ImportProjects(
                         moveOrCopyQuietly(project, destTargetTranslationDir)
                     }
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
-                    TargetTranslation.updateGenerator(
-                        context,
-                        TargetTranslation.open(destTargetTranslationDir, null)
-                    )
+                    TargetTranslation.open(destTargetTranslationDir)?.let { targetTranslation ->
+                        TargetTranslation.updateGenerator(context, targetTranslation)
+                    }
                 }
             }
 
@@ -257,7 +256,7 @@ class ImportProjects(
             val targetTranslationDirs = archiveImporter.importArchive(dir)
             for (newDir in targetTranslationDirs) {
                 val newTargetTranslation = TargetTranslation.open(newDir) {
-                    // Try to backup and delete corrupt project
+                    // Try to back up and delete corrupt project
                     try {
                         backupRC.backupTargetTranslation(newDir)
                         translator.deleteTargetTranslation(newDir)
@@ -271,7 +270,7 @@ class ImportProjects(
                     val targetTranslationId = newTargetTranslation.id
                     val localDir = File(translator.path, targetTranslationId)
                     val localTargetTranslation = TargetTranslation.open(localDir) {
-                        // Try to backup and delete corrupt project
+                        // Try to back up and delete corrupt project
                         try {
                             backupRC.backupTargetTranslation(localDir)
                             translator.deleteTargetTranslation(localDir)
@@ -287,7 +286,7 @@ class ImportProjects(
                         // merge translations
                         try {
                             val mergeSuccess = localTargetTranslation.merge(newDir) {
-                                // Try to backup and delete corrupt project
+                                // Try to back up and delete corrupt project
                                 try {
                                     backupRC.backupTargetTranslation(newDir)
                                     translator.deleteTargetTranslation(newDir)
@@ -308,15 +307,17 @@ class ImportProjects(
                         moveOrCopyQuietly(newDir, localDir)
                     }
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
-                    TargetTranslation.updateGenerator(context, TargetTranslation.open(localDir) {
-                        // Try to backup and delete corrupt project
+                    TargetTranslation.open(localDir) {
+                        // Try to back up and delete corrupt project
                         try {
                             backupRC.backupTargetTranslation(localDir)
                             translator.deleteTargetTranslation(localDir)
                         } catch (ex: java.lang.Exception) {
                             ex.printStackTrace()
                         }
-                    })
+                    }?.let { targetTranslation ->
+                        TargetTranslation.updateGenerator(context, targetTranslation)
+                    }
 
                     importedSlug = targetTranslationId
                 }
@@ -342,9 +343,9 @@ class ImportProjects(
     }
 
     data class ImportResults(
-        @JvmField val importedSlug: String?,
-        @JvmField val mergeConflict: Boolean,
-        @JvmField val alreadyExists: Boolean
+        val importedSlug: String?,
+        val mergeConflict: Boolean,
+        val alreadyExists: Boolean
     ) {
         val isSuccess: Boolean
             get() {

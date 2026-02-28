@@ -43,13 +43,15 @@ class TranslatorsFragment : PublishStepFragment(), ContributorsAdapter.OnClickLi
 
         val args = requireArguments()
         val targetTranslationId = args.getString(PublishActivity.EXTRA_TARGET_TRANSLATION_ID)
-        targetTranslation = translator.getTargetTranslation(targetTranslationId)!!
+        targetTranslation = targetTranslationId?.let {
+            translator.getTargetTranslation(it)
+        }!!
 
         // auto add profile
         targetTranslation.addContributor(profile.nativeSpeaker)
 
         with (binding) {
-            adapter.setContributors(targetTranslation.contributors)
+            adapter.setContributors(targetTranslation.getContributors())
             adapter.setOnClickListener(this@TranslatorsFragment)
 
             recyclerView.layoutManager = LinearLayoutManager(activity)
@@ -58,7 +60,7 @@ class TranslatorsFragment : PublishStepFragment(), ContributorsAdapter.OnClickLi
         }
 
         onNativeSpeakerDialogClick = View.OnClickListener {
-            adapter.setContributors(targetTranslation.contributors)
+            adapter.setContributors(targetTranslation.getContributors())
         }
 
         // re-attach to dialogs
@@ -95,7 +97,7 @@ class TranslatorsFragment : PublishStepFragment(), ContributorsAdapter.OnClickLi
     }
 
     override fun onClickNext() {
-        if (targetTranslation.contributors.isNotEmpty()) {
+        if (targetTranslation.getContributors().isNotEmpty()) {
             listener?.nextStep()
         } else {
             val snack = Snackbar.make(

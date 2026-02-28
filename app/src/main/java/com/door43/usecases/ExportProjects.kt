@@ -110,7 +110,7 @@ class ExportProjects(
 
         val success = try {
             tempDir.mkdirs()
-            val chapters = targetTranslation.chapterTranslations
+            val chapters = targetTranslation.getChapterTranslations()
 
             val bookData = BookData.generate(targetTranslation, library)
             val bookCode = bookData.bookCode
@@ -276,7 +276,7 @@ class ExportProjects(
         val translationJson = JSONObject()
         translationJson.put("path", targetTranslation.id)
         translationJson.put("id", targetTranslation.id)
-        translationJson.put("commit_hash", targetTranslation.commitHash)
+        translationJson.put("commit_hash", targetTranslation.getCommitHash())
         translationJson.put("direction", targetTranslation.targetLanguageDirection)
         translationJson.put("target_language_name", targetTranslation.targetLanguageName)
         translationsJson.put(translationJson)
@@ -327,7 +327,7 @@ class ExportProjects(
             private set
 
         init {
-            val projectTranslation = targetTranslation.projectTranslation
+            val projectTranslation = targetTranslation.getProjectTranslation()
             // TODO refactor
             val project = library.index.getProject(
                 languageId,

@@ -1,229 +1,126 @@
-package com.door43.translationstudio.core;
+package com.door43.translationstudio.core
 
-import com.door43.translationstudio.rendering.Clickables;
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan;
-import com.door43.translationstudio.ui.spannables.USXVerseSpan;
+import com.door43.translationstudio.rendering.Clickables
+import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.translationstudio.ui.spannables.USXVerseSpan
+import org.json.JSONException
+import org.json.JSONObject
 
-import org.json.JSONException;
-import org.json.JSONObject;
+data class Frame(
+    val id: String,
+    val chapterId: String,
+    val body: String,
+    val format: TranslationFormat,
+    val imageUrl: String
+) {
+    private var verses: IntArray? = null
 
-/**
- * Created by joel on 8/26/2015.
- */
-public class Frame {
+    companion object {
+        /**
+         * Generates a new frame from JSON
+         */
+        @Throws(JSONException::class)
+        fun generate(chapterId: String, json: JSONObject?): Frame? {
+            if (json == null) return null
 
-    public final String body;
-    private final String mId;
-    private final TranslationFormat mFormat;
-    private final String mChapterId;
-    public final String imageUrl;
-    private String mTitle;
-    private int[] mVerses = null;
-    private long DBId = -1;
+            val format = if (json.has("format")) {
+                TranslationFormat.get(json.getString("format"))
+            } else {
+                TranslationFormat.UNKNOWN
+            }
 
-    public Frame(String frameId, String chapterId, String body, TranslationFormat format, String imageUrl) {
-        mChapterId = chapterId;
-        this.body = body;
-        mFormat = format;
-        mId = frameId;
-        this.imageUrl = imageUrl;
-    }
+            val img = if (json.has("img")) json.getString("img") else ""
 
-    /**
-     * Returns the frame id
-     * @return
-     */
-    public String getId() {
-        return mId;
-    }
+            val complexId = json.getString("id").split("-")
+            val frameId = if (complexId.size > 1) complexId[1] else complexId[0]
 
-    /**
-     * Returns the id of the chapter to which this frame belongs
-     * @return
-     */
-    public String getChapterId() {
-        return mChapterId;
-    }
-
-    /**
-     * Returns the format of the text
-     * @return
-     */
-    public TranslationFormat getFormat() {
-        return mFormat;
-    }
-
-    /**
-     * Generates a dummy frame with just the chapter id
-     * @param chapterId
-     * @return
-     */
-    public static Frame generateDummy(String chapterId) {
-        return new Frame(null, chapterId, "", TranslationFormat.DEFAULT, "");
-    }
-
-    /**
-     * Generates a new frame from json
-     *
-     * Note: we receive the chapter id rather than parsing it from the frame id to keep things future proof
-     *
-     * @param chapterId
-     * @param json
-     * @return
-     */
-    public static Frame generate(String chapterId, JSONObject json) throws JSONException {
-        if(json == null) {
-            return null;
-        }
-        TranslationFormat format = TranslationFormat.DEFAULT;
-        if(json.has("format")) {
-            format = TranslationFormat.get(json.getString("format"));
-        }
-        String img = "";
-        if(json.has("img")) {
-            img = json.getString("img");
-        }
-        String[] complexId = json.getString("id").split("-");
-        String frameId;
-        if(complexId.length > 1) {
-            frameId = complexId[1];
-        } else {
-            // future proof
-            frameId = complexId[0];
-        }
-        return new Frame(
+            return Frame(
                 frameId,
                 chapterId,
                 json.getString("text"),
                 format,
-                img);
-    }
+                img
+            )
+        }
 
-    /**
-     * Returns the title of the frame
-     * @return
-     */
-    public String getTitle() {
-        if(Clickables.isClickableFormat(mFormat)) {
-            // get verse range
-            int[] verses = getVerseRange();
-            if(verses.length == 1) {
-                mTitle = verses[0] + "";
-            } else if(verses.length == 2) {
-                mTitle = verses[0] + "-" + verses[1];
-            } else {
-                mTitle = Integer.parseInt(mId) + "";
+        /**
+         * Parses the text for the verse title e.g. 1-5
+         */
+        fun parseVerseTitle(text: String, format: TranslationFormat): String {
+            val verses = getVerseRange(text, format)
+            return when (verses.size) {
+                1 -> "${verses[0]}"
+                2 -> "${verses[0]}-${verses[1]}"
+                else -> ""
             }
-            return mTitle;
-        } else {
-            return Integer.parseInt(mId) + "";
+        }
+
+        /**
+         * Returns the formatted beginning verse in this frame.
+         */
+        fun getStartVerse(text: String, format: TranslationFormat): String {
+            val verses = getVerseRange(text, format)
+            return if (verses.isNotEmpty()) "${verses[0]}" else ""
+        }
+
+        /**
+         * Returns the formatted ending verse for this frame.
+         */
+        fun getEndVerse(text: String, format: TranslationFormat): String {
+            val verses = getVerseRange(text, format)
+            return when (verses.size) {
+                1 -> "${verses[0]}"
+                2 -> "${verses[1]}"
+                else -> ""
+            }
+        }
+
+        /**
+         * Returns the range of verses that a chunk of text spans
+         */
+        fun getVerseRange(text: CharSequence, format: TranslationFormat): IntArray {
+            return when (format) {
+                TranslationFormat.USX -> USXVerseSpan.getVerseRange(text)
+                TranslationFormat.USFM -> USFMVerseSpan.getVerseRange(text)
+                else -> intArrayOf()
+            }
         }
     }
 
-    /**
-     * Parses the text for the verse title
-     * e.g. 1-5
-     * @param text
-     * @param format
-     * @return
-     */
-    public static String parseVerseTitle(String text, TranslationFormat format) {
-        String title = "";
-        int[] verses = getVerseRange(text, format);
-        if(verses.length == 1) {
-            title = verses[0] + "";
-        } else if(verses.length == 2) {
-            title = verses[0] + "-" + verses[1];
+    /** Returns the complex chapter-frame id */
+    val title: String
+        get() {
+            val fallbackId = id.toIntOrNull()?.toString() ?: id
+            return if (Clickables.isClickableFormat(format)) {
+                val verses = getVerseRange()
+                when (verses.size) {
+                    1 -> "${verses[0]}"
+                    2 -> "${verses[0]}-${verses[1]}"
+                    else -> fallbackId
+                }
+            } else {
+                fallbackId
+            }
         }
-        return title;
-    }
 
-    /**
-     * Returns the formatted beginning verse in this frame.
-     * @return
-     */
-    public static String getStartVerse(String text, TranslationFormat format) {
-//        if(Clickables.isClickableFormat(mFormat)) {
-            // get verse range
-        int[] verses = getVerseRange(text, format);
-        if(verses.length > 0) {
-            return verses[0] + "";
-        }
-        return "";
-//        }
-//        return Integer.parseInt(mId) + "";
-    }
-
-    /**
-     * Returns the formatted ending verse for this frame.
-     * @return
-     */
-    public static String getEndVerse(String text, TranslationFormat format) {
-//        if(Clickables.isClickableFormat(mFormat)) {
-            // get verse range
-        int[] verses = getVerseRange(text, format);
-        if(verses.length == 1) {
-            return verses[0] + "";
-        } else if(verses.length == 2) {
-            return verses[1] + "";
-        }
-        return "";
-//        }
-//        return Integer.parseInt(mId) + "";
-    }
+    /** Returns the complex chapter-frame id */
+    val complexId: String
+        get() = "$chapterId-$id"
 
     /**
      * Returns the range of verses that the body spans
-     * @return int[0] if no verses, int[1] if one verse, int[2] if a range of verses
      */
-    public int[] getVerseRange() {
-        if(mVerses == null) {
-            mVerses = getVerseRange(body);
+    fun getVerseRange(): IntArray {
+        if (verses == null) {
+            verses = getVerseRange(body)
         }
-        return mVerses;
+        return verses!!
     }
 
     /**
      * Returns the range of verses that a chunk of text spans
-     *
-     * @param text
-     * @return int[0] if no verses, int[1] if one verse, int[2] if a range of verses
      */
-    public int[] getVerseRange(CharSequence text) {
-
-        return getVerseRange(text, getFormat());
-    }
-
-
-    /**
-     * Returns the range of verses that a chunk of text spans
-     *
-     * @param text
-     * @return int[0] if no verses, int[1] if one verse, int[2] if a range of verses
-     */
-    public static int[] getVerseRange(CharSequence text, TranslationFormat format) {
-        if(format == TranslationFormat.USX) {
-            return USXVerseSpan.getVerseRange(text);
-        } else if (format == TranslationFormat.USFM) {
-            return USFMVerseSpan.getVerseRange(text);
-        }
-
-       return new int[]{};
-    }
-
-    /**
-     * Returns the complex chapter-frame id
-     * @return
-     */
-    public String getComplexId() {
-        return mChapterId + "-" + mId;
-    }
-
-    public void setDBId(long DBId) {
-        this.DBId = DBId;
-    }
-
-    public long getDBId() {
-        return this.DBId;
+    fun getVerseRange(text: CharSequence): IntArray {
+        return getVerseRange(text, format)
     }
 }

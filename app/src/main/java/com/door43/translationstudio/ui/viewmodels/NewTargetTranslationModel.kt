@@ -87,7 +87,7 @@ class NewTargetTranslationModel(
         return library.index.getTargetLanguage(languageId)
     }
 
-    fun getTargetTranslation(translationId: String?): TargetTranslation? {
+    fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
     }
 
@@ -134,30 +134,31 @@ class NewTargetTranslationModel(
         format: TranslationFormat
     ): TargetTranslation? {
         return selectedTargetLanguage?.let { targetLanguage ->
-            translator.createTargetTranslation(
+            val targetTranslation = translator.createTargetTranslation(
                 profile.nativeSpeaker,
                 targetLanguage,
                 projectId,
                 resourceType,
                 resourceSlug,
                 format
-            )?.let { targetTranslation ->
-                // deploy custom language code request to the translation
-                languageRequestRepository.getNewLanguageRequest(
-                    targetLanguage.slug
-                )?.let { request ->
-                    try {
-                        targetTranslation.setNewLanguageRequest(request)
-                    } catch (e: Exception) {
-                        Logger.e(
-                            this.javaClass.name,
-                            "Failed to deploy the new language code request",
-                            e
-                        )
-                    }
+            )
+
+            // deploy custom language code request to the translation
+            languageRequestRepository.getNewLanguageRequest(
+                targetLanguage.slug
+            )?.let { request ->
+                try {
+                    targetTranslation.setNewLanguageRequest(request)
+                } catch (e: Exception) {
+                    Logger.e(
+                        this.javaClass.name,
+                        "Failed to deploy the new language code request",
+                        e
+                    )
                 }
-                targetTranslation
             }
+
+            targetTranslation
         }
     }
 

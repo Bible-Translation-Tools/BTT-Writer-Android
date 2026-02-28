@@ -524,7 +524,7 @@ class ReadModeAdapter(
             }
 
             if (targetCardTitle.isEmpty()) { // if no chapter titles, fall back to project title, try translated title first
-                val projTrans = item.target.projectTranslation
+                val projTrans = item.target.getProjectTranslation()
                 if (projTrans.title.trim().isNotEmpty()) {
                     targetCardTitle = try {
                         "${projTrans.title.trim()} ${chapterSlug.toInt()}"

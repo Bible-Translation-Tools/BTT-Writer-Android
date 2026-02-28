@@ -147,7 +147,7 @@ class HomeViewModel(
         }
     }
 
-    fun getTargetTranslation(translationId: String?): TargetTranslation? {
+    fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
     }
 
@@ -193,7 +193,7 @@ class HomeViewModel(
 
     fun getProject(targetTranslation: TargetTranslation): Project {
         val project: Project
-        val existingSources = targetTranslation.sourceTranslations
+        val existingSources = targetTranslation.getSourceTranslations()
         // Gets an existing source project or default if none selected
         if (existingSources.isNotEmpty()) {
             val lastSource = existingSources[existingSources.size - 1]

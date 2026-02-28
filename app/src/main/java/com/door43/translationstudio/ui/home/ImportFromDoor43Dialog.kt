@@ -206,7 +206,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
                                 // merge target translation
                                 try {
                                     val success = existingTargetTranslation!!.merge(result.cloneDir) {
-                                        // Try to backup and delete corrupt project
+                                        // Try to back up and delete corrupt project
                                         viewModel.backupAndDeleteTranslation(clonedDir)
                                     }
                                     if (!success) {
