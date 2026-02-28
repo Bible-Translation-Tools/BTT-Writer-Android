@@ -119,7 +119,7 @@ class UpdateAppTest {
 
         every { translator.path }.returns(tempDir.newFolder("translations"))
 
-        mockkStatic(TargetTranslation::class)
+        mockkObject(TargetTranslation)
         every { translator.targetTranslations }.returns(arrayOf())
         every { TargetTranslation.updateGenerator(any(), any()) }.just(runs)
 

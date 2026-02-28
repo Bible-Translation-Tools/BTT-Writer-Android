@@ -66,7 +66,7 @@ class ProcessUSFMTest {
 
         mockkStatic(FileUtilities::class)
         mockkStatic(TextUtils::class)
-        mockkStatic(TargetTranslation::class)
+        mockkObject(TargetTranslation)
 
         every { context.resources }.returns(resources)
         every { context.packageManager }.returns(packageManager)

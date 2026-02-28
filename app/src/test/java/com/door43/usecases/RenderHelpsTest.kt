@@ -7,6 +7,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -38,7 +39,7 @@ class RenderHelpsTest {
 
         TestUtils.setPropertyReflection(library, "index", index)
 
-        mockkStatic(ContainerCache::class)
+        mockkObject(ContainerCache)
         every { ContainerCache.cache(library, any()) }
             .answers {
                 val slug = secondArg<String>()
@@ -281,6 +282,7 @@ class RenderHelpsTest {
                 val link: Link = mockk()
                 TestUtils.setPropertyReflection(link, "chapter", it)
                 TestUtils.setPropertyReflection(link, "resource", "tw")
+                TestUtils.setPropertyReflection(link, "project", "tw")
                 link
             }
         }

@@ -82,14 +82,35 @@ object ContainerCache {
      * If an exact match cannot be found for the given language then the closest matching resource container for the project
      * will be cached and returned.
      */
-    fun cacheClosest(client: Door43Client, languageSlug: String?, projectSlug: String, resourceSlug: String): ResourceContainer? {
+    fun cacheClosest(
+        client: Door43Client,
+        languageSlug: String?,
+        projectSlug: String,
+        resourceSlug: String
+    ): ResourceContainer? {
         val lang = if (languageSlug.isNullOrEmpty()) Locale.getDefault().language else languageSlug
 
         // search for translation
-        var translations = client.index.findTranslations(lang, projectSlug, resourceSlug, null, null, 0, -1)
+        var translations = client.index.findTranslations(
+            lang,
+            projectSlug,
+            resourceSlug,
+            null,
+            null,
+            0,
+            -1
+        )
         if (translations.isEmpty()) {
             // search for similar translations
-            translations = client.index.findTranslations(null, projectSlug, resourceSlug, null, null, 0, -1)
+            translations = client.index.findTranslations(
+                null,
+                projectSlug,
+                resourceSlug,
+                null,
+                null,
+                0,
+                -1
+            )
         }
 
         // return first successful cache

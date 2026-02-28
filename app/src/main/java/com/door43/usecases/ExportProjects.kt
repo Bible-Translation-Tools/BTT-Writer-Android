@@ -152,12 +152,12 @@ class ExportProjects(
                         ps.println(chapterNumber)
                     }
 
-                    if (chapter.title != null && chapter.title.isNotEmpty()) {
+                    if (chapter.title.isNotEmpty()) {
                         val chapterTitle = "\\cl " + chapter.title
                         ps.println(chapterTitle)
                     }
 
-                    if (chapter.reference != null && chapter.reference.isNotEmpty()) {
+                    if (chapter.reference.isNotEmpty()) {
                         val chapterRef = "\\cd " + chapter.reference
                         ps.println(chapterRef)
                     }

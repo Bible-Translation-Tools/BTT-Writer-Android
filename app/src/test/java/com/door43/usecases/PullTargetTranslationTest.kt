@@ -16,6 +16,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
@@ -63,7 +64,7 @@ class PullTargetTranslationTest {
 
         every { context.resources }.returns(resources)
 
-        mockkStatic(TargetTranslation::class)
+        mockkObject(TargetTranslation)
         mockkStatic(Manifest::class)
 
         every { Manifest.generate(any()) }.returns(mockk())

@@ -145,7 +145,7 @@ class BackupRCTest {
         every { tempFile.isFile }.returns(true)
 
         every { targetTranslation.id }.returns("aa_mrk_text_reg")
-        every { targetTranslation.commitHash }.returns("abcdefghijklmnopqrstuvwxyz")
+        every { targetTranslation.getCommitHash() }.returns("abcdefghijklmnopqrstuvwxyz")
         every {
             directoryProvider.createTempFile(
                 "aa_mrk_text_reg",
@@ -163,7 +163,7 @@ class BackupRCTest {
         verify { tempFile.exists() }
         verify { tempFile.isFile }
         verify { targetTranslation.id }
-        verify { targetTranslation.commitHash }
+        verify { targetTranslation.getCommitHash() }
         verify {
             directoryProvider.createTempFile(
                 "aa_mrk_text_reg",
@@ -182,7 +182,7 @@ class BackupRCTest {
         every { tempFile.isFile }.returns(true)
 
         every { targetTranslation.id }.returns("aa_mrk_text_reg")
-        every { targetTranslation.commitHash }.returns("abcdefghijklmnopqrstuvwxyz")
+        every { targetTranslation.getCommitHash() }.returns("abcdefghijklmnopqrstuvwxyz")
         every { directoryProvider.createTempFile(any(), any(), null) }.returns(tempFile)
         every { targetTranslation.setDefaultContributor(any()) } just runs
         every { exportProjects.exportProject(targetTranslation, tempFile) }.returns(mockk())
@@ -194,7 +194,7 @@ class BackupRCTest {
         verify { tempFile.exists() }
         verify { tempFile.isFile }
         verify { targetTranslation.id }
-        verify(exactly = 0) { targetTranslation.commitHash }
+        verify(exactly = 0) { targetTranslation.getCommitHash() }
         verify { directoryProvider.createTempFile(any(), any(), null) }
         verify { targetTranslation.setDefaultContributor(any()) }
         verify { exportProjects.exportProject(targetTranslation, tempFile) }

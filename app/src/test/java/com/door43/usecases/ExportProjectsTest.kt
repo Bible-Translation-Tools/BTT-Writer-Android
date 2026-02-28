@@ -98,7 +98,7 @@ class ExportProjectsTest {
         every { targetTranslation.commitSync(any(), any()) }.returns(true)
         every { targetTranslation.commit() }.just(runs)
         every { targetTranslation.id }.returns("aa_mrk_text_ulb")
-        every { targetTranslation.commitHash }.returns("abc123")
+        every { targetTranslation.getCommitHash() }.returns("abc123")
         every { targetTranslation.targetLanguageDirection }.returns("ltr")
         every { targetTranslation.targetLanguageName }.returns("aa")
         every { targetTranslation.path }.returns(mockk())
@@ -418,7 +418,7 @@ class ExportProjectsTest {
     ) {
         verify { directoryProvider.createTempDir() }
         verify { directoryProvider.createTempFile(any(), any(), any()) }
-        verify { targetTranslation.chapterTranslations }
+        verify { targetTranslation.getChapterTranslations() }
         verify { targetTranslation.getFrameTranslations(any(), any()) }
         verify { bookData.bookCode }
         verify { bookData.bookTitle }
@@ -444,14 +444,14 @@ class ExportProjectsTest {
 
     private fun mockTranslationContents() {
         val chapterTranslation: ChapterTranslation = mockk()
-        TestUtils.setPropertyReflection(chapterTranslation, "id", "01")
-        TestUtils.setPropertyReflection(chapterTranslation, "title", "Chapter 1")
-        TestUtils.setPropertyReflection(chapterTranslation, "reference", "Chapter reference")
-        every { targetTranslation.chapterTranslations }.returns(arrayOf(chapterTranslation))
+        every { chapterTranslation.id } returns "01"
+        every { chapterTranslation.title } returns "Chapter 1"
+        every { chapterTranslation.reference } returns "Chapter reference"
+        every { targetTranslation.getChapterTranslations() }.returns(arrayOf(chapterTranslation))
 
         val frameTranslation: FrameTranslation = mockk()
-        TestUtils.setPropertyReflection(frameTranslation, "id", "01")
-        TestUtils.setPropertyReflection(frameTranslation, "body", "This is a test verse contents")
+        every { frameTranslation.id } returns "01"
+        every { frameTranslation.body } returns "This is a test verse contents"
         every { targetTranslation.getFrameTranslations(any(), any()) }
             .returns(arrayOf(frameTranslation))
     }

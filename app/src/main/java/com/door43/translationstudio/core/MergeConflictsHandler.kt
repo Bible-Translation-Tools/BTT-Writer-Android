@@ -42,8 +42,8 @@ object MergeConflictsHandler {
      * @param text
      * @return
      */
-    fun isMergeConflicted(text: CharSequence?): Boolean {
-        if (!text.isNullOrEmpty()) {
+    fun isMergeConflicted(text: CharSequence): Boolean {
+        if (text.isNotEmpty()) {
             val matcher = mergeConflictPatternHead.matcher(text)
             return matcher.find()
         }

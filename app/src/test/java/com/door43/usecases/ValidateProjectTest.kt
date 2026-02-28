@@ -8,10 +8,12 @@ import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.publish.ValidationItem
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -65,7 +67,7 @@ class ValidateProjectTest {
 
         every { library.open(any()) }.returns(sourceContainer)
 
-        mockkStatic(MergeConflictsHandler::class)
+        mockkObject(MergeConflictsHandler)
         every { MergeConflictsHandler.isMergeConflicted(any()) }.returns(false)
 
         every { context.getString(R.string.has_warnings) }.returns("Has warnings")
@@ -83,26 +85,26 @@ class ValidateProjectTest {
         mockTranslation()
 
         val bookChapter: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter01: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter02: ChapterTranslation = mockk(relaxed = true)
 
         mockChapters(bookChapter, chapter01, chapter02)
 
         val chunk0101: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0104: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0201: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0203: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
 
         mockChunks(chunk0101, chunk0104, chunk0201, chunk0203)
@@ -118,7 +120,7 @@ class ValidateProjectTest {
 
         assertEquals(1, items.size)
         assertTrue(items.first().isRange)
-        assertTrue(items.first().isValid)
+        assertTrue(items.first() is ValidationItem.ValidGroup)
 
         verifyCommonStuff()
         verifyChapterAndChunks()
@@ -129,26 +131,26 @@ class ValidateProjectTest {
         mockTranslation()
 
         val bookChapter: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(false)
+            every { titleFinished }.returns(false)
         }
         val chapter01: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter02: ChapterTranslation = mockk(relaxed = true)
 
         mockChapters(bookChapter, chapter01, chapter02)
 
         val chunk0101: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0104: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0201: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0203: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
 
         mockChunks(chunk0101, chunk0104, chunk0201, chunk0203)
@@ -164,11 +166,11 @@ class ValidateProjectTest {
 
         assertEquals(3, items.size)
         assertEquals("Has warnings", items.first().title)
-        assertEquals("front", items[1].chapterId)
-        assertFalse(items[1].isValid)
+        assertEquals("front", (items[1] as ValidationItem.InvalidFrame).chapterId)
+        assertTrue(items[1] is ValidationItem.InvalidFrame)
         assertFalse(items[1].isRange)
         assertTrue(items[2].isRange)
-        assertTrue(items[2].isValid)
+        assertTrue(items[2] is ValidationItem.ValidFrame)
 
         verifyCommonStuff()
         verifyChapterAndChunks()
@@ -179,26 +181,26 @@ class ValidateProjectTest {
         mockTranslation()
 
         val bookChapter: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter01: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(false)
+            every { titleFinished }.returns(false)
         }
         val chapter02: ChapterTranslation = mockk(relaxed = true)
 
         mockChapters(bookChapter, chapter01, chapter02)
 
         val chunk0101: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0104: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0201: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0203: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
 
         mockChunks(chunk0101, chunk0104, chunk0201, chunk0203)
@@ -213,15 +215,15 @@ class ValidateProjectTest {
         )
 
         assertEquals(4, items.size)
-        assertTrue(items.first().isValid)
+        assertTrue(items.first() is ValidationItem.ValidGroup)
         assertEquals("Book of Mark front", items.first().title)
         assertEquals("Has warnings", items[1].title)
-        assertEquals("01", items[2].chapterId)
+        assertEquals("01", (items[2] as ValidationItem.InvalidFrame).chapterId)
         assertEquals("Chapter 1 - Title", items[2].title)
-        assertFalse(items[2].isValid)
+        assertTrue(items[2] is ValidationItem.InvalidFrame)
         assertFalse(items[2].isRange)
         assertTrue(items[3].isRange)
-        assertTrue(items[3].isValid)
+        assertTrue(items[3] is ValidationItem.ValidFrame)
 
         verifyCommonStuff()
         verifyChapterAndChunks()
@@ -232,26 +234,26 @@ class ValidateProjectTest {
         mockTranslation()
 
         val bookChapter: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter01: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter02: ChapterTranslation = mockk(relaxed = true)
 
         mockChapters(bookChapter, chapter01, chapter02)
 
         val chunk0101: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(false)
+            every { finished }.returns(false)
         }
         val chunk0104: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0201: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0203: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
 
         mockChunks(chunk0101, chunk0104, chunk0201, chunk0203)
@@ -266,13 +268,13 @@ class ValidateProjectTest {
         )
 
         assertEquals(3, items.size)
-        assertTrue(items.first().isValid)
+        assertTrue(items.first() is ValidationItem.ValidGroup)
         assertEquals("Book of Mark front", items.first().title)
         assertEquals("Has warnings", items[1].title)
-        assertEquals("01", items[2].chapterId)
-        assertEquals("01", items[2].frameId)
+        assertEquals("01", (items[2] as ValidationItem.InvalidFrame).chapterId)
+        assertEquals("01", (items[2] as ValidationItem.InvalidFrame).frameId)
         assertEquals("Book of Mark 1:", items[2].title)
-        assertFalse(items[2].isValid)
+        assertTrue(items[2] is ValidationItem.InvalidFrame)
         assertFalse(items[2].isRange)
 
         verifyCommonStuff()
@@ -284,26 +286,26 @@ class ValidateProjectTest {
         mockTranslation()
 
         val bookChapter: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter01: ChapterTranslation = mockk(relaxed = true) {
-            every { isTitleFinished }.returns(true)
+            every { titleFinished }.returns(true)
         }
         val chapter02: ChapterTranslation = mockk(relaxed = true)
 
         mockChapters(bookChapter, chapter01, chapter02)
 
         val chunk0101: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0104: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0201: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(true)
+            every { finished }.returns(true)
         }
         val chunk0203: FrameTranslation = mockk(relaxed = true) {
-            every { isFinished }.returns(false)
+            every { finished }.returns(false)
         }
 
         mockChunks(chunk0101, chunk0104, chunk0201, chunk0203)
@@ -318,16 +320,16 @@ class ValidateProjectTest {
         )
 
         assertEquals(4, items.size)
-        assertTrue(items.first().isValid)
+        assertTrue(items.first() is ValidationItem.ValidFrame)
         assertEquals("Book of Mark front-1", items.first().title)
         assertEquals("Has warnings", items[1].title)
         assertEquals("Book of Mark 2:", items[2].title)
-        assertTrue(items[2].isValid)
+        assertTrue(items[2] is ValidationItem.ValidFrame)
         assertFalse(items[2].isRange)
-        assertEquals("02", items[3].chapterId)
-        assertEquals("03", items[3].frameId)
+        assertEquals("02", (items[3] as ValidationItem.InvalidFrame).chapterId)
+        assertEquals("03", (items[3] as ValidationItem.InvalidFrame).frameId)
         assertEquals("Book of Mark 2:", items[3].title)
-        assertFalse(items[3].isValid)
+        assertTrue(items[3] is ValidationItem.InvalidFrame)
         assertFalse(items[3].isRange)
 
         verifyCommonStuff()
@@ -429,9 +431,9 @@ class ValidateProjectTest {
         every { targetTranslation.getChapterTranslation(any()) }.answers {
             val chapterSlug = firstArg<String>()
             when (chapterSlug) {
-                "front" -> chapters.getOrNull(0)
-                "01" -> chapters.getOrNull(1)
-                "02" -> chapters.getOrNull(2)
+                "front" -> chapters[0]
+                "01" -> chapters[1]
+                "02" -> chapters[2]
                 else -> mockk()
             }
         }
@@ -442,10 +444,10 @@ class ValidateProjectTest {
             val chapterSlug = firstArg<String>()
             val chunkSlug = secondArg<String>()
             when {
-                chapterSlug == "01" && chunkSlug == "01" -> chunks.getOrNull(0)
-                chapterSlug == "01" && chunkSlug == "04" -> chunks.getOrNull(1)
-                chapterSlug == "02" && chunkSlug == "01" -> chunks.getOrNull(2)
-                chapterSlug == "02" && chunkSlug == "03" -> chunks.getOrNull(3)
+                chapterSlug == "01" && chunkSlug == "01" -> chunks[0]
+                chapterSlug == "01" && chunkSlug == "04" -> chunks[1]
+                chapterSlug == "02" && chunkSlug == "01" -> chunks[2]
+                chapterSlug == "02" && chunkSlug == "03" -> chunks[3]
                 else -> mockk()
             }
         }
