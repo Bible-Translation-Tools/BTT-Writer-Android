@@ -48,7 +48,7 @@ class GogsLogout(
         var tokenId = -1
         val requestPath = String.format("/users/%s/tokens", user.username)
 
-        val tokenResponse = requester[requestPath, user]
+        val tokenResponse = requester.get(requestPath, user)
         if (tokenResponse.code == 200) {
             try {
                 val data = JSONArray(tokenResponse.data)

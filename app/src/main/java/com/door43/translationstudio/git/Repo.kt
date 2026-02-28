@@ -1,246 +1,173 @@
-package com.door43.translationstudio.git;
+package com.door43.translationstudio.git
 
-import android.util.SparseArray;
+import com.door43.util.FileUtilities
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.GitCommand
+import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.api.errors.JGitInternalException
+import org.eclipse.jgit.errors.LockFailedException
+import org.eclipse.jgit.lib.StoredConfig
+import java.io.File
+import java.io.IOException
 
-import com.door43.translationstudio.git.tasks.repo.RepoOpTask;
-import com.door43.util.FileUtilities;
+class Repo(repositoryPath: String) {
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.GitCommand;
-import org.eclipse.jgit.api.InitCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.errors.LockFailedException;
-import org.eclipse.jgit.lib.StoredConfig;
+    val id: Int = numRepos++
+    val localPath: String
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+    private var _git: Git? = null
+    private var _storedConfig: StoredConfig? = null
+    private var remotes: MutableSet<String> = mutableSetOf()
 
-/**
- * Created by joel on 9/15/2014.
- */
-public class Repo {
-    private static int numRepos;
-    private static SparseArray<RepoOpTask> mRepoTasks = new SparseArray<RepoOpTask>();
-
-    private Git mGit;
-    private int mId;
-    private String mLocalPath;
-    private StoredConfig mStoredConfig;
-    private Set<String> mRemotes = new HashSet<String>();
-
-    /**
-     * Creates a new repository instance
-     * @param repositoryPath the path to the repository directory (not including the .git directory)
-     */
-    public Repo(String repositoryPath) {
-        // automatically generate repo ids
-        mId = numRepos;
-        numRepos ++;
-
-        // create the directory if missing
-        File repoPath = new File(repositoryPath);
-        if(!repoPath.exists()) {
-            repoPath.mkdir();
+    init {
+        val repoPath = File(repositoryPath)
+        if (!repoPath.exists()) {
+            repoPath.mkdir()
         }
 
-        mLocalPath = repositoryPath;
+        localPath = repositoryPath
 
-        // initialize new repository
-        File gitPath = new File(mLocalPath + "/.git");
-        if(!gitPath.exists()) {
-            initRepo();
+        val gitPath = File("$localPath/.git")
+        if (!gitPath.exists()) {
+            initRepo()
         }
     }
 
-    /**
-     * Initialize the git repository
-     */
-    private void initRepo() {
-        InitCommand init = Git.init();
-        File initFile = new File(getLocalPath());
-        init.setDirectory(initFile);
+    private fun initRepo() {
+        val init = Git.init()
+        val initFile = File(localPath)
+        init.setDirectory(initFile)
         try {
-            init.call();
-        } catch (GitAPIException e) {
-            e.printStackTrace();
-            // could not create repo
+            init.call()
+        } catch (e: GitAPIException) {
+            e.printStackTrace()
         }
     }
 
-    /**
-     * Returns this repository's unique id
-     * @return
-     */
-    public int getID() {
-        return mId;
-    }
+    val dir: File
+        get() = File(localPath)
 
-    /**
-     * Returns the repository directory
-     * @return
-     */
-    public File getDir() {
-        return new File(getLocalPath());
-    }
-
-    public Git getGit() throws IOException {
-        if (mGit == null) {
-            File repoFile = getDir();
-            mGit = Git.open(repoFile);
-        }
-        return mGit;
-    }
-
-    /**
-     * Returns the local path to the repository
-     * @return
-     */
-    public String getLocalPath() {
-        return mLocalPath;
-    }
-
-    public void cancelTask() {
-        RepoOpTask task = mRepoTasks.get(getID());
-        if(task == null) {
-            return;
-        } else {
-            task.cancelTask();
-            removeTask(task);
-        }
-    }
-
-    public String getBranchName() {
-        try {
-            return getGit().getRepository().getFullBranch();
-        } catch (IOException e) {
-//            App.context().showException(e);
-        }
-        return "";
-    }
-
-    public void removeTask(RepoOpTask task) {
-        RepoOpTask runningTask = mRepoTasks.get(getID());
-        if (runningTask == null || runningTask != task)
-            return;
-        mRepoTasks.remove(getID());
-    }
-
-    public boolean addTask(RepoOpTask task) {
-        if (mRepoTasks.get(getID()) != null)
-            return false;
-        mRepoTasks.put(getID(), task);
-        return true;
-    }
-
-    public Set<String> getRemotes() {
-        if (mRemotes.size() > 0)
-            return mRemotes;
-        try {
-            StoredConfig config = getStoredConfig();
-            Set<String> remotes = config.getSubsections("remote");
-            mRemotes = new HashSet<String>(remotes);
-            return mRemotes;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return new HashSet<String>();
-    }
-
-    public void setRemote(String remote, String url) throws IOException {
-        try {
-            StoredConfig config = getStoredConfig();
-            Set<String> remoteNames = config.getSubsections("remote");
-            if (remoteNames.contains(remote)) {
-                throw new IOException(String.format(
-                        "Remote %s already exists.", remote));
+    val git: Git
+        @Throws(IOException::class)
+        get() {
+            if (_git == null) {
+                _git = Git.open(dir)
             }
-            config.setString("remote", remote, "url", url);
-            String fetch = String.format("+refs/heads/*:refs/remotes/%s/*",
-                    remote);
-            config.setString("remote", remote, "fetch", fetch);
-            config.save();
-            mRemotes.add(remote);
-        } catch (IOException e) {
-            e.printStackTrace();
+            return _git!!
+        }
+
+    fun getBranchName(): String {
+        return try {
+            git.repository.fullBranch
+        } catch (e: IOException) {
+            ""
         }
     }
 
-    public void deleteRemote(String remote) throws IOException {
-        StoredConfig config = getStoredConfig();
-        config.unsetSection("remote", remote);
+    @Throws(IOException::class)
+    fun getRemotes(): Set<String> {
+        if (remotes.isNotEmpty()) return remotes
+
+        val config = getStoredConfig()
+        val remoteNames = config.getSubsections("remote")
+        remotes = remoteNames.toMutableSet()
+        return remotes
     }
 
-    public StoredConfig getStoredConfig() throws IOException {
-        if (mStoredConfig == null) {
-            mStoredConfig = getGit().getRepository().getConfig();
+    @Throws(IOException::class)
+    fun setRemote(remote: String, url: String) {
+        val config = getStoredConfig()
+        val remoteNames = config.getSubsections("remote")
+
+        if (remoteNames.contains(remote)) {
+            throw IOException(String.format("Remote %s already exists.", remote))
         }
-        return mStoredConfig;
+
+        config.setString("remote", remote, "url", url)
+        val fetch = String.format("+refs/heads/*:refs/remotes/%s/*", remote)
+        config.setString("remote", remote, "fetch", fetch)
+        config.save()
+        remotes.add(remote)
     }
 
-    /**
-     * This will call a git command while attempting to handle lock exceptions.
-     * If the repo is locked it will wait and try again several times before removing the lock and
-     * calling the command once more. This last call may throw an exception.
-     *
-     * Use this with caution. You could break things by ignoring the git lock.
-     *
-     * @param command the command to call
-     */
-    @Deprecated
-    public static Object forceCall(GitCommand command) throws GitAPIException {
-        try {
-            return command.call();
-        } catch (JGitInternalException | GitAPIException e) {
-            // throw the error if not a lock exception
-            Throwable cause = getCause(e, LockFailedException.class);
-            if(cause == null) throw e;
-        }
+    @Throws(IOException::class)
+    fun deleteRemote(remote: String) {
+        val config = getStoredConfig()
+        config.unsetSection("remote", remote)
+    }
 
-        // re-try several times
-        int attempts = 0;
-        do {
-            attempts ++;
+    @Throws(IOException::class)
+    fun getStoredConfig(): StoredConfig {
+        if (_storedConfig == null) {
+            _storedConfig = git.repository.config
+        }
+        return _storedConfig!!
+    }
+
+    companion object {
+        private var numRepos = 0
+
+        /**
+         * This will call a git command while attempting to handle lock exceptions.
+         * If the repo is locked it will wait and try again several times before removing the lock and
+         * calling the command once more. This last call may throw an exception.
+         *
+         * Use this with caution. You could break things by ignoring the git lock.
+         */
+        @Deprecated("Use with caution. You could break things by ignoring the git lock.")
+        @Throws(GitAPIException::class)
+        fun forceCall(command: GitCommand<*>): Any {
             try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            try {
-                return command.call();
-            } catch (JGitInternalException | GitAPIException e) {
-                // throw the error if not a lock exception
-                Throwable cause = getCause(e, LockFailedException.class);
-                if(cause == null) {
-                    throw e;
+                return command.call()!!
+            } catch (e: Exception) {
+                if (e is JGitInternalException || e is GitAPIException) {
+                    if (!hasCause(e, LockFailedException::class.java)) throw e
+                } else {
+                    throw e
                 }
             }
-        } while(attempts < 30); // try several times up to 15 seconds
 
-        // remove lock and call once more
-        File gitDir = command.getRepository().getDirectory();
-        File lockFile = new File(gitDir, "index.lock");
-        if(lockFile.exists()) FileUtilities.deleteQuietly(lockFile);
-        return command.call();
-    }
+            // re-try several times
+            var attempts = 0
+            do {
+                attempts++
+                try {
+                    Thread.sleep(500)
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                }
 
-    /**
-     * Checks if the throwable has the given cause
-     * @param thrown the thrown object
-     * @param cause the cause class
-     * @return the matched cause
-     */
-    private static Throwable getCause(Throwable thrown, Class cause) {
-        if(cause.isInstance(thrown)) return thrown;
-        Throwable child = thrown.getCause();
-        if(child == null) return null;
+                try {
+                    return command.call()!!
+                } catch (e: Exception) {
+                    if (e is JGitInternalException || e is GitAPIException) {
+                        if (!hasCause(e, LockFailedException::class.java)) throw e
+                    } else {
+                        throw e
+                    }
+                }
+            } while (attempts < 30) // try several times up to 15 seconds
 
-        do {
-            if(cause.isInstance(child)) return child;
-            child = child.getCause();
-        } while(child != null);
-        return null;
+            // remove lock and call once more
+            val gitDir = command.repository.directory
+            val lockFile = File(gitDir, "index.lock")
+            if (lockFile.exists()) FileUtilities.deleteQuietly(lockFile)
+
+            return command.call()!!
+        }
+
+        /**
+         * Checks if the throwable has the given cause
+         */
+        private fun hasCause(thrown: Throwable, cause: Class<*>): Boolean {
+            if (cause.isInstance(thrown)) return true
+            var child = thrown.cause
+
+            while (child != null) {
+                if (cause.isInstance(child)) return true
+                child = child.cause
+            }
+            return false
+        }
     }
 }

@@ -1,180 +1,155 @@
-package com.door43.translationstudio.tasks.io;
-import org.unfoldingword.gogsclient.Response;
-import org.unfoldingword.gogsclient.User;
+package com.door43.translationstudio.tasks.io
 
-import java.io.IOException;
+import android.util.Base64
+import org.unfoldingword.gogsclient.Response
+import org.unfoldingword.gogsclient.User
+import org.unfoldingword.tools.logger.Logger
+import java.io.IOException
+import java.io.UnsupportedEncodingException
+import java.util.concurrent.TimeUnit
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
+class OkHttpRequest(apiUrl: String) : RequestAPI {
+    private val client: OkHttpClient
+    private val readTimeout = 5000L
+    private val connectionTimeout = 5000L
+    private val baseUrl: String = apiUrl.replace("/+$".toRegex(), "")
 
-import android.util.Base64;
-
-import org.unfoldingword.tools.logger.Logger;
-
-import java.io.UnsupportedEncodingException;
-import java.util.concurrent.TimeUnit;
-
-
-public class OkHttpRequest implements RequestAPI {
-    private OkHttpClient client;
-    private int readTimeout = 5000;
-    private int connectionTimeout = 5000;
-    private final String baseUrl;
-
-    public OkHttpRequest(String apiUrl) {
-        client = new OkHttpClient.Builder()
-                    .connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS)
-                    .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
-                    .build();
-
-        this.baseUrl = apiUrl.replaceAll("/+$", "");
+    init {
+        client = OkHttpClient.Builder()
+            .connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS)
+            .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
+            .build()
     }
 
-    /**
-     * @param path the api path
-     * @param userAuth the user authentication info. Requires account token or credentials
-     * @return
-     */
-    @Override
-    public Response get(String path, User userAuth) {
-        int responseCode = 0;
-        String responseData = null;
-        Exception exception = null;
+    override fun get(path: String, userAuth: User): Response {
+        var responseCode = 0
+        var responseData: String? = null
+        var exception: Exception? = null
 
-        String auth = encodeAuthHeader(userAuth);
+        val auth = encodeAuthHeader(userAuth)
 
-        Request request = new Request.Builder()
-                .url(baseUrl + path)
-                .addHeader("Authorization", auth)
-                .get()
-                .build();
+        val request = Request.Builder()
+            .url(baseUrl + path)
+            .addAuthHeader(auth)
+            .get()
+            .build()
 
         try {
-            okhttp3.Response response = client.newCall(request).execute();
-            responseCode = response.code();
-            responseData = response.body().string();
-        } catch (IOException ex) {
-            Logger.w(OkHttpRequest.class.getName(), "Request failed with an exception.", ex);
-            exception = ex;
+            val response = client.newCall(request).execute()
+            responseCode = response.code
+            responseData = response.body?.string() ?: ""
+        } catch (ex: IOException) {
+            Logger.w(OkHttpRequest::class.java.name, "Request failed with an exception.", ex)
+            exception = ex
         }
 
-        return new Response(responseCode, responseData, exception);
+        return Response(responseCode, responseData, exception)
     }
 
-    /**
-     * @param path the api path
-     * @param userAuth the user authentication info. Requires account token or credentials
-     * @param postData data (body) to submit
-     * @return
-     */
-    @Override
-    public Response post(String path, User userAuth, String postData) {
-        int responseCode = 0;
-        String responseData = null;
-        Exception exception = null;
+    override fun post(path: String, userAuth: User, postData: String): Response {
+        var responseCode = 0
+        var responseData: String? = null
+        var exception: Exception? = null
 
-        String auth = encodeAuthHeader(userAuth);
+        val auth = encodeAuthHeader(userAuth)
+        val body = postData.toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        RequestBody body = RequestBody.create(postData, MediaType.get("application/json; charset=utf-8"));
-
-        Request request = new Request.Builder()
-                .url(baseUrl + path)
-                .addHeader("Authorization", auth)
-                .post(body)
-                .build();
+        val request = Request.Builder()
+            .url(baseUrl + path)
+            .addAuthHeader(auth)
+            .post(body)
+            .build()
 
         try {
-            okhttp3.Response response = client.newCall(request).execute();
-            responseCode = response.code();
-            responseData = response.body().string();
-        } catch (IOException ex) {
-            Logger.w(OkHttpRequest.class.getName(), "Request failed with an exception.", ex);
-            exception = ex;
+            val response = client.newCall(request).execute()
+            responseCode = response.code
+            responseData = response.body?.string() ?: ""
+        } catch (ex: IOException) {
+            Logger.w(OkHttpRequest::class.java.name, "Request failed with an exception.", ex)
+            exception = ex
         }
 
-        return new Response(responseCode, responseData, exception);
+        return Response(responseCode, responseData, exception)
     }
 
-    /**
-     * @param path the api path
-     * @param userAuth the user authentication info. Requires account token or credentials
-     * @return
-     */
-    @Override
-    public Response delete(String path, User userAuth) {
-        int responseCode = 0;
-        Exception exception = null;
+    override fun delete(path: String, userAuth: User): Response {
+        var responseCode = 0
+        var exception: Exception? = null
 
-        String auth = encodeAuthHeader(userAuth);
+        val auth = encodeAuthHeader(userAuth)
 
-        Request request = new Request.Builder()
-                .url(baseUrl + path)
-                .addHeader("Authorization", auth)
-                .delete()
-                .build();
+        val request = Request.Builder()
+            .url(baseUrl + path)
+            .addAuthHeader(auth)
+            .delete()
+            .build()
 
         try {
-            okhttp3.Response response = client.newCall(request).execute();
-            responseCode = response.code();
-        } catch (IOException ex) {
-            Logger.w(OkHttpRequest.class.getName(), "Request failed with an exception.", ex);
-            exception = ex;
+            val response = client.newCall(request).execute()
+            responseCode = response.code
+        } catch (ex: IOException) {
+            Logger.w(OkHttpRequest::class.java.name, "Request failed with an exception.", ex)
+            exception = ex
         }
 
-        return new Response(responseCode, null, exception);
+        return Response(responseCode, null, exception)
     }
 
-    /**
-     * See post() method for more detail
-     */
-    @Override
-    public Response put(String path, User userAuth, String postData) {
-        int responseCode = 0;
-        String responseData = null;
-        Exception exception = null;
+    override fun put(path: String, userAuth: User, postData: String): Response {
+        var responseCode = 0
+        var responseData: String? = null
+        var exception: Exception? = null
 
-        String auth = encodeAuthHeader(userAuth);
+        val auth = encodeAuthHeader(userAuth)
+        val body = postData.toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        RequestBody body = RequestBody.create(postData, MediaType.get("application/json; charset=utf-8"));
-
-        Request request = new Request.Builder()
-                .url(baseUrl + path)
-                .addHeader("Authorization", auth)
-                .put(body)
-                .build();
+        val request = Request.Builder()
+            .url(baseUrl + path)
+            .addAuthHeader(auth)
+            .put(body)
+            .build()
 
         try {
-            okhttp3.Response response = client.newCall(request).execute();
-            responseCode = response.code();
-            responseData = response.body().string();
-        } catch (IOException ex) {
-            Logger.w(OkHttpRequest.class.getName(), "Request failed with an exception.", ex);
-            exception = ex;
+            val response = client.newCall(request).execute()
+            responseCode = response.code
+            responseData = response.body?.string() ?: ""
+        } catch (ex: IOException) {
+            Logger.w(OkHttpRequest::class.java.name, "Request failed with an exception.", ex)
+            exception = ex
         }
 
-        return new Response(responseCode, responseData, exception);
+        return Response(responseCode, responseData, exception)
     }
 
-
     /**
-     * Generates the authentication value from the use token or credentials
+     * Generates the authentication value from the user token or credentials
      */
-    private String encodeAuthHeader(User user) {
-        if(user != null) {
-            if(user.token != null) {
-                return "token " + user.token;
-            } else if(user.getUsername() != null && !user.getUsername().isEmpty()
-                    && user.getPassword() != null && !user.getPassword().isEmpty()) {
-                String credentials = user.getUsername() + ":" + user.getPassword();
-                try {
-                    return "Basic " + Base64.encodeToString(credentials.getBytes("UTF-8"), Base64.NO_WRAP);
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+    private fun encodeAuthHeader(user: User): String {
+        if (user.token != null) {
+            return "token " + user.token
+        } else if (!user.username.isNullOrEmpty() && !user.password.isNullOrEmpty()) {
+            val credentials = "${user.username}:${user.password}"
+            return try {
+                "Basic " + Base64.encodeToString(credentials.toByteArray(charset("UTF-8")), Base64.NO_WRAP)
+            } catch (e: UnsupportedEncodingException) {
+                e.printStackTrace()
+                ""
             }
         }
-        return null;
+        return ""
+    }
+
+    /**
+     * Safely adds the Authorization header only if a valid string is provided.
+     */
+    private fun Request.Builder.addAuthHeader(auth: String): Request.Builder {
+        if (auth.isNotEmpty()) {
+            this.addHeader("Authorization", auth)
+        }
+        return this
     }
 }

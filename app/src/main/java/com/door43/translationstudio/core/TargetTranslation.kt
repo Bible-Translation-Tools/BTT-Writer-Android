@@ -601,9 +601,9 @@ class TargetTranslation private constructor(
         git.branchCreate().setName("new").setStartPoint("new/master").call()
 
         // perform merge
-        val merge = repo.getGit().merge()
+        val merge = repo.git.merge()
         merge.setFastForward(MergeCommand.FastForwardMode.NO_FF)
-        merge.include(repo.getGit().repository.getRef("new"))
+        merge.include(repo.git.repository.getRef("new"))
         val result = merge.call()
 
         // merge manifests

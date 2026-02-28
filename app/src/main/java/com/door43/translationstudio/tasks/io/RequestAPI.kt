@@ -1,11 +1,11 @@
-package com.door43.translationstudio.tasks.io;
+package com.door43.translationstudio.tasks.io
 
-import org.unfoldingword.gogsclient.Response;
-import org.unfoldingword.gogsclient.User;
+import org.unfoldingword.gogsclient.Response
+import org.unfoldingword.gogsclient.User
 
-public interface RequestAPI {
-    public Response get(String path, User userAuth);
-    public Response post(String path, User userAuth, String postData);
-    public Response delete(String path, User userAuth);
-    public Response put(String path, User userAuth,  String postData);
+interface RequestAPI {
+    fun get(path: String, userAuth: User): Response
+    fun post(path: String, userAuth: User, postData: String): Response
+    fun delete(path: String, userAuth: User): Response
+    fun put(path: String, userAuth: User, postData: String): Response
 }

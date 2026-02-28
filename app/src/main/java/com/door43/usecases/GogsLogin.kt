@@ -87,7 +87,7 @@ class GogsLogin(
     private fun getTokenId(tokenName: String, userAuth: User, requester: RequestAPI): Int {
         var tokenId = -1
         val urlPath = String.format("/users/%s/tokens", userAuth.username)
-        val tokenResponse = requester[urlPath, userAuth]
+        val tokenResponse = requester.get(urlPath, userAuth)
 
         if (tokenResponse.code == 200) {
             try {
