@@ -736,7 +736,7 @@ class ExportUsfmTest : KoinTest {
         ): MutableList<MutableMap<*, *>?>? {
             val sourceTranslation: Translation = library.index.getTranslation(sourceTranslationSlug)
             val mSourceContainer: ResourceContainer =
-                ContainerCache.cache(library, sourceTranslation.resourceContainerSlug)
+                ContainerCache.cache(library, sourceTranslation.resourceContainerSlug)!!
             return mSourceContainer.toc as MutableList<MutableMap<*, *>?>?
         }
 

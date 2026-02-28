@@ -196,9 +196,9 @@ class ExportProjectsTest : KoinAndroidTest() {
         assertFalse("Project dirs should not be empty", projectDirs.listFiles().isNullOrEmpty())
 
         // Find targetTranslation directory
-        val projectDir = projectDirs.listFiles()?.firstOrNull {
+        val projectDir = projectDirs.listFiles()?.first {
             it.name == targetTranslation!!.id
-        }
+        }!!
 
         assertNotNull("Project dir should exist", projectDir)
 

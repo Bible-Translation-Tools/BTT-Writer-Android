@@ -10,6 +10,7 @@ import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.publish.ValidationItem
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.ValidateProject
 import junit.framework.TestCase.assertEquals
@@ -52,7 +53,9 @@ class ValidateProjectTest : KoinAndroidTest() {
         assertNotNull("Target translation should not be null", targetTranslation)
 
         val validate = validateProject.execute(targetTranslation!!.id, sourceTranslationId)
-        val invalidItems = validate.filter { !it.isValid }
+        val invalidItems = validate.filter {
+            it is ValidationItem.InvalidFrame || it is ValidationItem.InvalidGroup
+        }
 
         assertEquals("All items should be invalid", invalidItems.size, validate.size)
 
@@ -62,8 +65,12 @@ class ValidateProjectTest : KoinAndroidTest() {
         targetTranslation.finishFrame("03", "01")
 
         val validate2 = validateProject.execute(targetTranslation.id, sourceTranslationId)
-        val invalidItems2 = validate2.filter { !it.isValid }
-        val validItems = validate2.filter { it.isValid }
+        val invalidItems2 = validate2.filter {
+            it is ValidationItem.InvalidFrame || it is ValidationItem.InvalidGroup
+        }
+        val validItems = validate2.filter {
+            it is ValidationItem.ValidFrame || it is ValidationItem.ValidGroup
+        }
 
         assertEquals(
             "There should be ${invalidItems.size} errors",

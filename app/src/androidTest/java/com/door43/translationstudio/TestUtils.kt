@@ -116,7 +116,7 @@ object TestUtils {
         assertNotNull("Import result should not be null", result)
         assertNotNull("importedSlug should not be null", result?.importedSlug)
 
-        return translator.getTargetTranslation(result!!.importedSlug)
+        return translator.getTargetTranslation(result!!.importedSlug!!)
     }
 
     fun importTargetTranslation(
@@ -136,7 +136,7 @@ object TestUtils {
         assertTrue("Project file should not be empty", projectFile.length() > 0)
 
         val result = importProjects.importProject(projectFile, true)
-        return translator.getTargetTranslation(result!!.importedSlug)
+        return translator.getTargetTranslation(result!!.importedSlug!!)
     }
 
     fun simulateLoginGogsUser(

@@ -20,7 +20,6 @@ enum class TranslationFormat(val title: String) {
          * @param name the name of the format
          * @return the matching TranslationFormat or null
          */
-        @JvmStatic
         fun get(name: String): TranslationFormat {
             val searchName = name.lowercase()
             return entries.find { it.title == searchName } ?: UNKNOWN

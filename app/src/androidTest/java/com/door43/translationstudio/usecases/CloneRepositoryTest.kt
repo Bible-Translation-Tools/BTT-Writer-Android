@@ -46,14 +46,14 @@ class CloneRepositoryTest : KoinAndroidTest() {
 
         assertNotNull("Clone repository result should not be null", result)
         assertNotNull("Progress message should not be null", progressMessage)
-        assertEquals(result.status, CloneRepository.Status.SUCCESS)
-        assertEquals(result.cloneUrl, cloneUrl)
+        assertEquals(CloneRepository.Status.SUCCESS, result.status)
+        assertEquals(cloneUrl, result.cloneUrl)
         assertTrue(result.cloneDir!!.exists())
 
-        val gitDir: File? = result.cloneDir?.listFiles()?.find { it.name == ".git" }
+        val gitDir: File? = result.cloneDir.listFiles()?.find { it.name == ".git" }
         assertNotNull("Git directory should not be null", gitDir)
 
-        val manifestFile: File? = result.cloneDir?.listFiles()?.find { it.name == "manifest.yaml" }
+        val manifestFile: File? = result.cloneDir.listFiles()?.find { it.name == "manifest.yaml" }
         assertNotNull("Manifest file should not be null", manifestFile)
         assertTrue(manifestFile!!.length() > 0)
     }
@@ -71,8 +71,8 @@ class CloneRepositoryTest : KoinAndroidTest() {
 
         assertNotNull("Clone repository result should not be null", result)
         assertNotNull("Progress message should not be null", progressMessage)
-        assertEquals(result.status, CloneRepository.Status.NO_REMOTE_REPO)
-        assertEquals(result.cloneUrl, cloneUrl)
+        assertEquals(CloneRepository.Status.NO_REMOTE_REPO, result.status)
+        assertEquals(cloneUrl, result.cloneUrl)
         assertNull(result.cloneDir)
     }
 }

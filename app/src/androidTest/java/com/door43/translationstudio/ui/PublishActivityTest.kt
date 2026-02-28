@@ -174,7 +174,7 @@ class PublishActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_CALLING_ACTIVITY, ACTIVITY_HOME)
 
-        val sourceTranslationId = targetTranslation.sourceTranslations.first()
+        val sourceTranslationId = targetTranslation.getSourceTranslations().first()
         val sourceTranslation = library.open(sourceTranslationId)
 
         makeProjectTitleValid(targetTranslation)

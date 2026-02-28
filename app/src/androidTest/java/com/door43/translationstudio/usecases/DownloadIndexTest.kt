@@ -42,7 +42,7 @@ class DownloadIndexTest : KoinAndroidTest() {
         }
 
         val languagesBefore = library.index.targetLanguages
-        assertTrue("Languages before should not be empty", languagesBefore.size > 0)
+        assertTrue("Languages before should not be empty", languagesBefore.isNotEmpty())
 
         val downloaded = downloadIndex.download(progressListener)
 
