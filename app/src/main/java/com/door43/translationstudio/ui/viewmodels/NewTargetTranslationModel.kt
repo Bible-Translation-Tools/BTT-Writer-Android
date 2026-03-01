@@ -42,8 +42,11 @@ class NewTargetTranslationModel(
     private val _mergeTranslationResult = MutableLiveData<MergeTargetTranslation.Result?>()
     val mergeTranslationResult: LiveData<MergeTargetTranslation.Result?> = _mergeTranslationResult
 
-    fun getProject(targetTranslation: TargetTranslation): Project {
-        return library.index.getProject(deviceLanguageCode, targetTranslation.projectId)
+    fun getProject(targetTranslation: TargetTranslation): Project? {
+        return library.index.getProject(
+            deviceLanguageCode,
+            targetTranslation.projectId
+        )
     }
 
     fun mergeTargetTranslation(
@@ -83,7 +86,7 @@ class NewTargetTranslationModel(
         return false
     }
 
-    fun getTargetLanguage(languageId: String?): TargetLanguage? {
+    fun getTargetLanguage(languageId: String): TargetLanguage? {
         return library.index.getTargetLanguage(languageId)
     }
 
@@ -173,7 +176,7 @@ class NewTargetTranslationModel(
     }
 
     fun getTargetLanguages(): List<TargetLanguage> {
-        return library.index.targetLanguages
+        return library.index.getTargetLanguages()
     }
 
     fun getCategories(categoryId: Long = 0): List<CategoryEntry> {

@@ -42,8 +42,8 @@ class NewLanguageRequest private constructor(
      */
     val tempTargetLanguage: TargetLanguage
         get() {
-            var name: String? = tempLanguageCode
-            var region: String? = "unknown"
+            var name: String = tempLanguageCode
+            var region = "unknown"
             var direction = "ltr"
 
             if (dataFields.containsKey("ln")) {
@@ -72,8 +72,8 @@ class NewLanguageRequest private constructor(
      * @param questionTdId
      * @return
      */
-    fun getAnswer(questionTdId: Long): String? {
-        return answers[questionTdId]
+    fun getAnswer(questionTdId: Long): String {
+        return answers[questionTdId] ?: ""
     }
 
     /**

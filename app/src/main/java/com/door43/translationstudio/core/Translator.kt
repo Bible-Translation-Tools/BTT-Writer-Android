@@ -264,7 +264,7 @@ class Translator (
         val format = TranslationFormat.parse(draftTranslation.contentMimeType)
         val translation = createTargetTranslation(
             nativeSpeaker,
-            targetLanguage,
+            targetLanguage!!,
             draftTranslation.project.slug,
             ResourceType.TEXT,
             resourceSlug,

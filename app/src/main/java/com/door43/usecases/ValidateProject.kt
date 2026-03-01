@@ -29,7 +29,7 @@ class ValidateProject(
         translator.getTargetTranslation(targetTranslationId)?.let { targetTranslation ->
             val targetLanguage = library.index.getTargetLanguage(
                 targetTranslation.targetLanguageId
-            )
+            ) ?: return validations
 
             val container = try {
                 library.open(sourceTranslationId)
@@ -54,7 +54,9 @@ class ValidateProject(
             }
 
             val projectTitle = container.readChunk("front", "title")
-            val sourceLanguage = library.index.getSourceLanguage(container.language.slug)
+            val sourceLanguage = library.index.getSourceLanguage(
+                container.language.slug
+            ) ?: return validations
             val chapters = container.chapters()
 
             // validate chapters

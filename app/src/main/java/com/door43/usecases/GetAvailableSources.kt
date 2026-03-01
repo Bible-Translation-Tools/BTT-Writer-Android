@@ -26,6 +26,8 @@ class GetAvailableSources(
 
         progressListener?.onProgress(-1, max, "")
 
+        val allSources = mutableListOf<Translation>()
+
         val sources = library.index.findTranslations(
             null,
             null,
@@ -46,7 +48,8 @@ class GetAvailableSources(
             -1
         )
 
-        sources.addAll(tw)
+        allSources.addAll(sources)
+        allSources.addAll(tw)
 
 //        02/20/2017 - for now we are disabling updating of TA since a major change coming up could break the app
 //        List<Translation> man = library.index.findTranslations(null, null, null, "man", null, App.MIN_CHECKING_LEVEL, -1);
@@ -103,7 +106,7 @@ class GetAvailableSources(
         }
 
         return Result(
-            sources,
+            allSources,
             byLanguage,
             otBooks,
             ntBooks,

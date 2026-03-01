@@ -176,7 +176,7 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         val project = viewModel.getProject(existingTranslation)
         val message = String.format(
             resources.getString(R.string.warn_existing_target_translation),
-            project.name,
+            project?.name,
             existingTranslation.targetLanguageName
         )
 
@@ -468,7 +468,7 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
             } else if (secondResultCode == NewTempLanguageActivity.RESULT_USE_EXISTING_LANGUAGE) {
                 val targetLanguageId =
                     data.getStringExtra(NewTempLanguageActivity.EXTRA_LANGUAGE_ID)
-                val targetLanguage = viewModel.getTargetLanguage(targetLanguageId)
+                val targetLanguage = targetLanguageId?.let { viewModel.getTargetLanguage(it) }
                 if (targetLanguage != null) {
                     onItemClick(targetLanguage)
                 }

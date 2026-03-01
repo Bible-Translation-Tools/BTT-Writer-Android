@@ -103,8 +103,7 @@ class HomeViewModel(
      */
     val lastOpened: TranslationItem?
         get() {
-            val lastTarget = translator.lastFocusTargetTranslation
-            if (lastTarget != null) {
+            translator.lastFocusTargetTranslation?.let { lastTarget ->
                 return translator.getTargetTranslation(lastTarget)?.let {
                     val progress = calculateProgress.execute(it)
                     TranslationItem(it, progress, ::getProject)
@@ -192,24 +191,24 @@ class HomeViewModel(
     }
 
     fun getProject(targetTranslation: TargetTranslation): Project {
-        val project: Project
         val existingSources = targetTranslation.sourceTranslations
         // Gets an existing source project or default if none selected
-        if (existingSources.isNotEmpty()) {
+
+        return if (existingSources.isNotEmpty()) {
             val lastSource = existingSources[existingSources.size - 1]
-            project = library.index.getTranslation(lastSource)?.project ?: library.index.getProject(
-                targetTranslation.targetLanguageName,
-                targetTranslation.projectId,
-                true
-            )
+            library.index.getTranslation(lastSource)?.project
+                ?: library.index.getProject(
+                    targetTranslation.targetLanguageName,
+                    targetTranslation.projectId,
+                    true
+                )
         } else {
-            project = library.index.getProject(
+            library.index.getProject(
                 targetTranslation.targetLanguageName,
                 targetTranslation.projectId,
                 true
             )
-        }
-        return project
+        }!!
     }
 
     fun examineImportsForCollisions(contentUri: Uri) {

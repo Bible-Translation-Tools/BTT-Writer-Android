@@ -1,27 +1,22 @@
-package org.unfoldingword.door43client;
+package org.unfoldingword.door43client
 
-import org.unfoldingword.door43client.models.Catalog;
-import org.unfoldingword.door43client.models.Category;
-import org.unfoldingword.door43client.models.CategoryEntry;
-import org.unfoldingword.door43client.models.ChunkMarker;
-import org.unfoldingword.door43client.models.Question;
-import org.unfoldingword.door43client.models.Questionnaire;
-import org.unfoldingword.door43client.models.SourceLanguage;
-import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.door43client.models.Versification;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.unfoldingword.door43client.models.Catalog
+import org.unfoldingword.door43client.models.Category
+import org.unfoldingword.door43client.models.CategoryEntry
+import org.unfoldingword.door43client.models.ChunkMarker
+import org.unfoldingword.door43client.models.Question
+import org.unfoldingword.door43client.models.Questionnaire
+import org.unfoldingword.door43client.models.SourceLanguage
+import org.unfoldingword.door43client.models.TargetLanguage
+import org.unfoldingword.door43client.models.Translation
+import org.unfoldingword.door43client.models.Versification
+import org.unfoldingword.resourcecontainer.Project
+import org.unfoldingword.resourcecontainer.Resource
 
 /**
  * Defines the public methods of the index
  */
-public interface Index {
+interface Index {
 
     /**
      * Inserts or updates a temporary target language in the library.
@@ -32,7 +27,8 @@ public interface Index {
      * @return
      * @throws Exception
      */
-    boolean addTempTargetLanguage(TargetLanguage language) throws Exception;
+    @Throws(Exception::class)
+    fun addTempTargetLanguage(language: TargetLanguage): Boolean
 
     /**
      * Returns a list of source languages and when they were last modified.
@@ -40,7 +36,7 @@ public interface Index {
      *
      * @return {slug, modified_at}
      */
-    List<HashMap> listSourceLanguagesLastModified();
+    fun listSourceLanguagesLastModified(): List<Map<String, Any>>
 
     /**
      * Returns a list of projects and when they were last modified
@@ -49,7 +45,7 @@ public interface Index {
      * @param languageSlug the source language who's projects will be selected. If left empty the results will include all projects in all languages.
      * @return
      */
-    Map<String, Integer> listProjectsLastModified(String languageSlug);
+    fun listProjectsLastModified(languageSlug: String?): Map<String, Int>
 
     /**
      * Returns a translation that matches the resource container slug
@@ -57,7 +53,7 @@ public interface Index {
      * @param containerSlug
      * @return
      */
-    Translation getTranslation(String containerSlug);
+    fun getTranslation(containerSlug: String): Translation?
 
     /**
      * Returns a list of translations available for the project
@@ -71,14 +67,22 @@ public interface Index {
      * @param maxCheckingLevel the maximum checking level allowed for returned translations. Use -1 for no maximum
      * @return a list of matching translations
      */
-    List<Translation> findTranslations(String languageSlug, String projectSlug, String resourceSlug, String resourceType, String translateMode, int minCheckingLevel, int maxCheckingLevel);
+    fun findTranslations(
+        languageSlug: String?,
+        projectSlug: String?,
+        resourceSlug: String?,
+        resourceType: String?,
+        translateMode: String?,
+        minCheckingLevel: Int,
+        maxCheckingLevel: Int
+    ): List<Translation>
 
     /**
      * Returns a list of translations that have been manually imported by the user.
      *
      * @return a list of translations
      */
-    List<Translation> getImportedTranslations();
+    fun getImportedTranslations(): List<Translation>
 
     /**
      * Returns a source language.
@@ -86,7 +90,7 @@ public interface Index {
      * @param sourceLanguageSlug
      * @return the language object or null if it does not exist
      */
-    SourceLanguage getSourceLanguage(String sourceLanguageSlug);
+    fun getSourceLanguage(sourceLanguageSlug: String): SourceLanguage?
 
     /**
      * Inserts or updates a source language in the library.
@@ -95,21 +99,22 @@ public interface Index {
      * @return the id of the source language row
      * @throws Exception
      */
-    long addSourceLanguage(SourceLanguage language)  throws Exception;
+    @Throws(Exception::class)
+    fun addSourceLanguage(language: SourceLanguage): Long
 
     /**
      * Returns a list of every source language.
      *
      * @return an array of source languages
      */
-    List<SourceLanguage> getSourceLanguages();
+    fun getSourceLanguages(): List<SourceLanguage>
 
     /**
      * Returns a list of source languages in which the project exists.
      *
      * @return an array of source languages
      */
-    List<SourceLanguage> getSourceLanguages(String projectSlug);
+    fun getSourceLanguages(projectSlug: String): List<SourceLanguage>
 
     /**
      * Returns a target language.
@@ -120,7 +125,7 @@ public interface Index {
      * @param targetLanguageSlug
      * @return the language object or null if it does not exist
      */
-    TargetLanguage getTargetLanguage(String targetLanguageSlug);
+    fun getTargetLanguage(targetLanguageSlug: String): TargetLanguage?
 
     /**
      * Inserts or updates a target language in the library.
@@ -130,14 +135,15 @@ public interface Index {
      * @return
      * @throws Exception
      */
-    boolean addTargetLanguage(TargetLanguage language) throws Exception;
+    @Throws(Exception::class)
+    fun addTargetLanguage(language: TargetLanguage): Boolean
 
     /**
      * Searches for a target language by name.
-     * @param namequery
+     * @param nameQuery
      * @return
      */
-    List<TargetLanguage> findTargetLanguage(final String namequery);
+    fun findTargetLanguage(nameQuery: String): List<TargetLanguage>
 
     /**
      * Returns a list of every target language.
@@ -148,7 +154,7 @@ public interface Index {
      *
      * @return
      */
-    List<TargetLanguage> getTargetLanguages();
+    fun getTargetLanguages(): List<TargetLanguage>
 
     /**
      * Returns the target language that has been assigned to a temporary target language.
@@ -158,7 +164,7 @@ public interface Index {
      * @param tempTargetLanguageSlug the temporary target language with the assignment
      * @return the language object or null if it does not exist
      */
-    TargetLanguage getApprovedTargetLanguage(String tempTargetLanguageSlug);
+    fun getApprovedTargetLanguage(tempTargetLanguageSlug: String): TargetLanguage?
 
     /**
      * Returns a project with the option of falling back to a default language if not found
@@ -168,24 +174,24 @@ public interface Index {
      * @param enableDefaultLanguage allows this method to use the default language if no project is found in this language
      * @return the project object or null
      */
-    Project getProject(String sourceLanguageSlug, String projectSlug, boolean enableDefaultLanguage);
+    fun getProject(
+        sourceLanguageSlug: String,
+        projectSlug: String,
+        enableDefaultLanguage: Boolean = false
+    ): Project?
 
     /**
-     * Returns a project
-     *
-     * @param sourceLanguageSlug the source language code for which the project will be returned
-     * @param projectSlug the project code
-     * @return the project object or null
-     */
-    Project getProject(String sourceLanguageSlug, String projectSlug);
-
-    /**
-     * Returns a list of projects available in the given language.
+     * Returns a list of projects in the given language or (if enabled) a default language.
+     * The affect is a list of all unique projects with preference given to the specified language
      *
      * @param sourceLanguageSlug the source language code for which projects will be returned
+     * @param enableDefaultLanguage if true the default language will be used to fetch the remaining projects
      * @return an array of projects that are available in the source language
      */
-    List<Project> getProjects(String sourceLanguageSlug);
+    fun getProjects(
+        sourceLanguageSlug: String,
+        enableDefaultLanguage: Boolean = false
+    ): List<Project>
 
     /**
      * Inserts or updates a project in the library
@@ -196,17 +202,8 @@ public interface Index {
      * @return the id of the project row
      * @throws Exception
      */
-    long addProject(Project project, List<Category> categories, long sourceLanguageId) throws Exception;
-
-    /**
-     * Returns a list of projects in the given language or (if enabled) a default language.
-     * The affect is a list of all unique projects with preference given to the specified language
-     *
-     * @param sourceLanguageSlug the source language code for which projects will be returned
-     * @param enableDefaultLanguage if true the default language will be used to fetch the remaining projects
-     * @return an array of projects that are available in the source language
-     */
-    List<Project> getProjects(String sourceLanguageSlug, boolean enableDefaultLanguage);
+    @Throws(Exception::class)
+    fun addProject(project: Project, categories: List<Category>?, sourceLanguageId: Long): Long
 
     /**
      * Returns an array of categories that exist underneath the parent category.
@@ -217,7 +214,11 @@ public interface Index {
      * @param translateMode limit the results to just those with the given translate mode. Leave this falsy to not filter
      * @return
      */
-    List<CategoryEntry> getProjectCategories(long parentCategoryId, String languageSlug, String translateMode);
+    fun getProjectCategories(
+        parentCategoryId: Long,
+        languageSlug: String,
+        translateMode: String?
+    ): List<CategoryEntry>
 
     /**
      * Returns a resource
@@ -227,7 +228,7 @@ public interface Index {
      * @param resourceSlug
      * @return the Resource object or null if it does not exist
      */
-    Resource getResource(String sourceLanguageSlug, String projectSlug, String resourceSlug);
+    fun getResource(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): Resource?
 
     /**
      * Inserts or updates a resource in the library.
@@ -237,16 +238,17 @@ public interface Index {
      * @return the id of the resource row
      * @throws Exception
      */
-    long addResource(Resource resource, long projectId) throws Exception;
+    @Throws(Exception::class)
+    fun addResource(resource: Resource, projectId: Long): Long
 
     /**
      * Returns a list of resources available in the given project
      *
-     * @param sourcelanguageSlug the language of the resource. If null then all resources of the project will be returned.
-     * @param projectSlug the project who's resources will be returned
+     * @param sourceLanguageSlug the language of the resource. If null then all resources of the project will be returned.
+     * @param projectSlug the project whose resources will be returned
      * @return
      */
-    List<Resource> getResources(String sourcelanguageSlug, String projectSlug);
+    fun getResources(sourceLanguageSlug: String?, projectSlug: String): List<Resource>
 
     /**
      * Returns a catalog
@@ -254,7 +256,7 @@ public interface Index {
      * @param catalogSlug
      * @return the catalog object or null if it does not exist
      */
-    Catalog getCatalog(String catalogSlug);
+    fun getCatalog(catalogSlug: String): Catalog?
 
     /**
      * Inserts or updates a catalog in the library.
@@ -263,14 +265,15 @@ public interface Index {
      * @return the id of the catalog
      * @throws Exception
      */
-    long addCatalog(Catalog catalog) throws Exception;
+    @Throws(Exception::class)
+    fun addCatalog(catalog: Catalog): Long
 
     /**
      * Returns a list of catalogs
      *
      * @return
      */
-    List<Catalog> getCatalogs();
+    fun getCatalogs(): List<Catalog>
 
     /**
      * Returns a versification
@@ -279,7 +282,7 @@ public interface Index {
      * @param versificationSlug
      * @return versification or null
      */
-    Versification getVersification(String sourceLanguageSlug, String versificationSlug);
+    fun getVersification(sourceLanguageSlug: String, versificationSlug: String): Versification?
 
     /**
      * Inserts or updates a versification in the library.
@@ -289,7 +292,8 @@ public interface Index {
      * @return the id of the versification or -1
      * @throws Exception
      */
-    long addVersification(Versification versification, long sourceLanguageId) throws Exception;
+    @Throws(Exception::class)
+    fun addVersification(versification: Versification, sourceLanguageId: Long): Long
 
     /**
      * Returns a list of versifications
@@ -297,7 +301,7 @@ public interface Index {
      * @param sourceLanguageSlug the language code for which versifications will be returned
      * @return
      */
-    List<Versification> getVersifications(String sourceLanguageSlug);
+    fun getVersifications(sourceLanguageSlug: String): List<Versification>
 
     /**
      * Returns a list of chunk markers for a project
@@ -306,21 +310,21 @@ public interface Index {
      * @param versificationSlug
      * @return
      */
-    List<ChunkMarker> getChunkMarkers(String projectSlug, String versificationSlug);
+    fun getChunkMarkers(projectSlug: String, versificationSlug: String): List<ChunkMarker>
 
     /**
      * Returns a questionnaire
      * @param tdId the translation database id (on the server) of the questionnaire
      * @return
      */
-    Questionnaire getQuestionnaire(long tdId);
+    fun getQuestionnaire(tdId: Long): Questionnaire?
 
     /**
      * Returns a list of questionnaires
      *
      * @return a list of questionnaires
      */
-    List<Questionnaire> getQuestionnaires();
+    fun getQuestionnaires(): List<Questionnaire>
 
     /**
      * Returns a list of questions in the questionnaire
@@ -328,7 +332,7 @@ public interface Index {
      * @param questionnaireTDId the parent questionnaire translation database id (server side)
      * @return a list of questions
      */
-    List<Question> getQuestions(long questionnaireTDId);
+    fun getQuestions(questionnaireTDId: Long): List<Question>
 
     /**
      * Returns the category with it's localized title.
@@ -339,7 +343,7 @@ public interface Index {
      * @param slug the category slug
      * @return the category or null
      */
-    Category getCategory(String languageSlug, String slug);
+    fun getCategory(languageSlug: String, slug: String): Category?
 
     /**
      * Returns a list of categories in a project
@@ -348,5 +352,10 @@ public interface Index {
      * @param projectSlug the project slug
      * @return a list of categories in the project
      */
-    List<Category> getCategories(String languageSlug, String projectSlug);
+    fun getCategories(languageSlug: String, projectSlug: String): List<Category>
+
+    /**
+     * Temporary ends the transaction to let other threads run.
+     */
+    fun yieldSafely()
 }

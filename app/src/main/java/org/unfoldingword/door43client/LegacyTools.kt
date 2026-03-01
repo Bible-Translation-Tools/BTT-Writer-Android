@@ -1,68 +1,50 @@
-package org.unfoldingword.door43client;
+package org.unfoldingword.door43client
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.unfoldingword.door43client.models.Catalog;
-import org.unfoldingword.door43client.models.Category;
-import org.unfoldingword.door43client.models.ChunkMarker;
-import org.unfoldingword.door43client.models.SourceLanguage;
-import org.unfoldingword.door43client.models.Versification;
-import org.unfoldingword.resourcecontainer.ContainerTools;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.tools.http.GetRequest;
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import org.unfoldingword.door43client.models.Catalog
+import org.unfoldingword.door43client.models.Category
+import org.unfoldingword.door43client.models.ChunkMarker
+import org.unfoldingword.door43client.models.SourceLanguage
+import org.unfoldingword.door43client.models.Versification
+import org.unfoldingword.resourcecontainer.ContainerTools
+import org.unfoldingword.resourcecontainer.Project
+import org.unfoldingword.resourcecontainer.Resource
+import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.tools.http.GetRequest
+import java.net.URL
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+internal object LegacyTools {
 
-/**
- * Created by joel on 9/19/16.
- */
-class LegacyTools {
+    private var LANG_NAMES_URL = "https://langnames.bibleineverylanguage.org/langnames.json"
 
-    /** Defines a configurable languages URL to be used when updating catalogs */
-    private static String LANG_NAMES_URL = "https://langnames.bibleineverylanguage.org/langnames.json";
-
-    /**
-     *
-     * @param library
-     * @param host the host to use for the catalogs
-     * @throws Exception
-     */
-    public static void injectGlobalCatalogs(Library library, String host) throws Exception {
-        host = host != null && !host.trim().isEmpty() ? host : "https://td.unfoldingword.org";
-
-        library.addCatalog(new Catalog("langnames", LANG_NAMES_URL, 0));
+    @Throws(Exception::class)
+    fun injectGlobalCatalogs(library: Library, host: String?) {
+        val resolvedHost = if (!host.isNullOrBlank()) host else "https://td.unfoldingword.org"
+        library.addCatalog(Catalog("langnames", LANG_NAMES_URL, 0))
         // TRICKY: the trailing / is required on these urls
-        library.addCatalog(new Catalog("new-language-questions", host + "/api/questionnaire/", 0));
-        library.addCatalog(new Catalog("temp-langnames", host + "/api/templanguages/", 0));
+        library.addCatalog(Catalog("new-language-questions", "$resolvedHost/api/questionnaire/", 0))
+        library.addCatalog(Catalog("temp-langnames", "$resolvedHost/api/templanguages/", 0))
         // TRICKY: this catalog should always be indexed after langnames and temp-langnames otherwise the linking will fail!
-        library.addCatalog(new Catalog("approved-temp-langnames", host + "/api/templanguages/assignment/changed/", 0));
+        library.addCatalog(Catalog("approved-temp-langnames", "$resolvedHost/api/templanguages/assignment/changed/", 0))
     }
 
-    public static void processCatalog(Library library, String data, OnProgressListener listener) throws Exception {
-        JSONArray projects = new JSONArray(data);
-        for(int i = 0; i < projects.length(); i ++) {
-            JSONObject pJson = projects.getJSONObject(i);
-            if(listener != null) {
-                if(!listener.onProgress(pJson.getString("slug"), projects.length(), i + 1)) break;
-            }
-            downloadSourceLanguages(library, pJson, null);
-            library.yieldSafely();
+    @Throws(Exception::class)
+    fun processCatalog(library: Library, data: String, listener: OnProgressListener?) {
+        val projects = JSONArray(data)
+        for (i in 0 until projects.length()) {
+            val pJson = projects.getJSONObject(i)
+            if (listener?.onProgress(pJson.getString("slug"), projects.length(), i + 1) == false) break
+            downloadSourceLanguages(library, pJson, null)
+            library.yieldSafely()
         }
-
-        // tA
-        updateTA(library, listener);
+        updateTA(library, listener)
     }
 
-    public static void setLangNamesUrl(String url) { LANG_NAMES_URL = url; }
+    fun setLangNamesUrl(url: String) {
+        LANG_NAMES_URL = url
+    }
 
     /**
      * Pads a slug to 2 significant digits.
@@ -78,369 +60,262 @@ class LegacyTools {
      * And as a matter of consistency:
      * '0'  -> '00'
      * '00' -> '00'
-     *
-     * @param slug the slug to be normalized
-     * @return the normalized slug
      */
-    public static String normalizeSlug(String slug) throws Exception {
-        if(slug == null || slug.isEmpty()) throw new Exception("slug cannot be an empty string");
-        if(!isInteger(slug)) return slug;
-        slug = slug.replaceAll("^(0+)", "").trim();
-        while(slug.length() < 2) {
-            slug = "0" + slug;
-        }
-        return slug;
+    @Throws(Exception::class)
+    fun normalizeSlug(slug: String?): String {
+        if (slug.isNullOrEmpty()) throw Exception("slug cannot be an empty string")
+        if (!isInteger(slug)) return slug
+        var result = slug.replace(Regex("^(0+)"), "").trim()
+        while (result.length < 2) result = "0$result"
+        return result
     }
 
-    /**
-     * Checks if a string is an integer
-     * @param s
-     * @return
-     */
-    protected static boolean isInteger(String s) {
-        try {
-            Integer.parseInt(s);
-        } catch(NumberFormatException e) {
-            return false;
-        } catch(NullPointerException e) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Downloads the tA projects
-     * @param library
-     * @param listener
-     * @throws Exception
-     */
-    private static void updateTA(Library library, OnProgressListener listener) throws Exception {
-        String[] urls = new String[]{
-                "https://api.unfoldingword.org/ta/txt/1/en/audio_2.json",
-                "https://api.unfoldingword.org/ta/txt/1/en/checking_1.json",
-                "https://api.unfoldingword.org/ta/txt/1/en/checking_2.json",
-                "https://api.unfoldingword.org/ta/txt/1/en/gateway_3.json",
-                "https://api.unfoldingword.org/ta/txt/1/en/intro_1.json",
-                "https://api.unfoldingword.org/ta/txt/1/en/process_1.json",
-                "https://api.unfoldingword.org/ta/txt/1/en/translate_1.json",
-                "https://api.unfoldingword.org/ta/txt/1/en/translate_2.json"
-        };
-        for(int i = 0; i < urls.length; i ++) {
-            downloadTA(library, urls[i]);
-            if(listener != null) {
-                if(!listener.onProgress("ta", urls.length, i + 1)) break;
-            }
-            library.yieldSafely();
+    internal fun isInteger(s: String): Boolean {
+        return try {
+            s.toInt()
+            true
+        } catch (e: NumberFormatException) {
+            false
         }
     }
 
-    /**
-     * Downloads the tA projects
-     * Continues from updateTA()
-     *
-     * @param library
-     * @param url
-     * @throws Exception
-     */
-    private static void downloadTA(Library library, String url) throws Exception {
-        GetRequest get = new GetRequest(new URL(url));
-        String data = get.read();
-        JSONObject ta = new JSONObject(data);
-
-        // add language (right now only english)
-        long languageId = library.addSourceLanguage(new SourceLanguage("en", "English", "ltr"));
-
-        // add project
-        String rawSlug = ta.getJSONObject("meta").getString("manual").replaceAll("\\_", "-");
-        String name  = (rawSlug.charAt(0) + "").toUpperCase() + rawSlug.substring(1) + " Manual";
-        Project p = new Project("ta-" + rawSlug, name, 0);
-        List<Category> categories = new ArrayList<>();
-        categories.add(new Category("ta", "translationAcademy"));
-        long projectId = library.addProject(p, categories, languageId);
-
-        // add resource
-        String slug = "vol " + ta.getJSONObject("meta").getString("volume");
-        String resourceName = "Volume " + ta.getJSONObject("meta").getString("volume");
-        String type = new String("man");
-
-        // compile status
-        String checkingLevel = ta.getJSONObject("meta").getJSONObject("status").getString("checking_level");
-        String comments = ta.getJSONObject("meta").getJSONObject("status").getString("comments");
-        String pubDate = ta.getJSONObject("meta").getJSONObject("status").getString("publish_date");
-        String license = ta.getJSONObject("meta").getJSONObject("status").getString("license");
-        String version = ta.getJSONObject("meta").getJSONObject("status").getString("version");
-
-        Resource resource = new Resource(slug, resourceName, type, "gl", checkingLevel, version);
-        resource.comments = comments;
-        resource.pubDate = pubDate;
-        resource.license = license;
-
-        String packageVersion = ResourceContainer.version;
-        String mimType = ContainerTools.typeToMime("man");
-        int modifiedAt = ta.getJSONObject("meta").getInt("mod");
-        Resource.Format resourceFormat = new Resource.Format(packageVersion, mimType, modifiedAt, url, false);
-
-        resource.addFormat(resourceFormat);
-        library.addResource(resource, projectId);
+    @Throws(Exception::class)
+    private fun updateTA(library: Library, listener: OnProgressListener?) {
+        val urls = arrayOf(
+            "https://api.unfoldingword.org/ta/txt/1/en/audio_2.json",
+            "https://api.unfoldingword.org/ta/txt/1/en/checking_1.json",
+            "https://api.unfoldingword.org/ta/txt/1/en/checking_2.json",
+            "https://api.unfoldingword.org/ta/txt/1/en/gateway_3.json",
+            "https://api.unfoldingword.org/ta/txt/1/en/intro_1.json",
+            "https://api.unfoldingword.org/ta/txt/1/en/process_1.json",
+            "https://api.unfoldingword.org/ta/txt/1/en/translate_1.json",
+            "https://api.unfoldingword.org/ta/txt/1/en/translate_2.json"
+        )
+        for (i in urls.indices) {
+            downloadTA(library, urls[i])
+            if (listener?.onProgress("ta", urls.size, i + 1) == false) break
+            library.yieldSafely()
+        }
     }
 
-    /**
-     * This will download the source languages for a project.
-     * Some of the project info is mixed with languages
-     * so we are creating the projects and langauges here
-     *
-     * @param library
-     * @param pJson the project json
-     * @param listener
-     * @throws Exception
-     */
-    private static void downloadSourceLanguages(Library library, JSONObject pJson, OnProgressListener listener) throws Exception {
-        GetRequest request = new GetRequest(new URL(pJson.getString("lang_catalog")));
-        String response = request.read();
+    @Throws(Exception::class)
+    private fun downloadTA(library: Library, url: String) {
+        val data = GetRequest(URL(url)).read()
+        val ta = JSONObject(data)
+        val meta = ta.getJSONObject("meta")
+        val status = meta.getJSONObject("status")
 
-        JSONArray languages = new JSONArray(response);
-        for(int i = 0; i < languages.length(); i ++) {
-            JSONObject lJson = languages.getJSONObject(i);
+        val languageId = library.addSourceLanguage(SourceLanguage("en", "English", "ltr"))
 
-            if(listener != null) {
-                if(!listener.onProgress(lJson.getJSONObject("language").getString("slug") + pJson.getString("slug"), languages.length(), i + 1)) break;
-            }
+        val rawSlug = meta.getString("manual").replace("_", "-")
+        val name = rawSlug[0].uppercaseChar() + rawSlug.substring(1) + " Manual"
+        val project = Project("ta-$rawSlug", name, 0)
+        val projectId = library.addProject(project, listOf(Category("ta", "translationAcademy")), languageId)
 
-            SourceLanguage sl = new SourceLanguage(lJson.getJSONObject("language").getString("slug"),
-                    lJson.getJSONObject("language").getString("name"),
-                    lJson.getJSONObject("language").getString("direction"));
-            long languageId = library.addSourceLanguage(sl);
+        val slug = "vol ${meta.getString("volume")}"
+        val resourceName = "Volume ${meta.getString("volume")}"
+
+        val resource = Resource(slug, resourceName, "man", "gl", status.getString("checking_level"), status.getString("version")).apply {
+            comments = status.getString("comments")
+            pubDate = status.getString("publish_date")
+            license = status.getString("license")
+            addFormat(Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("man"), meta.getInt("mod"), url, false))
+        }
+        library.addResource(resource, projectId)
+    }
+
+    @Throws(Exception::class)
+    private fun downloadSourceLanguages(library: Library, pJson: JSONObject, listener: OnProgressListener?) {
+        val response = GetRequest(URL(pJson.getString("lang_catalog"))).read()
+        val languages = JSONArray(response)
+
+        for (i in 0 until languages.length()) {
+            val lJson = languages.getJSONObject(i)
+            val langJson = lJson.getJSONObject("language")
+
+            if (listener?.onProgress(langJson.getString("slug") + pJson.getString("slug"), languages.length(), i + 1) == false) break
+
+            val sl = SourceLanguage(langJson.getString("slug"), langJson.getString("name"), langJson.getString("direction"))
+            val languageId = library.addSourceLanguage(sl)
 
             // TODO: retrieve the correct versification name(s) from the source language
-            library.addVersification(new Versification("en-US", "American English"), languageId);
+            library.addVersification(Versification("en-US", "American English"), languageId)
 
-            downloadResources(library, pJson, languageId, lJson);
-            library.yieldSafely();
+            downloadResources(library, pJson, languageId, lJson)
+            library.yieldSafely()
         }
     }
 
-    /**
-     * Downloads resources for a project.
-     * This will split notes and questions into their own resource.
-     * words are added as a new project.
-     *
-     * @param library
-     * @param pJson
-     * @param languageId
-     * @param lJson
-     * @throws Exception
-     */
-    private static void downloadResources(Library library, JSONObject pJson, long languageId, JSONObject lJson) throws Exception {
-        GetRequest request = new GetRequest(new URL(lJson.getString("res_catalog")));
-        String response = request.read();
+    @Throws(Exception::class)
+    private fun downloadResources(library: Library, pJson: JSONObject, languageId: Long, lJson: JSONObject) {
+        val response = GetRequest(URL(lJson.getString("res_catalog"))).read()
+        val resources = JSONArray(response)
 
-        JSONArray resources = new JSONArray(response);
-        for(int i = 0; i < resources.length(); i ++) {
-            JSONObject rJson = resources.getJSONObject(i);
-
-            String translateMode;
-            switch(rJson.getString("slug").toLowerCase()) {
-                case "obs":
-                case "ulb":
-                    translateMode = "all";
-                    break;
-                default:
-                    translateMode = "gl";
+        for (i in 0 until resources.length()) {
+            val rJson = resources.getJSONObject(i)
+            val translateMode = when (rJson.getString("slug").lowercase()) {
+                "obs", "ulb" -> "all"
+                else -> "gl"
             }
 
-            Project project = new Project(pJson.getString("slug"),
-                    lJson.getJSONObject("project").getString("name"),
-                    pJson.getInt("sort"));
-            project.description = lJson.getJSONObject("project").getString("desc");
-            project.chunksUrl = rJson.getString("chunks");
-            List<Category> categories = new ArrayList<>();
-            if(pJson.has("meta")) {
-                for(int j = 0; j < pJson.getJSONArray("meta").length(); j ++) {
-                    String slug = pJson.getJSONArray("meta").getString(j);
-                    categories.add(new Category(slug, lJson.getJSONObject("project").getJSONArray("meta").getString(j)));
+            val project = Project(
+                pJson.getString("slug"),
+                lJson.getJSONObject("project").getString("name"),
+                pJson.getInt("sort")
+            ).apply {
+                description = lJson.getJSONObject("project").getString("desc")
+                chunksUrl = rJson.getString("chunks")
+            }
+
+            val categories = mutableListOf<Category>()
+            if (pJson.has("meta")) {
+                val metaArray = pJson.getJSONArray("meta")
+                val projMetaArray = lJson.getJSONObject("project").getJSONArray("meta")
+                for (j in 0 until metaArray.length()) {
+                    categories.add(Category(metaArray.getString(j), projMetaArray.getString(j)))
                 }
             }
 
-            long projectId = library.addProject(project, categories, languageId);
+            val projectId = library.addProject(project, categories, languageId)
 
-            rJson.getJSONObject("status").put("translate_mode", translateMode);
-            rJson.getJSONObject("status").put("pub_date", rJson.getJSONObject("status").getString("publish_date"));
-            rJson.put("type", "book");
-            Resource resource = Resource.fromJSON(rJson);
-            resource._legacyData.put(API.LEGACY_WORDS_ASSIGNMENTS_URL, rJson.getString("tw_cat"));
+            rJson.getJSONObject("status").apply {
+                put("translate_mode", translateMode)
+                put("pub_date", getString("publish_date"))
+            }
+            rJson.put("type", "book")
 
-            Resource.Format format = new Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("book"), rJson.getInt("date_modified"), rJson.getString("source"), false);
-            resource.addFormat(format);
-
-            library.addResource(resource, projectId);
+            val resource = Resource.fromJSON(rJson).apply {
+                _legacyData[API.LEGACY_WORDS_ASSIGNMENTS_URL] = rJson.getString("tw_cat")
+                addFormat(Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("book"), rJson.getInt("date_modified"), rJson.getString("source"), false))
+            }
+            library.addResource(resource, projectId)
 
             // coerce notes to resource
-            if(rJson.has("notes") && !rJson.getString("notes").isEmpty()) {
-                rJson.getJSONObject("status").put("translate_mode", "gl");
-                rJson.put("slug", "tn");
-                rJson.put("name", "translationNotes");
-                rJson.put("type", "help");
-                List<Map> sourceTranslations = new ArrayList();
-                Map<String, Object> tnSourceTranslation = new HashMap();
-                tnSourceTranslation.put("language_slug", lJson.getJSONObject("language").getString("slug"));
-                tnSourceTranslation.put("resource_slug", "tn");
-                tnSourceTranslation.put("version", resource.version);
-                sourceTranslations.add(tnSourceTranslation);
-                rJson.getJSONObject("status").put("source_translations", sourceTranslations);
-
-                Resource tnResource = (Resource) Resource.fromJSON(rJson);
-                Resource.Format tnFormat = new Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("help"), rJson.getInt("date_modified"), rJson.getString("notes"), false);
-                tnResource.addFormat(tnFormat);
-                library.addResource(tnResource, projectId);
+            if (rJson.has("notes") && rJson.getString("notes").isNotEmpty()) {
+                rJson.getJSONObject("status").put("translate_mode", "gl")
+                rJson.put("slug", "tn")
+                rJson.put("name", "translationNotes")
+                rJson.put("type", "help")
+                rJson.getJSONObject("status").put("source_translations", listOf(mapOf(
+                    "language_slug" to lJson.getJSONObject("language").getString("slug"),
+                    "resource_slug" to "tn",
+                    "version" to resource.version
+                )))
+                val tnResource = Resource.fromJSON(rJson).apply {
+                    addFormat(Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("help"), rJson.getInt("date_modified"), rJson.getString("notes"), false))
+                }
+                library.addResource(tnResource, projectId)
             }
 
             // coerce questions to resource
-            if(rJson.has("checking_questions") && !rJson.getString("checking_questions").isEmpty()) {
-                rJson.getJSONObject("status").put("translate_mode", "gl");
-                rJson.put("slug", "tq");
-                rJson.put("name", "translationQuestions");
-                rJson.put("type", "help");
-
-                List<Map> sourceTranslations = new ArrayList();
-                Map<String, Object> tnSourceTranslation = new HashMap();
-                tnSourceTranslation.put("language_slug", lJson.getJSONObject("language").getString("slug"));
-                tnSourceTranslation.put("resource_slug", "tq");
-                tnSourceTranslation.put("version", resource.version);
-                sourceTranslations.add(tnSourceTranslation);
-                rJson.getJSONObject("status").put("source_translations", sourceTranslations);
-
-                Resource tqResource = (Resource) Resource.fromJSON(rJson);
-                Resource.Format tqFormat = new Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("help"), rJson.getInt("date_modified"), rJson.getString("checking_questions"), false);
-                tqResource.addFormat(tqFormat);
-                library.addResource(tqResource, projectId);
+            if (rJson.has("checking_questions") && rJson.getString("checking_questions").isNotEmpty()) {
+                rJson.getJSONObject("status").put("translate_mode", "gl")
+                rJson.put("slug", "tq")
+                rJson.put("name", "translationQuestions")
+                rJson.put("type", "help")
+                rJson.getJSONObject("status").put("source_translations", listOf(mapOf(
+                    "language_slug" to lJson.getJSONObject("language").getString("slug"),
+                    "resource_slug" to "tq",
+                    "version" to resource.version
+                )))
+                val tqResource = Resource.fromJSON(rJson).apply {
+                    addFormat(Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("help"), rJson.getInt("date_modified"), rJson.getString("checking_questions"), false))
+                }
+                library.addResource(tqResource, projectId)
             }
 
-            // add words project (this is insert/update so it will only be added once)
-            // TRICKY: obs tw has not been unified with bible tw yet so we add it as separate project.
-            if(rJson.has("terms") && !rJson.getString("terms").isEmpty()) {
-                String slug = pJson.getString("slug").equals("obs") ? "bible-obs" : "bible";
-                String name = "translationWords" + (pJson.getString("slug").equals("obs") ? " OBS" : "");
-                Project wordsProject = new Project(slug, name, 100);
-                long wordsProjectId = library.addProject(wordsProject, null, languageId);
+            // add words project (insert/update so it will only be added once)
+            // TRICKY: obs tw has not been unified with bible tw yet so we add it as a separate project.
+            if (rJson.has("terms") && rJson.getString("terms").isNotEmpty()) {
+                val isObs = pJson.getString("slug") == "obs"
+                val wordsSlug = if (isObs) "bible-obs" else "bible"
+                val wordsName = "translationWords" + if (isObs) " OBS" else ""
+                val wordsProjectId = library.addProject(Project(wordsSlug, wordsName, 100), null, languageId)
 
-                // add resource to words project
-                rJson.getJSONObject("status").put("translate_mode", "gl");
-                rJson.put("slug", "tw");
-                rJson.put("name", "translationWords");
-                rJson.put("type", "dict");
-
-                List<Map> sourceTranslations = new ArrayList();
-                Map<String, Object> twSourceTranslation = new HashMap();
-                twSourceTranslation.put("language_slug", lJson.getJSONObject("language").getString("slug"));
-                twSourceTranslation.put("resource_slug", "tw");
-                twSourceTranslation.put("version", resource.version);
-                sourceTranslations.add(twSourceTranslation);
-                rJson.getJSONObject("status").put("source_translations", sourceTranslations);
-
-                Resource twResource = (Resource) Resource.fromJSON(rJson);
-                Resource.Format twFormat = new Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("dict"), rJson.getInt("date_modified"), rJson.getString("terms"), false);
-                twResource.addFormat(twFormat);
-                library.addResource(twResource, wordsProjectId);
+                rJson.getJSONObject("status").put("translate_mode", "gl")
+                rJson.put("slug", "tw")
+                rJson.put("name", "translationWords")
+                rJson.put("type", "dict")
+                rJson.getJSONObject("status").put("source_translations", listOf(mapOf(
+                    "language_slug" to lJson.getJSONObject("language").getString("slug"),
+                    "resource_slug" to "tw",
+                    "version" to resource.version
+                )))
+                val twResource = Resource.fromJSON(rJson).apply {
+                    addFormat(Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("dict"), rJson.getInt("date_modified"), rJson.getString("terms"), false))
+                }
+                library.addResource(twResource, wordsProjectId)
             }
-            library.yieldSafely();
+            library.yieldSafely()
         }
     }
 
-    /**
-     * Downloads chunks for a project
-     * @param library
-     * @param chunksUrl
-     * @param projectSlug
-     * @throws Exception
-     */
-    private static void downloadChunks(Library library, String chunksUrl, String projectSlug) throws Exception {
+    @Throws(Exception::class)
+    private fun downloadChunks(library: Library, chunksUrl: String, projectSlug: String) {
         // TODO: pull the correct versification slug from the data. For now there is only one versification
-        Versification v = library.getVersification("en", "en-US");
-        if(v != null) {
-            GetRequest request = new GetRequest(new URL(chunksUrl));
-            String data = request.read();
-            JSONArray chunks = new JSONArray(data);
-            for(int i = 0; i < chunks.length(); i ++) {
-                JSONObject chunk = chunks.getJSONObject(i);
-                ChunkMarker cm = new ChunkMarker(chunk.getString("chp"), chunk.getString("firstvs"));
-                library.addChunkMarker(cm, projectSlug, v.rowId);
-                library.yieldSafely();
+        val v = library.getVersification("en", "en-US")
+        if (v != null) {
+            val data = GetRequest(URL(chunksUrl)).read()
+            val chunks = JSONArray(data)
+            for (i in 0 until chunks.length()) {
+                val chunk = chunks.getJSONObject(i)
+                library.addChunkMarker(ChunkMarker(chunk.getString("chp"), chunk.getString("firstvs")), projectSlug, v.rowId)
+                library.yieldSafely()
             }
         } else {
-            System.console().writer().write("Unknown versification while downloading chunks for project " + projectSlug);
+            println("Unknown versification while downloading chunks for project $projectSlug")
         }
     }
 
     /**
-     * Converts a json object to a hash map
+     * Converts a JSONObject to a Map.
      * http://stackoverflow.com/questions/21720759/convert-a-json-string-to-a-hashmap
-     * @param json
-     * @return
-     * @throws JSONException
      */
-    public static Map<String, Object> jsonToMap(JSONObject json) throws JSONException {
-        Map<String, Object> retMap = new HashMap<String, Object>();
+    @Throws(JSONException::class)
+    fun jsonToMap(json: JSONObject): Map<String, Any> =
+        if (json != JSONObject.NULL) toMap(json) else emptyMap()
 
-        if(json != JSONObject.NULL) {
-            retMap = toMap(json);
+    @Throws(JSONException::class)
+    fun toMap(obj: JSONObject): Map<String, Any> {
+        val map = mutableMapOf<String, Any>()
+        val keys = obj.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            map[key] = when (val value = obj.get(key)) {
+                is JSONArray -> toList(value)
+                is JSONObject -> toMap(value)
+                else -> value
+            }
         }
-        return retMap;
+        return map
     }
 
-    public static Map<String, Object> toMap(JSONObject object) throws JSONException {
-        Map<String, Object> map = new HashMap<String, Object>();
-
-        Iterator<String> keysItr = object.keys();
-        while(keysItr.hasNext()) {
-            String key = keysItr.next();
-            Object value = object.get(key);
-
-            if(value instanceof JSONArray) {
-                value = toList((JSONArray) value);
+    @Throws(JSONException::class)
+    fun toList(array: JSONArray): List<Any> {
+        return (0 until array.length()).map { i ->
+            when (val value = array.get(i)) {
+                is JSONArray -> toList(value)
+                is JSONObject -> toMap(value)
+                else -> value
             }
-
-            else if(value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            map.put(key, value);
         }
-        return map;
     }
 
-    public static List<Object> toList(JSONArray array) throws JSONException {
-        List<Object> list = new ArrayList<Object>();
-        for(int i = 0; i < array.length(); i++) {
-            Object value = array.get(i);
-            if(value instanceof JSONArray) {
-                value = toList((JSONArray) value);
-            }
-
-            else if(value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            list.add(value);
-        }
-        return list;
-    }
-
-    public static void processChunks(Library library, OnProgressListener listener) throws Exception {
+    @Throws(Exception::class)
+    fun processChunks(library: Library, listener: OnProgressListener?) {
         // TRICKY: currently all chunk markers are defined according to the english versification system
-        Map<String, String> markers = new HashMap<>();
-        for(SourceLanguage l:library.getSourceLanguages()) {
-            for(Project p:library.getProjects(l.slug)) {
-                if(p.chunksUrl != null && !p.chunksUrl.isEmpty()) {
-                    markers.put(p.slug, p.chunksUrl);
+        val markers = mutableMapOf<String, String>()
+        for (l in library.getSourceLanguages()) {
+            for (p in library.getProjects(l.slug)) {
+                if (!p.chunksUrl.isNullOrEmpty()) {
+                    markers[p.slug] = p.chunksUrl
                 }
             }
         }
 
-        int pos = 0;
-        for(String key:markers.keySet()) {
-            downloadChunks(library, markers.get(key), key);
-            pos ++;
-            if(listener != null) {
-                if(!listener.onProgress("chunk_markers", markers.size(), pos)) break;
-            }
+        markers.entries.forEachIndexed { index, (slug, url) ->
+            downloadChunks(library, url, slug)
+            if (listener?.onProgress("chunk_markers", markers.size, index + 1) == false) return
         }
     }
 }

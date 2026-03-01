@@ -1,66 +1,73 @@
-package org.unfoldingword.door43client;
+package org.unfoldingword.door43client
 
-import android.content.ContentValues;
-import android.text.TextUtils;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.content.ContentValues
 
 /**
  * This is a utility class for preparing a where clause
  */
-class WhereClause {
-    public final String statement;
-    public final String[] arguments;
+internal class WhereClause private constructor(
+    val statement: String,
+    val arguments: Array<String>
+) {
 
-    private WhereClause(String statement, String[] values) {
-        this.statement = statement;
-        this.arguments = values;
+    // Required to automatically generate correct equals/hashCode for arrays
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as WhereClause
+
+        if (statement != other.statement) return false
+        if (!arguments.contentEquals(other.arguments)) return false
+
+        return true
     }
 
-    /**
-     * Performs a bunch of magical operations to convert a set of values and the specified unique columns
-     * into a valid where clause with supporting values.
-     *
-     *
-     *
-     * @param values
-     * @param uniqueColumns
-     * @return
-     */
-    public static WhereClause prepare(ContentValues values, String[] uniqueColumns) {
-        List<String> stringColumns = new ArrayList<>();
-        List<String> numberColumns = new ArrayList<>();
+    override fun hashCode(): Int {
+        var result = statement.hashCode()
+        result = 31 * result + arguments.contentHashCode()
+        return result
+    }
 
-        // split columns into sets by type
-        for(String key:uniqueColumns) {
-            if(values.get(key) instanceof String) {
-                stringColumns.add(key);
-            } else {
-                numberColumns.add(key);
+    companion object {
+        /**
+         * Performs a bunch of magical operations to convert a set of values and the specified unique columns
+         * into a valid where clause with supporting values.
+         *
+         * @param values
+         * @param uniqueColumns
+         * @return
+         */
+        fun prepare(values: ContentValues, uniqueColumns: Array<String>): WhereClause {
+            // Split columns into sets by type
+            val (stringColumns, numberColumns) = uniqueColumns.partition { key ->
+                values.get(key) is String
             }
-        }
 
-        // build the statement
-        String whereStmt = "";
-        if(stringColumns.size() > 0) {
-            whereStmt = TextUtils.join("=? and ", stringColumns) + "=?";
-        }
-        if(numberColumns.size() > 0) {
-            if (!whereStmt.isEmpty()) whereStmt += " and ";
-            List<String> expressions = new ArrayList<>();
-            for(String key:numberColumns) {
-                expressions.add(key + "=" + values.get(key));
+            // Build the statement parts
+            val stringStmt = if (stringColumns.isNotEmpty()) {
+                stringColumns.joinToString(separator = "=? and ", postfix = "=?")
+            } else ""
+
+            val numberStmt = if (numberColumns.isNotEmpty()) {
+                numberColumns.joinToString(separator = " and ") { key ->
+                    "$key=${values.get(key)}"
+                }
+            } else ""
+
+            // Combine the statements
+            val whereStmt = when {
+                stringStmt.isNotEmpty() && numberStmt.isNotEmpty() -> "$stringStmt and $numberStmt"
+                stringStmt.isNotEmpty() -> stringStmt
+                else -> numberStmt
             }
-            whereStmt += TextUtils.join(" and ", expressions);
-        }
 
-        // build the values
-        String[] uniqueValues = new String[stringColumns.size()];
-        for(int i = 0; i < stringColumns.size(); i ++) {
-            uniqueValues[i] = String.valueOf(values.get(stringColumns.get(i)));
-        }
+            // Build the values array
+            val uniqueValues = stringColumns.map { key ->
+                values.get(key).toString()
+            }.toTypedArray()
 
-        return new WhereClause(whereStmt, uniqueValues);
+            return WhereClause(whereStmt, uniqueValues)
+        }
     }
 }

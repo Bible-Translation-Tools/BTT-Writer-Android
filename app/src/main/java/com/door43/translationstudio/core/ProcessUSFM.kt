@@ -166,15 +166,6 @@ class ProcessUSFM {
         readResourceFile(rcPath)
     }
 
-    private constructor(
-        context: Context,
-        directoryProvider: IDirectoryProvider,
-        profile: Profile,
-        library: Door43Client,
-        assetsProvider: AssetsProvider,
-        jsonString: String?
-    ): this(context, directoryProvider, profile, library, assetsProvider, stringToJson(jsonString))
-
     @Throws(Exception::class)
     private constructor(
         context: Context,
@@ -182,9 +173,9 @@ class ProcessUSFM {
         profile: Profile,
         library: Door43Client,
         assetsProvider: AssetsProvider,
-        json: JSONObject?
+        json: JSONObject
     ): this(context, directoryProvider, profile, library, assetsProvider, null, null) {
-        this.targetLanguage = TargetLanguage.fromJSON(getOptJsonObject(json!!, "TargetLanguage"))
+        this.targetLanguage = getOptJsonObject(json, "TargetLanguage")?.let { TargetLanguage.fromJSON(it) }
         this.tempDir = getOptFile(json, "TempDir")
         this.projectsFolder = getOptFile(json, "TempOutput")
         this.tempDest = getOptFile(json, "TempDest")
@@ -217,7 +208,6 @@ class ProcessUSFM {
     ) {
         private var progressListener: OnProgressListener? = null
         private var targetLanguage: TargetLanguage? = null
-        private var jsonString: String? = null
         private var json: JSONObject? = null
         private var file: File? = null
         private var uri: Uri? = null
@@ -262,7 +252,7 @@ class ProcessUSFM {
          * @return
          */
         fun fromJsonString(jsonStr: String): Builder {
-            this.jsonString = jsonStr
+            this.json = stringToJson(jsonStr)
             return this
         }
 
@@ -271,58 +261,56 @@ class ProcessUSFM {
          * @param json
          * @return
          */
-        fun fromJson(json: JSONObject?): Builder {
+        fun fromJson(json: JSONObject): Builder {
             this.json = json
             return this
         }
 
         fun build(): ProcessUSFM? {
+            val currentJson = json
+            val currentLang = targetLanguage
+            val currentFile = file
+            val currentUri = uri
+            val currentRcPath = rcPath
+
             return try {
                 when {
-                    jsonString != null -> ProcessUSFM(
+                    currentJson != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
                         library,
                         assetsProvider,
-                        jsonString
+                        currentJson
                     )
-                    json != null -> ProcessUSFM(
+                    currentLang != null && currentFile != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
                         library,
                         assetsProvider,
-                        json
-                    )
-                    targetLanguage != null && file != null -> ProcessUSFM(
-                        context,
-                        directoryProvider,
-                        profile,
-                        library,
-                        assetsProvider,
-                        targetLanguage!!,
-                        file!!,
+                        currentLang,
+                        currentFile,
                         progressListener
                     )
-                    targetLanguage != null && uri != null -> ProcessUSFM(
+                    currentLang != null && currentUri != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
                         library,
                         assetsProvider,
-                        targetLanguage!!,
-                        uri!!,
+                        currentLang,
+                        currentUri,
                         progressListener
                     )
-                    targetLanguage != null && rcPath != null -> ProcessUSFM(
+                    currentLang != null && currentRcPath != null -> ProcessUSFM(
                         context,
                         directoryProvider,
                         profile,
                         library,
                         assetsProvider,
-                        targetLanguage!!,
-                        rcPath!!,
+                        currentLang,
+                        currentRcPath,
                         progressListener
                     )
                     else -> null
@@ -798,7 +786,9 @@ class ProcessUSFM {
             }
 
             val versifications = library.index.getVersifications("en")
-            val markers = library.index.getChunkMarkers(bookShortName, versifications[0].slug)
+            val markers = bookShortName?.let { shortName ->
+                library.index.getChunkMarkers(shortName, versifications[0].slug)
+            } ?: emptyList()
             val haveChunksList = markers.isNotEmpty()
 
             if (!haveChunksList) { // no chunk list
@@ -1817,8 +1807,7 @@ class ProcessUSFM {
             return array
         }
 
-        private fun stringToJson(jsonStr: String?): JSONObject? {
-            if (jsonStr == null) return null
+        private fun stringToJson(jsonStr: String): JSONObject? {
             return try {
                 JSONObject(jsonStr)
             } catch (e: Exception) {

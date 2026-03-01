@@ -5,13 +5,13 @@ package org.unfoldingword.door43client.models
  */
 data class Questionnaire(
     /** the language code */
-    @JvmField val languageSlug: String,
+    val languageSlug: String,
     /** the name of the language in which this questionnaire is presented */
-    @JvmField val languageName: String,
+    val languageName: String,
     /** the written direction of the language */
-    @JvmField val languageDirection: String,
+    val languageDirection: String,
     /** the translation database id (server side) */
-    @JvmField val tdId: Long,
+    val tdId: Long,
     /** a map of question ids that represent certain language data. e.g. language name, region etc. */
-    @JvmField val dataFields: Map<String, Long>
+    val dataFields: Map<String, Long>
 )

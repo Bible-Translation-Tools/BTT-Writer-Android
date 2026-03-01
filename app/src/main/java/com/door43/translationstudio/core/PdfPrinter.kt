@@ -74,18 +74,25 @@ class PdfPrinter(
     private val targetLanguageFontSize: Float
 
     init {
+        var rc: ResourceContainer? = null
         val p = library.index.getProject(
             "en",
             translation.projectId,
             true
         )
-        val resources = library.index.getResources(p.languageSlug, p.slug)
-        var rc: ResourceContainer? = null
-        try {
-            rc = library.open("en", translation.projectId, resources[0].slug)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        p?.let { project ->
+            val resources = library.index.getResources(project.languageSlug, project.slug)
+            try {
+                rc = library.open(
+                    "en",
+                    translation.projectId,
+                    resources[0].slug
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
+
         this.sourceContainer = rc
 
         targetLanguageFontSize = fontSize / RATIO_OF_SP_TO_PT

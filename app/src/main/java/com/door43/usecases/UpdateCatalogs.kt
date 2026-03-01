@@ -20,7 +20,7 @@ class UpdateCatalogs(
 
         progressListener?.onProgress(-1, maxProgress, message)
 
-        var targetLanguages = library.index.targetLanguages
+        var targetLanguages = library.index.getTargetLanguages()
         val initialLanguages = HashSet<String>()
         for (l in targetLanguages) {
             initialLanguages.add(l.slug)
@@ -45,7 +45,7 @@ class UpdateCatalogs(
         }
 
         if (success) {
-            targetLanguages = library.index.targetLanguages
+            targetLanguages = library.index.getTargetLanguages()
             Logger.i(
                 this.javaClass.simpleName,
                 "Final target languages count: " + targetLanguages.size

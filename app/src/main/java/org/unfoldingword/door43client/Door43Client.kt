@@ -1,232 +1,183 @@
-package org.unfoldingword.door43client;
+package org.unfoldingword.door43client
 
-import android.content.Context;
-
-import com.door43.data.IDirectoryProvider;
-
-import org.unfoldingword.resourcecontainer.ContainerTools;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import android.content.Context
+import com.door43.data.IDirectoryProvider
+import org.unfoldingword.resourcecontainer.ContainerTools
+import org.unfoldingword.resourcecontainer.ResourceContainer
+import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
+import java.io.InputStreamReader
 
 /**
- * Provides a interface to the Door43 resource api
+ * Provides an interface to the Door43 resource API
  */
-
-public class Door43Client {
-    private final IDirectoryProvider directoryProvider;
-
-    private final API api;
-    private static String schema = null;
-    /**
-     * The (mostly) read only index
-     */
-    public final Index index;
+class Door43Client @Throws(IOException::class) constructor(
+    context: Context,
+    private val directoryProvider: IDirectoryProvider
+) {
+    private val api: API
 
     /**
-     * Initializes a new Door43 client
-     * @param context the application context
-     * @param directoryProvider
-     * @throws IOException
+     * The (mostly) read-only index
      */
-    public Door43Client(Context context, IDirectoryProvider directoryProvider) throws IOException {
-        this.directoryProvider = directoryProvider;
+    val index: Index
 
-        // load schema
-        if(schema == null) {
-            InputStream is = context.getAssets().open("schema.sqlite");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
+    companion object {
+        private var schema: String? = null
+    }
+
+    init {
+        if (schema == null) {
+            schema = context.assets.open("schema.sqlite").use { stream ->
+                BufferedReader(InputStreamReader(stream)).readText()
             }
-            schema = sb.toString();
         }
 
-        this.api = new API(
-                context,
-                schema,
-                directoryProvider.getDatabaseFile(),
-                directoryProvider.getContainersDir()
-        );
-        this.index = api.index();
+        api = API(
+            context,
+            schema!!,
+            directoryProvider.databaseFile,
+            directoryProvider.containersDir
+        )
+        index = api.index
     }
 
     /**
-     * Attaches a listener to receive log events
-     * @param listener
+     * Attaches a listener to receive log events.
      */
-    public void setLogger(OnLogListener listener) {
-        api.setLogger(listener);
+    fun setLogger(listener: OnLogListener) {
+        api.setLogger(listener)
     }
 
     /**
      * Checks when an indexed (not downloaded) resource container was last modified.
      * This looks at the modified date in the resource format.
-     * The result is the last known modification date of what's available in the api.
+     * The result is the last known modification date of what's available in the API.
+     */
+    fun getResourceContainerLastModified(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): Int =
+        api.getResourceContainerLastModified(sourceLanguageSlug, projectSlug, resourceSlug)
+
+    /**
+     * Indexes the source content.
      *
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return
+     * @param url      the entry resource API catalog
+     * @param listener an optional progress listener (receives progress id, total, completed)
      */
-    public int getResourceContainerLastModified(String sourceLanguageSlug, String projectSlug, String resourceSlug) {
-        return api.getResourceContainerLastModified(sourceLanguageSlug, projectSlug, resourceSlug);
+    @Throws(Exception::class)
+    fun updateSources(url: String, listener: OnProgressListener?) {
+        api.updateSources(url, listener)
     }
 
     /**
-     * Indexes the source content
-     *
-     * @param url the entry resource api catalog
-     * @param listener an optional progress listener. This should receive progress id, total, completed
+     * Indexes the supplementary catalogs.
      */
-    public void updateSources(String url, OnProgressListener listener) throws Exception {
-        api.updateSources(url, listener);
+    @Throws(Exception::class)
+    fun updateCatalogs(force: Boolean, listener: OnProgressListener?) {
+        api.updateCatalogs(force, listener)
+    }
+
+    @Throws(Exception::class)
+    fun updateLanguageUrl(url: String) {
+        api.updateLanguageUrl(url)
     }
 
     /**
-     * Indexes the supplementary catalogs
-     * @param force
-     * @param listener
-     * @throws Exception
+     * Indexes the chunk markers.
      */
-    public void updateCatalogs(Boolean force, OnProgressListener listener) throws Exception {
-        api.updateCatalogs(force, listener);
-    }
-
-    public void updateLanguageUrl(String url) throws Exception {
-        api.updateLanguageUrl(url);
+    @Throws(Exception::class)
+    fun updateChunks(listener: OnProgressListener?) {
+        api.updateChunks(listener)
     }
 
     /**
-     * Indexes the chunk markers
-     * @param listener
-     * @throws Exception
+     * Downloads a resource container from the API.
      */
-    public void updateChunks(OnProgressListener listener) throws Exception {
-        api.updateChunks(listener);
-    }
+    @Throws(Exception::class)
+    fun download(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): ResourceContainer =
+        api.downloadResourceContainer(sourceLanguageSlug, projectSlug, resourceSlug)
 
     /**
-     * Downloads a resource container from the api
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return
-     * @throws Exception
+     * Opens a resource container archive so its contents can be read.
      */
-    public ResourceContainer download(String sourceLanguageSlug, String projectSlug, String resourceSlug) throws Exception {
-        return api.downloadResourceContainer(sourceLanguageSlug, projectSlug, resourceSlug);
-    }
+    @Throws(Exception::class)
+    fun open(languageSlug: String, projectSlug: String, resourceSlug: String): ResourceContainer =
+        api.openResourceContainer(languageSlug, projectSlug, resourceSlug)
 
     /**
-     * Opens a resource container archive so it's contents can be read.
-     * @param languageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return
-     * @throws Exception
+     * Opens a resource container archive so its contents can be read.
      */
-    public ResourceContainer open(String languageSlug, String projectSlug, String resourceSlug) throws Exception {
-        return api.openResourceContainer(languageSlug, projectSlug, resourceSlug);
-    }
-
-    /**
-     * Opens a resource container archive so it's contents can be read.
-     * @param containerSlug
-     * @return
-     */
-    public ResourceContainer open(String containerSlug) throws Exception {
-        return api.openResourceContainer(containerSlug);
-    }
+    @Throws(Exception::class)
+    fun open(containerSlug: String): ResourceContainer =
+        api.openResourceContainer(containerSlug)
 
     /**
      * Imports an external resource container into the client and indexes it for use.
+     *
      * @param directory the directory of the resource container to be imported
      * @return the imported resource container
-     * @throws Exception
      */
-    public ResourceContainer importResourceContainer(File directory) throws Exception {
-        return api.importResourceContainer(directory);
-    }
+    @Throws(Exception::class)
+    fun importResourceContainer(directory: File): ResourceContainer =
+        api.importResourceContainer(directory)
 
     /**
-     * Exports the closed resource container
+     * Exports the closed resource container.
+     *
      * @param destFile the destination file
-     * @param languageSlug
-     * @param projectSlug
-     * @param resourceSlug
      */
-    public void exportResourceContainer(File destFile, String languageSlug, String projectSlug, String resourceSlug) throws Exception {
-        api.exportResourceContainer(destFile, languageSlug, projectSlug, resourceSlug);
+    @Throws(Exception::class)
+    fun exportResourceContainer(destFile: File, languageSlug: String, projectSlug: String, resourceSlug: String) {
+        api.exportResourceContainer(destFile, languageSlug, projectSlug, resourceSlug)
     }
 
-    public Boolean getIsLibraryDeployed() {
-        Boolean hasContainers = directoryProvider.getContainersDir().exists()
-                && directoryProvider.getContainersDir().isDirectory()
-                && directoryProvider.getContainersDir().list().length > 0;
+    val isLibraryDeployed: Boolean
+        get() {
+            val containersDir = directoryProvider.containersDir
+            val hasContainers = containersDir.exists()
+                    && containersDir.isDirectory
+                    && (containersDir.list()?.isNotEmpty() == true)
+            return index.getSourceLanguages().size > 1 && hasContainers
+        }
 
-        return index.getSourceLanguages().size() > 1 && hasContainers;
+    /**
+     * Checks if a resource container has been downloaded.
+     */
+    fun exists(languageSlug: String, projectSlug: String, resourceSlug: String): Boolean =
+        api.resourceContainerExists(languageSlug, projectSlug, resourceSlug)
+
+    /**
+     * Checks if a resource container has been downloaded.
+     */
+    fun exists(containerSlug: String): Boolean =
+        api.resourceContainerExists(containerSlug)
+
+    /**
+     * Deletes a resource container.
+     */
+    fun delete(languageSlug: String, projectSlug: String, resourceSlug: String) {
+        delete(ContainerTools.makeSlug(languageSlug, projectSlug, resourceSlug))
     }
 
     /**
-     * Checks if a resource container has been downloaded
-     * @param languageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return
+     * Deletes a resource container.
      */
-    public boolean exists(String languageSlug, String projectSlug, String resourceSlug) {
-        return api.resourceContainerExists(languageSlug, projectSlug, resourceSlug);
+    fun delete(containerSlug: String) {
+        api.deleteResourceContainer(containerSlug)
     }
 
     /**
-     * Checks if a resource container has been downloaded
-     * @param containerSlug
-     * @return
+     * Closes a resource container directory.
      */
-    public boolean exists(String containerSlug) {
-        return api.resourceContainerExists(containerSlug);
+    @Throws(Exception::class)
+    fun close(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String) {
+        api.closeResourceContainer(sourceLanguageSlug, projectSlug, resourceSlug)
     }
 
     /**
-     * Deletes a resource container
-     * @param languageSlug
-     * @param projectSlug
-     * @param resourceSlug
+     * Closes the API.
      */
-    public void delete(String languageSlug, String projectSlug, String resourceSlug) {
-        delete(ContainerTools.makeSlug(languageSlug, projectSlug, resourceSlug));
-    }
-
-    /**
-     * Deletes a resource container
-     * @param containerSlug
-     */
-    public void delete(String containerSlug) {
-        api.deleteResourceContainer(containerSlug);
-    }
-
-    /**
-     * Closes a resource container directory
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @throws Exception
-     */
-    public void close(String sourceLanguageSlug, String projectSlug, String resourceSlug) throws Exception {
-        api.closeResourceContainer(sourceLanguageSlug, projectSlug, resourceSlug);
-    }
-
-    /**
-     * Closes the api
-     */
-    public void tearDown() {
-        api.tearDown();
+    fun tearDown() {
+        api.tearDown()
     }
 }

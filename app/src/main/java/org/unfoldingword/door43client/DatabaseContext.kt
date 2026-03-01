@@ -1,77 +1,61 @@
-package org.unfoldingword.door43client;
+package org.unfoldingword.door43client
 
-
-import android.content.Context;
-import android.content.ContextWrapper;
-import android.database.DatabaseErrorHandler;
-import android.database.sqlite.SQLiteDatabase;
-
-import java.io.File;
+import android.content.Context
+import android.content.ContextWrapper
+import android.database.DatabaseErrorHandler
+import android.database.sqlite.SQLiteDatabase
+import java.io.File
 
 /**
  * Custom wrapper to provide a custom database path
  * http://stackoverflow.com/questions/5332328/sqliteopenhelper-problem-with-fully-qualified-db-path-name
  */
-class DatabaseContext extends ContextWrapper {
+internal class DatabaseContext(
+    base: Context,
+    private val dir: File,
+    dbExt: String?
+) : ContextWrapper(base) {
 
-    private final File dir;
-    private final String dbExt;
+    private val dbExt: String = if (dbExt.isNullOrEmpty()) "db" else dbExt
 
-    /**
-     *
-     * @param base
-     * @param databaseDir the directory where databases will be stored
-     * @param dbExt the file extension to use for databases
-     */
-    public DatabaseContext(Context base, File databaseDir, String dbExt) {
-        super(base);
-        this.dir = databaseDir;
-        if(dbExt == null || dbExt.isEmpty()) {
-            this.dbExt = "db";
+    override fun getDatabasePath(name: String): File {
+        val dbName = if (!name.endsWith(".${this.dbExt}")) {
+            "$name.${this.dbExt}"
         } else {
-            this.dbExt = dbExt;
-        }
-    }
-
-    @Override
-    public File getDatabasePath(String name) {
-        String dbfile = dir.getAbsolutePath() + File.separator + name;
-
-        if (!dbfile.endsWith("." + dbExt)) {
-            dbfile += "." + dbExt;
+            name
         }
 
-        File result = new File(dbfile);
+        val result = File(dir, dbName)
 
-        if (!result.getParentFile().exists()) {
-            result.getParentFile().mkdirs();
+        result.parentFile?.let { parent ->
+            if (!parent.exists()) {
+                parent.mkdirs()
+            }
         }
 
-        return result;
+        return result
     }
 
     /**
-     * for devices greater than or equal to  api v11
-     * @param name
-     * @param mode
-     * @param factory
-     * @param errorHandler
-     * @return
+     * for devices greater than or equal to api v11
      */
-    @Override
-    public SQLiteDatabase openOrCreateDatabase(String name, int mode, SQLiteDatabase.CursorFactory factory, DatabaseErrorHandler errorHandler) {
-        return openOrCreateDatabase(name, mode, factory);
+    override fun openOrCreateDatabase(
+        name: String,
+        mode: Int,
+        factory: SQLiteDatabase.CursorFactory?,
+        errorHandler: DatabaseErrorHandler?
+    ): SQLiteDatabase {
+        return openOrCreateDatabase(name, mode, factory)
     }
 
     /**
      * For devices less than api v11
-     * @param name
-     * @param mode
-     * @param factory
-     * @return
      */
-    @Override
-    public SQLiteDatabase openOrCreateDatabase(String name, int mode, SQLiteDatabase.CursorFactory factory) {
-        return SQLiteDatabase.openOrCreateDatabase(getDatabasePath(name), null);
+    override fun openOrCreateDatabase(
+        name: String,
+        mode: Int,
+        factory: SQLiteDatabase.CursorFactory?
+    ): SQLiteDatabase {
+        return SQLiteDatabase.openOrCreateDatabase(getDatabasePath(name), null)
     }
 }

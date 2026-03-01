@@ -1,45 +1,52 @@
-package org.unfoldingword.door43client.models;
+package org.unfoldingword.door43client.models
 
-import org.unfoldingword.resourcecontainer.ContainerTools;
-import org.unfoldingword.resourcecontainer.Language;
-import org.unfoldingword.resourcecontainer.Project;
-import org.unfoldingword.resourcecontainer.Resource;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
+import org.unfoldingword.resourcecontainer.ContainerTools
+import org.unfoldingword.resourcecontainer.Language
+import org.unfoldingword.resourcecontainer.Project
+import org.unfoldingword.resourcecontainer.Resource
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
 /**
  * A Translation is a special abstraction of a ResourceContainer.
- * Translations are composed of a language, project, and resource.
- * As such a translation uniquely represents a single resource container,
- * though the existence of a translation does not demand the existence of a resource container.
+ * Made 'open' so SourceTranslation can inherit from it.
  */
-
-public class Translation {
-    public final Language language;
-    public final Project project;
-    public final Resource resource;
-
+open class Translation(
+    val language: Language,
+    val project: Project,
+    val resource: Resource
+) {
     /**
      * The slug of the resource container represented by this translation
      */
-    public final String resourceContainerSlug;
-
-    public Translation(Language language, Project project, Resource resource) {
-        this.language = language;
-        this.project = project;
-        this.resource = resource;
-
-        resourceContainerSlug = ContainerTools.makeSlug(language.slug, project.slug, resource.slug);
-    }
+    val resourceContainerSlug: String =
+        ContainerTools.makeSlug(
+            language.slug,
+            project.slug,
+            resource.slug
+        )
 
     /**
      * Creates a translation from a resource container
-     * @param container
      */
-    public Translation(ResourceContainer container) {
-        this.language = container.language;
-        this.project = container.project;
-        this.resource = container.resource;
+    constructor(container: ResourceContainer) : this(
+        container.language,
+        container.project,
+        container.resource
+    )
 
-        resourceContainerSlug = ContainerTools.makeSlug(language.slug, project.slug, resource.slug);
+    // Manual implementation of data class features since we can't use 'data' keyword
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Translation) return false
+        return language == other.language &&
+                project == other.project &&
+                resource == other.resource
+    }
+
+    override fun hashCode(): Int {
+        var result = language.hashCode()
+        result = 31 * result + project.hashCode()
+        result = 31 * result + resource.hashCode()
+        return result
     }
 }

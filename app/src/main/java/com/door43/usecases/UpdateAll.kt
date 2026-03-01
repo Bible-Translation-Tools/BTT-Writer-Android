@@ -31,8 +31,8 @@ class UpdateAll(
             library.updateSources(
                 rootApiUrl
             ) { tag, max, complete ->
-                maxProgress = max.toInt()
-                progressListener?.onProgress(complete.toInt(), maxProgress, tag)
+                maxProgress = max
+                progressListener?.onProgress(complete, maxProgress, tag)
                 true
             }
             success = true
@@ -47,8 +47,8 @@ class UpdateAll(
 
         try {
             library.updateCatalogs(updateCatalogs) { tag, max, complete ->
-                maxProgress = max.toInt()
-                progressListener?.onProgress(complete.toInt(), maxProgress, tag)
+                maxProgress = max
+                progressListener?.onProgress(complete, maxProgress, tag)
                 true
             }
             success = true
@@ -63,8 +63,8 @@ class UpdateAll(
 
         try {
             library.updateChunks { tag, max, complete ->
-                maxProgress = max.toInt()
-                progressListener?.onProgress(complete.toInt(), maxProgress, tag)
+                maxProgress = max
+                progressListener?.onProgress(complete, maxProgress, tag)
                 true
             }
             success = true

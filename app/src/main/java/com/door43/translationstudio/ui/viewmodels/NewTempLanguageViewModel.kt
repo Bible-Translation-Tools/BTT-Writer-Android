@@ -18,8 +18,8 @@ class NewTempLanguageViewModel(
 
     fun getQuestionnaire(): QuestionnairePager? {
         // TRICKY: for now we only have one questionnaire
-        val questionnaires = library.index.questionnaires
-        if (questionnaires.size > 0) {
+        val questionnaires = library.index.getQuestionnaires()
+        if (questionnaires.isNotEmpty()) {
             val q = questionnaires[0]
             val questions = library.index.getQuestions(q.tdId)
             val pager = QuestionnairePager(q)

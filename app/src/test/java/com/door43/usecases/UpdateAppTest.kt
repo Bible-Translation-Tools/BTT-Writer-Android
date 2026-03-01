@@ -92,7 +92,7 @@ class UpdateAppTest {
             any<String>()
         ) }.returns("font.ttf")
 
-        every { index.getImportedTranslations() }.returns(listOf())
+        every { index.importedTranslations }.returns(listOf())
         every { library.tearDown() }.just(runs)
         every { directoryProvider.deleteLibrary() }.just(runs)
         every { directoryProvider.deployDefaultLibrary() }.just(runs)
@@ -201,7 +201,7 @@ class UpdateAppTest {
         every { library.isLibraryDeployed }.returns(false)
 
         val translation: Translation = mockk()
-        every { index.getImportedTranslations() }.returns(listOf(translation))
+        every { index.importedTranslations }.returns(listOf(translation))
 
         val file = tempDir.newFile("backup.zip")
         every { backupRC.backupResourceContainer(translation) }.returns(file)
@@ -533,7 +533,7 @@ class UpdateAppTest {
     }
 
     private fun verifyUpdateLibrary(called: Boolean = true) {
-        verify(inverse = !called) { index.getImportedTranslations() }
+        verify(inverse = !called) { index.importedTranslations }
         verify(inverse = !called) { library.tearDown() }
         verify(inverse = !called) { directoryProvider.deleteLibrary() }
         verify(inverse = !called) { directoryProvider.deployDefaultLibrary() }

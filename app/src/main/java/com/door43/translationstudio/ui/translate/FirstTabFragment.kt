@@ -42,7 +42,7 @@ class FirstTabFragment : BaseFragment(), ChooseSourceTranslationDialog.OnClickLi
 
         try {
             val p = viewModel.getProject()
-            binding.sourceTranslationTitle.text = "${p.name} - ${viewModel.targetTranslation.targetLanguageName}"
+            binding.sourceTranslationTitle.text = "${p?.name} - ${viewModel.targetTranslation.targetLanguageName}"
         } catch (e: Exception) {
             Logger.e(
                 FirstTabFragment::class.java.simpleName,

@@ -237,7 +237,7 @@ class TargetTranslationViewModel(
         )
     }
 
-    fun getProject(): Project {
+    fun getProject(): Project? {
         return library.index.getProject(
             deviceLanguageCode,
             targetTranslation.projectId,
@@ -301,16 +301,19 @@ class TargetTranslationViewModel(
     }
 
     fun getDefaultSourceTranslation(): String? {
-        val project = getProject()
-        val resources = library.index.getResources(project.languageSlug, project.slug)
-            .filter { it.type == "book" && it.slug != "udb" }
-        val resourceContainer = try {
-            library.open(project.languageSlug, project.slug, resources[0].slug)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        return getProject()?.let { project ->
+            val resources = library.index.getResources(project.languageSlug, project.slug)
+                .filter { it.type == "book" && it.slug != "udb" }
+
+            val resourceContainer = try {
+                library.open(project.languageSlug, project.slug, resources[0].slug)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+
+            return resourceContainer?.slug
         }
-        return resourceContainer?.slug
     }
 
     private fun getSourceTranslations(): List<ContentValues> {

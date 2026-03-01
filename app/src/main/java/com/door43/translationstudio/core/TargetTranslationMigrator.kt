@@ -776,33 +776,41 @@ class TargetTranslationMigrator(
      * @return
      */
     private fun migrateChunkChanges(targetTranslationDir: File, projectSlug: String): Boolean {
-        // TRICKY: calling the App here is bad practice, but we'll deprecate this soon anyway.
+        var resourceContainer: ResourceContainer? = null
         val p = library.index.getProject("en", projectSlug, true)
-        val resources = library.index.getResources(p.languageSlug, p.slug)
-        val resourceContainer: ResourceContainer
-        try {
-            var resource: Resource? = null
-            for (i in resources.indices) {
-                val r = resources[i]
-                if ("book".equals(r.type, ignoreCase = true)) {
-                    resource = r
-                    break
+        p?.let { project ->
+            val resources = library.index.getResources(project.languageSlug, project.slug)
+            try {
+                var resource: Resource? = null
+                for (i in resources.indices) {
+                    val r = resources[i]
+                    if ("book".equals(r.type, ignoreCase = true)) {
+                        resource = r
+                        break
+                    }
                 }
+                resource?.let { r ->
+                    resourceContainer = library.open(project.languageSlug, project.slug, r.slug)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return true
             }
-            resourceContainer = library.open(p.languageSlug, p.slug, resource!!.slug)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return true
         }
+
         val chapterDirs = targetTranslationDir.listFiles { pathname ->
             pathname.isDirectory && pathname.name != ".git" && pathname.name != "00" // 00 contains project title translations
         }
-        for (cDir in chapterDirs) {
-            mergeInvalidChunksInChapter(
-                File(targetTranslationDir, "manifest.json"),
-                resourceContainer,
-                cDir
-            )
+        resourceContainer?.let { rc ->
+            chapterDirs?.let { cDirs ->
+                for (cDir in cDirs) {
+                    mergeInvalidChunksInChapter(
+                        File(targetTranslationDir, "manifest.json"),
+                        rc,
+                        cDir
+                    )
+                }
+            }
         }
         return true
     }

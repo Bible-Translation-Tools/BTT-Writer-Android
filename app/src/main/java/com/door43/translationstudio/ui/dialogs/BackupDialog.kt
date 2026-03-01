@@ -655,7 +655,7 @@ class BackupDialog : DialogFragment() {
         // open bug report dialog
         val feedbackDialog = FeedbackDialog()
         val args = Bundle()
-        val message = "Failed to upload the translation of ${project.name}" +
+        val message = "Failed to upload the translation of ${project?.name}" +
                 "into ${targetTranslation.targetLanguageName}.\n" +
                 "targetTranslation: ${targetTranslation.id}" +
                 "\n--------\n\n"

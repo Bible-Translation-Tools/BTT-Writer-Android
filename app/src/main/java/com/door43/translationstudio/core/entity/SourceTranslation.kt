@@ -6,22 +6,38 @@ import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
-class SourceTranslation : Translation {
+/**
+ * SourceTranslation extends the Translation data class.
+ * Note: This cannot be a 'data class' because its parent is already a data class.
+ */
+class SourceTranslation(
+    language: Language,
+    project: Project,
+    resource: Resource,
+    modifiedTimestamp: Int = -1
+) : Translation(language, project, resource) {
 
-    var modifiedTimestamp: Int = -1
+    var modifiedTimestamp: Int = modifiedTimestamp
         private set
 
-    constructor(language: Language, project: Project, resource: Resource) : super(language, project, resource)
+    /**
+     * Creates a source translation from a resource container
+     */
+    constructor(container: ResourceContainer) : this(
+        container.language,
+        container.project,
+        container.resource
+    )
 
-    constructor(container: ResourceContainer) : super(container)
-
-    constructor(translation: Translation, modifiedTimestamp: Int) : super(
+    /**
+     * Creates a source translation from an existing translation and a timestamp
+     */
+    constructor(translation: Translation, modifiedTimestamp: Int) : this(
         translation.language,
         translation.project,
-        translation.resource
-    ) {
-        this.modifiedTimestamp = modifiedTimestamp
-    }
+        translation.resource,
+        modifiedTimestamp
+    )
 
     /**
      * Set the modified time for this source translation

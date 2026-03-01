@@ -136,7 +136,7 @@ class DownloadResourceContainers(
             )
 
             try {
-                translation = library.index.getTranslation(resourceContainerSlug)
+                translation = library.index.getTranslation(resourceContainerSlug)!!
                 val rc = library.download(
                     translation.language.slug,
                     translation.project.slug,

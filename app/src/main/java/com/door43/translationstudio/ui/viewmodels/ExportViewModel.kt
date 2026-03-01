@@ -85,7 +85,7 @@ class ExportViewModel(
         )
     }
 
-    fun getProject(targetTranslation: TargetTranslation): Project {
+    fun getProject(targetTranslation: TargetTranslation): Project? {
         return library.index.getProject(
             "en",
             targetTranslation.projectId,
@@ -327,7 +327,7 @@ class ExportViewModel(
         }
     }
 
-    fun getProject(targetTranslationId: String?): Project? {
+    fun getProject(targetTranslationId: String): Project? {
         return library.index.getProject(
             Locale.getDefault().language,
             targetTranslationId
@@ -345,7 +345,10 @@ class ExportViewModel(
     }
 
     private fun generateP2PKeys() {
-        RSAEncryption.generateKeys(directoryProvider.p2pPrivateKey, directoryProvider.p2pPublicKey)
+        RSAEncryption.generateKeys(
+            directoryProvider.p2pPrivateKey,
+            directoryProvider.p2pPublicKey
+        )
     }
 
     fun clearResults() {
