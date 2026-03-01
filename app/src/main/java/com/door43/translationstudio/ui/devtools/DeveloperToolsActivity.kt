@@ -61,9 +61,9 @@ class DeveloperToolsActivity : BaseActivity() {
     private fun calculateSystemResources() {
         val am = getSystemService(ACTIVITY_SERVICE) as ActivityManager
         var message = "System Resources:\n"
-        val numProcessors = RuntimeWrapper.availableProcessors()
+        val numProcessors = RuntimeWrapper.availableProcessors
         message += "Number of processors: $numProcessors (${App.MINIMUM_NUMBER_OF_PROCESSORS} required)\n"
-        val maxMem = RuntimeWrapper.maxMemory()
+        val maxMem = RuntimeWrapper.maxMemory
         message += "JVM max memory: ${getFormattedSize(maxMem)} (${getFormattedSize(App.MINIMUM_REQUIRED_RAM)} required)\n"
 
         val info = ActivityManager.MemoryInfo()

@@ -250,11 +250,12 @@ class TargetTranslation private constructor(
         }
     }
 
-    fun removeContributor(speaker: NativeSpeaker?) {
-        if (speaker != null) {
-            val translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS)
-            manifest.put(FIELD_TRANSLATORS, Manifest.removeValue(translatorsJson, speaker.name))
-        }
+    fun removeContributor(speaker: NativeSpeaker) {
+        val translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS)
+        manifest.put(
+            FIELD_TRANSLATORS,
+            Manifest.removeValue(translatorsJson, speaker.name)
+        )
     }
 
     fun getContributor(name: String): NativeSpeaker? {

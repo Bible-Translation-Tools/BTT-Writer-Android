@@ -40,11 +40,11 @@ import java.lang.reflect.Method
  * still work.
  * To use in XML, add a widget for <my.package.name>.KeyboardlessEditText
  * To use in Java, use one of the three constructors in this class
-</my.package.name> */
+ */
 class KeyboardlessEditText : AppCompatEditText {
-    private val mOnClickListener = OnClickListener { isCursorVisible = false }
+    private val clickListener = OnClickListener { isCursorVisible = false }
 
-    private val mOnLongClickListener = OnLongClickListener {
+    private val longClickListener = OnLongClickListener {
         isCursorVisible = false
         false
     }
@@ -73,8 +73,8 @@ class KeyboardlessEditText : AppCompatEditText {
 
         // Needed to show cursor when user interacts with EditText so that the edit operations
         // still work. Without the cursor, the edit operations won't appear.
-        setOnClickListener(mOnClickListener)
-        setOnLongClickListener(mOnLongClickListener)
+        setOnClickListener(clickListener)
+        setOnLongClickListener(longClickListener)
 
         showSoftInputOnFocus = false // This is a hidden method in TextView.
         reflexSetShowSoftInputOnFocus(false) // Workaround.
@@ -104,8 +104,8 @@ class KeyboardlessEditText : AppCompatEditText {
     }
 
     private fun reflexSetShowSoftInputOnFocus(show: Boolean) {
-        if (mShowSoftInputOnFocus != null) {
-            invokeMethod(mShowSoftInputOnFocus, this, show)
+        if (showSoftInputOnFocusMethod != null) {
+            invokeMethod(showSoftInputOnFocusMethod, this, show)
         } else {
             // Use fallback method. Not tested.
             hideKeyboard()
@@ -113,10 +113,10 @@ class KeyboardlessEditText : AppCompatEditText {
     }
 
     companion object {
-        private val mShowSoftInputOnFocus = getMethod(
+        private val showSoftInputOnFocusMethod = getMethod(
             AppCompatEditText::class.java,
             "setShowSoftInputOnFocus",
-            Boolean::class.javaPrimitiveType
+            Boolean::class.javaPrimitiveType!!
         )
 
         /**
@@ -126,10 +126,10 @@ class KeyboardlessEditText : AppCompatEditText {
         private fun getMethod(
             cls: Class<*>,
             methodName: String,
-            vararg parametersType: Class<*>?
+            vararg parametersType: Class<*>
         ): Method? {
-            var sCls = cls.superclass
-            while (sCls != Any::class.java) {
+            var sCls: Class<*>? = cls.superclass
+            while (sCls != null && sCls != Any::class.java) {
                 try {
                     return sCls.getDeclaredMethod(methodName, *parametersType)
                 } catch (e: NoSuchMethodException) {
@@ -143,7 +143,7 @@ class KeyboardlessEditText : AppCompatEditText {
         /**
          * Returns results if available, otherwise returns null.
          */
-        fun invokeMethod(method: Method, receiver: Any?, vararg args: Any?) {
+        fun invokeMethod(method: Method, receiver: Any, vararg args: Any) {
             try {
                 method.invoke(receiver, *args)
             } catch (e: IllegalArgumentException) {

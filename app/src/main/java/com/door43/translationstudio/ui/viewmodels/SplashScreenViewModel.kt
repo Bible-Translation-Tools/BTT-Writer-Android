@@ -60,8 +60,8 @@ class SplashScreenViewModel(
 
     private fun evaluateStartupPath() {
         if (checkHardware()) {
-            val numProcessors = RuntimeWrapper.availableProcessors()
-            val maxMem = RuntimeWrapper.maxMemory()
+            val numProcessors = RuntimeWrapper.availableProcessors
+            val maxMem = RuntimeWrapper.maxMemory
 
             if (numProcessors < App.MINIMUM_NUMBER_OF_PROCESSORS || maxMem < App.MINIMUM_REQUIRED_RAM) {
                 _model.update { it.copy(showHardwareWarning = true) }

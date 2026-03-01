@@ -121,8 +121,8 @@ open class ReviewModeAdapter(
 
     override fun initializeListItems(
         listItems: List<ListItem>,
-        startingChapter: String,
-        startingChunk: String
+        startingChapter: String?,
+        startingChunk: String?
     ) {
         super.initializeListItems(listItems, startingChapter, startingChunk)
         setResourcesOpened(resourcesOpened)

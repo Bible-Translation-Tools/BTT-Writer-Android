@@ -2,13 +2,11 @@ package com.door43.util
 
 object RuntimeWrapper {
 
-    fun availableProcessors(): Int {
-        return Runtime.getRuntime().availableProcessors()
-    }
+    val availableProcessors: Int
+        get() = Runtime.getRuntime().availableProcessors()
 
-    fun maxMemory(): Long {
-        return Runtime.getRuntime().maxMemory()
-    }
+    val maxMemory: Long
+        get() = Runtime.getRuntime().maxMemory()
 
     fun exit(status: Int) {
         Runtime.getRuntime().exit(status)

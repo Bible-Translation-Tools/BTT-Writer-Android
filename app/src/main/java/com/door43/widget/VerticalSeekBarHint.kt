@@ -1,254 +1,257 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Rect;
-import android.util.AttributeSet;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.PopupWindow;
-import android.widget.SeekBar;
-import android.widget.TextView;
+import android.content.Context
+import android.graphics.Rect
+import android.util.AttributeSet
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.PopupWindow
+import android.widget.SeekBar
+import android.widget.TextView
+import androidx.core.content.withStyledAttributes
+import it.moondroid.seekbarhint.library.R
 
 /**
  * 7/1/2016
  * modified SeekBarHint to work with VerticalSeekBar
  */
-public class VerticalSeekBarHint extends com.door43.widget.VerticalSeekBar implements SeekBar.OnSeekBarChangeListener {
+class VerticalSeekBarHint : VerticalSeekBar, SeekBar.OnSeekBarChangeListener {
 
-    public static final String TAG = VerticalSeekBarHint.class.getSimpleName();
-    private int mPopupLayout;
-    private int mPopupWidth;
-    private int mPopupStyle;
-    public static final int POPUP_FIXED = 1;
-    public static final int POPUP_FOLLOW = 0;
+    private var popupLayout = 0
+    private var popupWidth = 0
+    var popupStyle = POPUP_FIXED
 
-    private PopupWindow mPopup;
-    private TextView mPopupTextView;
-    private int mXLocationOffset;
-    private int mYLocationOffset;
-    private Rect mSeekbarRectangle;
+    private lateinit var popup: PopupWindow
+    private lateinit var popupTextView: TextView
+    private var xLocationOffset = 0
+    private var yLocationOffset = 0
+    private val seekbarRectangle = Rect()
 
-    private OnSeekBarChangeListener mInternalListener;
-    private OnSeekBarChangeListener mExternalListener;
+    private var internalListener: OnSeekBarChangeListener? = null
+    private var externalListener: OnSeekBarChangeListener? = null
 
-    private OnSeekBarHintProgressChangeListener mProgressChangeListener;
+    private var progressChangeListener: OnSeekBarHintProgressChangeListener? = null
 
-    public interface OnSeekBarHintProgressChangeListener {
-        String onHintTextChanged(VerticalSeekBarHint seekBarHint, int progress);
+    fun interface OnSeekBarHintProgressChangeListener {
+        fun onHintTextChanged(seekBarHint: VerticalSeekBarHint, progress: Int): String?
     }
 
-    public VerticalSeekBarHint(Context context) {
-        super(context);
-        init(context, null);
+    constructor(context: Context) : super(context) {
+        init(context, null)
     }
 
-    public VerticalSeekBarHint(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle) {
+        init(context, attrs)
     }
 
-    public VerticalSeekBarHint(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context, attrs);
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        init(context, attrs)
     }
 
-    private void init(Context context, AttributeSet attrs) {
+    private fun init(context: Context, attrs: AttributeSet?) {
+        setOnSeekBarChangeListener(this)
 
-        setOnSeekBarChangeListener(this);
+        context.withStyledAttributes(
+            attrs,
+            R.styleable.SeekBarHint
+        ) {
+            popupLayout = getResourceId(
+                R.styleable.SeekBarHint_popupLayout,
+                R.layout.popup
+            )
+            popupWidth = getDimension(
+                R.styleable.SeekBarHint_popupWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT.toFloat()
+            ).toInt()
+            yLocationOffset = getDimension(
+                R.styleable.SeekBarHint_yOffset,
+                0f
+            ).toInt()
+            xLocationOffset = getDimension(
+                R.styleable.SeekBarHint_xOffset,
+                0f
+            ).toInt()
+            popupStyle = getInt(
+                R.styleable.SeekBarHint_popupStyle,
+                POPUP_FIXED
+            )
 
-        TypedArray a = context.obtainStyledAttributes(attrs, it.moondroid.seekbarhint.library.R.styleable.SeekBarHint);
-
-        mPopupLayout = a.getResourceId(it.moondroid.seekbarhint.library.R.styleable.SeekBarHint_popupLayout, it.moondroid.seekbarhint.library.R.layout.popup);
-        mPopupWidth = (int) a.getDimension(it.moondroid.seekbarhint.library.R.styleable.SeekBarHint_popupWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mYLocationOffset = (int) a.getDimension(it.moondroid.seekbarhint.library.R.styleable.SeekBarHint_yOffset, 0);
-        mXLocationOffset = (int) a.getDimension(it.moondroid.seekbarhint.library.R.styleable.SeekBarHint_xOffset, 0);
-        mPopupStyle = a.getInt(it.moondroid.seekbarhint.library.R.styleable.SeekBarHint_popupStyle, POPUP_FIXED);
-
-        a.recycle();
-        initHintPopup();
-    }
-
-    public void setPopupStyle(int style) {
-        mPopupStyle = style;
-    }
-
-    public int getPopupStyle() {
-        return mPopupStyle;
-    }
-
-    private void initHintPopup() {
-        LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        final View undoView = inflater.inflate(mPopupLayout, null);
-        mPopupTextView = (TextView) undoView.findViewById(it.moondroid.seekbarhint.library.R.id.text);
-
-        initPopupText();
-
-        mSeekbarRectangle = new Rect();
-        this.getGlobalVisibleRect(mSeekbarRectangle);
-//        Log.d(TAG,"initHintPopup: Rect=" + mSeekbarRectangle);
-
-        mPopup = new PopupWindow(undoView, mPopupWidth, ViewGroup.LayoutParams.WRAP_CONTENT, false);
-        mPopup.setAnimationStyle(it.moondroid.seekbarhint.library.R.style.fade_animation);
-    }
-
-    private void initPopupText() {
-        String popupText = null;
-        if (mProgressChangeListener != null) {
-            popupText = mProgressChangeListener.onHintTextChanged(this, getProgress());
         }
-        if(popupText == null) {
-            popupText = String.valueOf(getProgress());
+        initHintPopup()
+    }
+
+    private fun initHintPopup() {
+        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val undoView = inflater.inflate(popupLayout, null)
+        popupTextView = undoView.findViewById<View>(R.id.text) as TextView
+
+        initPopupText()
+
+        this.getGlobalVisibleRect(seekbarRectangle)
+        // Log.d(TAG,"initHintPopup: Rect=" + mSeekbarRectangle)
+
+        popup = PopupWindow(undoView, popupWidth, ViewGroup.LayoutParams.WRAP_CONTENT, false)
+        popup.animationStyle = R.style.fade_animation
+    }
+
+    private fun initPopupText() {
+        var popupText: String? = null
+        if (progressChangeListener != null) {
+            popupText = progressChangeListener!!.onHintTextChanged(this, progress)
         }
-        mPopupTextView.setText( popupText );
-//        Log.d(TAG,"initPopupText: popupText=" + popupText);
-    }
-
-    private void showPopup() {
-        getMeasurements();
-        initPopupText();
-
-        if (mPopupStyle == POPUP_FOLLOW) {
-            int xPosition = getXPosition();
-            int yPosition = getYPosition(this);
-//            Log.d(TAG,"showPopup: show Hint at =" + xPosition + "," + yPosition);
-            mPopup.showAtLocation(this, Gravity.LEFT | Gravity.BOTTOM, xPosition, yPosition);
+        if (popupText == null) {
+            popupText = progress.toString()
         }
-        if (mPopupStyle == POPUP_FIXED) {
-            int xPosition = getXPosition();
-            int yPosition = 0;
-//            Log.d(TAG,"showPopup: show Hint at =" + xPosition + "," + yPosition);
-            mPopup.showAtLocation(this, Gravity.LEFT | Gravity.CENTER, xPosition, yPosition);
+        popupTextView.text = popupText
+        // Log.d(TAG,"initPopupText: popupText=" + popupText)
+    }
+
+    private fun showPopup() {
+        getMeasurements()
+        initPopupText()
+
+        if (popupStyle == POPUP_FOLLOW) {
+            val xPosition = getXPosition()
+            val yPosition = getYPosition(this)
+            // Log.d(TAG,"showPopup: show Hint at =" + xPosition + "," + yPosition)
+            popup.showAtLocation(this, Gravity.LEFT or Gravity.BOTTOM, xPosition, yPosition)
         }
-    }
-
-    private void getMeasurements() {
-        mSeekbarRectangle = new Rect();
-        this.getGlobalVisibleRect(mSeekbarRectangle);
-//        Log.d(TAG,"getMeasurements: Rect=" + mSeekbarRectangle);
-    }
-
-    private int getXPosition() {
-        int textWidth = mPopupWidth;
-        float textCenter = (textWidth / 2.0f);
-        int x = (int) (this.getX() + textCenter + mXLocationOffset + this.getWidth());
-//        Log.d(TAG,"mXLocationOffset: " + mXLocationOffset);
-//        Log.d(TAG,"getWidth(): " + this.getWidth());
-//        Log.d(TAG,"getXPosition: " + x);
-        return x;
-    }
-
-    private int getYPosition(SeekBar seekBar) {
-        int y = mSeekbarRectangle.top + mYLocationOffset + (int) getYOffset(seekBar);
-//        Log.d(TAG,"mYLocationOffset: " + mYLocationOffset);
-//        Log.d(TAG,"getYPosition: " + y);
-        return y;
-    }
-
-    private void hidePopup() {
-        if (mPopup.isShowing()) {
-            mPopup.dismiss();
+        if (popupStyle == POPUP_FIXED) {
+            val xPosition = getXPosition()
+            val yPosition = 0
+            // Log.d(TAG,"showPopup: show Hint at =" + xPosition + "," + yPosition)
+            popup.showAtLocation(this, Gravity.LEFT or Gravity.CENTER, xPosition, yPosition)
         }
     }
 
-    public void setHintView(View view) {
-        //TODO
-        //initHintPopup();
+    private fun getMeasurements() {
+        // ZERO-ALLOCATION FIX: Reuse the existing rect to avoid allocating objects during drag updates
+        this.getGlobalVisibleRect(seekbarRectangle)
+        // Log.d(TAG,"getMeasurements: Rect=" + mSeekbarRectangle)
     }
 
-    @Override
-    public void setOnSeekBarChangeListener(OnSeekBarChangeListener l) {
-        if (mInternalListener == null) {
-            mInternalListener = l;
-            super.setOnSeekBarChangeListener(l);
+    private fun getXPosition(): Int {
+        val textWidth = popupWidth
+        val textCenter = textWidth / 2.0f
+        val x = (this.x + textCenter + xLocationOffset + this.width).toInt()
+        // Log.d(TAG,"mXLocationOffset: " + mXLocationOffset)
+        // Log.d(TAG,"getWidth(): " + this.getWidth())
+        // Log.d(TAG,"getXPosition: " + x)
+        return x
+    }
+
+    private fun getYPosition(seekBar: SeekBar): Int {
+        val y = seekbarRectangle.top + yLocationOffset + getYOffset(seekBar).toInt()
+        // Log.d(TAG,"mYLocationOffset: " + mYLocationOffset)
+        // Log.d(TAG,"getYPosition: " + y)
+        return y
+    }
+
+    private fun hidePopup() {
+        if (popup.isShowing) {
+            popup.dismiss()
+        }
+    }
+
+    fun setHintView(view: View?) {
+        // TODO
+        // initHintPopup()
+    }
+
+    override fun setOnSeekBarChangeListener(l: OnSeekBarChangeListener?) {
+        if (internalListener == null) {
+            internalListener = l
+            super.setOnSeekBarChangeListener(l)
         } else {
-            mExternalListener = l;
+            externalListener = l
         }
     }
 
-    public void setOnProgressChangeListener(OnSeekBarHintProgressChangeListener l) {
-        mProgressChangeListener = l;
+    fun setOnProgressChangeListener(l: OnSeekBarHintProgressChangeListener?) {
+        progressChangeListener = l
     }
 
+    override fun onProgressChanged(seekBar: SeekBar, progress: Int, b: Boolean) {
+        var popupText: String? = null
 
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
-        String popupText = null;
-
-        if (mProgressChangeListener != null) {
-            popupText = mProgressChangeListener.onHintTextChanged(this, progress);
+        if (progressChangeListener != null) {
+            popupText = progressChangeListener!!.onHintTextChanged(this, progress)
         }
 
-        if (mExternalListener != null) {
-            mExternalListener.onProgressChanged(seekBar, progress, b);
+        if (externalListener != null) {
+            externalListener!!.onProgressChanged(seekBar, progress, b)
         }
 
-        if(popupText == null) {
-            popupText = String.valueOf(getProgress());
+        if (popupText == null) {
+            popupText = this.progress.toString()
         }
-        mPopupTextView.setText( popupText );
-//        Log.d(TAG,"onProgressChanged: popupText=" + popupText);
+        popupTextView.text = popupText
+        // Log.d(TAG,"onProgressChanged: popupText=" + popupText)
 
-        if (mPopupStyle == POPUP_FOLLOW) {
-            getMeasurements();
-            int x = getXPosition();
-            int y = getYPosition(seekBar);
-            mPopup.update(x, y, -1, -1);
-//            Logger.i(TAG,"onProgressChanged: new Hint =" + x + "," + y);
+        if (popupStyle == POPUP_FOLLOW) {
+            getMeasurements()
+            val x = getXPosition()
+            val y = getYPosition(seekBar)
+            popup.update(x, y, -1, -1)
+            // Logger.i(TAG,"onProgressChanged: new Hint =" + x + "," + y)
         }
     }
 
-    private int limitProgress(SeekBar seekBar, int progress) {
-        int max = seekBar.getMax();
-        if(progress > max) {
-            progress = max;
+    private fun limitProgress(seekBar: SeekBar, progress: Int): Int {
+        var safeProgress = progress
+        val max = seekBar.max
+        if (safeProgress > max) {
+            safeProgress = max
         }
-        if(progress < 0) {
-            progress = 0;
+        if (safeProgress < 0) {
+            safeProgress = 0
         }
-        return progress;
+        return safeProgress
     }
 
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-        if (mExternalListener != null) {
-            mExternalListener.onStartTrackingTouch(seekBar);
+    override fun onStartTrackingTouch(seekBar: SeekBar) {
+        if (externalListener != null) {
+            externalListener!!.onStartTrackingTouch(seekBar)
         }
 
-        showPopup();
+        showPopup()
     }
 
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-        if (mExternalListener != null) {
-            mExternalListener.onStopTrackingTouch(seekBar);
+    override fun onStopTrackingTouch(seekBar: SeekBar) {
+        if (externalListener != null) {
+            externalListener!!.onStopTrackingTouch(seekBar)
         }
 
-        hidePopup();
+        hidePopup()
     }
 
-    private float getYOffset(SeekBar seekBar) {
-        float progress = (float) limitProgress( seekBar, seekBar.getProgress());
-//        Log.d(TAG,"getYOffset: progress=" + progress);
-        int seekBarMax = seekBar.getMax();
-//        Log.d(TAG,"getYOffset: seekBarMax=" + seekBarMax);
-        int seekBarHeight = seekBar.getHeight();
-        int seekBarThumbOffset = seekBar.getThumbOffset();
-//        Log.d(TAG,"getYOffset: seekBarThumbOffset=" + seekBarThumbOffset);
-        float maxScale = (float) (seekBarHeight - 2 * seekBarThumbOffset);
-        float position = (progress * maxScale / seekBarMax);
-//        Log.d(TAG,"getYOffset: position=" + position);
-        float offset = seekBarThumbOffset;
-//        Log.d(TAG,"getYOffset: offset=" + offset);
+    private fun getYOffset(seekBar: SeekBar): Float {
+        val progress = limitProgress(seekBar, seekBar.progress).toFloat()
+        // Log.d(TAG,"getYOffset: progress=" + progress)
+        val seekBarMax = seekBar.max
+        // Log.d(TAG,"getYOffset: seekBarMax=" + seekBarMax)
+        val seekBarHeight = seekBar.height
+        val seekBarThumbOffset = seekBar.thumbOffset
+        // Log.d(TAG,"getYOffset: seekBarThumbOffset=" + seekBarThumbOffset)
+        val maxScale = (seekBarHeight - 2 * seekBarThumbOffset).toFloat()
+        val position = progress * maxScale / seekBarMax
+        // Log.d(TAG,"getYOffset: position=" + position)
+        val offset = seekBarThumbOffset.toFloat()
+        // Log.d(TAG,"getYOffset: offset=" + offset)
 
-        int height = mPopup.getHeight();
-        int center = height / 2;
+        val height = popup.height
+        val center = height / 2
 
-        float newY = position + offset + center;
-//        Log.d(TAG,"getYOffset: newY=" + newY);
-        return newY;
+        val newY = position + offset + center
+        // Log.d(TAG,"getYOffset: newY=" + newY)
+        return newY
+    }
+
+    companion object {
+        val TAG: String = VerticalSeekBarHint::class.java.simpleName
+        const val POPUP_FIXED = 1
+        const val POPUP_FOLLOW = 0
     }
 }
-

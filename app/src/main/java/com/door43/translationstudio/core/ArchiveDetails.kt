@@ -2,6 +2,7 @@ package com.door43.translationstudio.core
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.animation.core.animateIntAsState
 import androidx.documentfile.provider.DocumentFile
 import com.door43.data.IDirectoryProvider
 import com.door43.util.FileUtilities.copyInputStreamToFile
@@ -152,20 +153,21 @@ class ArchiveDetails private constructor(
             preferredLocale: String
         ): ArchiveDetails? {
             if (archive.exists()) {
-                val ais = context.contentResolver.openInputStream(archive.uri)
-                val rawManifest = Zip.readInputStream(ais, MANIFEST_JSON)
-                if (rawManifest != null) {
-                    val json = JSONObject(rawManifest)
-                    if (json.has(PACKAGE_VERSION)) {
-                        val manifestVersion = json.getInt(PACKAGE_VERSION)
-                        when (manifestVersion) {
-                            1 -> return parseV1Manifest(json)
-                            2 -> context.contentResolver.openInputStream(archive.uri)?.let {
-                                return parseV2Manifest(
-                                    it,
-                                    json,
-                                    preferredLocale
-                                )
+                context.contentResolver.openInputStream(archive.uri)?.let { ais ->
+                    val rawManifest = Zip.readInputStream(ais, MANIFEST_JSON)
+                    if (rawManifest != null) {
+                        val json = JSONObject(rawManifest)
+                        if (json.has(PACKAGE_VERSION)) {
+                            val manifestVersion = json.getInt(PACKAGE_VERSION)
+                            when (manifestVersion) {
+                                1 -> return parseV1Manifest(json)
+                                2 -> context.contentResolver.openInputStream(archive.uri)?.let {
+                                    return parseV2Manifest(
+                                        it,
+                                        json,
+                                        preferredLocale
+                                    )
+                                }
                             }
                         }
                     }

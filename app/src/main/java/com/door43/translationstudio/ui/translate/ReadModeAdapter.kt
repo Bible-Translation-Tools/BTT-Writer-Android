@@ -62,8 +62,8 @@ class ReadModeAdapter(
 
     override fun initializeListItems(
         listItems: List<ListItem>,
-        startingChapter: String,
-        startingChunk: String
+        startingChapter: String?,
+        startingChunk: String?
     ) {
         layoutBuildNumber++ // force resetting of fonts
         chunks.clear()

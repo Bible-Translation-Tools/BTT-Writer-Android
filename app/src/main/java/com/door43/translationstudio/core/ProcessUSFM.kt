@@ -587,26 +587,27 @@ class ProcessUSFM {
         updateStatus(R.string.initializing_import)
 
         try {
-            Zip.unzipFromStream(stream, tempSrc)
+            tempSrc?.let { src ->
+                Zip.unzipFromStream(stream, src)
+                addFilesInFolder(src)
 
-            addFilesInFolder(tempSrc)
+                Logger.i(TAG, "found files: " + TextUtils.join("\n", sourceFiles))
 
-            Logger.i(TAG, "found files: " + TextUtils.join("\n", sourceFiles))
-
-            currentBook = 0
-            while (currentBook < sourceFiles.size) {
-                currentChapter = 0
-                val file = sourceFiles[currentBook]
-                val name = file.name
-                updateStatus(R.string.found_book, name)
-                success = processBook(file)
-                if (!success) {
-                    addError(R.string.could_not_parse, getShortFilePath(file.toString()))
+                currentBook = 0
+                while (currentBook < sourceFiles.size) {
+                    currentChapter = 0
+                    val file = sourceFiles[currentBook]
+                    val name = file.name
+                    updateStatus(R.string.found_book, name)
+                    success = processBook(file)
+                    if (!success) {
+                        addError(R.string.could_not_parse, getShortFilePath(file.toString()))
+                    }
+                    successOverall = successOverall && success
+                    currentBook++
                 }
-                successOverall = successOverall && success
-                currentBook++
+                currentBook = sourceFiles.size - 1 // set to last book
             }
-            currentBook = sourceFiles.size - 1 // set to last book
         } catch (e: Exception) {
             Logger.e(TAG, "error reading stream ", e)
             addError(R.string.zip_read_error)

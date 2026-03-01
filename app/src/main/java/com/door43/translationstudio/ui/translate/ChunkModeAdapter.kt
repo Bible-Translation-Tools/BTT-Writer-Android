@@ -60,8 +60,8 @@ class ChunkModeAdapter(
 
     override fun initializeListItems(
         listItems: List<ListItem>,
-        startingChapter: String,
-        startingChunk: String
+        startingChapter: String?,
+        startingChunk: String?
     ) {
         super.initializeListItems(listItems, startingChapter, startingChunk)
         triggerNotifyDataSetChanged()
@@ -249,7 +249,7 @@ class ChunkModeAdapter(
                 holder.binding.targetTranslationBody.isEnabled = true
                 holder.binding.targetTranslationBody.isFocusable = true
                 holder.binding.targetTranslationBody.isFocusableInTouchMode = true
-                holder.binding.targetTranslationBody.setEnableLines(true)
+                holder.binding.targetTranslationBody.enableLines = true
 
                 item.isComplete = false
                 editTarget(holder.binding.targetTranslationBody, item)
@@ -686,14 +686,14 @@ class ChunkModeAdapter(
 
         fun setCardStatus(finished: Boolean, closed: Boolean) {
             if (closed) {
-                binding.targetTranslationBody.setEnableLines(false)
+                binding.targetTranslationBody.enableLines = false
                 if (finished) {
                     binding.targetTranslationInnerCard.setBackgroundResource(R.color.card_background_color)
                 } else {
                     binding.targetTranslationInnerCard.setBackgroundResource(R.drawable.paper_repeating)
                 }
             } else {
-                binding.targetTranslationBody.setEnableLines(true)
+                binding.targetTranslationBody.enableLines = true
                 binding.targetTranslationInnerCard.setBackgroundResource(R.color.card_background_color)
             }
         }

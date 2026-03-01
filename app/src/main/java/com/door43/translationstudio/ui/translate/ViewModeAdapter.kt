@@ -198,8 +198,8 @@ abstract class ViewModeAdapter<VH : RecyclerView.ViewHolder> : RecyclerView.Adap
      */
     open fun initializeListItems(
         listItems: List<ListItem>,
-        startingChapter: String,
-        startingChunk: String
+        startingChapter: String?,
+        startingChunk: String?
     ) {
         layoutBuildNumber++ // force resetting of fonts
         items.clear()

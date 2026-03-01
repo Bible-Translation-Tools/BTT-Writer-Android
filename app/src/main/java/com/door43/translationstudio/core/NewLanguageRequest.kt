@@ -206,7 +206,7 @@ class NewLanguageRequest private constructor(
             val time = System.currentTimeMillis()
             val uniqueString = udid + time
             val hash = Security.sha1(uniqueString)
-            val languageCode = LANGUAGE_PREFIX + hash.substring(0, 6)
+            val languageCode = LANGUAGE_PREFIX + (hash?.substring(0, 6) ?: "invalid_hash")
 
             this.requestUUID = UUID.randomUUID().toString()
             this.tempLanguageCode = languageCode

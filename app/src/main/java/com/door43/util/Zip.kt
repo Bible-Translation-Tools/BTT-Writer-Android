@@ -1,29 +1,23 @@
-package com.door43.util;
+package com.door43.util
 
-import androidx.annotation.Nullable;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 /**
- * This class handles zipping and un-zipping files and directories
+ * This class handles zipping and unzipping files and directories
  */
-public class Zip {
+object Zip {
     /**
      * Creates a zip archive
      * http://stackoverflow.com/questions/6683600/zip-compress-a-folder-full-of-files-on-android
@@ -31,29 +25,32 @@ public class Zip {
      * @param destPath
      * @throws java.io.IOException
      */
-    public static void zip(String sourcePath, String destPath) throws IOException {
-        final int BUFFER = 2048;
-        File sourceFile = new File(sourcePath);
-        BufferedInputStream origin = null;
-        FileOutputStream dest = new FileOutputStream(destPath);
-        ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-        if (sourceFile.isDirectory()) {
+    @Throws(IOException::class)
+    fun zip(sourcePath: String, destPath: String) {
+        val buffer = 2048
+        val sourceFile = File(sourcePath)
+        val dest = FileOutputStream(destPath)
+        val out = ZipOutputStream(BufferedOutputStream(dest))
+
+        if (sourceFile.isDirectory) {
             // TRICKY: we add 1 to the base path length to exclude the leading path separator
-            zipSubFolder(out, sourceFile, sourceFile.getParent().length() + 1);
+            zipSubFolder(out, sourceFile, sourceFile.parent!!.length + 1)
         } else {
-            byte data[] = new byte[BUFFER];
-            FileInputStream fi = new FileInputStream(sourcePath);
-            origin = new BufferedInputStream(fi, BUFFER);
-            String[] segments = sourcePath.split("/");
-            String lastPathComponent = segments[segments.length - 1];
-            ZipEntry entry = new ZipEntry(lastPathComponent);
-            out.putNextEntry(entry);
-            int count;
-            while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                out.write(data, 0, count);
+            val data = ByteArray(buffer)
+            FileInputStream(sourcePath).use { fi ->
+                BufferedInputStream(fi, buffer).use { origin ->
+                    val segments = sourcePath.split("/".toRegex()).toTypedArray()
+                    val lastPathComponent = segments[segments.size - 1]
+                    val entry = ZipEntry(lastPathComponent)
+                    out.putNextEntry(entry)
+                    var count: Int
+                    while (origin.read(data, 0, buffer).also { count = it } != -1) {
+                        out.write(data, 0, count)
+                    }
+                }
             }
         }
-        out.close();
+        out.close()
     }
 
     /**
@@ -63,63 +60,63 @@ public class Zip {
      * @param files
      * @throws IOException
      */
-    @Deprecated
-    public static void addFilesToExistingZip(File zipFile, File[] files) throws IOException {
+    @Deprecated("")
+    @Throws(IOException::class)
+    fun addFilesToExistingZip(zipFile: File, files: Array<File>) {
         // get a temp file
-        File tempFile = File.createTempFile(zipFile.getName(), null);
+        val tempFile = File.createTempFile(zipFile.name, null)
         // delete it, otherwise you cannot rename your existing zip to it.
-        tempFile.delete();
+        tempFile.delete()
 
-        boolean renameOk=zipFile.renameTo(tempFile);
-        if (!renameOk)
-        {
-            throw new RuntimeException("could not rename the file "+zipFile.getAbsolutePath()+" to "+tempFile.getAbsolutePath());
+        val renameOk = zipFile.renameTo(tempFile)
+        if (!renameOk) {
+            throw RuntimeException("could not rename the file " + zipFile.absolutePath + " to " + tempFile.absolutePath)
         }
-        byte[] buf = new byte[1024];
+        val buf = ByteArray(1024)
 
-        ZipInputStream zin = new ZipInputStream(new FileInputStream(tempFile));
-        ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipFile));
+        val zin = ZipInputStream(FileInputStream(tempFile))
+        val out = ZipOutputStream(FileOutputStream(zipFile))
 
-        ZipEntry entry = zin.getNextEntry();
+        var entry = zin.nextEntry
         while (entry != null) {
-            String name = entry.getName();
-            boolean notInFiles = true;
-            for (File f : files) {
-                if (f.getName().equals(name)) {
-                    notInFiles = false;
-                    break;
+            val name = entry.name
+            var notInFiles = true
+            for (f in files) {
+                if (f.name == name) {
+                    notInFiles = false
+                    break
                 }
             }
             if (notInFiles) {
                 // Add ZIP entry to output stream.
-                out.putNextEntry(new ZipEntry(name));
+                out.putNextEntry(ZipEntry(name))
                 // Transfer bytes from the ZIP file to the output file
-                int len;
-                while ((len = zin.read(buf)) > 0) {
-                    out.write(buf, 0, len);
+                var len: Int
+                while (zin.read(buf).also { len = it } > 0) {
+                    out.write(buf, 0, len)
                 }
             }
-            entry = zin.getNextEntry();
+            entry = zin.nextEntry
         }
         // Close the streams
-        zin.close();
+        zin.close()
         // Compress the files
-        for (int i = 0; i < files.length; i++) {
-            InputStream in = new FileInputStream(files[i]);
-            // Add ZIP entry to output stream.
-            out.putNextEntry(new ZipEntry(files[i].getName()));
-            // Transfer bytes from the file to the ZIP file
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
+        for (i in files.indices) {
+            FileInputStream(files[i]).use { `in` ->
+                // Add ZIP entry to output stream.
+                out.putNextEntry(ZipEntry(files[i].name))
+                // Transfer bytes from the file to the ZIP file
+                var len: Int
+                while (`in`.read(buf).also { len = it } > 0) {
+                    out.write(buf, 0, len)
+                }
+                // Complete the entry
+                out.closeEntry()
             }
-            // Complete the entry
-            out.closeEntry();
-            in.close();
         }
         // Complete the ZIP file
-        out.close();
-        tempFile.delete();
+        out.close()
+        tempFile.delete()
     }
 
     /**
@@ -127,9 +124,10 @@ public class Zip {
      * @param files
      * @param archivePath - destination file
      */
-    public static void zip(File[] files, File archivePath) throws IOException {
-        FileOutputStream dest = new FileOutputStream(archivePath);
-        zipToStream(files, dest);
+    @Throws(IOException::class)
+    fun zip(files: Array<File>, archivePath: File) {
+        val dest = FileOutputStream(archivePath)
+        zipToStream(files, dest)
     }
 
     /**
@@ -137,32 +135,33 @@ public class Zip {
      * @param files
      * @param dest - destination output stream
      */
-    public static void zipToStream(File[] files, OutputStream dest) throws IOException {
-        final int BUFFER = 2048;
-        BufferedInputStream origin = null;
-        ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(
-                dest));
+    @Throws(IOException::class)
+    fun zipToStream(files: Array<File>, dest: OutputStream) {
+        val buffer = 2048
+        val out = ZipOutputStream(BufferedOutputStream(dest))
 
-        for(File f:files) {
-            if (f.isDirectory()) {
+        for (f in files) {
+            if (f.isDirectory) {
                 // TRICKY: we add 1 to the base path length to exclude the leading path separator
-                zipSubFolder(out, f, f.getParent().length() + 1);
+                zipSubFolder(out, f, f.parent!!.length + 1)
             } else {
-                byte data[] = new byte[BUFFER];
-                FileInputStream fi = new FileInputStream(f);
-                origin = new BufferedInputStream(fi, BUFFER);
-                String[] segments = f.getAbsolutePath().split("/");
-                String lastPathComponent = segments[segments.length - 1];
-                ZipEntry entry = new ZipEntry(lastPathComponent);
-                out.putNextEntry(entry);
-                int count;
-                while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                    out.write(data, 0, count);
+                val data = ByteArray(buffer)
+                FileInputStream(f).use { fi ->
+                    BufferedInputStream(fi, buffer).use { origin ->
+                        val segments = f.absolutePath.split("/".toRegex()).toTypedArray()
+                        val lastPathComponent = segments[segments.size - 1]
+                        val entry = ZipEntry(lastPathComponent)
+                        out.putNextEntry(entry)
+                        var count: Int
+                        while (origin.read(data, 0, buffer).also { count = it } != -1) {
+                            out.write(data, 0, count)
+                        }
+                    }
                 }
             }
         }
 
-        out.close();
+        out.close()
     }
 
     /**
@@ -172,35 +171,36 @@ public class Zip {
      * @param archivePath
      * @throws IOException
      */
-    public static void zip(Map<File, String> files, File archivePath) throws IOException {
-        final int BUFFER = 2048;
-        BufferedInputStream origin = null;
-        FileOutputStream dest = new FileOutputStream(archivePath);
-        ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+    @Throws(IOException::class)
+    fun zip(files: MutableMap<File, String>, archivePath: File) {
+        val buffer = 2048
+        val dest = FileOutputStream(archivePath)
+        val out = ZipOutputStream(BufferedOutputStream(dest))
 
-        Iterator it = files.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry<File, String> pair = (Map.Entry)it.next();
+        val it = files.entries.iterator()
+        while (it.hasNext()) {
+            val pair = it.next()
             // clean the target path
-            pair.setValue(pair.getValue().replaceAll("^/+", "").replace("/*$", "") + "/");
-            if (pair.getKey().isDirectory()) {
+            pair.setValue(pair.value.replace("^/+".toRegex(), "").replace("/*$".toRegex(), "") + "/")
+            if (pair.key.isDirectory) {
                 // TRICKY: we add 1 to the base path length to exclude the leading path separator
-                zipSubFolder(out, pair.getKey(), pair.getValue() + pair.getKey().getName());
+                zipSubFolder(out, pair.key, pair.value + pair.key.name)
             } else {
-                byte data[] = new byte[BUFFER];
-                FileInputStream fi = new FileInputStream(pair.getKey());
-                origin = new BufferedInputStream(fi, BUFFER);
-                String relativePath = pair.getValue() + pair.getKey().getName();
-                ZipEntry entry = new ZipEntry(pair.getValue());
-                out.putNextEntry(entry);
-                int count;
-                while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                    out.write(data, 0, count);
+                val data = ByteArray(buffer)
+                FileInputStream(pair.key).use { fi ->
+                    BufferedInputStream(fi, buffer).use { origin ->
+                        val entry = ZipEntry(pair.value)
+                        out.putNextEntry(entry)
+                        var count: Int
+                        while (origin.read(data, 0, buffer).also { count = it } != -1) {
+                            out.write(data, 0, count)
+                        }
+                    }
                 }
             }
         }
 
-        out.close();
+        out.close()
     }
 
     /**
@@ -210,27 +210,28 @@ public class Zip {
      * @param basePathLength
      * @throws IOException
      */
-    private static void zipSubFolder(ZipOutputStream out, File folder, int basePathLength) throws IOException {
-        final int BUFFER = 2048;
-        File[] fileList = folder.listFiles();
-        BufferedInputStream origin = null;
-        if(fileList == null) return; // skip empty folders
-        for (File file : fileList) {
-            if (file.isDirectory()) {
-                zipSubFolder(out, file, basePathLength);
+    @Throws(IOException::class)
+    private fun zipSubFolder(out: ZipOutputStream, folder: File, basePathLength: Int) {
+        val buffer = 2048
+        val fileList = folder.listFiles() ?: return // skip empty folders
+
+        for (file in fileList) {
+            if (file.isDirectory) {
+                zipSubFolder(out, file, basePathLength)
             } else {
-                byte data[] = new byte[BUFFER];
-                String unmodifiedFilePath = file.getPath();
-                String relativePath = unmodifiedFilePath.substring(basePathLength);
-                FileInputStream fi = new FileInputStream(unmodifiedFilePath);
-                origin = new BufferedInputStream(fi, BUFFER);
-                ZipEntry entry = new ZipEntry(relativePath);
-                out.putNextEntry(entry);
-                int count;
-                while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                    out.write(data, 0, count);
+                val data = ByteArray(buffer)
+                val unmodifiedFilePath = file.path
+                val relativePath = unmodifiedFilePath.substring(basePathLength)
+                FileInputStream(unmodifiedFilePath).use { fi ->
+                    BufferedInputStream(fi, buffer).use { origin ->
+                        val entry = ZipEntry(relativePath)
+                        out.putNextEntry(entry)
+                        var count: Int
+                        while (origin.read(data, 0, buffer).also { count = it } != -1) {
+                            out.write(data, 0, count)
+                        }
+                    }
                 }
-                origin.close();
             }
         }
     }
@@ -242,24 +243,26 @@ public class Zip {
      * @param relativePath
      * @throws IOException
      */
-    private static void zipSubFolder(ZipOutputStream out, File folder, String relativePath) throws IOException {
-        final int BUFFER = 2048;
-        File[] fileList = folder.listFiles();
-        BufferedInputStream origin = null;
-        for (File file : fileList) {
-            if (file.isDirectory()) {
-                zipSubFolder(out, file, relativePath + "/" + file.getName());
+    @Throws(IOException::class)
+    private fun zipSubFolder(out: ZipOutputStream, folder: File, relativePath: String) {
+        val buffer = 2048
+        val fileList = folder.listFiles() ?: return
+
+        for (file in fileList) {
+            if (file.isDirectory) {
+                zipSubFolder(out, file, relativePath + "/" + file.name)
             } else {
-                byte data[] = new byte[BUFFER];
-                FileInputStream fi = new FileInputStream(file.getPath());
-                origin = new BufferedInputStream(fi, BUFFER);
-                ZipEntry entry = new ZipEntry(relativePath + "/" + file.getName());
-                out.putNextEntry(entry);
-                int count;
-                while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                    out.write(data, 0, count);
+                val data = ByteArray(buffer)
+                FileInputStream(file.path).use { fi ->
+                    BufferedInputStream(fi, buffer).use { origin ->
+                        val entry = ZipEntry(relativePath + "/" + file.name)
+                        out.putNextEntry(entry)
+                        var count: Int
+                        while (origin.read(data, 0, buffer).also { count = it } != -1) {
+                            out.write(data, 0, count)
+                        }
+                    }
                 }
-                origin.close();
             }
         }
     }
@@ -269,36 +272,36 @@ public class Zip {
      * @param zipPath
      * @throws IOException
      */
-    public static void unzip(String zipPath, String destPath) throws IOException {
-        InputStream is;
-        ZipInputStream zis;
-        String filename;
-        ZipEntry ze;
-        int count;
-        byte[] buffer = new byte[1024];
-        is = new FileInputStream(zipPath);
-        zis = new ZipInputStream(new BufferedInputStream(is));
+    @Throws(IOException::class)
+    fun unzip(zipPath: String, destPath: String) {
+        val buffer = ByteArray(1024)
+        val `is` = FileInputStream(zipPath)
+        val zis = ZipInputStream(BufferedInputStream(`is`))
 
-        File destDir = new File(destPath);
-        destDir.mkdirs();
+        val destDir = File(destPath)
+        destDir.mkdirs()
 
-        while ((ze = zis.getNextEntry()) != null) {
-            filename = ze.getName();
-            File f = new File(destPath, filename);
-            if (ze.isDirectory()) {
-                f.mkdirs();
-                continue;
+        var ze: ZipEntry? = zis.nextEntry
+        while (ze != null) {
+            val filename = ze.name
+            val f = File(destPath, filename)
+            if (ze.isDirectory) {
+                f.mkdirs()
+                ze = zis.nextEntry
+                continue
             }
-            f.getParentFile().mkdirs();
-            f.createNewFile();
-            FileOutputStream fout = new FileOutputStream(f.getAbsolutePath());
-            while ((count = zis.read(buffer)) != -1) {
-                fout.write(buffer, 0, count);
+            f.parentFile?.mkdirs()
+            f.createNewFile()
+            FileOutputStream(f.absolutePath).use { fout ->
+                var count: Int
+                while (zis.read(buffer).also { count = it } != -1) {
+                    fout.write(buffer, 0, count)
+                }
             }
-            fout.close();
-            zis.closeEntry();
+            zis.closeEntry()
+            ze = zis.nextEntry
         }
-        zis.close();
+        zis.close()
     }
 
     /**
@@ -307,14 +310,10 @@ public class Zip {
      * @param destDir - place to store unzipped file
      * @throws IOException
      */
-    public static void unzip(File zipArchive, File destDir) throws IOException {
-        InputStream is;
-        ZipInputStream zis;
-        String filename;
-        ZipEntry ze;
-        int count;
-        is = new FileInputStream(zipArchive);
-        unzipFromStream(is, destDir);
+    @Throws(IOException::class)
+    fun unzip(zipArchive: File, destDir: File) {
+        val `is`: InputStream = FileInputStream(zipArchive)
+        unzipFromStream(`is`, destDir)
     }
 
     /**
@@ -323,33 +322,34 @@ public class Zip {
      * @param destDir - place to store unzipped file
      * @throws IOException
      */
-    public static void unzipFromStream(InputStream is, File destDir) throws IOException {
-        byte[] buffer = new byte[1024];
-        ZipInputStream zis;
-        ZipEntry ze;
-        String filename;
-        int count;
-        zis = new ZipInputStream(new BufferedInputStream(is));
+    @Throws(IOException::class)
+    fun unzipFromStream(`is`: InputStream, destDir: File) {
+        val buffer = ByteArray(1024)
+        val zis = ZipInputStream(BufferedInputStream(`is`))
 
-        destDir.mkdirs();
+        destDir.mkdirs()
 
-        while ((ze = zis.getNextEntry()) != null) {
-            filename = ze.getName();
-            File f = new File(destDir, filename);
-            if (ze.isDirectory()) {
-                f.mkdirs();
-                continue;
+        var ze: ZipEntry? = zis.nextEntry
+        while (ze != null) {
+            val filename = ze.name
+            val f = File(destDir, filename)
+            if (ze.isDirectory) {
+                f.mkdirs()
+                ze = zis.nextEntry
+                continue
             }
-            f.getParentFile().mkdirs();
-            f.createNewFile();
-            FileOutputStream fout = new FileOutputStream(f.getAbsolutePath());
-            while ((count = zis.read(buffer)) != -1) {
-                fout.write(buffer, 0, count);
+            f.parentFile?.mkdirs()
+            f.createNewFile()
+            FileOutputStream(f.absolutePath).use { fout ->
+                var count: Int
+                while (zis.read(buffer).also { count = it } != -1) {
+                    fout.write(buffer, 0, count)
+                }
             }
-            fout.close();
-            zis.closeEntry();
+            zis.closeEntry()
+            ze = zis.nextEntry
         }
-        zis.close();
+        zis.close()
     }
 
     /**
@@ -358,23 +358,24 @@ public class Zip {
      * @return
      * @throws IOException
      */
-    public static String[] list(File zipArchive) throws IOException {
-        InputStream is;
-        ZipInputStream zis;
-        ZipEntry ze;
-        is = new FileInputStream(zipArchive);
-        zis = new ZipInputStream(new BufferedInputStream(is));
+    @Throws(IOException::class)
+    fun list(zipArchive: File): Array<String> {
+        val `is`: InputStream = FileInputStream(zipArchive)
+        val zis = ZipInputStream(BufferedInputStream(`is`))
 
-        List<String> files = new ArrayList<>();
-        while ((ze = zis.getNextEntry()) != null) {
-            files.add(ze.getName());
-            if (ze.isDirectory()) {
-                continue;
+        val files = ArrayList<String>()
+        var ze: ZipEntry? = zis.nextEntry
+        while (ze != null) {
+            files.add(ze.name)
+            if (ze.isDirectory) {
+                ze = zis.nextEntry
+                continue
             }
-            zis.closeEntry();
+            zis.closeEntry()
+            ze = zis.nextEntry
         }
-        zis.close();
-        return files.toArray(new String[files.size()]);
+        zis.close()
+        return files.toTypedArray()
     }
 
     /**
@@ -383,10 +384,10 @@ public class Zip {
      * @param path
      * @return
      */
-    public static String read(File zipArchive, String path) throws IOException {
-        InputStream is;
-        is = new FileInputStream(zipArchive);
-        return readInputStream(is, path);
+    @Throws(IOException::class)
+    fun read(zipArchive: File, path: String): String? {
+        val `is`: InputStream = FileInputStream(zipArchive)
+        return readInputStream(`is`, path)
     }
 
     /**
@@ -394,33 +395,38 @@ public class Zip {
      * @param zipStream
      * @param path
      * @return
-     */    @Nullable
-    public static String readInputStream(InputStream zipStream, String path) throws IOException {
-        String contents = null;
-        ZipInputStream zis;
-        ZipEntry ze;
-        zis = new ZipInputStream(new BufferedInputStream(zipStream));
+     */
+    @Throws(IOException::class)
+    fun readInputStream(zipStream: InputStream, path: String): String? {
+        var contents: String? = null
+        val zis = ZipInputStream(BufferedInputStream(zipStream))
 
-        while ((ze = zis.getNextEntry()) != null) {
-            if (ze.isDirectory()) {
-                continue;
+        var ze: ZipEntry? = zis.nextEntry
+        while (ze != null) {
+            if (ze.isDirectory) {
+                ze = zis.nextEntry
+                continue
             }
-            if(ze.getName().equalsIgnoreCase(path)) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(zis));
-                StringBuilder sb = new StringBuilder();
+            if (ze.name.equals(path, ignoreCase = true)) {
+                // We use standard Reader, but we do not use Kotlin's .useLines or .use{} block here
+                // because it would close the ZipInputStream and break the loop.
+                val reader = BufferedReader(InputStreamReader(zis))
+                val sb = StringBuilder()
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line).append('\n');
+                var line: String? = reader.readLine()
+                while (line != null) {
+                    sb.append(line).append('\n')
+                    line = reader.readLine()
                 }
-                contents = sb.toString();
+                contents = sb.toString()
             }
-            zis.closeEntry();
-            if(contents != null) {
-                break;
+            zis.closeEntry()
+            if (contents != null) {
+                break
             }
+            ze = zis.nextEntry
         }
-        zis.close();
-        return contents;
+        zis.close()
+        return contents
     }
 }

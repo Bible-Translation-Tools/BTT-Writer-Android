@@ -19,7 +19,6 @@ import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import org.koin.android.ext.android.inject
 import java.security.InvalidParameterException
-import kotlin.getValue
 
 /**
  * Created by joel on 2/19/2016.
@@ -101,10 +100,10 @@ class ContributorDialog : DialogFragment() {
                     .setPositiveButton(
                         R.string.confirm
                     ) { _, _ ->
-                        targetTranslation!!.removeContributor(nativeSpeaker)
-                        if (listener != null) {
-                            listener!!.onClick(deleteButton)
+                        nativeSpeaker?.let { speaker ->
+                            targetTranslation?.removeContributor(speaker)
                         }
+                        listener?.onClick(deleteButton)
                         dismiss()
                     }
                     .setNegativeButton(R.string.title_cancel, null)
@@ -132,8 +131,10 @@ class ContributorDialog : DialogFragment() {
                             snack.show()
                         }
                     } else {
-                        targetTranslation!!.removeContributor(nativeSpeaker) // remove old name
-                        targetTranslation!!.addContributor(NativeSpeaker(name))
+                        nativeSpeaker?.let { speaker ->
+                            targetTranslation?.removeContributor(speaker) // remove old name
+                        }
+                        targetTranslation?.addContributor(NativeSpeaker(name))
                         listener?.onClick(saveButton)
                         dismiss()
                     }

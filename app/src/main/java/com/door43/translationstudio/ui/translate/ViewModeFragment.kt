@@ -222,7 +222,7 @@ abstract class ViewModeFragment : BaseFragment(),
                     if (chunkSlug == null) {
                         chunkSlug = viewModel.getLastFocusFrameId()
                     }
-                    it.initializeListItems(items, chapterSlug!!, chunkSlug!!)
+                    it.initializeListItems(items, chapterSlug, chunkSlug)
                     doScrollToPosition(it.startPosition, 0)
                 }
             } else {

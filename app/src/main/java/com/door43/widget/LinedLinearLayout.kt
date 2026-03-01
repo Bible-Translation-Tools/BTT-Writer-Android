@@ -1,103 +1,94 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.os.Build;
-import androidx.annotation.RequiresApi;
-import android.util.AttributeSet;
-import android.widget.LinearLayout;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.util.AttributeSet
+import android.widget.LinearLayout
 
 /**
  * Created by blm on 12/7/2015.
  * LinearLayout with drawn lines
  */
-public class LinedLinearLayout extends LinearLayout {
-    private Rect mRect;
-    private Paint mPaint;
-    private boolean mEnableLines = false;
-    private int mLineHeight = 0;
-    private int mYOffset = -1;
-    private int mFirstLineY = -1;
-    private LinedEditText mEditText = null;
+class LinedLinearLayout : LinearLayout {
+    private var rect = Rect()
+    private var paint = Paint()
+    private var lineHeight = 0
+    private var yOffset = -1
+    private var firstLineY = -1
+    private var editText: LinedEditText? = null
 
-    public LinedLinearLayout(Context context) {
-        super(context);
-        drawInit();
+    // ZERO-ALLOCATION FIX: Buffer for view coordinates to avoid allocating IntArray inside onDraw
+    private val locationBuffer = IntArray(2)
+
+    constructor(context: Context) : super(context) {
+        drawInit()
     }
 
-    public LinedLinearLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        drawInit();
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+        drawInit()
     }
 
-    public LinedLinearLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        drawInit();
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+        drawInit()
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public LinedLinearLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        drawInit();
-    }
+    override fun onDraw(canvas: Canvas) {
+        // val `var` = true // Removed unused boolean from original Java code to clean up warnings
 
-    @Override
-    protected void onDraw(Canvas canvas) {
+        if (enableLines) {
+            val currentEditText = editText
+            if (currentEditText != null) {
+                // get view position on screen without allocating a new array
+                this.getLocationOnScreen(locationBuffer)
+                // val viewX = locationBuffer[0]
+                val viewY = locationBuffer[1]
 
-        boolean var = true;
+                // ZERO-ALLOCATION FIX: Reuse the existing rect to get the clip bounds
+                canvas.getClipBounds(rect)
+                val bottom = rect.bottom
 
-        if (mEnableLines) {
-            if (null != mEditText) {
+                val relativeY = currentEditText.yLocation - viewY
+                val distBetweenLines = currentEditText.distanceBetweenLines
+                val offset = distBetweenLines / LinedEditText.relativeOffset // offset so that text is above line
+                var position = currentEditText.linePosition + relativeY + offset
 
-                // get view position on screen
-                int[] l = new int[2];
-                this.getLocationOnScreen(l);
-//            int viewX = l[0];
-                int viewY = l[1];
-
-                Rect bounds = canvas.getClipBounds();
-                int bottom = bounds.bottom;
-
-                int relativeY = mEditText.getYlocation() - viewY;
-                int lineHeight = mEditText.getDistanceBetweenLines();
-                int offset = lineHeight / LinedEditText.mRelativeOffset; // offset so that text is above line
-                int position = mEditText.getLinePosition() + relativeY + offset;
-
-                for (int i = 0; i < 100; i++) {
-
+                for (i in 0..99) {
                     if (position > bottom) {
-                        break;
+                        break
                     }
 
-                    canvas.drawLine(bounds.left, position, bounds.right, position, mPaint);
+                    canvas.drawLine(
+                        rect.left.toFloat(),
+                        position.toFloat(),
+                        rect.right.toFloat(),
+                        position.toFloat(),
+                        paint
+                    )
 
-                    position += lineHeight;
+                    position += distBetweenLines
                 }
             }
         }
 
-        super.onDraw(canvas);
+        super.onDraw(canvas)
     }
 
-    public boolean isEnableLines() {
-        return mEnableLines;
+    var enableLines: Boolean = false
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    private fun drawInit() {
+        rect = Rect()
+        paint = Paint()
+        paint.style = Paint.Style.STROKE
+        paint.color = -0x3b1801 // 0xFFC4E7FF converted to 32-bit signed int
     }
 
-    public void setEnableLines(boolean mEnableLines) {
-        this.mEnableLines = mEnableLines;
-        this.invalidate();
-    }
-
-    private void drawInit() {
-        mRect = new Rect();
-        mPaint = new Paint();
-        mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setColor(0xFFC4E7FF); // same color as in GIF
-    }
-
-    public void setEditText(final LinedEditText mEditText) {
-        this.mEditText = mEditText;
+    fun setEditText(editText: LinedEditText) {
+        this.editText = editText
     }
 }

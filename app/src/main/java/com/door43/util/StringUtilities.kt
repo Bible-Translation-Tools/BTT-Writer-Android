@@ -1,16 +1,13 @@
-package com.door43.util;
+package com.door43.util
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.text.Editable;
-import android.text.SpannedString;
-import android.util.Pair;
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.text.Editable
+import android.text.SpannedString
+import android.util.Pair
 
-/**
- * Created by joel on 1/14/2015.
- */
-public class StringUtilities {
+object StringUtilities {
 
     /**
      * Pads a slug to 2 significant digits.
@@ -30,14 +27,16 @@ public class StringUtilities {
      * @param slug the slug to be normalized
      * @return the normalized slug
      */
-    public static String normalizeSlug(String slug) throws Exception {
-        if(slug == null || slug.isEmpty()) throw new Exception("slug cannot be an empty string");
-        if(!isInteger(slug)) return slug;
-        slug = slug.replaceAll("^(0+)", "").trim();
-        while(slug.length() < 2) {
-            slug = "0" + slug;
+    @Throws(Exception::class)
+    fun normalizeSlug(slug: String): String {
+        if (slug.isEmpty()) throw Exception("slug cannot be an empty string")
+        if (!isInteger(slug)) return slug
+
+        var normalizedSlug = slug.replace("^(0+)".toRegex(), "").trim()
+        while (normalizedSlug.length < 2) {
+            normalizedSlug = "0$normalizedSlug"
         }
-        return slug;
+        return normalizedSlug
     }
 
     /**
@@ -45,15 +44,8 @@ public class StringUtilities {
      * @param s
      * @return
      */
-    public static boolean isInteger(String s) {
-        try {
-            Integer.parseInt(s);
-        } catch(NumberFormatException e) {
-            return false;
-        } catch(NullPointerException e) {
-            return false;
-        }
-        return true;
+    fun isInteger(s: String): Boolean {
+        return s.toIntOrNull() != null
     }
 
     /**
@@ -62,11 +54,8 @@ public class StringUtilities {
      * @param value the string to format
      * @return the number formatted string
      */
-    public static String formatNumber(String value) {
-        try {
-            return Integer.parseInt(value) + "";
-        } catch (Exception e) {}
-        return value;
+    fun formatNumber(value: String): String {
+        return value.toIntOrNull()?.toString() ?: value
     }
 
     /**
@@ -75,25 +64,25 @@ public class StringUtilities {
      * @param delimiter
      * @return
      */
-    public static String[] chunk(String string, String delimiter) {
-        if(string == null || string.isEmpty()) {
-            return new String[]{"", ""};
+    fun chunk(string: String, delimiter: String): Array<String> {
+        if (string.isEmpty()) {
+            return arrayOf("", "")
         }
-        String[] pieces = string.split(delimiter, 2);
-        if(pieces.length == 1) {
-            pieces = new String[] {string, ""};
+        var pieces = string.split(delimiter.toRegex(), limit = 2).toTypedArray()
+        if (pieces.size == 1) {
+            pieces = arrayOf(string, "")
         }
-        return pieces;
+        return pieces
     }
 
     /**
      * Copies the text to the clipboard
      * @param text
      */
-    public static void copyToClipboard(Context context, String text) {
-        ClipboardManager clipboard = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("simple text", text);
-        clipboard.setPrimaryClip(clip);
+    fun copyToClipboard(context: Context, text: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("simple text", text)
+        clipboard.setPrimaryClip(clip)
     }
 
     /**
@@ -103,26 +92,30 @@ public class StringUtilities {
      * @param end
      * @return the pair of start and end values
      */
-    public static Pair<Integer, Integer> expandSelectionForSpans(Editable text, int start, int end) {
+    fun expandSelectionForSpans(text: Editable, start: Int, end: Int): Pair<Int, Int> {
+        var expandedStart = start
+        var expandedEnd = end
+
         // make sure we don't cut any spans in half
-        SpannedString[] spans = text.getSpans(start, end, SpannedString.class);
-        for(SpannedString s :  spans) {
-            int spanStart = text.getSpanStart(s);
-            int spanEnd = text.getSpanEnd(s);
-            if(spanStart < start) {
-                start = spanStart;
+        val spans = text.getSpans(expandedStart, expandedEnd, SpannedString::class.java)
+        for (s in spans) {
+            val spanStart = text.getSpanStart(s)
+            val spanEnd = text.getSpanEnd(s)
+            if (spanStart < expandedStart) {
+                expandedStart = spanStart
             }
-            if(spanEnd > end) {
-                end = spanEnd;
+            if (spanEnd > expandedEnd) {
+                expandedEnd = spanEnd
             }
         }
-        return new Pair(start, end);
+        return Pair(expandedStart, expandedEnd)
     }
 
-    public static String ltrim(String str, char target) {
-        if (str.length() > 0 && str.charAt(str.length()-1)==target) {
-            str = str.substring(0, str.length()-1);
+    fun ltrim(str: String, target: Char): String {
+        var result = str
+        if (result.isNotEmpty() && result[result.length - 1] == target) {
+            result = result.substring(0, result.length - 1)
         }
-        return str;
+        return result
     }
 }

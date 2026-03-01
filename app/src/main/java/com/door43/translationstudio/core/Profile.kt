@@ -21,7 +21,7 @@ class Profile(
      * The name from their gogs account will be used if it exists
      * @return
      */
-    var fullName: String? = null
+    var fullName: String = ""
         get() = gogsUser?.fullName ?: field
 
     /**
@@ -31,18 +31,7 @@ class Profile(
 
     val currentUser: String
         get() {
-            var userName: String? = null
-            if (gogsUser != null) {
-                userName = gogsUser!!.username
-            }
-            if (userName == null) {
-                userName = fullName
-            }
-
-            if (userName == null) {
-                userName = ""
-            }
-            return userName
+            return gogsUser?.username ?: fullName
         }
 
     /**
@@ -58,7 +47,7 @@ class Profile(
      * Returns true if the user is logged in
      */
     val loggedIn: Boolean
-        get() = fullName.isNullOrEmpty().not()
+        get() = fullName.isEmpty().not()
 
     /**
      * Returns a native speaker version of this profile.
@@ -69,7 +58,7 @@ class Profile(
         get() = NativeSpeaker(fullName)
 
     /**
-     * Returns the profile represented as a json object
+     * Returns the profile represented as a JSON object
      * @return
      */
     @Throws(JSONException::class)
@@ -86,7 +75,7 @@ class Profile(
         return json
     }
 
-    fun login(name: String?, user: User? = null) {
+    fun login(name: String, user: User? = null) {
         fullName = name
         gogsUser = user
         saveProfile()
@@ -96,7 +85,7 @@ class Profile(
      * Logs the local user out of their account
      */
     fun logout() {
-        fullName = null
+        fullName = ""
         gogsUser = null
         termsOfUseLastAccepted = 0
         deleteProfile()
@@ -122,7 +111,7 @@ class Profile(
         private const val SERIAL_VERSION_UID = 0L
 
         /**
-         * Loads the user profile from json
+         * Loads the user profile from JSON
          * @param json
          * @return
          * @throws Exception
@@ -133,7 +122,7 @@ class Profile(
             directoryProvider: IDirectoryProvider,
             json: JSONObject?
         ): Profile {
-            var name: String? = null
+            var name = ""
             var user: User? = null
             var gogsToken: Token? = null
             var termsLastAccepted = 0

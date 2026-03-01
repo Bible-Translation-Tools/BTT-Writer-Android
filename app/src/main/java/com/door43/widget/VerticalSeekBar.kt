@@ -1,103 +1,90 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.os.Parcelable;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.widget.SeekBar;
+import android.content.Context
+import android.graphics.Canvas
+import android.os.Parcelable
+import android.util.AttributeSet
+import android.view.MotionEvent
+import androidx.appcompat.widget.AppCompatSeekBar
 
-public class VerticalSeekBar extends SeekBar {
+open class VerticalSeekBar : AppCompatSeekBar {
 
-    private OnSeekBarChangeListener myListener;
-    public VerticalSeekBar(Context context) {
-        super(context);
+    private var internalListener: OnSeekBarChangeListener? = null
+
+    constructor(context: Context) : super(context)
+
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
+
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(h, w, oldh, oldw)
     }
 
-    public VerticalSeekBar(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
+    @Synchronized
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(heightMeasureSpec, widthMeasureSpec)
+        setMeasuredDimension(measuredHeight, measuredWidth)
     }
 
-    public VerticalSeekBar(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    override fun setOnSeekBarChangeListener(l: OnSeekBarChangeListener?) {
+        this.internalListener = l
     }
 
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(h, w, oldh, oldw);
+    override fun onDraw(c: Canvas) {
+        c.rotate(-90f)
+        c.translate(-height.toFloat(), 0f)
+
+        super.onDraw(c)
     }
 
-    @Override
-    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(heightMeasureSpec, widthMeasureSpec);
-        setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
-    }
-
-    @Override
-    public void setOnSeekBarChangeListener(OnSeekBarChangeListener mListener){
-        this.myListener = mListener;
-    }
-
-    protected void onDraw(Canvas c) {
-        c.rotate(-90);
-        c.translate(-getHeight(), 0);
-
-        super.onDraw(c);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (!isEnabled()) {
-            return false;
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (!isEnabled) {
+            return false
         }
 
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                if(myListener!=null) {
-                    myListener.onStartTrackingTouch(this);
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                setProgress(getMax() - (int) (getMax() * event.getY() / getHeight()));
-                onSizeChanged(getWidth(), getHeight(), 0, 0);
-                if(myListener != null) {
-                    myListener.onProgressChanged(this, getMax() - (int) (getMax() * event.getY() / getHeight()), true);
-                }
-                break;
-            case MotionEvent.ACTION_UP:
-                if(myListener != null) {
-                    myListener.onStopTrackingTouch(this);
-                }
-                break;
-
-            case MotionEvent.ACTION_CANCEL:
-                break;
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                internalListener?.onStartTrackingTouch(this)
+            }
+            MotionEvent.ACTION_MOVE -> {
+                progress = max - (max * event.y / height).toInt()
+                onSizeChanged(width, height, 0, 0)
+                internalListener?.onProgressChanged(
+                    this,
+                    max - (max * event.y / height).toInt(),
+                    true
+                )
+            }
+            MotionEvent.ACTION_UP -> {
+                internalListener?.onStopTrackingTouch(this)
+            }
+            MotionEvent.ACTION_CANCEL -> {}
         }
-        return true;
+        return true
     }
 
-    @Override
-    public synchronized void setProgress(int progress) {
-        super.setProgress(progress);
-        onSizeChanged(getWidth(), getHeight(), 0, 0);
+    @Synchronized
+    override fun setProgress(progress: Int) {
+        super.setProgress(progress)
+        onSizeChanged(width, height, 0, 0)
     }
 
-    @Override
-    public Parcelable onSaveInstanceState() {
+    override fun onSaveInstanceState(): Parcelable? {
         // Store the actual progress (not the internal inverted progress), to allow restoring as
         // HorizontalScrollBar, which is not inverted. Do this by temporarily removing the inversion
         // prior to saving the instance state.
-        super.setProgress(getMax() - getProgress());
-        Parcelable result = super.onSaveInstanceState();
-        super.setProgress(getMax() - getProgress());
-        return result;
+        super.setProgress(max - progress)
+        val result = super.onSaveInstanceState()
+        super.setProgress(max - progress)
+        return result
     }
 
-    @Override
-    public void onRestoreInstanceState(Parcelable instanceState) {
-        super.onRestoreInstanceState(instanceState);
+    override fun onRestoreInstanceState(instanceState: Parcelable) {
+        super.onRestoreInstanceState(instanceState)
 
         // Since the instance state is saved without being inverted, restore the inverted internal
         // format on restore.
-        super.setProgress(getMax() - getProgress());
+        super.setProgress(max - progress)
     }
 }

@@ -1,26 +1,20 @@
-package com.door43.util;
+package com.door43.util
 
-import android.util.Base64;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.RSAPublicKeySpec;
-
-import javax.crypto.Cipher;
+import android.util.Base64
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.math.BigInteger
+import java.security.KeyFactory
+import java.security.KeyPairGenerator
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.spec.RSAPrivateKeySpec
+import java.security.spec.RSAPublicKeySpec
+import javax.crypto.Cipher
 
 /**
  *
@@ -29,31 +23,44 @@ import javax.crypto.Cipher;
  * RSA - Encrypt Data using Public Key
  * RSA - Descypt Data using Private Key
  */
-public class RSAEncryption {
+object RSAEncryption {
 
     /**
      * Generates a set of private and public keys
      * @param privateKeyFile the private key file
      * @param publicKeyFile the public key file
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidKeySpecException
-     * @throws IOException
+     * @throws Exception
      */
-    public static void generateKeys(File privateKeyFile, File publicKeyFile) throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-        PublicKey publicKey = keyPair.getPublic();
-        PrivateKey privateKey = keyPair.getPrivate();
+    @Throws(Exception::class)
+    fun generateKeys(privateKeyFile: File, publicKeyFile: File) {
+        val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
+        keyPairGenerator.initialize(2048)
+        val keyPair = keyPairGenerator.generateKeyPair()
+        val publicKey = keyPair.public
+        val privateKey = keyPair.private
 
         // pull out parameters which makes up Key
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        RSAPublicKeySpec rsaPubKeySpec = keyFactory.getKeySpec(publicKey, RSAPublicKeySpec.class);
-        RSAPrivateKeySpec rsaPrivKeySpec = keyFactory.getKeySpec(privateKey, RSAPrivateKeySpec.class);
+        val keyFactory = KeyFactory.getInstance("RSA")
+        val rsaPubKeySpec = keyFactory.getKeySpec(
+            publicKey,
+            RSAPublicKeySpec::class.java
+        )
+        val rsaPrivKeySpec = keyFactory.getKeySpec(
+            privateKey,
+            RSAPrivateKeySpec::class.java
+        )
 
         // save keys
-        saveKeys(publicKeyFile.getAbsolutePath(), rsaPubKeySpec.getModulus(), rsaPubKeySpec.getPublicExponent());
-        saveKeys(privateKeyFile.getAbsolutePath(), rsaPrivKeySpec.getModulus(), rsaPrivKeySpec.getPrivateExponent());
+        saveKeys(
+            publicKeyFile.absolutePath,
+            rsaPubKeySpec.modulus,
+            rsaPubKeySpec.publicExponent
+        )
+        saveKeys(
+            privateKeyFile.absolutePath,
+            rsaPrivKeySpec.modulus,
+            rsaPrivKeySpec.privateExponent
+        )
     }
 
     /**
@@ -61,65 +68,56 @@ public class RSAEncryption {
      * @param fileName
      * @param mod
      * @param exp
-     * @throws IOException
+     * @throws Exception
      */
-    private static void saveKeys(String fileName,BigInteger mod,BigInteger exp) throws Exception {
-        FileOutputStream fos = null;
-        ObjectOutputStream oos = null;
-
+    @Throws(Exception::class)
+    private fun saveKeys(fileName: String, mod: BigInteger, exp: BigInteger) {
         try {
-            fos = new FileOutputStream(fileName);
-            oos = new ObjectOutputStream(new BufferedOutputStream(fos));
-
-            oos.writeObject(mod);
-            oos.writeObject(exp);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        finally{
-            if(oos != null){
-                oos.close();
-
-                if(fos != null){
-                    fos.close();
+            FileOutputStream(fileName).use { fos ->
+                ObjectOutputStream(BufferedOutputStream(fos)).use { oos ->
+                    oos.writeObject(mod)
+                    oos.writeObject(exp)
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     /**
      * Encrypt Data
      * @param data
-     * @throws IOException
+     * @param pubKey
+     * @throws Exception
      */
-    public static byte[] encryptData(String data, PublicKey pubKey) throws Exception {
-        byte[] dataToEncrypt = data.getBytes();
-        byte[] encryptedData = null;
-        try {
-//            PublicKey pubKey = readPublicKeyFromFile(pubFile.getAbsolutePath());
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, pubKey);
-            encryptedData = cipher.doFinal(dataToEncrypt);
-        } catch (Exception e) {
-            e.printStackTrace();
+    @Throws(Exception::class)
+    fun encryptData(data: String, pubKey: PublicKey): ByteArray? {
+        val dataToEncrypt = data.toByteArray()
+        return try {
+            val cipher = Cipher.getInstance("RSA")
+            cipher.init(Cipher.ENCRYPT_MODE, pubKey)
+            cipher.doFinal(dataToEncrypt)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
-        return encryptedData;
     }
 
     /**
-     * Encrypt Data
+     * Decrypt Data
      * @param data
-     * @throws IOException
+     * @param privateKey
+     * @throws Exception
      */
-    public static String decryptData(byte[] data, PrivateKey privateKey) throws Exception {
-        try {
-//            PrivateKey privateKey = readPrivateKeyFromFile(privFile.getAbsolutePath());
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            return new String(cipher.doFinal(data));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+    @Throws(Exception::class)
+    fun decryptData(data: ByteArray, privateKey: PrivateKey): String? {
+        return try {
+            val cipher = Cipher.getInstance("RSA")
+            cipher.init(Cipher.DECRYPT_MODE, privateKey)
+            String(cipher.doFinal(data))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 
@@ -128,16 +126,17 @@ public class RSAEncryption {
      * @param key
      * @return
      */
-    public static String getPublicKeyAsString(PublicKey key) throws Exception {
+    @Throws(Exception::class)
+    fun getPublicKeyAsString(key: PublicKey): String {
         // pull out parameters which makes up Key
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        RSAPublicKeySpec rsaPubKeySpec = keyFactory.getKeySpec(key, RSAPublicKeySpec.class);
+        val keyFactory = KeyFactory.getInstance("RSA")
+        val rsaPubKeySpec = keyFactory.getKeySpec(key, RSAPublicKeySpec::class.java)
 
         // save as string
-        String modulus = new String(Base64.encode(rsaPubKeySpec.getModulus().toByteArray(), Base64.NO_WRAP));
-        String exponent = new String(Base64.encode(rsaPubKeySpec.getPublicExponent().toByteArray(), Base64.NO_WRAP));
+        val modulus = String(Base64.encode(rsaPubKeySpec.modulus.toByteArray(), Base64.NO_WRAP))
+        val exponent = String(Base64.encode(rsaPubKeySpec.publicExponent.toByteArray(), Base64.NO_WRAP))
 
-        return modulus+"<split>"+exponent;
+        return "$modulus<split>$exponent"
     }
 
     /**
@@ -145,95 +144,73 @@ public class RSAEncryption {
      * @param keyString
      * @return
      */
-    public static PublicKey getPublicKeyFromString(String keyString) {
-        String[] pieces = keyString.split("<split>");
-        if(pieces.length == 2) {
-            BigInteger modulus = new BigInteger(Base64.decode(pieces[0].getBytes(), Base64.NO_WRAP));
-            BigInteger exponent = new BigInteger(Base64.decode(pieces[1].getBytes(), Base64.NO_WRAP));
+    fun getPublicKeyFromString(keyString: String): PublicKey? {
+        val pieces = keyString.split("<split>").toTypedArray()
+        if (pieces.size == 2) {
+            val modulus = BigInteger(Base64.decode(pieces[0].toByteArray(), Base64.NO_WRAP))
+            val exponent = BigInteger(Base64.decode(pieces[1].toByteArray(), Base64.NO_WRAP))
 
-            RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(modulus, exponent);
-            try {
-                KeyFactory fact = KeyFactory.getInstance("RSA");
-                PublicKey publicKey = fact.generatePublic(rsaPublicKeySpec);
-                return publicKey;
-            } catch (Exception e) {
-                e.printStackTrace();
+            val rsaPublicKeySpec = RSAPublicKeySpec(modulus, exponent)
+            return try {
+                val fact = KeyFactory.getInstance("RSA")
+                fact.generatePublic(rsaPublicKeySpec)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             }
         }
-        return null;
+        return null
     }
 
     /**
      * read Public Key From File
      * @param file
      * @return PublicKey
-     * @throws IOException
+     * @throws Exception
      */
-    public static PublicKey readPublicKeyFromFile(File file) throws Exception{
-        FileInputStream fis = null;
-        ObjectInputStream ois = null;
-        try {
-            fis = new FileInputStream(file);
-            ois = new ObjectInputStream(fis);
+    @Throws(Exception::class)
+    fun readPublicKeyFromFile(file: File): PublicKey? {
+        return try {
+            FileInputStream(file).use { fis ->
+                ObjectInputStream(fis).use { ois ->
+                    val modulus = ois.readObject() as BigInteger
+                    val exponent = ois.readObject() as BigInteger
 
-            BigInteger modulus = (BigInteger) ois.readObject();
-            BigInteger exponent = (BigInteger) ois.readObject();
-
-            //Get Public Key
-            RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(modulus, exponent);
-            KeyFactory fact = KeyFactory.getInstance("RSA");
-            PublicKey publicKey = fact.generatePublic(rsaPublicKeySpec);
-
-            return publicKey;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        finally{
-            if(ois != null){
-                ois.close();
-                if(fis != null){
-                    fis.close();
+                    //Get Public Key
+                    val rsaPublicKeySpec = RSAPublicKeySpec(modulus, exponent)
+                    val fact = KeyFactory.getInstance("RSA")
+                    fact.generatePublic(rsaPublicKeySpec)
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
-        return null;
     }
 
     /**
-     * read Public Key From File
+     * read Private Key From File
      * @param file
-     * @return
-     * @throws IOException
+     * @return PrivateKey
+     * @throws Exception
      */
-    public static PrivateKey readPrivateKeyFromFile(File file) throws Exception{
-        FileInputStream fis = null;
-        ObjectInputStream ois = null;
-        try {
-            fis = new FileInputStream(file);
-            ois = new ObjectInputStream(fis);
+    @Throws(Exception::class)
+    fun readPrivateKeyFromFile(file: File): PrivateKey? {
+        return try {
+            FileInputStream(file).use { fis ->
+                ObjectInputStream(fis).use { ois ->
+                    val modulus = ois.readObject() as BigInteger
+                    val exponent = ois.readObject() as BigInteger
 
-            BigInteger modulus = (BigInteger) ois.readObject();
-            BigInteger exponent = (BigInteger) ois.readObject();
-
-            //Get Private Key
-            RSAPrivateKeySpec rsaPrivateKeySpec = new RSAPrivateKeySpec(modulus, exponent);
-            KeyFactory fact = KeyFactory.getInstance("RSA");
-            PrivateKey privateKey = fact.generatePrivate(rsaPrivateKeySpec);
-
-            return privateKey;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        finally{
-            if(ois != null){
-                ois.close();
-                if(fis != null){
-                    fis.close();
+                    //Get Private Key
+                    val rsaPrivateKeySpec = RSAPrivateKeySpec(modulus, exponent)
+                    val fact = KeyFactory.getInstance("RSA")
+                    fact.generatePrivate(rsaPrivateKeySpec)
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
-        return null;
     }
 }

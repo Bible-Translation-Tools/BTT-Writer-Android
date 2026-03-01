@@ -1,24 +1,19 @@
-package com.door43.util;
-
-import java.util.Comparator;
+package com.door43.util
 
 /**
  * Created by joel on 5/20/16.
  */
-public class NumericStringComparator implements Comparator<String> {
+class NumericStringComparator : Comparator<String> {
 
-    @Override
-    public int compare(String lhs, String rhs) {
-        int num1 = coerceInt(lhs);
-        int num2 = coerceInt(rhs);
-        return num1 - num2;
+    override fun compare(lhs: String, rhs: String): Int {
+        val num1 = coerceInt(lhs)
+        val num2 = coerceInt(rhs)
+        return num1 - num2
     }
 
-    private int coerceInt(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+    private fun coerceInt(value: String): Int {
+        // toIntOrNull() safely attempts the parse and returns null if it fails (NumberFormatException).
+        // The Elvis operator (?:) then catches the null and defaults it to 0.
+        return value.toIntOrNull() ?: 0
     }
 }

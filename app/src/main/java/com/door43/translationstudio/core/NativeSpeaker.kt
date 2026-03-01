@@ -6,9 +6,9 @@ package com.door43.translationstudio.core
  *
  * note: this is parse for now, but keeping it in a class for potential future addition of properties
  */
-class NativeSpeaker(val name: String?) {
+class NativeSpeaker(val name: String) {
     override fun toString(): String {
-        return name ?: "Unknown Native Speaker"
+        return name
     }
 
     override fun equals(other: Any?): Boolean {

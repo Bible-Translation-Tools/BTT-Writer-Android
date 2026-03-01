@@ -1,43 +1,36 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-
-import it.moondroid.seekbarhint.library.SeekBarHint;
+import android.content.Context
+import android.graphics.Canvas
+import android.util.AttributeSet
+import android.view.MotionEvent
+import it.moondroid.seekbarhint.library.SeekBarHint
 
 /**
  * This class provides a seekbar that is reversed. e.g. operates from right to left
  */
-public class SeekbarHintReversed extends SeekBarHint {
-    public SeekbarHintReversed(Context context) {
-        super(context);
-    }
+class SeekbarHintReversed : SeekBarHint {
 
-    public SeekbarHintReversed(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    constructor(context: Context) : super(context)
 
-    public SeekbarHintReversed(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
+
     // TODO: 10/4/16 we should turn this into a generic seek bar that allows vertical and horizontal orientation and also allow switching direction of seek.
 //
-//    @Override
-//    protected void onDraw(Canvas canvas) {
-//        float px = this.getWidth() / 2.0f;
-//        float py = this.getHeight() / 2.0f;
+//    override fun onDraw(canvas: Canvas) {
+//        val px = this.width / 2.0f
+//        val py = this.height / 2.0f
 //
-//        canvas.scale(-1, 1, px, py);
+//        canvas.scale(-1f, 1f, px, py)
 //
-//        super.onDraw(canvas);
+//        super.onDraw(canvas)
 //    }
 //
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//        event.setLocation(this.getWidth() - event.getX(), event.getY());
+//    override fun onTouchEvent(event: MotionEvent): Boolean {
+//        event.setLocation(this.width - event.x, event.y)
 //
-//        return super.onTouchEvent(event);
+//        return super.onTouchEvent(event)
 //    }
 }

@@ -1,137 +1,118 @@
-package com.door43.widget;
+package com.door43.widget
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.util.AttributeSet;
-import android.view.ViewParent;
-import androidx.appcompat.widget.AppCompatEditText;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatEditText
 
 /**
  * Created by blm on 11/25/15.
  */
+class LinedEditText(context: Context, attrs: AttributeSet) : AppCompatEditText(context, attrs) {
+    private val rect = Rect()
+    private val paint = Paint()
 
-public class LinedEditText extends AppCompatEditText {
-    private Rect mRect;
-    private Paint mPaint;
-    private boolean mEnableLines = false;
-    static public int mRelativeOffset = 8;
-
-    // we need this constructor for LayoutInflater
-    public LinedEditText(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        mRect = new Rect();
-        mPaint = new Paint();
-        mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setColor(0xFFC4E7FF); // same color as in GIF
+    init {
+        paint.style = Paint.Style.STROKE
+        paint.color = -0x3b1801 // 0xFFC4E7FF converted to 32-bit signed int
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
+    override fun onDraw(canvas: Canvas) {
+        val parent = linedParent
 
-        LinedLinearLayout parent = getLinedParent();
-        if(null != parent) { // if on top of LinedLinearLayout, draw lines on it
+        if (parent != null) {
+            // if on top of LinedLinearLayout, draw lines on it
+            parent.setEditText(this)
+        } else if (enableLines) {
+            // if not paired, draw line on edittext if enabled
+            val count = lineCount
+            val r = rect
 
-          parent.setEditText(this);
-        }
-        else // if not paired, draw line on edittext if enabled
-        if(mEnableLines) {
+            // ZERO-ALLOCATION FIX: Reuse the existing rect to get the clip bounds
+            canvas.getClipBounds(r)
+            val bottom = r.bottom
 
-            int count = getLineCount();
+            val lineHeight = lineHeight
+            val offset = lineHeight / relativeOffset // offset so that text is above line
 
-            Rect r = mRect;
+            var position = 0
 
-            Rect bounds = canvas.getClipBounds();
-            int bottom = bounds.bottom;
-
-            int lineHeight = (int) getLineHeight();
-            int offset = lineHeight / mRelativeOffset; // offset so that text is above line
-
-            int position = 0;
-
-            for (int i = 0; i < 100; i++) {  // 100 is just here for a sanity limit to max number of lines
-
+            for (i in 0..99) {  // 100 is just here for a sanity limit to max number of lines
                 if (i < count) {
-                    position = getLineBounds(i, r) + offset;
-                } else { // keep drawing below last text line
-                    position += lineHeight;
+                    position = getLineBounds(i, r) + offset
+                } else {
+                    // keep drawing below last text line
+                    position += lineHeight
                 }
 
-                if (position > bottom) { // done when we have filled the view
-                    break;
+                if (position > bottom) {
+                    // done when we have filled the view
+                    break
                 }
 
-                canvas.drawLine(r.left, position, r.right, position, mPaint);
+                canvas.drawLine(
+                    r.left.toFloat(),
+                    position.toFloat(),
+                    r.right.toFloat(),
+                    position.toFloat(),
+                    paint
+                )
             }
         }
 
-        super.onDraw(canvas);
+        super.onDraw(canvas)
     }
 
-    public int getYlocation() {
-
-        // get view position on screen
-        int[] l = new int[2];
-        this.getLocationOnScreen(l);
-//        int viewX = l[0];
-        int viewY = l[1];
-        return viewY;
-    }
-
-    public int getDistanceBetweenLines() {
-
-        int lineHeight = (int) getLineHeight();
-        return lineHeight;
-    }
-
-    public int getLinePosition() {
-
-//        int offset = lineHeight / mRelativeOffset; // offset so that text is above line
-
-        Rect r = mRect;
-        int position = getLineBounds(0, r);
-        return position;
-    }
-
-    public boolean isEnableLines() {
-        LinedLinearLayout parent = getLinedParent();
-        if(null != parent) {
-            return parent.isEnableLines();
+    val yLocation: Int
+        get() {
+            // get view position on screen
+            val l = IntArray(2)
+            this.getLocationOnScreen(l)
+            // val viewX = l[0]
+            return l[1] // viewY
         }
 
-        return mEnableLines;
-    }
+    val distanceBetweenLines: Int
+        get() = lineHeight
 
-    public void setEnableLines(boolean mEnableLines) {
-        LinedLinearLayout parent = getLinedParent();
-        if(null != parent) {
-            parent.setEnableLines(mEnableLines);
+    val linePosition: Int
+        get() {
+            // val offset = lineHeight / relativeOffset // offset so that text is above line
+            val r = rect
+            return getLineBounds(0, r)
         }
 
-        this.mEnableLines = mEnableLines;
-        this.invalidate();
-    }
+    var enableLines: Boolean = false
+        get() = linedParent?.enableLines ?: field
+        set(value) {
+            linedParent?.enableLines = value
+            field = value
+            invalidate()
+        }
 
-    private LinedLinearLayout getLinedParent() {
-        ViewParent parent = this.getParent();
+    private val linedParent: LinedLinearLayout?
+        get() {
+            var parent = this.parent
 
-        for(int i = 0; i < 2; i++) { // maximum levels
+            for (i in 0..1) { // maximum levels
+                if (parent == null) {
+                    break
+                }
 
-            if(null == parent) {
-                break;
+                val paired = parent is LinedLinearLayout
+
+                if (paired) {
+                    return parent
+                }
+
+                parent = parent.parent // try moving up
             }
-
-            boolean paired = (parent instanceof LinedLinearLayout);
-
-            if (paired) {
-                return (LinedLinearLayout) parent;
-            }
-
-            parent = parent.getParent(); // try moving up
+            return null
         }
-        return null;
-    }
 
+    companion object {
+        var relativeOffset = 8
+    }
 }

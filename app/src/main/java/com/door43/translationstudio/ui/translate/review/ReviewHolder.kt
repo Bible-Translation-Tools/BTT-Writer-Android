@@ -867,7 +867,7 @@ class ReviewHolder(
 
             binding.targetEditableBody?.let {
                 it.visibility = View.VISIBLE
-                it.setEnableLines(true)
+                it.enableLines = true
             }
         } else {
             binding.editButton?.setImageResource(R.drawable.ic_mode_edit_secondary_24dp)
@@ -878,7 +878,7 @@ class ReviewHolder(
 
             binding.targetEditableBody?.let {
                 it.visibility = View.GONE
-                it.setEnableLines(false)
+                it.enableLines = false
             }
         }
     }

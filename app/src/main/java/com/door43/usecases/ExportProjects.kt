@@ -64,12 +64,15 @@ class ExportProjects(
             manifestFile.createNewFile()
             directoryProvider.writeStringToFile(manifestFile, manifestJson.toString())
 
-            context.contentResolver.openOutputStream(fileUri).use { out ->
+            context.contentResolver.openOutputStream(fileUri)?.use { out ->
                 Zip.zipToStream(
-                    arrayOf(manifestFile, targetTranslation.path), out
+                    files = arrayOf(manifestFile, targetTranslation.path),
+                    dest = out
                 )
+                success = true
+            } ?: run {
+                success = false
             }
-            success = true
         } catch (e: TransportException) {
             if (recoverBadRepo) {
                 // fix corrupt repo and try again

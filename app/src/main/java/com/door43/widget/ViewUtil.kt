@@ -2,6 +2,7 @@ package com.door43.widget
 
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationSet
@@ -9,6 +10,7 @@ import android.view.animation.LinearInterpolator
 import android.view.animation.TranslateAnimation
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.DrawableCompat
 import com.google.android.material.R
 import com.google.android.material.snackbar.Snackbar
@@ -22,7 +24,6 @@ object ViewUtil {
      * includes support for long clicks
      * @param view
      */
-    @JvmStatic
     fun makeLinksClickable(view: TextView) {
         val m = view.movementMethod
         if (m == null || m !is LongClickLinkMovementMethod) {
@@ -37,7 +38,6 @@ object ViewUtil {
      * @param snack
      * @param color
      */
-    @JvmStatic
     fun setSnackBarTextColor(snack: Snackbar, color: Int) {
         val tv = snack.view.findViewById<TextView>(R.id.snackbar_text)
         tv.setTextColor(color)
@@ -45,10 +45,9 @@ object ViewUtil {
 
     /**
      * Provides a backwards compatible way to tint view drawables
-     * @param view the view who's background drawable will be tinted
+     * @param view the view whose background drawable will be tinted
      * @param color the color that will be applied
      */
-    @JvmStatic
     fun tintViewDrawable(view: View, color: Int) {
         val originalDrawable = view.background
         val wrappedDrawable = DrawableCompat.wrap(originalDrawable)
@@ -68,7 +67,6 @@ object ViewUtil {
      * @param leftToRight indicates which direction the animation of the top card should go.
      * @param listener
      */
-    @JvmStatic
     fun animateSwapCards(
         topCard: View,
         bottomCard: View,
@@ -218,10 +216,9 @@ object ViewUtil {
     }
 
     /**
-     * Forces a popup menu to display it's icons
+     * Forces a popup menu to display its icons
      * @param popup
      */
-    @JvmStatic
     fun forcePopupMenuIcons(popup: PopupMenu) {
         try {
             val fields = popup.javaClass.declaredFields
@@ -250,12 +247,27 @@ object ViewUtil {
      * @param view
      * @return
      */
-    @JvmStatic
     fun convertToBitmap(view: View): Bitmap {
-        view.isDrawingCacheEnabled = true
-        view.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        view.measure(
+            View.MeasureSpec.makeMeasureSpec(
+                0,
+                View.MeasureSpec.UNSPECIFIED
+            ),
+            View.MeasureSpec.makeMeasureSpec(
+                0,
+                View.MeasureSpec.UNSPECIFIED
+            )
+        )
+        // Layout the view with the measured dimensions
         view.layout(0, 0, view.measuredWidth, view.measuredHeight)
-        view.buildDrawingCache(true)
-        return view.drawingCache
+
+        // Create a bitmap backed by the exact dimensions of the view
+        val bitmap = createBitmap(view.measuredWidth, view.measuredHeight)
+
+        // Draw the view onto the canvas/bitmap
+        val canvas = Canvas(bitmap)
+        view.draw(canvas)
+
+        return bitmap
     }
 }

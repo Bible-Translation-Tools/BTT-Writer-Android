@@ -1,65 +1,30 @@
-package com.door43.util;
+package com.door43.util
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.File
+import java.io.IOException
 
 /**
  * This class handles the management of a manifest file.
  *
  */
-public class Manifest {
-    private final File mManifestFile;
-    private JSONObject mManifest = new JSONObject();
-    public static final String MANIFEST_JSON = "manifest.json";
+class Manifest private constructor(private val manifestFile: File) {
 
-    /**
-     * Creates a new manifest object representing a file on the disk
-     * @param file
-     */
-    private Manifest(File file) {
-        mManifestFile = file;
-    }
-
-    /**
-     * Generates a new manifest object.
-     * If a manifest file already exists it will be loaded otherwise it will be created.
-     * @param directory the directory in which the manifest file exists
-     * @return the manifest object or null if the manifest could not be created
-     */
-    public static Manifest generate(File directory) {
-        File file = new File(directory, MANIFEST_JSON);
-        if(!file.exists()) {
-            file.getParentFile().mkdirs();
-        }
-        if(!file.isFile()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-        Manifest m = new Manifest(file);
-        m.load();
-        return m;
-    }
+    private var manifest = JSONObject()
 
     /**
      *
      * @param key
      * @return an empty string if the key is invalid
      */
-    public String getString(String key) {
-        try {
-            return mManifest.getString(key);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return "";
+    fun getString(key: String): String {
+        return try {
+            manifest.getString(key)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            ""
         }
     }
 
@@ -68,8 +33,8 @@ public class Manifest {
      * @param key
      * @return
      */
-    public Boolean has(String key) {
-        return mManifest.has(key);
+    fun has(key: String): Boolean {
+        return manifest.has(key)
     }
 
     /**
@@ -78,35 +43,36 @@ public class Manifest {
      * @return
      * @throws JSONException
      */
-    public int getInt(String key) throws JSONException {
-        return mManifest.getInt(key);
+    @Throws(JSONException::class)
+    fun getInt(key: String): Int {
+        return manifest.getInt(key)
     }
 
     /**
      *
      * @param key
-     * @return an empty json object if the key is invalid
+     * @return an empty JSON object if the key is invalid
      */
-    public JSONObject getJSONObject(String key) {
-        try {
-            return mManifest.getJSONObject(key);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return new JSONObject();
+    fun getJSONObject(key: String): JSONObject {
+        return try {
+            manifest.getJSONObject(key)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            JSONObject()
         }
     }
 
     /**
      *
      * @param key
-     * @return an empty json array if the key is invalid
+     * @return an empty JSON array if the key is invalid
      */
-    public JSONArray getJSONArray(String key) {
-        try {
-            return mManifest.getJSONArray(key);
-        } catch (JSONException e) {
-//            e.printStackTrace();
-            return new JSONArray();
+    fun getJSONArray(key: String): JSONArray {
+        return try {
+            manifest.getJSONArray(key)
+        } catch (e: JSONException) {
+            // e.printStackTrace()
+            JSONArray()
         }
     }
 
@@ -115,12 +81,12 @@ public class Manifest {
      * @param key
      * @param json
      */
-    public void put(String key, JSONObject json) {
+    fun put(key: String, json: JSONObject) {
         try {
-            mManifest.put(key, json);
-            save();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            manifest.put(key, json)
+            save()
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
     }
 
@@ -129,12 +95,12 @@ public class Manifest {
      * @param key
      * @param obj
      */
-    public void put(String key, Object obj) {
+    fun put(key: String, obj: Any) {
         try {
-            mManifest.put(key, obj);
-            save();
-        } catch (Exception e) {
-            e.printStackTrace();
+            manifest.put(key, obj)
+            save()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -143,12 +109,12 @@ public class Manifest {
      * @param key
      * @param json
      */
-    public void put(String key, JSONArray json) {
+    fun put(key: String, json: JSONArray) {
         try {
-            mManifest.put(key, json);
-            save();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            manifest.put(key, json)
+            save()
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
     }
 
@@ -157,12 +123,12 @@ public class Manifest {
      * @param key
      * @param value
      */
-    public void put(String key, int value) {
+    fun put(key: String, value: Int) {
         try {
-            mManifest.put(key, value);
-            save();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            manifest.put(key, value)
+            save()
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
     }
 
@@ -171,12 +137,12 @@ public class Manifest {
      * @param key
      * @param value
      */
-    public void put(String key, String value) {
+    fun put(key: String, value: String) {
         try {
-            mManifest.put(key, value);
-            save();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            manifest.put(key, value)
+            save()
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
     }
 
@@ -184,49 +150,49 @@ public class Manifest {
      * Removes an element from the manifest
      * @param key
      */
-    public void remove(String key) {
-        mManifest.remove(key);
-        save();
+    fun remove(key: String) {
+        manifest.remove(key)
+        save()
     }
 
     /**
      * Saves the manifest to the disk
      */
-    public void save() {
+    fun save() {
         try {
-            FileUtilities.writeStringToFile(mManifestFile, mManifest.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
+            FileUtilities.writeStringToFile(manifestFile, manifest.toString())
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
-
 
     /**
      * Deletes the manifest file
      */
-    private void delete() {
-        mManifestFile.delete();
-        mManifest = new JSONObject();
+    private fun delete() {
+        manifestFile.delete()
+        manifest = JSONObject()
     }
 
     /**
      * Reads the manifest file from the disk
      */
-    public void load() {
-        String contents = "";
+    fun load() {
+        var contents = ""
         try {
-            contents = FileUtilities.readFileToString(mManifestFile);
-        } catch (IOException e) {
-            e.printStackTrace();
+            contents = FileUtilities.readFileToString(manifestFile)
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-        if(contents.isEmpty()) {
-            mManifest = new JSONObject();
+
+        if (contents.isEmpty()) {
+            manifest = JSONObject()
         } else {
             try {
-                mManifest = new JSONObject(contents);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                mManifest = new JSONObject();
+                manifest = JSONObject(contents)
+            } catch (e: JSONException) {
+                e.printStackTrace()
+                manifest = JSONObject()
             }
         }
     }
@@ -236,24 +202,24 @@ public class Manifest {
      * @param newArray
      * @param key
      */
-    public void join(JSONArray newArray, String key) {
-        if(newArray != null && key != null) {
+    fun join(newArray: JSONArray?, key: String?) {
+        if (newArray != null && key != null) {
             try {
-                if (!mManifest.has(key)) {
-                    mManifest.put(key, newArray);
+                if (!manifest.has(key)) {
+                    manifest.put(key, newArray)
                 } else {
-                    JSONArray array = mManifest.getJSONArray(key);
-                    for (int i = 0; i < newArray.length(); i++) {
-                        Object obj = newArray.get(i);
+                    val array = manifest.getJSONArray(key)
+                    for (i in 0 until newArray.length()) {
+                        val obj = newArray.get(i)
                         if (!hasValueInArray(array, obj)) {
-                            array.put(obj);
+                            array.put(obj)
                         }
                     }
-                    mManifest.put(key, array);
+                    manifest.put(key, array)
                 }
-                save();
-            } catch (JSONException e) {
-                e.printStackTrace();
+                save()
+            } catch (e: JSONException) {
+                e.printStackTrace()
             }
         }
     }
@@ -263,93 +229,117 @@ public class Manifest {
      * @param newObj
      * @param key
      */
-    public void join(JSONObject newObj, String key) {
-        if(newObj != null && key != null) {
+    fun join(newObj: JSONObject?, key: String?) {
+        if (newObj != null && key != null) {
             try {
-                if (!mManifest.has(key)) {
-                    mManifest.put(key, newObj);
+                if (!manifest.has(key)) {
+                    manifest.put(key, newObj)
                 } else {
-                    JSONObject obj = mManifest.getJSONObject(key);
-                    Iterator<String> newKeys = newObj.keys();
-                    while(newKeys.hasNext()) {
-                        String newObjKey = newKeys.next();
-                        if(!obj.has(newObjKey)) {
-                            obj.put(newObjKey, newObj.get(newObjKey));
+                    val obj = manifest.getJSONObject(key)
+                    val newKeys = newObj.keys()
+                    while (newKeys.hasNext()) {
+                        val newObjKey = newKeys.next()
+                        if (!obj.has(newObjKey)) {
+                            obj.put(newObjKey, newObj.get(newObjKey))
                         }
                     }
-                    mManifest.put(key, obj);
+                    manifest.put(key, obj)
                 }
-                save();
-            } catch (JSONException e) {
-                e.printStackTrace();
+                save()
+            } catch (e: JSONException) {
+                e.printStackTrace()
             }
         }
     }
 
-    /**
-     * Checks if a value exists in the array
-     * @param array
-     * @param value
-     * @return
-     */
-    private static boolean hasValueInArray(JSONArray array, Object value) {
-        if(value != null  && array != null) {
+    companion object {
+        const val MANIFEST_JSON = "manifest.json"
+
+        /**
+         * Generates a new manifest object.
+         * If a manifest file already exists it will be loaded otherwise it will be created.
+         * @param directory the directory in which the manifest file exists
+         * @return the manifest object or null if the manifest could not be created
+         */
+        fun generate(directory: File): Manifest {
+            val file = File(directory, MANIFEST_JSON)
+            if (!file.exists()) {
+                file.parentFile?.mkdirs()
+            }
+            if (!file.isFile) {
+                try {
+                    file.createNewFile()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    throw RuntimeException("Could not create manifest file at: ${file.absolutePath}", e)
+                }
+            }
+            val m = Manifest(file)
+            m.load()
+            return m
+        }
+
+        /**
+         * Checks if a value exists in the array
+         * @param array
+         * @param value
+         * @return
+         */
+        private fun hasValueInArray(array: JSONArray?, value: Any?): Boolean {
+            if (value != null && array != null) {
+                try {
+                    for (i in 0 until array.length()) {
+                        if (value == array.get(i)) {
+                            return true
+                        }
+                    }
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+            }
+            return false
+        }
+
+        /**
+         * Checks if a value exist for the key
+         * @param json
+         * @param key
+         * @return
+         */
+        fun valueExists(json: JSONObject, key: String): Boolean {
             try {
-                for (int i = 0; i < array.length(); i++) {
-                    if (value.equals(array.get(i))) {
-                        return true;
+                if (json.has(key)) {
+                    return when (val obj = json.get(key)) {
+                        is String -> obj.isNotEmpty()
+                        is JSONArray -> obj.length() > 0
+                        is JSONObject -> obj.keys().hasNext()
+                        else -> true
                     }
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
+            } catch (e: JSONException) {
+                e.printStackTrace()
             }
+            return false
         }
-        return false;
-    }
 
-    /**
-     * Checks if a value exist for the key
-     * @param json
-     * @param key
-     * @return
-     */
-    public static boolean valueExists(JSONObject json, String key) {
-        try {
-            if (json.has(key)) {
-                Object obj = json.get(key);
-                if(obj instanceof String) {
-                    return !((String) obj).isEmpty();
-                } else if(obj instanceof JSONArray) {
-                    return ((JSONArray)obj).length() > 0;
-                } else if(obj instanceof JSONObject) {
-                    return ((JSONObject)obj).keys().hasNext();
-                } else {
-                    return true;
+        /**
+         * Removes a string value from an array
+         * @param array
+         * @param value
+         */
+        fun removeValue(array: JSONArray, value: String): JSONArray {
+            val updatedArray = JSONArray()
+            for (i in 0 until array.length()) {
+                try {
+                    val content = array.getString(i)
+                    if (content != value) {
+                        updatedArray.put(content)
+                    }
+                } catch (e: JSONException) {
+                    e.printStackTrace()
                 }
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
+            return updatedArray
         }
-        return false;
-    }
-
-    /**
-     * Removes a string value from an array
-     * @param array
-     * @param value
-     */
-    public static JSONArray removeValue(JSONArray array, String value) {
-        JSONArray updatedArray = new JSONArray();
-        for (int i = 0; i < array.length(); i++) {
-            try {
-                String content = array.getString(i);
-                if (!content.equals(value)) {
-                    updatedArray.put(content);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        return updatedArray;
     }
 }
