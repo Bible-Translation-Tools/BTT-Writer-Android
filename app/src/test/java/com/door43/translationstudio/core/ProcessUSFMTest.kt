@@ -64,7 +64,7 @@ class ProcessUSFMTest {
     fun setUp() {
         MockKAnnotations.init(this)
 
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
         mockkStatic(TextUtils::class)
         mockkObject(TargetTranslation)
 
@@ -88,7 +88,7 @@ class ProcessUSFMTest {
 
         // Use reflection to modify property that is final
         // because mockk can't do that
-        TestUtils.setPropertyReflection(library, "index", index)
+        every { library.index } returns index
 
         val str1 = slot<String>()
         val str2 = slot<String>()

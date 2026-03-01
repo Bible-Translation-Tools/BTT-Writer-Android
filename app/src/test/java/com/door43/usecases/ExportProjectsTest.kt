@@ -71,14 +71,14 @@ class ExportProjectsTest {
         MockKAnnotations.init(this)
 
         mockkStatic(Uri::class)
-        mockkStatic(Zip::class)
+        mockkObject(Zip)
         mockkObject(RepoUtils)
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
         mockkObject(ExportProjects.BookData)
         mockkConstructor(PdfPrinter::class)
         mockkStatic(BaseFont::class)
 
-        TestUtils.setPropertyReflection(library, "index", index)
+        every { library.index } returns index
         val project: Project = mockk()
         val resource: Resource = mockk()
 

@@ -46,13 +46,13 @@ class DownloadResourceContainersTest {
 
         mockkStatic(Logger::class)
 
-        TestUtils.setPropertyReflection(translation, "language", language)
-        TestUtils.setPropertyReflection(translation, "project", project)
-        TestUtils.setPropertyReflection(translation, "resource", resource)
+        every { translation.language } returns language
+        every { translation.project } returns project
+        every { translation.resource } returns resource
+        every { translation.resourceContainerSlug } returns "en_mat_ulb"
 
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
-
-        TestUtils.setPropertyReflection(library, "index", index)
+        every { library.index } returns index
     }
 
     @After
@@ -459,13 +459,13 @@ class DownloadResourceContainersTest {
         verifySequence {
             progressListener.onProgress(-1, 2, "")
             progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
+            progressListener.onProgress(0, 2, "en_bible_tw")
+            progressListener.onProgress(0, 2, "en_mrk_tn")
+            progressListener.onProgress(0, 2, "en_mrk_tq")
             progressListener.onProgress(1, 2, "id_gen_ayt")
-            progressListener.onProgress(1, 2, null)
-            progressListener.onProgress(1, 2, null)
-            progressListener.onProgress(1, 2, null)
+            progressListener.onProgress(1, 2, "id_bible_tw")
+            progressListener.onProgress(1, 2, "id_gen_tn")
+            progressListener.onProgress(1, 2, "id_gen_tq")
             progressListener.onProgress(2, 2, "")
         }
     }
@@ -541,9 +541,9 @@ class DownloadResourceContainersTest {
         verifySequence {
             progressListener.onProgress(-1, 2, "")
             progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
+            progressListener.onProgress(0, 2, "en_bible_tw")
+            progressListener.onProgress(0, 2, "en_mrk_tn")
+            progressListener.onProgress(0, 2, "en_mrk_tq")
             progressListener.onProgress(1, 2, "id_gen_ayt")
             progressListener.onProgress(2, 2, "")
         }
@@ -621,9 +621,9 @@ class DownloadResourceContainersTest {
         verifySequence {
             progressListener.onProgress(-1, 2, "")
             progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
+            progressListener.onProgress(0, 2, "en_bible_tw")
+            progressListener.onProgress(0, 2, "en_mrk_tn")
+            progressListener.onProgress(0, 2, "en_mrk_tq")
             progressListener.onProgress(1, 2, "id_gen_ayt")
             progressListener.onProgress(2, 2, "")
         }
@@ -701,13 +701,13 @@ class DownloadResourceContainersTest {
         verifySequence {
             progressListener.onProgress(-1, 2, "")
             progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
+            progressListener.onProgress(0, 2, "en_bible_tw")
+            progressListener.onProgress(0, 2, "en_mrk_tn")
+            progressListener.onProgress(0, 2, "en_mrk_tq")
             progressListener.onProgress(1, 2, "id_gen_ayt")
-            progressListener.onProgress(1, 2, null)
-            progressListener.onProgress(1, 2, null)
-            progressListener.onProgress(1, 2, null)
+            progressListener.onProgress(1, 2, "id_bible_tw")
+            progressListener.onProgress(1, 2, "id_gen_tn")
+            progressListener.onProgress(1, 2, "id_gen_tq")
             progressListener.onProgress(2, 2, "")
         }
     }
@@ -780,13 +780,13 @@ class DownloadResourceContainersTest {
         verifySequence {
             progressListener.onProgress(-1, 2, "")
             progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
-            progressListener.onProgress(0, 2, null)
+            progressListener.onProgress(0, 2, "en_bible_tw")
+            progressListener.onProgress(0, 2, "en_mrk_tn")
+            progressListener.onProgress(0, 2, "en_mrk_tq")
             progressListener.onProgress(1, 2, "id_obs_ulb")
-            progressListener.onProgress(1, 2, null)
-            progressListener.onProgress(1, 2, null)
-            progressListener.onProgress(1, 2, null)
+            progressListener.onProgress(1, 2, "id_bible-obs_tw")
+            progressListener.onProgress(1, 2, "id_obs_tn")
+            progressListener.onProgress(1, 2, "id_obs_tq")
             progressListener.onProgress(2, 2, "")
         }
     }
@@ -820,9 +820,10 @@ class DownloadResourceContainersTest {
     ): Translation {
         val translation: Translation = mockk()
 
-        TestUtils.setPropertyReflection(translation, "language", language)
-        TestUtils.setPropertyReflection(translation, "project", project)
-        TestUtils.setPropertyReflection(translation, "resource", resource)
+        every { translation.language } returns language
+        every { translation.project } returns project
+        every { translation.resource } returns resource
+        every { translation.resourceContainerSlug } returns "${language.slug}_${project.slug}_${resource.slug}"
 
         return translation
     }

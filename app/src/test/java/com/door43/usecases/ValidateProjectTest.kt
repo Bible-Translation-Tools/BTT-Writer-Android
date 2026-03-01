@@ -49,13 +49,14 @@ class ValidateProjectTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        TestUtils.setPropertyReflection(library, "index", index)
+        every { library.index } returns index
 
         every { translator.getTargetTranslation(sourceTranslationId) }
             .returns(sourceTranslation)
         every { translator.getTargetTranslation(targetTranslationId) }
             .returns(targetTranslation)
 
+        TestUtils.setPropertyReflection(sourceLanguage, "slug", "en")
         every { index.getTargetLanguage(any()) }.returns(mockk())
         every { index.getSourceLanguage(any()) }.returns(sourceLanguage)
 

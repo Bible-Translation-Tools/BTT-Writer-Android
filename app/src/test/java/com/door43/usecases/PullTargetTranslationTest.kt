@@ -65,7 +65,7 @@ class PullTargetTranslationTest {
         every { context.resources }.returns(resources)
 
         mockkObject(TargetTranslation)
-        mockkStatic(Manifest::class)
+        mockkObject(Manifest)
 
         every { Manifest.generate(any()) }.returns(mockk())
 

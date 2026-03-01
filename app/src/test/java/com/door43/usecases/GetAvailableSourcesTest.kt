@@ -31,7 +31,7 @@ class GetAvailableSourcesTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        TestUtils.setPropertyReflection(library, "index", index)
+        every { library.index } returns index
 
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
     }
@@ -96,9 +96,9 @@ class GetAvailableSourcesTest {
         val project = if (resType == "dict") "bible" else book
         val resource = if (resType == "dict") "tw" else "ulb"
 
-        TestUtils.setPropertyReflection(translation, "language", mockLanguage(lang))
-        TestUtils.setPropertyReflection(translation, "project", mockProject(project))
-        TestUtils.setPropertyReflection(translation, "resource", mockResource(resource))
+        every { translation.language } returns mockLanguage(lang)
+        every { translation.project } returns mockProject(project)
+        every { translation.resource } returns mockResource(resource)
 
         return translation
     }

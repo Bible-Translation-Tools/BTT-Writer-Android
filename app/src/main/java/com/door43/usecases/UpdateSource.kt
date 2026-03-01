@@ -64,9 +64,9 @@ class UpdateSource(
             )
             val rootApiUrl = server + prefRepository.getRootCatalogApi()
             library.updateSources(rootApiUrl) { tag, max, complete ->
-                maxProgress = max.toInt()
+                maxProgress = max
                 val details = "$message $tag"
-                progressListener?.onProgress(complete.toInt(), max.toInt(), details)
+                progressListener?.onProgress(complete, max, details)
                 true
             }
             success = true

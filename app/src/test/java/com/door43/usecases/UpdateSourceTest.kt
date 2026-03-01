@@ -43,8 +43,7 @@ class UpdateSourceTest {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-
-        TestUtils.setPropertyReflection(library, "index", index)
+        every { library.index } returns index
 
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
         every { library.getResourceContainerLastModified(any(), any(), any()) }
@@ -164,7 +163,7 @@ class UpdateSourceTest {
         assertEquals(0, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), "Test") }
-        verify(exactly = 1) { library.index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 1) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 1) { library.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }
         verify { library.updateSources(any(), any()) }
@@ -172,7 +171,7 @@ class UpdateSourceTest {
 
     private fun verifyCommonStuff() {
         verify { progressListener.onProgress(any(), any(), "Test") }
-        verify(exactly = 2) { library.index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 2) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 2) { library.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }
         verify { library.updateSources(any(), any()) }
@@ -190,14 +189,10 @@ class UpdateSourceTest {
         val resource: Resource = mockk()
         TestUtils.setPropertyReflection(resource, "slug", res)
 
-        TestUtils.setPropertyReflection(
-            translation,
-            "resourceContainerSlug",
-            "${lang}_${book}_${res}"
-        )
-        TestUtils.setPropertyReflection(translation, "language", language)
-        TestUtils.setPropertyReflection(translation, "project", project)
-        TestUtils.setPropertyReflection(translation, "resource", resource)
+        every { translation.resourceContainerSlug } returns "${lang}_${book}_${res}"
+        every { translation.language } returns language
+        every { translation.project } returns project
+        every { translation.resource } returns resource
 
         return translation
     }

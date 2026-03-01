@@ -34,7 +34,6 @@ class USFMNoteSpan(
         /**
          * Generates the passage note tag with additional attributes
          */
-        @JvmStatic
         fun generateTag(style: String, caller: String, title: CharSequence, chars: List<USFMChar>): CharSequence {
             val tag = StringBuilder("\\f $caller ")
             for (c in chars) {
@@ -51,7 +50,6 @@ class USFMNoteSpan(
          * Generates a footnote span
          * @param note the note
          */
-        @JvmStatic
         fun generateFootnote(note: CharSequence): USFMNoteSpan {
             val chars = listOf(USFMChar(USFMChar.STYLE_FOOTNOTE_TEXT, note))
             return USFMNoteSpan("f", DEFAULT_CALLER, chars)
@@ -63,7 +61,6 @@ class USFMNoteSpan(
          * we are using usfm for footnotes and our own variant for user notes
          * http://ubs-icap.org/chm/usfm/2.4/index.html
          */
-        @JvmStatic
         fun parseNote(caller: CharSequence, noteText: CharSequence): USFMNoteSpan {
             val chars = mutableListOf<USFMChar>()
             val pattern = Pattern.compile(CHAR_PATTERN)

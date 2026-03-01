@@ -52,7 +52,6 @@ class USXNoteSpan(
         /**
          * Generates the passage note tag with additional attributes
          */
-        @JvmStatic
         fun generateTag(style: String, caller: String, title: CharSequence, chars: List<USXChar>): CharSequence {
             val dbf = DocumentBuilderFactory.newInstance()
             val db = try {
@@ -106,7 +105,6 @@ class USXNoteSpan(
          * Generates a footnote span
          * @param note the note
          */
-        @JvmStatic
         fun generateFootnote(note: CharSequence): USXNoteSpan {
             val chars = listOf(USXChar(USXChar.STYLE_FOOTNOTE_TEXT, note))
             return USXNoteSpan("f", DEFAULT_CALLER, chars)
@@ -118,7 +116,6 @@ class USXNoteSpan(
          * we are using usx for footnotes and our own variant for user notes
          * http://dbl.ubs-icap.org:8090/display/DBLDOCS/USX#USX-note(Footnote)
          */
-        @JvmStatic
         fun parseNote(usx: CharSequence): USXNoteSpan? {
             val parser = Xml.newPullParser()
             return try {

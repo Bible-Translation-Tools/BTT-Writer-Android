@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -59,7 +60,7 @@ class BackupRCTest {
             library
         )
 
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
 
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
         every { FileUtilities.copyFile(any(), any()) } just runs
@@ -67,9 +68,9 @@ class BackupRCTest {
         every { directoryProvider.backupsDir }.returns(File("/backups"))
         every { profile.nativeSpeaker }.returns(mockk())
 
-        TestUtils.setPropertyReflection(translation, "language", language)
-        TestUtils.setPropertyReflection(translation, "project", project)
-        TestUtils.setPropertyReflection(translation, "resource", resource)
+        every { translation.language } returns language
+        every { translation.project } returns project
+        every { translation.resource } returns resource
     }
 
     @After
@@ -82,7 +83,8 @@ class BackupRCTest {
         TestUtils.setPropertyReflection(language, "slug", "fa")
         TestUtils.setPropertyReflection(project, "slug", "mrk")
         TestUtils.setPropertyReflection(resource, "slug", "nmv")
-        TestUtils.setPropertyReflection(translation, "resourceContainerSlug", "fa_mrk_nmv")
+
+        every { translation.resourceContainerSlug } returns "fa_mrk_nmv"
 
         every {
             library.exportResourceContainer(
@@ -112,7 +114,8 @@ class BackupRCTest {
         TestUtils.setPropertyReflection(language, "slug", "fa")
         TestUtils.setPropertyReflection(project, "slug", "mrk")
         TestUtils.setPropertyReflection(resource, "slug", "nmv")
-        TestUtils.setPropertyReflection(translation, "resourceContainerSlug", "fa_mrk_nmv")
+
+        every { translation.resourceContainerSlug } returns "fa_mrk_nmv"
 
         every {
             library.exportResourceContainer(

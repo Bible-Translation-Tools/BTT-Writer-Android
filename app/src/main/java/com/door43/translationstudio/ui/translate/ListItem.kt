@@ -15,15 +15,15 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
  * Represents a single row in the translation list
  */
 abstract class ListItem(
-    @JvmField val chapterSlug: String,
-    @JvmField val chunkSlug: String,
-    @JvmField val source: ResourceContainer,
-    @JvmField val target: TargetTranslation
+    val chapterSlug: String,
+    val chunkSlug: String,
+    val source: ResourceContainer,
+    val target: TargetTranslation
 ) {
-    @JvmField var renderedSourceText: CharSequence? = null
-    @JvmField var renderedTargetText: CharSequence? = null
-    @JvmField var isEditing = false
-    @JvmField var isDisabled = false
+    var renderedSourceText: CharSequence? = null
+    var renderedTargetText: CharSequence? = null
+    var isEditing = false
+    var isDisabled = false
 
     val sourceText: String
         get() = getSourceText(chapterSlug, chunkSlug)
@@ -279,7 +279,7 @@ class ChunkListItem(
     private val getTargetTextFunc: (String, String?) -> String,
     private val getTabsFunc: () -> List<ContentValues>
 ) : ListItem(chapterSlug, chunkSlug, source, target) {
-    @JvmField var isTargetCardOpen = false
+    var isTargetCardOpen = false
 
     override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
         return getSourceTextFunc(chapterSlug, chunkSlug)
@@ -306,21 +306,13 @@ class ReviewListItem(
     private val getTargetTextFunc: (String, String?) -> String,
     private val getTabsFunc: () -> List<ContentValues>
 ) : ListItem(chapterSlug, chunkSlug, source, target) {
-    @JvmField
     var hasSearchText = false
-    @JvmField
     var mergeItems: List<CharSequence> = emptyList()
-    @JvmField
     var mergeItemSelected = -1
-    @JvmField
     var selectItemNum = -1
-    @JvmField
     var refreshSearchHighlightSource = false
-    @JvmField
     var refreshSearchHighlightTarget = false
-    @JvmField
     var hasMissingVerses = false
-    @JvmField
     var resourcesOpened = false
 
     override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {

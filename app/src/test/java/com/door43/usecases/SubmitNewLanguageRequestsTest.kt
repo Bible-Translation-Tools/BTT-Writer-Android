@@ -15,6 +15,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
@@ -53,7 +54,7 @@ class SubmitNewLanguageRequestsTest {
         every { prefRepository.getQuestionnaireApi() }.returns(server.url("/api").toString())
         every { directoryProvider.externalAppDir }.returns(File("external"))
 
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
         every { FileUtilities.writeStringToFile(any(), any()) }.just(runs)
 
         every { translator.targetTranslations }.returns(arrayOf())

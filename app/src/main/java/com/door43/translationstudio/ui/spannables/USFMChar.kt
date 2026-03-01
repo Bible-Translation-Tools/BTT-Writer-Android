@@ -31,7 +31,6 @@ class USFMChar(style: String, val value: CharSequence) {
         /**
          * Returns the compiled pattern to match this char
          */
-        @JvmStatic
         fun getPattern(style: String): Pattern {
             return Pattern.compile("\\\\f$style+\\s([^\\\\]+)", Pattern.DOTALL) // \\f(\S)+\s([^\\]+)
         }

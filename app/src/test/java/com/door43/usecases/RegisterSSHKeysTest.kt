@@ -47,7 +47,7 @@ class RegisterSSHKeysTest {
         mockkObject(App)
         every { App.udid() }.returns("1234567890")
 
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
         every { FileUtilities.readFileToString(any()) }.returns("public_key_string")
 
         mockkConstructor(GogsAPI::class)

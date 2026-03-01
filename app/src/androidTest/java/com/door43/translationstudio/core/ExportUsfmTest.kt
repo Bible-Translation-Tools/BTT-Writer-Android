@@ -775,7 +775,6 @@ class ExportUsfmTest : KoinTest {
          * @param fileName
          * @return
          */
-        @JvmStatic
         fun getRightFileNameLength(fileName: String): String {
             var fileName = fileName
             val numericalValue: Int = strToInt(fileName, -1)

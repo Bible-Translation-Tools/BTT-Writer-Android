@@ -7,7 +7,6 @@ class MarkdownTitledLinkSpan(val title: String, val address: String) : Span(
     address
 ) {
     companion object {
-        @JvmField
         val PATTERN: Pattern = Pattern.compile("\\[(((?!]).)*)]\\(((((?!\\\\)).)*)\\)")
     }
 }

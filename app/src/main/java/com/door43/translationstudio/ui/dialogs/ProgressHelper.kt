@@ -75,7 +75,6 @@ object ProgressHelper {
         }
     }
 
-    @JvmStatic
     fun newInstance(
         fragmentManager: FragmentManager,
         title: Int,

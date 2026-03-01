@@ -28,7 +28,6 @@ open class USXVerseSpan : VerseSpan {
          * @param usx the USX string
          * @return the parsed USXVerseSpan or null
          */
-        @JvmStatic
         fun parseVerse(usx: String): USXVerseSpan? {
             val pattern = Pattern.compile(PATTERN)
             val matcher = pattern.matcher(usx)
@@ -47,7 +46,6 @@ open class USXVerseSpan : VerseSpan {
          * @param text the text to search
          * @return IntArray of size 0 if no verses, size 1 if one verse, size 2 if a range of verses
          */
-        @JvmStatic
         fun getVerseRange(text: CharSequence): IntArray {
             // locate verse range
             val pattern = Pattern.compile(PATTERN)

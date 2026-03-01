@@ -37,7 +37,7 @@ class RenderHelpsTest {
         TestUtils.setPropertyReflection(language, "slug", "en")
         TestUtils.setPropertyReflection(project, "slug", "mrk")
 
-        TestUtils.setPropertyReflection(library, "index", index)
+        every { library.index } returns index
 
         mockkObject(ContainerCache)
         every { ContainerCache.cache(library, any()) }
@@ -69,13 +69,15 @@ class RenderHelpsTest {
         val listItem: ListItem = mockk {
             every { chunkConfig }.returns(mockTw())
         }
-        TestUtils.setPropertyReflection(listItem, "chapterSlug", "01")
-        TestUtils.setPropertyReflection(listItem, "chunkSlug", "01")
+
+        every { listItem.chapterSlug } returns "01"
+        every { listItem.chunkSlug } returns "01"
 
         val source: ResourceContainer = mockk {
             every { chunks(any()) }.returns(arrayOf("01", "03", "05"))
         }
-        TestUtils.setPropertyReflection(listItem, "source", source)
+        every { listItem.source } returns source
+
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
@@ -97,13 +99,13 @@ class RenderHelpsTest {
         val listItem: ListItem = mockk {
             every { chunkConfig }.returns(null)
         }
-        TestUtils.setPropertyReflection(listItem, "chapterSlug", "01")
-        TestUtils.setPropertyReflection(listItem, "chunkSlug", "01")
+        every { listItem.chapterSlug } returns "01"
+        every { listItem.chunkSlug } returns "01"
 
         val source: ResourceContainer = mockk {
             every { chunks(any()) }.returns(arrayOf("01", "03", "05"))
         }
-        TestUtils.setPropertyReflection(listItem, "source", source)
+        every { listItem.source } returns source
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
@@ -125,13 +127,13 @@ class RenderHelpsTest {
         val listItem: ListItem = mockk {
             every { chunkConfig }.returns(mockTw())
         }
-        TestUtils.setPropertyReflection(listItem, "chapterSlug", "01")
-        TestUtils.setPropertyReflection(listItem, "chunkSlug", "01")
+        every { listItem.chapterSlug } returns "01"
+        every { listItem.chunkSlug } returns "01"
 
         val source: ResourceContainer = mockk {
             every { chunks(any()) }.returns(arrayOf("01", "03", "05"))
         }
-        TestUtils.setPropertyReflection(listItem, "source", source)
+        every { listItem.source } returns source
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
@@ -156,13 +158,13 @@ class RenderHelpsTest {
         val listItem: ListItem = mockk {
             every { chunkConfig }.returns(mockTw())
         }
-        TestUtils.setPropertyReflection(listItem, "chapterSlug", "01")
-        TestUtils.setPropertyReflection(listItem, "chunkSlug", "01")
+        every { listItem.chapterSlug } returns "01"
+        every { listItem.chunkSlug } returns "01"
 
         val source: ResourceContainer = mockk {
             every { chunks(any()) }.returns(arrayOf("01", "03", "05"))
         }
-        TestUtils.setPropertyReflection(listItem, "source", source)
+        every { listItem.source } returns source
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
@@ -187,13 +189,13 @@ class RenderHelpsTest {
         val listItem: ListItem = mockk {
             every { chunkConfig }.returns(mockTw())
         }
-        TestUtils.setPropertyReflection(listItem, "chapterSlug", "01")
-        TestUtils.setPropertyReflection(listItem, "chunkSlug", "01")
+        every { listItem.chapterSlug } returns "01"
+        every { listItem.chunkSlug } returns "01"
 
         val source: ResourceContainer = mockk {
             every { chunks(any()) }.returns(arrayOf("01", "03", "05"))
         }
-        TestUtils.setPropertyReflection(listItem, "source", source)
+        every { listItem.source } returns source
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
@@ -218,13 +220,13 @@ class RenderHelpsTest {
         val listItem: ListItem = mockk {
             every { chunkConfig }.returns(mockTw())
         }
-        TestUtils.setPropertyReflection(listItem, "chapterSlug", "01")
-        TestUtils.setPropertyReflection(listItem, "chunkSlug", "01")
+        every { listItem.chapterSlug } returns "01"
+        every { listItem.chunkSlug } returns "01"
 
         val source: ResourceContainer = mockk {
             every { chunks(any()) }.returns(arrayOf("01", "03", "05"))
         }
-        TestUtils.setPropertyReflection(listItem, "source", source)
+        every { listItem.source } returns source
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
@@ -271,7 +273,7 @@ class RenderHelpsTest {
 
     private fun mockHelpsTranslation(slug: String): Translation {
         val translation: Translation = mockk()
-        TestUtils.setPropertyReflection(translation, "resourceContainerSlug", slug)
+        every { translation.resourceContainerSlug } returns slug
         return translation
     }
 

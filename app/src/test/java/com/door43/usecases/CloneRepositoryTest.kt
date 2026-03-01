@@ -47,7 +47,7 @@ class CloneRepositoryTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
         mockkStatic(Git::class)
 
         every { FileUtilities.deleteQuietly(any()) }.returns(true)

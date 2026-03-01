@@ -56,7 +56,7 @@ class GetAvailableSources(
 //        availableTranslations.addAll(man);
 
         val byLanguage = TreeMap<String, ArrayList<Int>>()
-        val maxProgress = sources.size
+        val maxProgress = allSources.size
 
         // initialize NT book list
         val ntBooks = LinkedHashMap<String, ArrayList<Int>>()
@@ -74,7 +74,7 @@ class GetAvailableSources(
         val otherBooks = LinkedHashMap<String, ArrayList<Int>>()
 
         for (i in 0 until maxProgress) {
-            val t: Translation = sources[i]
+            val t: Translation = allSources[i]
 
             if (i % 16 == 0) {
                 progressListener?.onProgress(i, maxProgress, prefix)

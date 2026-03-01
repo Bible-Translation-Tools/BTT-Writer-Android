@@ -27,7 +27,6 @@ object FileUtilities {
      * @return
      * @throws Exception
      */
-    @JvmStatic
     @Throws(IOException::class)
     fun readStreamToString(stream: InputStream): String {
         return stream.bufferedReader().use { it.readText() }
@@ -39,7 +38,6 @@ object FileUtilities {
      * @return
      * @throws Exception
      */
-    @JvmStatic
     @Throws(IOException::class)
     fun readFileToString(file: File): String {
         FileInputStream(file).use { fis ->
@@ -53,7 +51,6 @@ object FileUtilities {
      * @param contents
      * @throws IOException
      */
-    @JvmStatic
     @Throws(IOException::class)
     fun writeStringToFile(file: File, contents: String) {
         FileOutputStream(file).use { fos ->
@@ -61,7 +58,6 @@ object FileUtilities {
         }
     }
 
-    @JvmStatic
     @Throws(IOException::class)
     fun copyInputStreamToFile(source: InputStream, destination: File) {
         source.use { input ->
@@ -71,8 +67,6 @@ object FileUtilities {
         }
     }
 
-    @JvmOverloads
-    @JvmStatic
     @Throws(IOException::class)
     fun openOutputStream(file: File, append: Boolean = false): FileOutputStream {
         if (file.exists()) {
@@ -98,7 +92,6 @@ object FileUtilities {
         return if (count > 2147483647L) -1 else count.toInt()
     }
 
-    @JvmStatic
     fun getFilename(path: String): String {
         return File(path).name
     }
@@ -109,7 +102,6 @@ object FileUtilities {
      * @param path
      * @return
      */
-    @JvmStatic
     fun getExtension(path: String): String {
         val index = path.lastIndexOf(".")
         if (index == -1 || index == path.length - 1) {
@@ -118,7 +110,6 @@ object FileUtilities {
         return path.substring(index + 1)
     }
 
-    @JvmOverloads
     @Throws(IOException::class)
     fun copyLarge(
         input: InputStream,
@@ -140,7 +131,6 @@ object FileUtilities {
      * Recursively deletes a directory or just deletes the file
      * @param fileOrDirectory
      */
-    @JvmStatic
     fun deleteQuietly(fileOrDirectory: File?): Boolean {
         if (fileOrDirectory != null) {
             if (fileOrDirectory.isDirectory) {
@@ -168,7 +158,6 @@ object FileUtilities {
      * @param destFile
      * @return
      */
-    @JvmStatic
     fun moveOrCopyQuietly(sourceFile: File, destFile: File): Boolean {
         if (sourceFile.exists()) {
             // first try to move
@@ -197,7 +186,6 @@ object FileUtilities {
      * with the same name right after deleting it
      * @param file
      */
-    @JvmStatic
     fun safeDelete(file: File?) {
         if (file != null && file.exists()) {
             val temp = File(file.parentFile, System.currentTimeMillis().toString() + ".trash")
@@ -212,7 +200,6 @@ object FileUtilities {
         }
     }
 
-    @JvmStatic
     @Throws(IOException::class)
     fun copyDirectory(srcDir: File, destDir: File, filter: FileFilter?) {
         if (!srcDir.exists()) {
@@ -283,7 +270,6 @@ object FileUtilities {
     /**
      * Copies directory uri to a new directory
      */
-    @JvmStatic
     fun copyDirectory(context: Context, sourceDir: Uri, destDir: File) {
         when (sourceDir.scheme) {
             ContentResolver.SCHEME_CONTENT -> {
@@ -309,7 +295,6 @@ object FileUtilities {
      * @param destDir Destination directory
      * @param dirName Filter to directory name
      */
-    @JvmStatic
     fun copyDirectory(context: Context, sourceDir: Uri, destDir: File, dirName: String) {
         when (sourceDir.scheme) {
             ContentResolver.SCHEME_CONTENT -> {
@@ -337,7 +322,6 @@ object FileUtilities {
         }
     }
 
-    @JvmStatic
     fun copyFile(context: Context, file: DocumentFile, targetDir: File) {
         if (file.isDirectory) {
             // Create a corresponding directory in the cache
@@ -366,7 +350,6 @@ object FileUtilities {
      * @param srcFile
      * @param destFile
      */
-    @JvmStatic
     @Throws(IOException::class)
     fun copyFile(srcFile: File, destFile: File) {
         if (!srcFile.exists()) {
@@ -420,7 +403,6 @@ object FileUtilities {
      * closes the closable without throwing an exception
      * @param closable
      */
-    @JvmStatic
     fun closeQuietly(closable: Closeable) {
         try {
             closable.close()
@@ -429,7 +411,6 @@ object FileUtilities {
         }
     }
 
-    @JvmStatic
     @Throws(IOException::class)
     fun forceMkdir(directory: File) {
         val message: String
@@ -445,7 +426,6 @@ object FileUtilities {
         }
     }
 
-    @JvmStatic
     fun getUriDisplayName(context: Context, uri: Uri): String {
         val defaultName = "unnamed.file"
 

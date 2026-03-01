@@ -30,8 +30,7 @@ class UpdateCatalogsTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        TestUtils.setPropertyReflection(library, "index", index)
-
+        every { library.index } returns index
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
         every { library.updateCatalogs(any(), any()) }.just(runs)
     }
@@ -46,7 +45,7 @@ class UpdateCatalogsTest {
         val targetLanguage: TargetLanguage = mockk()
         TestUtils.setPropertyReflection(targetLanguage, "slug", "en")
 
-        every { index.targetLanguages }.returns(listOf(targetLanguage))
+        every { index.getTargetLanguages() }.returns(listOf(targetLanguage))
 
         val message = "Test"
         val result = UpdateCatalogs(library)
@@ -56,7 +55,7 @@ class UpdateCatalogsTest {
         assertEquals(0, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
-        verify(exactly = 2) { index.targetLanguages }
+        verify(exactly = 2) { index.getTargetLanguages() }
         verify { library.updateCatalogs(false, any()) }
     }
 
@@ -68,7 +67,7 @@ class UpdateCatalogsTest {
         TestUtils.setPropertyReflection(targetLanguage, "slug", "fr")
 
         var calls = 0
-        every { index.targetLanguages }.answers {
+        every { index.getTargetLanguages() }.answers {
             when (calls) {
                 0 -> {
                     calls++
@@ -86,13 +85,13 @@ class UpdateCatalogsTest {
         assertEquals(1, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
-        verify(exactly = 2) { index.targetLanguages }
+        verify(exactly = 2) { index.getTargetLanguages() }
         verify { library.updateCatalogs(false, any()) }
     }
 
     @Test
     fun `test update catalogs, force update`() {
-        every { index.targetLanguages }.returns(listOf())
+        every { index.getTargetLanguages() }.returns(listOf())
 
         val message = "Test"
         val result = UpdateCatalogs(library)
@@ -102,13 +101,13 @@ class UpdateCatalogsTest {
         assertEquals(0, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
-        verify(exactly = 2) { index.targetLanguages }
+        verify(exactly = 2) { index.getTargetLanguages() }
         verify { library.updateCatalogs(true, any()) }
     }
 
     @Test
     fun `test update catalogs, throws exception`() {
-        every { index.targetLanguages }.returns(listOf())
+        every { index.getTargetLanguages() }.returns(listOf())
         every { library.updateCatalogs(any(), any()) }.throws(Exception("An error occurred."))
 
         val message = "Test"
@@ -119,7 +118,7 @@ class UpdateCatalogsTest {
         assertEquals(0, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
-        verify(exactly = 1) { index.targetLanguages }
+        verify(exactly = 1) { index.getTargetLanguages() }
         verify { library.updateCatalogs(true, any()) }
     }
 }

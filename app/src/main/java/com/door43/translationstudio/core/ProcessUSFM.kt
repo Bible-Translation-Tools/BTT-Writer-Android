@@ -768,7 +768,7 @@ class ProcessUSFM {
                 return promptForName
             }
 
-            bookShortName = bookShortName!!.lowercase(Locale.getDefault())
+            bookShortName = bookShortName?.lowercase(Locale.getDefault())
 
             setBookName(bookShortName!!, description)
 
@@ -1569,11 +1569,11 @@ class ProcessUSFM {
             directoryProvider.cacheDir,
             System.currentTimeMillis().toString()
         )
-        tempDir!!.mkdirs()
+        tempDir?.mkdirs()
         tempSrc = File(tempDir, "source")
-        tempSrc!!.mkdirs()
+        tempSrc?.mkdirs()
         projectsFolder = File(tempDir, "output")
-        projectsFolder!!.mkdirs()
+        projectsFolder?.mkdirs()
     }
 
     /**
@@ -1678,23 +1678,17 @@ class ProcessUSFM {
         val PATTERN_CHAPTER_TITLE_MARKER: Pattern = Pattern.compile(CHAPTER_TITLE_MARKER)
         val PATTERN_FOOTNOTE_MARKER: Pattern = Pattern.compile(USFMNoteSpan.PATTERN)
         private const val BOOK_TITLE_MARKER: String = "\\\\toc1\\s([^\\n]*)"
-        @JvmField
         val PATTERN_BOOK_TITLE_MARKER: Pattern = Pattern.compile(BOOK_TITLE_MARKER)
         private const val ID_TAG: String = "\\\\id\\s([^\\n]*)"
-        @JvmField
         val ID_TAG_MARKER: Pattern = Pattern.compile(ID_TAG)
         private const val BOOK_LONG_NAME_MARKER: String = "\\\\toc2\\s([^\\n]*)"
-        @JvmField
         val PATTERN_BOOK_LONG_NAME_MARKER: Pattern = Pattern.compile(BOOK_LONG_NAME_MARKER)
         private const val BOOK_ABBREVIATION_MARKER: String = "\\\\toc3\\s([^\\n]*)"
-        @JvmField
         val PATTERN_BOOK_ABBREVIATION_MARKER: Pattern = Pattern.compile(BOOK_ABBREVIATION_MARKER)
         private const val SECTION_MARKER: String = "\\\\s5([^\\n]*)"
         private val PATTERN_SECTION_MARKER: Pattern = Pattern.compile(SECTION_MARKER)
         private const val CHAPTER_NUMBER_MARKER: String = "\\\\c\\s(\\d+(-\\d+)?)\\s"
-        @JvmField
         val PATTERN_CHAPTER_NUMBER_MARKER: Pattern = Pattern.compile(CHAPTER_NUMBER_MARKER)
-        @JvmField
         val PATTERN_USFM_VERSE_SPAN: Pattern = Pattern.compile(USFMVerseSpan.PATTERN)
         const val END_MARKER: Int = 999999
 

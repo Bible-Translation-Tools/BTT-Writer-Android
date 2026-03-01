@@ -62,7 +62,6 @@ class UpdateCatalogsTest : KoinAndroidTest() {
     companion object {
         private var _directoryProvider: IDirectoryProvider? = null
 
-        @JvmStatic
         @AfterClass
         fun tearDown() {
             _directoryProvider?.deleteLibrary()

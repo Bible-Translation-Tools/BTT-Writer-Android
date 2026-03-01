@@ -31,8 +31,7 @@ class TranslationProgressTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        TestUtils.setPropertyReflection(library, "index", index)
-
+        every { library.index } returns index
         every { targetTranslation.projectId }.returns("mrk")
         every { targetTranslation.id }.returns("aa_mrk_text_ulb")
 
@@ -231,18 +230,19 @@ class TranslationProgressTest {
         val enTranslation: Translation = mockk()
         TestUtils.setPropertyReflection(english, "slug", "en")
         TestUtils.setPropertyReflection(ulb, "slug", "ulb")
-        TestUtils.setPropertyReflection(enTranslation, "language", english)
-        TestUtils.setPropertyReflection(enTranslation, "resource", ulb)
-        TestUtils.setPropertyReflection(enTranslation, "resourceContainerSlug", "en_mrk_ulb")
+
+        every { enTranslation.language } returns english
+        every { enTranslation.resource } returns ulb
+        every { enTranslation.resourceContainerSlug } returns "en_mrk_ulb"
 
         val indonesian: Language = mockk()
         val ayt: Resource = mockk()
         val idTranslation: Translation = mockk()
         TestUtils.setPropertyReflection(indonesian, "slug", "id")
         TestUtils.setPropertyReflection(ayt, "slug", "ayt")
-        TestUtils.setPropertyReflection(idTranslation, "language", indonesian)
-        TestUtils.setPropertyReflection(idTranslation, "resource", ayt)
-        TestUtils.setPropertyReflection(idTranslation, "resourceContainerSlug", "id_mrk_ayt")
+        every { idTranslation.language } returns indonesian
+        every { idTranslation.resource } returns ayt
+        every { idTranslation.resourceContainerSlug } returns "id_mrk_ayt"
 
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf(enTranslation, idTranslation))

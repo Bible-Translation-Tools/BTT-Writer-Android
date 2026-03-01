@@ -73,8 +73,8 @@ class UpdateAppTest {
         every { packageManager.getPackageInfo(any<String>(), 0) }.returns(packageInfo)
 
         TestUtils.setPropertyReflection(packageInfo, "versionCode", 10)
-        TestUtils.setPropertyReflection(library, "index", index)
 
+        every { library.index } returns index
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(1)
         every { prefRepository.setPrivatePref(any(), any<Int>()) }.just(runs)
@@ -92,7 +92,7 @@ class UpdateAppTest {
             any<String>()
         ) }.returns("font.ttf")
 
-        every { index.importedTranslations }.returns(listOf())
+        every { index.getImportedTranslations() }.returns(listOf())
         every { library.tearDown() }.just(runs)
         every { directoryProvider.deleteLibrary() }.just(runs)
         every { directoryProvider.deployDefaultLibrary() }.just(runs)
@@ -101,10 +101,10 @@ class UpdateAppTest {
         every { directoryProvider.cacheDir }.returns(tempDir.newFolder("cache"))
 
         mockkStatic(ResourceContainer::class)
-        every { library.importResourceContainer(any()) }.returns(null)
+        every { library.importResourceContainer(any()) }.returns(mockk())
         every { library.updateLanguageUrl(any()) }.just(runs)
 
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
         every { FileUtilities.moveOrCopyQuietly(any(), any()) }.returns(true)
         every { FileUtilities.copyDirectory(any<File>(), any(), any()) }.just(runs)
@@ -201,7 +201,7 @@ class UpdateAppTest {
         every { library.isLibraryDeployed }.returns(false)
 
         val translation: Translation = mockk()
-        every { index.importedTranslations }.returns(listOf(translation))
+        every { index.getImportedTranslations() }.returns(listOf(translation))
 
         val file = tempDir.newFile("backup.zip")
         every { backupRC.backupResourceContainer(translation) }.returns(file)
@@ -533,7 +533,7 @@ class UpdateAppTest {
     }
 
     private fun verifyUpdateLibrary(called: Boolean = true) {
-        verify(inverse = !called) { index.importedTranslations }
+        verify(inverse = !called) { index.getImportedTranslations() }
         verify(inverse = !called) { library.tearDown() }
         verify(inverse = !called) { directoryProvider.deleteLibrary() }
         verify(inverse = !called) { directoryProvider.deployDefaultLibrary() }

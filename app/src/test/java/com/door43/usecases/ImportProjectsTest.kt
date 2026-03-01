@@ -72,7 +72,7 @@ class ImportProjectsTest {
         tStudioFile.writeText("tstudio")
         pdfFile.writeText("pdf")
 
-        mockkStatic(Zip::class)
+        mockkObject(Zip)
         every { Zip.unzipFromStream(any(), any()) }.answers {
             val content = firstArg<InputStream>().bufferedReader().use { it.readText() }
             if (content.contains("tstudio")) {
@@ -88,7 +88,7 @@ class ImportProjectsTest {
         every { directoryProvider.cacheDir }.returns(tempDir.newFolder("cache"))
         every { translator.path }.returns(tempDir.newFolder("translations"))
 
-        mockkStatic(FileUtilities::class)
+        mockkObject(FileUtilities)
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
 
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
@@ -690,6 +690,7 @@ class ImportProjectsTest {
         every { library.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc: ResourceContainer = mockk()
+        TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
         val result = ImportProjects(
@@ -727,6 +728,7 @@ class ImportProjectsTest {
         every { library.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc = mockResourceContainer()
+        TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
         every { context.getString(R.string.overwrite_content) }.returns("Overwrite %s?")
@@ -803,6 +805,7 @@ class ImportProjectsTest {
         every { library.importResourceContainer(srcDir) }.throws(Exception("Failed to import rc."))
 
         val tempRc: ResourceContainer = mockk()
+        TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
         val expectedErrorMessage = "Failed to import rc."

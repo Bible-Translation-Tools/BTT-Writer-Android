@@ -104,12 +104,10 @@ class App : Application() {
         private lateinit var directory: IDirectoryProvider
         private lateinit var backup: BackupRC
 
-        @JvmStatic
         fun configureLogger(minLogLevel: Int) {
             Logger.configure(directory.logFile, LogLevel.getLevel(minLogLevel))
         }
 
-        @JvmStatic
         val isNetworkAvailable: Boolean
             /**
              * Checks if we have internet
@@ -126,7 +124,6 @@ class App : Application() {
                 }
             }
 
-        @JvmStatic
         val deviceLanguageCode: String
             /**
              * Returns the language code used by the device.
@@ -138,7 +135,6 @@ class App : Application() {
                 return code.replace("[_-]$".toRegex(), "")
             }
 
-        @JvmStatic
         val isStoreVersion: Boolean
             /**
              * Checks if this apk was installed from the playstore or sideloaded
@@ -151,7 +147,6 @@ class App : Application() {
                 return !TextUtils.isEmpty(installer)
             }
 
-        @JvmStatic
         val isTablet: Boolean
             /**
              * Checks if the device is a tablet
@@ -166,7 +161,6 @@ class App : Application() {
          * @return
          */
         @SuppressLint("HardwareIds")
-        @JvmStatic
         fun udid(): String {
             return Build.MODEL.lowercase().replace(" ", "_")
         }
@@ -176,7 +170,6 @@ class App : Application() {
          * @param activity
          * @param view
          */
-        @JvmStatic
         fun showKeyboard(activity: Activity?, view: View?) {
             if (activity != null && view != null) {
                 val controller = WindowCompat.getInsetsController(activity.window, view)
@@ -188,7 +181,6 @@ class App : Application() {
          * Closes the keyboard in the given activity
          * @param activity
          */
-        @JvmStatic
         fun closeKeyboard(activity: Activity?) {
             if (activity != null && activity.window != null) {
                 val decorView: View = activity.window.decorView
@@ -201,12 +193,10 @@ class App : Application() {
             AppCompatDelegate.setDefaultNightMode(theme)
         }
 
-        @JvmStatic
         fun updateColorTheme(theme: String?) {
             updateColorTheme(getColorThemeId(theme))
         }
 
-        @JvmStatic
         fun restart() {
             val packageName = instance.packageName
             val intent = instance.packageManager.getLaunchIntentForPackage(packageName)

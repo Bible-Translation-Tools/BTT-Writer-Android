@@ -17,13 +17,10 @@ object BibleCodes {
         "mic", "nah", "hab", "zep", "hag", "zec", "mal"
     )
 
-    @JvmStatic
     fun getNtBooks(): Array<String> = ntBookList.toTypedArray()
 
-    @JvmStatic
     fun getOtBooks(): Array<String> = otBookList.toTypedArray()
 
-    @JvmStatic
     fun getBibleBooks(): Array<String> {
         return (otBookList + ntBookList).toTypedArray()
     }

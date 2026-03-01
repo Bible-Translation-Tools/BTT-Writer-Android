@@ -35,7 +35,6 @@ class USXChar(style: String, val value: CharSequence) {
         /**
          * Returns the compiled pattern to match this char
          */
-        @JvmStatic
         fun getPattern(style: String): Pattern {
             return Pattern.compile(
                 "<char\\s+style=\"$style\"\\s*>\\s*(((?!</char>).)*)</char>",

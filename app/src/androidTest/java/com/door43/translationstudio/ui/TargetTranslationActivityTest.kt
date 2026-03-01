@@ -75,7 +75,6 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     private val translator: Translator by inject()
 
     companion object {
-        @JvmStatic
         @BeforeClass
         fun setupClass() {
             Looper.prepare()
