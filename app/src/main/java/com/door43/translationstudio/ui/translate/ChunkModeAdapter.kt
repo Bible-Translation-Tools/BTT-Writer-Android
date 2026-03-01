@@ -287,7 +287,7 @@ class ChunkModeAdapter(
             renderer.setParagraphsEnabled(false)
         } else {
             // TODO: add note click listener
-            renderingGroup.addEngine(DefaultRenderer(null))
+            renderingGroup.addEngine(DefaultRenderer(context))
         }
 
         renderingGroup.init(text)

@@ -10,8 +10,8 @@ import java.util.regex.Pattern
 
 open class ArticleLinkSpan protected constructor(
     private val title: String,
-    val sourceLanguageSlug: String,
-    val volume: String,
+    sourceLanguageSlug: String,
+    volume: String,
     val section: String,
     val slug: String
 ) : Span() {
@@ -68,7 +68,7 @@ open class ArticleLinkSpan protected constructor(
         }
 
         @JvmStatic
-        fun parse(title: String, address: String): ArticleLinkSpan? {
+        fun parse(title: String, address: String): ArticleLinkSpan {
             val parts = address.split(":")
             if (parts.size == 5) {
                 // example: en:ta:vol2:translate:figs_euphemism
@@ -80,7 +80,11 @@ open class ArticleLinkSpan protected constructor(
             } else {
                 Logger.w(ArticleLinkSpan::class.java.name, "invalid translation academy link address $address")
             }
-            return null
+            return emptyArticleSpan
         }
+
+        val emptyArticleSpan: ArticleLinkSpan
+            get() = ArticleLinkSpan("", "", "", "", "")
+
     }
 }

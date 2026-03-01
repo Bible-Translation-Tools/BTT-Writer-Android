@@ -14,12 +14,6 @@ class RenderingProvider(
         return DefaultRenderer(context)
     }
 
-    fun createLinkToHtmlRenderer(
-        preprocessor: LinkToHtmlRenderer.OnPreprocessLink
-    ): LinkToHtmlRenderer {
-        return LinkToHtmlRenderer(context, preprocessor)
-    }
-
     fun createHtmlRenderer(
         preprocessor: HtmlRenderer.OnPreprocessLink,
         linkListener: Span.OnClickListener

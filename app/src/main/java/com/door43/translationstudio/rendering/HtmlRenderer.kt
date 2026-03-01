@@ -1,209 +1,206 @@
-package com.door43.translationstudio.rendering;
+package com.door43.translationstudio.rendering
 
-import android.content.Context;
-import android.text.Html;
-import android.text.TextUtils;
-
-import com.door43.translationstudio.ui.spannables.ArticleLinkSpan;
-import com.door43.translationstudio.ui.spannables.MarkdownLinkSpan;
-import com.door43.translationstudio.ui.spannables.MarkdownTitledLinkSpan;
-import com.door43.translationstudio.ui.spannables.PassageLinkSpan;
-import com.door43.translationstudio.ui.spannables.ShortReferenceSpan;
-import com.door43.translationstudio.ui.spannables.Span;
-import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import android.content.Context
+import android.text.Html
+import android.text.TextUtils
+import com.door43.translationstudio.ui.spannables.ArticleLinkSpan
+import com.door43.translationstudio.ui.spannables.MarkdownLinkSpan
+import com.door43.translationstudio.ui.spannables.MarkdownTitledLinkSpan
+import com.door43.translationstudio.ui.spannables.PassageLinkSpan
+import com.door43.translationstudio.ui.spannables.ShortReferenceSpan
+import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * Created by joel on 12/2/2015.
  */
-public class HtmlRenderer extends RenderingEngine {
+class HtmlRenderer(
+    context: Context,
+    private val preprocessCallback: OnPreprocessLink,
+    private val linkListener: Span.OnClickListener
+) : RenderingEngine() {
 
-    private final Span.OnClickListener mLinkListener;
-    private final OnPreprocessLink preprocessCallback;
-
-    public HtmlRenderer(
-            Context context,
-            OnPreprocessLink preprocessor,
-            Span.OnClickListener linkListener
-    ) {
-        this.context = context;
-        mLinkListener = linkListener;
-        preprocessCallback = preprocessor;
+    init {
+        this.context = context
     }
 
-    @Override
-    public CharSequence render(CharSequence in) {
-        CharSequence out = in;
-        out = renderTranslationAcademyAddress(out);
-        if(isStopped()) return in;
-        out = renderPassageLink(out);
-        if(isStopped()) return in;
-        out = renderShortReferenceLink(out);
-        if(isStopped()) return in;
-        out = renderMarkdownLink(out);
-        if(isStopped()) return in;
-        out = renderTranslationWordLink(out);
-        if(isStopped()) return in;
-        // TODO: 12/15/2015 it would be nice if we could pass in a private click listener and interpret the link types before calling the supplied listener.
+    override fun render(input: CharSequence): CharSequence {
+        var out = input
+
+        out = renderTranslationAcademyAddress(out)
+        if (isStopped()) return input
+
+        out = renderPassageLink(out)
+        if (isStopped()) return input
+
+        out = renderShortReferenceLink(out)
+        if (isStopped()) return input
+
+        out = renderMarkdownLink(out)
+        if (isStopped()) return input
+
+        out = renderTranslationWordLink(out)
+        if (isStopped()) return input
+
+        // TODO: 12/15/2015 it would be nice if we could pass in a private click listener and
+        //  interpret the link types before calling the supplied listener.
         // this will allow calling code to use instance of rather than comparing strings.
-        out = Html.fromHtml(out.toString(), null, new HtmlTagHandler(context, mLinkListener));
-        if(isStopped()) return in;
-        return out;
+        out = Html.fromHtml(
+            out.toString(),
+            Html.FROM_HTML_MODE_LEGACY,
+            null,
+            HtmlTagHandler(context, linkListener)
+        )
+        if (isStopped()) return input
+
+        return out
     }
 
-    private CharSequence renderTranslationWordLink(CharSequence in) {
-        return renderLink(in, MarkdownLinkSpan.PATTERN, "tw", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                String address = matcher.group(1).replaceAll("^:", "").trim().toLowerCase();
+    private fun renderTranslationWordLink(input: CharSequence): CharSequence {
+        return renderLink(input, MarkdownLinkSpan.PATTERN, "tw", object : OnCreateLink {
+            override fun onCreate(matcher: Matcher): Span? {
+                var address = matcher.group(1)
+                    ?.replace("^:".toRegex(), "")
+                    ?.trim()
+                    ?.lowercase() ?: ""
 
                 // cut off title e.g. en:obe:other:stuff|title
-                String[] addressName = address.split("\\|");
-                address = addressName[0];
+                val addressName = address.split("\\|".toRegex())
+                address = addressName[0]
 
-                String[] chunks = address.split(":");
-                if(chunks.length > 2) {
-                    String id = null;
+                val chunks = address.split(":")
+                if (chunks.size > 2) {
+                    var id = ""
                     // check for tw links
-                    if(chunks[1].equals("obe")) {
-                        id = chunks[chunks.length-1];
+                    if (chunks[1] == "obe") {
+                        id = chunks[chunks.size - 1]
                     }
                     // TODO: if there are other forms of tw links we can check for them here.
 
-                    if(id != null) {
-                        return new TranslationWordLinkSpan(id, id);
+                    if (id.isNotEmpty()) {
+                        return TranslationWordLinkSpan(id, id)
                     }
                 }
-                return null;
+                return null
             }
-        });
+        })
     }
 
-    private CharSequence renderMarkdownLink(CharSequence in) {
-        return renderLink(in, MarkdownTitledLinkSpan.PATTERN, "m", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                return new MarkdownTitledLinkSpan(matcher.group(1), matcher.group(3));
+    private fun renderMarkdownLink(input: CharSequence): CharSequence {
+        return renderLink(input, MarkdownTitledLinkSpan.PATTERN, "m", object : OnCreateLink {
+            override fun onCreate(matcher: Matcher): Span {
+                val title = matcher.group(1) ?: ""
+                val address = matcher.group(3) ?: ""
+                return MarkdownTitledLinkSpan(title, address)
             }
-        });
+        })
     }
 
     /**
      * Renders links to other passages in the project
-     * @param in
-     * @return
      */
-    private CharSequence renderPassageLink(CharSequence in) {
-        return renderLink(in, PassageLinkSpan.Companion.getPATTERN(), "p", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                return new PassageLinkSpan(matcher.group(3), matcher.group(1));
+    private fun renderPassageLink(input: CharSequence): CharSequence {
+        return renderLink(input, PassageLinkSpan.PATTERN, "p", object : OnCreateLink {
+            override fun onCreate(matcher: Matcher): Span {
+                val title = matcher.group(3) ?: ""
+                val address = matcher.group(1) ?: ""
+                return PassageLinkSpan(title, address)
             }
-        });
+        })
     }
 
     /**
      * Renders short references. that is references without a book label.
      * e.g. 1:1 indicates chapter 1 verse 1 of the current book.
-     *
-     * @param in
-     * @return
      */
-    private CharSequence renderShortReferenceLink(CharSequence in) {
-        return renderLink(in, ShortReferenceSpan.Companion.getPATTERN(), "sr", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                return new ShortReferenceSpan(matcher.group(0));
+    private fun renderShortReferenceLink(input: CharSequence): CharSequence {
+        return renderLink(input, ShortReferenceSpan.PATTERN, "sr", object : OnCreateLink {
+            override fun onCreate(matcher: Matcher): Span {
+                val ref = matcher.group(0) ?: ""
+                return ShortReferenceSpan(ref)
             }
-        });
+        })
     }
 
     /**
-     * Renders addresses to translation academy pages as html
+     * Renders addresses to translation academy pages as HTML
      * Example [[en:ta:vol1:translate:translate_unknown | How to Translate Unknowns]]
-     * @param in
-     * @return
      */
-    public CharSequence renderTranslationAcademyAddress(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.Companion.getADDRESS_PATTERN(), "ta", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                String title = matcher.group(4);
-                if(title == null) {
-                    title = matcher.group(0);
-                }
-                return ArticleLinkSpan.parse(title, matcher.group(2));
+    fun renderTranslationAcademyAddress(input: CharSequence): CharSequence {
+        return renderLink(input, ArticleLinkSpan.ADDRESS_PATTERN, "ta", object : OnCreateLink {
+            override fun onCreate(matcher: Matcher): Span {
+                val title = matcher.group(4) ?: matcher.group(0) ?: ""
+                val address = matcher.group(2) ?: ""
+                return ArticleLinkSpan.parse(title, address)
             }
-        });
+        })
     }
 
     /**
-     * Renders links to translation academy pages as html
+     * Renders links to translation academy pages as HTML
      * Example <a href="/en/ta/vol1/translate/figs_intro" title="en:ta:vol1:translate:figs_intro">Figures of Speech</a>
-     * @param in
-     * @return
      */
-    public CharSequence renderTranslationAcademyLink(CharSequence in) {
-        return renderLink(in, ArticleLinkSpan.Companion.getLINK_PATTERN(), "ta", new OnCreateLink() {
-            @Override
-            public Span onCreate(Matcher matcher) {
-                String title = matcher.group(6);
-                if(title == null) {
-                    title = matcher.group(0);
-                }
-                return ArticleLinkSpan.parse(title, matcher.group(3).replace("/", ":"));
+    fun renderTranslationAcademyLink(input: CharSequence): CharSequence {
+        return renderLink(input, ArticleLinkSpan.LINK_PATTERN, "ta", object : OnCreateLink {
+            override fun onCreate(matcher: Matcher): Span {
+                val title = matcher.group(6) ?: matcher.group(0) ?: ""
+                val address = matcher.group(3)?.replace("/", ":") ?: ""
+                return ArticleLinkSpan.parse(title, address)
             }
-        });
+        })
     }
 
     /**
      * A generic rendering method for rendering content links as html
-     *
-     * @param in
-     *@param pattern
-     * @param callback   @return
      */
-    private CharSequence renderLink(CharSequence in, Pattern pattern, String linkType, OnCreateLink callback) {
-        CharSequence out = "";
-        Matcher matcher = pattern.matcher(in);
-        int lastIndex = 0;
-        while(matcher.find()) {
-            if(isStopped()) return in;
-            Span link = callback.onCreate(matcher);
-            if(link != null) {
-                link.setOnClickListener(mLinkListener);
-                if (preprocessCallback == null || preprocessCallback.onPreprocess(link)) {
+    private fun renderLink(
+        input: CharSequence,
+        pattern: Pattern,
+        linkType: String,
+        callback: OnCreateLink
+    ): CharSequence {
+        var out: CharSequence = ""
+        val matcher = pattern.matcher(input)
+        var lastIndex = 0
+
+        while (matcher.find()) {
+            if (isStopped()) return input
+            callback.onCreate(matcher)?.let { link ->
+                link.onClickListener = linkListener
+
+                if (preprocessCallback.onPreprocess(link)) {
                     // render clickable link
-                    CharSequence title = link.getHumanReadable();
-                    if(title == null || title.toString().isEmpty()) {
-                        title = link.getMachineReadable();
+                    var title = link.humanReadable
+                    if (title.isEmpty()) {
+                        title = link.machineReadable
                     }
-                    String htmlLink = "<app-link href=\"" + link.getMachineReadable() + "\" type=\"" + linkType + "\" >" + title + "</app-link>";
-                    out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), htmlLink);
+                    val htmlLink = "<app-link href=\"${link.machineReadable}\" type=\"$linkType\" >$title</app-link>"
+                    out = TextUtils.concat(out, input.subSequence(lastIndex, matcher.start()), htmlLink)
                 } else {
                     // render as plain text
-                    out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.start()), link.getHumanReadable());
+                    out = TextUtils.concat(out, input.subSequence(lastIndex, matcher.start()), link.humanReadable)
                 }
-            } else {
+            } ?: run {
                 // ignore link
-                out = TextUtils.concat(out, in.subSequence(lastIndex, matcher.end()));
+                out = TextUtils.concat(out, input.subSequence(lastIndex, matcher.end()))
             }
-            lastIndex = matcher.end();
+
+            lastIndex = matcher.end()
         }
-        out = TextUtils.concat(out, in.subSequence(lastIndex, in.length()));
-        return out;
+        out = TextUtils.concat(out, input.subSequence(lastIndex, input.length))
+        return out
     }
 
     private interface OnCreateLink {
-        Span onCreate(Matcher matcher);
+        fun onCreate(matcher: Matcher): Span?
     }
 
     /**
      * Used to identify which links to render
      */
-    public interface OnPreprocessLink {
-        boolean onPreprocess(Span span);
+    fun interface OnPreprocessLink {
+        fun onPreprocess(span: Span): Boolean
     }
 }

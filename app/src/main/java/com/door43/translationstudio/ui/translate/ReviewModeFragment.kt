@@ -29,6 +29,7 @@ import com.door43.translationstudio.databinding.FragmentWordsIndexListBinding
 import com.door43.translationstudio.format
 import com.door43.translationstudio.formatSub
 import com.door43.translationstudio.formatTitle
+import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.spannables.ArticleLinkSpan
@@ -335,7 +336,7 @@ class ReviewModeFragment : ViewModeFragment(),
                 rc.language.direction
             )
             val renderer = renderingProvider.createHtmlRenderer(
-                { span ->
+                preprocessor = { span ->
                     var result = false
                     when (span) {
                         is ArticleLinkSpan -> {
@@ -381,7 +382,7 @@ class ReviewModeFragment : ViewModeFragment(),
                     }
                     result
                 },
-                object : Span.OnClickListener {
+                linkListener = object : Span.OnClickListener {
                     override fun onClick(view: View, span: Span, start: Int, end: Int) {
                         when (val type = (span as LinkSpan).type) {
                             "ta" -> {
@@ -561,7 +562,7 @@ class ReviewModeFragment : ViewModeFragment(),
         val noteBinding = FragmentResourcesNoteBinding.inflate(requireActivity().layoutInflater)
 
         val renderer = renderingProvider.createHtmlRenderer(
-            { span ->
+            preprocessor = { span ->
                 var result = false
                 when (span) {
                     is ArticleLinkSpan -> {
@@ -569,9 +570,11 @@ class ReviewModeFragment : ViewModeFragment(),
                         span.setTitle(title)
                         result = enableTmLinks
                     }
+
                     is PassageLinkSpan -> {
                         // Not implemented in original Java code
                     }
+
                     is TranslationWordLinkSpan -> {
                         val currentRC = getSelectedResourceContainer()
                         if (currentRC != null) {
@@ -591,15 +594,16 @@ class ReviewModeFragment : ViewModeFragment(),
                             }
                         }
                     }
+
                     is ShortReferenceSpan -> {
                         // Not implemented fully in original Java code
                     }
                 }
                 result
             },
-            object : Span.OnClickListener {
+            linkListener = object : Span.OnClickListener {
                 override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    when (val type = (span as LinkSpan).type) {
+                    when ((span as LinkSpan).type) {
                         "ta" -> {
                             val url = span.machineReadable.toString()
                             val link = ArticleLinkSpan.parse(url)

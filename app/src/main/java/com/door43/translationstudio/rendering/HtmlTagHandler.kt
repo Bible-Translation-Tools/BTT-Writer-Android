@@ -1,119 +1,108 @@
-package com.door43.translationstudio.rendering;
+package com.door43.translationstudio.rendering
 
-import android.content.Context;
-import android.text.Editable;
-import android.text.Html;
-import android.text.Layout;
-import android.text.Spannable;
-import android.text.style.AlignmentSpan;
-import android.text.style.BulletSpan;
-import android.text.style.LeadingMarginSpan;
-import android.text.style.TypefaceSpan;
-import android.util.Log;
-
-import com.door43.translationstudio.ui.spannables.LinkSpan;
-import com.door43.translationstudio.ui.spannables.Span;
-
-import org.xml.sax.XMLReader;
-
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Vector;
+import android.content.Context
+import android.text.Editable
+import android.text.Html
+import android.text.Layout
+import android.text.Spannable
+import android.text.style.AlignmentSpan
+import android.text.style.BulletSpan
+import android.text.style.LeadingMarginSpan
+import android.text.style.TypefaceSpan
+import android.util.Log
+import com.door43.translationstudio.ui.spannables.LinkSpan
+import com.door43.translationstudio.ui.spannables.Span
+import org.xml.sax.XMLReader
+import java.util.Vector
 
 /**
  * Some parts of this code are based on android.text.Html
  */
-public class HtmlTagHandler implements Html.TagHandler {
-    public static final String TAG = "HtmlTagHandler";
-    private final Context context;
-    private final Span.OnClickListener clickListener;
-    private int mListItemCount = 0;
-    private static final boolean DEBUG = true;
-    private Vector<String> mListParents = new Vector<>();
-    final HashMap<String, String> attributes = new HashMap<>();
+class HtmlTagHandler(
+    private val context: Context,
+    private val clickListener: Span.OnClickListener
+) : Html.TagHandler {
 
-    public HtmlTagHandler(Context context, Span.OnClickListener clickListener) {
-        this.context = context;
-        this.clickListener = clickListener;
-    }
+    private var listItemCount = 0
+    private val listParents = Vector<String>()
+    val attributes = HashMap<String, String>()
 
-    private static class Code {
-    }
-
-    private static class Center {
-    }
-
-    private static class AppLink {
-    }
+    private class Code
+    private class Center
+    private class AppLink
 
     /**
      * http://stackoverflow.com/questions/6952243/how-to-get-an-attribute-from-an-xmlreader
      * @param xmlReader
      */
-    private void processAttributes(final XMLReader xmlReader) {
+    private fun processAttributes(xmlReader: XMLReader) {
         try {
-            Field elementField = xmlReader.getClass().getDeclaredField("theNewElement");
-            elementField.setAccessible(true);
-            Object element = elementField.get(xmlReader);
-            Field attsField = element.getClass().getDeclaredField("theAtts");
-            attsField.setAccessible(true);
-            Object atts = attsField.get(element);
-            Field dataField = atts.getClass().getDeclaredField("data");
-            dataField.setAccessible(true);
-            String[] data = (String[])dataField.get(atts);
-            Field lengthField = atts.getClass().getDeclaredField("length");
-            lengthField.setAccessible(true);
-            int len = (Integer)lengthField.get(atts);
+            val elementField = xmlReader.javaClass.getDeclaredField("theNewElement")
+            elementField.isAccessible = true
+            val element = elementField.get(xmlReader)!!
+
+            val attsField = element.javaClass.getDeclaredField("theAtts")
+            attsField.isAccessible = true
+            val atts = attsField.get(element)!!
+
+            val dataField = atts.javaClass.getDeclaredField("data")
+            dataField.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            val data = dataField.get(atts) as Array<String>
+
+            val lengthField = atts.javaClass.getDeclaredField("length")
+            lengthField.isAccessible = true
+            val len = lengthField.get(atts) as Int
 
             /**
              * MSH: Look for supported attributes and add to hash map.
              * This is as tight as things can get :)
              * The data index is "just" where the keys and values are stored.
              */
-            for(int i = 0; i < len; i++)
-                attributes.put(data[i * 5 + 1], data[i * 5 + 4]);
-        }
-        catch (Exception e) {
-            Log.d(TAG, "Exception: " + e);
+            for (i in 0 until len) {
+                attributes[data[i * 5 + 1]] = data[i * 5 + 4]
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, "Exception: $e")
         }
     }
 
-    @Override
-    public void handleTag(final boolean opening, final String tag, Editable output, final XMLReader xmlReader) {
-        processAttributes(xmlReader);
+    override fun handleTag(opening: Boolean, tag: String, output: Editable, xmlReader: XMLReader) {
+        processAttributes(xmlReader)
         if (opening) {
             // opening tag
             if (DEBUG) {
-                Log.d(TAG, "opening, output: " + output.toString());
+                Log.d(TAG, "opening, output: $output")
             }
 
-            if (tag.equalsIgnoreCase("ul") || tag.equalsIgnoreCase("ol") || tag.equalsIgnoreCase("dd")) {
-                mListParents.add(tag);
-                mListItemCount = 0;
-            } else if (tag.equalsIgnoreCase("code")) {
-                start(output, new Code());
-            } else if (tag.equalsIgnoreCase("center")) {
-                start(output, new Center());
-            } else if (tag.equalsIgnoreCase("app-link")) {
-                start(output, new AppLink());
+            when {
+                tag.equals("ul", ignoreCase = true) ||
+                        tag.equals("ol", ignoreCase = true) ||
+                        tag.equals("dd", ignoreCase = true) -> {
+                    listParents.add(tag)
+                    listItemCount = 0
+                }
+                tag.equals("code", ignoreCase = true) -> start(output, Code())
+                tag.equals("center", ignoreCase = true) -> start(output, Center())
+                tag.equals("app-link", ignoreCase = true) -> start(output, AppLink())
             }
         } else {
             // closing tag
             if (DEBUG) {
-                Log.d(TAG, "closing, output: " + output.toString());
+                Log.d(TAG, "closing, output: $output")
             }
 
-            if (tag.equalsIgnoreCase("ul") || tag.equalsIgnoreCase("ol") || tag.equalsIgnoreCase("dd")) {
-                mListParents.remove(tag);
-                mListItemCount = 0;
-            } else if (tag.equalsIgnoreCase("li")) {
-                handleListTag(output);
-            } else if (tag.equalsIgnoreCase("code")) {
-                end(output, Code.class, new TypefaceSpan("monospace"), false);
-            } else if (tag.equalsIgnoreCase("center")) {
-                end(output, Center.class, new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), true);
-            } else if (tag.equalsIgnoreCase("app-link")) {
-                handleAppLinkTag(output);
+            when {
+                tag.equals("ul", ignoreCase = true) ||
+                        tag.equals("ol", ignoreCase = true) ||
+                        tag.equals("dd", ignoreCase = true) -> {
+                    listParents.remove(tag)
+                    listItemCount = 0
+                }
+                tag.equals("li", ignoreCase = true) -> handleListTag(output)
+                tag.equals("code", ignoreCase = true) -> end(output, Code::class.java, TypefaceSpan("monospace"), false)
+                tag.equals("center", ignoreCase = true) -> end(output, Center::class.java, AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), true)
+                tag.equals("app-link", ignoreCase = true) -> handleAppLinkTag(output)
             }
         }
     }
@@ -124,36 +113,36 @@ public class HtmlTagHandler implements Html.TagHandler {
      * @param output
      * @param mark
      */
-    private void start(Editable output, Object mark) {
-        int len = output.length();
-        output.setSpan(mark, len, len, Spannable.SPAN_MARK_MARK);
+    private fun start(output: Editable, mark: Any) {
+        val len = output.length
+        output.setSpan(mark, len, len, Spannable.SPAN_MARK_MARK)
 
         if (DEBUG) {
-            Log.d(TAG, "len: " + len);
+            Log.d(TAG, "len: $len")
         }
     }
 
-    private void end(Editable output, Class kind, Object repl, boolean paragraphStyle) {
-        Object obj = getLast(output, kind);
+    private fun end(output: Editable, kind: Class<*>, repl: Any, paragraphStyle: Boolean) {
+        val obj = getLast(output, kind) ?: return
         // start of the tag
-        int where = output.getSpanStart(obj);
+        val where = output.getSpanStart(obj)
         // end of the tag
-        int len = output.length();
+        var len = output.length
 
-        output.removeSpan(obj);
+        output.removeSpan(obj)
 
         if (where != len) {
             // paragraph styles like AlignmentSpan need to end with a new line!
             if (paragraphStyle) {
-                output.append("\n");
-                len++;
+                output.append("\n")
+                len++
             }
-            output.setSpan(repl, where, len, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            output.setSpan(repl, where, len, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
 
         if (DEBUG) {
-            Log.d(TAG, "where: " + where);
-            Log.d(TAG, "len: " + len);
+            Log.d(TAG, "where: $where")
+            Log.d(TAG, "len: $len")
         }
     }
 
@@ -164,61 +153,70 @@ public class HtmlTagHandler implements Html.TagHandler {
      * @param kind
      * @return
      */
-    private Object getLast(Editable text, Class kind) {
-        Object[] objs = text.getSpans(0, text.length(), kind);
-        if (objs.length == 0) {
-            return null;
+    private fun getLast(text: Editable, kind: Class<*>): Any? {
+        val objs = text.getSpans(0, text.length, kind)
+        if (objs.isEmpty()) {
+            return null
         } else {
-            for (int i = objs.length; i > 0; i--) {
+            for (i in objs.size downTo 1) {
                 if (text.getSpanFlags(objs[i - 1]) == Spannable.SPAN_MARK_MARK) {
-                    return objs[i - 1];
+                    return objs[i - 1]
                 }
             }
-            return null;
+            return null
         }
     }
 
-    private void handleAppLinkTag(Editable output) {
-        Object obj = getLast(output, AppLink.class);
+    private fun handleAppLinkTag(output: Editable) {
+        val obj = getLast(output, AppLink::class.java) ?: return
         // start of the tag
-        int where = output.getSpanStart(obj);
+        val where = output.getSpanStart(obj)
         // end of the tag
-        int len = output.length();
+        val len = output.length
 
-        output.removeSpan(obj);
+        output.removeSpan(obj)
 
-        CharSequence title = output.subSequence(where, len);
-        LinkSpan span = new LinkSpan(title.toString(), attributes.get("href"), attributes.get("type"));
-        span.setOnClickListener(this.clickListener);
+        val title = output.subSequence(where, len)
+        val href = attributes["href"] ?: ""
+        val type = attributes["type"] ?: ""
 
-        if(where != len) {
-            output.replace(where, len, span.toCharSequence(context));
+        val span = LinkSpan(title.toString(), href, type)
+        span.onClickListener = this.clickListener
+
+        if (where != len) {
+            output.replace(where, len, span.toCharSequence(context))
         }
 
         if (DEBUG) {
-            Log.d(TAG, "where: " + where);
-            Log.d(TAG, "len: " + len);
+            Log.d(TAG, "where: $where")
+            Log.d(TAG, "len: $len")
         }
     }
 
-    private void handleListTag(Editable output) {
-        if (mListParents.lastElement().equals("ul")) {
-            output.append("\n");
-            String[] split = output.toString().split("\n");
+    private fun handleListTag(output: Editable) {
+        if (listParents.lastElement() == "ul") {
+            output.append("\n")
+            val split = output.toString().split("\n".toRegex()).toTypedArray()
 
-            int lastIndex = split.length - 1;
-            int start = output.length() - split[lastIndex].length() - 1;
-            output.setSpan(new BulletSpan(15 * mListParents.size()), start, output.length(), 0);
-        } else if (mListParents.lastElement().equals("ol")) {
-            mListItemCount++;
+            val lastIndex = split.size - 1
+            val start = output.length - split[lastIndex].length - 1
+            output.setSpan(BulletSpan(15 * listParents.size), start, output.length, 0)
 
-            output.append("\n");
-            String[] split = output.toString().split("\n");
+        } else if (listParents.lastElement() == "ol") {
+            listItemCount++
 
-            int lastIndex = split.length - 1;
-            int start = output.length() - split[lastIndex].length() - 1;
-            output.insert(start, mListItemCount + ". ");
-            output.setSpan(new LeadingMarginSpan.Standard(15 * mListParents.size()), start, output.length(), 0);
+            output.append("\n")
+            val split = output.toString().split("\n".toRegex()).toTypedArray()
+
+            val lastIndex = split.size - 1
+            val start = output.length - split[lastIndex].length - 1
+            output.insert(start, "$listItemCount. ")
+            output.setSpan(LeadingMarginSpan.Standard(15 * listParents.size), start, output.length, 0)
         }
+    }
+
+    companion object {
+        const val TAG = "HtmlTagHandler"
+        private const val DEBUG = true
     }
 }

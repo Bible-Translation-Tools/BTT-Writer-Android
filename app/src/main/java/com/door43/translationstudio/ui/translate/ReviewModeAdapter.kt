@@ -480,7 +480,7 @@ open class ReviewModeAdapter(
                 false
             )
         } else {
-            renderingGroup.addEngine(DefaultRenderer(null))
+            renderingGroup.addEngine(DefaultRenderer(context))
         }
 
         if (enableSearch) {
@@ -1251,7 +1251,7 @@ open class ReviewModeAdapter(
             )
             renderer.setPopulateVerseMarkers(verseRange)
         } else {
-            renderingGroup.addEngine(DefaultRenderer(null))
+            renderingGroup.addEngine(DefaultRenderer(context))
         }
 
         if (enableSearch) {
@@ -1456,7 +1456,7 @@ open class ReviewModeAdapter(
                 }
             }
         } else {
-            renderingGroup.addEngine(DefaultRenderer(null))
+            renderingGroup.addEngine(DefaultRenderer(context))
         }
 
         if (enableSearch) {

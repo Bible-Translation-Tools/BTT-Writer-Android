@@ -1,75 +1,88 @@
-package com.door43.translationstudio.rendering;
+package com.door43.translationstudio.rendering
 
-import android.content.Context;
-
-import com.door43.translationstudio.ui.spannables.Span;
+import android.content.Context
+import android.view.View
+import com.door43.translationstudio.ui.spannables.Span
 
 /**
  * This is the default rendering engine.
  */
-public class DefaultRenderer extends RenderingEngine {
+class DefaultRenderer : RenderingEngine {
 
-    private Span.OnClickListener mNoteListener;
-    private String mSearch;
-    private int mHighlightColor = 0;
-    private USXRenderer renderer = null;
+    private var noteListener: Span.OnClickListener
+    private var search: String = ""
+    private var highlightColor = 0
+    private var renderer: USXRenderer? = null
 
     /**
      * Creates a new default rendering engine without any listeners
      */
-    public DefaultRenderer(Context context) {
-        this.context = context;
+    constructor(context: Context) {
+        this.context = context
+        this.noteListener = EmptyListener
     }
 
     /**
      * Creates a new default rendering engine with some custom click listeners
      * @param noteListener
      */
-    public DefaultRenderer(
-            Context context,
-            Span.OnClickListener noteListener
-    ) {
-        this.context = context;
-        mNoteListener = noteListener;
+    constructor(context: Context, noteListener: Span.OnClickListener) {
+        this.context = context
+        this.noteListener = noteListener
     }
 
     /**
      * Renders the input into a readable format
-     * @param in the raw input string
+     * @param input the raw input string
      * @return
      */
-    @Override
-    public CharSequence render(CharSequence in) {
-        CharSequence out = in;
+    override fun render(input: CharSequence): CharSequence {
+        var out = input
 
-        renderer = new USXRenderer(context, null, mNoteListener);
-        renderer.setSearchString(mSearch, mHighlightColor);
+        // Assuming USXRenderer constructor expects two listeners.
+        // We pass the EmptyListener to avoid nulls.
+        val usxRenderer = USXRenderer(context, EmptyListener, noteListener)
+        usxRenderer.setSearchString(search, highlightColor)
+        this.renderer = usxRenderer
 
-        if(isStopped()) return in;
-        out = renderer.renderNote(out);
-        if(isStopped()) return in;
-        out = renderer.renderHighlightSearch(out);
+        if (isStopped()) return input
+        out = usxRenderer.renderNote(out)
+        if (isStopped()) return input
+        out = usxRenderer.renderHighlightSearch(out)
 
-        return out;
+        return out
     }
 
-    @Override
-    public void onStop() {
-        if(renderer != null) renderer.stop();
+    override fun onStop() {
+        renderer?.stop()
     }
 
     /**
-     * If set to not null matched strings will be highlighted.
+     * If set to not empty matched strings will be highlighted.
      *
-     * @param searchString - null is disable
+     * @param searchString - empty string disables highlighting
      * @param highlightColor
      */
-    public void setSearchString(CharSequence searchString, int highlightColor) {
-        mHighlightColor = highlightColor;
-        if((searchString != null) && (searchString.length() > 0) ) {
-            mSearch = searchString.toString().toLowerCase();
+    override fun setSearchString(searchString: CharSequence, highlightColor: Int) {
+        this@DefaultRenderer.highlightColor = highlightColor
+        search = if (searchString.isNotEmpty()) {
+            searchString.toString().lowercase()
         } else {
-            mSearch = null;
+            ""
+        }
+    }
+
+    private companion object {
+        /**
+         * A dummy listener used to replace null fallbacks.
+         */
+        val EmptyListener = object : Span.OnClickListener {
+            override fun onClick(view: View, span: Span, start: Int, end: Int) {
+                // Do nothing
+            }
+            override fun onLongClick(view: View, span: Span, start: Int, end: Int) {
+                // Do nothing
+            }
         }
     }
 }

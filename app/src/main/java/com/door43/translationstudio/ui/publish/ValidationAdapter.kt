@@ -70,15 +70,13 @@ class ValidationAdapter(
 
             // title
             holder.binding.title.text = item.title
-            item.titleLanguage?.let { lang ->
-                holder.binding.title.format(
-                    typography,
-                    assetsProvider,
-                    TranslationType.TARGET,
-                    lang.slug,
-                    lang.direction
-                )
-            }
+            holder.binding.title.format(
+                typography,
+                assetsProvider,
+                TranslationType.TARGET,
+                item.titleLanguage.slug,
+                item.titleLanguage.direction
+            )
 
             when (item) {
                 is ValidationItem.ValidFrame,
@@ -120,22 +118,20 @@ class ValidationAdapter(
                                 true
                             )
                         } else {
-                            renderingGroup.addEngine(DefaultRenderer(null))
+                            renderingGroup.addEngine(DefaultRenderer(context))
                         }
                         renderingGroup.init(item.body)
                         renderedText[position] = renderingGroup.start()
                     }
                     holder.binding.body.text = renderedText[position]
 
-                    item.bodyLanguage?.let { lang ->
-                        holder.binding.body.formatSub(
-                            typography,
-                            assetsProvider,
-                            TranslationType.TARGET,
-                            lang.slug,
-                            lang.direction
-                        )
-                    }
+                    holder.binding.body.formatSub(
+                        typography,
+                        assetsProvider,
+                        TranslationType.TARGET,
+                        item.bodyLanguage.slug,
+                        item.bodyLanguage.direction
+                    )
 
                     holder.binding.reviewButton.setOnClickListener {
                         listener?.onClickReview(item.targetTranslationId, item.chapterId, item.frameId)
