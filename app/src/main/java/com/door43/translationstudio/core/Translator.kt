@@ -27,7 +27,6 @@ class Translator (
     private val profile: Profile,
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider,
-    private val archiveImporter: ArchiveImporter,
     private val backupRC: BackupRC,
     private val library: Door43Client
 ) {
@@ -473,8 +472,7 @@ class Translator (
         var language = library.index.getTargetLanguage(t.targetLanguageId)
         if (language == null && t.targetLanguageId.isEmpty()) {
             val name = t.targetLanguageName.ifEmpty { t.targetLanguageId }
-            val direction =
-                if (t.targetLanguageDirection == null) "ltr" else t.targetLanguageDirection
+            val direction = t.targetLanguageDirection
             language = TargetLanguage(
                 t.targetLanguageId,
                 name,
@@ -523,7 +521,6 @@ class Translator (
          * @param text
          * @return
          */
-        @JvmStatic
         fun compileTranslation(text: Editable): String {
             val compiledString = StringBuilder()
             var next: Int
@@ -557,7 +554,6 @@ class Translator (
          * @param text
          * @return
          */
-        @JvmStatic
         fun compileTranslationSpanned(text: SpannedString): String {
             val compiledString = StringBuilder()
             var next: Int

@@ -16,7 +16,6 @@ object Migration {
      *
      * @return the migrated slug
      */
-    @JvmStatic
     fun migrateSourceTranslationSlug(slug: String?): String? {
         if (slug == null) return null
         if (slug.contains("_")) return slug

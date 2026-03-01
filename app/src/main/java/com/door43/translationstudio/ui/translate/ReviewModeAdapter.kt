@@ -832,7 +832,7 @@ open class ReviewModeAdapter(
                 // commit changes before viewing history
                 history?.let { historyNotNull ->
                     if (historyNotNull.atHead) {
-                        if (!item.target.isClean()) {
+                        if (!item.target.isClean) {
                             try {
                                 item.target.commitSync()
                                 historyNotNull.loadCommits()
@@ -842,7 +842,7 @@ open class ReviewModeAdapter(
                         }
                     }
                     // get previous
-                    commit = historyNotNull.previous()
+                    commit = historyNotNull.previous
                 }
             }
 
@@ -880,9 +880,9 @@ open class ReviewModeAdapter(
 
                     if (holder.binding.redoButton != null && holder.binding.undoButton != null) {
                         holder.binding.redoButton?.visibility =
-                            if (historyNotNull.hasNext()) View.VISIBLE else View.GONE
+                            if (historyNotNull.hasNext) View.VISIBLE else View.GONE
                         holder.binding.undoButton?.visibility =
-                            if (historyNotNull.hasPrevious()) View.VISIBLE else View.GONE
+                            if (historyNotNull.hasPrevious) View.VISIBLE else View.GONE
                     }
                 }
             }
@@ -905,7 +905,7 @@ open class ReviewModeAdapter(
 
             override fun run() {
                 if (history != null) {
-                    commit = history.next()
+                    commit = history.next
                 }
             }
 
@@ -943,9 +943,9 @@ open class ReviewModeAdapter(
 
                     if (holder.binding.redoButton != null && holder.binding.undoButton != null) {
                         holder.binding.redoButton?.visibility =
-                            if (historyNotnull.hasNext()) View.VISIBLE else View.GONE
+                            if (historyNotnull.hasNext) View.VISIBLE else View.GONE
                         holder.binding.undoButton?.visibility =
-                            if (historyNotnull.hasPrevious()) View.VISIBLE else View.GONE
+                            if (historyNotnull.hasPrevious) View.VISIBLE else View.GONE
                     }
                 }
             }

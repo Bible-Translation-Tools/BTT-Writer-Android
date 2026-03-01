@@ -11,8 +11,8 @@ import java.util.regex.Pattern
  * Created by blm on 11/22/16.
  */
 object MergeConflictsHandler {
-    const val MERGE_CONFLICT_HEAD = "<<<<<<< HEAD.*\\n"
-    val mergeConflictPatternHead: Pattern = Pattern.compile(MERGE_CONFLICT_HEAD)
+    private const val MERGE_CONFLICT_HEAD = "<<<<<<< HEAD.*\\n"
+    private val mergeConflictPatternHead: Pattern = Pattern.compile(MERGE_CONFLICT_HEAD)
 
     /**
      * Split the merge conflict into a list of the options
@@ -66,12 +66,12 @@ object MergeConflictsHandler {
 
         val targetTranslation = translator.getTargetTranslation(targetTranslationId) ?: return false
 
-        val pt = targetTranslation.getProjectTranslation()
+        val pt = targetTranslation.projectTranslation
         if (isMergeConflicted(pt.title)) {
             return true
         }
 
-        val chapters = targetTranslation.getChapterTranslations()
+        val chapters = targetTranslation.chapterTranslations
         for (ct in chapters) {
             if (isMergeConflicted(ct.title)) {
                 return true

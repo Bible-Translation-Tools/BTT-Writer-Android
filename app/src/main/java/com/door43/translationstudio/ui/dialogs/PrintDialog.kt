@@ -297,7 +297,7 @@ class PrintDialog : DialogFragment() {
             )
             projectTitle.setTypeface(typeface, Typeface.NORMAL)
 
-            var title = targetTranslation.getProjectTranslation().title.replace("\n+$".toRegex(), "")
+            var title = targetTranslation.projectTranslation.title.replace("\n+$".toRegex(), "")
             if (title.isEmpty()) {
                 targetTranslation.resourceSlug?.let { resourceSlug ->
                     val sourceContainer = ContainerCache.cacheClosest(

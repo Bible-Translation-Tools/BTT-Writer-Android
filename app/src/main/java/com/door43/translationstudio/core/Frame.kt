@@ -92,7 +92,7 @@ data class Frame(
         get() {
             val fallbackId = id.toIntOrNull()?.toString() ?: id
             return if (Clickables.isClickableFormat(format)) {
-                val verses = getVerseRange()
+                val verses = getVerseRange
                 when (verses.size) {
                     1 -> "${verses[0]}"
                     2 -> "${verses[0]}-${verses[1]}"
@@ -110,12 +110,13 @@ data class Frame(
     /**
      * Returns the range of verses that the body spans
      */
-    fun getVerseRange(): IntArray {
-        if (verses == null) {
-            verses = getVerseRange(body)
+    val getVerseRange: IntArray
+        get() {
+            if (verses == null) {
+                verses = getVerseRange(body)
+            }
+            return verses!!
         }
-        return verses!!
-    }
 
     /**
      * Returns the range of verses that a chunk of text spans

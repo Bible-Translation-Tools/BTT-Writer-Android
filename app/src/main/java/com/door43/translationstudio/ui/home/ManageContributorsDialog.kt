@@ -62,7 +62,7 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
 
         with (binding) {
             adapter.setDisplayNext(false)
-            adapter.setContributors(targetTranslation.getContributors())
+            adapter.setContributors(targetTranslation.contributors)
             adapter.setOnClickListener(this@ManageContributorsDialog)
 
             recyclerView.layoutManager = LinearLayoutManager(activity)
@@ -71,7 +71,7 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
         }
 
         onNativeSpeakerDialogClick = View.OnClickListener {
-            adapter.setContributors(targetTranslation.getContributors())
+            adapter.setContributors(targetTranslation.contributors)
         }
 
         // re-attach to dialogs

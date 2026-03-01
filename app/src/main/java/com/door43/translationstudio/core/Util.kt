@@ -54,7 +54,8 @@ object Util {
     /**
      * Returns a unix timestamp
      */
-    fun unixTime(): Long = System.currentTimeMillis() / 1000L
+    val unixTime: Long
+        get() = System.currentTimeMillis() / 1000L
 
     /**
      * Converts a unix time value to a date object

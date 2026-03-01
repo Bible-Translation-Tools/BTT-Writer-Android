@@ -251,7 +251,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
      * returns a concatenated list of names or null if error
      */
     private fun getTranslatorNames(): String? {
-        return targetTranslation?.translation?.getContributors()?.let {
+        return targetTranslation?.translation?.contributors?.let {
             var listString = ""
 
             for (i in it.indices) {

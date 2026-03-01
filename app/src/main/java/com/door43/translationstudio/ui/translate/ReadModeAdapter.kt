@@ -514,9 +514,7 @@ class ReadModeAdapter(
 
             // look for translated chapter title first
             val chapterTranslation = item.target.getChapterTranslation(chapterSlug)
-            if (chapterTranslation != null) {
-                targetCardTitle = chapterTranslation.title.trim()
-            }
+            targetCardTitle = chapterTranslation.title.trim()
 
             // if no target chapter title translation, fall back to source chapter title
             if (targetCardTitle.isEmpty() && item.chapterTitle.trim().isNotEmpty()) {
@@ -524,7 +522,7 @@ class ReadModeAdapter(
             }
 
             if (targetCardTitle.isEmpty()) { // if no chapter titles, fall back to project title, try translated title first
-                val projTrans = item.target.getProjectTranslation()
+                val projTrans = item.target.projectTranslation
                 if (projTrans.title.trim().isNotEmpty()) {
                     targetCardTitle = try {
                         "${projTrans.title.trim()} ${chapterSlug.toInt()}"
@@ -545,7 +543,7 @@ class ReadModeAdapter(
                 }
             }
 
-            binding.targetTranslationTitle.setText("$targetCardTitle - ${item.target.targetLanguage.name}")
+            binding.targetTranslationTitle.text = "$targetCardTitle - ${item.target.targetLanguage.name}"
 
             // load tabs
             val tabs = item.tabs

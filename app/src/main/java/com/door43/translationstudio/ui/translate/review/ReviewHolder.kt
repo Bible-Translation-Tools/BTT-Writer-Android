@@ -902,8 +902,8 @@ class ReviewHolder(
             }
 
             override fun onPostExecute() {
-                binding.redoButton?.visibility = if (history?.hasNext() == true) View.VISIBLE else View.GONE
-                binding.undoButton?.visibility = if (history?.hasPrevious() == true) View.VISIBLE else View.GONE
+                binding.redoButton?.visibility = if (history?.hasNext == true) View.VISIBLE else View.GONE
+                binding.undoButton?.visibility = if (history?.hasPrevious == true) View.VISIBLE else View.GONE
             }
         }
         thread.start()

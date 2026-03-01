@@ -52,7 +52,7 @@ class FileHistory @Throws(IOException::class, GitAPIException::class) constructo
         }
 
         // preserve current position if not at HEAD
-        var currentCommit: RevCommit? = if (index > 0) current() else null
+        var currentCommit: RevCommit? = if (index > 0) current else null
 
         // load history
         val repository: Repository = git.repository
@@ -80,41 +80,47 @@ class FileHistory @Throws(IOException::class, GitAPIException::class) constructo
         }
     }
 
-    fun hasPrevious(): Boolean = index + 1 < history.size
+    val hasPrevious: Boolean
+        get() = index + 1 < history.size
 
     /**
      * Returns the previous commit in the file history
      * The position in the history will not be changed if the previous index would be out of bounds
      */
-    fun previous(): RevCommit? {
-        val prevIndex = index + 1
-        return getCommit(prevIndex)?.also {
-            index = prevIndex
+    val previous: RevCommit?
+        get() {
+            val prevIndex = index + 1
+            return getCommit(prevIndex)?.also {
+                index = prevIndex
+            }
         }
-    }
 
     /**
      * Returns the currently viewed commit of the file history
      */
-    fun current(): RevCommit? = getCommit(index)
+    val current: RevCommit?
+        get() = getCommit(index)
 
-    fun hasNext(): Boolean = index - 1 >= 0 && history.isNotEmpty()
+    val hasNext: Boolean
+        get() = index - 1 >= 0 && history.isNotEmpty()
 
     /**
      * Returns the next commit in the file history
      * The position in the history will not be changed if the next index would be out of bounds
      */
-    fun next(): RevCommit? {
-        val nextIndex = index - 1
-        return getCommit(nextIndex)?.also {
-            index = nextIndex
+    val next: RevCommit?
+        get() {
+            val nextIndex = index - 1
+            return getCommit(nextIndex)?.also {
+                index = nextIndex
+            }
         }
-    }
 
     /**
      * Returns the HEAD of the commit tree
      */
-    fun head(): RevCommit? = getCommit(0)
+    val head: RevCommit?
+        get() = getCommit(0)
 
     fun reset() {
         index = 0

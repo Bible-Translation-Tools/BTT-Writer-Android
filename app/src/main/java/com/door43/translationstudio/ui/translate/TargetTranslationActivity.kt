@@ -130,7 +130,7 @@ class TargetTranslationActivity : BaseActivity(),
         // notify user that a draft translation exists the first time activity starts
         if (savedInstanceState == null &&
             viewModel.draftIsAvailable() &&
-            viewModel.targetTranslation.numTranslated() == 0
+            viewModel.targetTranslation.numTranslated == 0
         ) {
             val snack = Snackbar.make(
                 findViewById(android.R.id.content),

@@ -69,7 +69,7 @@ class TargetTranslationViewModel(
 
     fun openUsedSourceTranslations() {
         if (prefRepository.getOpenSourceTranslations(targetTranslation.id).isEmpty()) {
-            val resourceContainerSlugs = targetTranslation.getSourceTranslations()
+            val resourceContainerSlugs = targetTranslation.sourceTranslations
             for (slug in resourceContainerSlugs) {
                 prefRepository.addOpenSourceTranslation(targetTranslation.id, slug)
             }
@@ -382,7 +382,7 @@ class TargetTranslationViewModel(
                 "front" -> {
                     // project stuff
                     if (chunkSlug == "title") {
-                        target.getProjectTranslation().title
+                        target.projectTranslation.title
                     } else ""
                 }
                 "back" -> ""

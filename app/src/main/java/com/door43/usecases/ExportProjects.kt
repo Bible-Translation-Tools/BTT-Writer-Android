@@ -110,7 +110,7 @@ class ExportProjects(
 
         val success = try {
             tempDir.mkdirs()
-            val chapters = targetTranslation.getChapterTranslations()
+            val chapters = targetTranslation.chapterTranslations
 
             val bookData = BookData.generate(targetTranslation, library)
             val bookCode = bookData.bookCode
@@ -271,12 +271,12 @@ class ExportProjects(
         generatorJson.put("build", pInfo.versionCode)
         manifestJson.put("generator", generatorJson)
         manifestJson.put("package_version", TSTUDIO_PACKAGE_VERSION)
-        manifestJson.put("timestamp", Util.unixTime())
+        manifestJson.put("timestamp", Util.unixTime)
         val translationsJson = JSONArray()
         val translationJson = JSONObject()
         translationJson.put("path", targetTranslation.id)
         translationJson.put("id", targetTranslation.id)
-        translationJson.put("commit_hash", targetTranslation.getCommitHash())
+        translationJson.put("commit_hash", targetTranslation.commitHash)
         translationJson.put("direction", targetTranslation.targetLanguageDirection)
         translationJson.put("target_language_name", targetTranslation.targetLanguageName)
         translationsJson.put(translationJson)
@@ -327,7 +327,7 @@ class ExportProjects(
             private set
 
         init {
-            val projectTranslation = targetTranslation.getProjectTranslation()
+            val projectTranslation = targetTranslation.projectTranslation
             // TODO refactor
             val project = library.index.getProject(
                 languageId,

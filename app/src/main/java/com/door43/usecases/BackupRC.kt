@@ -65,7 +65,7 @@ class BackupRC (
                     .build()
 
                 // TRICKY: we only generate backups with a single target translation inside.
-                if (getCommitHash(details) == targetTranslation.getCommitHash()) {
+                if (getCommitHash(details) == targetTranslation.commitHash) {
                     return false
                 }
             }

@@ -13,7 +13,6 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -145,7 +144,7 @@ class BackupRCTest {
         every { tempFile.isFile }.returns(true)
 
         every { targetTranslation.id }.returns("aa_mrk_text_reg")
-        every { targetTranslation.getCommitHash() }.returns("abcdefghijklmnopqrstuvwxyz")
+        every { targetTranslation.commitHash }.returns("abcdefghijklmnopqrstuvwxyz")
         every {
             directoryProvider.createTempFile(
                 "aa_mrk_text_reg",
@@ -163,7 +162,7 @@ class BackupRCTest {
         verify { tempFile.exists() }
         verify { tempFile.isFile }
         verify { targetTranslation.id }
-        verify { targetTranslation.getCommitHash() }
+        verify { targetTranslation.commitHash }
         verify {
             directoryProvider.createTempFile(
                 "aa_mrk_text_reg",
@@ -182,7 +181,7 @@ class BackupRCTest {
         every { tempFile.isFile }.returns(true)
 
         every { targetTranslation.id }.returns("aa_mrk_text_reg")
-        every { targetTranslation.getCommitHash() }.returns("abcdefghijklmnopqrstuvwxyz")
+        every { targetTranslation.commitHash }.returns("abcdefghijklmnopqrstuvwxyz")
         every { directoryProvider.createTempFile(any(), any(), null) }.returns(tempFile)
         every { targetTranslation.setDefaultContributor(any()) } just runs
         every { exportProjects.exportProject(targetTranslation, tempFile) }.returns(mockk())
@@ -194,7 +193,7 @@ class BackupRCTest {
         verify { tempFile.exists() }
         verify { tempFile.isFile }
         verify { targetTranslation.id }
-        verify(exactly = 0) { targetTranslation.getCommitHash() }
+        verify(exactly = 0) { targetTranslation.commitHash }
         verify { directoryProvider.createTempFile(any(), any(), null) }
         verify { targetTranslation.setDefaultContributor(any()) }
         verify { exportProjects.exportProject(targetTranslation, tempFile) }

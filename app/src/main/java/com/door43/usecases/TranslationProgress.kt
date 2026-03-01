@@ -49,7 +49,7 @@ class TranslationProgress(
      * @return the number of completed chunks in the target translation
      */
     private fun countChunks(targetTranslation: TargetTranslation): Int {
-        return targetTranslation.numFinished()
+        return targetTranslation.numFinished
     }
 
     /**

@@ -98,7 +98,7 @@ class ExportProjectsTest {
         every { targetTranslation.commitSync(any(), any()) }.returns(true)
         every { targetTranslation.commit() }.just(runs)
         every { targetTranslation.id }.returns("aa_mrk_text_ulb")
-        every { targetTranslation.getCommitHash() }.returns("abc123")
+        every { targetTranslation.commitHash }.returns("abc123")
         every { targetTranslation.targetLanguageDirection }.returns("ltr")
         every { targetTranslation.targetLanguageName }.returns("aa")
         every { targetTranslation.path }.returns(mockk())
@@ -418,7 +418,7 @@ class ExportProjectsTest {
     ) {
         verify { directoryProvider.createTempDir() }
         verify { directoryProvider.createTempFile(any(), any(), any()) }
-        verify { targetTranslation.getChapterTranslations() }
+        verify { targetTranslation.chapterTranslations }
         verify { targetTranslation.getFrameTranslations(any(), any()) }
         verify { bookData.bookCode }
         verify { bookData.bookTitle }
@@ -447,7 +447,7 @@ class ExportProjectsTest {
         every { chapterTranslation.id } returns "01"
         every { chapterTranslation.title } returns "Chapter 1"
         every { chapterTranslation.reference } returns "Chapter reference"
-        every { targetTranslation.getChapterTranslations() }.returns(arrayOf(chapterTranslation))
+        every { targetTranslation.chapterTranslations }.returns(arrayOf(chapterTranslation))
 
         val frameTranslation: FrameTranslation = mockk()
         every { frameTranslation.id } returns "01"

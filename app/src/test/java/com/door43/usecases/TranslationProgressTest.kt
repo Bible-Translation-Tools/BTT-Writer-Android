@@ -61,7 +61,7 @@ class TranslationProgressTest {
         every { library.open(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
-        every { targetTranslation.numFinished() }.returns(8)
+        every { targetTranslation.numFinished }.returns(8)
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
@@ -70,7 +70,7 @@ class TranslationProgressTest {
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { targetTranslation.numFinished() }
+        verify { targetTranslation.numFinished }
         verify { library.open(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
@@ -92,7 +92,7 @@ class TranslationProgressTest {
         every { library.open(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns(null)
-        every { targetTranslation.numFinished() }.returns(8)
+        every { targetTranslation.numFinished }.returns(8)
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
@@ -101,7 +101,7 @@ class TranslationProgressTest {
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { targetTranslation.numFinished() }
+        verify { targetTranslation.numFinished }
         verify { library.open(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
@@ -119,7 +119,7 @@ class TranslationProgressTest {
 
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
-        verify(exactly = 0) { targetTranslation.numFinished() }
+        verify(exactly = 0) { targetTranslation.numFinished }
         verify(exactly = 0) { library.open(any()) }
     }
 
@@ -128,7 +128,7 @@ class TranslationProgressTest {
         every { library.open(any()) }.throws(Exception("Rc is not downloaded."))
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
-        every { targetTranslation.numFinished() }.returns(8)
+        every { targetTranslation.numFinished }.returns(8)
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
@@ -137,7 +137,7 @@ class TranslationProgressTest {
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { library.open(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
-        verify(exactly = 0) { targetTranslation.numFinished() }
+        verify(exactly = 0) { targetTranslation.numFinished }
     }
 
     @Test
@@ -157,7 +157,7 @@ class TranslationProgressTest {
         every { library.open(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
-        every { targetTranslation.numFinished() }.returns(4)
+        every { targetTranslation.numFinished }.returns(4)
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
@@ -166,7 +166,7 @@ class TranslationProgressTest {
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { targetTranslation.numFinished() }
+        verify { targetTranslation.numFinished }
         verify { library.open(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
@@ -188,7 +188,7 @@ class TranslationProgressTest {
         every { library.open(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
-        every { targetTranslation.numFinished() }.returns(10)
+        every { targetTranslation.numFinished }.returns(10)
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
@@ -197,7 +197,7 @@ class TranslationProgressTest {
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { targetTranslation.numFinished() }
+        verify { targetTranslation.numFinished }
         verify { library.open(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
@@ -211,7 +211,7 @@ class TranslationProgressTest {
         every { library.open(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
-        every { targetTranslation.numFinished() }.returns(8)
+        every { targetTranslation.numFinished }.returns(8)
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
@@ -219,7 +219,7 @@ class TranslationProgressTest {
 
         verify { rc.chapters() }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { targetTranslation.numFinished() }
+        verify { targetTranslation.numFinished }
         verify { library.open(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
         verify(exactly = 0) { rc.chunks(any()) }

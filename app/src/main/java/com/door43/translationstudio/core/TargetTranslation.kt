@@ -102,10 +102,22 @@ class TargetTranslation private constructor(
     }
 
     val id: String
-        get() = generateTargetTranslationId(targetLanguageId, projectId, translationType, resourceSlug)
+        get() = generateTargetTranslationId(
+            targetLanguageId,
+            projectId,
+            translationType,
+            resourceSlug
+        )
 
     val targetLanguage: TargetLanguage
-        get() = TargetLanguage(targetLanguageId, targetLanguageName, "", targetLanguageDirection, targetLanguageRegion, false)
+        get() = TargetLanguage(
+            targetLanguageId,
+            targetLanguageName,
+            "",
+            targetLanguageDirection,
+            targetLanguageRegion,
+            false
+        )
 
     val repo: Repo
         get() = Repo(path.absolutePath)
@@ -115,7 +127,7 @@ class TargetTranslation private constructor(
 
     private fun readTranslationFormat(): TranslationFormat {
         val parsedFormat = fetchTranslationFormat(manifest)
-        if (parsedFormat == null) {
+        if (parsedFormat == TranslationFormat.UNKNOWN) {
             val resType = fetchTranslationType(manifest)
             return if (resType != ResourceType.TEXT) {
                 TranslationFormat.MARKDOWN
@@ -209,24 +221,25 @@ class TargetTranslation private constructor(
         return resultJson
     }
 
-    fun getSourceTranslations(): Array<String> {
-        return try {
-            val sources = ArrayList<String>()
-            val sourceTranslationsJson = manifest.getJSONArray(FIELD_SOURCE_TRANSLATIONS)
+    val sourceTranslations: Array<String>
+        get() {
+            return try {
+                val sources = ArrayList<String>()
+                val sourceTranslationsJson = manifest.getJSONArray(FIELD_SOURCE_TRANSLATIONS)
 
-            for (i in 0 until sourceTranslationsJson.length()) {
-                val obj = sourceTranslationsJson.getJSONObject(i)
-                val sourceLanguageSlug = obj.getString("language_id")
-                val resourceSlug = obj.getString("resource_id")
-                val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, this.projectId, resourceSlug)
-                sources.add(containerSlug)
+                for (i in 0 until sourceTranslationsJson.length()) {
+                    val obj = sourceTranslationsJson.getJSONObject(i)
+                    val sourceLanguageSlug = obj.getString("language_id")
+                    val resourceSlug = obj.getString("resource_id")
+                    val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, this.projectId, resourceSlug)
+                    sources.add(containerSlug)
+                }
+                sources.toTypedArray()
+            } catch (e: Exception) {
+                Logger.e(TAG, "Error reading sources", e)
+                emptyArray()
             }
-            sources.toTypedArray()
-        } catch (e: Exception) {
-            Logger.e(TAG, "Error reading sources", e)
-            emptyArray()
         }
-    }
 
     fun addContributor(speaker: NativeSpeaker?) {
         if (speaker != null) {
@@ -246,30 +259,31 @@ class TargetTranslation private constructor(
 
     fun getContributor(name: String): NativeSpeaker? {
         manifest.load()
-        return getContributors().find { it.name == name }
+        return contributors.find { it.name == name }
     }
 
-    fun getContributors(): ArrayList<NativeSpeaker> {
-        manifest.load()
-        val translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS)
-        val translators = ArrayList<NativeSpeaker>()
+    val contributors: ArrayList<NativeSpeaker>
+        get() {
+            manifest.load()
+            val translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS)
+            val translators = ArrayList<NativeSpeaker>()
 
-        for (i in 0 until translatorsJson.length()) {
-            try {
-                val name = translatorsJson.getString(i)
-                if (name.isNotEmpty()) {
-                    translators.add(NativeSpeaker(name))
+            for (i in 0 until translatorsJson.length()) {
+                try {
+                    val name = translatorsJson.getString(i)
+                    if (name.isNotEmpty()) {
+                        translators.add(NativeSpeaker(name))
+                    }
+                } catch (e: JSONException) {
+                    e.printStackTrace()
                 }
-            } catch (e: JSONException) {
-                e.printStackTrace()
             }
+            return translators
         }
-        return translators
-    }
 
     fun setDefaultContributor(speaker: NativeSpeaker?) {
         if (speaker != null) {
-            if (getContributors().isEmpty()) {
+            if (contributors.isEmpty()) {
                 addContributor(speaker)
             }
         }
@@ -311,11 +325,15 @@ class TargetTranslation private constructor(
         )
     }
 
-    fun getProjectTranslation(): ProjectTranslation {
-        val titleFile = getProjectTitleFile()
-        val title = if (titleFile.exists()) titleFile.readText() else ""
-        return ProjectTranslation(title, isProjectComponentFinished("title"))
-    }
+    val projectTranslation: ProjectTranslation
+        get() {
+            val titleFile = projectTitleFile
+            val title = if (titleFile.exists()) titleFile.readText() else ""
+            return ProjectTranslation(
+                title,
+                isProjectComponentFinished("title")
+            )
+        }
 
     fun applyFrameTranslation(frameTranslation: FrameTranslation, translatedText: String) {
         try {
@@ -327,7 +345,7 @@ class TargetTranslation private constructor(
 
     @Throws(IOException::class)
     fun applyProjectTitleTranslation(translatedText: String) {
-        val titleFile = getProjectTitleFile()
+        val titleFile = projectTitleFile
         if (translatedText.isEmpty()) {
             titleFile.delete()
         } else {
@@ -378,10 +396,11 @@ class TargetTranslation private constructor(
     fun getChapterTitleFile(chapterId: String): File =
         File(path, "$chapterId/title.txt")
 
-    fun getProjectTitleFile(): File = File(path, "front/title.txt")
+    val projectTitleFile: File
+        get() = File(path, "front/title.txt")
 
     fun closeProjectTitle(): Boolean {
-        return if (getProjectTitleFile().exists()) finishProjectComponent("title") else false
+        return if (projectTitleFile.exists()) finishProjectComponent("title") else false
     }
 
     fun openProjectTitle(): Boolean = openProjectComponent("title")
@@ -474,14 +493,13 @@ class TargetTranslation private constructor(
     @Throws(Exception::class)
     fun commitSync(): Boolean = commitSync(".")
 
-    fun isClean(): Boolean {
-        return try {
+    val isClean: Boolean
+        get() = try {
             repo.git.status().call().isClean
         } catch (e: Exception) {
             e.printStackTrace()
             false
         }
-    }
 
     fun setAuthor(name: String, email: String) {
         this.author = PersonIdent(name, email)
@@ -494,7 +512,7 @@ class TargetTranslation private constructor(
     fun commitSync(filePattern: String, forced: Boolean): Boolean {
         val git = repo.git
 
-        if (isClean()) return true
+        if (isClean) return true
 
         val add = git.add()
         add.addFilepattern(filePattern)
@@ -669,15 +687,14 @@ class TargetTranslation private constructor(
         return cleaned
     }
 
-    fun getCommitHash(): String? {
-        return try {
+    val commitHash: String?
+        get() = try {
             val commit = getGitHead(repo)
             commit?.name
         } catch (e: Exception) {
             Logger.e(TAG, "Could not get commit hash", e)
             null
         }
-    }
 
     @Throws(GitAPIException::class, IOException::class)
     private fun getGitHead(repo: Repo): RevCommit? {
@@ -701,40 +718,41 @@ class TargetTranslation private constructor(
         }
     }
 
-    fun numTranslated(): Int {
-        var numFiles = 0
-        val chapterDirs = path.listFiles { pathname ->
-            pathname.isDirectory && pathname.name != ".git" && pathname.name != "manifest.json"
-        }
-        chapterDirs?.forEach { dir ->
-            val files = dir.list()
-            if (files != null) {
-                numFiles += files.size
+    val numTranslated: Int
+        get() {
+            var numFiles = 0
+            val chapterDirs = path.listFiles { pathname ->
+                pathname.isDirectory && pathname.name != ".git" && pathname.name != "manifest.json"
             }
+            chapterDirs?.forEach { dir ->
+                val files = dir.list()
+                if (files != null) {
+                    numFiles += files.size
+                }
+            }
+            return numFiles
         }
-        return numFiles
-    }
 
-    fun numFinished(): Int {
-        return if (manifest.has(FIELD_FINISHED_CHUNKS)) {
+    val numFinished: Int
+        get() = if (manifest.has(FIELD_FINISHED_CHUNKS)) {
             manifest.getJSONArray(FIELD_FINISHED_CHUNKS).length()
         } else {
             0
         }
-    }
 
-    fun getChapterTranslations(): Array<ChapterTranslation> {
-        val chapterSlugs = path.list { dir, filename ->
-            File(dir, filename).isDirectory && filename != ".git"
-        } ?: return emptyArray()
+    val chapterTranslations: Array<ChapterTranslation>
+        get() {
+            val chapterSlugs = path.list { dir, filename ->
+                File(dir, filename).isDirectory && filename != ".git"
+            } ?: return emptyArray()
 
-        Arrays.sort(chapterSlugs, NumericStringComparator())
-        val chapterTranslations = ArrayList<ChapterTranslation>()
-        for (slug in chapterSlugs) {
-            chapterTranslations.add(getChapterTranslation(slug))
+            Arrays.sort(chapterSlugs, NumericStringComparator())
+            val chapterTranslations = ArrayList<ChapterTranslation>()
+            for (slug in chapterSlugs) {
+                chapterTranslations.add(getChapterTranslation(slug))
+            }
+            return chapterTranslations.toTypedArray()
         }
-        return chapterTranslations.toTypedArray()
-    }
 
     fun getFrameHistory(frameTranslation: FrameTranslation): FileHistory? {
         return try {
@@ -763,16 +781,15 @@ class TargetTranslation private constructor(
         }
     }
 
-    fun getProjectTitleHistory(): FileHistory? {
-        return try {
-            FileHistory(repo, getProjectTitleFile())
+    val projectTitleHistory: FileHistory?
+        get() = try {
+            FileHistory(repo, projectTitleFile)
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
-    }
 
-    fun getFrameTranslations(chapterSlug: String, frameTranslationformat: TranslationFormat): Array<FrameTranslation> {
+    fun getFrameTranslations(chapterSlug: String, frameTranslationFormat: TranslationFormat): Array<FrameTranslation> {
         val frameFileNames = File(path, chapterSlug).list { _, filename ->
             filename != "reference.txt" && filename != "title.txt"
         } ?: return emptyArray()
@@ -782,7 +799,7 @@ class TargetTranslation private constructor(
         for (fileName in frameFileNames) {
             val slug = fileName.split("\\.txt".toRegex()).toTypedArray()
             if (slug.isNotEmpty()) {
-                val f = getFrameTranslation(chapterSlug, slug[0], frameTranslationformat)
+                val f = getFrameTranslation(chapterSlug, slug[0], frameTranslationFormat)
                 frameTranslations.add(f)
             }
         }
