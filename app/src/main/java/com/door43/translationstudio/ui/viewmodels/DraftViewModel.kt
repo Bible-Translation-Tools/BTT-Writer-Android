@@ -126,10 +126,8 @@ class DraftViewModel (
             chapterBody += container.readChunk(chapterSlug, chunk)
         }
 
-        val mimeType = container.info?.optString("content_mime_type")
-        val bodyFormat = try {
-            TranslationFormat.parse(mimeType)
-        } catch (e: Exception) { null }
+        val mimeType = container.info.optString("content_mime_type")
+        val bodyFormat = TranslationFormat.parse(mimeType)
 
         val sourceRendering = RenderingGroup()
         var heading = ""

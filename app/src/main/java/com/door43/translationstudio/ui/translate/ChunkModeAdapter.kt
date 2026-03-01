@@ -282,7 +282,7 @@ class ChunkModeAdapter(
                 null,
                 noteClickListener,
                 true
-            ) as ClickableRenderingEngine
+            )
             renderer.setVersesEnabled(false)
             renderer.setParagraphsEnabled(false)
         } else {

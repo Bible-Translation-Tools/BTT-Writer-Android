@@ -111,7 +111,7 @@ class ValidationAdapter(
                     if (renderedText[position] == null) {
                         val renderingGroup = RenderingGroup()
                         val format = item.bodyFormat
-                        if (format != null && Clickables.isClickableFormat(format)) {
+                        if (Clickables.isClickableFormat(format)) {
                             renderingProvider.setupRenderingGroup(
                                 format,
                                 renderingGroup,

@@ -28,7 +28,7 @@ enum class TranslationFormat(val title: String) {
         /**
          * Parses a mimeType into a TranslationFormat
          */
-        fun parse(mimeType: String?): TranslationFormat {
+        fun parse(mimeType: String): TranslationFormat {
             return when (mimeType) {
                 "text/usfm" -> USFM
                 "text/markdown" -> MARKDOWN

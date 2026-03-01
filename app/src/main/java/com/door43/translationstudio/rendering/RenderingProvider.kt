@@ -28,7 +28,7 @@ class RenderingProvider(
     }
 
     fun setupRenderingGroup(
-        format: TranslationFormat?,
+        format: TranslationFormat,
         renderingGroup: RenderingGroup,
         verseClickListener: Span.OnClickListener? = null,
         noteClickListener: Span.OnClickListener? = null,

@@ -1,22 +1,21 @@
-package com.door43.translationstudio.rendering;
+package com.door43.translationstudio.rendering
 
-import android.content.Context;
-
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.ui.spannables.Span;
+import android.content.Context
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.ui.spannables.Span
 
 /**
  * Class to support clickable spans
  */
-public class Clickables {
+object Clickables {
 
     /**
      * test if this is a clickable format
      * @param format
      * @return
      */
-    public static boolean isClickableFormat(TranslationFormat format) {
-        return (format == TranslationFormat.USX) || (format == TranslationFormat.USFM);
+    fun isClickableFormat(format: TranslationFormat): Boolean {
+        return format == TranslationFormat.USX || format == TranslationFormat.USFM
     }
 
     /**
@@ -29,23 +28,23 @@ public class Clickables {
      * @param target - true if rendering target translations, false if source text
      * @return
      */
-    static public ClickableRenderingEngine setupRenderingGroup(
-            Context context,
-            TranslationFormat format,
-            RenderingGroup renderingGroup,
-            Span.OnClickListener verseClickListener,
-            Span.OnClickListener noteClickListener,
-            boolean target
-    ) {
-        TranslationFormat defaultFormat = target ? TranslationFormat.USFM : TranslationFormat.USX;
-        ClickableRenderingEngine renderer = ClickableRenderingEngineFactory.create(
-                context,
-                format,
-                defaultFormat,
-                verseClickListener,
-                noteClickListener
-        );
-        renderingGroup.addEngine(renderer);
-        return renderer;
+    fun setupRenderingGroup(
+        context: Context,
+        format: TranslationFormat,
+        renderingGroup: RenderingGroup,
+        verseClickListener: Span.OnClickListener?,
+        noteClickListener: Span.OnClickListener?,
+        target: Boolean
+    ): ClickableRenderingEngine {
+        val defaultFormat = if (target) TranslationFormat.USFM else TranslationFormat.USX
+        val renderer = ClickableRenderingEngineFactory.create(
+            context,
+            format,
+            defaultFormat,
+            verseClickListener,
+            noteClickListener
+        )
+        renderingGroup.addEngine(renderer)
+        return renderer
     }
 }

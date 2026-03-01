@@ -484,7 +484,9 @@ open class ReviewModeAdapter(
         }
 
         if (enableSearch) {
-            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR)
+            searchText?.let { query ->
+                renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
+            }
         }
 
         renderingGroup.init(item.sourceText)
@@ -1253,7 +1255,9 @@ open class ReviewModeAdapter(
         }
 
         if (enableSearch) {
-            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR)
+            searchText?.let { query ->
+                renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
+            }
         }
 
         if (!text.isNullOrBlank()) {
@@ -1456,7 +1460,9 @@ open class ReviewModeAdapter(
         }
 
         if (enableSearch) {
-            renderingGroup.setSearchString(searchText, HIGHLIGHT_COLOR)
+            searchText?.let { query ->
+                renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
+            }
         }
 
         renderingGroup.init(item.targetText)

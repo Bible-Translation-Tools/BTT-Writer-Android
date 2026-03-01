@@ -1,14 +1,13 @@
-package com.door43.translationstudio.rendering;
+package com.door43.translationstudio.rendering
 
-import android.content.Context;
-
-import com.door43.translationstudio.core.TranslationFormat;
-import com.door43.translationstudio.ui.spannables.Span;
+import android.content.Context
+import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.ui.spannables.Span
 
 /**
  * ClickableRenderingEngineFactory for creating ClickableRenderingEngine based on format
  */
-public class ClickableRenderingEngineFactory {
+object ClickableRenderingEngineFactory {
 
     /**
      * create appropriate rendering engine for format and add click listeners
@@ -19,27 +18,32 @@ public class ClickableRenderingEngineFactory {
      * @param noteClickListener
      * @return
      */
-    public static ClickableRenderingEngine create(
-            Context context,
-            TranslationFormat format,
-            TranslationFormat defaultFormat,
-            Span.OnClickListener verseClickListener,
-            Span.OnClickListener noteClickListener
-    ) {
+    fun create(
+        context: Context,
+        format: TranslationFormat,
+        defaultFormat: TranslationFormat,
+        verseClickListener: Span.OnClickListener?,
+        noteClickListener: Span.OnClickListener?
+    ): ClickableRenderingEngine {
 
-        ClickableRenderingEngine renderer = null;
-
-        if( (format != TranslationFormat.USFM) && (format != TranslationFormat.USX) ) {
-            format = defaultFormat;
+        val resolvedFormat = if (format != TranslationFormat.USFM && format != TranslationFormat.USX) {
+            defaultFormat
+        } else {
+            format
         }
 
-        if(format == TranslationFormat.USFM) {
-            renderer = new USFMRenderer(context, verseClickListener, noteClickListener);
-        } if(format == TranslationFormat.USX)  {
-            renderer = new USXRenderer(context, verseClickListener, noteClickListener);
+        return when (resolvedFormat) {
+            TranslationFormat.USFM -> USFMRenderer(
+                context,
+                verseClickListener,
+                noteClickListener
+            )
+            TranslationFormat.USX -> USXRenderer(
+                context,
+                verseClickListener,
+                noteClickListener
+            )
+            else -> throw IllegalArgumentException("Unsupported rendering format: $resolvedFormat")
         }
-
-        return renderer;
     }
-
 }

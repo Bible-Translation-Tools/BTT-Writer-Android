@@ -1,23 +1,28 @@
-package com.door43.translationstudio.rendering;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.door43.translationstudio.rendering
 
 /**
  * Created by joel on 1/26/2015.
  */
-public class RenderingGroup {
-    private boolean mStopped = false;
-    private boolean mRunning = false;
-    private List<RenderingEngine> mEngines =  new ArrayList<RenderingEngine>();
-    private CharSequence mInput;
+class RenderingGroup {
+    private var mStopped = false
+    private var mRunning = false
+    private val mEngines: MutableList<RenderingEngine> = mutableListOf()
+    private var mInput: CharSequence = ""
+
+    /**
+     * see if missing verse was added
+     */
+    val isAddedMissingVerse: Boolean
+        get() = mEngines.any {
+            it is ClickableRenderingEngine && it.isAddedMissingVerse
+        }
 
     /**
      * Adds a rendering engine to the queue
      * @param engine
      */
-    public void addEngine(RenderingEngine engine) {
-        mEngines.add(engine);
+    fun addEngine(engine: RenderingEngine) {
+        mEngines.add(engine)
     }
 
     /**
@@ -25,38 +30,23 @@ public class RenderingGroup {
      *
      * @param enable default is true
      */
-    public void setVersesEnabled(boolean enable) {
-        for (RenderingEngine engine : mEngines) {
-            if(engine instanceof ClickableRenderingEngine) {
-                ((ClickableRenderingEngine) engine).setVersesEnabled(enable);
+    fun setVersesEnabled(enable: Boolean) {
+        for (engine in mEngines) {
+            if (engine is ClickableRenderingEngine) {
+                engine.setVersesEnabled(enable)
             }
         }
     }
 
     /**
-     * see if missing verse was added
-     */
-    public boolean isAddedMissingVerse() {
-        boolean addedMissingVerse = false;
-        for (RenderingEngine engine : mEngines) {
-            if(engine instanceof ClickableRenderingEngine) {
-                addedMissingVerse |= ((ClickableRenderingEngine) engine).isAddedMissingVerse();
-            }
-        }
-        return addedMissingVerse;
-    }
-
-    /**
-     * If set to not null matched strings will be highlighted.
+     * If set to not empty matched strings will be highlighted.
      *
-     * @param searchString - null is disable
+     * @param searchString - empty string disables highlighting
      * @param highlightColor
      */
-    public void setSearchString(CharSequence searchString, int highlightColor) {
-        for (RenderingEngine engine : mEngines) {
-            if(engine instanceof RenderingEngine) {
-                ((RenderingEngine) engine).setSearchString(searchString, highlightColor);
-            }
+    fun setSearchString(searchString: CharSequence, highlightColor: Int) {
+        for (engine in mEngines) {
+            engine.setSearchString(searchString, highlightColor)
         }
     }
 
@@ -65,10 +55,10 @@ public class RenderingGroup {
      *
      * @param enable default is true
      */
-    public void setParagraphsEnabled(boolean enable) {
-        for (RenderingEngine engine : mEngines) {
-            if(engine instanceof ClickableRenderingEngine) {
-                ((ClickableRenderingEngine) engine).setParagraphsEnabled(enable);
+    fun setParagraphsEnabled(enable: Boolean) {
+        for (engine in mEngines) {
+            if (engine is ClickableRenderingEngine) {
+                engine.setParagraphsEnabled(enable)
             }
         }
     }
@@ -76,26 +66,28 @@ public class RenderingGroup {
     /**
      * Begins the rendering operations
      */
-    public CharSequence start() {
-        if(mRunning || mInput == null) return "";
-        mRunning = true;
-        mStopped = false;
-        CharSequence rendered = mInput;
-        for(RenderingEngine engine:mEngines) {
-            if(mStopped) break;
-            rendered = engine.render(rendered);
+    fun start(): CharSequence {
+        if (mRunning || mInput.isEmpty()) return ""
+        mRunning = true
+        mStopped = false
+        var rendered = mInput
+
+        for (engine in mEngines) {
+            if (mStopped) break
+            rendered = engine.render(rendered)
         }
-        mRunning = false;
-        return rendered;
+
+        mRunning = false
+        return rendered
     }
 
     /**
      * Stops the rendering operations
      */
-    public void stop() {
-        mStopped = true;
-        for(RenderingEngine engine:mEngines) {
-            engine.stop();
+    fun stop() {
+        mStopped = true
+        for (engine in mEngines) {
+            engine.stop()
         }
     }
 
@@ -103,7 +95,7 @@ public class RenderingGroup {
      * Initializes the rendering group
      * @param input
      */
-    public void init(String input) {
-        mInput = input;
+    fun init(input: String) {
+        mInput = input
     }
 }
