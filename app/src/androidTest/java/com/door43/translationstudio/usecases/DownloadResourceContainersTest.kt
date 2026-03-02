@@ -10,6 +10,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -46,7 +47,9 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
             progressMessage = message
         }
 
-        val result = downloadResourceContainers.download(translation!!, progressListener)
+        val result = runBlocking {
+            downloadResourceContainers.download(translation!!, progressListener)
+        }
 
         assertNotNull("Download result should not be null", result)
         assertTrue("Download result should be successful", result.success)
@@ -66,7 +69,9 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
             progressMessage = message
         }
 
-        val result = downloadResourceContainers.download(translationIds, progressListener)
+        val result = runBlocking {
+            downloadResourceContainers.download(translationIds, progressListener)
+        }
 
         assertNotNull("Download result should not be null", result)
 
@@ -124,7 +129,9 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
 
     @Test
     fun downloadNoneResourceContainers() {
-        val result = downloadResourceContainers.download(listOf())
+        val result = runBlocking {
+            downloadResourceContainers.download(listOf())
+        }
 
         assertNotNull("Download result should not be null", result)
         assertEquals(result.downloadedTranslations.size, 0)
@@ -137,7 +144,9 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
     @Test
     fun downloadIncorrectResourceContainers() {
         val badTranslationIds = listOf("bad_tr_id1", "bad_tr_id2")
-        val result = downloadResourceContainers.download(badTranslationIds)
+        val result = runBlocking {
+            downloadResourceContainers.download(badTranslationIds)
+        }
 
         assertNotNull("Download result should not be null", result)
 

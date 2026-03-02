@@ -12,6 +12,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -75,7 +76,9 @@ class UpdateCatalogsTest : KoinAndroidTest() {
         prepareCatalogs()
 
         val message = appContext.resources.getString(R.string.updating_languages)
-        val result = updateCatalogs.execute(false, message)
+        val result = runBlocking {
+            updateCatalogs.execute(false, message)
+        }
 
         assertTrue("Update catalogs should succeed", result.success)
         assertEquals("Added 2 languages", 2, result.addedCount)

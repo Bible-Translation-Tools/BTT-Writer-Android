@@ -10,6 +10,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -50,7 +51,9 @@ class CheckForLatestReleaseTest {
 
         TestUtils.setPropertyReflection(packageInfo, "versionCode", 9)
 
-        val result = CheckForLatestRelease(context, prefRepository).execute()
+        val result = runBlocking {
+            CheckForLatestRelease(context, prefRepository).execute()
+        }
 
         assertNotNull(result.release)
 
@@ -73,7 +76,9 @@ class CheckForLatestReleaseTest {
 
         TestUtils.setPropertyReflection(packageInfo, "versionCode", 10)
 
-        val result = CheckForLatestRelease(context, prefRepository).execute()
+        val result = runBlocking {
+            CheckForLatestRelease(context, prefRepository).execute()
+        }
 
         assertNull(result.release)
 

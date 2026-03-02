@@ -15,6 +15,7 @@ import io.mockk.justRun
 import io.mockk.mockkObject
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,7 +47,9 @@ class UpdateAppTest : KoinAndroidTest() {
             progressMessage = message
         }
 
-        updateApp.execute(progressListener)
+        runBlocking {
+            updateApp.execute(progressListener)
+        }
 
         assertNull("Progress message should be null", progressMessage)
     }
@@ -65,7 +68,9 @@ class UpdateAppTest : KoinAndroidTest() {
 
         prefRepository.setPrivatePref("last_version_code", currentVersion)
 
-        updateApp.execute()
+        runBlocking {
+            updateApp.execute()
+        }
     }
 
 //    @Test

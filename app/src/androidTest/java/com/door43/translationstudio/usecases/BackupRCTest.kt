@@ -15,6 +15,7 @@ import com.door43.usecases.BackupRC
 import com.door43.usecases.ImportProjects
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -181,7 +182,9 @@ class BackupRCTest : KoinAndroidTest() {
 
                 assertFalse("tempDir should not be empty", tempDir!!.listFiles().isNullOrEmpty())
 
-                val rc = library.importResourceContainer(tempDir!!)
+                val rc = runBlocking {
+                    library.importResourceContainer(tempDir!!)
+                }
 
                 assertNotNull("rc should not be null", rc)
 

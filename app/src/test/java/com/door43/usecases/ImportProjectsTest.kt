@@ -14,6 +14,8 @@ import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
@@ -24,6 +26,7 @@ import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifySequence
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -687,20 +690,22 @@ class ImportProjectsTest {
             .just(runs)
 
         every { library.open(any()) }.throws(Exception("local rc not found."))
-        every { library.importResourceContainer(srcDir) }.returns(mockk())
+        coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc: ResourceContainer = mockk()
         TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
-        val result = ImportProjects(
-            context,
-            translator,
-            backupRC,
-            directoryProvider,
-            archiveImporter,
-            library
-        ).importSource(uri)
+        val result = runBlocking {
+            ImportProjects(
+                context,
+                translator,
+                backupRC,
+                directoryProvider,
+                archiveImporter,
+                library
+            ).importSource(uri)
+        }
 
         assertTrue(result.success)
         assertFalse(result.hasConflict)
@@ -710,7 +715,7 @@ class ImportProjectsTest {
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
         verify { library.open(any()) }
-        verify { library.importResourceContainer(srcDir) }
+        coVerify { library.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
@@ -725,7 +730,7 @@ class ImportProjectsTest {
             .just(runs)
 
         every { library.open(any()) }.returns(mockk())
-        every { library.importResourceContainer(srcDir) }.returns(mockk())
+        coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc = mockResourceContainer()
         TestUtils.setPropertyReflection(tempRc, "slug", "en")
@@ -735,14 +740,16 @@ class ImportProjectsTest {
 
         val expectedErrorMessage = "Overwrite Farsi - Mark - New Millennium Version?"
 
-        val result = ImportProjects(
-            context,
-            translator,
-            backupRC,
-            directoryProvider,
-            archiveImporter,
-            library
-        ).importSource(uri)
+        val result = runBlocking {
+            ImportProjects(
+                context,
+                translator,
+                backupRC,
+                directoryProvider,
+                archiveImporter,
+                library
+            ).importSource(uri)
+        }
 
         assertFalse(result.success)
         assertTrue(result.hasConflict)
@@ -752,7 +759,7 @@ class ImportProjectsTest {
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
         verify { library.open(any()) }
-        verify(exactly = 0) { library.importResourceContainer(srcDir) }
+        coVerify(exactly = 0) { library.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify(exactly = 0) { FileUtilities.deleteQuietly(any()) }
     }
@@ -770,14 +777,16 @@ class ImportProjectsTest {
 
         val expectedErrorMessage = "Invalid rc."
 
-        val result = ImportProjects(
-            context,
-            translator,
-            backupRC,
-            directoryProvider,
-            archiveImporter,
-            library
-        ).importSource(uri)
+        val result = runBlocking {
+            ImportProjects(
+                context,
+                translator,
+                backupRC,
+                directoryProvider,
+                archiveImporter,
+                library
+            ).importSource(uri)
+        }
 
         assertFalse(result.success)
         assertFalse(result.hasConflict)
@@ -787,7 +796,7 @@ class ImportProjectsTest {
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
         verify(exactly = 0) { library.open(any()) }
-        verify(exactly = 0) { library.importResourceContainer(srcDir) }
+        coVerify(exactly = 0) { library.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify(exactly = 0) { FileUtilities.deleteQuietly(any()) }
     }
@@ -802,7 +811,7 @@ class ImportProjectsTest {
             .just(runs)
 
         every { library.open(any()) }.throws(Exception("local rc not found."))
-        every { library.importResourceContainer(srcDir) }.throws(Exception("Failed to import rc."))
+        coEvery { library.importResourceContainer(srcDir) }.throws(Exception("Failed to import rc."))
 
         val tempRc: ResourceContainer = mockk()
         TestUtils.setPropertyReflection(tempRc, "slug", "en")
@@ -810,14 +819,16 @@ class ImportProjectsTest {
 
         val expectedErrorMessage = "Failed to import rc."
 
-        val result = ImportProjects(
-            context,
-            translator,
-            backupRC,
-            directoryProvider,
-            archiveImporter,
-            library
-        ).importSource(uri)
+        val result = runBlocking {
+            ImportProjects(
+                context,
+                translator,
+                backupRC,
+                directoryProvider,
+                archiveImporter,
+                library
+            ).importSource(uri)
+        }
 
         assertFalse(result.success)
         assertFalse(result.hasConflict)
@@ -827,7 +838,7 @@ class ImportProjectsTest {
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
         verify { library.open(any()) }
-        verify { library.importResourceContainer(srcDir) }
+        coVerify { library.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
@@ -836,23 +847,25 @@ class ImportProjectsTest {
     fun `test import source from directory`() {
         val dir = tempDir.newFolder("fa_mrk_nmv")
 
-        every { library.importResourceContainer(dir) }.returns(mockk())
+        coEvery { library.importResourceContainer(dir) }.returns(mockk())
 
-        val result = ImportProjects(
-            context,
-            translator,
-            backupRC,
-            directoryProvider,
-            archiveImporter,
-            library
-        ).importSource(dir)
+        val result = runBlocking {
+            ImportProjects(
+                context,
+                translator,
+                backupRC,
+                directoryProvider,
+                archiveImporter,
+                library
+            ).importSource(dir)
+        }
 
         assertTrue(result.success)
         assertFalse(result.hasConflict)
         assertNull(result.error)
         assertNull(result.targetDir)
 
-        verify { library.importResourceContainer(dir) }
+        coVerify { library.importResourceContainer(dir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
 

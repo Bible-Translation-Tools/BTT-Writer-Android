@@ -16,6 +16,7 @@ import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -185,7 +186,9 @@ class ImportProjectsTest : KoinAndroidTest() {
             sourceDir.listFiles()?.isNotEmpty() ?: false
         )
 
-        val result = importProjects.importSource(sourceDir)
+        val result = runBlocking {
+            importProjects.importSource(sourceDir)
+        }
 
         assertTrue("Import should be successful", result.success)
         assertFalse("There should be no merge conflict", result.hasConflict)
@@ -194,7 +197,9 @@ class ImportProjectsTest : KoinAndroidTest() {
 
         // Import again
         val sourceDir2 = getSourceDir()
-        val result2 = importProjects.importSource(sourceDir2)
+        val result2 = runBlocking {
+            importProjects.importSource(sourceDir2)
+        }
 
         assertTrue("Import should be successful", result2.success)
         assertFalse("There should not be merge conflict", result2.hasConflict)
@@ -214,7 +219,9 @@ class ImportProjectsTest : KoinAndroidTest() {
             sourceDir.listFiles()?.isNotEmpty() ?: false
         )
 
-        val result = importProjects.importSource(sourceDirUri)
+        val result = runBlocking {
+            importProjects.importSource(sourceDirUri)
+        }
 
         assertTrue("Import should be successful", result.success)
         assertFalse("There should be no merge conflict", result.hasConflict)
@@ -224,7 +231,9 @@ class ImportProjectsTest : KoinAndroidTest() {
         // Import again
         val sourceDir2 = getSourceDir()
         val sourceDir2Uri = Uri.fromFile(sourceDir2)
-        val result2 = importProjects.importSource(sourceDir2Uri)
+        val result2 = runBlocking {
+            importProjects.importSource(sourceDir2Uri)
+        }
 
         assertFalse("Import should not be successful", result2.success)
         assertTrue("There should be merge conflict", result2.hasConflict)
@@ -239,7 +248,9 @@ class ImportProjectsTest : KoinAndroidTest() {
         assertEquals("Source files should match target files", sourceFiles, targetFiles)
 
         // Overwrite source from result target dir
-        val result3 = importProjects.importSource(result2.targetDir!!)
+        val result3 = runBlocking {
+            importProjects.importSource(result2.targetDir!!)
+        }
         assertTrue("Import should be successful", result3.success)
         assertFalse("There should be no merge conflict", result3.hasConflict)
         assertNull("Message should be null", result3.error)
@@ -250,7 +261,9 @@ class ImportProjectsTest : KoinAndroidTest() {
     fun testImportSourceTextFromZipShouldFail() {
         val sourceFile = getSourceFile()
 
-        val result = importProjects.importSource(sourceFile)
+        val result = runBlocking {
+            importProjects.importSource(sourceFile)
+        }
 
         assertFalse("Import should not be successful", result.success)
         assertFalse("There should be no merge conflict", result.hasConflict)
@@ -263,7 +276,9 @@ class ImportProjectsTest : KoinAndroidTest() {
         val sourceFile = getSourceFile()
         val sourceFileUri = Uri.fromFile(sourceFile)
 
-        val result = importProjects.importSource(sourceFileUri)
+        val result = runBlocking {
+            importProjects.importSource(sourceFileUri)
+        }
 
         assertFalse("Import should not be successful", result.success)
         assertFalse("There should be no merge conflict", result.hasConflict)

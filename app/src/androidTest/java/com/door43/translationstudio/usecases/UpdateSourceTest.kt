@@ -14,6 +14,7 @@ import com.door43.usecases.UpdateSource
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -89,7 +90,9 @@ class UpdateSourceTest : KoinAndroidTest() {
         prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MEDIA_SERVER, url.toString())
 
         val message = appContext.resources.getString(R.string.updating_sources)
-        val result = updateSource.execute(message)
+        val result = runBlocking {
+            updateSource.execute(message)
+        }
 
         assertTrue("Update source succeeded", result.success)
         assertEquals("Added 1 source", 1, result.addedCount)

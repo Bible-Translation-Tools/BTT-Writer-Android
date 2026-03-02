@@ -21,6 +21,8 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
@@ -31,6 +33,7 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -101,7 +104,7 @@ class UpdateAppTest {
         every { directoryProvider.cacheDir }.returns(tempDir.newFolder("cache"))
 
         mockkStatic(ResourceContainer::class)
-        every { library.importResourceContainer(any()) }.returns(mockk())
+        coEvery { library.importResourceContainer(any()) }.returns(mockk())
         every { library.updateLanguageUrl(any()) }.just(runs)
 
         mockkObject(FileUtilities)
@@ -144,15 +147,17 @@ class UpdateAppTest {
             .returns(0)
         every { library.isLibraryDeployed }.returns(true)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify { library.isLibraryDeployed }
 
@@ -168,15 +173,17 @@ class UpdateAppTest {
             .returns(9)
         every { library.isLibraryDeployed }.returns(true)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
 
@@ -208,15 +215,17 @@ class UpdateAppTest {
 
         every { ResourceContainer.open(file, any()) }.returns(mockk())
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -225,7 +234,7 @@ class UpdateAppTest {
 
         verify { backupRC.backupResourceContainer(translation) }
         verify { ResourceContainer.open(file, any()) }
-        verify { library.importResourceContainer(any()) }
+        coVerify { library.importResourceContainer(any()) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
 
@@ -246,15 +255,17 @@ class UpdateAppTest {
 
         every { migrator.migrate(targetTranslationDir) }.returns(targetTranslationDir)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -283,15 +294,17 @@ class UpdateAppTest {
         }
         every { translator.targetTranslations }.returns(arrayOf(targetTranslation))
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -309,15 +322,17 @@ class UpdateAppTest {
             .returns(88)
         every { library.isLibraryDeployed }.returns(false)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -341,15 +356,17 @@ class UpdateAppTest {
             .returns(104)
         every { library.isLibraryDeployed }.returns(false)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -373,15 +390,17 @@ class UpdateAppTest {
             .returns(112)
         every { library.isLibraryDeployed }.returns(false)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -405,15 +424,17 @@ class UpdateAppTest {
             .returns(123)
         every { library.isLibraryDeployed }.returns(false)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -437,15 +458,17 @@ class UpdateAppTest {
             .returns(140)
         every { library.isLibraryDeployed }.returns(false)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -469,15 +492,17 @@ class UpdateAppTest {
             .returns(143)
         every { library.isLibraryDeployed }.returns(false)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -501,15 +526,17 @@ class UpdateAppTest {
             .returns(176)
         every { library.isLibraryDeployed }.returns(false)
 
-        UpdateApp(
-            context,
-            prefRepository,
-            directoryProvider,
-            library,
-            backupRC,
-            translator,
-            migrator
-        ).execute(progressListener)
+        runBlocking {
+            UpdateApp(
+                context,
+                prefRepository,
+                directoryProvider,
+                library,
+                backupRC,
+                translator,
+                migrator
+            ).execute(progressListener)
+        }
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -541,7 +568,7 @@ class UpdateAppTest {
 
     private fun verifyNoSourceTranslations() {
         verify(exactly = 0) { backupRC.backupResourceContainer(any()) }
-        verify(exactly = 0) { library.importResourceContainer(any()) }
+        coVerify(exactly = 0) { library.importResourceContainer(any()) }
     }
 
     private fun verifyNoTargetTranslations() {

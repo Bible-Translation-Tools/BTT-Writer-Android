@@ -3,6 +3,8 @@ package com.door43.usecases
 import com.door43.OnProgressListener
 import com.door43.TestUtils
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
@@ -10,6 +12,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,7 +35,7 @@ class UpdateCatalogsTest {
 
         every { library.index } returns index
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
-        every { library.updateCatalogs(any(), any()) }.just(runs)
+        coEvery { library.updateCatalogs(any(), any()) }.just(runs)
     }
 
     @After
@@ -48,15 +51,17 @@ class UpdateCatalogsTest {
         every { index.getTargetLanguages() }.returns(listOf(targetLanguage))
 
         val message = "Test"
-        val result = UpdateCatalogs(library)
-            .execute(false, message, progressListener)
+        val result = runBlocking {
+            UpdateCatalogs(library)
+                .execute(false, message, progressListener)
+        }
 
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
-        verify { library.updateCatalogs(false, any()) }
+        coVerify { library.updateCatalogs(false, any()) }
     }
 
     @Test
@@ -78,15 +83,17 @@ class UpdateCatalogsTest {
         }
 
         val message = "Test"
-        val result = UpdateCatalogs(library)
-            .execute(false, message, progressListener)
+        val result = runBlocking {
+            UpdateCatalogs(library)
+                .execute(false, message, progressListener)
+        }
 
         assertTrue(result.success)
         assertEquals(1, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
-        verify { library.updateCatalogs(false, any()) }
+        coVerify { library.updateCatalogs(false, any()) }
     }
 
     @Test
@@ -94,31 +101,35 @@ class UpdateCatalogsTest {
         every { index.getTargetLanguages() }.returns(listOf())
 
         val message = "Test"
-        val result = UpdateCatalogs(library)
-            .execute(true, message, progressListener)
+        val result = runBlocking {
+            UpdateCatalogs(library)
+                .execute(true, message, progressListener)
+        }
 
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
-        verify { library.updateCatalogs(true, any()) }
+        coVerify { library.updateCatalogs(true, any()) }
     }
 
     @Test
     fun `test update catalogs, throws exception`() {
         every { index.getTargetLanguages() }.returns(listOf())
-        every { library.updateCatalogs(any(), any()) }.throws(Exception("An error occurred."))
+        coEvery { library.updateCatalogs(any(), any()) }.throws(Exception("An error occurred."))
 
         val message = "Test"
-        val result = UpdateCatalogs(library)
-            .execute(true, message, progressListener)
+        val result = runBlocking {
+            UpdateCatalogs(library)
+                .execute(true, message, progressListener)
+        }
 
         assertFalse(result.success)
         assertEquals(0, result.addedCount)
 
         verify { progressListener.onProgress(any(), any(), message) }
         verify(exactly = 1) { index.getTargetLanguages() }
-        verify { library.updateCatalogs(true, any()) }
+        coVerify { library.updateCatalogs(true, any()) }
     }
 }

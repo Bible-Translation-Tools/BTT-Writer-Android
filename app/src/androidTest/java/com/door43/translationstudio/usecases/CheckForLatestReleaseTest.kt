@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.CheckForLatestRelease
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -22,7 +23,9 @@ class CheckForLatestReleaseTest : KoinAndroidTest() {
 
     @Test
     fun checkForLatestRelease() {
-        val result = checkForLatestRelease.execute()
+        val result = runBlocking {
+            checkForLatestRelease.execute()
+        }
 
         // Run assertions if there is a new release
         if (result.release != null) {
