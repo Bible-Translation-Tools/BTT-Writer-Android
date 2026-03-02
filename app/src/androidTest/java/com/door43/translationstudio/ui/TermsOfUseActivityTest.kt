@@ -65,7 +65,7 @@ class TermsOfUseActivityTest : KoinAndroidTest() {
 
     @Test
     fun testProfileLoggedOut() {
-        profile.fullName = null
+        profile.fullName = ""
 
         val scenario = ActivityScenario.launch(TermsOfUseActivity::class.java)
         Thread.sleep(3000)

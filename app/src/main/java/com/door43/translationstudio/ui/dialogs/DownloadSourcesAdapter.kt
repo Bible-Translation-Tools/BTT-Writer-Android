@@ -69,7 +69,7 @@ class DownloadSourcesAdapter(
     private var languageFilter: String? = null
     private var bookFilter: String? = null
     private var search: String? = null
-    private val downloadErrors = mutableMapOf<String, String>()
+    private val downloadErrors = mutableMapOf<String, String?>()
 
     override fun getCount(): Int {
         return items.size
@@ -562,7 +562,7 @@ class DownloadSourcesAdapter(
     /**
      * marks an item as error
      */
-    fun markItemError(position: Int, message: String) {
+    fun markItemError(position: Int, message: String?) {
         val item = getItem(position)
         item.error = true
         item.errorMessage = message

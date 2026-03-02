@@ -60,7 +60,7 @@ class ExamineImportsForCollisionsTest : KoinAndroidTest() {
 
         val targetLanguage = library.index.getTargetLanguage("aa")
         val project = library.index.getProject("aa", "mrk", true)
-        val projectName = "${project.name} - ${targetLanguage.name}"
+        val projectName = "${project?.name} - ${targetLanguage?.name}"
 
         tempFile = directoryProvider.createTempFile("aa_mrk_text_reg", ".tstudio").also { file ->
             assetsProvider.open(source).use { input ->
@@ -111,7 +111,7 @@ class ExamineImportsForCollisionsTest : KoinAndroidTest() {
 
         val targetLanguage = library.index.getTargetLanguage("aa")
         val project = library.index.getProject("aa", "mrk", true)
-        val projectName = "${project.name} - ${targetLanguage.name}"
+        val projectName = "${project?.name} - ${targetLanguage?.name}"
 
         tempFile = directoryProvider.createTempFile("aa_mrk_text_reg", ".tstudio").also { file ->
             assetsProvider.open(source).use { input ->

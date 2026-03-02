@@ -99,7 +99,7 @@ object TestUtils {
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, path, null)
+            .fromRc(targetLanguage!!, path, null)
             .build()
 
         assertNotNull("usfm should not be null", usfm)

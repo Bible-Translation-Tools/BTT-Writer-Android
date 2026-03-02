@@ -35,12 +35,14 @@ gogs-client = "1.7.5"
 task-manager = "1.5.3"
 resource-container = "0.7.19"
 logger-version = "2.3.1"
+http-tools = "2.5.0"
 event-buffer = "1.0.2"
 foreground = "0.1.0"
 firebase-appindexing = "20.0.0"
 okhttp = "4.12.0"
 markdownj = "0.4"
 commons-io = "2.8.0"
+ktorVersion = "3.0.0"
 
 # Testing
 junit = "4.13.2"
@@ -112,6 +114,7 @@ gogs-client = { group = "org.bibletranslationtools", name = "gogs-client", versi
 task-manager = { group = "org.unfoldingword.tools", name = "task-manager", version.ref = "task-manager" }
 resource-container = { group = "org.unfoldingword.tools", name = "resource-container", version.ref = "resource-container" }
 bible-logger = { group = "org.bibletranslationtools", name = "logger", version.ref = "logger-version" }
+http-tools = { group = "org.unfoldingword.tools", name = "http", version.ref = "http-tools" }
 event-buffer = { group = "org.unfoldingword.tools", name = "event-buffer", version.ref = "event-buffer" }
 foreground = { group = "org.unfoldingword.tools", name = "foreground", version.ref = "foreground" }
 
@@ -121,6 +124,8 @@ firebase-appindexing = { group = "com.google.firebase", name = "firebase-appinde
 # Networking
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
+ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktorVersion"}
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktorVersion" }
 
 # Markdown
 markdownj = { group = "org.markdownj", name = "markdownj-core", version.ref = "markdownj" }

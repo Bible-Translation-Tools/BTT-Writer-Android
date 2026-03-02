@@ -19,7 +19,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.unfoldingword.tools.http.Request
+import com.door43.translationstudio.network.Request
 import org.unfoldingword.tools.logger.GithubReporter
 import org.unfoldingword.tools.logger.Logger
 import java.io.File

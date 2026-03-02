@@ -353,7 +353,7 @@ class DownloadResourceContainers(
                 downloadedContainers.add(rc)
                 Logger.i(this.javaClass.simpleName, name + " download Success: " + rc.slug)
             }
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
             val resource = languageSlug + "_" + projectSlug + "_" + resourceSlug
             Logger.w(

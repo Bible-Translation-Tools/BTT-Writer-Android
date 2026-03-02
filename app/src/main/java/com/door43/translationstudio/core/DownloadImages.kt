@@ -6,15 +6,13 @@ import android.util.Log
 import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
+import com.door43.translationstudio.network.GetRequest
+import com.door43.translationstudio.network.HttpRequest
 import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.moveOrCopyQuietly
 import com.door43.util.Zip
-import org.unfoldingword.tools.http.GetRequest
-import org.unfoldingword.tools.http.Request
 import java.io.File
 import java.io.IOException
-import java.net.MalformedURLException
-import java.net.URL
 
 /**
  * Created by blm on 12/28/16.  Revived from pre-resource container code.
@@ -33,7 +31,7 @@ class DownloadImages(
      * @return
      */
     @SuppressLint("DefaultLocale")
-    fun download(listener: OnProgressListener? = null): File? {
+    suspend fun download(listener: OnProgressListener? = null): File? {
         // TODO: 1/21/2016 we need to be sure to download images for the correct project.
         // Right now only obs has images
         // eventually the api will be updated so we can easily download the correct images.
@@ -84,24 +82,16 @@ class DownloadImages(
         } else null
     }
 
-    private fun requestToFile(
+    private suspend fun requestToFile(
         outputFile: File,
         listener: OnProgressListener?
     ): Boolean {
-        val url: URL
-        try {
-            url = URL(IMAGES_URL)
-        } catch (e: MalformedURLException) {
-            e.printStackTrace()
-            return false
-        }
-
         val outOf = context.getString(R.string.out_of)
         val mbDownloaded = context.getString(R.string.mb_downloaded)
 
-        val r = GetRequest(url)
+        val r = GetRequest(IMAGES_URL)
         r.setTimeout(5000)
-        r.setProgressListener(object : Request.OnProgressListener {
+        r.setProgressListener(object : HttpRequest.OnProgressListener {
             @SuppressLint("DefaultLocale")
             override fun onProgress(max: Long, progress: Long) {
                 listener?.let {

@@ -54,7 +54,7 @@ class ImportUsfmTest : KoinTest {
         expectedBooks = JSONArray()
 
         Logger.flush()
-        targetLanguage = library.index.getTargetLanguage("es")
+        targetLanguage = library.index.getTargetLanguage("es")!!
     }
 
     @After

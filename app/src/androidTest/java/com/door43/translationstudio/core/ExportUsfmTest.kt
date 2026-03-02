@@ -722,7 +722,7 @@ class ExportUsfmTest : KoinTest {
             sourceTranslationSlug = getAvailableTargetTranslations(library, projectId)
         }
 
-        return getResourceToc(library, sourceTranslationSlug)
+        return getResourceToc(library, sourceTranslationSlug!!)
     }
 
     companion object {
@@ -732,11 +732,11 @@ class ExportUsfmTest : KoinTest {
 
         private fun getResourceToc(
             library: Door43Client,
-            sourceTranslationSlug: String?
+            sourceTranslationSlug: String
         ): MutableList<MutableMap<*, *>?>? {
-            val sourceTranslation: Translation = library.index.getTranslation(sourceTranslationSlug)
+            val sourceTranslation: Translation? = library.index.getTranslation(sourceTranslationSlug)
             val mSourceContainer: ResourceContainer =
-                ContainerCache.cache(library, sourceTranslation.resourceContainerSlug)!!
+                ContainerCache.cache(library, sourceTranslation!!.resourceContainerSlug)!!
             return mSourceContainer.toc as MutableList<MutableMap<*, *>?>?
         }
 
@@ -752,11 +752,11 @@ class ExportUsfmTest : KoinTest {
             projectId: String?
         ): String? {
             var sourceTranslationSlug: String? = null
-            val availableTranslations: MutableList<Translation>? = library.index.findTranslations(
+            val availableTranslations: MutableList<Translation> = library.index.findTranslations(
                 null, projectId,
                 null, "book", "all", App.MIN_CHECKING_LEVEL, -1
-            )
-            if (!availableTranslations.isNullOrEmpty()) {
+            ).toMutableList()
+            if (availableTranslations.isNotEmpty()) {
                 for (availableTranslation in availableTranslations) {
                     val isDownloaded: Boolean =
                         library.exists(availableTranslation.resourceContainerSlug)

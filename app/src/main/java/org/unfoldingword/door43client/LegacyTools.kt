@@ -1,5 +1,7 @@
 package org.unfoldingword.door43client
 
+import com.door43.translationstudio.network.GetRequest
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -12,8 +14,6 @@ import org.unfoldingword.resourcecontainer.ContainerTools
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.http.GetRequest
-import java.net.URL
 
 internal object LegacyTools {
 
@@ -31,7 +31,11 @@ internal object LegacyTools {
     }
 
     @Throws(Exception::class)
-    fun processCatalog(library: Library, data: String, listener: OnProgressListener?) {
+    fun processCatalog(
+        library: Library,
+        data: String,
+        listener: OnProgressListener?
+    ) {
         val projects = JSONArray(data)
         for (i in 0 until projects.length()) {
             val pJson = projects.getJSONObject(i)
@@ -39,7 +43,6 @@ internal object LegacyTools {
             downloadSourceLanguages(library, pJson, null)
             library.yieldSafely()
         }
-        updateTA(library, listener)
     }
 
     fun setLangNamesUrl(url: String) {
@@ -80,53 +83,13 @@ internal object LegacyTools {
     }
 
     @Throws(Exception::class)
-    private fun updateTA(library: Library, listener: OnProgressListener?) {
-        val urls = arrayOf(
-            "https://api.unfoldingword.org/ta/txt/1/en/audio_2.json",
-            "https://api.unfoldingword.org/ta/txt/1/en/checking_1.json",
-            "https://api.unfoldingword.org/ta/txt/1/en/checking_2.json",
-            "https://api.unfoldingword.org/ta/txt/1/en/gateway_3.json",
-            "https://api.unfoldingword.org/ta/txt/1/en/intro_1.json",
-            "https://api.unfoldingword.org/ta/txt/1/en/process_1.json",
-            "https://api.unfoldingword.org/ta/txt/1/en/translate_1.json",
-            "https://api.unfoldingword.org/ta/txt/1/en/translate_2.json"
-        )
-        for (i in urls.indices) {
-            downloadTA(library, urls[i])
-            if (listener?.onProgress("ta", urls.size, i + 1) == false) break
-            library.yieldSafely()
-        }
-    }
-
-    @Throws(Exception::class)
-    private fun downloadTA(library: Library, url: String) {
-        val data = GetRequest(URL(url)).read()
-        val ta = JSONObject(data)
-        val meta = ta.getJSONObject("meta")
-        val status = meta.getJSONObject("status")
-
-        val languageId = library.addSourceLanguage(SourceLanguage("en", "English", "ltr"))
-
-        val rawSlug = meta.getString("manual").replace("_", "-")
-        val name = rawSlug[0].uppercaseChar() + rawSlug.substring(1) + " Manual"
-        val project = Project("ta-$rawSlug", name, 0)
-        val projectId = library.addProject(project, listOf(Category("ta", "translationAcademy")), languageId)
-
-        val slug = "vol ${meta.getString("volume")}"
-        val resourceName = "Volume ${meta.getString("volume")}"
-
-        val resource = Resource(slug, resourceName, "man", "gl", status.getString("checking_level"), status.getString("version")).apply {
-            comments = status.getString("comments")
-            pubDate = status.getString("publish_date")
-            license = status.getString("license")
-            addFormat(Resource.Format(ResourceContainer.version, ContainerTools.typeToMime("man"), meta.getInt("mod"), url, false))
-        }
-        library.addResource(resource, projectId)
-    }
-
-    @Throws(Exception::class)
-    private fun downloadSourceLanguages(library: Library, pJson: JSONObject, listener: OnProgressListener?) {
-        val response = GetRequest(URL(pJson.getString("lang_catalog"))).read()
+    private fun downloadSourceLanguages(
+        library: Library,
+        pJson: JSONObject,
+        listener: OnProgressListener?
+    ) {
+        val request = GetRequest(pJson.getString("lang_catalog"))
+        val response = runBlocking { request.read() }
         val languages = JSONArray(response)
 
         for (i in 0 until languages.length()) {
@@ -147,8 +110,14 @@ internal object LegacyTools {
     }
 
     @Throws(Exception::class)
-    private fun downloadResources(library: Library, pJson: JSONObject, languageId: Long, lJson: JSONObject) {
-        val response = GetRequest(URL(lJson.getString("res_catalog"))).read()
+    private fun downloadResources(
+        library: Library,
+        pJson: JSONObject,
+        languageId: Long,
+        lJson: JSONObject
+    ) {
+        val request = GetRequest(lJson.getString("res_catalog"))
+        val response = runBlocking { request.read() }
         val resources = JSONArray(response)
 
         for (i in 0 until resources.length()) {
@@ -251,11 +220,16 @@ internal object LegacyTools {
     }
 
     @Throws(Exception::class)
-    private fun downloadChunks(library: Library, chunksUrl: String, projectSlug: String) {
+    private fun downloadChunks(
+        library: Library,
+        chunksUrl: String,
+        projectSlug: String
+    ) {
         // TODO: pull the correct versification slug from the data. For now there is only one versification
         val v = library.getVersification("en", "en-US")
         if (v != null) {
-            val data = GetRequest(URL(chunksUrl)).read()
+            val request = GetRequest(chunksUrl)
+            val data = runBlocking { request.read() }
             val chunks = JSONArray(data)
             for (i in 0 until chunks.length()) {
                 val chunk = chunks.getJSONObject(i)

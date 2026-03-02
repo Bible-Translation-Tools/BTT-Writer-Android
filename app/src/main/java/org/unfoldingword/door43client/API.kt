@@ -1,6 +1,8 @@
 package org.unfoldingword.door43client
 
 import android.content.Context
+import com.door43.translationstudio.network.GetRequest
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -15,10 +17,8 @@ import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.resourcecontainer.errors.InvalidRCException
 import org.unfoldingword.resourcecontainer.errors.MissingRCException
-import org.unfoldingword.tools.http.GetRequest
 import java.io.File
 import java.io.IOException
-import java.net.URL
 
 /**
  * Created by joel on 8/30/16.
@@ -96,15 +96,15 @@ internal class API @Throws(IOException::class) constructor(
     fun updateSources(url: String, listener: OnProgressListener?) {
         library.beginTransaction()
         try {
-            val getPrimaryCatalog = GetRequest(URL(url))
-            val data = getPrimaryCatalog.read()
+            val getPrimaryCatalog = GetRequest(url)
+            val data = runBlocking { getPrimaryCatalog.read() }
             // process legacy catalog data
             LegacyTools.processCatalog(library, data, listener)
+            library.endTransaction(true)
         } catch (e: Exception) {
             library.endTransaction(false)
             throw e
         }
-        library.endTransaction(true)
     }
 
     /**
@@ -168,8 +168,8 @@ internal class API @Throws(IOException::class) constructor(
     @Throws(Exception::class)
     private fun updateCatalog(catalog: Catalog?, listener: OnProgressListener?) {
         if (catalog == null) throw Exception("Unknown catalog")
-        val request = GetRequest(URL(catalog.url))
-        val data = request.read()
+        val request = GetRequest(catalog.url)
+        val data = runBlocking { request.read() }
         library.beginTransaction()
         try {
             when (catalog.slug) {
@@ -391,9 +391,9 @@ internal class API @Throws(IOException::class) constructor(
         val url = containerFormat.url
         if (url.isNullOrEmpty()) throw Exception("Missing resource format url")
 
-        val request = GetRequest(URL(url))
+        val request = GetRequest(url)
         try {
-            request.download(destFile)
+            runBlocking { request.download(destFile) }
         } catch (e: Exception) {
             FileUtil.deleteQuietly(destFile)
             throw e
@@ -450,10 +450,10 @@ internal class API @Throws(IOException::class) constructor(
         // grab the tW assignments
         val legacyUrl = resource._legacyData[LEGACY_WORDS_ASSIGNMENTS_URL] as? String
         if (!legacyUrl.isNullOrEmpty()) {
-            val request = GetRequest(URL(legacyUrl))
+            val request = GetRequest(legacyUrl)
             var wordsData: String? = null
             try {
-                wordsData = request.read()
+                wordsData = runBlocking { request.read() }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -698,7 +698,7 @@ internal class API @Throws(IOException::class) constructor(
 
         /**
          * Returns the first resource container format found in the list.
-         * E.g. the array may contain binary formats such as pdf, mp3, etc. This basically filters those.
+         * E.g. the array may contain binary formats such as PDF, mp3, etc. This basically filters those.
          *
          * @param formats a list of resource formats
          * @return

@@ -70,7 +70,7 @@ class NewTargetTranslationActivityTest : KoinAndroidTest() {
 
     @Test
     fun testCreateNewTargetTranslation() {
-        val langCount = library.index.targetLanguages.size
+        val langCount = library.index.getTargetLanguages().size
 
         val scenario = ActivityScenario.launchActivityForResult(NewTargetTranslationActivity::class.java)
 
@@ -167,7 +167,7 @@ class NewTargetTranslationActivityTest : KoinAndroidTest() {
         val project = library.index.getProject(deviceLanguageCode, existingTranslation.projectId)
         val dialogMessage = context.getString(
             R.string.warn_existing_target_translation,
-            project.name,
+            project?.name,
             existingTranslation.targetLanguageName
         )
         checkDialogText(dialogMessage, true)
@@ -200,7 +200,7 @@ class NewTargetTranslationActivityTest : KoinAndroidTest() {
         val project = library.index.getProject(deviceLanguageCode, existingTranslation.projectId)
         val dialogMessage = context.getString(
             R.string.warn_existing_target_translation,
-            project.name,
+            project?.name,
             existingTranslation.targetLanguageName
         )
         checkDialogText(dialogMessage, true)

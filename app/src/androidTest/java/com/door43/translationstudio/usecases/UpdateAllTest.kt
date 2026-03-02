@@ -78,6 +78,7 @@ class UpdateAllTest : KoinAndroidTest() {
     companion object {
         private var _directoryProvider: IDirectoryProvider? = null
 
+        @JvmStatic
         @AfterClass
         fun cleanUp() {
             _directoryProvider?.deleteLibrary()
@@ -208,7 +209,7 @@ class UpdateAllTest : KoinAndroidTest() {
     }
 
     private fun verifyTargetLanguages() {
-        val targetLanguages = library.index.targetLanguages
+        val targetLanguages = library.index.getTargetLanguages()
         assertEquals("There should be 4 target languages", 4, targetLanguages.size)
 
         val aaLang = targetLanguages.singleOrNull { it.slug == "aa" }
@@ -237,7 +238,7 @@ class UpdateAllTest : KoinAndroidTest() {
     }
 
     private fun verifyQuestionnaire() {
-        val questionnaires = library.index.questionnaires
+        val questionnaires = library.index.getQuestionnaires()
         assertTrue("Questionnaires should not be empty", questionnaires.isNotEmpty())
 
         val questionnaire = questionnaires.singleOrNull { it.tdId == 2L }

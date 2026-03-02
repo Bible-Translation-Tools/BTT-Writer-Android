@@ -39,9 +39,9 @@ class SplashScreenActivityTest : KoinAndroidTest() {
 
     @Test
     fun testSlowDeviceShowsDialog() {
-        every { RuntimeWrapper.availableProcessors() }
+        every { RuntimeWrapper.availableProcessors }
             .returns(App.MINIMUM_NUMBER_OF_PROCESSORS.toInt() - 1)
-        every { RuntimeWrapper.maxMemory() }
+        every { RuntimeWrapper.maxMemory }
             .returns(App.MINIMUM_REQUIRED_RAM - 100)
 
         ActivityScenario.launch(SplashScreenActivity::class.java).use {
@@ -54,9 +54,9 @@ class SplashScreenActivityTest : KoinAndroidTest() {
 
     @Test
     fun testFastDeviceDoesNotShowDialog() {
-        every { RuntimeWrapper.availableProcessors() }
+        every { RuntimeWrapper.availableProcessors }
             .returns(App.MINIMUM_NUMBER_OF_PROCESSORS.toInt() + 1)
-        every { RuntimeWrapper.maxMemory() }
+        every { RuntimeWrapper.maxMemory }
             .returns(App.MINIMUM_REQUIRED_RAM + 100)
 
         ActivityScenario.launch(SplashScreenActivity::class.java).use {
@@ -66,9 +66,9 @@ class SplashScreenActivityTest : KoinAndroidTest() {
 
     @Test
     fun testMigrateAppShowDialog() {
-        every { RuntimeWrapper.availableProcessors() }
+        every { RuntimeWrapper.availableProcessors }
             .returns(App.MINIMUM_NUMBER_OF_PROCESSORS.toInt() + 1)
-        every { RuntimeWrapper.maxMemory() }
+        every { RuntimeWrapper.maxMemory }
             .returns(App.MINIMUM_REQUIRED_RAM + 100)
 
         ActivityScenario.launch(SplashScreenActivity::class.java).use {

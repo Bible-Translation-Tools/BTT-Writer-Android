@@ -9,7 +9,7 @@ class UpdateCatalogs(
 ) {
     data class Result(val success: Boolean, val addedCount: Int)
 
-    fun execute(
+    suspend fun execute(
         updateCatalogs: Boolean,
         message: String,
         progressListener: OnProgressListener? = null
@@ -34,9 +34,9 @@ class UpdateCatalogs(
 
         try {
             library.updateCatalogs(updateCatalogs) { tag, max, complete ->
-                maxProgress = max.toInt()
+                maxProgress = max
                 val details = "$message $tag"
-                progressListener?.onProgress(complete.toInt(), max.toInt(), details)
+                progressListener?.onProgress(complete, max, details)
                 true
             }
             success = true

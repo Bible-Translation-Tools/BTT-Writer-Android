@@ -127,9 +127,8 @@ dependencies {
     implementation(libs.gogs.client)
     implementation(libs.task.manager)
     implementation(libs.resource.container)
-    implementation(libs.bible.logger) {
-        exclude(group = "org.unfoldingword.tools", module = "http")
-    }
+    implementation(libs.bible.logger)
+    implementation(libs.http.tools)
     implementation(libs.event.buffer)
     implementation(libs.foreground)
     implementation(project(":html-textview"))
@@ -176,6 +175,12 @@ dependencies {
     implementation(libs.koin.core.coroutines)
     implementation(libs.koin.android.compat)
     implementation(libs.koin.androidx.compose)
+
+    // Ktor
+    implementation(libs.ktor.core)
+    implementation(libs.ktor.client.okhttp)
+
+    // Testing
 
     testImplementation(libs.junit)
     androidTestUtil(libs.androidx.test.orchestrator)

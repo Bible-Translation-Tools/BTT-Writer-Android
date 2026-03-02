@@ -17,11 +17,11 @@ import com.door43.translationstudio.core.ArchiveImporter
 import com.door43.translationstudio.core.BackupController
 import com.door43.translationstudio.core.DownloadImages
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.ResourceProvider
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
 import com.door43.translationstudio.ui.viewmodels.ChooseSourcesViewModel
 import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel

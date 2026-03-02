@@ -46,7 +46,7 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
             progressMessage = message
         }
 
-        val result = downloadResourceContainers.download(translation, progressListener)
+        val result = downloadResourceContainers.download(translation!!, progressListener)
 
         assertNotNull("Download result should not be null", result)
         assertTrue("Download result should be successful", result.success)

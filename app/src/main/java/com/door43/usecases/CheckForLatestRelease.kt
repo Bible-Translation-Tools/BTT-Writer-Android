@@ -3,13 +3,12 @@ package com.door43.usecases
 import android.content.Context
 import android.content.pm.PackageManager
 import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.network.GetRequest
 import org.json.JSONException
 import org.json.JSONObject
-import org.unfoldingword.tools.http.GetRequest
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
 import java.io.Serializable
-import java.net.URL
 
 class CheckForLatestRelease(
     private val context: Context,
@@ -17,14 +16,14 @@ class CheckForLatestRelease(
 ) {
     data class Result(val release: Release?)
 
-    fun execute(): Result {
+    suspend fun execute(): Result {
         var latestRelease: Release? = null
 
         val githubApiUrl = prefRepository.getGithubRepoApi()
         val url = "$githubApiUrl/releases/latest"
         var latestReleaseStr: String?
         try {
-            val request = GetRequest(URL(url))
+            val request = GetRequest(url)
             latestReleaseStr = request.read()
         } catch (e: IOException) {
             Logger.e(

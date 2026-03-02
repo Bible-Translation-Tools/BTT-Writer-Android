@@ -585,7 +585,7 @@ class DownloadSourcesDialog : DialogFragment() {
                 if (pos >= 0) {
                     adapter.markItemError(
                         pos,
-                        result.failureMessages[translationID]!!
+                        result.failureMessages[translationID]
                     )
                 }
             }

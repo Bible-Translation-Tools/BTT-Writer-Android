@@ -41,7 +41,7 @@ class DownloadIndexTest : KoinAndroidTest() {
             progressMessage = message
         }
 
-        val languagesBefore = library.index.targetLanguages
+        val languagesBefore = library.index.getTargetLanguages()
         assertTrue("Languages before should not be empty", languagesBefore.isNotEmpty())
 
         val downloaded = downloadIndex.download(progressListener)
@@ -52,7 +52,7 @@ class DownloadIndexTest : KoinAndroidTest() {
         // Create new instance of the library, because after downloading index,
         // library is closed and can't be used anymore
         val newLibrary = Door43Client(appContext, directoryProvider)
-        val languagesAfter = newLibrary.index.targetLanguages
+        val languagesAfter = newLibrary.index.getTargetLanguages()
 
         assertTrue("Languages after should not be empty", languagesAfter.size > 0)
         assertNotEquals(
@@ -63,8 +63,8 @@ class DownloadIndexTest : KoinAndroidTest() {
 
     @Test
     fun importIndexSucceeds() {
-        val languagesBefore = library.index.targetLanguages
-        assertTrue("Languages before should not be empty", languagesBefore.size > 0)
+        val languagesBefore = library.index.getTargetLanguages()
+        assertTrue("Languages before should not be empty", languagesBefore.isNotEmpty())
 
         val indexFile = directoryProvider.createTempFile("index", ".sqlite")
         assetsProvider.open("index_shrunk.sqlite").use { input ->
@@ -80,7 +80,7 @@ class DownloadIndexTest : KoinAndroidTest() {
         // Create new instance of the library, because after downloading index,
         // library is closed and can't be used anymore
         val newLibrary = Door43Client(appContext, directoryProvider)
-        val languagesAfter = newLibrary.index.targetLanguages
+        val languagesAfter = newLibrary.index.getTargetLanguages()
 
         assertTrue("Languages after should not be empty", languagesAfter.size > 0)
         assertNotEquals(

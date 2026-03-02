@@ -48,7 +48,7 @@ class BackupRCTest : KoinAndroidTest() {
 
     @Before
     fun setUp() {
-        targetLanguage = library.index.getTargetLanguage("aae")
+        targetLanguage = library.index.getTargetLanguage("aae")!!
     }
 
     @After
@@ -181,7 +181,7 @@ class BackupRCTest : KoinAndroidTest() {
 
                 assertFalse("tempDir should not be empty", tempDir!!.listFiles().isNullOrEmpty())
 
-                val rc = library.importResourceContainer(tempDir)
+                val rc = library.importResourceContainer(tempDir!!)
 
                 assertNotNull("rc should not be null", rc)
 
