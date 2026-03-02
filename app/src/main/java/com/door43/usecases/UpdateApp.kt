@@ -35,7 +35,7 @@ class UpdateApp(
 ) {
     private var updateLibrary = true
 
-    fun execute(progressListener: OnProgressListener? = null) {
+    suspend fun execute(progressListener: OnProgressListener? = null) {
         var lastVersionCode = prefRepository.getPrivatePref(
             "last_version_code",
             0

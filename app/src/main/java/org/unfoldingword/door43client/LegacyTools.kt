@@ -1,7 +1,6 @@
 package org.unfoldingword.door43client
 
 import com.door43.translationstudio.network.GetRequest
-import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -30,98 +29,87 @@ internal object LegacyTools {
         library.addCatalog(Catalog("approved-temp-langnames", "$resolvedHost/api/templanguages/assignment/changed/", 0))
     }
 
-    @Throws(Exception::class)
-    fun processCatalog(
-        library: Library,
-        data: String,
-        listener: OnProgressListener?
-    ) {
-        val projects = JSONArray(data)
-        for (i in 0 until projects.length()) {
-            val pJson = projects.getJSONObject(i)
-            if (listener?.onProgress(pJson.getString("slug"), projects.length(), i + 1) == false) break
-            downloadSourceLanguages(library, pJson, null)
-            library.yieldSafely()
-        }
-    }
-
     fun setLangNamesUrl(url: String) {
         LANG_NAMES_URL = url
     }
 
+    internal data class DownloadedResource(val rJson: JSONObject)
+    internal data class DownloadedLanguage(val lJson: JSONObject, val resources: List<DownloadedResource>)
+    internal data class DownloadedProject(val pJson: JSONObject, val languages: List<DownloadedLanguage>)
+
     /**
-     * Pads a slug to 2 significant digits.
-     * Examples:
-     * '1'    -> '01'
-     * '001'  -> '01'
-     * '12'   -> '12'
-     * '123'  -> '123'
-     * '0123' -> '123'
-     * Words are not padded:
-     * 'a' -> 'a'
-     * '0word' -> '0word'
-     * And as a matter of consistency:
-     * '0'  -> '00'
-     * '00' -> '00'
+     * Download all source catalog data.
      */
     @Throws(Exception::class)
-    fun normalizeSlug(slug: String?): String {
-        if (slug.isNullOrEmpty()) throw Exception("slug cannot be an empty string")
-        if (!isInteger(slug)) return slug
-        var result = slug.replace(Regex("^(0+)"), "").trim()
-        while (result.length < 2) result = "0$result"
+    suspend fun downloadCatalogData(
+        data: String,
+        listener: OnProgressListener?
+    ): List<DownloadedProject> {
+        val projects = JSONArray(data)
+        val result = mutableListOf<DownloadedProject>()
+        for (i in 0 until projects.length()) {
+            val pJson = projects.getJSONObject(i)
+            if (listener?.onProgress(pJson.getString("slug"), projects.length(), i + 1) == false) break
+            result.add(DownloadedProject(pJson, downloadLanguageEntries(pJson)))
+        }
         return result
     }
 
-    internal fun isInteger(s: String): Boolean {
-        return try {
-            s.toInt()
-            true
-        } catch (e: NumberFormatException) {
-            false
-        }
-    }
-
-    @Throws(Exception::class)
-    private fun downloadSourceLanguages(
-        library: Library,
-        pJson: JSONObject,
-        listener: OnProgressListener?
-    ) {
-        val request = GetRequest(pJson.getString("lang_catalog"))
-        val response = runBlocking { request.read() }
-        val languages = JSONArray(response)
-
+    private suspend fun downloadLanguageEntries(pJson: JSONObject): List<DownloadedLanguage> {
+        val languages = JSONArray(GetRequest(pJson.getString("lang_catalog")).read())
+        val result = mutableListOf<DownloadedLanguage>()
         for (i in 0 until languages.length()) {
             val lJson = languages.getJSONObject(i)
-            val langJson = lJson.getJSONObject("language")
+            result.add(DownloadedLanguage(lJson, downloadResourceEntries(lJson)))
+        }
+        return result
+    }
 
-            if (listener?.onProgress(langJson.getString("slug") + pJson.getString("slug"), languages.length(), i + 1) == false) break
+    private suspend fun downloadResourceEntries(lJson: JSONObject): List<DownloadedResource> {
+        val resources = JSONArray(GetRequest(lJson.getString("res_catalog")).read())
+        return (0 until resources.length()).map { DownloadedResource(resources.getJSONObject(it)) }
+    }
 
-            val sl = SourceLanguage(langJson.getString("slug"), langJson.getString("name"), langJson.getString("direction"))
-            val languageId = library.addSourceLanguage(sl)
-
-            // TODO: retrieve the correct versification name(s) from the source language
-            library.addVersification(Versification("en-US", "American English"), languageId)
-
-            downloadResources(library, pJson, languageId, lJson)
+    /**
+     * Index all previously-downloaded catalog data.
+     */
+    @Throws(Exception::class)
+    fun indexCatalogData(library: Library, projects: List<DownloadedProject>) {
+        for (project in projects) {
+            indexLanguagesForProject(library, project.pJson, project.languages)
             library.yieldSafely()
         }
     }
 
-    @Throws(Exception::class)
-    private fun downloadResources(
+    private fun indexLanguagesForProject(
+        library: Library,
+        pJson: JSONObject,
+        languages: List<DownloadedLanguage>
+    ) {
+        for (language in languages) {
+            val langJson = language.lJson.getJSONObject("language")
+            val sl = SourceLanguage(
+                langJson.getString("slug"),
+                langJson.getString("name"),
+                langJson.getString("direction")
+            )
+            val languageId = library.addSourceLanguage(sl)
+            // TODO: retrieve the correct versification name(s) from the source language
+            library.addVersification(Versification("en-US", "American English"), languageId)
+            indexResourcesForLanguage(library, pJson, languageId, language.lJson, language.resources)
+            library.yieldSafely()
+        }
+    }
+
+    private fun indexResourcesForLanguage(
         library: Library,
         pJson: JSONObject,
         languageId: Long,
-        lJson: JSONObject
+        lJson: JSONObject,
+        resources: List<DownloadedResource>
     ) {
-        val request = GetRequest(lJson.getString("res_catalog"))
-        val response = runBlocking { request.read() }
-        val resources = JSONArray(response)
-
-        for (i in 0 until resources.length()) {
-            val rJson = resources.getJSONObject(i)
+        for (downloadedResource in resources) {
+            val rJson = downloadedResource.rJson
             val translateMode = when (rJson.getString("slug").lowercase()) {
                 "obs", "ulb" -> "all"
                 else -> "gl"
@@ -219,25 +207,75 @@ internal object LegacyTools {
         }
     }
 
+    /**
+     * Phase 1 – Download all chunk markers over the network.
+     * No DB access; safe to call outside a transaction.
+     */
     @Throws(Exception::class)
-    private fun downloadChunks(
-        library: Library,
-        chunksUrl: String,
-        projectSlug: String
-    ) {
-        // TODO: pull the correct versification slug from the data. For now there is only one versification
-        val v = library.getVersification("en", "en-US")
-        if (v != null) {
-            val request = GetRequest(chunksUrl)
-            val data = runBlocking { request.read() }
+    suspend fun downloadAllChunks(
+        markers: Map<String, String>,
+        listener: OnProgressListener?
+    ): Map<String, List<ChunkMarker>> {
+        val result = mutableMapOf<String, List<ChunkMarker>>()
+        markers.entries.forEachIndexed { index, (slug, url) ->
+            if (listener?.onProgress("chunk_markers", markers.size, index + 1) == false) return result
+            val data = GetRequest(url).read()
             val chunks = JSONArray(data)
-            for (i in 0 until chunks.length()) {
+            result[slug] = (0 until chunks.length()).map { i ->
                 val chunk = chunks.getJSONObject(i)
-                library.addChunkMarker(ChunkMarker(chunk.getString("chp"), chunk.getString("firstvs")), projectSlug, v.rowId)
-                library.yieldSafely()
+                ChunkMarker(chunk.getString("chp"), chunk.getString("firstvs"))
             }
-        } else {
-            println("Unknown versification while downloading chunks for project $projectSlug")
+        }
+        return result
+    }
+
+    /**
+     * Phase 2 – Insert all previously-downloaded chunk markers into the DB.
+     * No network I/O and no suspension points; safe to call inside a transaction.
+     */
+    fun insertAllChunks(
+        library: Library,
+        chunks: Map<String, List<ChunkMarker>>,
+        versificationRowId: Long
+    ) {
+        for ((slug, markerList) in chunks) {
+            for (marker in markerList) {
+                library.addChunkMarker(marker, slug, versificationRowId)
+            }
+            library.yieldSafely()
+        }
+    }
+
+    /**
+     * Pads a slug to 2 significant digits.
+     * Examples:
+     * '1'    -> '01'
+     * '001'  -> '01'
+     * '12'   -> '12'
+     * '123'  -> '123'
+     * '0123' -> '123'
+     * Words are not padded:
+     * 'a' -> 'a'
+     * '0word' -> '0word'
+     * And as a matter of consistency:
+     * '0'  -> '00'
+     * '00' -> '00'
+     */
+    @Throws(Exception::class)
+    fun normalizeSlug(slug: String?): String {
+        if (slug.isNullOrEmpty()) throw Exception("slug cannot be an empty string")
+        if (!isInteger(slug)) return slug
+        var result = slug.replace(Regex("^(0+)"), "").trim()
+        while (result.length < 2) result = "0$result"
+        return result
+    }
+
+    internal fun isInteger(s: String): Boolean {
+        return try {
+            s.toInt()
+            true
+        } catch (e: NumberFormatException) {
+            false
         }
     }
 
@@ -272,24 +310,6 @@ internal object LegacyTools {
                 is JSONObject -> toMap(value)
                 else -> value
             }
-        }
-    }
-
-    @Throws(Exception::class)
-    fun processChunks(library: Library, listener: OnProgressListener?) {
-        // TRICKY: currently all chunk markers are defined according to the english versification system
-        val markers = mutableMapOf<String, String>()
-        for (l in library.getSourceLanguages()) {
-            for (p in library.getProjects(l.slug)) {
-                if (!p.chunksUrl.isNullOrEmpty()) {
-                    markers[p.slug] = p.chunksUrl
-                }
-            }
-        }
-
-        markers.entries.forEachIndexed { index, (slug, url) ->
-            downloadChunks(library, url, slug)
-            if (listener?.onProgress("chunk_markers", markers.size, index + 1) == false) return
         }
     }
 }

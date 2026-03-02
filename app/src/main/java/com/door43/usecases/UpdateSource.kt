@@ -20,7 +20,7 @@ class UpdateSource(
         val addedCount: Int
     )
 
-    fun execute(message: String, progressListener: OnProgressListener? = null): Result {
+    suspend fun execute(message: String, progressListener: OnProgressListener? = null): Result {
         var updatedCount = 0
         var addedCount = 0
         var success = false

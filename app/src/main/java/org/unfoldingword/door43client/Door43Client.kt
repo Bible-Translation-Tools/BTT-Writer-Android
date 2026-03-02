@@ -75,7 +75,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * @param listener an optional progress listener. This should receive progress id, total, completed
      */
     @Throws(Exception::class)
-    fun updateSources(url: String, listener: OnProgressListener?) {
+    suspend fun updateSources(url: String, listener: OnProgressListener?) {
         api.updateSources(url, listener)
     }
 
@@ -83,7 +83,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * Indexes the supplementary catalogs
      */
     @Throws(Exception::class)
-    fun updateCatalogs(force: Boolean, listener: OnProgressListener?) {
+    suspend fun updateCatalogs(force: Boolean, listener: OnProgressListener?) {
         api.updateCatalogs(force, listener)
     }
 
@@ -96,7 +96,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * Indexes the chunk markers
      */
     @Throws(Exception::class)
-    fun updateChunks(listener: OnProgressListener?) {
+    suspend fun updateChunks(listener: OnProgressListener?) {
         api.updateChunks(listener)
     }
 
@@ -104,7 +104,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * Downloads a resource container from the api
      */
     @Throws(Exception::class)
-    fun download(
+    suspend fun download(
         sourceLanguageSlug: String,
         projectSlug: String,
         resourceSlug: String
@@ -132,7 +132,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * Imports an external resource container into the client and indexes it for use.
      */
     @Throws(Exception::class)
-    fun importResourceContainer(directory: File): ResourceContainer {
+    suspend fun importResourceContainer(directory: File): ResourceContainer {
         return api.importResourceContainer(directory)
     }
 

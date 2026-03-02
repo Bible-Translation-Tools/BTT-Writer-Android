@@ -2,7 +2,8 @@ package org.unfoldingword.door43client
 
 import android.content.Context
 import com.door43.translationstudio.network.GetRequest
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -29,10 +30,17 @@ internal class API @Throws(IOException::class) constructor(
     databasePath: File,
     private val resourceDir: File
 ) {
-
     private val library: Library
     private var globalCatalogHost: String? = null
     private var logListener: OnLogListener = defaultLogListener
+
+    // Single-threaded dispatcher for ALL database operations.
+    // This guarantees serial access to the SQLite connection pool and prevents
+    // connection starvation across concurrent coroutines.
+    private val dbDispatcher = Dispatchers.IO.limitedParallelism(1)
+
+    // Separate dispatcher for network I/O so downloads never hold a DB transaction open.
+    private val networkDispatcher = Dispatchers.IO
 
     init {
         val nameParts = databasePath.name.split("\\.".toRegex()).toTypedArray()
@@ -40,7 +48,7 @@ internal class API @Throws(IOException::class) constructor(
         val databaseContext = DatabaseContext(context, databasePath.parentFile!!, dbExt)
         val dbName = databasePath.name.replaceFirst("\\.[^.]+$".toRegex(), "")
 
-        synchronized(this) {
+        synchronized(Companion) {
             if (sqLiteHelper == null) {
                 sqLiteHelper = SQLiteHelper(databaseContext, schema, dbName)
             }
@@ -53,15 +61,16 @@ internal class API @Throws(IOException::class) constructor(
      * e.g. closing the db, etc.
      */
     fun tearDown() {
-        sqLiteHelper?.let {
-            it.close()
-            sqLiteHelper = null
+        synchronized(Companion) {
+            sqLiteHelper?.let {
+                it.close()
+                sqLiteHelper = null
+            }
         }
     }
 
     /**
      * Attaches a listener to receive log events
-     * @param listener
      */
     fun setLogger(listener: OnLogListener?) {
         this.logListener = listener ?: defaultLogListener
@@ -72,7 +81,6 @@ internal class API @Throws(IOException::class) constructor(
      * This is only valid until we migrate to the use api.
      *
      * This is also only currently used for tests
-     * @param host
      */
     @Deprecated("This is only valid until we migrate to the use api.")
     fun setGlobalCatalogServer(host: String?) {
@@ -81,62 +89,86 @@ internal class API @Throws(IOException::class) constructor(
 
     /**
      * Returns the read only index
-     * @return
      */
     val index: Index
         get() = library
 
     /**
-     * Indexes the source content
+     * Indexes the source content.
      *
      * @param url the entry resource api catalog
-     * @param listener an optional progress listener. This should receive progress id, total, completed
+     * @param listener an optional progress listener
      */
     @Throws(Exception::class)
-    fun updateSources(url: String, listener: OnProgressListener?) {
-        library.beginTransaction()
-        try {
-            val getPrimaryCatalog = GetRequest(url)
-            val data = runBlocking { getPrimaryCatalog.read() }
-            // process legacy catalog data
-            LegacyTools.processCatalog(library, data, listener)
-            library.endTransaction(true)
-        } catch (e: Exception) {
-            library.endTransaction(false)
-            throw e
+    suspend fun updateSources(url: String, listener: OnProgressListener?) {
+        // Download catalog entry point
+        val data = withContext(networkDispatcher) {
+            GetRequest(url).read()
+        }
+        // Download all language/resource data
+        val catalogData = withContext(networkDispatcher) {
+            LegacyTools.downloadCatalogData(data, listener)
+        }
+        // Index everything in one transaction
+        withTransaction {
+            LegacyTools.indexCatalogData(library, catalogData)
         }
     }
 
     /**
-     * Indexes the chunk markers
-     * @param listener
-     * @throws Exception
+     * Indexes the chunk markers.
+     *
+     * Network downloads are performed first, then all DB writes happen inside
+     * a single short-lived transaction.
      */
     @Throws(Exception::class)
-    fun updateChunks(listener: OnProgressListener?) {
-        library.beginTransaction()
-        try {
-            LegacyTools.processChunks(library, listener)
-        } catch (e: Exception) {
-            library.endTransaction(false)
-            throw e
+    suspend fun updateChunks(listener: OnProgressListener?) {
+        // Collect chunk URLs and versification
+        val (markers, versificationRowId) = withContext(dbDispatcher) {
+            val result = mutableMapOf<String, String>()
+            for (l in library.getSourceLanguages()) {
+                for (p in library.getProjects(l.slug)) {
+                    if (!p.chunksUrl.isNullOrEmpty()) {
+                        result[p.slug] = p.chunksUrl
+                    }
+                }
+            }
+            val v = library.getVersification("en", "en-US")
+            result to v?.rowId
         }
-        library.endTransaction(true)
+
+        if (versificationRowId == null) {
+            println("Unknown versification while downloading chunks")
+            return
+        }
+
+        // Download ALL chunk data
+        val downloadedChunks = withContext(networkDispatcher) {
+            LegacyTools.downloadAllChunks(markers, listener)
+        }
+
+        // Write everything in one fast transaction
+        withTransaction {
+            LegacyTools.insertAllChunks(library, downloadedChunks, versificationRowId)
+        }
     }
 
     /**
-     * Updates all the global catalogs
+     * Updates all the global catalogs.
+     *
      * @param force Should we update/insert catalogs
      * @param listener Progress Listener
-     * @throws Exception Any exception
      */
     @Throws(Exception::class)
-    fun updateCatalogs(force: Boolean, listener: OnProgressListener?) {
+    suspend fun updateCatalogs(force: Boolean, listener: OnProgressListener?) {
         if (force) {
-            // inject missing global catalogs
-            LegacyTools.injectGlobalCatalogs(library, globalCatalogHost)
+            withContext(dbDispatcher) {
+                LegacyTools.injectGlobalCatalogs(library, globalCatalogHost)
+            }
         }
-        val catalogs = library.getCatalogs()
+        val catalogs = withContext(dbDispatcher) {
+            library.getCatalogs()
+        }
         for (c in catalogs) {
             updateCatalog(c, listener)
         }
@@ -144,14 +176,15 @@ internal class API @Throws(IOException::class) constructor(
 
     /**
      * Utility for testing
-     *
-     * @param slug
-     * @throws Exception
      */
     @Throws(Exception::class)
-    fun updateCatalog(slug: String) {
-        LegacyTools.injectGlobalCatalogs(library, globalCatalogHost)
-        val c = library.getCatalog(slug)
+    suspend fun updateCatalog(slug: String) {
+        withContext(dbDispatcher) {
+            LegacyTools.injectGlobalCatalogs(library, globalCatalogHost)
+        }
+        val c = withContext(dbDispatcher) {
+            library.getCatalog(slug)
+        }
         updateCatalog(c, null)
     }
 
@@ -162,16 +195,19 @@ internal class API @Throws(IOException::class) constructor(
     /**
      * Downloads a global catalog and indexes it.
      *
-     * @param catalog the catalog being updated
-     * @param listener an optional progress listener. This should receive progress id, total, completed
+     * Pattern: download first (network), then index (DB transaction).
      */
     @Throws(Exception::class)
-    private fun updateCatalog(catalog: Catalog?, listener: OnProgressListener?) {
+    private suspend fun updateCatalog(catalog: Catalog?, listener: OnProgressListener?) {
         if (catalog == null) throw Exception("Unknown catalog")
-        val request = GetRequest(catalog.url)
-        val data = runBlocking { request.read() }
-        library.beginTransaction()
-        try {
+
+        // Download catalog
+        val data = withContext(networkDispatcher) {
+            GetRequest(catalog.url).read()
+        }
+
+        // Index inside a short-lived transaction
+        withTransaction {
             when (catalog.slug) {
                 "langnames" -> {
                     library.clearTargetLanguages()
@@ -191,18 +227,9 @@ internal class API @Throws(IOException::class) constructor(
                 }
                 else -> throw Exception("Parsing this catalog has not been implemented")
             }
-        } catch (e: Exception) {
-            library.endTransaction(false)
-            throw e
         }
-        library.endTransaction(true)
     }
 
-    /**
-     * parses the target language catalog and indexes it
-     * @param data
-     * @param listener
-     */
     @Throws(Exception::class)
     private fun indexTargetLanguageCatalog(data: String, listener: OnProgressListener?) {
         val languages = JSONArray(data)
@@ -223,11 +250,6 @@ internal class API @Throws(IOException::class) constructor(
         }
     }
 
-    /**
-     * Parses the new language questions catalog and indexes it
-     * @param data
-     * @param listener
-     */
     @Throws(Exception::class)
     private fun indexNewLanguageQuestionsCatalog(data: String, listener: OnProgressListener?) {
         val obj = JSONObject(data)
@@ -252,7 +274,6 @@ internal class API @Throws(IOException::class) constructor(
             )
             val questionnaireId = library.addQuestionnaire(questionnaire)
 
-            // add questions
             val questionsArray = qJson.getJSONArray("questions")
             for (j in 0 until questionsArray.length()) {
                 val questionJson = questionsArray.getJSONObject(j)
@@ -267,13 +288,11 @@ internal class API @Throws(IOException::class) constructor(
                 )
                 library.addQuestion(question, questionnaireId)
 
-                // broadcast itemized progress if there is only one questionnaire
                 if (languages.length() == 1 && listener != null) {
                     if (!listener.onProgress("new-language-questions", questionsArray.length(), j + 1)) break
                 }
                 library.yieldSafely()
             }
-            // broadcast overall progress if there are multiple questionnaires.
             if (languages.length() > 1 && listener != null) {
                 if (!listener.onProgress("new-language-questions", questionsArray.length(), i + 1)) break
             }
@@ -281,11 +300,6 @@ internal class API @Throws(IOException::class) constructor(
         }
     }
 
-    /**
-     * Parses the temporary language codes catalog and indexes it
-     * @param data
-     * @param listener
-     */
     @Throws(Exception::class)
     private fun indexTempLanguagesCatalog(data: String, listener: OnProgressListener?) {
         val languages = JSONArray(data)
@@ -306,11 +320,6 @@ internal class API @Throws(IOException::class) constructor(
         }
     }
 
-    /**
-     * Parses the approved temporary language codes catalog and indexes it
-     * @param data
-     * @param listener
-     */
     @Throws(Exception::class)
     private fun indexApprovedTempLanguagesCatalog(data: String, listener: OnProgressListener?) {
         val languages = JSONArray(data)
@@ -334,28 +343,24 @@ internal class API @Throws(IOException::class) constructor(
      * Downloads a resource container.
      *
      * TRICKY: to keep the interface stable we've abstracted some things.
-     * once the api supports real resource containers this entire method can go away and be replace
-     * with downloadContainer_Future (which should be renamed to downloadContainer).
-     * convertLegacyResourceToContainer will also become deprecated at that time though it may be handy to keep around.
-     *
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return The new resource container
+     * Once the api supports real resource containers this entire method can go away.
      */
     @Throws(Exception::class)
-    fun downloadResourceContainer(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): ResourceContainer {
+    suspend fun downloadResourceContainer(
+        sourceLanguageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
+    ): ResourceContainer {
         val path = downloadFutureCompatibleResourceContainer(sourceLanguageSlug, projectSlug, resourceSlug)
 
-        // migrate to resource container
-        val r = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
-        if (r == null) {
+        withContext(dbDispatcher) {
+            library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
+        } ?: run {
             FileUtil.deleteQuietly(path)
             throw Exception("Unknown resource")
         }
-        val data = FileUtil.readFileToString(path)
 
-        // clean downloaded file
+        val data = FileUtil.readFileToString(path)
         FileUtil.deleteQuietly(path)
         return convertLegacyResource(sourceLanguageSlug, projectSlug, resourceSlug, data)
     }
@@ -363,44 +368,47 @@ internal class API @Throws(IOException::class) constructor(
     /**
      * Downloads a resource container.
      * This expects a correctly formatted resource container
-     * and will download it directly to the disk
-     *
-     * once the api can deliver proper resource containers this method
-     * should be renamed to downloadContainer and the current downloadResourceContainer method removed.
-     *
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return the path to the downloaded resource container
+     * and will download it directly to the disk.
      */
     @Throws(Exception::class)
-    fun downloadFutureCompatibleResourceContainer(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): File {
-        val r = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
-            ?: throw Exception("Unknown resource")
-        val containerFormat = getResourceContainerFormat(r.formats)
-            ?: throw Exception("Missing resource container format")
+    suspend fun downloadFutureCompatibleResourceContainer(
+        sourceLanguageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
+    ): File {
+        // Read resource metadata
+        val (containerFormat, containerSlug) = withContext(dbDispatcher) {
+            val r = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
+                ?: throw Exception("Unknown resource")
+            val format = getResourceContainerFormat(r.formats)
+                ?: throw Exception("Missing resource container format")
+            val slug = ContainerTools.makeSlug(sourceLanguageSlug, projectSlug, resourceSlug)
+            format to slug
+        }
 
-        val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, projectSlug, resourceSlug)
         val containerDir = File(resourceDir, containerSlug)
         val destFile = File(resourceDir, "$containerSlug.${ResourceContainer.fileExtension}")
 
         FileUtil.deleteQuietly(destFile)
         FileUtil.deleteQuietly(containerDir)
-
         destFile.parentFile?.mkdirs()
+
         val url = containerFormat.url
         if (url.isNullOrEmpty()) throw Exception("Missing resource format url")
 
-        val request = GetRequest(url)
-        try {
-            runBlocking { request.download(destFile) }
-        } catch (e: Exception) {
-            FileUtil.deleteQuietly(destFile)
-            throw e
-        }
-        if (request.responseCode != 200) {
-            FileUtil.deleteQuietly(destFile)
-            throw Exception(request.responseMessage)
+        // Download
+        withContext(networkDispatcher) {
+            val request = GetRequest(url)
+            try {
+                request.download(destFile)
+            } catch (e: Exception) {
+                FileUtil.deleteQuietly(destFile)
+                throw e
+            }
+            if (request.responseCode != 200) {
+                FileUtil.deleteQuietly(destFile)
+                throw Exception(request.responseMessage)
+            }
         }
 
         return destFile
@@ -408,56 +416,67 @@ internal class API @Throws(IOException::class) constructor(
 
     /**
      * Converts a legacy resource catalog into a resource container.
-     * The container will be placed in.
      *
      * This will be deprecated once the api is updated to support proper resource containers.
-     *
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @param data the legacy data that will be converted
-     * @return
      */
     @Deprecated("This will be deprecated once the api is updated to support proper resource containers.")
     @Throws(Exception::class)
-    fun convertLegacyResource(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String, data: String): ResourceContainer {
+    suspend fun convertLegacyResource(
+        sourceLanguageSlug: String,
+        projectSlug: String,
+        resourceSlug: String,
+        data: String
+    ): ResourceContainer {
         val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, projectSlug, resourceSlug)
         val containerDir = File(resourceDir, containerSlug)
 
-        val language = library.getSourceLanguage(sourceLanguageSlug) ?: throw Exception("Missing language")
-        val lJson = language.toJSON()
+        // Gather all metadata from DB
+        val (properties, legacyUrl) = withContext(dbDispatcher) {
+            val language = library.getSourceLanguage(sourceLanguageSlug)
+                ?: throw Exception("Missing language")
+            val lJson = language.toJSON()
 
-        val project = library.getProject(sourceLanguageSlug, projectSlug) ?: throw Exception("Missing project")
-        val pJson = project.toJSON()
-        val pCatJson = JSONArray()
-        val categories = library.getCategories(sourceLanguageSlug, projectSlug)
-        for (cat in categories) {
-            pCatJson.put(cat.slug)
-        }
-        pJson.put("categories", pCatJson)
-
-        val resource = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug) ?: throw Exception("Missing resource")
-        val format = getResourceContainerFormat(resource.formats) ?: throw Exception("Missing resource container format")
-        val rJson = resource.toJSON()
-
-        val properties = JSONObject().apply {
-            put("language", lJson)
-            put("project", pJson)
-            put("resource", rJson)
-            put("modified_at", format.modifiedAt)
-        }
-
-        // grab the tW assignments
-        val legacyUrl = resource._legacyData[LEGACY_WORDS_ASSIGNMENTS_URL] as? String
-        if (!legacyUrl.isNullOrEmpty()) {
-            val request = GetRequest(legacyUrl)
-            var wordsData: String? = null
-            try {
-                wordsData = runBlocking { request.read() }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            val project = library.getProject(sourceLanguageSlug, projectSlug)
+                ?: throw Exception("Missing project")
+            val pJson = project.toJSON()
+            val pCatJson = JSONArray()
+            val categories = library.getCategories(sourceLanguageSlug, projectSlug)
+            for (cat in categories) {
+                pCatJson.put(cat.slug)
             }
-            if (wordsData != null && request.responseCode < 300) {
+            pJson.put("categories", pCatJson)
+
+            val resource = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
+                ?: throw Exception("Missing resource")
+            val format = getResourceContainerFormat(resource.formats)
+                ?: throw Exception("Missing resource container format")
+            val rJson = resource.toJSON()
+
+            val props = JSONObject().apply {
+                put("language", lJson)
+                put("project", pJson)
+                put("resource", rJson)
+                put("modified_at", format.modifiedAt)
+            }
+
+            val url = resource._legacyData[LEGACY_WORDS_ASSIGNMENTS_URL] as? String
+            props to url
+        }
+
+        // Download tW assignments
+        if (!legacyUrl.isNullOrEmpty()) {
+            val wordsData = withContext(networkDispatcher) {
+                try {
+                    val request = GetRequest(legacyUrl)
+                    val result = request.read()
+                    if (request.responseCode < 300) result else null
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+            }
+
+            if (wordsData != null) {
                 try {
                     val words = JSONObject(wordsData)
                     val assignmentsJson = JSONObject()
@@ -475,9 +494,15 @@ internal class API @Throws(IOException::class) constructor(
                                 val twProjSlug = if (projectSlug == "obs") "bible-obs" else "bible"
                                 frameAssignment.put("//$twProjSlug/tw/${word.getString("id")}")
                             }
-                            chapterAssignment.put(LegacyTools.normalizeSlug(frame.getString("id")), frameAssignment)
+                            chapterAssignment.put(
+                                LegacyTools.normalizeSlug(frame.getString("id")),
+                                frameAssignment
+                            )
                         }
-                        assignmentsJson.put(LegacyTools.normalizeSlug(chapter.getString("id")), chapterAssignment)
+                        assignmentsJson.put(
+                            LegacyTools.normalizeSlug(chapter.getString("id")),
+                            chapterAssignment
+                        )
                     }
                     properties.put("tw_assignments", assignmentsJson)
                 } catch (e: Exception) {
@@ -493,42 +518,35 @@ internal class API @Throws(IOException::class) constructor(
      * Copies a valid resource container into the resource directory and adds an entry to the index.
      * If the container already exists in the system it will be overwritten.
      * Invalid containers will cause this method to return an error.
-     * The container *must* be open (uncompressed). This is in preparation for v0.2 of the rc spec.
+     * The container *must* be open (uncompressed).
      * Containers imported in this manner will have a flag set to indicate it was manually imported.
-     *
-     * @param directory the path to the resource container directory that will be imported
-     * @return the imported resource container
      */
     @Throws(Exception::class)
-    fun importResourceContainer(directory: File): ResourceContainer {
+    suspend fun importResourceContainer(directory: File): ResourceContainer {
         val rc = ResourceContainer.load(directory)
         val destination = File(resourceDir, rc.slug)
 
-        // validate project
-        // TRICKY: we currently only support importing known projects. Only the language and resource can vary.
-        if (library.getProjectMeta(rc.project.slug) == null) throw InvalidRCException("Unsupported project")
+        // Validate project
+        withContext(dbDispatcher) {
+            if (library.getProjectMeta(rc.project.slug) == null) {
+                throw InvalidRCException("Unsupported project")
+            }
+        }
         if (!rc.info.has("project")) throw InvalidRCException("Missing field: project")
 
-        // delete the old container
         deleteResourceContainer(rc.slug)
-
-        // copy new container
         FileUtil.copyDirectory(directory, destination, null)
 
-        // add entry to the index
-        var indexError: Exception? = null
-        library.beginTransaction()
-        try {
+        // Index the container
+        withTransaction {
             val languageId = library.addSourceLanguage(SourceLanguage(rc.language))
 
-            // build categories
             val categories = ArrayList<Category>()
             try {
                 if (rc.info.has("project") && rc.info.getJSONObject("project").has("categories")) {
                     val catJson = rc.info.getJSONObject("project").getJSONArray("categories")
                     for (i in 0 until catJson.length()) {
                         val catSlug = catJson.getString(i)
-                        // use known name if available
                         val existingCat = library.getCategory(rc.language.slug, catSlug)
                         val catName = existingCat?.name ?: catSlug
                         categories.add(Category(catSlug, catName))
@@ -540,31 +558,35 @@ internal class API @Throws(IOException::class) constructor(
 
             val projectId = library.addProject(rc.project, categories, languageId)
             val resource = rc.resource
-            resource.addFormat(Resource.Format(rc.info.getString("package_version"), resource.type, rc.modifiedAt, "", true))
+            resource.addFormat(
+                Resource.Format(
+                    rc.info.getString("package_version"),
+                    resource.type,
+                    rc.modifiedAt,
+                    "",
+                    true
+                )
+            )
             library.addResource(resource, projectId)
-        } catch (e: Exception) {
-            indexError = e
         }
-        library.endTransaction(indexError == null)
-        if (indexError != null) throw indexError
 
         return openResourceContainer(rc.language.slug, rc.project.slug, rc.resource.slug)
     }
 
     /**
-     * Exports the closed resource container
-     * @param destFile the destination file
-     * @param languageSlug
-     * @param projectSlug
-     * @param resourceSlug
+     * Exports the closed resource container.
      */
     @Throws(Exception::class)
-    fun exportResourceContainer(destFile: File, languageSlug: String, projectSlug: String, resourceSlug: String) {
+    fun exportResourceContainer(
+        destFile: File,
+        languageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
+    ) {
         val slug = ContainerTools.makeSlug(languageSlug, projectSlug, resourceSlug)
         val srcDir = File(resourceDir, slug)
         val srcFile = File("$srcDir.${ResourceContainer.fileExtension}")
 
-        // create closed rc
         if (!srcFile.exists() && srcDir.isDirectory) ResourceContainer.close(srcDir)
         if (!srcFile.exists()) throw MissingRCException("The resource container could not be found at $srcFile")
 
@@ -572,16 +594,15 @@ internal class API @Throws(IOException::class) constructor(
     }
 
     /**
-     * Opens a resource container archive so it's contents can be read.
-     * The index will be referenced to validate the resource and retrieve the container type.
-     *
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return
+     * Opens a resource container archive so its contents can be read.
+     * The index will be referenced to validate the resource.
      */
     @Throws(Exception::class)
-    fun openResourceContainer(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): ResourceContainer {
+    fun openResourceContainer(
+        sourceLanguageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
+    ): ResourceContainer {
         library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
             ?: throw Exception("Unknown Resource")
         val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, projectSlug, resourceSlug)
@@ -589,40 +610,35 @@ internal class API @Throws(IOException::class) constructor(
     }
 
     /**
-     * Opens a resource container archive so it's contents can be read.
+     * Opens a resource container archive so its contents can be read.
      * This will NOT check with the index to validate the resource container.
-     * @param containerSlug
-     * @return
-     * @throws Exception
      */
     @Throws(Exception::class)
     fun openResourceContainer(containerSlug: String): ResourceContainer {
         val directory = File(resourceDir, containerSlug)
         val archive = File("$directory.${ResourceContainer.fileExtension}")
 
-        // try to load already opened container first
+        // try to load already-opened container first
         try {
             if (directory.exists() && directory.isDirectory) {
                 return ResourceContainer.load(directory)
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // ignore and fallback to archive
         }
 
-        // open archive as last resource
         return ResourceContainer.open(archive, directory)
     }
 
     /**
      * Closes a resource container archive.
-     *
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return the path to the closed container
      */
     @Throws(Exception::class)
-    fun closeResourceContainer(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): File {
+    fun closeResourceContainer(
+        sourceLanguageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
+    ): File {
         library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
             ?: throw Exception("Unknown Resource")
         val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, projectSlug, resourceSlug)
@@ -632,12 +648,12 @@ internal class API @Throws(IOException::class) constructor(
 
     /**
      * Checks when a resource container was last modified.
-     * @param sourceLanguageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return
      */
-    fun getResourceContainerLastModified(sourceLanguageSlug: String, projectSlug: String, resourceSlug: String): Int {
+    fun getResourceContainerLastModified(
+        sourceLanguageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
+    ): Int {
         val resource = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
         if (resource != null) {
             val format = getResourceContainerFormat(resource.formats)
@@ -647,9 +663,7 @@ internal class API @Throws(IOException::class) constructor(
     }
 
     /**
-     * Checks if the resource container has been downloaded
-     * @param containerSlug
-     * @return
+     * Checks if the resource container has been downloaded.
      */
     fun resourceContainerExists(containerSlug: String): Boolean {
         val directory = File(resourceDir, containerSlug)
@@ -657,21 +671,17 @@ internal class API @Throws(IOException::class) constructor(
         return (directory.exists() && directory.isDirectory) || (archive.exists() && archive.isFile)
     }
 
-    /**
-     * Checks if the resource container has been downloaded
-     * @param languageSlug
-     * @param projectSlug
-     * @param resourceSlug
-     * @return
-     */
-    fun resourceContainerExists(languageSlug: String, projectSlug: String, resourceSlug: String): Boolean {
+    fun resourceContainerExists(
+        languageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
+    ): Boolean {
         val containerSlug = ContainerTools.makeSlug(languageSlug, projectSlug, resourceSlug)
         return resourceContainerExists(containerSlug)
     }
 
     /**
-     * Deletes a resource container from the disk
-     * @param containerSlug
+     * Deletes a resource container from the disk.
      */
     fun deleteResourceContainer(containerSlug: String) {
         val directory = File(resourceDir, containerSlug)
@@ -681,6 +691,28 @@ internal class API @Throws(IOException::class) constructor(
         }
         if (archive.exists() && archive.isFile) {
             FileUtil.deleteQuietly(archive)
+        }
+    }
+
+    /**
+     * Runs [block] inside a database transaction on [dbDispatcher].
+     * The transaction is committed on success and rolled back on any exception.
+     * This ensures:
+     *   1. All DB work is serialized on a single thread (no pool contention).
+     *   2. The transaction is ALWAYS closed, even on unexpected errors.
+     *   3. Network I/O is never accidentally performed inside a transaction.
+     */
+    private suspend fun <T> withTransaction(block: suspend () -> T): T {
+        return withContext(dbDispatcher) {
+            library.beginTransaction()
+            try {
+                val result = block()
+                library.endTransaction(true)
+                result
+            } catch (e: Exception) {
+                library.endTransaction(false)
+                throw e
+            }
         }
     }
 
@@ -698,10 +730,6 @@ internal class API @Throws(IOException::class) constructor(
 
         /**
          * Returns the first resource container format found in the list.
-         * E.g. the array may contain binary formats such as PDF, mp3, etc. This basically filters those.
-         *
-         * @param formats a list of resource formats
-         * @return
          */
         private fun getResourceContainerFormat(formats: List<Resource.Format>): Resource.Format? {
             val regex = "${ResourceContainer.baseMimeType}\\+.+".toRegex()

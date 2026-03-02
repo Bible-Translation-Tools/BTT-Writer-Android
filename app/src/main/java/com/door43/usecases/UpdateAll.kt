@@ -15,7 +15,7 @@ class UpdateAll(
 ) {
     data class Result(val success: Boolean)
 
-    fun execute(updateCatalogs: Boolean, progressListener: OnProgressListener? = null): Result {
+    suspend fun execute(updateCatalogs: Boolean, progressListener: OnProgressListener? = null): Result {
         var maxProgress = 100
         var success = false
         var overallSuccess = true

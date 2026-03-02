@@ -168,7 +168,7 @@ class ImportProjects(
         return ImportUsfmResult(success, conflictingTargetTranslation)
     }
 
-    fun importSource(uri: Uri): ImportSourceResult {
+    suspend fun importSource(uri: Uri): ImportSourceResult {
         val uuid = UUID.randomUUID().toString()
         val tempDir = directoryProvider.createTempDir(uuid)
         FileUtilities.copyDirectory(context, uri, tempDir)
@@ -203,7 +203,7 @@ class ImportProjects(
         }
     }
 
-    fun importSource(dir: File): ImportSourceResult {
+    suspend fun importSource(dir: File): ImportSourceResult {
         return try {
             library.importResourceContainer(dir)
             ImportSourceResult(

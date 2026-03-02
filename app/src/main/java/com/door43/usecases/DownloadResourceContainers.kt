@@ -24,7 +24,7 @@ class DownloadResourceContainers(
         val containers: List<ResourceContainer>
     )
 
-    fun download(
+    suspend fun download(
         translation: Translation,
         onProgressListener: OnProgressListener? = null
     ): DownloadResult {
@@ -107,7 +107,7 @@ class DownloadResourceContainers(
         return DownloadResult(success, downloadedContainers)
     }
 
-    fun download(
+    suspend fun download(
         translationIDs: List<String>,
         progressListener: OnProgressListener? = null
     ): Result {
@@ -262,7 +262,7 @@ class DownloadResourceContainers(
      * @param name
      * @return
      */
-    private fun downloadTranslationWords(
+    private suspend fun downloadTranslationWords(
         progress: Int,
         resourceContainerSlug: String,
         downloaded: MutableSet<String>,
@@ -312,7 +312,7 @@ class DownloadResourceContainers(
      * @param name
      * @return
      */
-    private fun downloadHelps(
+    private suspend fun downloadHelps(
         progress: Int,
         resourceContainerSlug: String,
         languageSlug: String,
