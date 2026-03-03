@@ -439,19 +439,25 @@ class USFMRenderer(
         if (expectedVerseRange.size == 1) {
             val v = expectedVerseRange[0]
             if (!existingVerses.contains(v)) {
-                missing.add(TextNode.VerseMarker(v, 0, pinVerses))
+                missing.add(TextNode.VerseMarker(v, 0, pinVerses, "\\v $v "))
                 addedMissingVerse = true
             }
         } else if (expectedVerseRange.size == 2) {
-            for (v in expectedVerseRange[1] downTo expectedVerseRange[0]) {
+            for (v in expectedVerseRange[0]..expectedVerseRange[1]) {
                 if (!existingVerses.contains(v)) {
-                    missing.add(TextNode.VerseMarker(v, 0, pinVerses))
+                    missing.add(TextNode.VerseMarker(v, 0, pinVerses, "\\v $v "))
                     addedMissingVerse = true
                 }
             }
         }
         // Prepend missing verses at the front
-        nodes.addAll(0, missing)
+        if (missing.isNotEmpty()) {
+            nodes.addAll(0, missing)
+            // Add space separator between inserted verses and existing content
+            if (nodes.size > missing.size) {
+                nodes.add(missing.size, TextNode.Text(" "))
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
