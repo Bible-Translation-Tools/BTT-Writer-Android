@@ -17,6 +17,8 @@ import android.text.SpannedString
 import android.text.TextUtils
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
+import android.text.Spannable
 import android.util.Log
 import android.view.DragEvent
 import android.view.LayoutInflater
@@ -351,8 +353,8 @@ open class ReviewModeAdapter(
             if (view != null) {
                 // Temporarily disable TextWatcher to prevent automatic save during programmatic setText
                 view.removeTextChangedListener(holder.editableTextWatcher)
-                // Display the raw source text (already in USFM/USX format)
-                view.setText(item.targetText)
+                // Display raw USFM text with footnotes rendered as icons
+                view.setText(createEditModeSpannable(item.targetText))
                 view.addTextChangedListener(holder.editableTextWatcher)
 
                 handler.post {
@@ -375,7 +377,7 @@ open class ReviewModeAdapter(
                         onVerseLongClick(view, holder, item, marker, start, end)
                     },
                     noteClickListener = NoteClickListener { _, marker, start, end ->
-                        onNoteClick(holder, item, marker, start, end, false)
+                        onNoteClick(holder, item, marker, start, end, !item.isComplete)
                     }
                 ))
 
@@ -564,6 +566,55 @@ open class ReviewModeAdapter(
     /**
      * if missing verses were found during render, then add them
      */
+    /**
+     * Create a spannable for edit mode: raw USFM text with footnotes rendered as icons.
+     * Everything else (verse markers, paragraphs, etc.) stays as plain USFM text.
+     * Footnotes are rendered as an icon that can be deleted.
+     */
+    private fun createEditModeSpannable(usfmText: String): SpannableStringBuilder {
+        val sb = SpannableStringBuilder()
+        val footnotePattern = Pattern.compile(USFMNoteSpan.PATTERN)
+        val matcher = footnotePattern.matcher(usfmText)
+
+        var lastEnd = 0
+        while (matcher.find()) {
+            // Append plain text before footnote
+            sb.append(usfmText.substring(lastEnd, matcher.start()))
+
+            // Append footnote as an icon placeholder
+            val start = sb.length
+            sb.append("†")  // placeholder character that will be replaced by ImageSpan
+            val end = sb.length
+
+            // Render footnote as an icon
+            val drawable = ContextCompat.getDrawable(context, R.drawable.ic_description_secondary_24dp)
+            if (drawable != null) {
+                drawable.setBounds(0, 0, drawable.minimumWidth, drawable.minimumHeight)
+                sb.setSpan(
+                    ImageSpan(drawable),
+                    start, end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+
+            // Store the original USFM footnote code as a span so it can be found when text changes
+            sb.setSpan(
+                SpannedString(matcher.group()),
+                start, end,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
+            lastEnd = matcher.end()
+        }
+
+        // Append remaining text after last footnote
+        if (lastEnd < usfmText.length) {
+            sb.append(usfmText.substring(lastEnd))
+        }
+
+        return sb
+    }
+
     private fun addMissingVerses(holder: ReviewHolder) {
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) {
@@ -653,27 +704,65 @@ open class ReviewModeAdapter(
      */
     private fun createFootnoteAtSelection(holder: ReviewHolder, item: ReviewListItem) {
         val editText = holder.getEditText(item.isEditing) ?: return
-        var endPos = editText.selectionEnd
-        if (endPos < 0) {
-            endPos = 0
+        var renderedPos = editText.selectionEnd
+        if (renderedPos < 0) {
+            renderedPos = 0
         }
-        val insertPos = endPos
-        editFootnote("", holder, item, insertPos, insertPos)
+        // Map position from rendered text (with footnotes as icons) back to USFM source text
+        val insertPos = mapRenderedPositionToSourcePosition(item.targetText, renderedPos)
+        createNewFootnote("", holder, item, insertPos)
     }
 
     /**
-     * edit contents of footnote at specified position
+     * Map a cursor position from rendered text (with footnotes as icons) back to USFM source text positions.
+     * In rendered text, footnotes appear as single "†" characters.
+     * In USFM source, footnotes are full codes like "\f + \ft text \f*".
      */
-    private fun editFootnote(
+    private fun mapRenderedPositionToSourcePosition(sourceText: String, renderedPos: Int): Int {
+        val footnotePattern = Pattern.compile(USFMNoteSpan.PATTERN)
+        val matcher = footnotePattern.matcher(sourceText)
+
+        var sourceIndex = 0
+        var renderedIndex = 0
+
+        while (matcher.find()) {
+            val footnoteStart = matcher.start()
+            val footnoteEnd = matcher.end()
+
+            // Add characters before this footnote
+            val beforeLength = footnoteStart - sourceIndex
+            renderedIndex += beforeLength
+
+            if (renderedIndex >= renderedPos) {
+                // Cursor is before this footnote
+                return sourceIndex + (renderedPos - (renderedIndex - beforeLength))
+            }
+
+            // Add the footnote as a single icon character
+            renderedIndex += 1
+
+            if (renderedIndex >= renderedPos) {
+                // Cursor is on or after this footnote icon, map it to after the footnote code
+                return footnoteEnd
+            }
+
+            sourceIndex = footnoteEnd
+        }
+
+        // Cursor is after all footnotes
+        val result = sourceIndex + (renderedPos - renderedIndex)
+        return minOf(result, sourceText.length)
+    }
+
+    /**
+     * create a new footnote at specified position (for new footnotes, not editing existing ones)
+     */
+    private fun createNewFootnote(
         initialNote: CharSequence,
         holder: ReviewHolder,
         item: ReviewListItem,
-        footnotePos: Int,
-        footnoteEndPos: Int
+        insertPos: Int
     ) {
-        val editText = holder.getEditText(item.isEditing) ?: return
-        val original = editText.text
-
         val inflater = LayoutInflater.from(context)
         val footnoteBinding = FragmentFootnotePromptBinding.inflate(inflater)
 
@@ -684,18 +773,37 @@ open class ReviewModeAdapter(
             .setTitle(R.string.title_add_footnote)
             .setPositiveButton(R.string.label_ok) { dialog, _ ->
                 val footnote = footnoteBinding.footnoteText.text
-                val validated = verifyAndReplaceFootnote(
-                    footnote,
-                    original,
-                    footnotePos,
-                    footnoteEndPos,
-                    holder,
-                    item,
-                    editText
-                )
-                if (validated) {
-                    dialog.dismiss()
-                }
+                placeNewFootnote(footnote, holder, item, insertPos)
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.title_cancel) { dialog, _ -> dialog.dismiss() }
+            .setView(footnoteBinding.root)
+            .show()
+    }
+
+    /**
+     * edit contents of footnote at specified position
+     */
+    private fun editFootnote(
+        initialNote: CharSequence,
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        marker: TextNode.NoteMarker,
+        footnotePos: Int,
+        footnoteEndPos: Int
+    ) {
+        val inflater = LayoutInflater.from(context)
+        val footnoteBinding = FragmentFootnotePromptBinding.inflate(inflater)
+
+        footnoteBinding.footnoteText.setText(initialNote)
+
+        // pop up note prompt
+        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+            .setTitle(R.string.title_add_footnote)
+            .setPositiveButton(R.string.label_ok) { dialog, _ ->
+                val footnote = footnoteBinding.footnoteText.text
+                placeFootnote(footnote, marker, holder, item)
+                dialog.dismiss()
             }
             .setNegativeButton(R.string.title_cancel) { dialog, _ -> dialog.dismiss() }
             .setView(footnoteBinding.root)
@@ -705,25 +813,6 @@ open class ReviewModeAdapter(
     /**
      * insert footnote into EditText or remove footnote from EditText
      */
-    private fun verifyAndReplaceFootnote(
-        footnote: CharSequence?,
-        original: CharSequence,
-        insertPos: Int,
-        insertEndPos: Int,
-        holder: ReviewHolder,
-        item: ReviewListItem,
-        editText: EditText
-    ): Boolean {
-        // sanity checks
-        if (footnote.isNullOrEmpty()) {
-            warnDialog(R.string.title_footnote_invalid, R.string.footnote_message_empty)
-            return false
-        }
-
-        placeFootnote(footnote, original, insertPos, insertEndPos, holder, item, editText)
-        return true
-    }
-
     /**
      * display warning dialog
      */
@@ -738,14 +827,62 @@ open class ReviewModeAdapter(
     /**
      * insert footnote into EditText or remove footnote from EditText
      */
-    private fun placeFootnote(
+    /**
+     * Insert a new footnote at the specified position in item.targetText (USFM source).
+     */
+    private fun placeNewFootnote(
         footnote: CharSequence?,
-        original: CharSequence,
-        start: Int,
-        end: Int,
         holder: ReviewHolder,
         item: ReviewListItem,
-        editText: EditText
+        insertPos: Int
+    ) {
+        var footnotecode: CharSequence = ""
+        var actualFootnote = footnote
+        if (actualFootnote != null) {
+            if (actualFootnote.isEmpty()) {
+                actualFootnote = context.resources.getString(R.string.footnote_label)
+            }
+
+            val footnoteSpannable = USFMNoteSpan.generateFootnote(actualFootnote)
+            footnotecode = footnoteSpannable.machineReadable
+        }
+
+        // Insert the footnote code at the specified position in the USFM text
+        val clampedPos = minOf(insertPos, item.targetText.length)
+        val newText = item.targetText.substring(0, clampedPos) + footnotecode + item.targetText.substring(clampedPos)
+
+        item.targetText = newText
+        item.target.applyFrameTranslation(item.ft, item.targetText)
+
+        val editText = holder.getEditText(item.isEditing) ?: return
+
+        if (item.isEditing) {
+            // In edit mode, show raw USFM but render footnotes as icons
+            editText.setText(createEditModeSpannable(item.targetText))
+        } else {
+            item.renderedTargetNodes = renderTargetText(
+                item.targetText,
+                item.targetTranslationFormat,
+                item.ft,
+                holder,
+                item
+            )
+            editText.setText(SpannableAdapter.convert(
+                item.renderedTargetNodes ?: emptyList(),
+                context = context,
+                verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
+                verseLongClickListener = VerseLongClickListener { v, m, s, e -> onVerseLongClick(v, holder, item, m, s, e) },
+                noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, !item.isComplete) }
+            ))
+        }
+        editText.setSelection(editText.length(), editText.length())
+    }
+
+    private fun placeFootnote(
+        footnote: CharSequence?,
+        marker: TextNode.NoteMarker,
+        holder: ReviewHolder,
+        item: ReviewListItem
     ) {
         var footnotecode: CharSequence = ""
         var actualFootnote = footnote
@@ -757,22 +894,33 @@ open class ReviewModeAdapter(
 
             val footnoteSpannable = USFMNoteSpan.generateFootnote(actualFootnote)
             footnotecode = footnoteSpannable.machineReadable
+        } else {
+            // Deleting: no new footnote code
+            footnotecode = ""
         }
 
-        val newText = TextUtils.concat(
-            original.subSequence(0, start),
-            footnotecode,
-            original.subSequence(end, original.length)
-        )
-        editText.setText(newText)
+        // Find the old footnote in item.targetText by searching for marker.machineReadable
+        val oldFootnoteCode = marker.machineReadable
+        val startIdx = item.targetText.indexOf(oldFootnoteCode)
 
-        item.targetText = Translator.compileTranslation(editText.text) // get XML for footnote
+        if (startIdx < 0) {
+            // Footnote not found - this shouldn't happen, but handle gracefully
+            return
+        }
+
+        val endIdx = minOf(startIdx + oldFootnoteCode.length, item.targetText.length)
+        val newText = item.targetText.substring(0, startIdx) + footnotecode + item.targetText.substring(endIdx)
+
+        item.targetText = newText // save the USFM text with footnote
         item.target.applyFrameTranslation(item.ft, item.targetText) // save change
 
-        // generate spannable again adding
-        if (item.isComplete || item.isEditing) {
-            item.renderedTargetNodes = renderTargetText(holder, item, true)
+        val editText = holder.getEditText(item.isEditing) ?: return
+
+        // In edit mode, show raw USFM but render footnotes as icons
+        if (item.isEditing) {
+            editText.setText(createEditModeSpannable(item.targetText))
         } else {
+            // In view mode, render and display
             item.renderedTargetNodes = renderTargetText(
                 item.targetText,
                 item.targetTranslationFormat,
@@ -780,8 +928,14 @@ open class ReviewModeAdapter(
                 holder,
                 item
             )
+            editText.setText(SpannableAdapter.convert(
+                item.renderedTargetNodes ?: emptyList(),
+                context = context,
+                verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
+                verseLongClickListener = VerseLongClickListener { v, m, s, e -> onVerseLongClick(v, holder, item, m, s, e) },
+                noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, !item.isComplete) }
+            ))
         }
-        editText.setText(SpannableAdapter.convert(item.renderedTargetNodes ?: emptyList(), context = context))
         editText.setSelection(editText.length(), editText.length())
     }
 
@@ -1175,6 +1329,21 @@ open class ReviewModeAdapter(
 
     private fun resetHighlightColor(text: CharSequence): SpannableString {
         val noHighlightText = SpannableString(text)
+
+        // Preserve all existing spans from the original text (especially footnote markers)
+        if (text is Spanned) {
+            val spans = text.getSpans(0, text.length, Any::class.java)
+            for (span in spans) {
+                val start = text.getSpanStart(span)
+                val end = text.getSpanEnd(span)
+                val flags = text.getSpanFlags(span)
+                // Only re-add if it's not a background/foreground color that we're replacing
+                if (span !is BackgroundColorSpan && span !is ForegroundColorSpan) {
+                    noHighlightText.setSpan(span, start, end, flags)
+                }
+            }
+        }
+
         val background = BackgroundColorSpan(Color.TRANSPARENT)
         val foreground = ForegroundColorSpan(
             ColorUtil.getColor(context, R.color.dark_primary_text)
@@ -1239,8 +1408,8 @@ open class ReviewModeAdapter(
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton(R.string.dismiss, null)
-                .setNeutralButton(R.string.edit) { _, _ -> editFootnote(marker.notes, holder, item, start, end) }
-                .setNegativeButton(R.string.label_delete) { _, _ -> deleteFootnote(marker.notes, holder, item, start, end) }
+                .setNeutralButton(R.string.edit) { _, _ -> editFootnote(marker.notes, holder, item, marker, start, end) }
+                .setNegativeButton(R.string.label_delete) { _, _ -> deleteFootnote(marker.notes, holder, item, marker, start, end) }
                 .show()
 
         } else {
@@ -1259,17 +1428,15 @@ open class ReviewModeAdapter(
         note: CharSequence,
         holder: ReviewHolder,
         item: ReviewListItem,
+        marker: TextNode.NoteMarker,
         start: Int,
         end: Int
     ) {
-        val editText = holder.getEditText(item.isEditing) ?: return
-        val original = editText.text
-
         AlertDialog.Builder(context, R.style.AppTheme_Dialog)
             .setTitle(R.string.footnote_confirm_delete)
             .setMessage(note)
             .setPositiveButton(R.string.label_delete) { _, _ ->
-                placeFootnote(null, original, start, end, holder, item, editText)
+                placeFootnote(null, marker, holder, item)
             }
             .setNegativeButton(R.string.title_cancel, null)
             .show()
@@ -1430,17 +1597,24 @@ open class ReviewModeAdapter(
                         val translation = Translator.compileTranslation(editText.text)
                         item.target.applyFrameTranslation(frameTranslation, translation)
                         item.targetText = translation
-                        val nodes = renderTargetText(translation, item.targetTranslationFormat, frameTranslation, holder, item)
-                        item.renderedTargetNodes = nodes
-                        editText.setText(
-                            SpannableAdapter.convert(
-                                nodes,
-                                context = context,
-                                verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
-                                verseLongClickListener = VerseLongClickListener { v2, m, s, e -> onVerseLongClick(v2, holder, item, m, s, e) },
-                                noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, false) }
+
+                        // In edit mode, display raw USFM with footnotes as icons (not full re-render)
+                        if (item.isEditing) {
+                            editText.setText(createEditModeSpannable(item.targetText))
+                        } else {
+                            // In view mode, fully render with verse pins and footnote icons
+                            val nodes = renderTargetText(translation, item.targetTranslationFormat, frameTranslation, holder, item)
+                            item.renderedTargetNodes = nodes
+                            editText.setText(
+                                SpannableAdapter.convert(
+                                    nodes,
+                                    context = context,
+                                    verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
+                                    verseLongClickListener = VerseLongClickListener { v2, m, s, e -> onVerseLongClick(v2, holder, item, m, s, e) },
+                                    noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, !item.isComplete) }
+                                )
                             )
-                        )
+                        }
                     }
                     DragEvent.ACTION_DRAG_ENDED -> {
                         toggleDisableItems(false, null)
@@ -1453,17 +1627,25 @@ open class ReviewModeAdapter(
                             editText.setText(currentText)
                             val translation = Translator.compileTranslation(editText.text)
                             item.target.applyFrameTranslation(frameTranslation, translation)
-                            val recoveryNodes = renderTargetText(translation, item.targetTranslationFormat, frameTranslation, holder, item)
-                            item.renderedTargetNodes = recoveryNodes
-                            editText.setText(
-                                SpannableAdapter.convert(
-                                    recoveryNodes,
-                                    context = context,
-                                    verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
-                                    verseLongClickListener = VerseLongClickListener { v2, m, s, e -> onVerseLongClick(v2, holder, item, m, s, e) },
-                                    noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, false) }
+                            item.targetText = translation
+
+                            // In edit mode, display raw USFM with footnotes as icons (not full re-render)
+                            if (item.isEditing) {
+                                editText.setText(createEditModeSpannable(item.targetText))
+                            } else {
+                                // In view mode, fully render with verse pins and footnote icons
+                                val recoveryNodes = renderTargetText(translation, item.targetTranslationFormat, frameTranslation, holder, item)
+                                item.renderedTargetNodes = recoveryNodes
+                                editText.setText(
+                                    SpannableAdapter.convert(
+                                        recoveryNodes,
+                                        context = context,
+                                        verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
+                                        verseLongClickListener = VerseLongClickListener { v2, m, s, e -> onVerseLongClick(v2, holder, item, m, s, e) },
+                                        noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, !item.isComplete) }
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                     DragEvent.ACTION_DRAG_ENTERED -> {

@@ -331,7 +331,8 @@ class USXRenderer(
                                 passage = note.passage.toString(),
                                 notes = note.notes.toString(),
                                 noteStyle = style,
-                                highlighted = highlighted
+                                highlighted = highlighted,
+                                machineReadable = noteText  // Store original USX footnote code
                             )
                         )
                     )

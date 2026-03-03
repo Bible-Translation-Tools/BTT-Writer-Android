@@ -32,7 +32,8 @@ sealed class TextNode {
         val passage: String,
         val notes: String,
         val noteStyle: NoteStyle,
-        val highlighted: Boolean = false
+        val highlighted: Boolean = false,
+        val machineReadable: String = ""  // The raw source-format string (e.g. `\f + \ft ... \f*` for USFM)
     ) : TextNode()
 
     /** A paragraph break with optional indent. */

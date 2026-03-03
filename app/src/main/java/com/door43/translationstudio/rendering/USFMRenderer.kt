@@ -315,7 +315,8 @@ class USFMRenderer(
                                 passage = note.passage.toString(),
                                 notes = note.notes.toString(),
                                 noteStyle = style,
-                                highlighted = highlighted
+                                highlighted = highlighted,
+                                machineReadable = matcher.group()  // Store original USFM footnote code
                             )
                         )
                     )

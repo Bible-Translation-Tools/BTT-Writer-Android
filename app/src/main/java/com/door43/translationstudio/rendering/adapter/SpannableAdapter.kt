@@ -185,16 +185,27 @@ object SpannableAdapter {
 
             is TextNode.NoteMarker -> {
                 val start = sb.length
-                sb.append(if (node.passage.isNotEmpty()) node.passage else node.caller)
+                sb.append("†")  // placeholder character for note icon
                 val end = sb.length
                 context?.let { ctx ->
-                    // TODO: Use a distinct color for CROSS_REFERENCE notes once a color resource is defined.
-                    val bgColor = ContextCompat.getColor(ctx, R.color.footnote_yellow)
-                    sb.setSpan(BackgroundColorSpan(bgColor), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                    sb.setSpan(StyleSpan(Typeface.ITALIC), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    // Render note marker as icon
+                    val drawable = ContextCompat.getDrawable(ctx, R.drawable.ic_description_secondary_24dp)
+                    if (drawable != null) {
+                        drawable.setBounds(0, 0, drawable.minimumWidth, drawable.minimumHeight)
+                        sb.setSpan(ImageSpan(drawable), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    }
                 }
                 if (node.highlighted && searchHighlightColor != 0) {
                     sb.setSpan(BackgroundColorSpan(searchHighlightColor), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                // Store the original USFM/USX footnote code as a span so it can be reconstructed
+                // when the text is compiled back after drag-and-drop
+                if (node.machineReadable.isNotEmpty()) {
+                    sb.setSpan(
+                        SpannedString(node.machineReadable),
+                        start, end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
                 }
                 noteClickListener?.let { listener ->
                     val spanStart = start

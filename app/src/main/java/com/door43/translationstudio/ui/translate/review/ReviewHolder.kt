@@ -342,14 +342,14 @@ class ReviewHolder(
                     SpannableAdapter.convert(
                         item.renderedTargetNodes ?: emptyList(),
                         context = itemView.context,
-                        verseClickListener = VerseClickListener { _, marker, _, _ ->
+                        verseClickListener = { _, marker, _, _ ->
                             reviewModeListener?.onVerseClick(item, marker)
                         },
-                        verseLongClickListener = VerseLongClickListener { view, marker, start, end ->
+                        verseLongClickListener = { view, marker, start, end ->
                             reviewModeListener?.onVerseLongClick(view, this@ReviewHolder, item, marker, start, end)
                         },
-                        noteClickListener = NoteClickListener { _, marker, start, end ->
-                            reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, false)
+                        noteClickListener = { _, marker, start, end ->
+                            reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, !item.isComplete)
                         }
                     )
                 )
@@ -408,7 +408,7 @@ class ReviewHolder(
                                 reviewModeListener?.onVerseLongClick(view, this@ReviewHolder, item, marker, start, end)
                             },
                             noteClickListener = NoteClickListener { _, marker, start, end ->
-                                reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, false)
+                                reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, !item.isComplete)
                             }
                         )
                     )
@@ -466,7 +466,7 @@ class ReviewHolder(
                             reviewModeListener?.onVerseLongClick(view, this@ReviewHolder, item, marker, start, end)
                         },
                         noteClickListener = NoteClickListener { _, marker, start, end ->
-                            reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, false)
+                            reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, !item.isComplete)
                         }
                     )
                 )
