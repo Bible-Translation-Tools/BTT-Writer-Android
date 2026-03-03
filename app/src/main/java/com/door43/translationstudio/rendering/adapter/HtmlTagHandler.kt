@@ -1,4 +1,4 @@
-package com.door43.translationstudio.rendering
+package com.door43.translationstudio.rendering.adapter
 
 import android.content.Context
 import android.text.Editable
