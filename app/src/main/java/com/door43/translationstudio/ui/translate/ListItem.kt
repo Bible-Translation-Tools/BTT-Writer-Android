@@ -20,6 +20,10 @@ abstract class ListItem(
     val source: ResourceContainer,
     val target: TargetTranslation
 ) {
+    // TODO Task 9: These caches are CharSequence because ReviewModeAdapter, ChunkModeAdapter,
+    //  and ReviewHolder use them directly as Editable/SpannedString in edit, undo/redo, and
+    //  drag-and-drop flows. Changing to List<TextNode>? would require extensive cascading updates
+    //  across all three adapters and ReviewHolder. Defer to a dedicated refactor task.
     var renderedSourceText: CharSequence? = null
     var renderedTargetText: CharSequence? = null
     var isEditing = false

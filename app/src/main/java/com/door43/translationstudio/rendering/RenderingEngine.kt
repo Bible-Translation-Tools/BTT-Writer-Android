@@ -20,10 +20,10 @@ abstract class RenderingEngine {
 
         thread {
             try {
-                val output = render(input)
+                val output = renderToNodes(input.toString())
                 callback.onComplete(output)
             } catch (e: Exception) {
-                callback.onError(input)
+                callback.onError(input.toString())
             } finally {
                 running = false
             }
@@ -93,14 +93,14 @@ abstract class RenderingEngine {
     interface OnRenderCallback {
         /**
          * Called when the rendering has finished
-         * @param output the rendered output
+         * @param output the platform-agnostic rendered output
          */
-        fun onComplete(output: CharSequence)
+        fun onComplete(output: List<TextNode>)
 
         /**
          * Called when an exception occurred during rendering
          * @param input the raw input string
          */
-        fun onError(input: CharSequence)
+        fun onError(input: String)
     }
 }
