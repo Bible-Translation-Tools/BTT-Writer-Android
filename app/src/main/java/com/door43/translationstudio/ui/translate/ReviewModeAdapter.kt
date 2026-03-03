@@ -579,8 +579,6 @@ open class ReviewModeAdapter(
                 Log.i(TAG, "Added Missing verses: $translation")
                 item.hasMissingVerses = false
                 item.renderedTargetNodes = null // force re-rendering of target text
-
-                holder.itemView.post { notifyItemChanged(position) }
             }
         }
     }
