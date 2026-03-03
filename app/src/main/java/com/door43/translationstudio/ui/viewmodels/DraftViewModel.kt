@@ -7,9 +7,9 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.rendering.Clickables
+import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.ImportDraft
 import com.door43.util.sortNumerically
@@ -29,7 +29,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 data class ChapterContent(
     val heading: String,
     val title: String,
-    val bodyText: CharSequence?
+    val textNodes: List<TextNode> = emptyList()
 )
 
 data class DraftModel(
@@ -145,12 +145,12 @@ class DraftViewModel (
         }
 
         sourceRendering.init(chapterBody)
-        val bodyText = SpannableAdapter.convert(sourceRendering.startNodes())
+        val textNodes = sourceRendering.startNodes()
 
         ChapterContent(
             heading = heading,
             title = title,
-            bodyText = bodyText
+            textNodes = textNodes
         )
     }
 }

@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.draft
 
-import android.widget.TextView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +14,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -31,7 +28,7 @@ import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
-import com.door43.translationstudio.toComposeAnnotatedString
+import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
 import com.door43.translationstudio.ui.viewmodels.ChapterContent
 import org.unfoldingword.door43client.models.SourceLanguage
 
@@ -41,14 +38,6 @@ fun DraftChapterCard(
     language: SourceLanguage,
     typography: Typography
 ) {
-    // TODO Remove android dependency
-    val context = LocalContext.current
-    val dummyView = remember { TextView(context) }
-
-    LaunchedEffect(chapterContent?.bodyText) {
-        chapterContent?.bodyText?.let { dummyView.text = it }
-    }
-
     val titleStyle = typography.getComposeTextStyle(
         translationType = TranslationType.SOURCE,
         style = TextStyleType.TITLE,
@@ -88,7 +77,6 @@ fun DraftChapterCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             val textColor = MaterialTheme.colorScheme.onSurface
-            val clickableColor = MaterialTheme.colorScheme.onSurfaceVariant
 
             chapterContent?.let { content ->
 
@@ -114,12 +102,9 @@ fun DraftChapterCard(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                if (content.bodyText != null) {
-                    val annotatedBody = remember(content.bodyText, clickableColor) {
-                        content.bodyText.toComposeAnnotatedString(
-                            dummyView = dummyView,
-                            clickableColor = clickableColor
-                        )
+                if (content.textNodes.isNotEmpty()) {
+                    val annotatedBody = remember(content.textNodes) {
+                        ComposeTextAdapter.convert(content.textNodes)
                     }
 
                     Text(

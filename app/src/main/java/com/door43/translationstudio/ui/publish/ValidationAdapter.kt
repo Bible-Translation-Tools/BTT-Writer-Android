@@ -121,7 +121,7 @@ class ValidationAdapter(
                             renderingGroup.addEngine(DefaultRenderer(context))
                         }
                         renderingGroup.init(item.body)
-                        renderedText[position] = SpannableAdapter.convert(renderingGroup.startNodes())
+                        renderedText[position] = SpannableAdapter.convert(renderingGroup.startNodes(), context = context)
                     }
                     holder.binding.body.text = renderedText[position]
 
