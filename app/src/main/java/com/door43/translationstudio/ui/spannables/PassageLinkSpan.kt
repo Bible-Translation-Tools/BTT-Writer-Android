@@ -1,10 +1,5 @@
 package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import androidx.core.content.ContextCompat
-import com.door43.translationstudio.R
 import org.unfoldingword.tools.logger.Logger
 import java.util.regex.Pattern
 
@@ -12,8 +7,6 @@ class PassageLinkSpan(
     title: String,
     var address: String
 ) : Span(title, address) {
-
-    private var spannable: SpannableStringBuilder? = null
 
     private var _title: String = title
     fun getTitle(): String = _title
@@ -45,24 +38,7 @@ class PassageLinkSpan(
      */
     fun setTitle(title: String) {
         this._title = title
-        setHumanReadable(title)
-    }
-
-    override fun render(): SpannableStringBuilder {
-        if (spannable == null) {
-            val s = super.render()
-            // apply custom styles
-            context?.let { ctx ->
-                s.setSpan(
-                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.accent)),
-                    0,
-                    s.length,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
-            spannable = s
-        }
-        return spannable!!
+        humanReadable = title
     }
 
     /**

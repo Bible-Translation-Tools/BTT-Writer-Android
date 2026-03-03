@@ -5,17 +5,22 @@ import android.content.ClipData
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.Html
 import android.text.Layout
+import android.text.Spannable
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.SpannedString
 import android.text.TextUtils
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
+import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.view.DragEvent
 import android.view.LayoutInflater
@@ -23,6 +28,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.door43.data.AssetsProvider
@@ -1156,12 +1162,12 @@ open class ReviewModeAdapter(
                                         // insert the verse at the offset
                                         TextUtils.concat(
                                             currentText.subSequence(0, offset),
-                                            pin.toCharSequence(context),
+                                            renderVersePin(pin),
                                             currentText.subSequence(offset, currentText.length)
                                         )
                                     } else {
                                         // place the verse back at the beginning
-                                        TextUtils.concat(pin.toCharSequence(context), currentText)
+                                        TextUtils.concat(renderVersePin(pin), currentText)
                                     }
 
                                     val noHighlightText = resetHighlightColor(currentText)
@@ -1186,7 +1192,7 @@ open class ReviewModeAdapter(
                                     if (!hasEntered) {
                                         // place the verse back at the beginning
                                         var currentText: CharSequence = editText.text
-                                        currentText = TextUtils.concat(pin.toCharSequence(context), currentText)
+                                        currentText = TextUtils.concat(renderVersePin(pin), currentText)
                                         editText.setText(currentText)
                                         val translation = Translator.compileTranslation(editText.text)
                                         item.target.applyFrameTranslation(frameTranslation, translation)
@@ -1273,6 +1279,37 @@ open class ReviewModeAdapter(
     /**
      * Find the closest position to drop verse marker. Weighted toward beginning of word.
      */
+    /**
+     * Renders a VerseSpan to a SpannableStringBuilder with the verse-pin visual style.
+     * TODO Task 9: move this render logic to SpannableAdapter or a dedicated adapter helper.
+     */
+    @SuppressLint("SetTextI18n")
+    private fun renderVersePin(pin: VerseSpan): CharSequence {
+        val label = if (pin.endVerseNumber > 0) {
+            "${pin.startVerseNumber}-${pin.endVerseNumber}"
+        } else {
+            "${pin.startVerseNumber}"
+        }
+        val s = SpannableStringBuilder(label)
+        if (s.isNotEmpty()) {
+            s.setSpan(SpannedString(pin.machineReadable), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            s.setSpan(RelativeSizeSpan(0.8f), 0, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            s.setSpan(
+                ForegroundColorSpan(ContextCompat.getColor(context, R.color.white)),
+                0, s.length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            val inflater = LayoutInflater.from(context)
+            val binding = com.door43.translationstudio.databinding.FragmentVerseMarkerBinding.inflate(inflater)
+            binding.verse.text = label
+            val image = ViewUtil.convertToBitmap(binding.root)
+            val background = BitmapDrawable(context.resources, image)
+            background.setBounds(0, 0, background.minimumWidth, background.minimumHeight)
+            s.setSpan(ImageSpan(background), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        return s
+    }
+
     private fun closestSpotForVerseMarker(offset: Int, text: CharSequence): Int {
         var currentOffset = offset
         if (currentOffset <= 0) {

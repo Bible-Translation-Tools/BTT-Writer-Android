@@ -1,16 +1,5 @@
 package com.door43.translationstudio.ui.spannables
 
-import android.graphics.Typeface
-import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.BackgroundColorSpan
-import android.text.style.ForegroundColorSpan
-import android.text.style.ImageSpan
-import android.text.style.StyleSpan
-import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
-import com.door43.translationstudio.R
 import org.unfoldingword.tools.logger.Logger
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
@@ -20,7 +9,6 @@ import java.util.Properties
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.transform.OutputKeys
-import javax.xml.transform.TransformerException
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
@@ -39,7 +27,6 @@ class USXNoteSpan(
     override val passage: CharSequence
 
     var isHighlight: Boolean = false
-    private var spannable: SpannableStringBuilder? = null
 
     companion object {
         private const val DEFAULT_CALLER = "+"
@@ -88,10 +75,8 @@ class USXNoteSpan(
                 transformer.outputProperties = outFormat
                 transformer.transform(domSource, result)
             } catch (e: Exception) {
-                Logger.e(USXNoteSpan::class.java.name, "failed to transform the the span text", e)
-                if (e !is TransformerException) {
-                    return title
-                }
+                Logger.e(USXNoteSpan::class.java.name, "failed to transform the span text", e)
+                return title
             }
 
             return output.toString()
@@ -189,43 +174,10 @@ class USXNoteSpan(
             spanTitle = quotation
         }
 
-        init(spanTitle, generateTag(style, caller, spanTitle, chars))
+        init(spanTitle.toString(), generateTag(style, caller, spanTitle, chars).toString())
 
         passage = spanTitle
         notes = noteBuilder
-    }
-
-    override fun render(): SpannableStringBuilder {
-        if (spannable == null) {
-            val s = super.render()
-            // apply custom styles
-            context?.let { ctx ->
-                if (humanReadable.toString().isEmpty()) {
-                    val icon = if (isHighlight) R.drawable.ic_description_black_24dp_highlight else R.drawable.ic_description_black_24dp
-                    val image = ResourcesCompat.getDrawable(ctx.resources, icon, ctx.theme)
-                    if (image != null) {
-                        image.setBounds(0, 0, image.minimumWidth, image.minimumHeight)
-                        s.setSpan(ImageSpan(image), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                    }
-                } else {
-                    s.setSpan(
-                        BackgroundColorSpan(ContextCompat.getColor(ctx, R.color.footnote_yellow)),
-                        0,
-                        s.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                    s.setSpan(StyleSpan(Typeface.ITALIC), 0, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                    s.setSpan(
-                        ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.dark_gray)),
-                        0,
-                        s.length,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-            }
-            spannable = s
-        }
-        return spannable!!
     }
 
     /**

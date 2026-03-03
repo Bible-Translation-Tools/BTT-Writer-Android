@@ -1,11 +1,5 @@
 package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.text.style.RelativeSizeSpan
-import androidx.core.content.ContextCompat
-import com.door43.translationstudio.R
 import java.util.regex.Pattern
 
 open class USFMVerseSpan : VerseSpan {
@@ -17,8 +11,6 @@ open class USFMVerseSpan : VerseSpan {
     private var _endVerseNumber: Int = 0
     final override val endVerseNumber: Int
         get() = _endVerseNumber
-
-    private var spannable: SpannableStringBuilder? = null
 
     companion object {
         const val PATTERN = "\\\\v\\s(\\d+(-\\d+)?)\\s?"
@@ -115,27 +107,5 @@ open class USFMVerseSpan : VerseSpan {
     constructor(startVerse: Int, endVerse: Int) : super("$startVerse-$endVerse", "\\v $startVerse-$endVerse ") {
         _startVerseNumber = startVerse
         _endVerseNumber = endVerse
-    }
-
-    /**
-     * Generates the spannable.
-     * This provides caching so we can look up the span in the text later
-     */
-    override fun render(): SpannableStringBuilder {
-        if (spannable == null) {
-            val s = super.render()
-            context?.let { ctx ->
-                // apply custom styles
-                s.setSpan(RelativeSizeSpan(0.8f), 0, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                s.setSpan(
-                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.gray)),
-                    0,
-                    s.length,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
-            spannable = s
-        }
-        return spannable!!
     }
 }

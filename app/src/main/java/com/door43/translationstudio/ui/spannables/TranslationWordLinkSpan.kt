@@ -8,6 +8,6 @@ class TranslationWordLinkSpan(
     var title: String = title
         set(value) {
             field = value
-            setHumanReadable(value)
+            humanReadable = value
         }
 }

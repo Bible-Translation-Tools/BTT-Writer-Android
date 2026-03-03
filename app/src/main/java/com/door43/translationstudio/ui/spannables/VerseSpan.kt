@@ -1,8 +1,8 @@
 package com.door43.translationstudio.ui.spannables
 
 open class VerseSpan internal constructor(
-    humanReadable: CharSequence,
-    machineReadable: CharSequence
+    humanReadable: String,
+    machineReadable: String
 ) : Span(humanReadable, machineReadable) {
 
     /**

@@ -5,13 +5,21 @@ import android.text.Editable
 import android.text.Html
 import android.text.Layout
 import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.SpannedString
 import android.text.style.AlignmentSpan
 import android.text.style.BulletSpan
+import android.text.style.ForegroundColorSpan
 import android.text.style.LeadingMarginSpan
 import android.text.style.TypefaceSpan
 import android.util.Log
+import android.view.View
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.spannables.LinkSpan
 import com.door43.translationstudio.ui.spannables.Span
+import com.door43.widget.LongClickableSpan
 import org.xml.sax.XMLReader
 import java.util.Vector
 
@@ -25,7 +33,7 @@ class HtmlTagHandler(
 
     private var listItemCount = 0
     private val listParents = Vector<String>()
-    val attributes = HashMap<String, String>()
+    private val attributes = HashMap<String, String>()
 
     private class Code
     private class Center
@@ -184,13 +192,48 @@ class HtmlTagHandler(
         span.onClickListener = this.clickListener
 
         if (where != len) {
-            output.replace(where, len, span.toCharSequence(context))
+            // TODO Task 9: move this render logic to a dedicated adapter helper
+            output.replace(where, len, renderLinkSpan(span))
         }
 
         if (DEBUG) {
             Log.d(TAG, "where: $where")
             Log.d(TAG, "len: $len")
         }
+    }
+
+    /**
+     * Renders a LinkSpan to a SpannableStringBuilder with click listener and link color styling.
+     * TODO Task 9: move this render logic to a dedicated adapter helper.
+     */
+    private fun renderLinkSpan(span: LinkSpan): SpannableStringBuilder {
+        val text = if (span.humanReadable.isNotEmpty()) span.humanReadable else span.machineReadable
+        val s = SpannableStringBuilder(text)
+        if (s.isNotEmpty()) {
+            s.setSpan(SpannedString(span.machineReadable), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            val clickListener = span.onClickListener
+            if (span.isClickable && clickListener != null) {
+                val clickSpan = object : LongClickableSpan() {
+                    override fun onLongClick(view: View) {
+                        val tv = view as? TextView ?: return
+                        val ss = tv.text as? android.text.Spanned ?: return
+                        clickListener.onLongClick(view, span, ss.getSpanStart(this), ss.getSpanEnd(this))
+                    }
+                    override fun onClick(view: View) {
+                        val tv = view as? TextView ?: return
+                        val ss = tv.text as? android.text.Spanned ?: return
+                        clickListener.onClick(view, span, ss.getSpanStart(this), ss.getSpanEnd(this))
+                    }
+                }
+                s.setSpan(clickSpan, 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            s.setSpan(
+                ForegroundColorSpan(ContextCompat.getColor(context, R.color.accent)),
+                0, s.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        return s
     }
 
     private fun handleListTag(output: Editable) {
@@ -217,6 +260,6 @@ class HtmlTagHandler(
 
     companion object {
         const val TAG = "HtmlTagHandler"
-        private const val DEBUG = true
+        private const val DEBUG = false
     }
 }

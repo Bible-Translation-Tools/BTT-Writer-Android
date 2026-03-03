@@ -1,10 +1,5 @@
 package com.door43.translationstudio.ui.spannables
 
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import androidx.core.content.ContextCompat
-import com.door43.translationstudio.R
 import org.unfoldingword.tools.logger.Logger
 import java.util.regex.Pattern
 
@@ -17,27 +12,9 @@ open class ArticleLinkSpan protected constructor(
 ) : Span() {
 
     private val address: String = buildAddress(sourceLanguageSlug, volume, section, slug)
-    private var spannable: SpannableStringBuilder? = null
 
     init {
         init(this.title, address)
-    }
-
-    override fun render(): SpannableStringBuilder {
-        if (spannable == null) {
-            val s = super.render()
-            // apply custom styles
-            context?.let { ctx ->
-                s.setSpan(
-                    ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.accent)),
-                    0,
-                    s.length,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
-            spannable = s
-        }
-        return spannable!!
     }
 
     private fun buildAddress(sourceLanguageSlug: String, volume: String, manual: String, id: String): String {
@@ -50,8 +27,7 @@ open class ArticleLinkSpan protected constructor(
      * @param title
      */
     fun setTitle(title: String) {
-        setHumanReadable(title)
-        spannable = null
+        humanReadable = title
     }
 
     companion object {
