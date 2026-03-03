@@ -2,20 +2,14 @@ package com.door43.translationstudio.core;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
-import androidx.annotation.Nullable;
 
-import org.eclipse.jgit.api.ResetCommand;
-import org.unfoldingword.door43client.models.Translation;
-import org.unfoldingword.resourcecontainer.ContainerTools;
-import org.unfoldingword.resourcecontainer.ResourceContainer;
-import org.unfoldingword.door43client.models.TargetLanguage;
-import org.unfoldingword.tools.logger.Logger;
+import androidx.annotation.Nullable;
 
 import com.door43.translationstudio.core.entity.SourceTranslation;
 import com.door43.translationstudio.git.Repo;
-import com.door43.util.NumericStringComparator;
 import com.door43.util.FileUtilities;
 import com.door43.util.Manifest;
+import com.door43.util.NumericStringComparator;
 
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CommitCommand;
@@ -25,12 +19,18 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeCommand;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.unfoldingword.door43client.models.TargetLanguage;
+import org.unfoldingword.door43client.models.Translation;
+import org.unfoldingword.resourcecontainer.ContainerTools;
+import org.unfoldingword.resourcecontainer.ResourceContainer;
+import org.unfoldingword.tools.logger.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -351,6 +351,7 @@ public class TargetTranslation {
         manifest.put(FIELD_MANIFEST_FORMAT, translationFormat);
         JSONObject resourceJson = new JSONObject();
         resourceJson.put(FIELD_MANIFEST_ID, resourceSlug);
+        resourceJson.put(FIELD_MANIFEST_NAME, getResourceName(resourceSlug));
         manifest.put(FIELD_MANIFEST_RESOURCE, resourceJson);
 
         File licenseFile = new File(targetTranslationDir, LICENSE_FILE);
@@ -1540,5 +1541,15 @@ public class TargetTranslation {
 
     public interface OnError {
         void doAction();
+    }
+
+    private static String getResourceName(String resourceSlug) {
+        return switch (resourceSlug) {
+            case "reg" -> "Regular";
+            case "ulb" -> "Unlocked Literal Bible";
+            case "udb" -> "Unlocked Dynamic Bible";
+            case "obs" -> "Open Bible Stories";
+            default -> resourceSlug;
+        };
     }
 }
