@@ -9,6 +9,7 @@ import com.door43.translationstudio.ui.spannables.Span
  */
 class DefaultRenderer : RenderingEngine {
 
+    private var context: Context
     private var noteListener: Span.OnClickListener
     private var search: String = ""
     private var highlightColor = 0

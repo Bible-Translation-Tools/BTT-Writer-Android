@@ -1,17 +1,12 @@
 package com.door43.translationstudio.rendering
 
-import android.content.Context
+import com.door43.translationstudio.rendering.model.TextNode
 import kotlin.concurrent.thread
 
-/**
- * Created by joel on 1/26/2015.
- */
 abstract class RenderingEngine {
-    protected lateinit var context: Context
 
-    private var callback: OnRenderCallback? = null
-    private var stopped = false
-    private var running = false
+    @Volatile private var stopped = false
+    @Volatile private var running = false
 
     /**
      * Begins the rendering process
@@ -20,7 +15,6 @@ abstract class RenderingEngine {
      */
     fun start(input: CharSequence, callback: OnRenderCallback) {
         if (running) return
-        this@RenderingEngine.callback = callback
         running = true
         stopped = false
 
@@ -54,13 +48,26 @@ abstract class RenderingEngine {
     }
 
     /**
-     * Renders the input string
+     * Primary rendering method. Subclasses override this to produce a platform-agnostic
+     * intermediate representation. The default implementation wraps the raw input in a
+     * single [TextNode.Text] node.
+     *
      * @param input the raw input string
-     * @return the rendered output
+     * @return list of platform-agnostic nodes describing the rendered output
      */
-    open fun render(input: CharSequence): CharSequence {
-        return input
+    open fun renderToNodes(input: String): List<TextNode> {
+        return listOf(TextNode.Text(input))
     }
+
+    /**
+     * Renders the input string to a [CharSequence].
+     * Subclasses override this to apply format-specific rendering.
+     * The base implementation returns [input] unchanged.
+     *
+     * @param input the raw input string
+     * @return the rendered output as a CharSequence
+     */
+    open fun render(input: CharSequence): CharSequence = input
 
     /**
      * If set to not empty, matched strings will be highlighted.

@@ -13,11 +13,11 @@ import java.util.regex.Pattern
 /**
  * USX rendering engine. Produces a List<TextNode> via renderToNodes().
  * The render(CharSequence) override is a shim that calls renderToNodes + SpannableAdapter.convert
- * so that existing callers continue to work until Task 6 updates the base class.
+ * so that existing callers continue to work.
  *
  * No Android framework code lives in this file. The android.content.Context import is retained
- * only to allow the legacy constructors to satisfy the inherited RenderingEngine.context field
- * (which is removed in Task 6). All rendering logic is Android-free.
+ * only for the legacy constructors that accept a Context for binary compatibility with existing
+ * call sites. The Context is not stored or used by any rendering logic.
  */
 class USXRenderer : ClickableRenderingEngine {
 
@@ -40,23 +40,23 @@ class USXRenderer : ClickableRenderingEngine {
     constructor()
 
     /**
-     * Legacy constructor kept for callers that supply only a Context.
-     * The context is stored in the inherited RenderingEngine.context field.
+     * Legacy constructor kept for callers that supply a Context.
+     * Context is accepted but not stored — kept for binary compatibility with existing call sites.
      */
     constructor(context: Context) {
-        this.context = context
+        // context intentionally not stored; RenderingEngine no longer holds a Context field
     }
 
     /**
      * Legacy constructor kept for existing call sites in DefaultRenderer and
-     * ClickableRenderingEngineFactory. Context is stored in the inherited field.
+     * ClickableRenderingEngineFactory.
+     * Context is accepted but not stored — kept for binary compatibility with existing call sites.
      */
     constructor(
         context: Context,
         verseListener: Span.OnClickListener?,
         noteListener: Span.OnClickListener?
     ) {
-        this.context = context
         this.verseListener = verseListener
         this.noteListener = noteListener
     }
@@ -98,7 +98,7 @@ class USXRenderer : ClickableRenderingEngine {
      * This is the primary output of the new pipeline; Task 6 will make the base
      * class return List<TextNode> directly.
      */
-    fun renderToNodes(input: String): List<TextNode> {
+    override fun renderToNodes(input: String): List<TextNode> {
         addedMissingVerse = false
         if (isStopped()) return emptyList()
 
@@ -154,7 +154,7 @@ class USXRenderer : ClickableRenderingEngine {
     }
 
     // -------------------------------------------------------------------------
-    // Shim overrides — keep existing callers compiling (Task 6 removes these)
+    // Shim overrides — keep existing callers compiling
     // -------------------------------------------------------------------------
 
     /**
@@ -167,11 +167,11 @@ class USXRenderer : ClickableRenderingEngine {
     }
 
     /**
-     * Shim: required by ClickableRenderingEngine. Delegates to render().
-     * DefaultRenderer calls this directly; the result is a SpannableStringBuilder.
+     * Required by ClickableRenderingEngine. Returns the platform-agnostic node list
+     * for the given verse input.
      */
-    override fun renderVerse(input: CharSequence): CharSequence {
-        return render(input)
+    override fun renderVerse(input: CharSequence): List<TextNode> {
+        return renderToNodes(input.toString())
     }
 
     /**
@@ -194,7 +194,7 @@ class USXRenderer : ClickableRenderingEngine {
     // getLeadingMajorSectionHeading
     // -------------------------------------------------------------------------
 
-    override fun getLeadingMajorSectionHeading(input: CharSequence): CharSequence {
+    override fun getLeadingMajorSectionHeading(input: CharSequence): String {
         val matcher = paraPattern("ms").matcher(input.toString())
         return if (matcher.find() && matcher.start() == 0) matcher.group(1) ?: "" else ""
     }

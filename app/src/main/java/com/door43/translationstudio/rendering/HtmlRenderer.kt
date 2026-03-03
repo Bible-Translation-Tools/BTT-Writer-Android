@@ -15,7 +15,7 @@ import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
 /**
  * HTML rendering engine. Produces a List<TextNode> via renderToNodes().
  * The render(CharSequence) override is a shim that calls renderToNodes + SpannableAdapter.convert
- * so that existing callers continue to work until Task 6 updates the base class.
+ * so that existing callers continue to work.
  *
  * No Android framework code lives in this file beyond the backward-compat constructor.
  * HtmlTagHandler has been moved to rendering/adapter/HtmlTagHandler.kt and is no longer
@@ -27,16 +27,14 @@ class HtmlRenderer(
 ) : RenderingEngine() {
 
     /**
-     * Backward-compat shim constructor. Context is accepted but ignored — kept for binary
-     * compatibility until Task 6 removes the Context field from RenderingEngine.
+     * Backward-compat shim constructor. Context is accepted but not stored — kept for binary
+     * compatibility with existing call sites.
      */
     constructor(
-        context: Context,  // ignored — kept for binary compat until Task 6
+        context: Context,  // ignored — RenderingEngine no longer holds a Context field
         preprocessCallback: OnPreprocessLink,
         linkListener: Span.OnClickListener
-    ) : this(preprocessCallback, linkListener) {
-        this.context = context
-    }
+    ) : this(preprocessCallback, linkListener)
 
     // -------------------------------------------------------------------------
     // Public API — new pipeline
@@ -46,7 +44,7 @@ class HtmlRenderer(
      * Render HTML-formatted input into a platform-agnostic List<TextNode>.
      * This is the primary output of the new pipeline.
      */
-    fun renderToNodes(input: String): List<TextNode> {
+    override fun renderToNodes(input: String): List<TextNode> {
         val allTokens = mutableListOf<Token>()
         allTokens.addAll(findTranslationAcademyAddresses(input))
         allTokens.addAll(findTranslationAcademyLinks(input))
@@ -73,7 +71,7 @@ class HtmlRenderer(
     }
 
     // -------------------------------------------------------------------------
-    // Shim override — keeps existing callers compiling (Task 6 removes this)
+    // Shim override — keeps existing callers compiling
     // -------------------------------------------------------------------------
 
     /**
