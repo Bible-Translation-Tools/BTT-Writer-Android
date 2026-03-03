@@ -1,8 +1,10 @@
 // rendering/adapter/ComposeTextAdapter.kt
 package com.door43.translationstudio.rendering.adapter
 
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -16,11 +18,13 @@ import com.door43.translationstudio.rendering.model.TextNode
  * Converts a List<TextNode> to Compose AnnotatedString.
  *
  * Usage in a Composable:
- *   val annotated = ComposeTextAdapter.convert(nodes, searchHighlightColor = Color.Yellow)
+ *   val annotated = ComposeTextAdapter.convert(
+ *     nodes,
+ *     onNoteClick = { notes -> showDialog(notes) }
+ *   )
  *   Text(annotated)
  *
- * Click handling: attach a clickable annotation for verse/note/link nodes
- * and handle in ClickableText's onClick lambda.
+ * Click handling: note markers include LinkAnnotation that calls onNoteClick.
  */
 object ComposeTextAdapter {
 
@@ -28,10 +32,11 @@ object ComposeTextAdapter {
         nodes: List<TextNode>,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
-        noteColor: Color = Color(0xFFFFD700)  // amber
+        noteColor: Color = Color(0xFFFFD700),  // amber
+        onNoteClick: (String) -> Unit = {}
     ): AnnotatedString = buildAnnotatedString {
         for (node in nodes) {
-            appendNode(node, searchHighlightColor, verseColor, noteColor)
+            appendNode(node, searchHighlightColor, verseColor, noteColor, onNoteClick)
         }
     }
 
@@ -39,7 +44,8 @@ object ComposeTextAdapter {
         node: TextNode,
         searchHighlightColor: Color,
         verseColor: Color,
-        noteColor: Color
+        noteColor: Color,
+        onNoteClick: (String) -> Unit
     ) {
         when (node) {
             is TextNode.Text -> append(node.content)
@@ -97,8 +103,13 @@ object ComposeTextAdapter {
             is TextNode.NoteMarker -> {
                 val start = length
                 pushStyle(SpanStyle(color = noteColor, fontStyle = FontStyle.Italic))
-                addStringAnnotation(tag = "NOTE", annotation = node.notes, start = start, end = start + node.caller.length)
-                append(node.caller)
+                appendInlineContent("footnote_icon", "footnote")
+                val end = length
+                addLink(
+                    LinkAnnotation.Clickable(tag = "NOTE") { onNoteClick(node.notes) },
+                    start = start,
+                    end = end
+                )
                 pop()
             }
 

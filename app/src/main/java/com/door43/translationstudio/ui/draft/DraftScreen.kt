@@ -118,7 +118,8 @@ fun DraftScreen(
                     DraftChapterCard(
                         chapterContent = chapterContent,
                         language = language,
-                        typography = typography
+                        typography = typography,
+                        onNoteClick = { notes -> showNoteDialog = notes }
                     )
                 }
             }
