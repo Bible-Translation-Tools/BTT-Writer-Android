@@ -349,14 +349,11 @@ open class ReviewModeAdapter(
         if (item.isEditing) {
             val view = holder.binding.targetEditableBody
             if (view != null) {
-                item.renderedTargetNodes = renderTargetText(holder, item, true)
-                view.setText(SpannableAdapter.convert(
-                    item.renderedTargetNodes ?: emptyList(),
-                    context = context,
-                    noteClickListener = NoteClickListener { _, marker, start, end ->
-                        onNoteClick(holder, item, marker, start, end, true)
-                    }
-                ))
+                // Temporarily disable TextWatcher to prevent automatic save during programmatic setText
+                view.removeTextChangedListener(holder.editableTextWatcher)
+                // Display the raw source text (already in USFM/USX format)
+                view.setText(item.targetText)
+                view.addTextChangedListener(holder.editableTextWatcher)
 
                 handler.post {
                     onClickListener?.showKeyboard(view)
@@ -387,9 +384,10 @@ open class ReviewModeAdapter(
                     view.requestFocus()
                 }
             }
+            // Only add missing verses when exiting edit mode, not when entering
+            addMissingVerses(holder)
         }
 
-        addMissingVerses(holder)
         holder.rebuildControls(item)
     }
 

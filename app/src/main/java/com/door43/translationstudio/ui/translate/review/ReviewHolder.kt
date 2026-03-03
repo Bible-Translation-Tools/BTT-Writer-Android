@@ -74,7 +74,7 @@ class ReviewHolder(
     private var initialTextSize = 0f
     private var marginInitialLeft = 0
 
-    private val editableTextWatcher: TextWatcher
+    internal val editableTextWatcher: TextWatcher
 
     private enum class MergeConflictDisplayState {
         NORMAL,

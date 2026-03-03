@@ -155,6 +155,15 @@ object SpannableAdapter {
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                         )
                     }
+                    // Add SpannedString span so Translator.compileTranslation() can reconstruct
+                    // the machine-readable source format after drag-and-drop.
+                    if (node.machineReadable.isNotEmpty()) {
+                        sb.setSpan(
+                            SpannedString(node.machineReadable),
+                            start, end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
                 }
                 if (node.pinned && (verseClickListener != null || verseLongClickListener != null)) {
                     val spanStart = start
