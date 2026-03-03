@@ -18,8 +18,11 @@ sealed class TextNode {
      * @param startVerse The first (or only) verse number.
      * @param endVerse The last verse in a range, or **0** if this is a single verse.
      * @param pinned When true, display as a pinned icon (tap-to-navigate UI); when false, display as plain number text.
+     * @param machineReadable The raw source-format string (e.g. `\v 1 ` for USFM, `<verse number="1" style="v"/>` for USX).
+     *   Empty string for synthesised missing-verse markers. Used by [Translator.compileTranslation] to reconstruct
+     *   the machine-readable form after drag-and-drop.
      */
-    data class VerseMarker(val startVerse: Int, val endVerse: Int, val pinned: Boolean) : TextNode()
+    data class VerseMarker(val startVerse: Int, val endVerse: Int, val pinned: Boolean, val machineReadable: String = "") : TextNode()
 
     // TODO: Consider adding a stable id/verseRef field here if NoteMarker needs to be
     //       serialised (e.g. SavedStateHandle, analytics). Currently all fields are display strings.

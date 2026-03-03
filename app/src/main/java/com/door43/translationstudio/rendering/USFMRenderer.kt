@@ -1,10 +1,8 @@
 package com.door43.translationstudio.rendering
 
-import android.content.Context
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.TextNode
-import com.door43.translationstudio.ui.spannables.Span
 import com.door43.translationstudio.ui.spannables.USFMChar
 import com.door43.translationstudio.ui.spannables.USFMNoteSpan
 import com.door43.translationstudio.ui.spannables.USFMParagraphSpan
@@ -16,14 +14,12 @@ import java.util.regex.Pattern
  * The render(CharSequence) override is a shim that calls renderToNodes + SpannableAdapter.convert
  * so that existing callers continue to work.
  *
- * No Android framework code lives in this file. The android.content.Context import is retained
- * only for the legacy constructors that accept a Context for binary compatibility with existing
- * call sites. The Context is not stored or used by any rendering logic.
+ * No Android framework code lives in this file.
  */
-class USFMRenderer : ClickableRenderingEngine {
+class USFMRenderer(
+    private val pinVerses: Boolean = false
+) : ClickableRenderingEngine() {
 
-    private var noteListener: Span.OnClickListener? = null
-    private var verseListener: Span.OnClickListener? = null
     private var renderParagraphs = true
     private var renderVerses = true
     private var search: String? = null
@@ -31,40 +27,6 @@ class USFMRenderer : ClickableRenderingEngine {
     private var expectedVerseRange = IntArray(0)
     private var suppressLeadingMajorSectionHeadings = false
     private var addedMissingVerse = false
-
-    // -------------------------------------------------------------------------
-    // Constructors
-    // -------------------------------------------------------------------------
-
-    /** No-arg constructor — for Compose / unit tests (no Context needed). */
-    constructor()
-
-    /** Constructor with listeners but no Context. */
-    constructor(verseListener: Span.OnClickListener?, noteListener: Span.OnClickListener?) {
-        this.verseListener = verseListener
-        this.noteListener = noteListener
-    }
-
-    /**
-     * Legacy constructor kept for callers that supply only a Context.
-     * Context is accepted but not stored — kept for binary compatibility with existing call sites.
-     */
-    constructor(context: Context) : this() {
-        // context intentionally not stored; RenderingEngine no longer holds a Context field
-    }
-
-    /**
-     * Legacy constructor kept for existing call sites in DefaultRenderer and
-     * ClickableRenderingEngineFactory.
-     * Context is accepted but not stored — kept for binary compatibility with existing call sites.
-     */
-    constructor(
-        context: Context,
-        verseListener: Span.OnClickListener?,
-        noteListener: Span.OnClickListener?
-    ) : this(verseListener, noteListener) {
-        // context intentionally not stored; RenderingEngine no longer holds a Context field
-    }
 
     // -------------------------------------------------------------------------
     // Configuration setters (no Android dependencies)
@@ -323,11 +285,10 @@ class USFMRenderer : ClickableRenderingEngine {
                 if (startVerse < minV || effectiveEnd > maxV) continue
             }
 
-            val pinned = verseListener != null
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.VerseMarker(startVerse, endVerse, pinned))
+                    listOf(TextNode.VerseMarker(startVerse, endVerse, pinVerses, text.substring(matcher.start(), matcher.end())))
                 )
             )
         }
@@ -474,18 +435,17 @@ class USFMRenderer : ClickableRenderingEngine {
         val existingVerses = nodes.filterIsInstance<TextNode.VerseMarker>()
             .flatMap { if (it.endVerse > 0) (it.startVerse..it.endVerse).toList() else listOf(it.startVerse) }
             .toSet()
-        val pinned = verseListener != null
         val missing = mutableListOf<TextNode.VerseMarker>()
         if (expectedVerseRange.size == 1) {
             val v = expectedVerseRange[0]
             if (!existingVerses.contains(v)) {
-                missing.add(TextNode.VerseMarker(v, 0, pinned))
+                missing.add(TextNode.VerseMarker(v, 0, pinVerses))
                 addedMissingVerse = true
             }
         } else if (expectedVerseRange.size == 2) {
             for (v in expectedVerseRange[1] downTo expectedVerseRange[0]) {
                 if (!existingVerses.contains(v)) {
-                    missing.add(TextNode.VerseMarker(v, 0, pinned))
+                    missing.add(TextNode.VerseMarker(v, 0, pinVerses))
                     addedMissingVerse = true
                 }
             }

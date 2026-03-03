@@ -4,7 +4,6 @@ import android.content.Context
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.TranslationFormat
-import com.door43.translationstudio.ui.spannables.Span
 
 class RenderingProvider(
     private val context: Context
@@ -15,27 +14,26 @@ class RenderingProvider(
     }
 
     fun createHtmlRenderer(
-        preprocessor: HtmlRenderer.OnPreprocessLink,
-        linkListener: Span.OnClickListener
+        preprocessor: HtmlRenderer.OnPreprocessLink
     ): HtmlRenderer {
-        return HtmlRenderer(context, preprocessor, linkListener)
+        return HtmlRenderer(preprocessor)
     }
 
+    /**
+     * Setup rendering group for translation format using a pinVerses flag.
+     * @param format
+     * @param renderingGroup
+     * @param pinVerses true if verse markers should be pinned (i.e. clickable)
+     * @param target - true if rendering target translations, false if source text
+     * @return
+     */
     fun setupRenderingGroup(
         format: TranslationFormat,
         renderingGroup: RenderingGroup,
-        verseClickListener: Span.OnClickListener? = null,
-        noteClickListener: Span.OnClickListener? = null,
+        pinVerses: Boolean = false,
         target: Boolean = true
     ): ClickableRenderingEngine {
-        return Clickables.setupRenderingGroup(
-            context,
-            format,
-            renderingGroup,
-            verseClickListener,
-            noteClickListener,
-            target
-        )
+        return Clickables.setupRenderingGroup(context, format, renderingGroup, pinVerses, target)
     }
 
     companion object {

@@ -5,13 +5,11 @@ import android.content.ClipData
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.Html
 import android.text.Layout
-import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -19,8 +17,6 @@ import android.text.SpannedString
 import android.text.TextUtils
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
-import android.text.style.ImageSpan
-import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.view.DragEvent
 import android.view.LayoutInflater
@@ -42,16 +38,17 @@ import com.door43.translationstudio.databinding.FragmentFootnotePromptBinding
 import com.door43.translationstudio.databinding.FragmentReviewListItemBinding
 import com.door43.translationstudio.databinding.FragmentReviewListItemMergeConflictBinding
 import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding
-import com.door43.translationstudio.rendering.ClickableRenderingEngine
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.spannables.NoteSpan
-import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.rendering.adapter.NoteClickListener
+import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.rendering.adapter.VerseClickListener
+import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
+import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.spannables.USFMNoteSpan
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
-import com.door43.translationstudio.ui.spannables.VerseSpan
 import com.door43.translationstudio.ui.translate.review.OnReviewModeListener
 import com.door43.translationstudio.ui.translate.review.ReviewHolder
 import com.door43.translationstudio.ui.translate.review.SearchSubject
@@ -352,8 +349,14 @@ open class ReviewModeAdapter(
         if (item.isEditing) {
             val view = holder.binding.targetEditableBody
             if (view != null) {
-                item.renderedTargetText = this.renderTargetText(holder, item, true)
-                view.setText(item.renderedTargetText)
+                item.renderedTargetNodes = renderTargetText(holder, item, true)
+                view.setText(SpannableAdapter.convert(
+                    item.renderedTargetNodes ?: emptyList(),
+                    context = context,
+                    noteClickListener = NoteClickListener { _, marker, start, end ->
+                        onNoteClick(holder, item, marker, start, end, true)
+                    }
+                ))
 
                 handler.post {
                     onClickListener?.showKeyboard(view)
@@ -364,8 +367,20 @@ open class ReviewModeAdapter(
             val view = holder.binding.targetBody
             if (view != null) {
                 // re-render for verse mode
-                item.renderedTargetText = renderTargetText(holder, item)
-                view.setText(item.renderedTargetText)
+                item.renderedTargetNodes = renderTargetText(holder, item)
+                view.setText(SpannableAdapter.convert(
+                    item.renderedTargetNodes ?: emptyList(),
+                    context = context,
+                    verseClickListener = VerseClickListener { _, marker, _, _ ->
+                        onVerseClick(item, marker)
+                    },
+                    verseLongClickListener = VerseLongClickListener { view, marker, start, end ->
+                        onVerseLongClick(view, holder, item, marker, start, end)
+                    },
+                    noteClickListener = NoteClickListener { _, marker, start, end ->
+                        onNoteClick(holder, item, marker, start, end, false)
+                    }
+                ))
 
                 handler.post {
                     onClickListener?.closeKeyboard()
@@ -423,7 +438,6 @@ open class ReviewModeAdapter(
             if (item.isEditing && holder.binding.targetEditableBody != null) {
                 // make sure to capture verse marker changes before dialog is displayed
                 val changes: Editable? = holder.binding.targetEditableBody?.text
-                item.renderedTargetText = changes
                 if (changes != null) {
                     item.targetText = Translator.compileTranslation(changes)
                 }
@@ -462,28 +476,19 @@ open class ReviewModeAdapter(
     }
 
     /**
-     * Generate spannable for source text. Will add click listener for notes if supported
+     * Generate node list for source text. Note click listeners are passed to
+     * SpannableAdapter.convert() when the nodes are later displayed in a ViewHolder.
      */
-    override fun onRenderSourceText(item: ReviewListItem): CharSequence {
+    override fun onRenderSourceText(item: ReviewListItem): List<TextNode> {
         val renderingGroup = RenderingGroup()
         val enableSearch = searchText != null && searchSubject == SearchSubject.SOURCE
 
         if (Clickables.isClickableFormat(item.sourceTranslationFormat)) {
-            val noteClickListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    if (span is NoteSpan) {
-                        onSourceFootnoteClick(item, span, start, end)
-                    }
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
-            }
             renderingProvider.setupRenderingGroup(
                 item.sourceTranslationFormat,
                 renderingGroup,
-                null,
-                noteClickListener,
-                false
+                pinVerses = false,
+                target = false
             )
         } else {
             renderingGroup.addEngine(DefaultRenderer(context))
@@ -496,9 +501,9 @@ open class ReviewModeAdapter(
         }
 
         renderingGroup.init(item.sourceText)
-        val results = renderingGroup.start()
+        val nodes = renderingGroup.startNodes()
         item.hasMissingVerses = renderingGroup.isAddedMissingVerse
-        return results ?: ""
+        return nodes
     }
 
     override fun onSearchItemUpdated(position: Int, view: TextView, isTarget: Boolean) {
@@ -540,11 +545,11 @@ open class ReviewModeAdapter(
         }
     }
 
-    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem, editable: Boolean): CharSequence {
+    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem, editable: Boolean): List<TextNode> {
         return renderTargetText(holder, item, editable)
     }
 
-    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem): CharSequence {
+    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem): List<TextNode> {
         return renderTargetText(holder, item)
     }
 
@@ -570,10 +575,10 @@ open class ReviewModeAdapter(
         if (item.hasMissingVerses && !item.isComplete) {
             Log.i(TAG, "Adding Missing verses to: " + item.targetText)
             if (item.targetText.isNotEmpty()) {
-                val translation = applyChangedText(item.renderedTargetText, item)
+                val translation = applyChangedText(item.renderedTargetNodes?.let { SpannableAdapter.convert(it) }, item)
                 Log.i(TAG, "Added Missing verses: $translation")
                 item.hasMissingVerses = false
-                item.renderedTargetText = null // force re-rendering of target text
+                item.renderedTargetNodes = null // force re-rendering of target text
 
                 holder.itemView.post { notifyItemChanged(position) }
             }
@@ -641,7 +646,7 @@ open class ReviewModeAdapter(
         }
 
         if (opened) {
-            (item as ReviewListItem).renderedTargetText = null
+            (item as ReviewListItem).renderedTargetNodes = null
             item.isComplete = false
             triggerNotifyItemChanged(filteredItems.indexOf(item))
         }
@@ -765,15 +770,14 @@ open class ReviewModeAdapter(
         )
         editText.setText(newText)
 
-        item.renderedTargetText = newText
         item.targetText = Translator.compileTranslation(editText.text) // get XML for footnote
         item.target.applyFrameTranslation(item.ft, item.targetText) // save change
 
         // generate spannable again adding
         if (item.isComplete || item.isEditing) {
-            item.renderedTargetText = this.renderTargetText(holder, item, true)
+            item.renderedTargetNodes = renderTargetText(holder, item, true)
         } else {
-            item.renderedTargetText = renderTargetText(
+            item.renderedTargetNodes = renderTargetText(
                 item.targetText,
                 item.targetTranslationFormat,
                 item.ft,
@@ -781,7 +785,7 @@ open class ReviewModeAdapter(
                 item
             )
         }
-        editText.setText(item.renderedTargetText)
+        editText.setText(SpannableAdapter.convert(item.renderedTargetNodes ?: emptyList(), context = context))
         editText.setSelection(editText.length(), editText.length())
     }
 
@@ -878,7 +882,8 @@ open class ReviewModeAdapter(
 
                             holder.binding.targetEditableBody?.let {
                                 holder.removeTextChangeListener()
-                                it.setText(item.renderedTargetText)
+                                item.renderedTargetNodes = renderTargetText(holder, item, true)
+                                it.setText(SpannableAdapter.convert(item.renderedTargetNodes ?: emptyList(), context = context))
                                 holder.attachTextChangeListener()
                             }
                         }
@@ -941,7 +946,8 @@ open class ReviewModeAdapter(
 
                             holder.binding.targetEditableBody?.let {
                                 holder.removeTextChangeListener()
-                                it.setText(item.renderedTargetText)
+                                item.renderedTargetNodes = renderTargetText(holder, item, true)
+                                it.setText(SpannableAdapter.convert(item.renderedTargetNodes ?: emptyList(), context = context))
                                 holder.attachTextChangeListener()
                             }
                         }
@@ -1069,10 +1075,10 @@ open class ReviewModeAdapter(
         }
 
         (item as ReviewListItem).isEditing = false
-        item.renderedTargetText = null
+        item.renderedTargetNodes = null
     }
 
-    private fun renderTargetText(holder: ReviewHolder, item: ReviewListItem): CharSequence {
+    private fun renderTargetText(holder: ReviewHolder, item: ReviewListItem): List<TextNode> {
         return renderTargetText(
             item.targetText,
             item.targetTranslationFormat,
@@ -1083,174 +1089,26 @@ open class ReviewModeAdapter(
     }
 
     /**
-     * generate spannable for target text.  Will add click listener for notes and verses if they
-     * are supported
+     * generate node list for target text.  Verse/note click listeners are passed to
+     * SpannableAdapter.convert() when the nodes are later displayed in a ViewHolder.
      */
-    @SuppressLint("SetTextI18n")
     private fun renderTargetText(
         text: String?,
         format: TranslationFormat,
         frameTranslation: FrameTranslation,
         holder: ReviewHolder?,
         item: ReviewListItem
-    ): CharSequence {
+    ): List<TextNode> {
         val renderingGroup = RenderingGroup()
         val enableSearch = searchText != null && searchSubject != null && searchSubject == SearchSubject.TARGET
 
         if (Clickables.isClickableFormat(format)) {
-            val verseClickListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    itemActionListener?.onShowToast(R.string.long_click_to_drag)
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {
-                    toggleDisableItems(true, item)
-
-                    val dragData = ClipData.newPlainText(
-                        "${item.chapterSlug}-${item.chunkSlug}",
-                        span.machineReadable
-                    )
-                    val pin = span as VerseSpan
-
-                    // create drag shadow
-                    val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                    val markerBinding = FragmentVerseMarkerBinding.inflate(inflater)
-
-                    if (pin.endVerseNumber > 0) {
-                        markerBinding.verse.text = "${pin.startVerseNumber}-${pin.endVerseNumber}"
-                    } else {
-                        markerBinding.verse.text = "${pin.startVerseNumber}"
-                    }
-                    val shadow = ViewUtil.convertToBitmap(markerBinding.root)
-                    val myShadow = CustomDragShadowBuilder.fromBitmap(context, shadow)
-
-                    val spanRange = intArrayOf(start, end)
-                    @Suppress("DEPRECATION")
-                    view.startDrag(
-                        dragData,  // the data to be dragged
-                        myShadow,  // the drag shadow builder
-                        spanRange, // local state data
-                        0          // flags
-                    )
-
-                    view.setOnDragListener(object : View.OnDragListener {
-                        private var hasEntered = false
-
-                        override fun onDrag(v: View, e: DragEvent): Boolean {
-                            val editText = v as EditText
-                            when (e.action) {
-                                DragEvent.ACTION_DRAG_STARTED -> {
-                                    // delete old span
-                                    val localSpanRange = e.localState as? IntArray
-                                    if (localSpanRange != null && localSpanRange.size >= 2) {
-                                        val input = editText.text
-                                        if (localSpanRange[0] < input.length && localSpanRange[1] < input.length) {
-                                            val out = TextUtils.concat(
-                                                input.subSequence(0, localSpanRange[0]),
-                                                input.subSequence(localSpanRange[1], input.length)
-                                            )
-                                            editText.setText(out)
-                                        }
-                                    }
-                                }
-                                DragEvent.ACTION_DROP -> {
-                                    var offset = editText.getOffsetForPosition(e.x, e.y)
-                                    var currentText: CharSequence = editText.text
-                                    offset = closestSpotForVerseMarker(offset, currentText)
-
-                                    currentText = if (offset >= 0) {
-                                        // insert the verse at the offset
-                                        TextUtils.concat(
-                                            currentText.subSequence(0, offset),
-                                            renderVersePin(pin),
-                                            currentText.subSequence(offset, currentText.length)
-                                        )
-                                    } else {
-                                        // place the verse back at the beginning
-                                        TextUtils.concat(renderVersePin(pin), currentText)
-                                    }
-
-                                    val noHighlightText = resetHighlightColor(currentText)
-                                    editText.setText(noHighlightText)
-
-                                    val translation = Translator.compileTranslation(editText.text)
-                                    item.target.applyFrameTranslation(frameTranslation, translation)
-                                    item.targetText = translation
-                                    item.renderedTargetText = renderTargetText(
-                                        translation,
-                                        item.targetTranslationFormat,
-                                        frameTranslation,
-                                        holder,
-                                        item
-                                    )
-                                }
-                                DragEvent.ACTION_DRAG_ENDED -> {
-                                    toggleDisableItems(false, null)
-                                    v.setOnDragListener(null)
-                                    editText.setSelection(editText.selectionEnd)
-                                    // reset verse if dragged off the view
-                                    if (!hasEntered) {
-                                        // place the verse back at the beginning
-                                        var currentText: CharSequence = editText.text
-                                        currentText = TextUtils.concat(renderVersePin(pin), currentText)
-                                        editText.setText(currentText)
-                                        val translation = Translator.compileTranslation(editText.text)
-                                        item.target.applyFrameTranslation(frameTranslation, translation)
-                                        item.renderedTargetText = renderTargetText(
-                                            translation,
-                                            item.targetTranslationFormat,
-                                            frameTranslation,
-                                            holder,
-                                            item
-                                        )
-                                    }
-                                }
-                                DragEvent.ACTION_DRAG_ENTERED -> {
-                                    hasEntered = true
-                                }
-                                DragEvent.ACTION_DRAG_EXITED -> {
-                                    hasEntered = false
-                                    editText.setSelection(editText.selectionEnd)
-                                    val noHighlightText = resetHighlightColor(editText.text)
-                                    editText.setText(noHighlightText)
-                                }
-                                DragEvent.ACTION_DRAG_LOCATION -> {
-                                    val offset = editText.getOffsetForPosition(e.x, e.y)
-                                    if (offset >= 0 && offset < editText.text.length - 1) {
-                                        val txt = editText.text
-                                        val str = highlightWordAt(offset, txt)
-                                        editText.setText(str)
-                                    } else {
-                                        editText.setSelection(editText.selectionEnd)
-                                    }
-                                }
-                            }
-                            return true
-                        }
-                    })
-                }
-            }
-
-            val noteClickListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    if (span is NoteSpan) {
-                        holder?.let {
-                            showFootnote(it, item, span, start, end, true)
-                        }
-                    }
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
-            }
-
             val renderer = renderingProvider.setupRenderingGroup(
                 format,
                 renderingGroup,
-                verseClickListener,
-                noteClickListener,
-                true
-            ) as ClickableRenderingEngine
-
+                pinVerses = true,
+                target = true
+            )
             val verseRange = RenderingProvider.getVerseRange(
                 item.sourceText,
                 item.sourceTranslationFormat
@@ -1268,48 +1126,17 @@ open class ReviewModeAdapter(
 
         if (!text.isNullOrBlank()) {
             renderingGroup.init(text)
-            val results = renderingGroup.start()
+            val nodes = renderingGroup.startNodes()
             item.hasMissingVerses = renderingGroup.isAddedMissingVerse
-            return results ?: ""
+            return nodes
         } else {
-            return ""
+            return emptyList()
         }
     }
 
     /**
      * Find the closest position to drop verse marker. Weighted toward beginning of word.
      */
-    /**
-     * Renders a VerseSpan to a SpannableStringBuilder with the verse-pin visual style.
-     * TODO Task 9: move this render logic to SpannableAdapter or a dedicated adapter helper.
-     */
-    @SuppressLint("SetTextI18n")
-    private fun renderVersePin(pin: VerseSpan): CharSequence {
-        val label = if (pin.endVerseNumber > 0) {
-            "${pin.startVerseNumber}-${pin.endVerseNumber}"
-        } else {
-            "${pin.startVerseNumber}"
-        }
-        val s = SpannableStringBuilder(label)
-        if (s.isNotEmpty()) {
-            s.setSpan(SpannedString(pin.machineReadable), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            s.setSpan(RelativeSizeSpan(0.8f), 0, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            s.setSpan(
-                ForegroundColorSpan(ContextCompat.getColor(context, R.color.white)),
-                0, s.length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-            val inflater = LayoutInflater.from(context)
-            val binding = com.door43.translationstudio.databinding.FragmentVerseMarkerBinding.inflate(inflater)
-            binding.verse.text = label
-            val image = ViewUtil.convertToBitmap(binding.root)
-            val background = BitmapDrawable(context.resources, image)
-            background.setBounds(0, 0, background.minimumWidth, background.minimumHeight)
-            s.setSpan(ImageSpan(background), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        }
-        return s
-    }
-
     private fun closestSpotForVerseMarker(offset: Int, text: CharSequence): Int {
         var currentOffset = offset
         if (currentOffset <= 0) {
@@ -1400,25 +1227,24 @@ open class ReviewModeAdapter(
     private fun showFootnote(
         holder: ReviewHolder,
         item: ReviewListItem,
-        span: NoteSpan,
+        marker: TextNode.NoteMarker,
         start: Int,
         end: Int,
         editable: Boolean
     ) {
-        val marker = span.passage
         var title: CharSequence = context.resources.getText(R.string.title_footnote)
-        if (marker.toString().isNotEmpty()) {
-            title = "$title: $marker"
+        if (marker.passage.isNotEmpty()) {
+            title = "$title: ${marker.passage}"
         }
-        val message = span.notes
+        val message = marker.notes
 
         if (editable && !item.isComplete) {
             AlertDialog.Builder(context, R.style.AppTheme_Dialog)
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton(R.string.dismiss, null)
-                .setNeutralButton(R.string.edit) { _, _ -> editFootnote(span.notes, holder, item, start, end) }
-                .setNegativeButton(R.string.label_delete) { _, _ -> deleteFootnote(span.notes, holder, item, start, end) }
+                .setNeutralButton(R.string.edit) { _, _ -> editFootnote(marker.notes, holder, item, start, end) }
+                .setNegativeButton(R.string.label_delete) { _, _ -> deleteFootnote(marker.notes, holder, item, start, end) }
                 .show()
 
         } else {
@@ -1454,36 +1280,22 @@ open class ReviewModeAdapter(
     }
 
     /**
-     * generate spannable for source text.  Will add click listener for notes if supported
+     * generate node list for target text in editable or non-editable mode.
+     * Note/verse click listeners are passed to SpannableAdapter.convert() in the ViewHolder.
      */
     private fun renderTargetText(
         holder: ReviewHolder,
         item: ReviewListItem,
         editable: Boolean
-    ): CharSequence {
+    ): List<TextNode> {
         val renderingGroup = RenderingGroup()
-        var enableSearch = searchText != null && searchSubject != null
-        if (editable) {
-            // make sure we are searching target
-            enableSearch = enableSearch && searchSubject == SearchSubject.TARGET
-        }
+        val enableSearch = searchText != null && searchSubject == SearchSubject.TARGET
         if (Clickables.isClickableFormat(item.targetTranslationFormat)) {
-            val noteClickListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    if (span is NoteSpan) {
-                        showFootnote(holder, item, span, start, end, editable)
-                    }
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
-            }
-
             renderingProvider.setupRenderingGroup(
                 item.targetTranslationFormat,
                 renderingGroup,
-                null,
-                noteClickListener,
-                false
+                pinVerses = !editable,
+                target = true
             )
 
             if (editable) {
@@ -1503,9 +1315,9 @@ open class ReviewModeAdapter(
         }
 
         renderingGroup.init(item.targetText)
-        val results = renderingGroup.start()
+        val nodes = renderingGroup.startNodes()
         item.hasMissingVerses = renderingGroup.isAddedMissingVerse
-        return results ?: ""
+        return nodes
     }
 
     override fun getItemCount(): Int {
@@ -1547,11 +1359,140 @@ open class ReviewModeAdapter(
         return -1
     }
 
-    override fun onSourceFootnoteClick(item: ReviewListItem, span: NoteSpan, start: Int, end: Int) {
+    override fun onSourceNoteClick(item: ReviewListItem, marker: TextNode.NoteMarker) {
         val position = filteredItems.indexOf(item)
         if (onClickListener == null) return
         val holder = onClickListener?.getVisibleViewHolder(position) as? ReviewHolder ?: return
-        showFootnote(holder, item, span, start, end, false)
+        showFootnote(holder, item, marker, 0, 0, false)
+    }
+
+    override fun onNoteClick(holder: ReviewHolder, item: ReviewListItem, marker: TextNode.NoteMarker, start: Int, end: Int, editable: Boolean) {
+        showFootnote(holder, item, marker, start, end, editable)
+    }
+
+    override fun onVerseClick(item: ReviewListItem, marker: TextNode.VerseMarker) {
+        itemActionListener?.onShowToast(R.string.long_click_to_drag)
+    }
+
+    override fun onVerseLongClick(
+        view: View,
+        holder: ReviewHolder,
+        item: ReviewListItem,
+        marker: TextNode.VerseMarker,
+        start: Int,
+        end: Int
+    ) {
+        toggleDisableItems(true, item)
+        val frameTranslation = item.ft
+
+        val dragData = ClipData.newPlainText(
+            "${item.chapterSlug}-${item.chunkSlug}",
+            marker.machineReadable.ifEmpty { "${marker.startVerse}" }
+        )
+
+        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val markerBinding = FragmentVerseMarkerBinding.inflate(inflater)
+        markerBinding.verse.text = if (marker.endVerse > 0) "${marker.startVerse}-${marker.endVerse}" else "${marker.startVerse}"
+        val shadow = ViewUtil.convertToBitmap(markerBinding.root)
+        val myShadow = CustomDragShadowBuilder.fromBitmap(context, shadow)
+
+        val spanRange = intArrayOf(start, end)
+        @Suppress("DEPRECATION")
+        view.startDrag(dragData, myShadow, spanRange, 0)
+
+        view.setOnDragListener(object : View.OnDragListener {
+            private var hasEntered = false
+
+            override fun onDrag(v: View, e: DragEvent): Boolean {
+                val editText = v as EditText
+                when (e.action) {
+                    DragEvent.ACTION_DRAG_STARTED -> {
+                        val localSpanRange = e.localState as? IntArray
+                        if (localSpanRange != null && localSpanRange.size >= 2) {
+                            val input = editText.text
+                            if (localSpanRange[0] < input.length && localSpanRange[1] < input.length) {
+                                val out = TextUtils.concat(
+                                    input.subSequence(0, localSpanRange[0]),
+                                    input.subSequence(localSpanRange[1], input.length)
+                                )
+                                editText.setText(out)
+                            }
+                        }
+                    }
+                    DragEvent.ACTION_DROP -> {
+                        var offset = editText.getOffsetForPosition(e.x, e.y)
+                        var currentText: CharSequence = editText.text
+                        offset = closestSpotForVerseMarker(offset, currentText)
+                        val versePin: CharSequence = SpannableAdapter.convert(listOf(marker), context = context)
+                        currentText = if (offset >= 0) {
+                            TextUtils.concat(currentText.subSequence(0, offset), versePin, currentText.subSequence(offset, currentText.length))
+                        } else {
+                            TextUtils.concat(versePin, currentText)
+                        }
+                        val noHighlightText = resetHighlightColor(currentText)
+                        editText.setText(noHighlightText)
+                        val translation = Translator.compileTranslation(editText.text)
+                        item.target.applyFrameTranslation(frameTranslation, translation)
+                        item.targetText = translation
+                        val nodes = renderTargetText(translation, item.targetTranslationFormat, frameTranslation, holder, item)
+                        item.renderedTargetNodes = nodes
+                        editText.setText(
+                            SpannableAdapter.convert(
+                                nodes,
+                                context = context,
+                                verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
+                                verseLongClickListener = VerseLongClickListener { v2, m, s, e -> onVerseLongClick(v2, holder, item, m, s, e) },
+                                noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, false) }
+                            )
+                        )
+                    }
+                    DragEvent.ACTION_DRAG_ENDED -> {
+                        toggleDisableItems(false, null)
+                        v.setOnDragListener(null)
+                        editText.setSelection(editText.selectionEnd)
+                        if (!hasEntered) {
+                            var currentText: CharSequence = editText.text
+                            val versePin: CharSequence = SpannableAdapter.convert(listOf(marker), context = context)
+                            currentText = TextUtils.concat(versePin, currentText)
+                            editText.setText(currentText)
+                            val translation = Translator.compileTranslation(editText.text)
+                            item.target.applyFrameTranslation(frameTranslation, translation)
+                            val recoveryNodes = renderTargetText(translation, item.targetTranslationFormat, frameTranslation, holder, item)
+                            item.renderedTargetNodes = recoveryNodes
+                            editText.setText(
+                                SpannableAdapter.convert(
+                                    recoveryNodes,
+                                    context = context,
+                                    verseClickListener = VerseClickListener { _, m, _, _ -> onVerseClick(item, m) },
+                                    verseLongClickListener = VerseLongClickListener { v2, m, s, e -> onVerseLongClick(v2, holder, item, m, s, e) },
+                                    noteClickListener = NoteClickListener { _, m, s, e -> onNoteClick(holder, item, m, s, e, false) }
+                                )
+                            )
+                        }
+                    }
+                    DragEvent.ACTION_DRAG_ENTERED -> {
+                        hasEntered = true
+                    }
+                    DragEvent.ACTION_DRAG_EXITED -> {
+                        hasEntered = false
+                        editText.setSelection(editText.selectionEnd)
+                        val noHighlightText = resetHighlightColor(editText.text)
+                        editText.setText(noHighlightText)
+                    }
+                    DragEvent.ACTION_DRAG_LOCATION -> {
+                        val offset = editText.getOffsetForPosition(e.x, e.y)
+                        if (offset >= 0 && offset < editText.text.length - 1) {
+                            val txt = editText.text
+                            val str = highlightWordAt(offset, txt)
+                            editText.setText(str)
+                        } else {
+                            editText.setSelection(editText.selectionEnd)
+                        }
+                    }
+                }
+                return true
+            }
+        })
     }
 
     /**
@@ -1681,7 +1622,7 @@ open class ReviewModeAdapter(
         val matcher = match?.toString() ?: ""
         val length = matcher.length
 
-        val text = if (searchingTarget) item.renderedTargetText else item.renderedSourceText
+        val text = if (searchingTarget) item.renderedTargetNodes?.let { SpannableAdapter.convert(it) } else item.renderedSourceNodes?.let { SpannableAdapter.convert(it) }
         val needRender = text == null
 
         val matcherEmpty = matcher.isEmpty()
@@ -1730,8 +1671,8 @@ open class ReviewModeAdapter(
                 // Item will be re-rendered with default text (without highlights)
                 if (reviewItem.hasSearchText) {
                     reviewItem.hasSearchText = false
-                    reviewItem.renderedSourceText = null
-                    reviewItem.renderedTargetText = null
+                    reviewItem.renderedSourceNodes = null
+                    reviewItem.renderedTargetNodes = null
                 }
             }
             triggerNotifyDataSetChanged()
@@ -1916,26 +1857,26 @@ open class ReviewModeAdapter(
                     var foundMatch = reviewItem.targetText.lowercase().contains(matcher)
                     if (foundMatch) { // if matched, it could be in markup, so we
                         // double-check by rendering and searching that
-                        val text = renderTargetText(
+                        val nodes = renderTargetText(
                             reviewItem.targetText,
                             reviewItem.targetTranslationFormat,
                             reviewItem.ft,
                             null,
                             reviewItem
                         )
-                        foundMatch = text.toString().lowercase().contains(matcher)
+                        foundMatch = SpannableAdapter.convert(nodes).toString().lowercase().contains(matcher)
                     }
                     match = foundMatch
                 } else {
                     var foundMatch: Boolean
-                    if (reviewItem.renderedSourceText != null) {
-                        foundMatch = reviewItem.renderedSourceText.toString().lowercase().contains(matcher)
+                    if (reviewItem.renderedSourceNodes != null) {
+                        foundMatch = SpannableAdapter.convert(reviewItem.renderedSourceNodes!!).toString().lowercase().contains(matcher)
                     } else {
                         foundMatch = reviewItem.sourceText.lowercase().contains(matcher)
                         if (foundMatch) { // if match, it could be in markup, so we
                             // double check by rendering and searching that
-                            val text = onRenderSourceText(reviewItem)
-                            foundMatch = text.toString().lowercase().contains(matcher)
+                            val nodes = onRenderSourceText(reviewItem)
+                            foundMatch = SpannableAdapter.convert(nodes).toString().lowercase().contains(matcher)
                         }
                     }
                     match = foundMatch
@@ -1943,15 +1884,15 @@ open class ReviewModeAdapter(
             }
 
             if (reviewItem.hasSearchText && !match) { // check for search match cleared
-                reviewItem.renderedTargetText = null  // re-render target
-                reviewItem.renderedSourceText = null  // re-render source
+                reviewItem.renderedTargetNodes = null  // re-render target
+                reviewItem.renderedSourceNodes = null  // re-render source
                 triggerNotifyItemChanged(reviewItem)
             }
 
             reviewItem.hasSearchText = match
             if (match) {
-                reviewItem.renderedTargetText = null  // re-render target
-                reviewItem.renderedSourceText = null  // re-render source
+                reviewItem.renderedTargetNodes = null  // re-render target
+                reviewItem.renderedSourceNodes = null  // re-render source
                 chunkSearchMatchesCounter++
                 triggerNotifyItemChanged(reviewItem)
             }

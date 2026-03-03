@@ -26,8 +26,9 @@ import com.door43.translationstudio.rendering.ClickableRenderingEngine
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.spannables.NoteSpan
-import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.rendering.adapter.NoteClickListener
+import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.widget.ViewUtil
 import com.google.android.material.tabs.TabLayout
 
@@ -40,8 +41,8 @@ class ReadModeAdapter(
     assetsProvider: AssetsProvider
 ) : ViewModeAdapter<ReadModeAdapter.ViewHolder>(), OnReadModeListener {
 
-    private var renderedTargetBody: Array<CharSequence?> = emptyArray()
-    private var renderedSourceBody: Array<CharSequence?> = emptyArray()
+    private var renderedTargetBody: Array<List<TextNode>?> = emptyArray()
+    private var renderedSourceBody: Array<List<TextNode>?> = emptyArray()
     private var targetStateOpen: BooleanArray = BooleanArray(0)
 
     /**
@@ -87,8 +88,8 @@ class ReadModeAdapter(
         chunks.addAll(listItems)
 
         targetStateOpen = BooleanArray(chapters.size)
-        renderedSourceBody = arrayOfNulls(chapters.size)
-        renderedTargetBody = arrayOfNulls(chapters.size)
+        renderedSourceBody = arrayOfNulls<List<TextNode>>(chapters.size)
+        renderedTargetBody = arrayOfNulls<List<TextNode>>(chapters.size)
 
         triggerNotifyDataSetChanged()
         updateMergeConflict()
@@ -140,7 +141,7 @@ class ReadModeAdapter(
     override fun onCreateManagedViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = FragmentReadListItemBinding.inflate(inflater, parent, false)
-        return ViewHolder(binding, typography, assetsProvider, this)
+        return ViewHolder(binding, typography, assetsProvider, this, ::showFootnote)
     }
 
     override fun markAllChunksDone() {}
@@ -163,11 +164,9 @@ class ReadModeAdapter(
         onClickListener?.onNewSourceTranslationTabClick()
     }
 
-    override fun onRenderSourceText(holder: ViewHolder): CharSequence {
+    override fun onRenderSourceText(holder: ViewHolder): List<TextNode> {
         val position = holder.bindingAdapterPosition
-        if (position == RecyclerView.NO_POSITION) {
-            return ""
-        }
+        if (position == RecyclerView.NO_POSITION) return emptyList()
         val item = items[position] as ReadListItem
 
         val sourceChapterBody = item.sourceText
@@ -175,24 +174,12 @@ class ReadModeAdapter(
         val sourceRendering = RenderingGroup()
 
         if (Clickables.isClickableFormat(bodyFormat)) {
-            val noteClickListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    if (span is NoteSpan) {
-                        showFootnote(span, holder.binding.root.context)
-                    }
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
-            }
             val renderer = renderingProvider.setupRenderingGroup(
                 bodyFormat,
                 sourceRendering,
-                null,
-                noteClickListener,
-                true
+                pinVerses = false,   // source text never has draggable pins
+                target = false
             ) as ClickableRenderingEngine
-            // In read mode (and only in read mode), pull leading major section headings out for
-            // display above chapter headings.
             renderer.setSuppressLeadingMajorSectionHeadings(true)
             val heading = renderer.getLeadingMajorSectionHeading(sourceChapterBody)
             holder.binding.sourceTranslationHeading.setText(heading)
@@ -201,16 +188,14 @@ class ReadModeAdapter(
             sourceRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
         sourceRendering.init(sourceChapterBody)
-        renderedSourceBody[position] = sourceRendering.start()
-
-        return renderedSourceBody[position] ?: ""
+        val nodes = sourceRendering.startNodes()
+        renderedSourceBody[position] = nodes
+        return nodes
     }
 
-    override fun onRenderTargetText(holder: ViewHolder): CharSequence {
+    override fun onRenderTargetText(holder: ViewHolder): List<TextNode> {
         val position = holder.bindingAdapterPosition
-        if (position == RecyclerView.NO_POSITION) {
-            return ""
-        }
+        if (position == RecyclerView.NO_POSITION) return emptyList()
         val item = items[position] as ReadListItem
 
         val bodyFormat = item.target.format
@@ -218,30 +203,20 @@ class ReadModeAdapter(
         val targetRendering = RenderingGroup()
 
         if (Clickables.isClickableFormat(bodyFormat)) {
-            val noteClickListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    if (span is NoteSpan) {
-                        showFootnote(span, holder.binding.root.context)
-                    }
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
-            }
             val renderer = renderingProvider.setupRenderingGroup(
                 bodyFormat,
                 targetRendering,
-                null,
-                noteClickListener,
-                true
+                pinVerses = false,   // read mode never has draggable pins
+                target = true
             ) as ClickableRenderingEngine
             renderer.setVersesEnabled(true)
         } else {
             targetRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
         targetRendering.init(chapterBody)
-        renderedTargetBody[position] = targetRendering.start()
-
-        return renderedTargetBody[position] ?: ""
+        val nodes = targetRendering.startNodes()
+        renderedTargetBody[position] = nodes
+        return nodes
     }
 
     override fun onOpenTranslationMode(chapterSlug: String) {
@@ -280,10 +255,10 @@ class ReadModeAdapter(
         val item = items[position] as ReadListItem
         val targetOpen = targetStateOpen[position]
         val chapterSlug = chapters[position]
-        val renderedSourceText = renderedSourceBody[position]
-        val renderedTargetText = renderedTargetBody[position]
+        val renderedSourceNodes = renderedSourceBody[position]
+        val renderedTargetNodes = renderedTargetBody[position]
 
-        holder.bind(item, targetOpen, chapterSlug, renderedSourceText, renderedTargetText)
+        holder.bind(item, targetOpen, chapterSlug, renderedSourceNodes, renderedTargetNodes)
     }
 
     override fun getItemCount(): Int {
@@ -358,13 +333,12 @@ class ReadModeAdapter(
     /**
      * display selected footnote in dialog.
      */
-    private fun showFootnote(span: NoteSpan, context: Context) {
-        val marker = span.passage
+    private fun showFootnote(marker: TextNode.NoteMarker, context: Context) {
         var title: CharSequence = context.resources.getText(R.string.title_footnote)
-        if (marker.toString().isNotEmpty()) {
-            title = "$title: $marker"
+        if (marker.passage.isNotEmpty()) {
+            title = "$title: ${marker.passage}"
         }
-        val message = span.notes
+        val message = marker.notes
 
         AlertDialog.Builder(context, R.style.AppTheme_Dialog)
             .setTitle(title)
@@ -392,7 +366,8 @@ class ReadModeAdapter(
         val binding: FragmentReadListItemBinding,
         private val typography: Typography,
         private val assetsProvider: AssetsProvider,
-        private val readModeListener: OnReadModeListener?
+        private val readModeListener: OnReadModeListener?,
+        private val onShowFootnote: (TextNode.NoteMarker, Context) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         private val context: Context = binding.root.context
@@ -443,8 +418,8 @@ class ReadModeAdapter(
             item: ReadListItem,
             isTargetOpen: Boolean,
             chapterSlug: String,
-            renderedSourceText: CharSequence?,
-            renderedTargetText: CharSequence?
+            renderedSourceNodes: List<TextNode>?,
+            renderedTargetNodes: List<TextNode>?
         ) {
             val cardMargin = context.resources.getDimensionPixelSize(R.dimen.card_margin)
             val stackedCardMargin = context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
@@ -485,29 +460,42 @@ class ReadModeAdapter(
             }
 
             // render the source chapter body
-            var sourceText = renderedSourceText
-            if (sourceText == null) {
-                sourceText = readModeListener?.onRenderSourceText(this) ?: ""
+            var sourceNodes = renderedSourceNodes
+            if (sourceNodes == null) {
+                sourceNodes = readModeListener?.onRenderSourceText(this) ?: emptyList()
             }
-
-            binding.sourceTranslationBody.setText(sourceText)
+            binding.sourceTranslationBody.setText(
+                SpannableAdapter.convert(
+                    sourceNodes,
+                    context = context,
+                    noteClickListener = NoteClickListener { _, marker, _, _ ->
+                        onShowFootnote(marker, context)
+                    }
+                )
+            )
             ViewUtil.makeLinksClickable(binding.sourceTranslationBody)
             binding.sourceTranslationTitle.setText(item.chapterTitle)
 
             // render the target chapter body
-            var targetText = renderedTargetText
-            if (targetText == null) {
-                targetText = readModeListener?.onRenderTargetText(this) ?: ""
+            var targetNodes = renderedTargetNodes
+            if (targetNodes == null) {
+                targetNodes = readModeListener?.onRenderTargetText(this) ?: emptyList()
             }
+            val targetSpannable = SpannableAdapter.convert(
+                targetNodes,
+                context = context,
+                noteClickListener = NoteClickListener { _, marker, _, _ ->
+                    onShowFootnote(marker, context)
+                }
+            )
 
             // display begin translation button
-            if (targetText.toString().trim().isEmpty()) {
+            if (targetSpannable.toString().trim().isEmpty()) {
                 binding.beginTranslatingButton.visibility = View.VISIBLE
             } else {
                 binding.beginTranslatingButton.visibility = View.GONE
             }
-
-            binding.targetTranslationBody.setText(targetText)
+            binding.targetTranslationBody.setText(targetSpannable)
             ViewUtil.makeLinksClickable(binding.targetTranslationBody)
 
             var targetCardTitle = ""

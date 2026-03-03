@@ -33,6 +33,11 @@ import com.door43.translationstudio.databinding.FragmentMergeCardBinding
 import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding
 import com.door43.translationstudio.format
 import com.door43.translationstudio.formatSub
+import com.door43.translationstudio.rendering.adapter.NoteClickListener
+import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.rendering.adapter.VerseClickListener
+import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
+import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Companion.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.IReviewListItemBinding
 import com.door43.translationstudio.ui.translate.ReviewListItem
@@ -258,14 +263,22 @@ class ReviewHolder(
     }
 
     private fun renderSourceCard(item: ReviewListItem) {
-        item.renderedSourceText?.let {
-            setSource(it)
+        item.renderedSourceNodes?.let {
+            setSource(SpannableAdapter.convert(it, context = itemView.context))
         } ?: showLoadingSource()
 
         reviewModeListener?.let { listener ->
-            val renderedText = listener.onRenderSourceText(item)
-            item.renderedSourceText = renderedText
-            setSource(renderedText)
+            val nodes = listener.onRenderSourceText(item)
+            item.renderedSourceNodes = nodes
+            setSource(
+                SpannableAdapter.convert(
+                    nodes,
+                    context = itemView.context,
+                    noteClickListener = NoteClickListener { _, marker, _, _ ->
+                        listener.onSourceNoteClick(item, marker)
+                    }
+                )
+            )
 
             // update the search
             val position = bindingAdapterPosition
@@ -310,14 +323,36 @@ class ReviewHolder(
         removeTextChangeListener()
         rebuildControls(item)
 
-        // insert rendered text
+        // insert rendered text from cache
         if (item.isEditing) {
-            // editing mode
-            binding.targetEditableBody?.setText(item.renderedTargetText)
+            // editing mode — no verse pin listeners needed
+            binding.targetEditableBody?.setText(
+                SpannableAdapter.convert(
+                    item.renderedTargetNodes ?: emptyList(),
+                    context = itemView.context,
+                    noteClickListener = NoteClickListener { _, marker, start, end ->
+                        reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, true)
+                    }
+                )
+            )
         } else {
-            // verse marker mode
+            // verse marker mode — attach verse and note click listeners
             binding.targetBody?.let {
-                it.setText(item.renderedTargetText)
+                it.setText(
+                    SpannableAdapter.convert(
+                        item.renderedTargetNodes ?: emptyList(),
+                        context = itemView.context,
+                        verseClickListener = VerseClickListener { _, marker, _, _ ->
+                            reviewModeListener?.onVerseClick(item, marker)
+                        },
+                        verseLongClickListener = VerseLongClickListener { view, marker, start, end ->
+                            reviewModeListener?.onVerseLongClick(view, this@ReviewHolder, item, marker, start, end)
+                        },
+                        noteClickListener = NoteClickListener { _, marker, start, end ->
+                            reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, false)
+                        }
+                    )
+                )
                 ViewUtil.makeLinksClickable(it)
                 it.isEnabled = !item.isDisabled
             }
@@ -327,23 +362,31 @@ class ReviewHolder(
         binding.targetTitle.text = item.targetTitle
 
         // render target body
-        if (item.renderedTargetText == null) {
+        if (item.renderedTargetNodes == null) {
             binding.targetEditableBody?.setText(item.targetText)
             binding.targetBody?.setText(item.targetText)
 
             reviewModeListener?.let { listener ->
-                val text = if (item.isComplete || item.isEditing) {
+                val nodes = if (item.isComplete || item.isEditing) {
                     listener.onRenderTargetText(this, item, true)
                 } else {
                     listener.onRenderTargetText(this, item)
                 }
-                item.renderedTargetText = text
+                item.renderedTargetNodes = nodes
             }
 
             if (item.isEditing) {
                 // edit mode
                 binding.targetEditableBody?.let { body ->
-                    body.setText(item.renderedTargetText)
+                    body.setText(
+                        SpannableAdapter.convert(
+                            item.renderedTargetNodes ?: emptyList(),
+                            context = itemView.context,
+                            noteClickListener = NoteClickListener { _, marker, start, end ->
+                                reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, true)
+                            }
+                        )
+                    )
                     reviewModeListener?.let { listener ->
                         val position = bindingAdapterPosition
                         if (position != RecyclerView.NO_POSITION) {
@@ -354,7 +397,21 @@ class ReviewHolder(
             } else {
                 // verse marker mode
                 binding.targetBody?.let { body ->
-                    body.setText(item.renderedTargetText)
+                    body.setText(
+                        SpannableAdapter.convert(
+                            item.renderedTargetNodes ?: emptyList(),
+                            context = itemView.context,
+                            verseClickListener = VerseClickListener { _, marker, _, _ ->
+                                reviewModeListener?.onVerseClick(item, marker)
+                            },
+                            verseLongClickListener = VerseLongClickListener { view, marker, start, end ->
+                                reviewModeListener?.onVerseLongClick(view, this@ReviewHolder, item, marker, start, end)
+                            },
+                            noteClickListener = NoteClickListener { _, marker, start, end ->
+                                reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, false)
+                            }
+                        )
+                    )
                     reviewModeListener?.let { listener ->
                         val position = bindingAdapterPosition
                         if (position != RecyclerView.NO_POSITION) {
@@ -376,9 +433,17 @@ class ReviewHolder(
             // editing mode
             binding.targetEditableBody?.let { body ->
                 reviewModeListener?.let { listener ->
-                    item.renderedTargetText = listener.onRenderTargetText(this, item, true)
+                    item.renderedTargetNodes = listener.onRenderTargetText(this, item, true)
                 }
-                body.setText(item.renderedTargetText)
+                body.setText(
+                    SpannableAdapter.convert(
+                        item.renderedTargetNodes ?: emptyList(),
+                        context = itemView.context,
+                        noteClickListener = NoteClickListener { _, marker, start, end ->
+                            reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, true)
+                        }
+                    )
+                )
 
                 if (item.refreshSearchHighlightTarget && reviewModeListener != null) {
                     val position = bindingAdapterPosition
@@ -390,7 +455,21 @@ class ReviewHolder(
         } else {
             // verse marker mode
             binding.targetBody?.let { body ->
-                body.setText(item.renderedTargetText)
+                body.setText(
+                    SpannableAdapter.convert(
+                        item.renderedTargetNodes ?: emptyList(),
+                        context = itemView.context,
+                        verseClickListener = VerseClickListener { _, marker, _, _ ->
+                            reviewModeListener?.onVerseClick(item, marker)
+                        },
+                        verseLongClickListener = VerseLongClickListener { view, marker, start, end ->
+                            reviewModeListener?.onVerseLongClick(view, this@ReviewHolder, item, marker, start, end)
+                        },
+                        noteClickListener = NoteClickListener { _, marker, start, end ->
+                            reviewModeListener?.onNoteClick(this@ReviewHolder, item, marker, start, end, false)
+                        }
+                    )
+                )
                 ViewUtil.makeLinksClickable(body)
 
                 if (item.refreshSearchHighlightTarget && reviewModeListener != null) {

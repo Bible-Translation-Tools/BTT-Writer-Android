@@ -26,13 +26,13 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentChunkListItemBinding
 import com.door43.translationstudio.format
 import com.door43.translationstudio.formatSub
-import com.door43.translationstudio.rendering.ClickableRenderingEngine
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.spannables.NoteSpan
-import com.door43.translationstudio.ui.spannables.Span
+import com.door43.translationstudio.rendering.adapter.NoteClickListener
+import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Companion.MAX_SOURCE_ITEMS
 import com.door43.widget.ViewUtil
 import com.google.android.material.tabs.TabLayout
@@ -171,7 +171,7 @@ class ChunkModeAdapter(
             )
         }
 
-        item.renderedTargetText = renderText(
+        item.renderedTargetNodes = renderText(
             translation,
             item.targetTranslationFormat
         )
@@ -187,7 +187,7 @@ class ChunkModeAdapter(
         onClickListener?.openTranslationMode(TranslationViewMode.REVIEW, args)
     }
 
-    override fun onRenderText(text: String, format: TranslationFormat): CharSequence {
+    override fun onRenderNodes(text: String, format: TranslationFormat): List<TextNode> {
         return renderText(text, format)
     }
 
@@ -258,40 +258,22 @@ class ChunkModeAdapter(
             .show()
     }
 
-    private fun renderText(text: String, format: TranslationFormat): CharSequence {
+    private fun renderText(text: String, format: TranslationFormat): List<TextNode> {
         val renderingGroup = RenderingGroup()
-
         if (Clickables.isClickableFormat(format)) {
-            // TODO: add click listeners for verses and notes
-            val noteClickListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    if (span is NoteSpan) {
-                        AlertDialog.Builder(context, R.style.AppTheme_Dialog)
-                            .setTitle(R.string.title_footnote)
-                            .setMessage(span.notes)
-                            .setPositiveButton(R.string.dismiss, null)
-                            .show()
-                    }
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
-            }
             val renderer = renderingProvider.setupRenderingGroup(
                 format,
                 renderingGroup,
-                null,
-                noteClickListener,
-                true
+                pinVerses = false,   // chunk mode never uses draggable pins
+                target = true
             )
             renderer.setVersesEnabled(false)
             renderer.setParagraphsEnabled(false)
         } else {
-            // TODO: add note click listener
             renderingGroup.addEngine(DefaultRenderer(context))
         }
-
         renderingGroup.init(text)
-        return renderingGroup.start() ?: ""
+        return renderingGroup.startNodes()
     }
 
     override fun getItemCount(): Int {
@@ -620,23 +602,40 @@ class ChunkModeAdapter(
         private fun renderChunk(item: ChunkListItem) {
             removeTextChangeListener()
 
-            // render source text
-            if (item.renderedSourceText == null && chunkModeListener != null) {
-                item.renderedSourceText = chunkModeListener.onRenderText(
-                    item.sourceText,
-                    item.sourceTranslationFormat
+            // Source
+            if (item.renderedSourceNodes == null && chunkModeListener != null) {
+                item.renderedSourceNodes = chunkModeListener.onRenderNodes(
+                    item.sourceText, item.sourceTranslationFormat
                 )
             }
-            binding.sourceTranslationBody.setText(item.renderedSourceText)
+            binding.sourceTranslationBody.setText(
+                SpannableAdapter.convert(
+                    item.renderedSourceNodes ?: emptyList(),
+                    context = context,
+                    noteClickListener = NoteClickListener { _, marker, _, _ ->
+                        showFootnoteDialog(marker)
+                    }
+                )
+            )
 
-            // render target text
-            if (item.renderedTargetText == null && chunkModeListener != null) {
-                item.renderedTargetText = chunkModeListener.onRenderText(
-                    item.targetText,
-                    item.targetTranslationFormat
+            // Target
+            if (item.renderedTargetNodes == null && chunkModeListener != null) {
+                item.renderedTargetNodes = chunkModeListener.onRenderNodes(
+                    item.targetText, item.targetTranslationFormat
                 )
             }
-            binding.targetTranslationBody.setText(TextUtils.concat(item.renderedTargetText, "\n"))
+            binding.targetTranslationBody.setText(
+                TextUtils.concat(
+                    SpannableAdapter.convert(
+                        item.renderedTargetNodes ?: emptyList(),
+                        context = context,
+                        noteClickListener = NoteClickListener { _, marker, _, _ ->
+                            showFootnoteDialog(marker)
+                        }
+                    ),
+                    "\n"
+                )
+            )
 
             // render source title
             if (item.isProjectTitle) {
@@ -696,6 +695,14 @@ class ChunkModeAdapter(
                 binding.targetTranslationBody.enableLines = true
                 binding.targetTranslationInnerCard.setBackgroundResource(R.color.card_background_color)
             }
+        }
+
+        private fun showFootnoteDialog(marker: TextNode.NoteMarker) {
+            AlertDialog.Builder(context, R.style.AppTheme_Dialog)
+                .setTitle(R.string.title_footnote)
+                .setMessage(marker.notes)
+                .setPositiveButton(R.string.dismiss, null)
+                .show()
         }
 
         private fun renderSourceTabs(tabs: List<ContentValues>, sourceSlug: String) {

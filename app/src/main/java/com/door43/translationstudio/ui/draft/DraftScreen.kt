@@ -30,8 +30,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.ProgressDialog
-import com.door43.translationstudio.ui.spannables.NoteSpan
-import com.door43.translationstudio.ui.spannables.Span
 import com.door43.translationstudio.ui.viewmodels.ChapterContent
 import com.door43.translationstudio.ui.viewmodels.DraftViewModel
 import com.door43.util.sortNumerically
@@ -109,23 +107,11 @@ fun DraftScreen(
                 items(chapters) { chapterSlug ->
                     var chapterContent by remember { mutableStateOf<ChapterContent?>(null) }
 
-                    val clickInterceptor = remember(chapterSlug) {
-                        object : Span.OnClickListener {
-                            override fun onClick(view: android.view.View, span: Span, start: Int, end: Int) {
-                                if (span is NoteSpan) {
-                                    showNoteDialog = span.notes?.toString()
-                                }
-                            }
-                            override fun onLongClick(view: android.view.View, span: Span, start: Int, end: Int) {}
-                        }
-                    }
-
                     LaunchedEffect(chapterSlug) {
                         chapterContent = viewModel.parseChapterContent(
                             chapterSlug = chapterSlug,
                             container = container,
-                            renderingProvider = renderingProvider,
-                            clickInterceptor = clickInterceptor
+                            renderingProvider = renderingProvider
                         )
                     }
 

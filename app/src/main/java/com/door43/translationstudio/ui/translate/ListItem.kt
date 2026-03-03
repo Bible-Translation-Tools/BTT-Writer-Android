@@ -9,6 +9,7 @@ import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.rendering.model.TextNode
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 /**
@@ -20,12 +21,9 @@ abstract class ListItem(
     val source: ResourceContainer,
     val target: TargetTranslation
 ) {
-    // TODO Task 9: These caches are CharSequence because ReviewModeAdapter, ChunkModeAdapter,
-    //  and ReviewHolder use them directly as Editable/SpannedString in edit, undo/redo, and
-    //  drag-and-drop flows. Changing to List<TextNode>? would require extensive cascading updates
-    //  across all three adapters and ReviewHolder. Defer to a dedicated refactor task.
-    var renderedSourceText: CharSequence? = null
-    var renderedTargetText: CharSequence? = null
+    var renderedSourceNodes: List<TextNode>? = null
+    var renderedTargetNodes: List<TextNode>? = null
+
     var isEditing = false
     var isDisabled = false
 
@@ -217,8 +215,8 @@ abstract class ListItem(
      * Clears the loaded translation data
      */
     fun reset() {
-        this.renderedSourceText = null
-        this.renderedTargetText = null
+        this.renderedSourceNodes = null
+        this.renderedTargetNodes = null
         this.hasMergeConflicts = false
     }
 
@@ -244,8 +242,8 @@ abstract class ListItem(
             base::fetchTabs
         ).apply {
             hasMergeConflicts = base.hasMergeConflicts
-            renderedSourceText = base.renderedSourceText
-            renderedTargetText = base.renderedTargetText
+            renderedSourceNodes = base.renderedSourceNodes   // changed from renderedSourceText
+            renderedTargetNodes = base.renderedTargetNodes   // changed from renderedTargetText
             isEditing = base.isEditing
         }
     }

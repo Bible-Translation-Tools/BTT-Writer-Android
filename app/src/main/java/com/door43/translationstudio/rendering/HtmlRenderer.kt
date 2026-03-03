@@ -1,6 +1,5 @@
 package com.door43.translationstudio.rendering
 
-import android.content.Context  // only for backward-compat constructor
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.TextNode
@@ -16,25 +15,10 @@ import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
  * HTML rendering engine. Produces a List<TextNode> via renderToNodes().
  * The render(CharSequence) override is a shim that calls renderToNodes + SpannableAdapter.convert
  * so that existing callers continue to work.
- *
- * No Android framework code lives in this file beyond the backward-compat constructor.
- * HtmlTagHandler has been moved to rendering/adapter/HtmlTagHandler.kt and is no longer
- * called from here — it is available for SpannableAdapter to use in the future.
  */
 class HtmlRenderer(
-    private val preprocessCallback: OnPreprocessLink,
-    private val linkListener: Span.OnClickListener? = null
+    private val preprocessCallback: OnPreprocessLink
 ) : RenderingEngine() {
-
-    /**
-     * Backward-compat shim constructor. Context is accepted but not stored — kept for binary
-     * compatibility with existing call sites.
-     */
-    constructor(
-        context: Context,  // ignored — RenderingEngine no longer holds a Context field
-        preprocessCallback: OnPreprocessLink,
-        linkListener: Span.OnClickListener
-    ) : this(preprocessCallback, linkListener)
 
     // -------------------------------------------------------------------------
     // Public API — new pipeline
@@ -80,10 +64,6 @@ class HtmlRenderer(
      */
     override fun render(input: CharSequence): CharSequence {
         val nodes = renderToNodes(input.toString())
-        // TODO: wire linkListener via SpannableAdapter in Task 9.
-        // SpannableAdapter.convert() currently exposes verseClickListener and noteClickListener
-        // but has no parameter for generic link clicks (TextNode.Link). linkListener is stored on
-        // HtmlRenderer but is silently discarded here until Task 9 adds that parameter.
         return SpannableAdapter.convert(nodes)
     }
 

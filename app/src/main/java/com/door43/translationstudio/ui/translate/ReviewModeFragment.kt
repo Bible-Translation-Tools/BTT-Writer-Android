@@ -33,10 +33,8 @@ import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.spannables.ArticleLinkSpan
-import com.door43.translationstudio.ui.spannables.LinkSpan
 import com.door43.translationstudio.ui.spannables.PassageLinkSpan
 import com.door43.translationstudio.ui.spannables.ShortReferenceSpan
-import com.door43.translationstudio.ui.spannables.Span
 import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
 import com.door43.translationstudio.ui.translate.review.ReviewHolder
 import com.door43.util.StringUtilities
@@ -381,53 +379,6 @@ class ReviewModeFragment : ViewModeFragment(),
                         }
                     }
                     result
-                },
-                linkListener = object : Span.OnClickListener {
-                    override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                        when (val type = (span as LinkSpan).type) {
-                            "ta" -> {
-                                val url = span.machineReadable.toString()
-                                val link = ArticleLinkSpan.parse(url)
-                                if (link != null) {
-                                    onTranslationManualClick(link.section, link.slug)
-                                }
-                            }
-                            "p" -> {
-                                val url = span.machineReadable.toString()
-                                val link = PassageLinkSpan("", url)
-                                scrollToChunk(link.chapterId, link.frameId)
-                            }
-                            "m" -> {
-                                // markdown link
-                                val url = span.machineReadable.toString()
-                                AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                                    .setTitle(R.string.view_online)
-                                    .setMessage(R.string.use_internet_confirmation)
-                                    .setNegativeButton(R.string.title_cancel, null)
-                                    .setPositiveButton(R.string.label_continue) { _, _ ->
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                        startActivity(intent)
-                                    }
-                                    .show()
-                            }
-                            "tw" -> {
-                                // translation word
-                                val currentRC = getSelectedResourceContainer()
-                                if (currentRC != null) {
-                                    val localRc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
-                                    if (localRc != null) {
-                                        onTranslationWordClick(
-                                            localRc.slug,
-                                            span.machineReadable.toString(),
-                                            binding.resourcesDrawerCard.layoutParams.width
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
                 }
             )
 
@@ -600,58 +551,6 @@ class ReviewModeFragment : ViewModeFragment(),
                     }
                 }
                 result
-            },
-            linkListener = object : Span.OnClickListener {
-                override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                    when ((span as LinkSpan).type) {
-                        "ta" -> {
-                            val url = span.machineReadable.toString()
-                            val link = ArticleLinkSpan.parse(url)
-                            if (link != null) {
-                                onTranslationManualClick(link.section, link.slug)
-                            }
-                        }
-                        "p" -> {
-                            val url = span.machineReadable.toString()
-                            val link = PassageLinkSpan("", url)
-                            scrollToChunk(link.chapterId, link.frameId)
-                        }
-                        "m" -> {
-                            // markdown link
-                            val url = span.machineReadable.toString()
-                            AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                                .setTitle(R.string.view_online)
-                                .setMessage(R.string.use_internet_confirmation)
-                                .setNegativeButton(R.string.title_cancel, null)
-                                .setPositiveButton(R.string.label_continue) { _, _ ->
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                    startActivity(intent)
-                                }
-                                .show()
-                        }
-                        "tw" -> {
-                            // translation word
-                            val currentRC = getSelectedResourceContainer()
-                            if (currentRC != null) {
-                                val rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
-                                if (rc != null) {
-                                    onTranslationWordClick(
-                                        rc.slug,
-                                        span.machineReadable.toString(),
-                                        binding.resourcesDrawerCard.layoutParams.width
-                                    )
-                                }
-                            }
-                        }
-                        "sr" -> {
-                            // reference
-                            val link = ShortReferenceSpan(span.machineReadable.toString())
-                            scrollToVerse(link.chapter, link.verse)
-                        }
-                    }
-                }
-
-                override fun onLongClick(view: View, span: Span, start: Int, end: Int) {}
             }
         )
 

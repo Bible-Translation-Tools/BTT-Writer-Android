@@ -13,13 +13,9 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.LeadingMarginSpan
 import android.text.style.TypefaceSpan
 import android.util.Log
-import android.view.View
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.spannables.LinkSpan
-import com.door43.translationstudio.ui.spannables.Span
-import com.door43.widget.LongClickableSpan
 import org.xml.sax.XMLReader
 import java.util.Vector
 
@@ -27,8 +23,7 @@ import java.util.Vector
  * Some parts of this code are based on android.text.Html
  */
 class HtmlTagHandler(
-    private val context: Context,
-    private val clickListener: Span.OnClickListener
+    private val context: Context
 ) : Html.TagHandler {
 
     private var listItemCount = 0
@@ -189,10 +184,8 @@ class HtmlTagHandler(
         val type = attributes["type"] ?: ""
 
         val span = LinkSpan(title.toString(), href, type)
-        span.onClickListener = this.clickListener
 
         if (where != len) {
-            // TODO Task 9: move this render logic to a dedicated adapter helper
             output.replace(where, len, renderLinkSpan(span))
         }
 
@@ -203,30 +196,13 @@ class HtmlTagHandler(
     }
 
     /**
-     * Renders a LinkSpan to a SpannableStringBuilder with click listener and link color styling.
-     * TODO Task 9: move this render logic to a dedicated adapter helper.
+     * Renders a LinkSpan to a SpannableStringBuilder with link color styling.
      */
     private fun renderLinkSpan(span: LinkSpan): SpannableStringBuilder {
         val text = if (span.humanReadable.isNotEmpty()) span.humanReadable else span.machineReadable
         val s = SpannableStringBuilder(text)
         if (s.isNotEmpty()) {
             s.setSpan(SpannedString(span.machineReadable), 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            val clickListener = span.onClickListener
-            if (span.isClickable && clickListener != null) {
-                val clickSpan = object : LongClickableSpan() {
-                    override fun onLongClick(view: View) {
-                        val tv = view as? TextView ?: return
-                        val ss = tv.text as? android.text.Spanned ?: return
-                        clickListener.onLongClick(view, span, ss.getSpanStart(this), ss.getSpanEnd(this))
-                    }
-                    override fun onClick(view: View) {
-                        val tv = view as? TextView ?: return
-                        val ss = tv.text as? android.text.Spanned ?: return
-                        clickListener.onClick(view, span, ss.getSpanStart(this), ss.getSpanEnd(this))
-                    }
-                }
-                s.setSpan(clickSpan, 0, s.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            }
             s.setSpan(
                 ForegroundColorSpan(ContextCompat.getColor(context, R.color.accent)),
                 0, s.length,

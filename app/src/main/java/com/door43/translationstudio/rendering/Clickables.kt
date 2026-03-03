@@ -2,7 +2,6 @@ package com.door43.translationstudio.rendering
 
 import android.content.Context
 import com.door43.translationstudio.core.TranslationFormat
-import com.door43.translationstudio.ui.spannables.Span
 
 /**
  * Class to support clickable spans
@@ -19,12 +18,11 @@ object Clickables {
     }
 
     /**
-     * setup rendering group for translation format
+     * Setup rendering group for translation format using a pinVerses flag.
      * @param context
      * @param format
      * @param renderingGroup
-     * @param verseClickListener
-     * @param noteClickListener
+     * @param pinVerses true if verse markers should be pinned (i.e. clickable)
      * @param target - true if rendering target translations, false if source text
      * @return
      */
@@ -32,19 +30,13 @@ object Clickables {
         context: Context,
         format: TranslationFormat,
         renderingGroup: RenderingGroup,
-        verseClickListener: Span.OnClickListener?,
-        noteClickListener: Span.OnClickListener?,
+        pinVerses: Boolean = false,
         target: Boolean
     ): ClickableRenderingEngine {
         val defaultFormat = if (target) TranslationFormat.USFM else TranslationFormat.USX
-        val renderer = ClickableRenderingEngineFactory.create(
-            context,
-            format,
-            defaultFormat,
-            verseClickListener,
-            noteClickListener
-        )
+        val renderer = ClickableRenderingEngineFactory.create(context, format, defaultFormat, pinVerses)
         renderingGroup.addEngine(renderer)
         return renderer
     }
+
 }

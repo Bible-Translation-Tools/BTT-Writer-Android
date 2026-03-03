@@ -1,13 +1,15 @@
 package com.door43.translationstudio.rendering
 
+import com.door43.translationstudio.rendering.model.TextNode
+
 /**
  * Created by joel on 1/26/2015.
  */
 class RenderingGroup {
-    private var mStopped = false
-    private var mRunning = false
+    @Volatile private var mStopped = false
+    @Volatile private var mRunning = false
     private val mEngines: MutableList<RenderingEngine> = mutableListOf()
-    private var mInput: CharSequence = ""
+    private var mInput: String = ""
 
     /**
      * see if missing verse was added
@@ -64,21 +66,32 @@ class RenderingGroup {
     }
 
     /**
-     * Begins the rendering operations
+     * Runs the pipeline and returns a platform-agnostic List<TextNode>.
+     *
+     * If the first engine is a [ClickableRenderingEngine], its [RenderingEngine.renderToNodes]
+     * override is used directly (it handles notes, highlights, etc. natively).
+     * For any other engine (e.g. DefaultRenderer), only [RenderingEngine.render] is overridden,
+     * so this method calls render() and wraps the result in a plain [TextNode.Text].
      */
-    fun start(): CharSequence {
-        if (mRunning || mInput.isEmpty()) return ""
+    fun startNodes(): List<TextNode> {
+        if (mRunning || mInput.isEmpty()) return emptyList()
         mRunning = true
         mStopped = false
-        var rendered = mInput
-
-        for (engine in mEngines) {
-            if (mStopped) break
-            rendered = engine.render(rendered)
+        val result: List<TextNode> = if (mEngines.isEmpty()) {
+            listOf(TextNode.Text(mInput))
+        } else {
+            val engine = mEngines.first()
+            if (engine is ClickableRenderingEngine) {
+                // ClickableRenderingEngine properly overrides renderToNodes()
+                engine.renderToNodes(mInput)
+            } else {
+                // Other engines (e.g. DefaultRenderer) only override render(), not renderToNodes().
+                // Fall back to render() and wrap the text content in a plain TextNode.
+                listOf(TextNode.Text(engine.render(mInput).toString()))
+            }
         }
-
         mRunning = false
-        return rendered
+        return result
     }
 
     /**

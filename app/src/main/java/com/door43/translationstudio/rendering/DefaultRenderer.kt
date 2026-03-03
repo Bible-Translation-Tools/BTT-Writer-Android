@@ -1,36 +1,17 @@
 package com.door43.translationstudio.rendering
 
 import android.content.Context
-import android.view.View
-import com.door43.translationstudio.ui.spannables.Span
 
 /**
  * This is the default rendering engine.
  */
-class DefaultRenderer : RenderingEngine {
+class DefaultRenderer(
+    context: Context  // accepted for API symmetry; not stored
+) : RenderingEngine() {
 
-    private var context: Context
-    private var noteListener: Span.OnClickListener
     private var search: String = ""
     private var highlightColor = 0
     private var renderer: USXRenderer? = null
-
-    /**
-     * Creates a new default rendering engine without any listeners
-     */
-    constructor(context: Context) {
-        this.context = context
-        this.noteListener = EmptyListener
-    }
-
-    /**
-     * Creates a new default rendering engine with some custom click listeners
-     * @param noteListener
-     */
-    constructor(context: Context, noteListener: Span.OnClickListener) {
-        this.context = context
-        this.noteListener = noteListener
-    }
 
     /**
      * Renders the input into a readable format
@@ -40,9 +21,7 @@ class DefaultRenderer : RenderingEngine {
     override fun render(input: CharSequence): CharSequence {
         var out = input
 
-        // Assuming USXRenderer constructor expects two listeners.
-        // We pass the EmptyListener to avoid nulls.
-        val usxRenderer = USXRenderer(context, EmptyListener, noteListener)
+        val usxRenderer = USXRenderer()
         usxRenderer.setSearchString(search, highlightColor)
         this.renderer = usxRenderer
 
@@ -70,20 +49,6 @@ class DefaultRenderer : RenderingEngine {
             searchString.toString().lowercase()
         } else {
             ""
-        }
-    }
-
-    private companion object {
-        /**
-         * A dummy listener used to replace null fallbacks.
-         */
-        val EmptyListener = object : Span.OnClickListener {
-            override fun onClick(view: View, span: Span, start: Int, end: Int) {
-                // Do nothing
-            }
-            override fun onLongClick(view: View, span: Span, start: Int, end: Int) {
-                // Do nothing
-            }
         }
     }
 }

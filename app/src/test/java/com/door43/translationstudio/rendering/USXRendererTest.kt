@@ -456,4 +456,38 @@ class USXRendererTest {
         r.renderToNodes(input)
         assertFalse("isAddedMissingVerse should be false when verse is present", r.isAddedMissingVerse)
     }
+
+    // -------------------------------------------------------------------------
+    // pinVerses constructor
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `verse markers are pinned when pinVerses is true`() {
+        val renderer = USXRenderer(pinVerses = true)
+        val nodes = renderer.renderToNodes("<verse number=\"1\" style=\"v\" />In the beginning.")
+        val verse = nodes.filterIsInstance<TextNode.VerseMarker>().firstOrNull()
+        assertNotNull("Expected a VerseMarker node", verse)
+        assertTrue("Expected pinned=true when pinVerses=true", verse!!.pinned)
+    }
+
+    @Test
+    fun `verse markers are not pinned when pinVerses is false`() {
+        val renderer = USXRenderer(pinVerses = false)
+        val nodes = renderer.renderToNodes("<verse number=\"1\" style=\"v\" />In the beginning.")
+        val verse = nodes.filterIsInstance<TextNode.VerseMarker>().firstOrNull()
+        assertNotNull(verse)
+        assertFalse("Expected pinned=false when pinVerses=false", verse!!.pinned)
+    }
+
+    @Test
+    fun `missing verse marker is pinned when pinVerses is true`() {
+        // USX with verse 2 present but verse 1 missing; expected range includes verse 1
+        val renderer = USXRenderer(pinVerses = true)
+        // Set expected verse range to include verse 1 even though only verse 2 is in the text
+        renderer.setPopulateVerseMarkers(intArrayOf(1, 2))
+        val nodes = renderer.renderToNodes("<para style=\"p\"><verse number=\"2\" style=\"v\" />Second verse.</para>")
+        val missing = nodes.filterIsInstance<TextNode.VerseMarker>().firstOrNull { it.startVerse == 1 }
+        assertNotNull("Expected verse 1 to be inserted as missing", missing)
+        assertTrue("Expected missing verse marker to be pinned when pinVerses=true", missing!!.pinned)
+    }
 }

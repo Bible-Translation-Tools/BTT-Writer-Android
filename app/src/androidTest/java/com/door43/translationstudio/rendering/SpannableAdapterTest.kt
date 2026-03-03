@@ -4,7 +4,11 @@ import android.text.style.AlignmentSpan
 import android.text.style.BackgroundColorSpan
 import android.text.style.StyleSpan
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.door43.translationstudio.rendering.adapter.NoteClickListener
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.rendering.adapter.VerseClickListener
+import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
+import com.door43.widget.LongClickableSpan
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
 import com.door43.translationstudio.rendering.model.NoteStyle
@@ -290,5 +294,52 @@ class SpannableAdapterTest {
         val nodes = listOf(TextNode.Link(LinkData.AppLink("/ta/figs", "ta", "Figures of Speech")))
         val result = SpannableAdapter.convert(nodes)
         assertEquals("Figures of Speech", result.toString())
+    }
+
+    @Test
+    fun `pinned verse marker with verseClickListener attaches a click span`() {
+        val nodes = listOf(TextNode.VerseMarker(startVerse = 3, endVerse = 0, pinned = true))
+        val verseListener = VerseClickListener { _, _, _, _ -> }
+        val result = SpannableAdapter.convert(nodes, verseClickListener = verseListener)
+        val spans = result.getSpans(0, result.length, LongClickableSpan::class.java)
+        assertTrue("Expected a LongClickableSpan on pinned verse", spans.isNotEmpty())
+        assertEquals("Span should start at 0", 0, result.getSpanStart(spans[0]))
+        assertEquals("Span should end at result length", result.length, result.getSpanEnd(spans[0]))
+    }
+
+    @Test
+    fun `note marker with noteClickListener attaches a click span`() {
+        val nodes = listOf(
+            TextNode.NoteMarker(
+                caller = "+",
+                passage = "In the beginning",
+                notes = "footnote text",
+                noteStyle = com.door43.translationstudio.rendering.model.NoteStyle.FOOTNOTE
+            )
+        )
+        val noteListener = NoteClickListener { _, _, _, _ -> }
+        val result = SpannableAdapter.convert(nodes, noteClickListener = noteListener)
+        val spans = result.getSpans(0, result.length, LongClickableSpan::class.java)
+        assertTrue("Expected a LongClickableSpan on note marker", spans.isNotEmpty())
+        assertEquals("Span should start at 0", 0, result.getSpanStart(spans[0]))
+        assertEquals("Span should end at result length", result.length, result.getSpanEnd(spans[0]))
+    }
+
+    @Test
+    fun `unpinned verse marker has no click span`() {
+        val nodes = listOf(TextNode.VerseMarker(startVerse = 3, endVerse = 0, pinned = false))
+        val verseListener = VerseClickListener { _, _, _, _ -> }
+        val result = SpannableAdapter.convert(nodes, verseClickListener = verseListener)
+        val spans = result.getSpans(0, result.length, LongClickableSpan::class.java)
+        assertTrue("Expected no LongClickableSpan on unpinned verse", spans.isEmpty())
+    }
+
+    @Test
+    fun `pinned verse marker with only verseLongClickListener attaches a click span`() {
+        val nodes = listOf(TextNode.VerseMarker(startVerse = 5, endVerse = 0, pinned = true))
+        val longClickListener = VerseLongClickListener { _, _, _, _ -> }
+        val result = SpannableAdapter.convert(nodes, verseLongClickListener = longClickListener)
+        val spans = result.getSpans(0, result.length, LongClickableSpan::class.java)
+        assertTrue("Expected a LongClickableSpan when only verseLongClickListener is provided", spans.isNotEmpty())
     }
 }

@@ -1,9 +1,5 @@
 package com.door43.translationstudio.ui.spannables
 
-// Only Android import remaining: android.view.View (for OnClickListener)
-// TODO Task 9: move OnClickListener to rendering/adapter/AndroidSpanClickListener.kt
-import android.view.View
-
 abstract class Span {
     var humanReadable: String = ""
         protected set
@@ -12,7 +8,6 @@ abstract class Span {
         protected set
 
     var isClickable: Boolean = true
-    var onClickListener: OnClickListener? = null
     var extras: Map<String, Any>? = null
 
     /**
@@ -44,11 +39,4 @@ abstract class Span {
         this.machineReadable = machineReadable
     }
 
-    /**
-     * TODO Task 9: move this interface to rendering/adapter/AndroidSpanClickListener.kt
-     */
-    interface OnClickListener {
-        fun onClick(view: View, span: Span, start: Int, end: Int)
-        fun onLongClick(view: View, span: Span, start: Int, end: Int)
-    }
 }

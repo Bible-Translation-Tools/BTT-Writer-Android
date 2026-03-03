@@ -9,8 +9,8 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.spannables.Span
 import com.door43.usecases.ImportDraft
 import com.door43.util.sortNumerically
 import kotlinx.coroutines.Dispatchers
@@ -110,8 +110,7 @@ class DraftViewModel (
     suspend fun parseChapterContent(
         chapterSlug: String,
         container: ResourceContainer,
-        renderingProvider: RenderingProvider,
-        clickInterceptor: Span.OnClickListener
+        renderingProvider: RenderingProvider
     ): ChapterContent = withContext(Dispatchers.IO) {
 
         var tempTitle = container.readChunk(chapterSlug, "title")
@@ -136,9 +135,8 @@ class DraftViewModel (
             val renderer = renderingProvider.setupRenderingGroup(
                 bodyFormat,
                 sourceRendering,
-                null,
-                clickInterceptor,
-                true
+                pinVerses = false,
+                target = true
             )
             renderer.setSuppressLeadingMajorSectionHeadings(true)
             heading = renderer.getLeadingMajorSectionHeading(chapterBody).toString()
@@ -147,7 +145,7 @@ class DraftViewModel (
         }
 
         sourceRendering.init(chapterBody)
-        val bodyText = sourceRendering.start()
+        val bodyText = SpannableAdapter.convert(sourceRendering.startNodes())
 
         ChapterContent(
             heading = heading,

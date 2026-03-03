@@ -17,6 +17,7 @@ import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.widget.ViewUtil
 
 /**
@@ -113,15 +114,14 @@ class ValidationAdapter(
                             renderingProvider.setupRenderingGroup(
                                 format,
                                 renderingGroup,
-                                null,
-                                null,
-                                true
+                                pinVerses = false,
+                                target = true
                             )
                         } else {
                             renderingGroup.addEngine(DefaultRenderer(context))
                         }
                         renderingGroup.init(item.body)
-                        renderedText[position] = renderingGroup.start()
+                        renderedText[position] = SpannableAdapter.convert(renderingGroup.startNodes())
                     }
                     holder.binding.body.text = renderedText[position]
 

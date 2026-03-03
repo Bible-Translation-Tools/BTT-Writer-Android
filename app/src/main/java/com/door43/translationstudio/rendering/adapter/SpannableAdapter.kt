@@ -2,21 +2,28 @@ package com.door43.translationstudio.rendering.adapter
 
 import android.content.Context
 import android.graphics.Typeface
+import android.graphics.drawable.BitmapDrawable
 import android.text.Layout
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.SpannedString
 import android.text.style.AlignmentSpan
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
+import android.view.LayoutInflater
+import android.view.View
 import androidx.core.content.ContextCompat
 import com.door43.translationstudio.R
+import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.TextNode
-import com.door43.translationstudio.ui.spannables.Span
+import com.door43.widget.LongClickableSpan
+import com.door43.widget.ViewUtil
 
 /**
  * Converts a List<TextNode> to a SpannableStringBuilder for use with Android TextViews.
@@ -29,23 +36,22 @@ object SpannableAdapter {
      *
      * @param nodes                The platform-agnostic node list from a renderer.
      * @param context              Required for color/resource lookups. Null = no color styling.
-     * @param verseClickListener   Optional click handler for verse markers.
+     * @param verseClickListener   Optional click handler for verse markers (only fires when pinned=true).
+     * @param verseLongClickListener Optional long-click handler for verse markers (only fires when pinned=true).
      * @param noteClickListener    Optional click handler for note markers.
      * @param searchHighlightColor ARGB color for search highlight nodes (0 = no highlight).
-     *
-     * **Note:** [verseClickListener] and [noteClickListener] are accepted but not yet wired to
-     * click spans. Pass them to future-proof call sites; they will take effect when TODOs are resolved.
      */
     fun convert(
         nodes: List<TextNode>,
         context: Context? = null,
-        verseClickListener: Span.OnClickListener? = null,
-        noteClickListener: Span.OnClickListener? = null,
+        verseClickListener: VerseClickListener? = null,
+        verseLongClickListener: VerseLongClickListener? = null,
+        noteClickListener: NoteClickListener? = null,
         searchHighlightColor: Int = 0
     ): SpannableStringBuilder {
         val sb = SpannableStringBuilder()
         for (node in nodes) {
-            appendNode(sb, node, context, verseClickListener, noteClickListener, searchHighlightColor)
+            appendNode(sb, node, context, verseClickListener, verseLongClickListener, noteClickListener, searchHighlightColor)
         }
         return sb
     }
@@ -54,8 +60,9 @@ object SpannableAdapter {
         sb: SpannableStringBuilder,
         node: TextNode,
         context: Context?,
-        verseClickListener: Span.OnClickListener?,
-        noteClickListener: Span.OnClickListener?,
+        verseClickListener: VerseClickListener?,
+        verseLongClickListener: VerseLongClickListener?,
+        noteClickListener: NoteClickListener?,
         searchHighlightColor: Int
     ) {
         @Suppress("UNUSED_VARIABLE")
@@ -116,17 +123,54 @@ object SpannableAdapter {
             is TextNode.VerseMarker -> {
                 val label = if (node.endVerse > 0) "${node.startVerse}-${node.endVerse}" else "${node.startVerse}"
                 val start = sb.length
-                sb.append(label)
-                val end = sb.length
-                context?.let { ctx ->
+                if (node.pinned && context != null) {
+                    // Render verse-pin bitmap using the layout
+                    val inflater = LayoutInflater.from(context)
+                    val pinBinding = FragmentVerseMarkerBinding.inflate(inflater)
+                    pinBinding.verse.text = label
+                    val bitmap = ViewUtil.convertToBitmap(pinBinding.root)
+                    val drawable = BitmapDrawable(context.resources, bitmap)
+                    drawable.setBounds(0, 0, drawable.minimumWidth, drawable.minimumHeight)
+                    sb.append(label)   // placeholder text (ImageSpan visually replaces it)
+                    val end = sb.length
+                    sb.setSpan(ImageSpan(drawable), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                     sb.setSpan(RelativeSizeSpan(0.8f), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    // Add SpannedString span so Translator.compileTranslation() can reconstruct
+                    // the machine-readable source format after drag-and-drop.
+                    if (node.machineReadable.isNotEmpty()) {
+                        sb.setSpan(
+                            SpannedString(node.machineReadable),
+                            start, end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
+                } else {
+                    sb.append(label)
+                    val end = sb.length
+                    context?.let { ctx ->
+                        sb.setSpan(RelativeSizeSpan(0.8f), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        sb.setSpan(
+                            ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.gray)),
+                            start, end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
+                }
+                if (node.pinned && (verseClickListener != null || verseLongClickListener != null)) {
+                    val spanStart = start
+                    val spanEnd = sb.length
                     sb.setSpan(
-                        ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.gray)),
-                        start, end,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        object : LongClickableSpan() {
+                            override fun onClick(view: View) {
+                                verseClickListener?.onVerseClick(view, node, spanStart, spanEnd)
+                            }
+                            override fun onLongClick(view: View) {
+                                verseLongClickListener?.onVerseLongClick(view, node, spanStart, spanEnd)
+                            }
+                        },
+                        start, spanEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
                 }
-                // TODO: attach verseClickListener click span when pinned=true
                 Unit
             }
 
@@ -143,7 +187,19 @@ object SpannableAdapter {
                 if (node.highlighted && searchHighlightColor != 0) {
                     sb.setSpan(BackgroundColorSpan(searchHighlightColor), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
-                // TODO: attach noteClickListener click span
+                noteClickListener?.let { listener ->
+                    val spanStart = start
+                    val spanEnd = end
+                    sb.setSpan(
+                        object : LongClickableSpan() {
+                            override fun onClick(view: View) {
+                                listener.onNoteClick(view, node, spanStart, spanEnd)
+                            }
+                            override fun onLongClick(view: View) { /* notes only support click, not long-click */ }
+                        },
+                        start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
                 Unit
             }
 
