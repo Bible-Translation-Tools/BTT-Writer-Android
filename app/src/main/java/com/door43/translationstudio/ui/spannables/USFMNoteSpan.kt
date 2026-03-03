@@ -4,7 +4,6 @@ import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
-import android.text.TextUtils
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.ImageSpan
@@ -66,20 +65,20 @@ class USFMNoteSpan(
             val pattern = Pattern.compile(CHAR_PATTERN)
             val matcher = pattern.matcher(noteText)
             var lastIndex = 0
-            var note: CharSequence = ""
+            val noteBuilder = StringBuilder()
 
             while (matcher.find()) {
                 val start = matcher.start()
                 if (start > lastIndex) {
-                    note = TextUtils.concat(note, noteText.subSequence(lastIndex, start))
+                    noteBuilder.append(noteText.subSequence(lastIndex, start))
                 }
-                chars.add(USFMChar("f" + matcher.group(1), matcher.group(2)))
+                chars.add(USFMChar("f" + matcher.group(1), matcher.group(2) ?: ""))
                 lastIndex = matcher.end()
             }
 
             if (lastIndex < noteText.length) { // if extra text, add it
-                note = TextUtils.concat(note, noteText.subSequence(lastIndex, noteText.length))
-                chars.add(USFMChar(USFMChar.STYLE_PASSAGE_TEXT, note))
+                noteBuilder.append(noteText.subSequence(lastIndex, noteText.length))
+                chars.add(USFMChar(USFMChar.STYLE_PASSAGE_TEXT, noteBuilder.toString()))
             }
             return USFMNoteSpan("f", caller.toString(), chars)
         }
@@ -87,7 +86,7 @@ class USFMNoteSpan(
 
     init {
         var spanTitle: CharSequence = ""
-        var note: CharSequence = ""
+        val noteBuilder = StringBuilder()
         var quotation: CharSequence = ""
         var altQuotation: CharSequence = ""
         var passageText: CharSequence = ""
@@ -99,22 +98,22 @@ class USFMNoteSpan(
                 USFMChar.STYLE_FOOTNOTE_ALT_QUOTATION -> altQuotation = c.value
                 else -> {
                     // TODO: implement better. We may need to format the values
-                    note = TextUtils.concat(note, c.value)
+                    noteBuilder.append(c.value)
                 }
             }
         }
 
         // set the span title
-        if (!TextUtils.isEmpty(passageText)) {
+        if (passageText.isNotEmpty()) {
             spanTitle = passageText
-        } else if (!TextUtils.isEmpty(quotation)) {
+        } else if (quotation.isNotEmpty()) {
             spanTitle = quotation
         }
 
         init(spanTitle, generateTag(style, caller, spanTitle, chars))
 
         passage = spanTitle
-        notes = TextUtils.concat(note, " ", altQuotation)
+        notes = "$noteBuilder $altQuotation"
     }
 
     override fun render(): SpannableStringBuilder {
