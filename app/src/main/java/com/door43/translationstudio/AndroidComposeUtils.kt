@@ -57,7 +57,7 @@ fun Typography.getComposeTextStyle(
     )
 }
 
-@Deprecated("don't use this anymore")
+@Deprecated("use ComposeTextAdapter instead")
 fun CharSequence.toComposeAnnotatedString(
     dummyView: TextView,
     clickableColor: Color
