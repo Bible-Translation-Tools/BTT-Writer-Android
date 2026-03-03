@@ -4,23 +4,18 @@ import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
-import android.text.TextUtils
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.ImageSpan
 import android.text.style.StyleSpan
-import android.util.Xml
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import com.door43.translationstudio.R
 import org.unfoldingword.tools.logger.Logger
 import org.w3c.dom.Element
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
+import org.w3c.dom.NodeList
 import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
+import java.io.StringReader
 import java.util.Properties
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
@@ -29,6 +24,7 @@ import javax.xml.transform.TransformerException
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import org.xml.sax.InputSource
 
 /**
  * Class to create NoteSpans from USX format text
@@ -115,73 +111,47 @@ class USXNoteSpan(
          * Don't forget to set the click listener!
          * we are using usx for footnotes and our own variant for user notes
          * http://dbl.ubs-icap.org:8090/display/DBLDOCS/USX#USX-note(Footnote)
+         *
+         * Uses javax.xml DOM parsing (JVM standard, no Android SDK dependency).
          */
         fun parseNote(usx: CharSequence): USXNoteSpan? {
-            val parser = Xml.newPullParser()
             return try {
-                parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-                parser.setInput(InputStreamReader(getStream(usx)))
-                parser.nextTag()
-                readXML(parser)
-            } catch (e: XmlPullParserException) {
-                Logger.e(USXNoteSpan::class.java.name, "Failed to parse note", e)
-                null
-            } catch (e: IOException) {
-                null
-            }
-        }
+                val dbf = DocumentBuilderFactory.newInstance()
+                val db = dbf.newDocumentBuilder()
+                val document = db.parse(InputSource(StringReader(usx.toString())))
+                val root = document.documentElement ?: return null
+                if (root.tagName != "note") return null
 
-        /**
-         * Converts charsequence to an input stream
-         */
-        private fun getStream(charSequence: CharSequence): InputStream {
-            return object : InputStream() {
-                var index = 0
-                val length = charSequence.length
-                @Throws(IOException::class)
-                override fun read(): Int {
-                    return if (index >= length) -1 else charSequence[index++].code
-                }
-            }
-        }
+                val style = root.getAttribute("style") ?: return null
+                val caller = root.getAttribute("caller").takeIf { it.isNotEmpty() } ?: DEFAULT_CALLER
 
-        /**
-         * Reads some xml to produce a new note span
-         */
-        @Throws(XmlPullParserException::class, IOException::class)
-        private fun readXML(parser: XmlPullParser): USXNoteSpan {
-            parser.require(XmlPullParser.START_TAG, null, "note")
-
-            // load attributes
-            val style = parser.getAttributeValue("", "style")
-            var caller = parser.getAttributeValue("", "caller")
-            if (caller == null) {
-                caller = DEFAULT_CALLER
-            }
-
-            var eventType = parser.eventType
-            parser.nextTag()
-
-            // load char's
-            val chars = ArrayList<USXChar>()
-            while (eventType != XmlPullParser.END_DOCUMENT) {
-                if (eventType == XmlPullParser.START_TAG) {
-                    parser.require(XmlPullParser.START_TAG, null, "char")
-                    val charStyle = parser.getAttributeValue("", "style")
-                    val charText = parser.nextText().trim()
+                val chars = ArrayList<USXChar>()
+                val charNodes: NodeList = root.getElementsByTagName("char")
+                for (i in 0 until charNodes.length) {
+                    val charEl = charNodes.item(i) as? Element ?: continue
+                    val charStyle = charEl.getAttribute("style") ?: continue
+                    val charText = charEl.textContent?.trim() ?: ""
                     if (charText.isNotEmpty()) {
                         chars.add(USXChar(charStyle, charText))
                     }
-                } else if (eventType == XmlPullParser.TEXT) {
-                    val text = parser.text.trim()
-                    if (text.isNotEmpty()) {
-                        chars.add(USXChar("ft", text))
+                }
+                // Also handle bare text directly inside <note> (not in a <char>)
+                val childNodes = root.childNodes
+                for (i in 0 until childNodes.length) {
+                    val child = childNodes.item(i)
+                    if (child.nodeType == org.w3c.dom.Node.TEXT_NODE) {
+                        val text = child.textContent?.trim() ?: ""
+                        if (text.isNotEmpty()) {
+                            chars.add(USXChar("ft", text))
+                        }
                     }
                 }
-                eventType = parser.next()
-            }
 
-            return USXNoteSpan(style, caller.trim(), chars)
+                USXNoteSpan(style, caller.trim(), chars)
+            } catch (e: Exception) {
+                Logger.e(USXNoteSpan::class.java.name, "Failed to parse note", e)
+                null
+            }
         }
     }
 
@@ -189,33 +159,33 @@ class USXNoteSpan(
         var spanTitle: CharSequence = ""
         var quotation: CharSequence = ""
         var passageText: CharSequence = ""
-        var noteBuilder: CharSequence = ""
+        val noteBuilder = StringBuilder()
 
         for (c in chars) {
             when (c.style) {
                 USXChar.STYLE_PASSAGE_TEXT -> {
-                    passageText = TextUtils.concat(passageText, c.value)
+                    passageText = "$passageText${c.value}"
                 }
                 USXChar.STYLE_FOOTNOTE_QUOTATION -> {
-                    quotation = TextUtils.concat(quotation, c.value)
+                    quotation = "$quotation${c.value}"
                 }
                 USXChar.STYLE_FOOTNOTE_ALT_QUOTATION -> {
-                    if (noteBuilder.toString() != "") noteBuilder = TextUtils.concat(noteBuilder, " ")
-                    noteBuilder = TextUtils.concat(noteBuilder, "\"", c.value, "\"")
+                    if (noteBuilder.isNotEmpty()) noteBuilder.append(" ")
+                    noteBuilder.append("\"").append(c.value).append("\"")
                 }
                 else -> {
                     // TRICKY: this could add extra white space between the quote and a , but
                     // without fixing the usx converter on the server this is the best we can do.
-                    if (noteBuilder.toString() != "") noteBuilder = TextUtils.concat(noteBuilder, " ")
-                    noteBuilder = TextUtils.concat(noteBuilder, c.value)
+                    if (noteBuilder.isNotEmpty()) noteBuilder.append(" ")
+                    noteBuilder.append(c.value)
                 }
             }
         }
 
         // set the span title
-        if (!TextUtils.isEmpty(passageText)) {
+        if (passageText.isNotEmpty()) {
             spanTitle = passageText
-        } else if (!TextUtils.isEmpty(quotation)) {
+        } else if (quotation.isNotEmpty()) {
             spanTitle = quotation
         }
 
