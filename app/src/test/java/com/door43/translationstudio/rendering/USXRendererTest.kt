@@ -273,6 +273,19 @@ class USXRendererTest {
         assertEquals(TextNode.LineBreak, nodes[poeticIdx - 1])
     }
 
+    @Test
+    fun `Selah char tag inside paragraph is rendered`() {
+        val input = """<para style="q1">Test text <char style="qs">Selah</char></para>"""
+        val nodes = testRender(input)
+        // After rendering, we should have a LineBreak followed by a right-aligned PoeticLine with "Selah"
+        val poeticLines = nodes.filterIsInstance<TextNode.PoeticLine>()
+        assertTrue("Expected at least one PoeticLine node for Selah", poeticLines.isNotEmpty())
+        val selahLine = poeticLines.lastOrNull()
+        assertNotNull(selahLine)
+        assertTrue("Selah line should be right-aligned", selahLine!!.rightAligned)
+        assertEquals("Selah", selahLine.content)
+    }
+
     // -------------------------------------------------------------------------
     // Chapter labels
     // -------------------------------------------------------------------------

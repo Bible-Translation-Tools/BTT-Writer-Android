@@ -42,11 +42,18 @@ object RenderNodeConverter {
                     isMajor = node.isMajor,
                     children = emptyList()
                 )
-                is TextNode.PoeticLine -> RenderNode.PoeticLine(
-                    indentLevel = node.indentLevel,
-                    rightAligned = node.rightAligned,
-                    children = emptyList()
-                )
+                is TextNode.PoeticLine -> {
+                    val children = if (node.content.isNotEmpty()) {
+                        listOf(RenderNode.Text(node.content))
+                    } else {
+                        emptyList()
+                    }
+                    RenderNode.PoeticLine(
+                        indentLevel = node.indentLevel,
+                        rightAligned = node.rightAligned,
+                        children = children
+                    )
+                }
                 is TextNode.ChapterLabel -> RenderNode.ChapterLabel(node.text)
                 is TextNode.Link -> RenderNode.Link(node.linkData)
                 is TextNode.SearchHighlight -> RenderNode.Text(node.content,
@@ -97,10 +104,14 @@ object RenderNodeConverter {
                     result
                 }
                 is RenderNode.PoeticLine -> {
-                    val result = mutableListOf<TextNode>()
-                    result.add(TextNode.PoeticLine(content = "", indentLevel = node.indentLevel, rightAligned = node.rightAligned))
-                    result.addAll(renderNodesToTextNodes(node.children))
-                    result
+                    // Extract text content from children for the PoeticLine content field
+                    val content = node.children.joinToString("") { child ->
+                        when (child) {
+                            is RenderNode.Text -> child.content
+                            else -> ""
+                        }
+                    }
+                    listOf(TextNode.PoeticLine(content = content, indentLevel = node.indentLevel, rightAligned = node.rightAligned))
                 }
                 is RenderNode.ChapterLabel -> listOf(TextNode.ChapterLabel(node.text))
                 is RenderNode.Link -> listOf(TextNode.Link(node.linkData))
