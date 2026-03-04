@@ -1,6 +1,6 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.rendering.model.RenderNode
 import kotlin.concurrent.thread
 
 abstract class RenderingEngine {
@@ -49,14 +49,14 @@ abstract class RenderingEngine {
 
     /**
      * Primary rendering method. Subclasses override this to produce a platform-agnostic
-     * intermediate representation. The default implementation wraps the raw input in a
-     * single [TextNode.Text] node.
+     * hierarchical representation. The default implementation wraps the raw input in a
+     * single [RenderNode.Text] node.
      *
      * @param input the raw input string
      * @return list of platform-agnostic nodes describing the rendered output
      */
-    open fun renderToNodes(input: String): List<TextNode> {
-        return listOf(TextNode.Text(input))
+    open fun renderToNodes(input: String): List<RenderNode> {
+        return listOf(RenderNode.Text(input))
     }
 
     /**
@@ -93,9 +93,9 @@ abstract class RenderingEngine {
     interface OnRenderCallback {
         /**
          * Called when the rendering has finished
-         * @param output the platform-agnostic rendered output
+         * @param output the platform-agnostic hierarchical rendered output
          */
-        fun onComplete(output: List<TextNode>)
+        fun onComplete(output: List<RenderNode>)
 
         /**
          * Called when an exception occurred during rendering

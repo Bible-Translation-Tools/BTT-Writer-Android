@@ -1,6 +1,6 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.rendering.model.RenderNode
 
 /**
  * Created by joel on 1/26/2015.
@@ -66,19 +66,19 @@ class RenderingGroup {
     }
 
     /**
-     * Runs the pipeline and returns a platform-agnostic List<TextNode>.
+     * Runs the pipeline and returns a platform-agnostic hierarchical List<RenderNode>.
      *
      * If the first engine is a [ClickableRenderingEngine], its [RenderingEngine.renderToNodes]
      * override is used directly (it handles notes, highlights, etc. natively).
      * For any other engine (e.g. DefaultRenderer), only [RenderingEngine.render] is overridden,
-     * so this method calls render() and wraps the result in a plain [TextNode.Text].
+     * so this method calls render() and wraps the result in a plain [RenderNode.Text].
      */
-    fun startNodes(): List<TextNode> {
+    fun startNodes(): List<RenderNode> {
         if (mRunning || mInput.isEmpty()) return emptyList()
         mRunning = true
         mStopped = false
-        val result: List<TextNode> = if (mEngines.isEmpty()) {
-            listOf(TextNode.Text(mInput))
+        val result: List<RenderNode> = if (mEngines.isEmpty()) {
+            listOf(RenderNode.Text(mInput))
         } else {
             val engine = mEngines.first()
             if (engine is ClickableRenderingEngine) {
@@ -86,8 +86,8 @@ class RenderingGroup {
                 engine.renderToNodes(mInput)
             } else {
                 // Other engines (e.g. DefaultRenderer) only override render(), not renderToNodes().
-                // Fall back to render() and wrap the text content in a plain TextNode.
-                listOf(TextNode.Text(engine.render(mInput).toString()))
+                // Fall back to render() and wrap the text content in a plain RenderNode.
+                listOf(RenderNode.Text(engine.render(mInput).toString()))
             }
         }
         mRunning = false

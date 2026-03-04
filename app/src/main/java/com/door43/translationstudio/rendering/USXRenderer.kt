@@ -2,6 +2,7 @@ package com.door43.translationstudio.rendering
 
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.model.NoteStyle
+import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.spannables.USXChar
 import com.door43.translationstudio.ui.spannables.USXNoteSpan
@@ -61,11 +62,9 @@ class USXRenderer(
     // -------------------------------------------------------------------------
 
     /**
-     * Render USX input into a platform-agnostic List<TextNode>.
-     * This is the primary output of the new pipeline; Task 6 will make the base
-     * class return List<TextNode> directly.
+     * Render USX input into a platform-agnostic hierarchical List<RenderNode>.
      */
-    override fun renderToNodes(input: String): List<TextNode> {
+    override fun renderToNodes(input: String): List<RenderNode> {
         addedMissingVerse = false
         if (isStopped()) return emptyList()
 
@@ -119,7 +118,7 @@ class USXRenderer(
         // Phase 6: insert missing expected verses
         insertMissingVerses(nodes)
 
-        return nodes
+        return convertTextNodesToRenderNodes(nodes)
     }
 
     // -------------------------------------------------------------------------
@@ -127,19 +126,21 @@ class USXRenderer(
     // -------------------------------------------------------------------------
 
     /**
-     * Shim: delegates to renderToNodes + SpannableAdapter.convert so that
+     * Shim: delegates to renderToNodes + conversion to TextNode + SpannableAdapter.convert so that
      * RenderingEngine.start() and any direct callers of render() continue to work.
+     * TODO: Update SpannableAdapter to work directly with RenderNode
      */
     override fun render(input: CharSequence): CharSequence {
-        val nodes = renderToNodes(input.toString())
-        return SpannableAdapter.convert(nodes, searchHighlightColor = highlightColor)
+        val renderNodes = renderToNodes(input.toString())
+        val textNodes = convertRenderNodesToTextNodes(renderNodes)
+        return SpannableAdapter.convert(textNodes, searchHighlightColor = highlightColor)
     }
 
     /**
-     * Required by ClickableRenderingEngine. Returns the platform-agnostic node list
+     * Required by ClickableRenderingEngine. Returns the platform-agnostic hierarchical node list
      * for the given verse input.
      */
-    override fun renderVerse(input: CharSequence): List<TextNode> {
+    override fun renderVerse(input: CharSequence): List<RenderNode> {
         return renderToNodes(input.toString())
     }
 
@@ -527,6 +528,100 @@ class USXRenderer(
          */
         private fun paraShortPattern(style: String): Pattern {
             return Pattern.compile("<para\\s+style=\"$style\"\\s*/>", Pattern.DOTALL)
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Temporary conversion from TextNode to RenderNode
+    // TODO: Refactor renderers to build RenderNode tree directly
+    // -------------------------------------------------------------------------
+
+    private fun convertTextNodesToRenderNodes(textNodes: List<TextNode>): List<RenderNode> {
+        return textNodes.map { node ->
+            when (node) {
+                is TextNode.Text -> RenderNode.Text(node.content)
+                is TextNode.Styled -> RenderNode.StyledText(node.content, node.style)
+                is TextNode.VerseMarker -> RenderNode.Verse(
+                    startVerse = node.startVerse,
+                    endVerse = node.endVerse,
+                    pinned = node.pinned,
+                    machineReadable = node.machineReadable
+                )
+                is TextNode.NoteMarker -> RenderNode.Note(
+                    caller = node.caller,
+                    passage = node.passage,
+                    notes = node.notes,
+                    noteStyle = node.noteStyle,
+                    machineReadable = node.machineReadable
+                )
+                is TextNode.Paragraph -> RenderNode.Paragraph(
+                    indented = node.indented,
+                    children = emptyList()  // TODO: Properly nest children
+                )
+                is TextNode.SectionHeading -> RenderNode.Section(
+                    text = node.text,
+                    isMajor = node.isMajor,
+                    children = emptyList()
+                )
+                is TextNode.PoeticLine -> RenderNode.PoeticLine(
+                    indentLevel = node.indentLevel,
+                    rightAligned = node.rightAligned,
+                    children = emptyList()  // TODO: Properly nest children
+                )
+                is TextNode.ChapterLabel -> RenderNode.ChapterLabel(node.text)
+                is TextNode.Link -> RenderNode.Link(node.linkData)
+                is TextNode.SearchHighlight -> RenderNode.Text(node.content,
+                    attributes = com.door43.translationstudio.rendering.model.NodeAttributes(
+                        searchHighlighted = true
+                    )
+                )
+                TextNode.LineBreak -> RenderNode.LineBreak
+                TextNode.BlankLine -> RenderNode.BlankLine
+            }
+        }
+    }
+
+    private fun convertRenderNodesToTextNodes(renderNodes: List<RenderNode>): List<TextNode> {
+        return renderNodes.flatMap { node ->
+            when (node) {
+                is RenderNode.Text -> listOf(TextNode.Text(node.content))
+                is RenderNode.StyledText -> listOf(TextNode.Styled(node.content, node.style))
+                is RenderNode.Verse -> listOf(TextNode.VerseMarker(
+                    startVerse = node.startVerse,
+                    endVerse = node.endVerse,
+                    pinned = node.pinned,
+                    machineReadable = node.machineReadable
+                ))
+                is RenderNode.Note -> listOf(TextNode.NoteMarker(
+                    caller = node.caller,
+                    passage = node.passage,
+                    notes = node.notes,
+                    noteStyle = node.noteStyle,
+                    machineReadable = node.machineReadable
+                ))
+                is RenderNode.Paragraph -> {
+                    val result = mutableListOf<TextNode>()
+                    result.add(TextNode.Paragraph(indented = node.indented))
+                    result.addAll(convertRenderNodesToTextNodes(node.children))
+                    result
+                }
+                is RenderNode.Section -> {
+                    val result = mutableListOf<TextNode>()
+                    result.add(TextNode.SectionHeading(text = node.text, isMajor = node.isMajor))
+                    result.addAll(convertRenderNodesToTextNodes(node.children))
+                    result
+                }
+                is RenderNode.PoeticLine -> {
+                    val result = mutableListOf<TextNode>()
+                    result.add(TextNode.PoeticLine(content = "", indentLevel = node.indentLevel, rightAligned = node.rightAligned))
+                    result.addAll(convertRenderNodesToTextNodes(node.children))
+                    result
+                }
+                is RenderNode.ChapterLabel -> listOf(TextNode.ChapterLabel(node.text))
+                is RenderNode.Link -> listOf(TextNode.Link(node.linkData))
+                RenderNode.LineBreak -> listOf(TextNode.LineBreak)
+                RenderNode.BlankLine -> listOf(TextNode.BlankLine)
+            }
         }
     }
 }

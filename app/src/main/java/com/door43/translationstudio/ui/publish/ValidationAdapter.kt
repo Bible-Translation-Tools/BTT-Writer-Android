@@ -17,6 +17,7 @@ import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.widget.ViewUtil
 
@@ -121,7 +122,9 @@ class ValidationAdapter(
                             renderingGroup.addEngine(DefaultRenderer(context))
                         }
                         renderingGroup.init(item.body)
-                        renderedText[position] = SpannableAdapter.convert(renderingGroup.startNodes(), context = context)
+                        val renderNodes = renderingGroup.startNodes()
+                        val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
+                        renderedText[position] = SpannableAdapter.convert(textNodes, context = context)
                     }
                     holder.binding.body.text = renderedText[position]
 

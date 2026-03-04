@@ -30,6 +30,7 @@ import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.model.TextNode
@@ -273,7 +274,8 @@ class ChunkModeAdapter(
             renderingGroup.addEngine(DefaultRenderer(context))
         }
         renderingGroup.init(text)
-        return renderingGroup.startNodes()
+        val renderNodes = renderingGroup.startNodes()
+        return RenderNodeConverter.renderNodesToTextNodes(renderNodes)
     }
 
     override fun getItemCount(): Int {

@@ -10,6 +10,7 @@ import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.usecases.ImportDraft
 import com.door43.util.sortNumerically
@@ -145,7 +146,8 @@ class DraftViewModel (
         }
 
         sourceRendering.init(chapterBody)
-        val textNodes = sourceRendering.startNodes()
+        val renderNodes = sourceRendering.startNodes()
+        val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
 
         ChapterContent(
             heading = heading,

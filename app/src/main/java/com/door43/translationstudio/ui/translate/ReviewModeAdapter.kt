@@ -44,6 +44,7 @@ import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.adapter.VerseClickListener
@@ -501,7 +502,8 @@ open class ReviewModeAdapter(
         }
 
         renderingGroup.init(item.sourceText)
-        val nodes = renderingGroup.startNodes()
+        val renderNodes = renderingGroup.startNodes()
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         item.hasMissingVerses = renderingGroup.isAddedMissingVerse
         return nodes
     }
@@ -1276,7 +1278,8 @@ open class ReviewModeAdapter(
 
         if (!text.isNullOrBlank()) {
             renderingGroup.init(text)
-            val nodes = renderingGroup.startNodes()
+            val renderNodes = renderingGroup.startNodes()
+            val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             item.hasMissingVerses = renderingGroup.isAddedMissingVerse
             return nodes
         } else {
@@ -1478,7 +1481,8 @@ open class ReviewModeAdapter(
         }
 
         renderingGroup.init(item.targetText)
-        val nodes = renderingGroup.startNodes()
+        val renderNodes = renderingGroup.startNodes()
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         item.hasMissingVerses = renderingGroup.isAddedMissingVerse
         return nodes
     }

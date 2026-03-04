@@ -26,6 +26,7 @@ import com.door43.translationstudio.rendering.ClickableRenderingEngine
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.model.TextNode
@@ -188,7 +189,8 @@ class ReadModeAdapter(
             sourceRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
         sourceRendering.init(sourceChapterBody)
-        val nodes = sourceRendering.startNodes()
+        val renderNodes = sourceRendering.startNodes()
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         renderedSourceBody[position] = nodes
         return nodes
     }
@@ -214,7 +216,8 @@ class ReadModeAdapter(
             targetRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
         targetRendering.init(chapterBody)
-        val nodes = targetRendering.startNodes()
+        val renderNodes = targetRendering.startNodes()
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         renderedTargetBody[position] = nodes
         return nodes
     }
