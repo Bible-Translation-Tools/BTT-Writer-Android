@@ -30,7 +30,8 @@ object RenderNodeConverter {
                     passage = node.passage,
                     notes = node.notes,
                     noteStyle = node.noteStyle,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    attributes = NodeAttributes(searchHighlighted = node.highlighted)
                 )
                 is TextNode.Paragraph -> RenderNode.Paragraph(
                     indented = node.indented,
@@ -60,7 +61,14 @@ object RenderNodeConverter {
     fun renderNodesToTextNodes(renderNodes: List<RenderNode>): List<TextNode> {
         return renderNodes.flatMap { node ->
             when (node) {
-                is RenderNode.Text -> listOf(TextNode.Text(node.content))
+                is RenderNode.Text -> {
+                    val textNode = if (node.attributes.searchHighlighted) {
+                        TextNode.SearchHighlight(node.content)
+                    } else {
+                        TextNode.Text(node.content)
+                    }
+                    listOf(textNode)
+                }
                 is RenderNode.StyledText -> listOf(TextNode.Styled(node.content, node.style))
                 is RenderNode.Verse -> listOf(TextNode.VerseMarker(
                     startVerse = node.startVerse,
@@ -73,6 +81,7 @@ object RenderNodeConverter {
                     passage = node.passage,
                     notes = node.notes,
                     noteStyle = node.noteStyle,
+                    highlighted = node.attributes.searchHighlighted,
                     machineReadable = node.machineReadable
                 ))
                 is RenderNode.Paragraph -> {

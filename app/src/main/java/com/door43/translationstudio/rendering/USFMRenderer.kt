@@ -140,7 +140,10 @@ class USFMRenderer(
                     passage = node.passage,
                     notes = node.notes,
                     noteStyle = node.noteStyle,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    attributes = com.door43.translationstudio.rendering.model.NodeAttributes(
+                        searchHighlighted = node.highlighted
+                    )
                 )
                 is TextNode.Paragraph -> RenderNode.Paragraph(
                     indented = node.indented,
