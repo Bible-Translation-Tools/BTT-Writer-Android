@@ -76,7 +76,12 @@ class USXRenderer(
         if (isStopped()) return emptyList()
 
         // Phase 2: collect all token matches simultaneously
+        // NOTE: Selah (and other small tokens) are collected first so they don't get
+        // shadowed by larger container tokens during overlap removal
         val allTokens = mutableListOf<Token>()
+        allTokens.addAll(findVerses(text))
+        allTokens.addAll(findNotes(text))
+        allTokens.addAll(findSelah(text))
         allTokens.addAll(findMajorSectionHeadings(text))
         allTokens.addAll(findSectionHeadings(text))
         allTokens.addAll(findParagraphBreaks(text))
@@ -84,9 +89,6 @@ class USXRenderer(
         allTokens.addAll(findPoeticLines(text))
         allTokens.addAll(findRightAlignedPoeticLines(text))
         allTokens.addAll(findChapterLabels(text))
-        allTokens.addAll(findVerses(text))
-        allTokens.addAll(findNotes(text))
-        allTokens.addAll(findSelah(text))
         if (isStopped()) return emptyList()
 
         // Phase 3: sort by position, remove overlapping tokens

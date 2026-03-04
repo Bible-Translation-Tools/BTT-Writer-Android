@@ -117,6 +117,7 @@ object SpannableAdapter {
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
                 }
+                sb.append("\n")
                 Unit
             }
 
