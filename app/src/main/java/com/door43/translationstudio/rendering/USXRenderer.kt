@@ -178,13 +178,15 @@ class USXRenderer(
 
     private fun findMajorSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("ms").matcher(text)
+        // Match only opening <para style="ms"> tags, extracting content after >
+        val pattern = Pattern.compile("<para\\s+style=\"ms\"\\s*>\\s*([^<]*?)\\s*(?=<|$)")
+        val matcher = pattern.matcher(text)
         while (matcher.find()) {
             if (suppressLeadingMajorSectionHeadings && matcher.start() == 0) continue
             val content = matcher.group(1)?.trim() ?: continue
             tokens.add(
                 Token(
-                    matcher.start(), matcher.end(),
+                    matcher.start(), matcher.start() + matcher.group().length,
                     listOf(TextNode.SectionHeading(content, isMajor = true), TextNode.LineBreak)
                 )
             )
@@ -194,12 +196,14 @@ class USXRenderer(
 
     private fun findSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("s").matcher(text)
+        // Match only opening <para style="s"> tags, extracting content after >
+        val pattern = Pattern.compile("<para\\s+style=\"s\"\\s*>\\s*([^<]*?)\\s*(?=<|$)")
+        val matcher = pattern.matcher(text)
         while (matcher.find()) {
             val content = matcher.group(1)?.trim() ?: continue
             tokens.add(
                 Token(
-                    matcher.start(), matcher.end(),
+                    matcher.start(), matcher.start() + matcher.group().length,
                     listOf(TextNode.SectionHeading(content, isMajor = false), TextNode.LineBreak)
                 )
             )
@@ -209,13 +213,18 @@ class USXRenderer(
 
     private fun findParagraphBreaks(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("p").matcher(text)
+        // Match only the opening <para style="p"> tag, not the entire block
+        // This allows verses/notes inside paragraphs to be processed separately
+        val matcher = beginParagraphPattern.matcher(text)
         while (matcher.find()) {
-            val content = matcher.group(1)?.trim() ?: ""
-            val nodes = mutableListOf<TextNode>(TextNode.Paragraph(indented = true))
-            if (content.isNotEmpty()) nodes.add(TextNode.Text(content))
-            nodes.add(TextNode.LineBreak)
-            tokens.add(Token(matcher.start(), matcher.end(), nodes))
+            val tagText = matcher.group() ?: continue
+            // Only create tokens for <para style="p"> tags (indented paragraphs)
+            if (tagText.contains("style=\"p\"")) {
+                tokens.add(Token(
+                    matcher.start(), matcher.end(),
+                    listOf(TextNode.Paragraph(indented = true), TextNode.LineBreak)
+                ))
+            }
         }
         return tokens
     }
@@ -231,15 +240,16 @@ class USXRenderer(
 
     private fun findPoeticLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("q(\\d+)").matcher(text)
+        // Match only opening <para style="q\d+"> tags, not entire blocks
+        // This allows verses inside poetic lines to be processed separately
+        val pattern = Pattern.compile("<para\\s+style=\"q(\\d+)\"\\s*>")
+        val matcher = pattern.matcher(text)
         while (matcher.find()) {
             val level = matcher.group(1)?.toIntOrNull() ?: 1
-            // group(2) is the content when the style regex has a capture group inside it
-            val content = matcher.group(2)?.trim() ?: ""
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.PoeticLine(content, indentLevel = level, rightAligned = false))
+                    listOf(TextNode.PoeticLine("", indentLevel = level, rightAligned = false))
                 )
             )
         }
@@ -248,15 +258,16 @@ class USXRenderer(
 
     private fun findRightAlignedPoeticLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("qr").matcher(text)
+        // Match only opening <para style="qr"> tags, not entire blocks
+        val pattern = Pattern.compile("<para\\s+style=\"qr\"\\s*>")
+        val matcher = pattern.matcher(text)
         while (matcher.find()) {
-            val content = matcher.group(1)?.trim() ?: ""
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
                     listOf(
                         TextNode.LineBreak,
-                        TextNode.PoeticLine(content, indentLevel = 0, rightAligned = true)
+                        TextNode.PoeticLine("", indentLevel = 0, rightAligned = true)
                     )
                 )
             )
@@ -266,10 +277,12 @@ class USXRenderer(
 
     private fun findChapterLabels(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("cl").matcher(text)
+        // Match only opening <para style="cl"> tags, extracting content after >
+        val pattern = Pattern.compile("<para\\s+style=\"cl\"\\s*>\\s*([^<]*?)\\s*(?=<|$)")
+        val matcher = pattern.matcher(text)
         while (matcher.find()) {
             val content = matcher.group(1)?.trim() ?: ""
-            tokens.add(Token(matcher.start(), matcher.end(), listOf(TextNode.ChapterLabel(content))))
+            tokens.add(Token(matcher.start(), matcher.start() + matcher.group()!!.length, listOf(TextNode.ChapterLabel(content))))
         }
         return tokens
     }
@@ -391,6 +404,14 @@ class USXRenderer(
         // Remove open/close para tags
         out = out.replace(beginParagraphPattern.toRegex(), "")
         out = out.replace(endParagraphPattern.toRegex(), "")
+        // Remove verse tags (both self-closing and open)
+        out = out.replace(Regex("""<verse[^>]*>"""), "")
+        out = out.replace(Regex("""</verse>"""), "")
+        // Remove note tags (both self-closing and open)
+        out = out.replace(Regex("""<note[^>]*>"""), "")
+        out = out.replace(Regex("""</note>"""), "")
+        // Remove any other unparsed tags
+        out = out.replace(Regex("""<[^>]*>"""), "")
         // Extract text content from char tags, discard the tags themselves
         val charPattern = Pattern.compile(USXChar.PATTERN)
         val charMatcher = charPattern.matcher(out)
