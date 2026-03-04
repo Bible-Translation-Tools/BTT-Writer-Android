@@ -94,7 +94,7 @@ object ComposeTextAdapter {
 
             is TextNode.VerseMarker -> {
                 val label = if (node.endVerse > 0) "${node.startVerse}-${node.endVerse}" else "${node.startVerse}"
-                pushStyle(SpanStyle(fontSize = 10.sp, color = verseColor))
+                pushStyle(SpanStyle(fontSize = 16.sp, color = verseColor))
                 addStringAnnotation(tag = "VERSE", annotation = label, start = length, end = length + label.length)
                 append(label)
                 pop()

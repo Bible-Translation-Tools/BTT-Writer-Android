@@ -50,8 +50,47 @@ object SpannableAdapter {
         searchHighlightColor: Int = 0
     ): SpannableStringBuilder {
         val sb = SpannableStringBuilder()
+        var currentPoeticalLineIndent = 0  // Track current poetic line indent level
+        var isFirstElementOfPoeticLine = true  // Track if next element is first child of poetic line
+        var verseMarkerAddedIndentation = false  // Track if verse marker already added indentation
+        var lastWasPoeticLineMarker = false  // Track if previous node was a PoeticLine marker
+
         for (node in nodes) {
-            appendNode(sb, node, context, verseClickListener, verseLongClickListener, noteClickListener, searchHighlightColor)
+            // Update poetic line context when we encounter a PoeticLine marker
+            if (node is TextNode.PoeticLine && node.content.isEmpty()) {
+                // This is a poetic line marker (e.g., <para style="q1">)
+                currentPoeticalLineIndent = node.indentLevel
+                isFirstElementOfPoeticLine = true
+                verseMarkerAddedIndentation = false
+                lastWasPoeticLineMarker = true
+            } else if (node is TextNode.LineBreak || node is TextNode.Paragraph) {
+                // Reset context at line/paragraph boundaries
+                currentPoeticalLineIndent = 0
+                isFirstElementOfPoeticLine = false
+                verseMarkerAddedIndentation = false
+                lastWasPoeticLineMarker = false
+            } else if (node is TextNode.VerseMarker && isFirstElementOfPoeticLine && currentPoeticalLineIndent > 0) {
+                // Verse marker as first element in poetic line will add indentation
+                verseMarkerAddedIndentation = true
+                lastWasPoeticLineMarker = false
+            } else if (node !is TextNode.PoeticLine) {
+                // Mark that we've processed a non-poetic-marker element
+                if (node !is TextNode.VerseMarker) {
+                    isFirstElementOfPoeticLine = false
+                }
+                lastWasPoeticLineMarker = false
+            }
+
+            // Skip whitespace-only text nodes that appear right after a poetic line marker
+            // (these are gap nodes from the renderer)
+            if (node is TextNode.Text && lastWasPoeticLineMarker && currentPoeticalLineIndent > 0 && node.content.trim().isEmpty()) {
+                continue
+            }
+
+            // Pass isFirstElementOfPoetic=true only for verse markers that are first, not for text nodes
+            val isFirstForNode = if (node is TextNode.VerseMarker) isFirstElementOfPoeticLine else false
+            appendNode(sb, node, context, verseClickListener, verseLongClickListener, noteClickListener, searchHighlightColor,
+                      currentPoeticalLineIndent, isFirstForNode, verseMarkerAddedIndentation)
         }
         return sb
     }
@@ -63,11 +102,24 @@ object SpannableAdapter {
         verseClickListener: VerseClickListener?,
         verseLongClickListener: VerseLongClickListener?,
         noteClickListener: NoteClickListener?,
-        searchHighlightColor: Int
+        searchHighlightColor: Int,
+        poeticalLineIndent: Int = 0,
+        isFirstElementOfPoetic: Boolean = false,
+        verseMarkerAddedIndentation: Boolean = false
     ) {
         @Suppress("UNUSED_VARIABLE")
         val exhaustive: Unit = when (node) {
-            is TextNode.Text -> { sb.append(node.content); Unit }
+            is TextNode.Text -> {
+                // Apply indentation for text in poetic lines, unless verse marker already added it
+                // Don't add indentation for empty/whitespace-only text (could be a gap before verse marker)
+                if (poeticalLineIndent > 0 && !verseMarkerAddedIndentation && node.content.trim().isNotEmpty()) {
+                    // Indent text in poetic lines from column 0
+                    val padding = "    ".repeat(poeticalLineIndent)
+                    sb.append(padding)
+                }
+                sb.append(node.content)
+                Unit
+            }
 
             is TextNode.Styled -> {
                 val start = sb.length
@@ -105,19 +157,25 @@ object SpannableAdapter {
             }
 
             is TextNode.PoeticLine -> {
-                val padding = "    ".repeat(node.indentLevel)
-                val start = sb.length
-                sb.append(padding).append(node.content)
-                val end = sb.length
-                if (node.rightAligned) {
-                    sb.setSpan(StyleSpan(Typeface.ITALIC), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                    sb.setSpan(
-                        AlignmentSpan.Standard(Layout.Alignment.ALIGN_OPPOSITE),
-                        start, end,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
+                if (node.content.isEmpty()) {
+                    // Marker node - just output a newline, indentation will be handled by following Text nodes
+                    sb.append("\n")
+                } else {
+                    // Content node (e.g., Selah) - apply indentation from node's own level
+                    val padding = "    ".repeat(node.indentLevel)
+                    val start = sb.length
+                    sb.append(padding).append(node.content)
+                    val end = sb.length
+                    if (node.rightAligned) {
+                        sb.setSpan(StyleSpan(Typeface.ITALIC), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        sb.setSpan(
+                            AlignmentSpan.Standard(Layout.Alignment.ALIGN_OPPOSITE),
+                            start, end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
+                    sb.append("\n")
                 }
-                sb.append("\n")
                 Unit
             }
 
@@ -180,6 +238,13 @@ object SpannableAdapter {
                         },
                         start, spanEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
+                }
+
+                // When verse marker is the first element of a poetic line, add indentation after it
+                // for the subsequent text to appear at the poetic line indent level
+                if (isFirstElementOfPoetic && poeticalLineIndent > 0) {
+                    val padding = "    ".repeat(poeticalLineIndent)
+                    sb.append(padding)
                 }
                 Unit
             }
