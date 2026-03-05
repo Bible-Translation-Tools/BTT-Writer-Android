@@ -957,6 +957,7 @@ class TargetTranslation private constructor(
 
             val resourceJson = JSONObject().apply {
                 put(FIELD_MANIFEST_ID, resourceSlug)
+                put(FIELD_MANIFEST_NAME, getResourceName(resourceSlug))
             }
             manifest.put(FIELD_MANIFEST_RESOURCE, resourceJson)
 
@@ -1024,6 +1025,16 @@ class TargetTranslation private constructor(
                 original.put(FIELD_PARENT_DRAFT, imported.getJSONObject(FIELD_PARENT_DRAFT))
             }
             return original
+        }
+
+        private fun getResourceName(resourceSlug: String): String {
+            return when (resourceSlug) {
+                "reg" -> "Regular"
+                "ulb" -> "Unlocked Literal Bible"
+                "udb" -> "Unlocked Dynamic Bible"
+                "obs" -> "Open Bible Stories"
+                else -> resourceSlug
+            }
         }
     }
 }

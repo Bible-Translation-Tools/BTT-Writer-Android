@@ -23,8 +23,8 @@ android {
         minSdk = 26
         compileSdk = 35
         targetSdk = 35
-        versionCode = 40
-        versionName = "1.5.4"
+        versionCode = 42
+        versionName = "1.6.0"
 
         testBuildType = "verify"
         testInstrumentationRunner = "com.door43.translationstudio.CustomTestRunner"
