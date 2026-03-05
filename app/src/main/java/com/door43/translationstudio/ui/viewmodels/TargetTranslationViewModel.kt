@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.ContentValues
 import android.graphics.Typeface
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
@@ -26,6 +24,10 @@ import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
@@ -34,6 +36,15 @@ import org.unfoldingword.resourcecontainer.Language
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
+
+data class TargetTranslationModel(
+    val items: List<ListItem> = emptyList(),
+    val renderHelpsResult: RenderHelps.RenderHelpsResult? = null,
+    val progress: ProgressHelper.Progress? = null,
+    val viewMode: TranslationViewMode = TranslationViewMode.READ,
+    val draftAvailable: Boolean = false,
+    val showDraftAvailable: Boolean = false
+)
 
 class TargetTranslationViewModel(
     application: Application,
@@ -47,31 +58,42 @@ class TargetTranslationViewModel(
 
     private val renderHelpJobs = arrayListOf<Job>()
 
-    private var _targetTranslation: TargetTranslation? = null
-    val targetTranslation get() = _targetTranslation!!
+    lateinit var targetTranslation: TargetTranslation
+        private set
 
     private var _resourceContainer: ResourceContainer? = null
     val resourceContainer get() = _resourceContainer!!
 
-    private var _listItems = MutableLiveData<List<ListItem>>()
-    val listItems: LiveData<List<ListItem>> = _listItems
+    private val _model = MutableStateFlow(TargetTranslationModel())
+    val model: StateFlow<TargetTranslationModel> = _model.asStateFlow()
 
-    private var _renderHelpsResult = MutableLiveData<RenderHelps.RenderHelpsResult?>(null)
-    val renderHelpsResult: LiveData<RenderHelps.RenderHelpsResult?> = _renderHelpsResult
+    fun initialize(targetTranslationId: String): Boolean {
+        val translation = translator.getTargetTranslation(targetTranslationId) ?: return false
 
-    private val _progress = MutableLiveData<ProgressHelper.Progress?>(null)
-    val progress: LiveData<ProgressHelper.Progress?> = _progress
+        targetTranslation = translation
 
-    fun getTargetTranslation(translationID: String): TargetTranslation? {
-        _targetTranslation = translator.getTargetTranslation(translationID)
-        return _targetTranslation
+        val draftAvailable = draftIsAvailable()
+        val lastViewMode = translator.getLastViewMode(targetTranslation.id)
+
+        _model.update {
+            it.copy(
+                viewMode = lastViewMode,
+                draftAvailable = draftAvailable,
+                showDraftAvailable = draftAvailable && targetTranslation.numTranslated == 0
+            )
+        }
+
+        return true
     }
 
     fun openUsedSourceTranslations() {
         if (prefRepository.getOpenSourceTranslations(targetTranslation.id).isEmpty()) {
             val resourceContainerSlugs = targetTranslation.sourceTranslations
             for (slug in resourceContainerSlugs) {
-                prefRepository.addOpenSourceTranslation(targetTranslation.id, slug)
+                prefRepository.addOpenSourceTranslation(
+                    targetTranslation.id,
+                    slug
+                )
             }
         }
     }
@@ -80,7 +102,7 @@ class TargetTranslationViewModel(
      * Checks if a draft is available
      * @return
      */
-    fun draftIsAvailable(): Boolean {
+    private fun draftIsAvailable(): Boolean {
         return library.index.findTranslations(
             targetTranslation.targetLanguage.slug,
             targetTranslation.projectId,
@@ -92,10 +114,6 @@ class TargetTranslationViewModel(
         ).any { it.resource.slug != "udb" }
     }
 
-    fun getLastViewMode(): TranslationViewMode {
-        return translator.getLastViewMode(targetTranslation.id)
-    }
-
     fun setLastViewMode(modeIndex: Int) {
         if (modeIndex > 0 && modeIndex < TranslationViewMode.entries.size) {
             setLastViewMode(TranslationViewMode.entries[modeIndex])
@@ -103,6 +121,7 @@ class TargetTranslationViewModel(
     }
 
     fun setLastViewMode(mode: TranslationViewMode) {
+        _model.update { it.copy(viewMode = mode) }
         translator.setLastViewMode(targetTranslation.id, mode)
     }
 
@@ -164,7 +183,7 @@ class TargetTranslationViewModel(
             getSelectedSourceTranslationId()?.let { sourceTranslationSlug ->
                 setSelectedResourceContainer(sourceTranslationSlug)
             } ?: run {
-                _listItems.value = listOf()
+                _model.update { it.copy(items = emptyList()) }
             }
         }
     }
@@ -173,8 +192,8 @@ class TargetTranslationViewModel(
      * Selects the source translation by id
      */
     fun setSelectedResourceContainer(sourceTranslationId: String) {
-        viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress()
+       viewModelScope.launch {
+            _model.update { it.copy(progress = ProgressHelper.Progress()) }
 
             withContext(Dispatchers.IO) {
                 translator.setSelectedSourceTranslation(targetTranslation.id, sourceTranslationId)
@@ -187,7 +206,7 @@ class TargetTranslationViewModel(
             }
 
             loadListItems()
-            _progress.value = null
+            _model.update { it.copy(progress = null) }
         }
     }
 
@@ -258,13 +277,17 @@ class TargetTranslationViewModel(
                 }
             }
         }
-        _listItems.value = items
+        _model.update { it.copy(items = items) }
+
     }
 
     fun renderHelps(item: ListItem) {
         viewModelScope.launch {
-            _renderHelpsResult.value = withContext(Dispatchers.IO) {
+            val result = withContext(Dispatchers.IO) {
                 renderHelps.execute(item)
+            }
+            _model.update {
+                it.copy(renderHelpsResult = result)
             }
         }.also(renderHelpJobs::add)
     }
@@ -326,7 +349,11 @@ class TargetTranslationViewModel(
                 val title = st.language.name + " " + st.resource.slug.uppercase(Locale.getDefault())
                 values.put("title", title)
                 // include the resource id if there are more than one
-                if (library.index.getResources(st.language.slug, st.project.slug).size > 1) {
+                val resources = library.index.getResources(
+                    st.language.slug,
+                    st.project.slug
+                )
+                if (resources.size > 1) {
                     values.put("title", title)
                 } else {
                     values.put("title", st.language.name)

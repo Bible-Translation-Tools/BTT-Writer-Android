@@ -6,7 +6,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import androidx.activity.addCallback
-import androidx.activity.viewModels
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityPublishBinding
@@ -39,8 +38,10 @@ class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
         // validate parameters
         val args = checkNotNull(intent.extras)
         val targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null)
-        val translation = viewModel.getTargetTranslation(targetTranslationId)
-        if (translation == null) {
+
+        val initialized = viewModel.initialize(targetTranslationId)
+
+        if (!initialized) {
             Logger.e(
                 PublishActivity::class.java.simpleName,
                 "A valid target translation id is required. Received $targetTranslationId but the translation could not be found"

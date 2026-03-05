@@ -5,9 +5,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.door43.translationstudio.databinding.FragmentFirstTabBinding
 import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.json.JSONException
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.unfoldingword.tools.logger.Logger
@@ -81,9 +87,18 @@ class FirstTabFragment : BaseFragment(), ChooseSourceTranslationDialog.OnClickLi
     }
 
     private fun setupObservers() {
-        viewModel.listItems.observe(viewLifecycleOwner) { items ->
-            if (items.isNotEmpty()) {
-                listener?.onHasSourceTranslations()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.model
+                        .map { it.items }
+                        .distinctUntilChanged()
+                        .collect { items ->
+                            if (items.isNotEmpty()) {
+                                listener?.onHasSourceTranslations()
+                            }
+                        }
+                }
             }
         }
     }

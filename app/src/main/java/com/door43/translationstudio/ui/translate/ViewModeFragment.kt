@@ -11,6 +11,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,6 +34,9 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.json.JSONException
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -200,33 +206,47 @@ abstract class ViewModeFragment : BaseFragment(),
     }
 
     protected open fun setupObservers() {
-        viewModel.progress.observe(viewLifecycleOwner) { progress ->
-            if (progress != null) {
-                progressDialog?.apply {
-                    show()
-                    setProgress(progress.progress)
-                    setMessage(progress.message)
-                    setMax(progress.max)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.model
+                        .map { it.progress }
+                        .distinctUntilChanged()
+                        .collect { progress ->
+                            if (progress != null) {
+                                progressDialog?.apply {
+                                    show()
+                                    setProgress(progress.progress)
+                                    setMessage(progress.message)
+                                    setMax(progress.max)
+                                }
+                            } else {
+                                progressDialog?.dismiss()
+                            }
+                        }
                 }
-            } else {
-                progressDialog?.dismiss()
-            }
-        }
 
-        viewModel.listItems.observe(viewLifecycleOwner) { items ->
-            if (items.isNotEmpty()) {
-                adapter?.let {
-                    if (chapterSlug == null) {
-                        chapterSlug = viewModel.getLastFocusChapterId()
-                    }
-                    if (chunkSlug == null) {
-                        chunkSlug = viewModel.getLastFocusFrameId()
-                    }
-                    it.initializeListItems(items, chapterSlug, chunkSlug)
-                    doScrollToPosition(it.startPosition, 0)
+                launch {
+                    viewModel.model
+                        .map { it.items }
+                        .distinctUntilChanged()
+                        .collect { items ->
+                            if (items.isNotEmpty()) {
+                                adapter?.let {
+                                    if (chapterSlug == null) {
+                                        chapterSlug = viewModel.getLastFocusChapterId()
+                                    }
+                                    if (chunkSlug == null) {
+                                        chunkSlug = viewModel.getLastFocusFrameId()
+                                    }
+                                    it.initializeListItems(items, chapterSlug, chunkSlug)
+                                    doScrollToPosition(it.startPosition, 0)
+                                }
+                            } else {
+                                listener?.onNoSourceTranslations()
+                            }
+                        }
                 }
-            } else {
-                listener?.onNoSourceTranslations()
             }
         }
     }
@@ -506,7 +526,7 @@ abstract class ViewModeFragment : BaseFragment(),
         val args = Bundle()
         args.putString(
             ChooseSourceTranslationDialog.ARG_TARGET_TRANSLATION_ID,
-            viewModel.targetTranslation?.id
+            viewModel.targetTranslation.id
         )
         dialog.setOnClickListener(this)
         dialog.arguments = args
@@ -593,7 +613,7 @@ abstract class ViewModeFragment : BaseFragment(),
             } catch (e: Exception) {
                 Logger.e(
                     this.javaClass.name,
-                    "Error while adding source $slug for ${viewModel.targetTranslation?.id}"
+                    "Error while adding source $slug for ${viewModel.targetTranslation.id}"
                 )
                 e.printStackTrace()
             }

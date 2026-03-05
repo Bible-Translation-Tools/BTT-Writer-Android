@@ -2,26 +2,18 @@ package com.door43.translationstudio.ui.translate
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Rect
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
-import android.text.Layout
 import android.text.TextWatcher
-import android.util.Log
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.EditText
-import android.widget.PopupMenu
-import android.widget.SeekBar
-import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.door43.data.IPreferenceRepository
@@ -30,6 +22,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityTargetTranslationDetailBinding
+import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.dialogs.BackupDialog
@@ -38,12 +31,8 @@ import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.translate.review.SearchSubject
+import com.door43.translationstudio.ui.translate.screens.TargetTranslationScreen
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
-import com.door43.widget.VerticalSeekBar
-import com.door43.widget.VerticalSeekBarHint
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
-import it.moondroid.seekbarhint.library.SeekBarHint
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
@@ -51,7 +40,6 @@ import java.util.Timer
 import java.util.TimerTask
 
 class TargetTranslationActivity : BaseActivity(),
-    ViewModeFragment.OnEventListener,
     FirstTabFragment.OnEventListener,
     AdapterView.OnItemSelectedListener {
 
@@ -61,7 +49,6 @@ class TargetTranslationActivity : BaseActivity(),
     private lateinit var binding: ActivityTargetTranslationDetailBinding
 
     private var fragment: Fragment? = null
-    private var graduations: ViewGroup? = null
     private var commitTimer = Timer()
     private var searchEnabled = false
     private var searchTextWatcher: TextWatcher? = null
@@ -69,8 +56,6 @@ class TargetTranslationActivity : BaseActivity(),
     private var searchTimer: Timer? = null
     private var searchString: String? = null
 
-    private val enableGrids = false
-    private var seekbarMultiplier = 1 // allows for more granularity in setting position if cards are few
     private var haveMergeConflict = false
     private var mergeConflictFilterEnabled = false
     private var foundTextFormat: Int = 0
@@ -99,8 +84,8 @@ class TargetTranslationActivity : BaseActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityTargetTranslationDetailBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+//        binding = ActivityTargetTranslationDetailBinding.inflate(layoutInflater)
+//        setContentView(binding.root)
 
         // validate parameters
         val args = intent.extras
@@ -109,8 +94,9 @@ class TargetTranslationActivity : BaseActivity(),
         val targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null)
         mergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false)
 
-        val translation = viewModel.getTargetTranslation(targetTranslationId)
-        if (translation == null) {
+        val initialized = viewModel.initialize(targetTranslationId)
+
+        if (!initialized) {
             Logger.e(
                 TAG,
                 "A valid target translation id is required. Received $targetTranslationId but the translation could not be found"
@@ -119,37 +105,8 @@ class TargetTranslationActivity : BaseActivity(),
             return
         }
 
-        if (savedInstanceState == null) {
-            // reset cached values
-            ViewModeFragment.reset()
-        }
-
         // open used source translations by default
         viewModel.openUsedSourceTranslations()
-
-        // notify user that a draft translation exists the first time activity starts
-        if (savedInstanceState == null &&
-            viewModel.draftIsAvailable() &&
-            viewModel.targetTranslation.numTranslated == 0
-        ) {
-            val snack = Snackbar.make(
-                findViewById(android.R.id.content),
-                R.string.draft_translation_exists,
-                Snackbar.LENGTH_LONG
-            ).setAction(R.string.preview) {
-                val intent = Intent(this, DraftActivity::class.java)
-                intent.putExtra(
-                    DraftActivity.EXTRA_TARGET_TRANSLATION_ID,
-                    viewModel.targetTranslation.id
-                )
-                startActivity(intent)
-            }
-            ViewUtil.setSnackBarTextColor(
-                snack,
-                ContextCompat.getColor(this, R.color.light_primary_text)
-            )
-            snack.show()
-        }
 
         // manual location settings
         val modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1)
@@ -157,58 +114,45 @@ class TargetTranslationActivity : BaseActivity(),
             viewModel.setLastViewMode(TranslationViewMode.entries[modeIndex])
         }
 
-        binding.searchPane.downSearch.setOnClickListener { moveSearch(true) }
-        binding.searchPane.upSearch.setOnClickListener { moveSearch(false) }
+//        binding.searchPane.downSearch.setOnClickListener { moveSearch(true) }
+//        binding.searchPane.upSearch.setOnClickListener { moveSearch(false) }
 
         foundTextFormat = R.string.found_in_chunks
 
         // inject fragments
-        if (findViewById<View>(R.id.fragment_container) != null) {
-            if (savedInstanceState != null) {
-                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-            } else {
-                fragment = when (viewModel.getLastViewMode()) {
-                    TranslationViewMode.READ -> ReadModeFragment()
-                    TranslationViewMode.CHUNK -> ChunkModeFragment()
-                    TranslationViewMode.REVIEW -> ReviewModeFragment()
-                }
-                fragment?.arguments = intent.extras
-                supportFragmentManager
-                    .beginTransaction()
-                    .add(R.id.fragment_container, fragment!!)
-                    .commit()
-                // TODO: animate
-                // TODO: update menu
-            }
-        }
+//        if (findViewById<View>(R.id.fragment_container) != null) {
+//            if (savedInstanceState != null) {
+//                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+//            } else {
+//                fragment = when (viewModel.model.value.viewMode) {
+//                    TranslationViewMode.READ -> ReadModeFragment()
+//                    TranslationViewMode.CHUNK -> ChunkModeFragment()
+//                    TranslationViewMode.REVIEW -> ReviewModeFragment()
+//                }
+//                fragment?.arguments = intent.extras
+//                supportFragmentManager
+//                    .beginTransaction()
+//                    .add(R.id.fragment_container, fragment!!)
+//                    .commit()
+//                // TODO: animate
+//                // TODO: update menu
+//            }
+//        }
 
-        setUpSeekBar()
+//        setUpSeekBar()
 
-        // set up menu items
-        buildMenu()
+//        binding.translatorSidebar.warnMergeConflict.setOnClickListener {
+//            mergeConflictFilterEnabled = !mergeConflictFilterEnabled // toggle filter state
+//            setMergeConflictFilter() // update displayed state
+//            openTranslationMode(TranslationViewMode.REVIEW, null) // make sure we are in review mode
+//        }
 
-        binding.translatorSidebar.warnMergeConflict.setOnClickListener {
-            mergeConflictFilterEnabled = !mergeConflictFilterEnabled // toggle filter state
-            setMergeConflictFilter() // update displayed state
-            openTranslationMode(TranslationViewMode.REVIEW, null) // make sure we are in review mode
-        }
-
-        binding.translatorSidebar.actionRead.setOnClickListener {
-            removeSearchBar()
-            openTranslationMode(TranslationViewMode.READ, null)
-        }
-
-        binding.translatorSidebar.actionChunk.setOnClickListener {
-            removeSearchBar()
-            openTranslationMode(TranslationViewMode.CHUNK, null)
-        }
-
-        binding.translatorSidebar.actionReview.setOnClickListener {
-            removeSearchBar()
-            mergeConflictFilterEnabled = false
-            setMergeConflictFilter()
-            openTranslationMode(TranslationViewMode.REVIEW, null)
-        }
+//        binding.translatorSidebar.actionReview.setOnClickListener {
+//            removeSearchBar()
+//            mergeConflictFilterEnabled = false
+//            setMergeConflictFilter()
+//            openTranslationMode(TranslationViewMode.REVIEW, null)
+//        }
 
         if (savedInstanceState != null) {
             searchEnabled = savedInstanceState.getBoolean(STATE_SEARCH_ENABLED, false)
@@ -224,117 +168,155 @@ class TargetTranslationActivity : BaseActivity(),
             showConflictSummary = mergeConflictFilterEnabled
         }
 
-        setupSidebarModeIcons()
-        setSearchBarVisibility(searchEnabled)
-        if (searchEnabled) {
-            setSearchSpinner(true, numberOfChunkMatches, searchAtEnd, searchAtStart) // restore initial state
-        }
+//        setSearchBarVisibility(searchEnabled)
+//        if (searchEnabled) {
+//            setSearchSpinner(true, numberOfChunkMatches, searchAtEnd, searchAtStart) // restore initial state
+//        }
 
         restartAutoCommitTimer()
+
+        setContent {
+            AppTheme(darkTheme = isDarkTheme) {
+                TargetTranslationScreen(
+                    onHomeClick = { finish() },
+                    onNavigateToDraft = {
+                        val intent = Intent(this, DraftActivity::class.java)
+                        intent.putExtra(
+                            DraftActivity.EXTRA_TARGET_TRANSLATION_ID,
+                            viewModel.targetTranslation.id
+                        )
+                        startActivity(intent)
+                    },
+                    onProjectPreview = {
+                        val publishIntent = Intent(this@TargetTranslationActivity, PublishActivity::class.java)
+                        publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
+                        publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION)
+                        startActivity(publishIntent)
+                        // TRICKY: we may move back and forth between the publisher and translation activities
+                        // so we finish to avoid filling the stack.
+                        finish()
+                    },
+                    onUploadExport = {
+                        val backupFt = supportFragmentManager.beginTransaction()
+                        val backupPrev = supportFragmentManager.findFragmentByTag(BackupDialog.TAG)
+                        if (backupPrev != null) {
+                            backupFt.remove(backupPrev)
+                        }
+                        backupFt.addToBackStack(null)
+
+                        val backupDialog = BackupDialog()
+                        val args = Bundle()
+                        args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
+                        backupDialog.arguments = args
+                        backupDialog.show(backupFt, BackupDialog.TAG)
+                    },
+                    onPrint = {
+                        val printFt = supportFragmentManager.beginTransaction()
+                        val printPrev = supportFragmentManager.findFragmentByTag("printDialog")
+                        if (printPrev != null) {
+                            printFt.remove(printPrev)
+                        }
+                        printFt.addToBackStack(null)
+
+                        val printDialog = PrintDialog()
+                        val printArgs = Bundle()
+                        printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
+                        printDialog.arguments = printArgs
+                        printDialog.show(printFt, "printDialog")
+                    },
+                    onFeedback = {
+                        val ft = supportFragmentManager.beginTransaction()
+                        val prev = supportFragmentManager.findFragmentByTag("bugDialog")
+                        if (prev != null) {
+                            ft.remove(prev)
+                        }
+                        ft.addToBackStack(null)
+
+                        val dialog = FeedbackDialog()
+                        dialog.show(ft, "bugDialog")
+                    },
+                    onSearch = {},
+                    onChunksDone = {},
+                    onSettings = {
+                        startActivity(Intent(this@TargetTranslationActivity, SettingsActivity::class.java))
+                    },
+                )
+            }
+        }
     }
 
     /**
      * enable/disable merge conflict filter in adapter
      */
-    private fun setMergeConflictFilter() {
-        val hand = Handler(Looper.getMainLooper())
-        hand.post {
-            val currentFragment = fragment
-            if (currentFragment is ViewModeFragment) {
-                currentFragment.setShowMergeSummary(showConflictSummary)
-                currentFragment.setMergeConflictFilter(mergeConflictFilterEnabled, false)
-            }
-            onEnableMergeConflict(haveMergeConflict, mergeConflictFilterEnabled)
-        }
-    }
+//    private fun setMergeConflictFilter() {
+//        val hand = Handler(Looper.getMainLooper())
+//        hand.post {
+//            val currentFragment = fragment
+//            if (currentFragment is ViewModeFragment) {
+//                currentFragment.setShowMergeSummary(showConflictSummary)
+//                currentFragment.setMergeConflictFilter(mergeConflictFilterEnabled, false)
+//            }
+//            onEnableMergeConflict(haveMergeConflict, mergeConflictFilterEnabled)
+//        }
+//    }
 
-    /**
-     * called by adapter to set state for merge conflict icon
-     */
-    override fun onEnableMergeConflict(showConflicted: Boolean, active: Boolean) {
-        haveMergeConflict = showConflicted
-        mergeConflictFilterEnabled = active
-        binding.translatorSidebar.warnMergeConflict.visibility = if (showConflicted) View.VISIBLE else View.GONE
-        if (mergeConflictFilterEnabled) {
-            binding.translatorSidebar.warnMergeConflict.setImageResource(R.drawable.ic_warning_white_24dp)
-            val highlightedColor = ContextCompat.getColor(this, R.color.primary_dark)
-            binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor)
-        } else {
-            binding.translatorSidebar.warnMergeConflict.setImageResource(R.drawable.ic_warning_inactive_24dp)
-            binding.translatorSidebar.warnMergeConflict.background = null // clear any previous background highlighting
-        }
-    }
-
-    private fun setUpSeekBar() {
-        if (enableGrids) {
-            graduations = binding.translatorSidebar.actionSeekGraduations
-        }
-        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-        seekBar.max = 100
-        seekBar.progress = computePositionFromProgress(0)
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                var correctedProgress = correctProgress(progress)
-                correctedProgress = limitRange(correctedProgress, 0, seekBar.max - 1)
-                val position = correctedProgress / seekbarMultiplier
-                var percentage = 0
-
-                if (seekbarMultiplier > 1) { // if we need some granularity, calculate fractional amount
-                    val fractional = correctedProgress - position * seekbarMultiplier
-                    if (fractional != 0) {
-                        percentage = 100 * fractional / seekbarMultiplier
-                    }
-                }
-
-                // TODO: 2/16/17 record position
-
-                // If this change was initiated by a click on a UI element (rather than as a result
-                // of updates within the program), then update the view accordingly.
-                val currentFragment = fragment
-                if (currentFragment is ViewModeFragment && fromUser) {
-                    currentFragment.onScrollProgressUpdate(position, percentage)
-                }
-
-                closeKeyboard()
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) {
-                graduations?.animate()?.alpha(1f)
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar) {
-                graduations?.animate()?.alpha(0f)
-            }
-        })
-
-        if (seekBar is SeekBarHint) {
-            seekBar.setOnProgressChangeListener { _, progress -> getFormattedChapter(progress) }
-        }
-
-        if (seekBar is VerticalSeekBarHint) {
-            seekBar.setOnProgressChangeListener { _, progress -> getFormattedChapter(progress) }
-        }
-    }
-
-    /**
-     * clips value to within range min to max
-     */
-    private fun limitRange(value: Int, min: Int, max: Int): Int {
-        var newValue = value
-        if (newValue < min) {
-            newValue = min
-        } else if (newValue > max) {
-            newValue = max
-        }
-        return newValue
-    }
+//    private fun setUpSeekBar() {
+//        if (enableGrids) {
+//            graduations = binding.translatorSidebar.actionSeekGraduations
+//        }
+//        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//        seekBar.max = 100
+//        seekBar.progress = computePositionFromProgress(0)
+//        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+//            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+//                var correctedProgress = correctProgress(progress)
+//                correctedProgress = limitRange(correctedProgress, 0, seekBar.max - 1)
+//                val position = correctedProgress / seekbarMultiplier
+//                var percentage = 0
+//
+//                if (seekbarMultiplier > 1) { // if we need some granularity, calculate fractional amount
+//                    val fractional = correctedProgress - position * seekbarMultiplier
+//                    if (fractional != 0) {
+//                        percentage = 100 * fractional / seekbarMultiplier
+//                    }
+//                }
+//
+//                // TODO: 2/16/17 record position
+//
+//                // If this change was initiated by a click on a UI element (rather than as a result
+//                // of updates within the program), then update the view accordingly.
+//                val currentFragment = fragment
+//                if (currentFragment is ViewModeFragment && fromUser) {
+//                    currentFragment.onScrollProgressUpdate(position, percentage)
+//                }
+//
+//                closeKeyboard()
+//            }
+//
+//            override fun onStartTrackingTouch(seekBar: SeekBar) {
+//                graduations?.animate()?.alpha(1f)
+//            }
+//
+//            override fun onStopTrackingTouch(seekBar: SeekBar) {
+//                graduations?.animate()?.alpha(0f)
+//            }
+//        })
+//
+//        if (seekBar is SeekBarHint) {
+//            seekBar.setOnProgressChangeListener { _, progress -> getFormattedChapter(progress) }
+//        }
+//
+//        if (seekBar is VerticalSeekBarHint) {
+//            seekBar.setOnProgressChangeListener { _, progress -> getFormattedChapter(progress) }
+//        }
+//    }
 
     /**
      * get chapter string to display
      */
     private fun getFormattedChapter(progress: Int): String {
-        val position = computePositionFromProgress(progress)
-        val chapter = getChapterSlug(position)
+//        val position = computePositionFromProgress(progress)
+        val chapter = getChapterSlug(0)
         return " $chapter "
     }
 
@@ -359,108 +341,6 @@ class TargetTranslationActivity : BaseActivity(),
         super.onSaveInstanceState(out)
     }
 
-    private fun buildMenu() {
-        binding.translatorSidebar.actionMore.setOnClickListener { v ->
-            val moreMenu = PopupMenu(this@TargetTranslationActivity, v)
-            ViewUtil.forcePopupMenuIcons(moreMenu)
-            moreMenu.menuInflater.inflate(R.menu.menu_target_translation_detail, moreMenu.menu)
-
-            // display menu item for draft translations
-            val draftsMenuItem = moreMenu.menu.findItem(R.id.action_drafts_available)
-            draftsMenuItem.isVisible = viewModel.draftIsAvailable()
-
-            val searchMenuItem = moreMenu.menu.findItem(R.id.action_search)
-            val searchSupported = isSearchSupported()
-            searchMenuItem.isVisible = searchSupported
-
-            val markAllChunksItem = moreMenu.menu.findItem(R.id.mark_chunks_done)
-            val markAllChunksSupported = isMarkAllChunksSupported()
-            markAllChunksItem.isVisible = markAllChunksSupported
-
-            moreMenu.setOnMenuItemClickListener { item: MenuItem ->
-                when (item.itemId) {
-                    R.id.action_translations -> {
-                        finish()
-                        true
-                    }
-                    R.id.action_publish -> {
-                        val publishIntent = Intent(this@TargetTranslationActivity, PublishActivity::class.java)
-                        publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
-                        publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION)
-                        startActivity(publishIntent)
-                        // TRICKY: we may move back and forth between the publisher and translation activities
-                        // so we finish to avoid filling the stack.
-                        finish()
-                        true
-                    }
-                    R.id.action_drafts_available -> {
-                        val intent = Intent(this@TargetTranslationActivity, DraftActivity::class.java)
-                        intent.putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
-                        startActivity(intent)
-                        true
-                    }
-                    R.id.action_backup -> {
-                        val backupFt = supportFragmentManager.beginTransaction()
-                        val backupPrev = supportFragmentManager.findFragmentByTag(BackupDialog.TAG)
-                        if (backupPrev != null) {
-                            backupFt.remove(backupPrev)
-                        }
-                        backupFt.addToBackStack(null)
-
-                        val backupDialog = BackupDialog()
-                        val args = Bundle()
-                        args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
-                        backupDialog.arguments = args
-                        backupDialog.show(backupFt, BackupDialog.TAG)
-                        true
-                    }
-                    R.id.action_print -> {
-                        val printFt = supportFragmentManager.beginTransaction()
-                        val printPrev = supportFragmentManager.findFragmentByTag("printDialog")
-                        if (printPrev != null) {
-                            printFt.remove(printPrev)
-                        }
-                        printFt.addToBackStack(null)
-
-                        val printDialog = PrintDialog()
-                        val printArgs = Bundle()
-                        printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation?.id)
-                        printDialog.arguments = printArgs
-                        printDialog.show(printFt, "printDialog")
-                        true
-                    }
-                    R.id.action_feedback -> {
-                        val ft = supportFragmentManager.beginTransaction()
-                        val prev = supportFragmentManager.findFragmentByTag("bugDialog")
-                        if (prev != null) {
-                            ft.remove(prev)
-                        }
-                        ft.addToBackStack(null)
-
-                        val dialog = FeedbackDialog()
-                        dialog.show(ft, "bugDialog")
-                        true
-                    }
-                    R.id.action_settings -> {
-                        val settingsIntent = Intent(this@TargetTranslationActivity, SettingsActivity::class.java)
-                        startActivity(settingsIntent)
-                        true
-                    }
-                    R.id.action_search -> {
-                        setSearchBarVisibility(true)
-                        true
-                    }
-                    R.id.mark_chunks_done -> {
-                        (fragment as? ViewModeFragment)?.markAllChunksDone()
-                        true
-                    }
-                    else -> false
-                }
-            }
-            moreMenu.show()
-        }
-    }
-
     /**
      * hide search bar and clear search text
      */
@@ -468,25 +348,6 @@ class TargetTranslationActivity : BaseActivity(),
         setSearchBarVisibility(false)
         setFilterText(null)
         filter(null) // clear search filter
-    }
-
-    /**
-     * method to see if searching is supported
-     */
-    private fun isSearchSupported(): Boolean {
-        val currentFragment = fragment
-        return if (currentFragment is ViewModeFragment) {
-            currentFragment.hasFilter()
-        } else {
-            false
-        }
-    }
-
-    /**
-     * Check to see if marking all chunks done is supported
-     */
-    private fun isMarkAllChunksSupported(): Boolean {
-        return fragment is ReviewModeFragment
     }
 
     /**
@@ -677,7 +538,6 @@ class TargetTranslationActivity : BaseActivity(),
     override fun onResume() {
         super.onResume()
         notifyDatasetChanged()
-        buildMenu()
         //setMergeConflictFilter(mMergeConflictFilterEnabled, mMergeConflictFilterEnabled); // restore last state
     }
 
@@ -700,83 +560,83 @@ class TargetTranslationActivity : BaseActivity(),
         }
     }
 
-    private fun checkIfCursorStillOnScreen() {
-        val cursorPos = getCursorPositionOnScreen()
-        if (cursorPos != null) {
-            val scrollView = findViewById<View>(R.id.fragment_container)
-            if (scrollView != null) {
-                var visible = true
+//    private fun checkIfCursorStillOnScreen() {
+//        val cursorPos = getCursorPositionOnScreen()
+//        if (cursorPos != null) {
+//            val scrollView = findViewById<View>(R.id.fragment_container)
+//            if (scrollView != null) {
+//                var visible = true
+//
+//                val scrollBounds = Rect()
+//                scrollView.getHitRect(scrollBounds)
+//
+//                if (cursorPos.top < scrollBounds.top) {
+//                    visible = false
+//                } else if (cursorPos.bottom > scrollBounds.bottom) {
+//                    visible = false
+//                }
+//
+//                if (!visible) {
+//                    closeKeyboard()
+//                }
+//            }
+//        }
+//    }
 
-                val scrollBounds = Rect()
-                scrollView.getHitRect(scrollBounds)
+//    private fun getCursorPositionOnScreen(): Rect? {
+//        val focusedView = currentFocus
+//        if (focusedView != null) {
+//            // get view position on screen
+//            val l = IntArray(2)
+//            focusedView.getLocationOnScreen(l)
+//            val focusedViewX = l[0]
+//            val focusedViewY = l[1]
+//
+//            if (focusedView is EditText) {
+//                // getting relative cursor position
+//                val pos = focusedView.selectionStart
+//                val layout: Layout? = focusedView.layout
+//                if (layout != null) {
+//                    val line = layout.getLineForOffset(pos)
+//                    val baseline = layout.getLineBaseline(line)
+//                    val ascent = layout.getLineAscent(line)
+//
+//                    // convert relative positions to absolute position
+//                    val x = focusedViewX + layout.getPrimaryHorizontal(pos).toInt()
+//                    val bottomY = focusedViewY + baseline
+//                    val y = bottomY + ascent
+//
+//                    return Rect(x, y, x, bottomY) // ignore width of cursor for now
+//                }
+//            }
+//        }
+//
+//        return null
+//    }
 
-                if (cursorPos.top < scrollBounds.top) {
-                    visible = false
-                } else if (cursorPos.bottom > scrollBounds.bottom) {
-                    visible = false
-                }
-
-                if (!visible) {
-                    closeKeyboard()
-                }
-            }
-        }
-    }
-
-    private fun getCursorPositionOnScreen(): Rect? {
-        val focusedView = currentFocus
-        if (focusedView != null) {
-            // get view position on screen
-            val l = IntArray(2)
-            focusedView.getLocationOnScreen(l)
-            val focusedViewX = l[0]
-            val focusedViewY = l[1]
-
-            if (focusedView is EditText) {
-                // getting relative cursor position
-                val pos = focusedView.selectionStart
-                val layout: Layout? = focusedView.layout
-                if (layout != null) {
-                    val line = layout.getLineForOffset(pos)
-                    val baseline = layout.getLineBaseline(line)
-                    val ascent = layout.getLineAscent(line)
-
-                    // convert relative positions to absolute position
-                    val x = focusedViewX + layout.getPrimaryHorizontal(pos).toInt()
-                    val bottomY = focusedViewY + baseline
-                    val y = bottomY + ascent
-
-                    return Rect(x, y, x, bottomY) // ignore width of cursor for now
-                }
-            }
-        }
-
-        return null
-    }
-
-    override fun onScrollProgress(progress: Int) {
+//    override fun onScrollProgress(progress: Int) {
         // TODO: 2/16/17 record scroll position
-        val computedProgress = computeProgressFromPosition(progress)
-        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-        seekBar.progress = computedProgress
-        checkIfCursorStillOnScreen()
-    }
+//        val computedProgress = computeProgressFromPosition(progress)
+//        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//        seekBar.progress = computedProgress
+//        checkIfCursorStillOnScreen()
+//    }
 
-    override fun onDataSetChanged(count: Int) {
-        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-        val initialMax = seekBar.max
-        val initialProgress = seekBar.progress
-
-        val newCount = setSeekbarMax(count)
-        val newMax = seekBar.max
-        if (initialMax != newMax && initialMax > 0) { // if seekbar maximum has changed
-            // adjust proportionally
-            val newProgress = newMax * initialProgress / initialMax
-            seekBar.progress = newProgress
-        }
-        closeKeyboard()
-        setupGraduations()
-    }
+//    override fun onDataSetChanged(count: Int) {
+//        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//        val initialMax = seekBar.max
+//        val initialProgress = seekBar.progress
+//
+//        val newCount = setSeekbarMax(count)
+//        val newMax = seekBar.max
+//        if (initialMax != newMax && initialMax > 0) { // if seekbar maximum has changed
+//            // adjust proportionally
+//            val newProgress = newMax * initialProgress / initialMax
+//            seekBar.progress = newProgress
+//        }
+//        setupGraduations()
+//        closeKeyboard()
+//    }
 
     /**
      * get number of items in adapter
@@ -792,78 +652,78 @@ class TargetTranslationActivity : BaseActivity(),
     /**
      * sets seekbar maximum based on item count, and add granularity if item count is small
      */
-    private fun setSeekbarMax(itemCount: Int): Int {
-        val minimumSteps = 300
-        var count = itemCount
-
-        Log.i(TAG, "setSeekbarMax: itemCount=$count")
-
-        if (count < 1) { // sanity check
-            count = 1
-        }
-
-        seekbarMultiplier = if (count < minimumSteps) {  // increase step size if number of cards is small, this gives more granularity in positioning
-            (minimumSteps / count) + 1
-        } else {
-            1
-        }
-
-        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-        val newMax = count * seekbarMultiplier
-        val oldMax = seekBar.max
-        if (newMax != oldMax) {
-            Log.i(TAG, "setSeekbarMax: oldMax=$oldMax, newMax=$newMax, mSeekbarMultiplier=$seekbarMultiplier")
-            seekBar.max = newMax
-        } else {
-            Log.i(TAG, "setSeekbarMax: max unchanged=$oldMax")
-        }
-        return count
-    }
+//    private fun setSeekbarMax(itemCount: Int): Int {
+//        val minimumSteps = 300
+//        var count = itemCount
+//
+//        Log.i(TAG, "setSeekbarMax: itemCount=$count")
+//
+//        if (count < 1) { // sanity check
+//            count = 1
+//        }
+//
+//        seekbarMultiplier = if (count < minimumSteps) {  // increase step size if number of cards is small, this gives more granularity in positioning
+//            (minimumSteps / count) + 1
+//        } else {
+//            1
+//        }
+//
+//        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//        val newMax = count * seekbarMultiplier
+//        val oldMax = seekBar.max
+//        if (newMax != oldMax) {
+//            Log.i(TAG, "setSeekbarMax: oldMax=$oldMax, newMax=$newMax, mSeekbarMultiplier=$seekbarMultiplier")
+//            seekBar.max = newMax
+//        } else {
+//            Log.i(TAG, "setSeekbarMax: max unchanged=$oldMax")
+//        }
+//        return count
+//    }
 
     /**
      * initialize text on graduations if enabled
      */
-    private fun setupGraduations() {
-        if (enableGrids && graduations != null) {
-            val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-            val numCards = seekBar.max / seekbarMultiplier
-
-            val maxChapterStr = getChapterSlug(numCards - 1)
-            val maxChapter = maxChapterStr.toIntOrNull() ?: 0
-
-            // Set up visibility of the graduation bar.
-            // Display graduations evenly spaced by number of chapters (but not more than the number
-            // of chapters that exist). As a special case, display nothing if there's only one chapter.
-            // Also, show nothing unless we're in read mode, since the other modes are indexed by
-            // frame, not by chapter, so displaying either frame numbers or chapter numbers would be
-            // nonsensical.
-            var numVisibleGraduations = Math.min(numCards, graduations!!.childCount)
-
-            if (maxChapter in 1 until numVisibleGraduations) {
-                numVisibleGraduations = maxChapter
-            }
-
-            if (numVisibleGraduations < 2) {
-                numVisibleGraduations = 0
-            }
-
-            // Set up the visible chapters.
-            for (i in 0 until numVisibleGraduations) {
-                val container = graduations!!.getChildAt(i) as ViewGroup
-                container.visibility = View.VISIBLE
-                val text = container.getChildAt(1) as TextView
-
-                val position = i * (numCards - 1) / (numVisibleGraduations - 1)
-                val chapter = getChapterSlug(position)
-                text.text = chapter
-            }
-
-            // Undisplay the invisible chapters.
-            for (i in numVisibleGraduations until graduations!!.childCount) {
-                graduations!!.getChildAt(i).visibility = View.GONE
-            }
-        }
-    }
+//    private fun setupGraduations() {
+//        if (enableGrids && graduations != null) {
+//            val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//            val numCards = seekBar.max / seekbarMultiplier
+//
+//            val maxChapterStr = getChapterSlug(numCards - 1)
+//            val maxChapter = maxChapterStr.toIntOrNull() ?: 0
+//
+//            // Set up visibility of the graduation bar.
+//            // Display graduations evenly spaced by number of chapters (but not more than the number
+//            // of chapters that exist). As a special case, display nothing if there's only one chapter.
+//            // Also, show nothing unless we're in read mode, since the other modes are indexed by
+//            // frame, not by chapter, so displaying either frame numbers or chapter numbers would be
+//            // nonsensical.
+//            var numVisibleGraduations = Math.min(numCards, graduations!!.childCount)
+//
+//            if (maxChapter in 1 until numVisibleGraduations) {
+//                numVisibleGraduations = maxChapter
+//            }
+//
+//            if (numVisibleGraduations < 2) {
+//                numVisibleGraduations = 0
+//            }
+//
+//            // Set up the visible chapters.
+//            for (i in 0 until numVisibleGraduations) {
+//                val container = graduations!!.getChildAt(i) as ViewGroup
+//                container.visibility = View.VISIBLE
+//                val text = container.getChildAt(1) as TextView
+//
+//                val position = i * (numCards - 1) / (numVisibleGraduations - 1)
+//                val chapter = getChapterSlug(position)
+//                text.text = chapter
+//            }
+//
+//            // Undisplay the invisible chapters.
+//            for (i in numVisibleGraduations until graduations!!.childCount) {
+//                graduations!!.getChildAt(i).visibility = View.GONE
+//            }
+//        }
+//    }
 
     /**
      * get the chapter slug for the position
@@ -884,107 +744,105 @@ class TargetTranslationActivity : BaseActivity(),
         finish()
     }
 
-    private fun displaySeekBarAsInverted(): Boolean {
-        return binding.translatorSidebar.actionSeek is VerticalSeekBar
-    }
+//    private fun displaySeekBarAsInverted(): Boolean {
+//        return binding.translatorSidebar.actionSeek is VerticalSeekBar
+//    }
+//
+//    private fun computeProgressFromPosition(position: Int): Int {
+//        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//        val correctedProgress = correctProgress(position * seekbarMultiplier)
+//        return limitRange(correctedProgress, 0, seekBar.max)
+//    }
+//
+//    private fun computePositionFromProgress(progress: Int): Int {
+//        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//        var correctedProgress = correctProgress(progress)
+//        correctedProgress = limitRange(correctedProgress, 0, seekBar.max - 1)
+//        return correctedProgress / seekbarMultiplier
+//    }
+//
+//    /**
+//     * if seekbar is inverted, this will correct the progress
+//     */
+//    private fun correctProgress(progress: Int): Int {
+//        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
+//        return if (displaySeekBarAsInverted()) seekBar.max - progress else progress
+//    }
 
-    private fun computeProgressFromPosition(position: Int): Int {
-        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-        val correctedProgress = correctProgress(position * seekbarMultiplier)
-        return limitRange(correctedProgress, 0, seekBar.max)
-    }
+//    override fun onNoSourceTranslations() {
+//        if (fragment !is FirstTabFragment) {
+//            val newFragment = FirstTabFragment()
+//            newFragment.arguments = intent.extras
+//            fragment = newFragment
+//            supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
+//        }
+//    }
 
-    private fun computePositionFromProgress(progress: Int): Int {
-        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-        var correctedProgress = correctProgress(progress)
-        correctedProgress = limitRange(correctedProgress, 0, seekBar.max - 1)
-        return correctedProgress / seekbarMultiplier
-    }
-
-    /**
-     * if seekbar is inverted, this will correct the progress
-     */
-    private fun correctProgress(progress: Int): Int {
-        val seekBar = binding.translatorSidebar.actionSeek as SeekBar
-        return if (displaySeekBarAsInverted()) seekBar.max - progress else progress
-    }
-
-    override fun onNoSourceTranslations() {
-        if (fragment !is FirstTabFragment) {
-            val newFragment = FirstTabFragment()
-            newFragment.arguments = intent.extras
-            fragment = newFragment
-            supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
-            buildMenu()
-        }
-    }
-
-    override fun openTranslationMode(mode: TranslationViewMode, extras: Bundle?) {
-        val fragmentExtras = Bundle()
-        intent.extras?.let { fragmentExtras.putAll(it) }
-        if (extras != null) {
-            fragmentExtras.putAll(extras)
-        }
-
-        // close the keyboard when switching between modes
-        val focusedView = currentFocus
-        if (focusedView != null) {
-            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.hideSoftInputFromWindow(focusedView.windowToken, 0)
-        } else {
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
-        }
-
-        viewModel.setLastViewMode(mode)
-        setupSidebarModeIcons()
-
-        when (mode) {
-            TranslationViewMode.READ -> {
-                if (fragment !is ReadModeFragment) {
-                    val newFragment = ReadModeFragment()
-                    newFragment.arguments = fragmentExtras
-                    fragment = newFragment
-                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
-                    // TODO: animate
-                    // TODO: update menu
-                }
-            }
-            TranslationViewMode.CHUNK -> {
-                if (fragment !is ChunkModeFragment) {
-                    val newFragment = ChunkModeFragment()
-                    newFragment.arguments = fragmentExtras
-                    fragment = newFragment
-                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
-                    // TODO: animate
-                    // TODO: update menu
-                }
-            }
-            TranslationViewMode.REVIEW -> {
-                if (fragment !is ReviewModeFragment) {
-                    fragmentExtras.putBoolean(STATE_FILTER_MERGE_CONFLICTS, mergeConflictFilterEnabled)
-                    val newFragment = ReviewModeFragment()
-                    newFragment.arguments = fragmentExtras
-                    fragment = newFragment
-                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
-                    // TODO: animate
-                    // TODO: update menu
-                }
-            }
-        }
-    }
+//    override fun openTranslationMode(mode: TranslationViewMode, extras: Bundle?) {
+//        val fragmentExtras = Bundle()
+//        intent.extras?.let { fragmentExtras.putAll(it) }
+//        if (extras != null) {
+//            fragmentExtras.putAll(extras)
+//        }
+//
+//        // close the keyboard when switching between modes
+//        val focusedView = currentFocus
+//        if (focusedView != null) {
+//            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+//            imm.hideSoftInputFromWindow(focusedView.windowToken, 0)
+//        } else {
+//            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+//        }
+//
+//        viewModel.setLastViewMode(mode)
+//
+//        when (mode) {
+//            TranslationViewMode.READ -> {
+//                if (fragment !is ReadModeFragment) {
+//                    val newFragment = ReadModeFragment()
+//                    newFragment.arguments = fragmentExtras
+//                    fragment = newFragment
+//                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
+//                    // TODO: animate
+//                    // TODO: update menu
+//                }
+//            }
+//            TranslationViewMode.CHUNK -> {
+//                if (fragment !is ChunkModeFragment) {
+//                    val newFragment = ChunkModeFragment()
+//                    newFragment.arguments = fragmentExtras
+//                    fragment = newFragment
+//                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
+//                    // TODO: animate
+//                    // TODO: update menu
+//                }
+//            }
+//            TranslationViewMode.REVIEW -> {
+//                if (fragment !is ReviewModeFragment) {
+//                    fragmentExtras.putBoolean(STATE_FILTER_MERGE_CONFLICTS, mergeConflictFilterEnabled)
+//                    val newFragment = ReviewModeFragment()
+//                    newFragment.arguments = fragmentExtras
+//                    fragment = newFragment
+//                    supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
+//                    // TODO: animate
+//                    // TODO: update menu
+//                }
+//            }
+//        }
+//    }
 
     /**
      * Restart scheduled translation commits
      */
-    override fun restartAutoCommitTimer() {
+    fun restartAutoCommitTimer() {
         commitTimer.cancel()
         commitTimer = Timer()
         commitTimer.schedule(object : TimerTask() {
             override fun run() {
                 try {
-                    viewModel.targetTranslation?.commit()
+                    viewModel.targetTranslation.commit()
                 } catch (e: Exception) {
-                    Logger.e(TargetTranslationActivity::class.java.name, "Failed to commit the latest translation of ${viewModel.targetTranslation?.id}", e)
+                    Logger.e(TargetTranslationActivity::class.java.name, "Failed to commit the latest translation of ${viewModel.targetTranslation.id}", e)
                 }
             }
         }, COMMIT_INTERVAL, COMMIT_INTERVAL)
@@ -993,12 +851,12 @@ class TargetTranslationActivity : BaseActivity(),
     /**
      * callback on search state changes
      */
-    override fun onSearching(doingSearch: Boolean, numberOfChunkMatches: Int, atEnd: Boolean, atStart: Boolean) {
+    fun onSearching(doingSearch: Boolean, numberOfChunkMatches: Int, atEnd: Boolean, atStart: Boolean) {
         setSearchSpinner(doingSearch, numberOfChunkMatches, atEnd, atStart)
     }
 
     override fun onHasSourceTranslations() {
-        val newFragment = when (viewModel.getLastViewMode()) {
+        val newFragment = when (viewModel.model.value.viewMode) {
             TranslationViewMode.READ -> ReadModeFragment()
             TranslationViewMode.CHUNK -> ChunkModeFragment()
             TranslationViewMode.REVIEW -> ReviewModeFragment()
@@ -1026,7 +884,7 @@ class TargetTranslationActivity : BaseActivity(),
     override fun onDestroy() {
         commitTimer.cancel()
         try {
-            viewModel.targetTranslation?.commit()
+            viewModel.targetTranslation.commit()
         } catch (e: Exception) {
             Logger.e(this.javaClass.name, "Failed to commit changes before closing translation", e)
         }
@@ -1041,56 +899,6 @@ class TargetTranslationActivity : BaseActivity(),
         val currentFragment = fragment
         if (currentFragment is ViewModeFragment && currentFragment.getAdapter() != null) {
             currentFragment.getAdapter()?.triggerNotifyDataSetChanged()
-        }
-    }
-
-    /**
-     * Causes the activity to tell the fragment that everything needs to be redrawn
-     */
-    fun redrawTarget() {
-        val currentFragment = fragment
-        if (currentFragment is ViewModeFragment) {
-            currentFragment.onResume()
-        }
-    }
-
-    /**
-     * Updates the visual state of all the sidebar icons to match the application's current mode.
-     */
-    private fun setupSidebarModeIcons() {
-        val viewMode = viewModel.getLastViewMode()
-
-        // Set the non-highlighted icons by default.
-        binding.translatorSidebar.actionReview.setImageResource(R.drawable.ic_view_week_inactive_24dp)
-        binding.translatorSidebar.actionChunk.setImageResource(R.drawable.ic_content_copy_inactive_24dp)
-        binding.translatorSidebar.actionRead.setImageResource(R.drawable.ic_subject_inactive_24dp)
-
-        // Clear the highlight background.
-        binding.translatorSidebar.actionReview.background = null
-        binding.translatorSidebar.actionChunk.background = null
-        binding.translatorSidebar.actionRead.background = null
-
-        // For the active view, set the correct icon, and highlight the background.
-        val highlightedColor = ContextCompat.getColor(this, R.color.primary_dark)
-        when (viewMode) {
-            TranslationViewMode.READ -> {
-                binding.translatorSidebar.actionRead.setImageResource(R.drawable.ic_subject_white_24dp)
-                binding.translatorSidebar.actionRead.setBackgroundColor(highlightedColor)
-            }
-            TranslationViewMode.CHUNK -> {
-                binding.translatorSidebar.actionChunk.setImageResource(R.drawable.ic_content_copy_white_24dp)
-                binding.translatorSidebar.actionChunk.setBackgroundColor(highlightedColor)
-            }
-            TranslationViewMode.REVIEW -> {
-                if (mergeConflictFilterEnabled) {
-                    binding.translatorSidebar.warnMergeConflict.setBackgroundColor(highlightedColor) // highlight background of the conflict icon
-                    onEnableMergeConflict(showConflicted = true, active = true)
-                } else {
-                    binding.translatorSidebar.actionReview.setBackgroundColor(highlightedColor)
-                    binding.translatorSidebar.actionReview.setImageResource(R.drawable.ic_view_week_white_24dp)
-                }
-            }
-            else -> {}
         }
     }
 

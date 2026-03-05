@@ -13,8 +13,10 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.ArrayAdapter
 import android.widget.Button
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Frame
@@ -29,7 +31,6 @@ import com.door43.translationstudio.databinding.FragmentWordsIndexListBinding
 import com.door43.translationstudio.format
 import com.door43.translationstudio.formatSub
 import com.door43.translationstudio.formatTitle
-import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.spannables.ArticleLinkSpan
@@ -40,6 +41,9 @@ import com.door43.translationstudio.ui.translate.review.ReviewHolder
 import com.door43.util.StringUtilities
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.sufficientlysecure.htmltextview.LocalLinkMovementMethod
 import org.unfoldingword.resourcecontainer.Link
@@ -133,9 +137,18 @@ class ReviewModeFragment : ViewModeFragment(),
     override fun setupObservers() {
         super.setupObservers()
 
-        viewModel.renderHelpsResult.observe(viewLifecycleOwner) { result ->
-            if (result != null) {
-                renderHelpsResult(result.item, result.helps)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.model
+                        .map { it.renderHelpsResult }
+                        .distinctUntilChanged()
+                        .collect { result ->
+                            if (result != null) {
+                                renderHelpsResult(result.item, result.helps)
+                            }
+                        }
+                }
             }
         }
     }

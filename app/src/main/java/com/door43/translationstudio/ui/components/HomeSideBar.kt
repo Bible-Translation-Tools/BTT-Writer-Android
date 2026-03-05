@@ -23,13 +23,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.door43.translationstudio.R
+
+data class SideBarAction(
+    val title: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit
+)
 
 @Composable
 fun HomeSideBar(
-    onSettingsClick: () -> Unit
+    vararg actions: SideBarAction
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -57,13 +62,18 @@ fun HomeSideBar(
                 expanded = showMenu,
                 onDismissRequest = { showMenu = false }
             ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.action_settings)) },
-                    onClick = {
-                        showMenu = false
-                        onSettingsClick()
-                    }
-                )
+                actions.forEach { action ->
+                    DropdownMenuItem(
+                        text = { Text(text = action.title) },
+                        leadingIcon = {
+                            Icon(imageVector = action.icon, contentDescription = action.title)
+                        },
+                        onClick = {
+                            showMenu = false
+                            action.onClick()
+                        }
+                    )
+                }
             }
         }
     }
