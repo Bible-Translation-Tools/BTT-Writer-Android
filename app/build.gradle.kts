@@ -64,14 +64,12 @@ android {
             }
         }
     }
-    // Output filename customization removed for AGP 8.x compatibility
-    // Default naming is used
-    packaging {
-        resources {
-            merges += listOf("plugin.properties")
-            excludes += listOf("/META-INF/*")
-        }
-    }
+//    packaging {
+//        resources {
+//            merges += listOf("plugin.properties")
+//            excludes += listOf("/META-INF/*")
+//        }
+//    }
     lint {
         abortOnError = false
         checkReleaseBuilds = false

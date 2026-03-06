@@ -74,6 +74,7 @@ fun TargetTranslationScreen(
 
     LaunchedEffect(Unit) {
         ContainerCache.empty()
+        viewModel.setSelectedResourceContainer()
     }
 
     LaunchedEffect(model.draftAvailable, model.viewMode) {
@@ -199,7 +200,7 @@ fun TargetTranslationScreen(
             Box(modifier = Modifier.weight(1f)) {
                 when (model.viewMode) {
                     TranslationViewMode.READ -> {
-                        ReadModeScreen()
+                        ReadModeScreen(model.items)
                     }
                     TranslationViewMode.CHUNK -> {
                         ChunkModeScreen()

@@ -3,7 +3,7 @@
 agp = "8.7.2"
 kotlin = "2.1.0"
 dexcount = "4.0.0"
-composeBom = "2026.02.00"
+composeBom = "2026.02.01"
 activityCompose = "1.9.3"
 
 # AndroidX Core
@@ -20,7 +20,7 @@ fragment-ktx = "1.8.6"
 lifecycleRuntime = "2.8.7"
 
 # Material Design
-material = "1.12.0"
+material = "1.13.0"
 
 # Third-party Libraries
 jgit = "3.7.1.201504261725-r"

@@ -49,7 +49,7 @@ class App : Application() {
         super.onCreate()
 
         startKoin {
-            androidLogger(Level.DEBUG)
+            androidLogger(Level.WARNING)
             androidContext(this@App)
             modules(appModule, prodDataModule)
         }

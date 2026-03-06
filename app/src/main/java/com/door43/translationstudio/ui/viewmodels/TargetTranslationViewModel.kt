@@ -393,7 +393,7 @@ class TargetTranslationViewModel(
             val sorter = SlugSorter()
             val chunks = sorter.sort(source.chunks(chapterSlug))
             for (chunk in chunks) {
-                if(!chunk.equals("title")) {
+                if(chunk != "title") {
                     chapterBody += source.readChunk(chapterSlug, chunk);
                 }
             }
