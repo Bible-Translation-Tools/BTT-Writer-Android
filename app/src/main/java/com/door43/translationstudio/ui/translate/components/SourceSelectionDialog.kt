@@ -53,7 +53,7 @@ fun SourceSelectionDialog(
 
     val selectedString = stringResource(R.string.selected)
     val availableString = stringResource(R.string.available)
-    val availableOnlineString = stringResource(R.string.available_online)
+    val onlineString = stringResource(R.string.available_online)
 
     val uiState by remember(sources, searchQuery) {
         derivedStateOf {
@@ -62,7 +62,7 @@ fun SourceSelectionDialog(
                 searchText = searchQuery,
                 selectedString = selectedString,
                 availableString = availableString,
-                availableOnlineString = availableOnlineString
+                availableOnlineString = onlineString
             )
         }
     }
@@ -97,7 +97,7 @@ fun SourceSelectionDialog(
                         }
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(50), // Makes it a pill shape like M3 SearchBar
+                    shape = RoundedCornerShape(50),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
@@ -109,12 +109,9 @@ fun SourceSelectionDialog(
                 LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     itemsIndexed(uiState.filteredList) { index, item ->
                         if (uiState.headerIndices.contains(index)) {
-                            val isInternetRequiredHeader = item.title.toString().contains("Selected", true) ||
-                                    item.title.toString().contains("Online", true)
-
                             SourceHeaderRow(
-                                title = item.title.toString(),
-                                showStatusIcons = isInternetRequiredHeader
+                                title = item.title,
+                                showStatusIcons = item.hasUpdates
                             )
                         } else {
                             SourceItemRow(
@@ -203,16 +200,28 @@ private fun prepareSourceState(
     val headers = mutableSetOf<Int>()
 
     // Helper to add sections
-    fun addSection(title: String, items: List<RCItem>) {
+    fun addSection(title: String, items: List<RCItem>, needsInternet: Boolean) {
         if (items.isEmpty()) return
+
         headers.add(flatList.size)
-        flatList.add(RCItem(title, null, selected = false, downloaded = false))
+
+        val headerItem = RCItem(
+            title,
+            null,
+            selected = false,
+            downloaded = false,
+            hasUpdates = needsInternet
+        )
+
+        flatList.add(headerItem)
         flatList.addAll(items)
     }
 
-    addSection(selectedString, selected)
-    addSection(availableString, available)
-    addSection(availableOnlineString, downloadable)
+    val selectedNeedsInternet = selected.any { it.hasUpdates }
+    addSection(selectedString, selected, selectedNeedsInternet)
+
+    addSection(availableString, available, false)
+    addSection(availableOnlineString, downloadable, true)
 
     return SourceSelectionState(flatList, headers)
 }

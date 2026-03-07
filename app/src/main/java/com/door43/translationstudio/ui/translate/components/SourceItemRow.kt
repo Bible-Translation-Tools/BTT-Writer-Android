@@ -101,7 +101,7 @@ fun SourceItemRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = item.title.toString(),
+            text = item.title,
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge
         )

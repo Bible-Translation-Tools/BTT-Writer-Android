@@ -70,7 +70,7 @@ data class SourceTabItem(
 )
 
 data class RCItem(
-    val title: CharSequence,
+    val title: String,
     val sourceTranslation: Translation?,
     val selected: Boolean,
     val downloaded: Boolean,
