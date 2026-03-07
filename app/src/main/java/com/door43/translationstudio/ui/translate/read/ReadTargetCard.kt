@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
@@ -26,7 +27,7 @@ import com.door43.translationstudio.R
 @Composable
 fun ReadTargetCard(
     title: String,
-    text: String,
+    text: AnnotatedString,
     modifier: Modifier = Modifier
 ) {
     Card(

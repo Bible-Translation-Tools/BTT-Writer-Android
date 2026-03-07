@@ -8,29 +8,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SecondaryScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.door43.translationstudio.rendering.model.TextNode
-import com.door43.translationstudio.ui.translate.ChunkItem
-import com.door43.translationstudio.ui.translate.ReadListItem3
+import com.door43.translationstudio.ui.components.SourceTabRow
+import com.door43.translationstudio.ui.viewmodels.SourceTabItem
 
 @Composable
 fun ReadSourceCard(
-    chapter: ChunkItem.ReadMode,
-    onNoteClick: (TextNode.NoteMarker) -> Unit,
+    title: String,
+    text: AnnotatedString,
+    sourceTabs: List<SourceTabItem>,
+    selectedSourceId: String?,
+    onSourceTabClick: (String) -> Unit,
+    onAddNewSourceClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -48,33 +46,25 @@ fun ReadSourceCard(
                     .padding(bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SecondaryScrollableTabRow(
-                    selectedTabIndex = 0,
-                    modifier = Modifier.weight(1f),
-                    edgePadding = 0.dp
-                ) {
-                    Tab(selected = true, onClick = {}, text = { Text("Tab 1") })
-                }
-                
-                IconButton(onClick = { /* Add new tab */ }) {
-                    Icon(
-                        imageVector = Icons.Default.LibraryAdd,
-                        contentDescription = "New Tab"
-                    )
-                }
+                SourceTabRow(
+                    sourceTabs = sourceTabs,
+                    selectedTag = selectedSourceId,
+                    onSourceTabClick = onSourceTabClick,
+                    onAddClick = onAddNewSourceClick
+                )
             }
 
             Text(
-                text = chapter.sourceTitle,
+                text = title,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = chapter.meta.renderedSourceText,
+                text = text,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.fillMaxWidth()
                     .padding(16.dp)

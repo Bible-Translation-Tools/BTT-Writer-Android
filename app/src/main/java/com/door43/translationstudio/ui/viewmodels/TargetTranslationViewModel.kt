@@ -1,7 +1,6 @@
 package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
-import android.content.ContentValues
 import android.graphics.Typeface
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.AndroidViewModel
@@ -39,7 +38,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.Language
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
@@ -51,8 +49,28 @@ data class TargetTranslationModel(
     val progress: ProgressHelper.Progress? = null,
     val viewMode: TranslationViewMode = TranslationViewMode.READ,
     val draftAvailable: Boolean = false,
-    val showDraftAvailable: Boolean = false
+    val showDraftAvailable: Boolean = false,
+    val sourceTabs: List<SourceTabItem> = emptyList(),
+    val resourceContainer: ResourceContainer? = null
 )
+
+data class SourceTabItem(
+    val tag: String,
+    val title: String,
+    val language: String?,
+    val direction: String?
+)
+
+data class RCItem(
+    val title: CharSequence,
+    val sourceTranslation: Translation?,
+    val selected: Boolean,
+    val downloaded: Boolean,
+    val hasUpdates: Boolean = false,
+    val checkedUpdates: Boolean = false
+) {
+    val containerSlug: String? = sourceTranslation?.resourceContainerSlug
+}
 
 class TargetTranslationViewModel(
     private val application: Application,
@@ -68,9 +86,6 @@ class TargetTranslationViewModel(
 
     lateinit var targetTranslation: TargetTranslation
         private set
-
-    private var _resourceContainer: ResourceContainer? = null
-    val resourceContainer get() = _resourceContainer!!
 
     private val _model = MutableStateFlow(TargetTranslationModel())
     val model: StateFlow<TargetTranslationModel> = _model.asStateFlow()
@@ -193,6 +208,7 @@ class TargetTranslationViewModel(
             } ?: run {
                 _model.update { it.copy(items = emptyList()) }
             }
+            updateSourceTranslations()
         }
     }
 
@@ -205,12 +221,13 @@ class TargetTranslationViewModel(
 
             withContext(Dispatchers.IO) {
                 translator.setSelectedSourceTranslation(targetTranslation.id, sourceTranslationId)
-                _resourceContainer = library.index.getTranslation(sourceTranslationId)?.let { sourceTranslation ->
+                val resourceContainer = library.index.getTranslation(sourceTranslationId)?.let { sourceTranslation ->
                     ContainerCache.cache(
                         library,
                         sourceTranslation.resourceContainerSlug
                     )
                 }
+                _model.update { it.copy(resourceContainer = resourceContainer) }
             }
 
             loadListItems()
@@ -238,10 +255,6 @@ class TargetTranslationViewModel(
                 translation.resource.slug
             )
         } ?: -1
-    }
-
-    fun getSourceLanguage(): Language? {
-        return _resourceContainer?.language
     }
 
     fun findTranslations(
@@ -275,7 +288,7 @@ class TargetTranslationViewModel(
     private suspend fun loadListItems() {
         val items = mutableListOf<Chunk>()
         withContext(Dispatchers.Default) {
-            _resourceContainer?.let { source ->
+            _model.value.resourceContainer?.let { source ->
                 val sorter = SlugSorter()
                 val chapterSlugs = sorter.sort(source.chapters())
                 for (chapterSlug: String in chapterSlugs) {
@@ -321,40 +334,41 @@ class TargetTranslationViewModel(
         }
     }
 
-    private fun getSourceTranslations(): List<ContentValues> {
-        val tabContents = arrayListOf<ContentValues>()
+    private fun updateSourceTranslations() {
+        val tabs = arrayListOf<SourceTabItem>()
         val sourceTranslationSlugs = prefRepository.getOpenSourceTranslations(targetTranslation.id)
         for (slug in sourceTranslationSlugs) {
             val st: Translation? = library.index.getTranslation(slug)
             if (st != null) {
-                val values = ContentValues()
-                val title = st.language.name + " " + st.resource.slug.uppercase(Locale.getDefault())
-                values.put("title", title)
+                var title = st.language.name + " " + st.resource.slug.uppercase(Locale.getDefault())
+
                 // include the resource id if there are more than one
                 val resources = library.index.getResources(
                     st.language.slug,
                     st.project.slug
                 )
-                if (resources.size > 1) {
-                    values.put("title", title)
-                } else {
-                    values.put("title", st.language.name)
+                if (resources.size <= 1) {
+                    title = st.language.name
                 }
-                values.put("tag", st.resourceContainerSlug)
 
-                getFontForLanguageTab(st, values)
-                tabContents.add(values)
+                val tag = st.resourceContainerSlug
+                val (language, direction) = getFontForLanguageTab(st)
+
+                tabs.add(
+                    SourceTabItem(tag, title, language, direction)
+                )
             }
         }
-        return tabContents
+
+        _model.update { it.copy(sourceTabs = tabs) }
     }
 
     /**
-     * if better font for language, save language info in values
-     * @param st
-     * @param values
+     * if better font for language, get language info
+     * @param translation
+     * @param Pair<String, String> pair of language slug and direction
      */
-    private fun getFontForLanguageTab(translation: Translation, values: ContentValues) {
+    private fun getFontForLanguageTab(translation: Translation): Pair<String?, String?> {
         //see if there is a special font for tab
         val typeface = getBestFontForLanguage(
             typography,
@@ -362,9 +376,10 @@ class TargetTranslationViewModel(
             translation.language.slug,
         )
         if (typeface != Typeface.DEFAULT) {
-            values.put("language", translation.language.slug);
-            values.put("direction", translation.language.direction)
+            return translation.language.slug to translation.language.direction
         }
+
+        return null to null
     }
 
     private fun fetchSourceText(source: ResourceContainer, chapterSlug: String, chunkSlug: String?): String {

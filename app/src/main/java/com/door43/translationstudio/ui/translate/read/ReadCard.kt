@@ -1,37 +1,21 @@
 package com.door43.translationstudio.ui.translate.read
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.door43.translationstudio.R
-import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.translate.ChunkItem
-import com.door43.translationstudio.ui.translate.ReadListItem3
 import com.door43.translationstudio.ui.translate.components.StackedCardFlipper
+import com.door43.translationstudio.ui.viewmodels.SourceTabItem
 
 @Composable
 fun ReadCard(
     chapter: ChunkItem.ReadMode,
+    sourceTabs: List<SourceTabItem>,
+    selectedSourceId: String?,
+    onSourceTabClick: (String) -> Unit,
+    onAddNewSourceClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val targetText = chapter.meta.targetText
-
-    var noteDialogText by remember { mutableStateOf<String?>(null) }
-    val onNoteClick: (TextNode.NoteMarker) -> Unit = remember {
-        {
-            println(it)
-            noteDialogText = it.notes
-        }
-    }
-
     StackedCardFlipper(
         modifier = modifier,
         containerPadding = 8.dp,
@@ -41,28 +25,19 @@ fun ReadCard(
         },
         frontCard = {
             ReadSourceCard(
-                chapter = chapter,
-                onNoteClick = onNoteClick
+                title = chapter.sourceTitle,
+                text = chapter.meta.renderedSourceText,
+                sourceTabs = sourceTabs,
+                selectedSourceId = selectedSourceId,
+                onSourceTabClick = onSourceTabClick,
+                onAddNewSourceClick = onAddNewSourceClick
             )
         },
         backCard = {
             ReadTargetCard(
                 title = chapter.targetTitle,
-                text = targetText
+                text = chapter.meta.renderedTargetText
             )
         }
     )
-
-    noteDialogText?.let { notes ->
-        AlertDialog(
-            onDismissRequest = { noteDialogText = null },
-            title = { Text(stringResource(R.string.footnote_label)) },
-            text = { Text(notes) },
-            confirmButton = {
-                TextButton(onClick = { noteDialogText = null }) {
-                    Text(stringResource(R.string.dismiss))
-                }
-            }
-        )
-    }
 }

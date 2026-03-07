@@ -290,7 +290,7 @@ abstract class ViewModeFragment : BaseFragment(),
      * Returns the currently selected resource container
      */
     protected fun getSelectedResourceContainer(): ResourceContainer? {
-        return viewModel.resourceContainer
+        return viewModel.model.value.resourceContainer
     }
 
     /**

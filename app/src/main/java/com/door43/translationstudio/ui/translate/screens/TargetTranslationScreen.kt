@@ -24,14 +24,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.ui.translate.components.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
 import com.door43.translationstudio.ui.translate.read.ReadModeScreen
@@ -72,6 +75,8 @@ fun TargetTranslationScreen(
     val menuActionSearch = stringResource(R.string.action_search)
     val menuActionChunksDone = stringResource(R.string.mark_chunks_done)
     val menuActionSettings = stringResource(R.string.action_settings)
+
+    var showSourceDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         ContainerCache.empty()
@@ -201,7 +206,13 @@ fun TargetTranslationScreen(
             Box(modifier = Modifier.weight(1f)) {
                 when (model.viewMode) {
                     TranslationViewMode.READ -> {
-                        ReadModeScreen(model.items)
+                        ReadModeScreen(
+                            items = model.items,
+                            sourceTabs = model.sourceTabs,
+                            selectedSourceId = model.resourceContainer?.slug,
+                            onSourceTabClick = viewModel::setSelectedResourceContainer,
+                            onAddNewSourceClick = { showSourceDialog = true }
+                        )
                     }
                     TranslationViewMode.CHUNK -> {
                         ChunkModeScreen()
@@ -212,5 +223,20 @@ fun TargetTranslationScreen(
                 }
             }
         }
+    }
+
+    if (showSourceDialog) {
+        SourceSelectionDialog(
+            onDismissRequest = { showSourceDialog = false },
+            onConfirm = { showSourceDialog = false },
+            onUpdate = { },
+            searchQuery = "",
+            onSearchQueryChange = {},
+            sortedData = emptyList(),
+            sectionHeaders = emptySet(),
+            onToggleSelection = {},
+            onTriggerDownload = { _, _ -> },
+            onTriggerDelete = { _, _ -> }
+        )
     }
 }

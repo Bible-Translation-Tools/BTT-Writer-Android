@@ -26,7 +26,8 @@ import kotlinx.coroutines.withContext
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 data class ReadModeModel(
-    val items: List<ChunkItem.ReadMode> = emptyList()
+    val items: List<ChunkItem.ReadMode> = emptyList(),
+    val notes: String? = null
 )
 
 class ReadModeViewModel(
@@ -45,6 +46,10 @@ class ReadModeViewModel(
             }
             _model.update { it.copy(items = readItems) }
         }
+    }
+
+    fun clearNotes() {
+        _model.update { it.copy(notes = null) }
     }
 
     private fun prepareItem(chunk: Chunk): ChunkItem.ReadMode {
@@ -124,7 +129,12 @@ class ReadModeViewModel(
             )
             val renderNodes = renderingGroup.startNodes()
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-            ComposeTextAdapter.convert(textNodes, onNoteClick = { println(it.notes) })
+            ComposeTextAdapter.convert(
+                textNodes,
+                onNoteClick = {
+                    _model.update { state -> state.copy(notes = it.notes) }
+                }
+            )
         } catch (_: Exception) {
             AnnotatedString(sourceText)
         }
@@ -160,7 +170,12 @@ class ReadModeViewModel(
             )
             val renderNodes = renderingGroup.startNodes()
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-            ComposeTextAdapter.convert(textNodes, onNoteClick = { println(it.notes) })
+            ComposeTextAdapter.convert(
+                textNodes,
+                onNoteClick = {
+                    _model.update { state -> state.copy(notes = it.notes) }
+                }
+            )
         } catch (_: Exception) {
             AnnotatedString(targetText)
         }

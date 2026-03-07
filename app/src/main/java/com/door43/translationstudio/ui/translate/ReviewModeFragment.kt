@@ -184,7 +184,7 @@ class ReviewModeFragment : ViewModeFragment(),
                                     sample.getResourceCardWidth()
                                 )
                             } else if (translationWordId != null) {
-                                viewModel.resourceContainer?.slug?.let { slug ->
+                                viewModel.model.value.resourceContainer?.slug?.let { slug ->
                                     onTranslationWordClick(
                                         slug,
                                         translationWordId!!,
@@ -454,21 +454,21 @@ class ReviewModeFragment : ViewModeFragment(),
                         val slugs = exampleSlug.split("-")
                         if (slugs.size != 2) continue
 
-                        val projectTitle = viewModel.resourceContainer?.readChunk("front", "title") ?: ""
+                        val projectTitle = viewModel.model.value.resourceContainer?.readChunk("front", "title") ?: ""
 
                         // get verse title
                         var verseTitle = StringUtilities.formatNumber(slugs[1])
-                        if (viewModel.resourceContainer?.contentMimeType == "text/usfm") {
+                        if (viewModel.model.value.resourceContainer?.contentMimeType == "text/usfm") {
                             verseTitle = Frame.parseVerseTitle(
-                                viewModel.resourceContainer!!.readChunk(slugs[0], slugs[1]),
-                                TranslationFormat.parse(viewModel.resourceContainer!!.contentMimeType)
+                                viewModel.model.value.resourceContainer!!.readChunk(slugs[0], slugs[1]),
+                                TranslationFormat.parse(viewModel.model.value.resourceContainer!!.contentMimeType)
                             )
                         }
 
                         val examplesBinding = FragmentResourcesExampleItemBinding.inflate(requireActivity().layoutInflater)
 
                         examplesBinding.reference.text = "${projectTitle.trim()} ${StringUtilities.formatNumber(slugs[0])}:$verseTitle"
-                        examplesBinding.passage.setHtmlFromString(viewModel.resourceContainer?.readChunk(slugs[0], slugs[1]) ?: "", true)
+                        examplesBinding.passage.setHtmlFromString(viewModel.model.value.resourceContainer?.readChunk(slugs[0], slugs[1]) ?: "", true)
                         examplesBinding.root.setOnClickListener { scrollToChunk(slugs[0], slugs[1]) }
 
                         examplesBinding.reference.formatSub(
@@ -568,7 +568,7 @@ class ReviewModeFragment : ViewModeFragment(),
         )
 
         noteBinding.title.text = note.title
-        val sourceLanguage = viewModel.getSourceLanguage()
+        val sourceLanguage = viewModel.model.value.resourceContainer?.language
         if (sourceLanguage != null) {
             noteBinding.title.format(
                 typography,
@@ -605,7 +605,7 @@ class ReviewModeFragment : ViewModeFragment(),
 
         val questionBinding = FragmentResourcesQuestionBinding.inflate(requireActivity().layoutInflater)
 
-        val sourceLanguage = viewModel.getSourceLanguage()
+        val sourceLanguage = viewModel.model.value.resourceContainer?.language
         if (sourceLanguage != null) {
             questionBinding.questionTitle.formatTitle(
                 typography,
@@ -739,7 +739,7 @@ class ReviewModeFragment : ViewModeFragment(),
     }
 
     override fun getVerseChunk(chapterSlug: String, verseSlug: String): String {
-        return Util.mapVerseToChunk(viewModel.resourceContainer, chapterSlug, verseSlug)
+        return Util.mapVerseToChunk(viewModel.model.value.resourceContainer!!, chapterSlug, verseSlug)
     }
 
     override fun onStop() {
