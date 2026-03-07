@@ -25,7 +25,6 @@ import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.translate.ListItem3
 import com.door43.translationstudio.ui.translate.ListItemOld
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.review.SearchSubject
@@ -304,40 +303,6 @@ class TargetTranslationViewModel(
     fun cancelRenderJobs() {
         renderHelpJobs.forEach { it.cancel() }
         renderHelpJobs.clear()
-    }
-
-    private fun createItem2(
-        chapterSlug: String,
-        chunkSlug: String,
-        source: ResourceContainer,
-        targetTranslation: TargetTranslation
-    ): ListItem3 {
-        return object: ListItem3(
-            chapterSlug,
-            chunkSlug,
-            source,
-            targetTranslation
-        ) {
-            override fun fetchTabs(): List<ContentValues> {
-                return getSourceTranslations()
-            }
-
-            override fun fetchSourceText(chapterSlug: String, chunkSlug: String?): String {
-                return fetchSourceText(source, chapterSlug, chunkSlug)
-            }
-
-            override fun fetchRenderedSourceText(): AnnotatedString {
-                return renderSourceText(sourceText, sourceTranslationFormat)
-            }
-
-            override fun fetchTargetText(chapterSlug: String, chunkSlug: String?): String {
-                return fetchTargetText(source, targetTranslation, chapterSlug, chunkSlug)
-            }
-
-            override fun fetchRenderedTargetText(): AnnotatedString {
-                return renderTargetText(targetText)
-            }
-        }
     }
 
     fun getDefaultSourceTranslation(): String? {
