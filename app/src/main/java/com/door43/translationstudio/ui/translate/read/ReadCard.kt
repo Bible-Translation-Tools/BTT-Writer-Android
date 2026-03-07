@@ -20,9 +20,6 @@ fun ReadCard(
         modifier = modifier,
         containerPadding = 8.dp,
         stackOffset = 32.dp,
-        onAnimationEnd = { isFrontOnTop ->
-            println("Animation finished, fron is on top: $isFrontOnTop")
-        },
         frontCard = {
             ReadSourceCard(
                 title = chapter.sourceTitle,

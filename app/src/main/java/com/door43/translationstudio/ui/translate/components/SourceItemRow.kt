@@ -20,10 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
@@ -32,13 +30,45 @@ import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.ui.viewmodels.RCItem
 
 @Composable
-fun SourceHeaderRow(title: CharSequence) {
+fun SourceHeaderRow(title: String, showStatusIcons: Boolean) {
+    val inlineContent = mapOf(
+        "refresh" to InlineTextContent(
+            Placeholder(18.sp, 18.sp, PlaceholderVerticalAlign.Center)
+        ) {
+            Icon(
+                Icons.Default.Refresh,
+                null,
+                tint = MaterialTheme.colorScheme.secondary
+            )
+        },
+        "wifi" to InlineTextContent(
+            Placeholder(18.sp, 18.sp, PlaceholderVerticalAlign.Center)
+        ) {
+            Icon(
+                Icons.Default.Wifi,
+                null,
+                tint = MaterialTheme.colorScheme.secondary
+            )
+        }
+    )
+
+    val styledTitle = buildAnnotatedString {
+        append(title.uppercase())
+        if (showStatusIcons) {
+            append("    ")
+            appendInlineContent("refresh", "[refresh]")
+            append(" REQUIRES INTERNET ")
+            appendInlineContent("wifi", "[wifi]")
+        }
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = title.toString(), // If using buildAnnotatedString, pass that directly
+            text = styledTitle,
+            inlineContent = inlineContent,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -85,37 +115,3 @@ fun SourceItemRow(
         }
     }
 }
-
-@Composable
-fun rememberHeaderTitle(text: String, internetText: String, showStatusIcons: Boolean): AnnotatedString {
-    return remember(text, showStatusIcons) {
-        buildAnnotatedString {
-            append(text)
-            if (showStatusIcons) {
-                append("  ")
-                appendInlineContent("refresh", "[refresh]")
-                append(" ")
-                append(internetText)
-                append(" ")
-                appendInlineContent("wifi", "[wifi]")
-            }
-        }
-    }
-}
-
-val inlineContent = mapOf(
-    "refresh" to InlineTextContent(
-        Placeholder(20.sp, 20.sp, PlaceholderVerticalAlign.Center)
-    ) {
-        Icon(
-            Icons.Default.Refresh,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary
-        )
-    },
-    "wifi" to InlineTextContent(
-        Placeholder(18.sp, 18.sp, PlaceholderVerticalAlign.Center)
-    ) {
-        Icon(Icons.Default.Wifi, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
-    }
-)

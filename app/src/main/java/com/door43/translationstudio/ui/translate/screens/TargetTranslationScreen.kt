@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -34,10 +35,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.ui.components.ConfirmDialog
+import com.door43.translationstudio.ui.components.ProgressDialog
 import com.door43.translationstudio.ui.translate.components.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
 import com.door43.translationstudio.ui.translate.read.ReadModeScreen
+import com.door43.translationstudio.ui.viewmodels.RCItem
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.launch
@@ -76,7 +80,9 @@ fun TargetTranslationScreen(
     val menuActionChunksDone = stringResource(R.string.mark_chunks_done)
     val menuActionSettings = stringResource(R.string.action_settings)
 
-    var showSourceDialog by remember { mutableStateOf(false) }
+    var showSourceDialog by rememberSaveable { mutableStateOf(false) }
+    var sourceToDownload by rememberSaveable { mutableStateOf<RCItem?>(null) }
+    var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
 
     LaunchedEffect(Unit) {
         ContainerCache.empty()
@@ -150,6 +156,14 @@ fun TargetTranslationScreen(
         )
     }
 
+    LaunchedEffect(model.snackBarMessage) {
+        model.snackBarMessage?.let { message ->
+            scope.launch {
+                snackBarHostState.showSnackbar(message)
+            }
+        }
+    }
+
     LaunchedEffect(model.showDraftAvailable) {
         if (model.showDraftAvailable) {
             scope.launch {
@@ -211,7 +225,10 @@ fun TargetTranslationScreen(
                             sourceTabs = model.sourceTabs,
                             selectedSourceId = model.resourceContainer?.slug,
                             onSourceTabClick = viewModel::setSelectedResourceContainer,
-                            onAddNewSourceClick = { showSourceDialog = true }
+                            onAddNewSourceClick = {
+                                viewModel.loadAvailableSources()
+                                showSourceDialog = true
+                            }
                         )
                     }
                     TranslationViewMode.CHUNK -> {
@@ -227,16 +244,47 @@ fun TargetTranslationScreen(
 
     if (showSourceDialog) {
         SourceSelectionDialog(
+            sources = model.availableSources,
             onDismissRequest = { showSourceDialog = false },
-            onConfirm = { showSourceDialog = false },
+            onConfirm = {
+                showSourceDialog = false
+                viewModel.confirmSelectedSources()
+            },
             onUpdate = { },
-            searchQuery = "",
-            onSearchQueryChange = {},
-            sortedData = emptyList(),
-            sectionHeaders = emptySet(),
-            onToggleSelection = {},
-            onTriggerDownload = { _, _ -> },
-            onTriggerDelete = { _, _ -> }
+            onToggleSelection = viewModel::toggleSourceSelection,
+            onTriggerDownload = { sourceToDownload = it },
+            onTriggerDelete = { sourceToDelete = it }
+        )
+    }
+
+    sourceToDownload?.let { source ->
+        ConfirmDialog(
+            title = stringResource(R.string.title_download_source_language),
+            message = stringResource(R.string.download_source_language, source.title),
+            onConfirm = {
+                sourceToDownload = null
+                viewModel.downloadResourceContainer(source)
+            },
+            onDismiss = { sourceToDownload = null }
+        )
+    }
+
+    sourceToDelete?.let { source ->
+        ConfirmDialog(
+            title = stringResource(R.string.label_delete),
+            message = stringResource(R.string.confirm_delete_project),
+            onConfirm = {
+                sourceToDelete = null
+                viewModel.deleteResourceContainer(source)
+            },
+            onDismiss = { sourceToDelete = null }
+        )
+    }
+
+    model.progress?.let {
+        ProgressDialog(
+            message = it.message ?: stringResource(R.string.loading),
+            progressValue = it.progress.toFloat()
         )
     }
 }

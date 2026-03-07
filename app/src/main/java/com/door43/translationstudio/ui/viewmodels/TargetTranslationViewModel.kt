@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.graphics.Typeface
+import android.util.Log
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,7 +10,9 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
+import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.SlugSorter
@@ -18,6 +21,7 @@ import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
@@ -27,6 +31,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.translate.ListItemOld
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.review.SearchSubject
+import com.door43.usecases.DownloadResourceContainers
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,22 +41,25 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONException
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.tools.logger.Logger
 import java.util.Locale
 
 data class TargetTranslationModel(
     val items: List<Chunk> = emptyList(),
-    val itemsOld: List<ListItemOld> = emptyList(),
     val renderHelpsResult: RenderHelps.RenderHelpsResult? = null,
     val progress: ProgressHelper.Progress? = null,
     val viewMode: TranslationViewMode = TranslationViewMode.READ,
     val draftAvailable: Boolean = false,
     val showDraftAvailable: Boolean = false,
     val sourceTabs: List<SourceTabItem> = emptyList(),
-    val resourceContainer: ResourceContainer? = null
+    val resourceContainer: ResourceContainer? = null,
+    val availableSources: List<RCItem> = emptyList(),
+    val snackBarMessage: String? = null
 )
 
 data class SourceTabItem(
@@ -79,7 +87,8 @@ class TargetTranslationViewModel(
     private val library: Door43Client,
     private val prefRepository: IPreferenceRepository,
     private val typography: Typography,
-    private val assetsProvider: AssetsProvider
+    private val assetsProvider: AssetsProvider,
+    private val downloadResourceContainers: DownloadResourceContainers
 ) : AndroidViewModel(application) {
 
     private val renderHelpJobs = arrayListOf<Job>()
@@ -282,6 +291,214 @@ class TargetTranslationViewModel(
             deviceLanguageCode,
             targetTranslation.projectId,
             true
+        )
+    }
+
+    fun loadAvailableSources() {
+        viewModelScope.launch {
+            _model.update { it.copy(progress = ProgressHelper.Progress()) }
+
+            val rcItems = withContext(Dispatchers.IO) {
+                val items = arrayListOf<RCItem>()
+                // add selected source translations
+                val sourceTranslationSlugs = getOpenSourceTranslations()
+                for (slug in sourceTranslationSlugs) {
+                    val st = library.index.getTranslation(slug)
+                    if (st != null) {
+                        _model.update {
+                            it.copy(
+                                progress = ProgressHelper.Progress(st.resourceContainerSlug)
+                            )
+                        }
+                        items.add(addSourceTranslation(st, true))
+                    }
+                }
+
+                val availableTranslations = library.index.findTranslations(
+                    null,
+                    targetTranslation.projectId,
+                    null,
+                    "book",
+                    null,
+                    App.MIN_CHECKING_LEVEL,
+                    -1
+                )
+                for (sourceTranslation in availableTranslations) {
+                    _model.update {
+                        it.copy(
+                            progress = ProgressHelper.Progress(sourceTranslation.resourceContainerSlug)
+                        )
+                    }
+                    if (!items.map { it.containerSlug }.contains(sourceTranslation.resourceContainerSlug)) {
+                        items.add(addSourceTranslation(sourceTranslation, false))
+                    }
+                }
+                items
+            }
+            _model.update {
+                it.copy(progress = null, availableSources = rcItems)
+            }
+        }
+    }
+
+    fun toggleSourceSelection(source: RCItem) {
+        val stackFull = model.value.availableSources.filter { it.selected }.size == 3
+
+        if (!stackFull || source.selected) {
+            _model.update { state ->
+                state.copy(
+                    availableSources = state.availableSources.map {
+                        if (it.containerSlug == source.containerSlug) {
+                            it.copy(selected = !it.selected)
+                        } else {
+                            it
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    fun downloadResourceContainer(source: RCItem) {
+        val translation = source.sourceTranslation ?: return
+
+        viewModelScope.launch {
+            _model.update { it.copy(progress = ProgressHelper.Progress()) }
+            val result = withContext(Dispatchers.IO) {
+                downloadResourceContainers.download(translation) { progress, max, message ->
+                    _model.update {
+                        it.copy(
+                            progress = ProgressHelper.Progress(
+                                message,
+                                progress,
+                                max
+                            )
+                        )
+                    }
+                }
+            }
+
+            for (rc in result.containers) {
+                // reset cached containers that were downloaded
+                ContainerCache.remove(rc.slug)
+            }
+
+            val snackBarMessage = if (result.success) {
+                application.getString(R.string.download_complete)
+            } else {
+                application.getString(R.string.download_failed)
+            }
+
+            _model.update { it.copy(progress = null, snackBarMessage = snackBarMessage) }
+
+            loadAvailableSources()
+        }
+    }
+
+    fun deleteResourceContainer(source: RCItem) {
+        viewModelScope.launch {
+            source.containerSlug?.let {
+                library.delete(it)
+                loadAvailableSources()
+            }
+        }
+    }
+
+    fun confirmSelectedSources() {
+        val selectedItems = model.value.availableSources.filter { it.selected }
+        val selectedIds = selectedItems.mapNotNull { it.containerSlug }
+
+        if (selectedItems.size > 3) return
+
+        viewModelScope.launch {
+            val oldSourceTranslationIds = getOpenSourceTranslations()
+            for (id in oldSourceTranslationIds) {
+                removeOpenSourceTranslation(id)
+            }
+            if (selectedIds.isNotEmpty()) {
+                setSelectedSources(selectedIds)
+                val selectedSourceId = getSelectedSourceTranslationId()
+                if (selectedSourceId != null) {
+                    setSelectedResourceContainer(selectedSourceId)
+                }
+            } else {
+                // TODO Trigger FirstTab Screen to load
+                //listener?.onNoSourceTranslations()
+            }
+
+            updateSourceTranslations()
+        }
+    }
+
+    private fun setSelectedSources(sourceSlugs: List<String>) {
+        val sources = ArrayList<SourceTranslation>()
+        for (slug in sourceSlugs) {
+            try {
+               addOpenSourceTranslation(slug)
+            } catch (e: Exception) {
+                Logger.e(
+                    this.javaClass.name,
+                    "Error while adding source $slug for ${targetTranslation.id}"
+                )
+                e.printStackTrace()
+            }
+
+            val translation = getTranslation(slug)
+            if (translation != null) {
+                val modifiedAt = getResourceContainerLastModified(translation)
+                sources.add(SourceTranslation(translation, modifiedAt))
+            }
+        }
+
+        try {
+            targetTranslation.setSourceTranslations(sources)
+        } catch (e: JSONException) {
+            Logger.e(
+                this.javaClass.name,
+                "Failed to set source translations for the target translation ${targetTranslation.id}",
+                e
+            )
+        }
+    }
+
+    private fun addSourceTranslation(sourceTranslation: Translation, selected: Boolean): RCItem {
+        val title = sourceTranslation.language.name + " (" + sourceTranslation.language.slug + ") - " + sourceTranslation.resource.name
+        val isDownloaded = library.exists(sourceTranslation.resourceContainerSlug)
+        var hasUpdates = false
+        var checkedUpdates = false
+
+        if (selected) { // see if there are updates available to download
+            Log.i(
+                this::class.java.simpleName,
+                "Checking for updates on " + sourceTranslation.resourceContainerSlug
+            )
+            try {
+                ContainerCache.cache(library, sourceTranslation.resourceContainerSlug)?.let { container ->
+                    val lastModified: Int = library.getResourceContainerLastModified(
+                        container.language.slug,
+                        container.project.slug,
+                        container.resource.slug
+                    )
+                    hasUpdates = (lastModified > container.modifiedAt)
+                    Log.i(
+                        this::class.java.simpleName,
+                        "Checking for updates on " + sourceTranslation.resourceContainerSlug + " finished, needs updates: " + hasUpdates
+                    )
+                }
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+
+            checkedUpdates = true
+        }
+
+        return RCItem(
+            title = title,
+            sourceTranslation = sourceTranslation,
+            selected = selected,
+            downloaded = isDownloaded,
+            hasUpdates = hasUpdates,
+            checkedUpdates = checkedUpdates
         )
     }
 

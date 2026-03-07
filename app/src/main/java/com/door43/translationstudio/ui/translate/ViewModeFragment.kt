@@ -228,7 +228,7 @@ abstract class ViewModeFragment : BaseFragment(),
 
                 launch {
                     viewModel.model
-                        .map { it.itemsOld }
+                        .map { it.items }
                         .distinctUntilChanged()
                         .collect { items ->
                             if (items.isNotEmpty()) {
@@ -239,7 +239,7 @@ abstract class ViewModeFragment : BaseFragment(),
                                     if (chunkSlug == null) {
                                         chunkSlug = viewModel.getLastFocusFrameId()
                                     }
-                                    it.initializeListItems(items, chapterSlug, chunkSlug)
+                                    //it.initializeListItems(items, chapterSlug, chunkSlug)
                                     doScrollToPosition(it.startPosition, 0)
                                 }
                             } else {
