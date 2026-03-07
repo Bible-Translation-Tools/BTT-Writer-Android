@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.translate
 
 import android.content.ContentValues
+import androidx.compose.ui.text.AnnotatedString
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.FileHistory
 import com.door43.translationstudio.core.Frame
@@ -15,29 +16,57 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 /**
  * Represents a single row in the translation list
  */
-abstract class ListItem(
+abstract class ListItemOld(
     val chapterSlug: String,
     val chunkSlug: String,
     val source: ResourceContainer,
     val target: TargetTranslation
 ) {
+    @Deprecated("Use renderedSourceText instead")
     var renderedSourceNodes: List<TextNode>? = null
+    @Deprecated("Use renderedTargetText instead")
     var renderedTargetNodes: List<TextNode>? = null
 
     var isEditing = false
     var isDisabled = false
 
+    private var _sourceText: String? = null
     val sourceText: String
-        get() = getSourceText(chapterSlug, chunkSlug)
+        get() = _sourceText ?: run {
+            _sourceText = fetchSourceText(chapterSlug, chunkSlug)
+            _sourceText!!
+        }
 
-    abstract fun getSourceText(chapterSlug: String, chunkSlug: String?): String
+    private var _renderedSourceText: AnnotatedString? = null
+    val renderedSourceText: AnnotatedString
+        get() = _renderedSourceText ?: run {
+            _renderedSourceText = fetchRenderedSourceText()
+            _renderedSourceText!!
+        }
+
+    abstract fun fetchSourceText(chapterSlug: String, chunkSlug: String?): String
+    abstract fun fetchRenderedSourceText(): AnnotatedString
 
     private var _targetText: String? = null
     var targetText: String
-        get() = _targetText ?: getTargetText(chapterSlug, chunkSlug)
-        set(value) { _targetText = value }
+        get() = _targetText ?: run {
+            _targetText = fetchTargetText(chapterSlug, chunkSlug)
+            _targetText!!
+        }
+        set(value) {
+            _targetText = value
+            _renderedTargetText = null
+        }
 
-    abstract fun getTargetText(chapterSlug: String, chunkSlug: String?): String
+    private var _renderedTargetText: AnnotatedString? = null
+    val renderedTargetText: AnnotatedString
+        get() = _renderedTargetText ?: run {
+            _renderedTargetText = fetchRenderedTargetText()
+            _renderedTargetText!!
+        }
+
+    abstract fun fetchTargetText(chapterSlug: String, chunkSlug: String?): String
+    abstract fun fetchRenderedTargetText(): AnnotatedString
 
     /**
      * Returns the title of the list item
@@ -211,23 +240,16 @@ abstract class ListItem(
         return text
     }
 
-    /**
-     * Clears the loaded translation data
-     */
-    fun reset() {
-        this.renderedSourceNodes = null
-        this.renderedTargetNodes = null
-        this.hasMergeConflicts = false
-    }
-
-    fun <T: ListItem>toType(
+    fun <T: ListItemOld>toType(
         factory: (
             String,
             String,
             ResourceContainer,
             TargetTranslation,
             (String, String?) -> String,
+            () -> AnnotatedString,
             (String, String?) -> String,
+            () -> AnnotatedString,
             () -> List<ContentValues>
         ) -> T
     ): T {
@@ -237,34 +259,46 @@ abstract class ListItem(
             base.chunkSlug,
             base.source,
             base.target,
-            base::getSourceText,
-            base::getTargetText,
+            base::fetchSourceText,
+            base::fetchRenderedSourceText,
+            base::fetchTargetText,
+            base::fetchRenderedTargetText,
             base::fetchTabs
         ).apply {
             hasMergeConflicts = base.hasMergeConflicts
-            renderedSourceNodes = base.renderedSourceNodes   // changed from renderedSourceText
-            renderedTargetNodes = base.renderedTargetNodes   // changed from renderedTargetText
+            renderedSourceNodes = base.renderedSourceNodes
+            renderedTargetNodes = base.renderedTargetNodes
             isEditing = base.isEditing
         }
     }
 }
 
-class ReadListItem(
+class ReadListItemOld(
     chapterSlug: String,
     chunkSlug: String,
     source: ResourceContainer,
     target: TargetTranslation,
     private val getSourceTextFunc: (String, String?) -> String,
+    private val getRenderedSourceTextFunc: () -> AnnotatedString,
     private val getTargetTextFunc: (String, String?) -> String,
+    private val getRenderedTargetTextFunc: () -> AnnotatedString,
     private val getTabsFunc: () -> List<ContentValues>,
-) : ListItem(chapterSlug, chunkSlug, source, target) {
+) : ListItemOld(chapterSlug, chunkSlug, source, target) {
 
-    override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+    override fun fetchSourceText(chapterSlug: String, chunkSlug: String?): String {
         return getSourceTextFunc(chapterSlug, null)
     }
 
-    override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+    override fun fetchRenderedSourceText(): AnnotatedString {
+        return getRenderedSourceTextFunc()
+    }
+
+    override fun fetchTargetText(chapterSlug: String, chunkSlug: String?): String {
         return getTargetTextFunc(chapterSlug, null)
+    }
+
+    override fun fetchRenderedTargetText(): AnnotatedString {
+        return getRenderedTargetTextFunc()
     }
 
     override fun fetchTabs(): List<ContentValues> {
@@ -272,23 +306,33 @@ class ReadListItem(
     }
 }
 
-class ChunkListItem(
+class ChunkListItemOld(
     chapterSlug: String,
     chunkSlug: String,
     source: ResourceContainer,
     target: TargetTranslation,
     private val getSourceTextFunc: (String, String?) -> String,
+    private val getRenderedSourceTextFunc: () -> AnnotatedString,
     private val getTargetTextFunc: (String, String?) -> String,
+    private val getRenderedTargetTextFunc: () -> AnnotatedString,
     private val getTabsFunc: () -> List<ContentValues>
-) : ListItem(chapterSlug, chunkSlug, source, target) {
+) : ListItemOld(chapterSlug, chunkSlug, source, target) {
     var isTargetCardOpen = false
 
-    override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+    override fun fetchSourceText(chapterSlug: String, chunkSlug: String?): String {
         return getSourceTextFunc(chapterSlug, chunkSlug)
     }
 
-    override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+    override fun fetchRenderedSourceText(): AnnotatedString {
+        return getRenderedSourceTextFunc()
+    }
+
+    override fun fetchTargetText(chapterSlug: String, chunkSlug: String?): String {
         return getTargetTextFunc(chapterSlug, chunkSlug)
+    }
+
+    override fun fetchRenderedTargetText(): AnnotatedString {
+        return getRenderedTargetTextFunc()
     }
 
     override fun fetchTabs(): List<ContentValues> {
@@ -299,15 +343,17 @@ class ChunkListItem(
 /**
  * Represents a single item in the review list
  */
-class ReviewListItem(
+class ReviewListItemOld(
     chapterSlug: String,
     chunkSlug: String,
     source: ResourceContainer,
     target: TargetTranslation,
     private val getSourceTextFunc: (String, String?) -> String,
+    private val getRenderedSourceTextFunc: () -> AnnotatedString,
     private val getTargetTextFunc: (String, String?) -> String,
+    private val getRenderedTargetTextFunc: () -> AnnotatedString,
     private val getTabsFunc: () -> List<ContentValues>
-) : ListItem(chapterSlug, chunkSlug, source, target) {
+) : ListItemOld(chapterSlug, chunkSlug, source, target) {
     var hasSearchText = false
     var mergeItems: List<CharSequence> = emptyList()
     var mergeItemSelected = -1
@@ -317,12 +363,20 @@ class ReviewListItem(
     var hasMissingVerses = false
     var resourcesOpened = false
 
-    override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+    override fun fetchSourceText(chapterSlug: String, chunkSlug: String?): String {
         return getSourceTextFunc(chapterSlug, chunkSlug)
     }
 
-    override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+    override fun fetchRenderedSourceText(): AnnotatedString {
+        return getRenderedSourceTextFunc()
+    }
+
+    override fun fetchTargetText(chapterSlug: String, chunkSlug: String?): String {
         return getTargetTextFunc(chapterSlug, chunkSlug)
+    }
+
+    override fun fetchRenderedTargetText(): AnnotatedString {
+        return getRenderedTargetTextFunc()
     }
 
     override fun fetchTabs(): List<ContentValues> {

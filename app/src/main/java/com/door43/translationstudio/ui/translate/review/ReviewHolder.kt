@@ -37,10 +37,9 @@ import com.door43.translationstudio.rendering.adapter.NoteClickListener
 import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.adapter.VerseClickListener
 import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
-import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Companion.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.IReviewListItemBinding
-import com.door43.translationstudio.ui.translate.ReviewListItem
+import com.door43.translationstudio.ui.translate.ReviewListItemOld
 import com.door43.translationstudio.ui.translate.ReviewModeAdapter
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.ParseMergeConflicts
@@ -195,7 +194,7 @@ class ReviewHolder(
         }
     }
 
-    fun bind(item: ReviewListItem) {
+    fun bind(item: ReviewListItemOld) {
         showResourceCard(item.resourcesOpened, false)
         ViewUtil.makeLinksClickable(binding.sourceBody)
 
@@ -262,7 +261,7 @@ class ReviewHolder(
         binding.targetEditableBody?.removeTextChangedListener(editableTextWatcher)
     }
 
-    private fun renderSourceCard(item: ReviewListItem) {
+    private fun renderSourceCard(item: ReviewListItemOld) {
         item.renderedSourceNodes?.let {
             setSource(SpannableAdapter.convert(it, context = itemView.context))
         } ?: showLoadingSource()
@@ -298,7 +297,7 @@ class ReviewHolder(
      *
      * @param item the review list item
      */
-    private fun renderConflictingTargetCard(item: ReviewListItem) {
+    private fun renderConflictingTargetCard(item: ReviewListItemOld) {
         // render title
         binding.targetTitle.text = item.targetTitle
         if (binding.mergeConflictLayout == null) { // sanity check
@@ -318,7 +317,7 @@ class ReviewHolder(
      * @param item the review list item
      */
     @SuppressLint("ClickableViewAccessibility")
-    private fun renderTargetCard(item: ReviewListItem) {
+    private fun renderTargetCard(item: ReviewListItemOld) {
         // Remove text change listener before rendering
         removeTextChangeListener()
         rebuildControls(item)
@@ -493,7 +492,7 @@ class ReviewHolder(
      *
      * @param item the review list item
      */
-    private fun renderResourceCard(item: ReviewListItem) {
+    private fun renderResourceCard(item: ReviewListItemOld) {
         clearResourceCard()
 
         // skip if chapter title/reference or udb
@@ -701,7 +700,7 @@ class ReviewHolder(
      * set up the merge conflicts on the card
      * @param item the review list item
      */
-    private fun displayMergeConflictsOnTargetCard(item: ReviewListItem) {
+    private fun displayMergeConflictsOnTargetCard(item: ReviewListItemOld) {
         val language = item.source.language
         item.mergeItems = ParseMergeConflicts.execute(item.targetText)
 
@@ -771,7 +770,7 @@ class ReviewHolder(
     /**
      * set merge conflict selection state
      */
-    private fun displayMergeConflictSelectionState(item: ReviewListItem) {
+    private fun displayMergeConflictSelectionState(item: ReviewListItemOld) {
         for (i in item.mergeItems.indices) {
             val mergeConflictCard = item.mergeItems[i]
             val textView = mergeTexts!![i]
@@ -933,7 +932,7 @@ class ReviewHolder(
     /**
      * Sets the correct ui state for translation controls
      */
-    fun rebuildControls(item: ReviewListItem) {
+    fun rebuildControls(item: ReviewListItemOld) {
         if (item.isEditing) {
             prepareUndoRedoUI(item)
 
@@ -965,7 +964,7 @@ class ReviewHolder(
     /**
      * check history to see if we should show undo/redo buttons
      */
-    private fun prepareUndoRedoUI(item: ReviewListItem) {
+    private fun prepareUndoRedoUI(item: ReviewListItemOld) {
         val history: FileHistory? = item.fileHistory
         val thread = object : ThreadableUI(context) {
             override fun onStop() {}

@@ -34,6 +34,7 @@ import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
+import com.door43.translationstudio.ui.translate.read.ReadModeScreen
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.launch
@@ -178,7 +179,7 @@ fun TargetTranslationScreen(
             modifier = Modifier.padding(paddingValues)
         ) {
             TranslateSideBar(
-                showMergeConflict = model.items.any { it.hasMergeConflicts },
+                showMergeConflict = false, // TODO model.items.any { it.hasMergeConflicts },
                 onReadClick = {
                     viewModel.setLastViewMode(TranslationViewMode.READ)
                 },

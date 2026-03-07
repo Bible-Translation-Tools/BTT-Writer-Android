@@ -2,13 +2,12 @@ package com.door43.usecases
 
 import com.door43.TestUtils
 import com.door43.translationstudio.core.ContainerCache
-import com.door43.translationstudio.ui.translate.ListItem
+import com.door43.translationstudio.ui.translate.ListItemOld
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
@@ -66,7 +65,7 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps has all resources`() {
-        val listItem: ListItem = mockk {
+        val listItem: ListItemOld = mockk {
             every { chunkConfig }.returns(mockTw())
         }
 
@@ -96,7 +95,7 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tW resource`() {
-        val listItem: ListItem = mockk {
+        val listItem: ListItemOld = mockk {
             every { chunkConfig }.returns(null)
         }
         every { listItem.chapterSlug } returns "01"
@@ -124,7 +123,7 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tQ resource`() {
-        val listItem: ListItem = mockk {
+        val listItem: ListItemOld = mockk {
             every { chunkConfig }.returns(mockTw())
         }
         every { listItem.chapterSlug } returns "01"
@@ -155,7 +154,7 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tQ resource, no rc`() {
-        val listItem: ListItem = mockk {
+        val listItem: ListItemOld = mockk {
             every { chunkConfig }.returns(mockTw())
         }
         every { listItem.chapterSlug } returns "01"
@@ -186,7 +185,7 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tN resource`() {
-        val listItem: ListItem = mockk {
+        val listItem: ListItemOld = mockk {
             every { chunkConfig }.returns(mockTw())
         }
         every { listItem.chapterSlug } returns "01"
@@ -217,7 +216,7 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tN resource, no rc`() {
-        val listItem: ListItem = mockk {
+        val listItem: ListItemOld = mockk {
             every { chunkConfig }.returns(mockTw())
         }
         every { listItem.chapterSlug } returns "01"

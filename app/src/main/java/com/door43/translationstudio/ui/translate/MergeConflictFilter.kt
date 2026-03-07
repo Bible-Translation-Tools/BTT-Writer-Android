@@ -5,8 +5,8 @@ import android.widget.Filter
 /**
  * Created by blm on 10/20/16.
  */
-class MergeConflictFilter(private val items: List<ListItem>) : Filter() {
-    private val filteredItems = arrayListOf<ListItem>()
+class MergeConflictFilter(private val items: List<ListItemOld>) : Filter() {
+    private val filteredItems = arrayListOf<ListItemOld>()
     private var listener: OnMatchListener? = null
 
     /**
@@ -39,7 +39,7 @@ class MergeConflictFilter(private val items: List<ListItem>) : Filter() {
     }
 
     override fun publishResults(constraint: CharSequence, results: FilterResults) {
-        listener?.onFinished(constraint, results.values as ArrayList<ListItem>)
+        listener?.onFinished(constraint, results.values as ArrayList<ListItemOld>)
     }
 
     interface OnMatchListener {
@@ -47,14 +47,14 @@ class MergeConflictFilter(private val items: List<ListItem>) : Filter() {
          * called when a match was found
          * @param item
          */
-        fun onMatch(item: ListItem)
+        fun onMatch(item: ListItemOld)
 
         /**
          * called when the filtering is finished
          * @param constraint
          * @param results
          */
-        fun onFinished(constraint: CharSequence, results: ArrayList<ListItem>)
+        fun onFinished(constraint: CharSequence, results: ArrayList<ListItemOld>)
     }
 }
 

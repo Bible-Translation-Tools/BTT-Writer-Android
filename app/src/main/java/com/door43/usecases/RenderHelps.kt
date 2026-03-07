@@ -2,7 +2,7 @@ package com.door43.usecases
 
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Util
-import com.door43.translationstudio.ui.translate.ListItem
+import com.door43.translationstudio.ui.translate.ListItemOld
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Link
@@ -12,9 +12,9 @@ import java.util.regex.Pattern
 class RenderHelps(
     private val library: Door43Client
 ) {
-    data class RenderHelpsResult(val item: ListItem, val helps: Map<String, Any>)
+    data class RenderHelpsResult(val item: ListItemOld, val helps: Map<String, Any>)
 
-    fun execute(item: ListItem): RenderHelpsResult {
+    fun execute(item: ListItemOld): RenderHelpsResult {
 
         // init default values
         val result: MutableMap<String, Any> = HashMap()
@@ -42,7 +42,7 @@ class RenderHelps(
         return RenderHelpsResult(item, result)
     }
 
-    private fun getWordsLinks(config: List<String>, item: ListItem): List<Link> {
+    private fun getWordsLinks(config: List<String>, item: ListItemOld): List<Link> {
         val links = ContainerCache.cacheFromLinks(
             library,
             config,
@@ -78,7 +78,7 @@ class RenderHelps(
         return links
     }
 
-    private fun getTranslationQuestions(item: ListItem): List<TranslationHelp> {
+    private fun getTranslationQuestions(item: ListItemOld): List<TranslationHelp> {
         val translationQuestions = arrayListOf<TranslationHelp>()
         val questionTranslations = library.index.findTranslations(
             item.source.language.slug,
@@ -127,7 +127,7 @@ class RenderHelps(
         return translationQuestions
     }
 
-    private fun getTranslationNotes(item: ListItem): List<TranslationHelp> {
+    private fun getTranslationNotes(item: ListItemOld): List<TranslationHelp> {
         val translationNotes = arrayListOf<TranslationHelp>()
         val noteTranslations = library.index.findTranslations(
             item.source.language.slug,

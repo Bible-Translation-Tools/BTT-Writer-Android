@@ -107,7 +107,7 @@ fun DraftChapterCard(
                     val annotatedBody = remember(content.textNodes) {
                         ComposeTextAdapter.convert(
                             content.textNodes,
-                            onNoteClick = onNoteClick
+                            onNoteClick = { onNoteClick(it.notes) }
                         )
                     }
 

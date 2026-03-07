@@ -5,10 +5,12 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
@@ -16,27 +18,78 @@ import com.door43.translationstudio.rendering.model.TextNode
 
 /**
  * Converts a List<TextNode> to Compose AnnotatedString.
- *
- * Usage in a Composable:
- *   val annotated = ComposeTextAdapter.convert(
- *     nodes,
- *     onNoteClick = { notes -> showDialog(notes) }
- *   )
- *   Text(annotated)
- *
- * Click handling: note markers include LinkAnnotation that calls onNoteClick.
+ * All Compose-specific styling lives here — the core renderers have no UI imports.
  */
 object ComposeTextAdapter {
 
+    /**
+     * Convert a list of TextNodes to an AnnotatedString.
+     *
+     * @param nodes                The platform-agnostic node list from a renderer.
+     * @param searchHighlightColor Color for search highlight nodes.
+     * @param verseColor           Color for regular verse markers.
+     * @param noteColor            Color for note markers.
+     * @param onVerseClick         Optional click handler for verse markers.
+     * @param onNoteClick          Optional click handler for note markers.
+     */
     fun convert(
         nodes: List<TextNode>,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
-        noteColor: Color = Color(0xFFFFD700),  // amber
-        onNoteClick: (String) -> Unit = {}
+        noteColor: Color = Color(0xFFFFD700), // amber
+        onVerseClick: (TextNode.VerseMarker) -> Unit = {},
+        onNoteClick: (TextNode.NoteMarker) -> Unit = {}
     ): AnnotatedString = buildAnnotatedString {
+
+        var currentPoeticalLineIndent = 0  // Track current poetic line indent level
+        var isFirstElementOfPoeticLine = true  // Track if next element is first child of poetic line
+        var verseMarkerAddedIndentation = false  // Track if verse marker already added indentation
+        var lastWasPoeticLineMarker = false  // Track if previous node was a PoeticLine marker
+
         for (node in nodes) {
-            appendNode(node, searchHighlightColor, verseColor, noteColor, onNoteClick)
+            // Update poetic line context when we encounter a PoeticLine marker
+            if (node is TextNode.PoeticLine && node.content.isEmpty()) {
+                currentPoeticalLineIndent = node.indentLevel
+                isFirstElementOfPoeticLine = true
+                verseMarkerAddedIndentation = false
+                lastWasPoeticLineMarker = true
+            } else if (node is TextNode.LineBreak || node is TextNode.Paragraph) {
+                // Reset context at line/paragraph boundaries
+                currentPoeticalLineIndent = 0
+                isFirstElementOfPoeticLine = false
+                verseMarkerAddedIndentation = false
+                lastWasPoeticLineMarker = false
+            } else if (node is TextNode.VerseMarker && isFirstElementOfPoeticLine && currentPoeticalLineIndent > 0) {
+                // Verse marker as first element in poetic line will add indentation
+                verseMarkerAddedIndentation = true
+                lastWasPoeticLineMarker = false
+            } else if (node !is TextNode.PoeticLine) {
+                // Mark that we've processed a non-poetic-marker element
+                if (node !is TextNode.VerseMarker) {
+                    isFirstElementOfPoeticLine = false
+                }
+                lastWasPoeticLineMarker = false
+            }
+
+            // Skip whitespace-only text nodes that appear right after a poetic line marker
+            if (node is TextNode.Text && lastWasPoeticLineMarker && currentPoeticalLineIndent > 0 && node.content.trim().isEmpty()) {
+                continue
+            }
+
+            // Pass isFirstElementOfPoetic=true only for verse markers that are first, not for text nodes
+            val isFirstForNode = if (node is TextNode.VerseMarker) isFirstElementOfPoeticLine else false
+
+            appendNode(
+                node = node,
+                searchHighlightColor = searchHighlightColor,
+                verseColor = verseColor,
+                noteColor = noteColor,
+                onVerseClick = onVerseClick,
+                onNoteClick = onNoteClick,
+                poeticalLineIndent = currentPoeticalLineIndent,
+                isFirstElementOfPoetic = isFirstForNode,
+                verseMarkerAddedIndentation = verseMarkerAddedIndentation
+            )
         }
     }
 
@@ -45,78 +98,132 @@ object ComposeTextAdapter {
         searchHighlightColor: Color,
         verseColor: Color,
         noteColor: Color,
-        onNoteClick: (String) -> Unit
+        onVerseClick: (TextNode.VerseMarker) -> Unit,
+        onNoteClick: (TextNode.NoteMarker) -> Unit,
+        poeticalLineIndent: Int = 0,
+        isFirstElementOfPoetic: Boolean = false,
+        verseMarkerAddedIndentation: Boolean = false
     ) {
         when (node) {
-            is TextNode.Text -> append(node.content)
-
-            is TextNode.Styled -> {
-                val style = when (node.style) {
-                    NodeStyle.BOLD -> SpanStyle(fontWeight = FontWeight.Bold)
-                    NodeStyle.ITALIC -> SpanStyle(fontStyle = FontStyle.Italic)
-                    NodeStyle.BOLD_CENTER -> SpanStyle(fontWeight = FontWeight.Bold)
-                    NodeStyle.ITALIC_RIGHT -> SpanStyle(fontStyle = FontStyle.Italic)
-                    NodeStyle.NORMAL -> SpanStyle()
+            is TextNode.Text -> {
+                if (poeticalLineIndent > 0 && !verseMarkerAddedIndentation && node.content.trim().isNotEmpty()) {
+                    val padding = "    ".repeat(poeticalLineIndent)
+                    append(padding)
                 }
-                pushStyle(style)
                 append(node.content)
-                pop()
             }
 
-            is TextNode.LineBreak -> append("\n")
-            is TextNode.BlankLine -> append("\n\n")
+            is TextNode.Styled -> {
+                val start = length
+                append(node.content)
+                val end = length
+                applyNodeStyle(node.style, start, end)
+            }
+
+            TextNode.LineBreak -> append("\n")
+
+            TextNode.BlankLine -> append("\n\n")
+
             is TextNode.Paragraph -> append(if (node.indented) "\n    " else "\n")
 
             is TextNode.SectionHeading -> {
+                val start = length
                 val text = if (node.isMajor) node.text.uppercase() else node.text
-                pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
                 append(text)
-                pop()
+                val end = length
+
+                addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
+                addStyle(ParagraphStyle(textAlign = TextAlign.Center), start, end)
                 append("\n")
             }
 
             is TextNode.ChapterLabel -> {
-                pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                val start = length
                 append(node.text)
-                pop()
+                val end = length
+                addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
             }
 
             is TextNode.PoeticLine -> {
-                val padding = "    ".repeat(node.indentLevel)
-                if (node.rightAligned) {
-                    pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
-                    append("$padding${node.content}")
-                    pop()
+                if (node.content.isEmpty()) {
+                    append("\n")
                 } else {
-                    append("$padding${node.content}")
+                    val padding = "    ".repeat(node.indentLevel)
+                    val start = length
+                    append(padding)
+                    append(node.content)
+                    val end = length
+
+                    if (node.rightAligned) {
+                        addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
+                        addStyle(ParagraphStyle(textAlign = TextAlign.Right), start, end)
+                    }
+                    append("\n")
                 }
             }
 
             is TextNode.VerseMarker -> {
                 val label = if (node.endVerse > 0) "${node.startVerse}-${node.endVerse}" else "${node.startVerse}"
-                pushStyle(SpanStyle(fontSize = 16.sp, color = verseColor))
-                addStringAnnotation(tag = "VERSE", annotation = label, start = length, end = length + label.length)
-                append(label)
-                pop()
+                val start = length
+
+                if (node.pinned) {
+                    // In Compose, you would typically use appendInlineContent here
+                    // to render the custom pin UI, but we'll use styling as a fallback
+                    pushStyle(SpanStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold))
+                    append("[$label]") // Bracket placeholder for pinned verse
+                    pop()
+                } else {
+                    pushStyle(SpanStyle(fontSize = 12.sp, color = verseColor))
+                    append(label)
+                    pop()
+                }
+                val end = length
+
+                // Click handler
+                if (node.pinned) {
+                    addLink(
+                        LinkAnnotation.Clickable(tag = "VERSE_${node.startVerse}") { onVerseClick(node) },
+                        start = start,
+                        end = end
+                    )
+                }
+
+                if (isFirstElementOfPoetic && poeticalLineIndent > 0) {
+                    val padding = "    ".repeat(poeticalLineIndent)
+                    append(padding)
+                }
             }
 
             is TextNode.NoteMarker -> {
                 val start = length
-                pushStyle(SpanStyle(color = noteColor, fontStyle = FontStyle.Italic))
-                appendInlineContent("footnote_icon", "footnote")
+                pushStyle(SpanStyle(color = noteColor))
+                if (node.highlighted && searchHighlightColor != Color.Unspecified) {
+                    pushStyle(SpanStyle(background = searchHighlightColor))
+                }
+
+                // Placeholder for the note icon using inline content
+                appendInlineContent("note_icon", "†")
+
+                if (node.highlighted && searchHighlightColor != Color.Unspecified) {
+                    pop()
+                }
+                pop()
                 val end = length
+
                 addLink(
-                    LinkAnnotation.Clickable(tag = "NOTE") { onNoteClick(node.notes) },
+                    LinkAnnotation.Clickable(tag = "NOTE") { onNoteClick(node) },
                     start = start,
                     end = end
                 )
-                pop()
             }
 
             is TextNode.SearchHighlight -> {
-                pushStyle(SpanStyle(background = searchHighlightColor))
+                val start = length
                 append(node.content)
-                pop()
+                val end = length
+                if (searchHighlightColor != Color.Unspecified) {
+                    addStyle(SpanStyle(background = searchHighlightColor), start, end)
+                }
             }
 
             is TextNode.Link -> {
@@ -128,12 +235,38 @@ object ComposeTextAdapter {
                     is LinkData.ShortReference -> Triple("REF", d.ref, d.ref)
                     is LinkData.AppLink -> Triple(d.linkType, d.href, d.title)
                 }
+
                 val start = length
-                pushStyle(SpanStyle(color = Color.Blue))
-                addStringAnnotation(tag = tag, annotation = annotation, start = start, end = start + title.length)
+                pushStyle(SpanStyle(color = Color.Blue)) // Or extract to parameter
                 append(title)
                 pop()
+                val end = length
+
+                addLink(
+                    LinkAnnotation.Clickable(tag = tag) { /* Hook up external link listener if needed */ },
+                    start = start,
+                    end = end
+                )
             }
+        }
+    }
+
+    private fun AnnotatedString.Builder.applyNodeStyle(style: NodeStyle, start: Int, end: Int) {
+        when (style) {
+            NodeStyle.BOLD ->
+                addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
+            NodeStyle.ITALIC ->
+                addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
+            NodeStyle.BOLD_CENTER -> {
+                addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
+                addStyle(ParagraphStyle(textAlign = TextAlign.Center), start, end)
+            }
+            NodeStyle.ITALIC_RIGHT -> {
+                addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
+                addStyle(ParagraphStyle(textAlign = TextAlign.Right), start, end)
+            }
+            NodeStyle.NORMAL ->
+                addStyle(SpanStyle(fontWeight = FontWeight.Normal, fontStyle = FontStyle.Normal), start, end)
         }
     }
 }

@@ -84,7 +84,7 @@ class TargetTranslationActivity : BaseActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        binding = ActivityTargetTranslationDetailBinding.inflate(layoutInflater)
+        binding = ActivityTargetTranslationDetailBinding.inflate(layoutInflater)
 //        setContentView(binding.root)
 
         // validate parameters

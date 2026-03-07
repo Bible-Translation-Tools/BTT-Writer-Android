@@ -49,7 +49,7 @@ class ReadModeAdapter(
     /**
      * Reference to the list of all items (chunks)
      */
-    private val chunks = ArrayList<ListItem>()
+    private val chunks = ArrayList<ListItemOld>()
 
     companion object {
         private const val BOTTOM_ELEVATION = 2f
@@ -63,7 +63,7 @@ class ReadModeAdapter(
     }
 
     override fun initializeListItems(
-        listItems: List<ListItem>,
+        listItems: List<ListItemOld>,
         startingChapter: String?,
         startingChunk: String?
     ) {
@@ -96,8 +96,8 @@ class ReadModeAdapter(
         updateMergeConflict()
     }
 
-    override fun createListItem(item: ListItem): ReadListItem {
-        return item.toType(::ReadListItem)
+    override fun createListItem(item: ListItemOld): ReadListItemOld {
+        return item.toType(::ReadListItemOld)
     }
 
     /**
@@ -134,7 +134,7 @@ class ReadModeAdapter(
         return chapters.indexOf(chapterSlug)
     }
 
-    override fun getItem(chapterSlug: String, chunkSlug: String): ListItem? {
+    override fun getItem(chapterSlug: String, chunkSlug: String): ListItemOld? {
         val position = getItemPosition(chapterSlug, chunkSlug)
         return if (position >= 0) items[position] else null
     }
@@ -168,7 +168,7 @@ class ReadModeAdapter(
     override fun onRenderSourceText(holder: ViewHolder): List<TextNode> {
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return emptyList()
-        val item = items[position] as ReadListItem
+        val item = items[position] as ReadListItemOld
 
         val sourceChapterBody = item.sourceText
         val bodyFormat = TranslationFormat.parse(item.source.contentMimeType)
@@ -198,7 +198,7 @@ class ReadModeAdapter(
     override fun onRenderTargetText(holder: ViewHolder): List<TextNode> {
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return emptyList()
-        val item = items[position] as ReadListItem
+        val item = items[position] as ReadListItemOld
 
         val bodyFormat = item.target.format
         val chapterBody = item.targetText
@@ -255,7 +255,7 @@ class ReadModeAdapter(
     }
 
     override fun onBindManagedViewHolder(holder: ViewHolder, position: Int) {
-        val item = items[position] as ReadListItem
+        val item = items[position] as ReadListItemOld
         val targetOpen = targetStateOpen[position]
         val chapterSlug = chapters[position]
         val renderedSourceNodes = renderedSourceBody[position]
@@ -418,7 +418,7 @@ class ReadModeAdapter(
         }
 
         fun bind(
-            item: ReadListItem,
+            item: ReadListItemOld,
             isTargetOpen: Boolean,
             chapterSlug: String,
             renderedSourceNodes: List<TextNode>?,

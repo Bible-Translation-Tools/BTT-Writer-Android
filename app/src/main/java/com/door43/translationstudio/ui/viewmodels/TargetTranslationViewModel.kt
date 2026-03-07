@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.viewmodels
 import android.app.Application
 import android.content.ContentValues
 import android.graphics.Typeface
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.AssetsProvider
@@ -10,15 +11,22 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getBestFontForLanguage
+import com.door43.translationstudio.rendering.RenderNodeConverter
+import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.translate.ListItem
+import com.door43.translationstudio.ui.translate.ListItem3
+import com.door43.translationstudio.ui.translate.ListItemOld
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.usecases.RenderHelps
@@ -38,7 +46,8 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
 
 data class TargetTranslationModel(
-    val items: List<ListItem> = emptyList(),
+    val items: List<Chunk> = emptyList(),
+    val itemsOld: List<ListItemOld> = emptyList(),
     val renderHelpsResult: RenderHelps.RenderHelpsResult? = null,
     val progress: ProgressHelper.Progress? = null,
     val viewMode: TranslationViewMode = TranslationViewMode.READ,
@@ -47,7 +56,7 @@ data class TargetTranslationModel(
 )
 
 class TargetTranslationViewModel(
-    application: Application,
+    private val application: Application,
     private val translator: Translator,
     private val renderHelps: RenderHelps,
     private val library: Door43Client,
@@ -264,24 +273,24 @@ class TargetTranslationViewModel(
         )
     }
 
-    private fun loadListItems() {
-        val items = mutableListOf<ListItem>()
-        _resourceContainer?.let { source ->
-            val sorter = SlugSorter()
-            val chapterSlugs: List<String> = sorter.sort(source.chapters())
-            for (chapterSlug: String in chapterSlugs) {
-                val chunkSlugs: List<String> = sorter.sort(source.chunks(chapterSlug))
-                for (chunkSlug in chunkSlugs) {
-                    val item = createItem(chapterSlug, chunkSlug, source, targetTranslation)
-                    items.add(item)
+    private suspend fun loadListItems() {
+        val items = mutableListOf<Chunk>()
+        withContext(Dispatchers.Default) {
+            _resourceContainer?.let { source ->
+                val sorter = SlugSorter()
+                val chapterSlugs = sorter.sort(source.chapters())
+                for (chapterSlug: String in chapterSlugs) {
+                    val chunkSlugs = sorter.sort(source.chunks(chapterSlug))
+                    for (chunkSlug in chunkSlugs) {
+                        items.add(Chunk(chapterSlug, chunkSlug, source, targetTranslation))
+                    }
                 }
             }
         }
         _model.update { it.copy(items = items) }
-
     }
 
-    fun renderHelps(item: ListItem) {
+    fun renderHelps(item: ListItemOld) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 renderHelps.execute(item)
@@ -297,13 +306,13 @@ class TargetTranslationViewModel(
         renderHelpJobs.clear()
     }
 
-    private fun createItem(
+    private fun createItem2(
         chapterSlug: String,
         chunkSlug: String,
         source: ResourceContainer,
         targetTranslation: TargetTranslation
-    ): ListItem {
-        return object: ListItem(
+    ): ListItem3 {
+        return object: ListItem3(
             chapterSlug,
             chunkSlug,
             source,
@@ -313,12 +322,20 @@ class TargetTranslationViewModel(
                 return getSourceTranslations()
             }
 
-            override fun getSourceText(chapterSlug: String, chunkSlug: String?): String {
+            override fun fetchSourceText(chapterSlug: String, chunkSlug: String?): String {
                 return fetchSourceText(source, chapterSlug, chunkSlug)
             }
 
-            override fun getTargetText(chapterSlug: String, chunkSlug: String?): String {
+            override fun fetchRenderedSourceText(): AnnotatedString {
+                return renderSourceText(sourceText, sourceTranslationFormat)
+            }
+
+            override fun fetchTargetText(chapterSlug: String, chunkSlug: String?): String {
                 return fetchTargetText(source, targetTranslation, chapterSlug, chunkSlug)
+            }
+
+            override fun fetchRenderedTargetText(): AnnotatedString {
+                return renderTargetText(targetText)
             }
         }
     }
@@ -401,6 +418,24 @@ class TargetTranslationViewModel(
         }
     }
 
+    private fun renderSourceText(sourceText: String, format: TranslationFormat): AnnotatedString {
+        return try {
+            val renderingGroup = RenderingGroup()
+            renderingGroup.init(sourceText)
+            RenderingProvider(application).setupRenderingGroup(
+                format,
+                renderingGroup,
+                pinVerses = false,
+                target = false
+            )
+            val renderNodes = renderingGroup.startNodes()
+            val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
+            ComposeTextAdapter.convert(textNodes/*, onNoteClick = onNoteClick*/)
+        } catch (_: Exception) {
+            AnnotatedString(sourceText)
+        }
+    }
+
     private fun fetchTargetText(
         source: ResourceContainer,
         target: TargetTranslation,
@@ -439,6 +474,10 @@ class TargetTranslationViewModel(
             }
             chapterBody
         }
+    }
+
+    private fun renderTargetText(targetText: String): AnnotatedString {
+        return AnnotatedString(targetText)
     }
 
     fun saveSearchSource(source: String) {

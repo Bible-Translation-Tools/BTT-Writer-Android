@@ -23,6 +23,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
+import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.viewmodels.ChooseSourcesViewModel
 import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel
 import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel
@@ -165,6 +166,7 @@ val appModule = module {
     viewModelOf(::LoginViewModel)
     viewModelOf(::NewTempLanguageViewModel)
     viewModelOf(::TermsOfUseViewModel)
+    viewModelOf(::ReadModeViewModel)
 }
 
 val prodDataModule = module {

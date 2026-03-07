@@ -1,8 +1,7 @@
 package com.door43.translationstudio.ui.viewmodels
 
-import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
@@ -110,7 +109,6 @@ data class SettingsModel(
 )
 
 class SettingsViewModel(
-    application: Application,
     private val checkForLatestRelease: CheckForLatestRelease,
     private val downloadLatestRelease: DownloadLatestRelease,
     private val library: Door43Client,
@@ -122,7 +120,7 @@ class SettingsViewModel(
     private val assetsProvider: AssetsProvider,
     private val resourceProvider: ResourceProvider,
     private val backupController: BackupController
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     private val _model = MutableStateFlow(SettingsModel())
     val model: StateFlow<SettingsModel> = _model.asStateFlow()

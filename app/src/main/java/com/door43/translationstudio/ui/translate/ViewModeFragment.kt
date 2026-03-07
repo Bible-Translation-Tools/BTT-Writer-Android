@@ -228,7 +228,7 @@ abstract class ViewModeFragment : BaseFragment(),
 
                 launch {
                     viewModel.model
-                        .map { it.items }
+                        .map { it.itemsOld }
                         .distinctUntilChanged()
                         .collect { items ->
                             if (items.isNotEmpty()) {

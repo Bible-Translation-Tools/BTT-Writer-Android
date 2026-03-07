@@ -60,7 +60,7 @@ class ChunkModeAdapter(
     }
 
     override fun initializeListItems(
-        listItems: List<ListItem>,
+        listItems: List<ListItemOld>,
         startingChapter: String?,
         startingChunk: String?
     ) {
@@ -69,8 +69,8 @@ class ChunkModeAdapter(
         updateMergeConflict()
     }
 
-    override fun createListItem(item: ListItem): ChunkListItem {
-        return item.toType(::ChunkListItem)
+    override fun createListItem(item: ListItemOld): ChunkListItemOld {
+        return item.toType(::ChunkListItemOld)
     }
 
     /**
@@ -104,7 +104,7 @@ class ChunkModeAdapter(
     }
 
     override fun onBindManagedViewHolder(holder: ViewHolder, position: Int) {
-        val item = filteredItems[position] as ChunkListItem
+        val item = filteredItems[position] as ChunkListItemOld
         holder.bind(item)
     }
 
@@ -142,7 +142,7 @@ class ChunkModeAdapter(
     }
 
     override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int, itemPosition: Int) {
-        val item = filteredItems[itemPosition] as ChunkListItem
+        val item = filteredItems[itemPosition] as ChunkListItemOld
         val translation = Translator.compileTranslation(s as Editable)
 
         if (item.isProjectTitle) {
@@ -179,7 +179,7 @@ class ChunkModeAdapter(
     }
 
     override fun onConflictButtonClicked(position: Int) {
-        val item = filteredItems[position] as ChunkListItem
+        val item = filteredItems[position] as ChunkListItemOld
         val args = Bundle()
         args.putBoolean(ChunkModeFragment.EXTRA_TARGET_OPEN, true)
         args.putString(Translator.EXTRA_CHAPTER_ID, item.chapterSlug)
@@ -198,7 +198,7 @@ class ChunkModeAdapter(
      *
      * @param target target edit text
      */
-    private fun editTarget(target: EditText, item: ListItem) {
+    private fun editTarget(target: EditText, item: ListItemOld) {
         // flag that chunk is open for edit
         if (item.isChapterReference) {
             item.target.reopenChapterReference(item.chapterSlug)
@@ -226,7 +226,7 @@ class ChunkModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return false
         }
-        val item = filteredItems[position] as ChunkListItem
+        val item = filteredItems[position] as ChunkListItemOld
 
         if (item.isComplete) {
             promptToEditDoneChunk(holder, item)
@@ -242,7 +242,7 @@ class ChunkModeAdapter(
      * @param holder chunk view holder
      * @param item list item
      */
-    fun promptToEditDoneChunk(holder: ViewHolder, item: ListItem) {
+    fun promptToEditDoneChunk(holder: ViewHolder, item: ListItemOld) {
         AlertDialog.Builder(context, R.style.AppTheme_Dialog)
             .setTitle(R.string.chunk_done_title)
             .setMessage(R.string.chunk_done_prompt)
@@ -314,7 +314,7 @@ class ChunkModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ChunkListItem
+        val item = filteredItems[position] as ChunkListItemOld
 
         if (item.isTargetCardOpen) {
             clearSelectionFromTarget(holder)
@@ -353,7 +353,7 @@ class ChunkModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ChunkListItem
+        val item = filteredItems[position] as ChunkListItemOld
 
         if (!item.isTargetCardOpen) {
             ViewUtil.animateSwapCards(
@@ -493,7 +493,7 @@ class ChunkModeAdapter(
             }
         }
 
-        fun bind(item: ChunkListItem) {
+        fun bind(item: ChunkListItemOld) {
             val cardMargin = context.resources.getDimensionPixelSize(R.dimen.card_margin)
             val stackedCardMargin = context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
             if (item.isTargetCardOpen) {
@@ -601,7 +601,7 @@ class ChunkModeAdapter(
          *
          * @param item chunk list item
          */
-        private fun renderChunk(item: ChunkListItem) {
+        private fun renderChunk(item: ChunkListItemOld) {
             removeTextChangeListener()
 
             // Source

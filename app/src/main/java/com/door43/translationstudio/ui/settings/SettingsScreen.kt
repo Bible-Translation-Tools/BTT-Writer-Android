@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,26 +37,26 @@ fun SettingsScreen(
 ) {
     val model by viewModel.model.collectAsStateWithLifecycle()
 
-    var showThemeDialog by remember { mutableStateOf(false) }
-    var showGogsApiDialog by remember { mutableStateOf(false) }
-    var showTranslationFontDialog by remember { mutableStateOf(false) }
-    var showTranslationFontSizeDialog by remember { mutableStateOf(false) }
-    var showSourceFontDialog by remember { mutableStateOf(false) }
-    var showSourceFontSizeDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by rememberSaveable { mutableStateOf(false) }
+    var showGogsApiDialog by rememberSaveable { mutableStateOf(false) }
+    var showTranslationFontDialog by rememberSaveable { mutableStateOf(false) }
+    var showTranslationFontSizeDialog by rememberSaveable { mutableStateOf(false) }
+    var showSourceFontDialog by rememberSaveable { mutableStateOf(false) }
+    var showSourceFontSizeDialog by rememberSaveable { mutableStateOf(false) }
 
-    var showContentServerDialog by remember { mutableStateOf(false) }
-    var showGitPortDialog by remember { mutableStateOf(false) }
-    var showMediaServerUrlDialog by remember { mutableStateOf(false) }
-    var showReaderServerUrlDialog by remember { mutableStateOf(false) }
-    var showAccountCreationUrlDialog by remember { mutableStateOf(false) }
-    var showLanguageUrlDialog by remember { mutableStateOf(false) }
-    var showIndexSqliteUrlDialog by remember { mutableStateOf(false) }
-    var showTmLinksUrlDialog by remember { mutableStateOf(false) }
+    var showContentServerDialog by rememberSaveable { mutableStateOf(false) }
+    var showGitPortDialog by rememberSaveable { mutableStateOf(false) }
+    var showMediaServerUrlDialog by rememberSaveable { mutableStateOf(false) }
+    var showReaderServerUrlDialog by rememberSaveable { mutableStateOf(false) }
+    var showAccountCreationUrlDialog by rememberSaveable { mutableStateOf(false) }
+    var showLanguageUrlDialog by rememberSaveable { mutableStateOf(false) }
+    var showIndexSqliteUrlDialog by rememberSaveable { mutableStateOf(false) }
+    var showTmLinksUrlDialog by rememberSaveable { mutableStateOf(false) }
 
-    var showBackupIntervalDialog by remember { mutableStateOf(false) }
-    var showLoggingLevelDialog by remember { mutableStateOf(false) }
+    var showBackupIntervalDialog by rememberSaveable { mutableStateOf(false) }
+    var showLoggingLevelDialog by rememberSaveable { mutableStateOf(false) }
 
-    var openLegalDocumentId by remember { mutableStateOf<Int?>(null) }
+    var openLegalDocumentId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val openDirectoryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocumentTree()

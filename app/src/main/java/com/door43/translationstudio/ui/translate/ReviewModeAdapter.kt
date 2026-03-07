@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.translate
 
-import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ContentValues
 import android.content.Context
@@ -74,7 +73,7 @@ open class ReviewModeAdapter(
 ) : ViewModeAdapter<ReviewHolder>(), OnReviewModeListener {
 
     interface OnRenderHelpsListener {
-        fun onRenderHelps(item: ListItem)
+        fun onRenderHelps(item: ListItemOld)
     }
 
     interface OnShowToastListener {
@@ -126,7 +125,7 @@ open class ReviewModeAdapter(
     }
 
     override fun initializeListItems(
-        listItems: List<ListItem>,
+        listItems: List<ListItemOld>,
         startingChapter: String?,
         startingChunk: String?
     ) {
@@ -137,8 +136,8 @@ open class ReviewModeAdapter(
         updateMergeConflict()
     }
 
-    override fun createListItem(item: ListItem): ReviewListItem {
-        return item.toType(::ReviewListItem) as ReviewListItem
+    override fun createListItem(item: ListItemOld): ReviewListItemOld {
+        return item.toType(::ReviewListItemOld) as ReviewListItemOld
     }
 
     override fun onNoteClick(note: TranslationHelp, resourceCardWidth: Int) {
@@ -160,7 +159,7 @@ open class ReviewModeAdapter(
     override fun onResourceTabNotesSelected(holder: ReviewHolder) {
         val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            val item = filteredItems[position] as ReviewListItem
+            val item = filteredItems[position] as ReviewListItemOld
             holder.showNotes(item.source.language)
         }
     }
@@ -168,7 +167,7 @@ open class ReviewModeAdapter(
     override fun onResourceTabWordsSelected(holder: ReviewHolder) {
         val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            val item = filteredItems[position] as ReviewListItem
+            val item = filteredItems[position] as ReviewListItemOld
             holder.showWords(item.source.language)
         }
     }
@@ -176,7 +175,7 @@ open class ReviewModeAdapter(
     override fun onResourceTabQuestionsSelected(holder: ReviewHolder) {
         val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION) {
-            val item = filteredItems[position] as ReviewListItem
+            val item = filteredItems[position] as ReviewListItemOld
             holder.showQuestions(item.source.language)
         }
     }
@@ -218,7 +217,7 @@ open class ReviewModeAdapter(
         return filteredItems.indexOf(item)
     }
 
-    override fun getItem(chapterSlug: String, chunkSlug: String): ListItem? {
+    override fun getItem(chapterSlug: String, chunkSlug: String): ListItemOld? {
         for (item in filteredItems) {
             if (chapterSlug == item.chapterSlug && chunkSlug == item.chunkSlug) {
                 return item
@@ -230,13 +229,13 @@ open class ReviewModeAdapter(
     override fun setResourcesOpened(status: Boolean) {
         resourcesOpened = status
         for (item in items) {
-            (item as ReviewListItem).resourcesOpened = status
+            (item as ReviewListItemOld).resourcesOpened = status
         }
         triggerNotifyDataSetChanged()
     }
 
-    override fun getItem(position: Int): ReviewListItem? {
-        return super.getItem(position) as? ReviewListItem
+    override fun getItem(position: Int): ReviewListItemOld? {
+        return super.getItem(position) as? ReviewListItemOld
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -335,7 +334,7 @@ open class ReviewModeAdapter(
     }
 
     override fun onBindManagedViewHolder(holder: ReviewHolder, position: Int) {
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         holder.bind(item)
     }
 
@@ -346,7 +345,7 @@ open class ReviewModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         item.isEditing = !item.isEditing
 
         if (item.isEditing) {
@@ -399,7 +398,7 @@ open class ReviewModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         applyChangedText(s, item)
 
         // commit immediately if editing history
@@ -415,7 +414,7 @@ open class ReviewModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         undoTextInTarget(holder, item)
     }
 
@@ -424,7 +423,7 @@ open class ReviewModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         redoTextInTarget(holder, item)
     }
 
@@ -434,7 +433,7 @@ open class ReviewModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         if (checked) {
             if (item.isEditing && holder.binding.targetEditableBody != null) {
                 // make sure to capture verse marker changes before dialog is displayed
@@ -472,7 +471,7 @@ open class ReviewModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         createFootnoteAtSelection(holder, item)
     }
 
@@ -480,7 +479,7 @@ open class ReviewModeAdapter(
      * Generate node list for source text. Note click listeners are passed to
      * SpannableAdapter.convert() when the nodes are later displayed in a ViewHolder.
      */
-    override fun onRenderSourceText(item: ReviewListItem): List<TextNode> {
+    override fun onRenderSourceText(item: ReviewListItemOld): List<TextNode> {
         val renderingGroup = RenderingGroup()
         val enableSearch = searchText != null && searchSubject == SearchSubject.SOURCE
 
@@ -509,7 +508,7 @@ open class ReviewModeAdapter(
     }
 
     override fun onSearchItemUpdated(position: Int, view: TextView, isTarget: Boolean) {
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         val selectPosition = checkForSelectedSearchItem(item, position, isTarget)
 
         if (isTarget) {
@@ -522,13 +521,13 @@ open class ReviewModeAdapter(
     }
 
     override fun onMergeConflictItemCancel(position: Int) {
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         item.mergeItemSelected = -1
         notifyItemChanged(position)
     }
 
     override fun onMergeConflictItemConfirm(position: Int) {
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         if (item.mergeItemSelected >= 0 && item.mergeItemSelected < item.mergeItems.size) {
             val selectedText = item.mergeItems[item.mergeItemSelected]
             applyNewCompiledText(selectedText.toString(), item)
@@ -547,11 +546,11 @@ open class ReviewModeAdapter(
         }
     }
 
-    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem, editable: Boolean): List<TextNode> {
+    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItemOld, editable: Boolean): List<TextNode> {
         return renderTargetText(holder, item, editable)
     }
 
-    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItem): List<TextNode> {
+    override fun onRenderTargetText(holder: ReviewHolder, item: ReviewListItemOld): List<TextNode> {
         return renderTargetText(holder, item)
     }
 
@@ -559,7 +558,7 @@ open class ReviewModeAdapter(
         addMissingVerses(holder)
     }
 
-    override fun onRenderHelps(item: ReviewListItem) {
+    override fun onRenderHelps(item: ReviewListItemOld) {
         if (item.resourcesOpened) {
             renderHelpsListener?.onRenderHelps(item)
         }
@@ -622,7 +621,7 @@ open class ReviewModeAdapter(
         if (position == RecyclerView.NO_POSITION) {
             return
         }
-        val item = filteredItems[position] as ReviewListItem
+        val item = filteredItems[position] as ReviewListItemOld
         if (item.hasMissingVerses && !item.isComplete) {
             Log.i(TAG, "Adding Missing verses to: " + item.targetText)
             if (item.targetText.isNotEmpty()) {
@@ -637,7 +636,7 @@ open class ReviewModeAdapter(
     /**
      * check if we have a selected search item in this chunk
      */
-    private fun checkForSelectedSearchItem(item: ReviewListItem, position: Int, target: Boolean): Int {
+    private fun checkForSelectedSearchItem(item: ReviewListItemOld, position: Int, target: Boolean): Int {
         var selectPosition = -1
         if (item.hasSearchText && position == searchPosition) {
             if (searchSubPositionItems < 0) { // if we haven't counted items yet
@@ -686,7 +685,7 @@ open class ReviewModeAdapter(
     /**
      * mark item as not done
      */
-    private fun reOpenItem(item: ListItem) {
+    private fun reOpenItem(item: ListItemOld) {
         val opened = when {
             item.isChapterReference -> item.target.reopenChapterReference(item.chapterSlug)
             item.isChapterTitle -> item.target.reopenChapterTitle(item.chapterSlug)
@@ -695,7 +694,7 @@ open class ReviewModeAdapter(
         }
 
         if (opened) {
-            (item as ReviewListItem).renderedTargetNodes = null
+            (item as ReviewListItemOld).renderedTargetNodes = null
             item.isComplete = false
             triggerNotifyItemChanged(filteredItems.indexOf(item))
         }
@@ -704,7 +703,7 @@ open class ReviewModeAdapter(
     /**
      * create a new footnote at selected position in target text.
      */
-    private fun createFootnoteAtSelection(holder: ReviewHolder, item: ReviewListItem) {
+    private fun createFootnoteAtSelection(holder: ReviewHolder, item: ReviewListItemOld) {
         val editText = holder.getEditText(item.isEditing) ?: return
         var renderedPos = editText.selectionEnd
         if (renderedPos < 0) {
@@ -762,7 +761,7 @@ open class ReviewModeAdapter(
     private fun createNewFootnote(
         initialNote: CharSequence,
         holder: ReviewHolder,
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         insertPos: Int
     ) {
         val inflater = LayoutInflater.from(context)
@@ -789,7 +788,7 @@ open class ReviewModeAdapter(
     private fun editFootnote(
         initialNote: CharSequence,
         holder: ReviewHolder,
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         marker: TextNode.NoteMarker,
         footnotePos: Int,
         footnoteEndPos: Int
@@ -835,7 +834,7 @@ open class ReviewModeAdapter(
     private fun placeNewFootnote(
         footnote: CharSequence?,
         holder: ReviewHolder,
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         insertPos: Int
     ) {
         var footnotecode: CharSequence = ""
@@ -884,7 +883,7 @@ open class ReviewModeAdapter(
         footnote: CharSequence?,
         marker: TextNode.NoteMarker,
         holder: ReviewHolder,
-        item: ReviewListItem
+        item: ReviewListItemOld
     ) {
         var footnotecode: CharSequence = ""
         var actualFootnote = footnote
@@ -944,7 +943,7 @@ open class ReviewModeAdapter(
     /**
      * save changed text to item,  first see if it needs to be compiled
      */
-    private fun applyChangedText(s: CharSequence?, item: ReviewListItem): String? {
+    private fun applyChangedText(s: CharSequence?, item: ReviewListItemOld): String? {
         val translation: String = when (s) {
             null -> return null
             is Editable -> Translator.compileTranslation(s)
@@ -959,7 +958,7 @@ open class ReviewModeAdapter(
     /**
      * save new text to item
      */
-    private fun applyNewCompiledText(translation: String, item: ListItem) {
+    private fun applyNewCompiledText(translation: String, item: ListItemOld) {
         val cleanTranslation = translation.replace("\\s*\\R\\s*".toRegex(), "\n")
 
         item.targetText = cleanTranslation
@@ -980,7 +979,7 @@ open class ReviewModeAdapter(
     /**
      * restore the text from previous commit for fragment
      */
-    private fun undoTextInTarget(holder: ReviewHolder, item: ReviewListItem) {
+    private fun undoTextInTarget(holder: ReviewHolder, item: ReviewListItemOld) {
         holder.binding.undoButton?.visibility = View.INVISIBLE
         holder.binding.redoButton?.visibility = View.INVISIBLE
 
@@ -1056,7 +1055,7 @@ open class ReviewModeAdapter(
     /**
      * restore the text from later commit for fragment
      */
-    private fun redoTextInTarget(holder: ReviewHolder, item: ReviewListItem) {
+    private fun redoTextInTarget(holder: ReviewHolder, item: ReviewListItemOld) {
         holder.binding.undoButton?.visibility = View.INVISIBLE
         holder.binding.redoButton?.visibility = View.INVISIBLE
 
@@ -1122,7 +1121,7 @@ open class ReviewModeAdapter(
      *
      * @throws IllegalStateException If there is an error with the chunk
      */
-    private fun markChunkCompleted(item: ListItem, format: TranslationFormat) {
+    private fun markChunkCompleted(item: ListItemOld, format: TranslationFormat) {
         // Check for empty translation.
         if (item.targetText.isEmpty()) {
             throw java.lang.IllegalStateException(context.getString(R.string.translate_first))
@@ -1226,11 +1225,11 @@ open class ReviewModeAdapter(
             item.isComplete = true
         }
 
-        (item as ReviewListItem).isEditing = false
+        (item as ReviewListItemOld).isEditing = false
         item.renderedTargetNodes = null
     }
 
-    private fun renderTargetText(holder: ReviewHolder, item: ReviewListItem): List<TextNode> {
+    private fun renderTargetText(holder: ReviewHolder, item: ReviewListItemOld): List<TextNode> {
         return renderTargetText(
             item.targetText,
             item.targetTranslationFormat,
@@ -1249,7 +1248,7 @@ open class ReviewModeAdapter(
         format: TranslationFormat,
         frameTranslation: FrameTranslation,
         holder: ReviewHolder?,
-        item: ReviewListItem
+        item: ReviewListItemOld
     ): List<TextNode> {
         val renderingGroup = RenderingGroup()
         val enableSearch = searchText != null && searchSubject != null && searchSubject == SearchSubject.TARGET
@@ -1394,7 +1393,7 @@ open class ReviewModeAdapter(
      */
     private fun showFootnote(
         holder: ReviewHolder,
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         marker: TextNode.NoteMarker,
         start: Int,
         end: Int,
@@ -1430,7 +1429,7 @@ open class ReviewModeAdapter(
     private fun deleteFootnote(
         note: CharSequence,
         holder: ReviewHolder,
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         marker: TextNode.NoteMarker,
         start: Int,
         end: Int
@@ -1451,7 +1450,7 @@ open class ReviewModeAdapter(
      */
     private fun renderTargetText(
         holder: ReviewHolder,
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         editable: Boolean
     ): List<TextNode> {
         val renderingGroup = RenderingGroup()
@@ -1526,25 +1525,25 @@ open class ReviewModeAdapter(
         return -1
     }
 
-    override fun onSourceNoteClick(item: ReviewListItem, marker: TextNode.NoteMarker) {
+    override fun onSourceNoteClick(item: ReviewListItemOld, marker: TextNode.NoteMarker) {
         val position = filteredItems.indexOf(item)
         if (onClickListener == null) return
         val holder = onClickListener?.getVisibleViewHolder(position) as? ReviewHolder ?: return
         showFootnote(holder, item, marker, 0, 0, false)
     }
 
-    override fun onNoteClick(holder: ReviewHolder, item: ReviewListItem, marker: TextNode.NoteMarker, start: Int, end: Int, editable: Boolean) {
+    override fun onNoteClick(holder: ReviewHolder, item: ReviewListItemOld, marker: TextNode.NoteMarker, start: Int, end: Int, editable: Boolean) {
         showFootnote(holder, item, marker, start, end, editable)
     }
 
-    override fun onVerseClick(item: ReviewListItem, marker: TextNode.VerseMarker) {
+    override fun onVerseClick(item: ReviewListItemOld, marker: TextNode.VerseMarker) {
         itemActionListener?.onShowToast(R.string.long_click_to_drag)
     }
 
     override fun onVerseLongClick(
         view: View,
         holder: ReviewHolder,
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         marker: TextNode.VerseMarker,
         start: Int,
         end: Int
@@ -1777,7 +1776,7 @@ open class ReviewModeAdapter(
     /**
      * gets the number of string matches within chunk and selects next item
      */
-    private fun findSearchItemInChunkAndPreselect(item: ReviewListItem, target: Boolean) {
+    private fun findSearchItemInChunkAndPreselect(item: ReviewListItemOld, target: Boolean) {
         val results = getMatchItemN(item, searchText, 1000, target) // get item count
         searchSubPositionItems = results.numberFound
         val searchSubPosition = 0
@@ -1796,7 +1795,7 @@ open class ReviewModeAdapter(
      * search text to find the nth item (matchNumb) of the search string
      */
     private fun getMatchItemN(
-        item: ReviewListItem,
+        item: ReviewListItemOld,
         match: CharSequence?,
         matchNumb: Int,
         target: Boolean
@@ -1849,7 +1848,7 @@ open class ReviewModeAdapter(
             searchSubject = null
 
             for (item in filteredItems) {
-                val reviewItem = item as ReviewListItem
+                val reviewItem = item as ReviewListItemOld
                 // Item will be re-rendered with default text (without highlights)
                 if (reviewItem.hasSearchText) {
                     reviewItem.hasSearchText = false
@@ -1926,7 +1925,7 @@ open class ReviewModeAdapter(
     private fun getMergeConflictFilter(): MergeConflictFilter {
         val filter = MergeConflictFilter(items)
         filter.setListener(object : MergeConflictFilter.OnMatchListener {
-            override fun onMatch(item: ListItem) {
+            override fun onMatch(item: ListItemOld) {
                 if (!filteredChapters.contains(item.chapterSlug)) {
                     filteredChapters.add(item.chapterSlug)
                 }
@@ -1934,7 +1933,7 @@ open class ReviewModeAdapter(
 
             override fun onFinished(
                 constraint: CharSequence,
-                results: ArrayList<ListItem>
+                results: ArrayList<ListItemOld>
             ) {
                 filteredItems.clear()
                 filteredItems.addAll(results)
@@ -2031,7 +2030,7 @@ open class ReviewModeAdapter(
 
         chunkSearchMatchesCounter = 0
         for (item in filteredItems) {
-            val reviewItem = item as ReviewListItem
+            val reviewItem = item as ReviewListItemOld
             var match = false
 
             if (!matcherEmpty) {
@@ -2092,7 +2091,7 @@ open class ReviewModeAdapter(
     /**
      * Disable/Enable items
      */
-    private fun toggleDisableItems(disable: Boolean, itemToExclude: ListItem?) {
+    private fun toggleDisableItems(disable: Boolean, itemToExclude: ListItemOld?) {
         for (i in filteredItems) {
             if (itemToExclude === i) continue
             i.isDisabled = disable

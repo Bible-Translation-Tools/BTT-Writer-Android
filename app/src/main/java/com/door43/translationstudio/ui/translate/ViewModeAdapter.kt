@@ -38,8 +38,8 @@ abstract class ViewModeAdapter<VH : RecyclerView.ViewHolder> : RecyclerView.Adap
     protected lateinit var renderingProvider: RenderingProvider
     protected lateinit var assetsProvider: AssetsProvider
 
-    protected val items = mutableListOf<ListItem>()
-    val filteredItems = mutableListOf<ListItem>()
+    protected val items = mutableListOf<ListItemOld>()
+    val filteredItems = mutableListOf<ListItemOld>()
     protected val chapters = mutableListOf<String>()
     protected val filteredChapters = mutableListOf<String>()
 
@@ -171,7 +171,7 @@ abstract class ViewModeAdapter<VH : RecyclerView.ViewHolder> : RecyclerView.Adap
         onClickListener?.onDataSetChanged(1)
     }
 
-    protected fun triggerNotifyItemChanged(item: ListItem) {
+    protected fun triggerNotifyItemChanged(item: ListItemOld) {
         notifyItemChanged(filteredItems.indexOf(item))
         onClickListener?.onDataSetChanged(1)
     }
@@ -197,7 +197,7 @@ abstract class ViewModeAdapter<VH : RecyclerView.ViewHolder> : RecyclerView.Adap
      * Update the list of items
      */
     open fun initializeListItems(
-        listItems: List<ListItem>,
+        listItems: List<ListItemOld>,
         startingChapter: String?,
         startingChunk: String?
     ) {
@@ -226,7 +226,7 @@ abstract class ViewModeAdapter<VH : RecyclerView.ViewHolder> : RecyclerView.Adap
     /**
      * need to override
      */
-    abstract fun createListItem(item: ListItem): ListItem
+    abstract fun createListItem(item: ListItemOld): ListItemOld
 
     abstract fun markAllChunksDone()
 
@@ -269,7 +269,7 @@ abstract class ViewModeAdapter<VH : RecyclerView.ViewHolder> : RecyclerView.Adap
         return filteredItems.indexOf(item)
     }
 
-    protected open fun getItem(chapterSlug: String, chunkSlug: String): ListItem? {
+    protected open fun getItem(chapterSlug: String, chunkSlug: String): ListItemOld? {
         for (item in filteredItems) {
             if (item.isChunk && chapterSlug == item.chapterSlug && chunkSlug == item.chunkSlug) {
                 return item
@@ -278,7 +278,7 @@ abstract class ViewModeAdapter<VH : RecyclerView.ViewHolder> : RecyclerView.Adap
         return null
     }
 
-    protected open fun getItem(position: Int): ListItem? {
+    protected open fun getItem(position: Int): ListItemOld? {
         if (position in 0 until filteredItems.size) {
             return filteredItems[position]
         }

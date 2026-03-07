@@ -645,7 +645,7 @@ class ReviewModeFragment : ViewModeFragment(),
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun renderHelpsResult(item: ListItem, helps: Map<String, Any>) {
+    private fun renderHelpsResult(item: ListItemOld, helps: Map<String, Any>) {
         // skip if resources are closed
         if (!isResourcesOpen()) return
 
@@ -668,7 +668,7 @@ class ReviewModeFragment : ViewModeFragment(),
         }
     }
 
-    override fun onRenderHelps(item: ListItem) {
+    override fun onRenderHelps(item: ListItemOld) {
         viewModel.renderHelps(item)
     }
 
