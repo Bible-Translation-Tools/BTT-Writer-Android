@@ -421,9 +421,6 @@ class TargetTranslationViewModel(
                 if (selectedSourceId != null) {
                     setSelectedResourceContainer(selectedSourceId)
                 }
-            } else {
-                // TODO Trigger FirstTab Screen to load
-                //listener?.onNoSourceTranslations()
             }
 
             updateSourceTranslations()

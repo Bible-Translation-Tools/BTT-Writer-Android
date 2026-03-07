@@ -119,14 +119,13 @@ fun SourceSelectionDialog(
                         } else {
                             SourceItemRow(
                                 item = item,
-                                onClick = {
-                                    if (!item.downloaded || item.hasUpdates) {
-                                        onTriggerDownload(item)
-                                    } else {
-                                        onToggleSelection(item)
-                                    }
+                                onTriggerSelected = {
+                                    onToggleSelection(item)
                                 },
-                                onLongClick = {
+                                onTriggerDownload = {
+                                    onTriggerDownload(item)
+                                },
+                                onTriggerDelete = {
                                     if (item.downloaded) {
                                         onTriggerDelete(item)
                                     }

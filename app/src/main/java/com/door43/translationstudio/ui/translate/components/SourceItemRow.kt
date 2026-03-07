@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.translate.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -79,13 +80,23 @@ fun SourceHeaderRow(title: String, showStatusIcons: Boolean) {
 @Composable
 fun SourceItemRow(
     item: RCItem,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onTriggerSelected: () -> Unit,
+    onTriggerDownload: () -> Unit,
+    onTriggerDelete: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .combinedClickable(
+                onClick = {
+                    if (!item.downloaded) {
+                        onTriggerDownload()
+                    } else {
+                        onTriggerSelected()
+                    }
+                },
+                onLongClick = onTriggerDelete
+            )
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -97,10 +108,17 @@ fun SourceItemRow(
 
         if (!item.downloaded || item.hasUpdates) {
             Icon(
-                imageVector = if (!item.downloaded) Icons.Default.FileDownload else Icons.Default.Refresh,
+                imageVector = if (!item.downloaded) {
+                    Icons.Default.FileDownload
+                } else Icons.Default.Refresh,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
+                    .clickable {
+                        if (!item.downloaded || item.hasUpdates) {
+                            onTriggerDownload()
+                        }
+                    }
             )
         }
 
