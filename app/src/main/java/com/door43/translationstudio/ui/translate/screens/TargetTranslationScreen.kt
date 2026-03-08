@@ -228,7 +228,8 @@ fun TargetTranslationScreen(
                             onAddNewSourceClick = {
                                 viewModel.loadAvailableSources()
                                 showSourceDialog = true
-                            }
+                            },
+                            onRemoveSourceClick = viewModel::removeOpenSourceTranslation
                         )
                     }
                     TranslationViewMode.CHUNK -> {

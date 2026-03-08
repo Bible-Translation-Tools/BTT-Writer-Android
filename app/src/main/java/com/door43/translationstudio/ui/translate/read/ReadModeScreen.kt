@@ -25,7 +25,8 @@ fun ReadModeScreen(
     sourceTabs: List<SourceTabItem>,
     selectedSourceId: String?,
     onSourceTabClick: (String) -> Unit,
-    onAddNewSourceClick: () -> Unit
+    onAddNewSourceClick: () -> Unit,
+    onRemoveSourceClick: (String) -> Unit
 ) {
     val viewModel: ReadModeViewModel = koinViewModel()
 
@@ -47,7 +48,8 @@ fun ReadModeScreen(
                     sourceTabs = sourceTabs,
                     selectedSourceId = selectedSourceId,
                     onSourceTabClick = onSourceTabClick,
-                    onAddNewSourceClick = onAddNewSourceClick
+                    onAddNewSourceClick = onAddNewSourceClick,
+                    onRemoveSourceClick = onRemoveSourceClick
                 )
             }
         }

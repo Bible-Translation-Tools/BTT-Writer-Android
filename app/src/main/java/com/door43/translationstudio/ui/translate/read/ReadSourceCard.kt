@@ -29,6 +29,7 @@ fun ReadSourceCard(
     selectedSourceId: String?,
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
+    onRemoveSourceClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -50,7 +51,8 @@ fun ReadSourceCard(
                     sourceTabs = sourceTabs,
                     selectedTag = selectedSourceId,
                     onSourceTabClick = onSourceTabClick,
-                    onAddClick = onAddNewSourceClick
+                    onAddClick = onAddNewSourceClick,
+                    onRemoveClick = onRemoveSourceClick
                 )
             }
 

@@ -195,7 +195,19 @@ class TargetTranslationViewModel(
     }
 
     fun removeOpenSourceTranslation(sourceTranslationId: String) {
-        prefRepository.removeOpenSourceTranslation(targetTranslation.id, sourceTranslationId)
+        prefRepository.removeOpenSourceTranslation(
+            targetTranslation.id,
+            sourceTranslationId
+        )
+
+        val sourceTranslationIds = getOpenSourceTranslations()
+        if (sourceTranslationIds.isNotEmpty()) {
+            val selectedSourceId = getSelectedSourceTranslationId()
+            if (selectedSourceId != null) {
+                setSelectedResourceContainer(selectedSourceId)
+            }
+        }
+        updateSourceTranslations()
     }
 
     fun addOpenSourceTranslation(slug: String) {

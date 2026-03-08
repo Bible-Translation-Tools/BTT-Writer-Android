@@ -14,6 +14,7 @@ fun ReadCard(
     selectedSourceId: String?,
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
+    onRemoveSourceClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     StackedCardFlipper(
@@ -27,7 +28,8 @@ fun ReadCard(
                 sourceTabs = sourceTabs,
                 selectedSourceId = selectedSourceId,
                 onSourceTabClick = onSourceTabClick,
-                onAddNewSourceClick = onAddNewSourceClick
+                onAddNewSourceClick = onAddNewSourceClick,
+                onRemoveSourceClick = onRemoveSourceClick
             )
         },
         backCard = {
