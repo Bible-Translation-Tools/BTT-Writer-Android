@@ -71,11 +71,6 @@ object ComposeTextAdapter {
                 lastWasPoeticLineMarker = false
             }
 
-            // Skip whitespace-only text nodes that appear right after a poetic line marker
-            if (node is TextNode.Text && lastWasPoeticLineMarker && currentPoeticalLineIndent > 0 && node.content.trim().isEmpty()) {
-                continue
-            }
-
             // Pass isFirstElementOfPoetic=true only for verse markers that are first, not for text nodes
             val isFirstForNode = if (node is TextNode.VerseMarker) isFirstElementOfPoeticLine else false
 
@@ -202,7 +197,7 @@ object ComposeTextAdapter {
                 }
 
                 // Placeholder for the note icon using inline content
-                appendInlineContent("note_icon", "†")
+                appendInlineContent("note_icon", "[note]")
 
                 if (node.highlighted && searchHighlightColor != Color.Unspecified) {
                     pop()

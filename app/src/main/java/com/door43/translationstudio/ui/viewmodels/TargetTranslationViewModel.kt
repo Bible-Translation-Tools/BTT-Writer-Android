@@ -208,6 +208,7 @@ class TargetTranslationViewModel(
             }
         }
         updateSourceTranslations()
+        setSelectedResourceContainer()
     }
 
     fun addOpenSourceTranslation(slug: String) {

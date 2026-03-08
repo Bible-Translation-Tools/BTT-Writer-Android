@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.door43.translationstudio.core.TranslationViewMode
 
 data class TranslateSideBarAction(
     val title: String,
@@ -40,6 +42,7 @@ data class TranslateSideBarAction(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TranslateSideBar(
+    currentViewMode: TranslationViewMode,
     showMergeConflict: Boolean,
     onReadClick: () -> Unit,
     onChunkClick: () -> Unit,
@@ -63,31 +66,31 @@ fun TranslateSideBar(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            IconButton(onClick = onReadClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Subject,
-                    contentDescription = "Read Mode"
-                )
-            }
-            IconButton(onClick = onChunkClick) {
-                Icon(
-                    imageVector = Icons.Default.ContentCopy,
-                    contentDescription = "Chunk Mode"
-                )
-            }
-            IconButton(onClick = onReviewClick) {
-                Icon(
-                    imageVector = Icons.Default.ViewWeek,
-                    contentDescription = "Review Mode"
-                )
-            }
+            SidebarIconButton(
+                isSelected = currentViewMode == TranslationViewMode.READ,
+                icon = Icons.AutoMirrored.Filled.Subject,
+                contentDescription = "Read Mode",
+                onClick = onReadClick
+            )
+            SidebarIconButton(
+                isSelected = currentViewMode == TranslationViewMode.CHUNK,
+                icon = Icons.Default.ContentCopy,
+                contentDescription = "Chunk Mode",
+                onClick = onChunkClick
+            )
+            SidebarIconButton(
+                isSelected = currentViewMode == TranslationViewMode.REVIEW,
+                icon = Icons.Default.ViewWeek,
+                contentDescription = "Review Mode",
+                onClick = onReviewClick
+            )
             if (showMergeConflict) {
-                IconButton(onClick = onMergeConflictClick) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Merge Conflict Warning"
-                    )
-                }
+                SidebarIconButton(
+                    isSelected = false,
+                    icon = Icons.Default.Warning,
+                    contentDescription = "Merge Conflict Warning",
+                    onClick = onMergeConflictClick
+                )
             }
         }
 
@@ -136,5 +139,30 @@ fun TranslateSideBar(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SidebarIconButton(
+    isSelected: Boolean,
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isSelected) Color.Black.copy(alpha = 0.2f) else Color.Transparent
+    val iconTint = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
+
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .background(backgroundColor)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = iconTint
+        )
     }
 }

@@ -33,7 +33,7 @@ val AccentLightGreenDark = Color(0xFF8EA89E)
 // --- Backgrounds & Surfaces ---
 val BackgroundLight = Color(0xFFEFEFEF)
 val BackgroundDark = Color(0xFF1C1C1C)
-val SurfaceLight = Color(0xFFFFFFFF)
+val SurfaceLight = Color(0xFFF2F2F2)
 val SurfaceDark = Color(0xFF272727)
 
 // --- Text Colors ---

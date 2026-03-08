@@ -37,6 +37,7 @@ import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.ui.components.ConfirmDialog
 import com.door43.translationstudio.ui.components.ProgressDialog
+import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
@@ -198,6 +199,7 @@ fun TargetTranslationScreen(
             modifier = Modifier.padding(paddingValues)
         ) {
             TranslateSideBar(
+                currentViewMode = model.viewMode,
                 showMergeConflict = false, // TODO model.items.any { it.hasMergeConflicts },
                 onReadClick = {
                     viewModel.setLastViewMode(TranslationViewMode.READ)
@@ -218,25 +220,41 @@ fun TargetTranslationScreen(
             )
 
             Box(modifier = Modifier.weight(1f)) {
-                when (model.viewMode) {
-                    TranslationViewMode.READ -> {
-                        ReadModeScreen(
-                            items = model.items,
-                            sourceTabs = model.sourceTabs,
-                            selectedSourceId = model.resourceContainer?.slug,
-                            onSourceTabClick = viewModel::setSelectedResourceContainer,
-                            onAddNewSourceClick = {
-                                viewModel.loadAvailableSources()
-                                showSourceDialog = true
-                            },
-                            onRemoveSourceClick = viewModel::removeOpenSourceTranslation
-                        )
-                    }
-                    TranslationViewMode.CHUNK -> {
-                        ChunkModeScreen()
-                    }
-                    TranslationViewMode.REVIEW -> {
-                        ReviewModeScreen()
+                if (model.items.isEmpty()) {
+                    val project = viewModel.getProject()
+                    val projectTitle = "${project?.name} - ${viewModel.targetTranslation.targetLanguageName}"
+                    NoSourceScreen(
+                        projectTitle = projectTitle,
+                        onAddSourceClick = {
+                            viewModel.loadAvailableSources()
+                            showSourceDialog = true
+                        }
+                    )
+                } else {
+                    when (model.viewMode) {
+                        TranslationViewMode.READ -> {
+                            ReadModeScreen(
+                                items = model.items,
+                                sourceTabs = model.sourceTabs,
+                                selectedSourceId = model.resourceContainer?.slug,
+                                lastFocusChapterId = viewModel.getLastFocusChapterId(),
+                                onSourceTabClick = viewModel::setSelectedResourceContainer,
+                                onAddNewSourceClick = {
+                                    viewModel.loadAvailableSources()
+                                    showSourceDialog = true
+                                },
+                                onRemoveSourceClick = viewModel::removeOpenSourceTranslation,
+                                onScrollToChapterId = {
+                                    viewModel.setLastFocus(it, null)
+                                }
+                            )
+                        }
+                        TranslationViewMode.CHUNK -> {
+                            ChunkModeScreen()
+                        }
+                        TranslationViewMode.REVIEW -> {
+                            ReviewModeScreen()
+                        }
                     }
                 }
             }
