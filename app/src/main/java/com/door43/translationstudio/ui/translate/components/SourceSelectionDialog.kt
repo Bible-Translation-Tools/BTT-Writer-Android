@@ -71,7 +71,7 @@ fun SourceSelectionDialog(
         onDismissRequest = onDismissRequest
     ) {
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(0.95f),
             color = MaterialTheme.colorScheme.background
         ) {
             Column(modifier = Modifier.fillMaxSize()) {

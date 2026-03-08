@@ -1,6 +1,8 @@
 package com.door43.translationstudio.ui.translate.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -27,15 +30,25 @@ fun VerticalSeekBar(
     sliderValue: Float = 0f,
     onSliderValueChange: (Float) -> Unit
 ) {
-    var currentSliderValue by remember(sliderValue) { mutableFloatStateOf(sliderValue) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isDragged by interactionSource.collectIsDraggedAsState()
+    var internalDragValue by remember { mutableFloatStateOf(sliderValue) }
+
+    LaunchedEffect(sliderValue) {
+        if (!isDragged) {
+            internalDragValue = sliderValue
+        }
+    }
+
+    val displayValue = if (isDragged) internalDragValue else sliderValue
 
     Slider(
-        value = currentSliderValue,
+        value = displayValue,
         onValueChange = {
-            currentSliderValue = it
+            internalDragValue = it
             onSliderValueChange(it)
         },
-        //steps = 16,
+        interactionSource = interactionSource,
         colors = SliderDefaults.colors(
             thumbColor = Color.White,
             activeTrackColor = Color.White,

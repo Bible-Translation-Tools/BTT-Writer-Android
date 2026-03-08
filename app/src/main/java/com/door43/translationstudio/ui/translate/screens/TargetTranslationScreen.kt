@@ -118,10 +118,20 @@ fun TargetTranslationScreen(
         }
     }
 
-    val currentSliderValue = if (activeList.size > 1) {
-        dominantIndex.toFloat() / (activeList.size - 1).toFloat()
-    } else {
-        0f
+    val currentSliderValue by remember(activeList) {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visibleItems = layoutInfo.visibleItemsInfo
+
+            if (visibleItems.isEmpty() || activeList.isEmpty()) return@derivedStateOf 0f
+
+            val firstItem = visibleItems.first()
+            val scrolledPixels = -firstItem.offset
+            val itemFraction = (scrolledPixels.toFloat() / firstItem.size.toFloat()).coerceIn(0f, 1f)
+
+            val absolutePosition = firstItem.index + itemFraction
+            (absolutePosition / activeList.size).coerceIn(0f, 1f)
+        }
     }
 
     LaunchedEffect(activeList, lastFocusChapterId) {
@@ -130,7 +140,8 @@ fun TargetTranslationScreen(
             var targetIndex = activeList.indexOfFirst {
                 it.chapterSlug == lastFocusChapterId && it.chunkSlug == lastFocusFrameId
             }
-            // Fallback: If in READ mode, the specific chunkId might be filtered out. Find the chapter.
+            // Fallback: If in READ mode,
+            // the specific chunkId might be filtered out. Find the chapter.
             if (targetIndex == -1) {
                 targetIndex = activeList.indexOfFirst { it.chapterSlug == lastFocusChapterId }
             }
@@ -308,11 +319,18 @@ fun TargetTranslationScreen(
                     viewModel.setLastViewMode(TranslationViewMode.REVIEW)
                 },
                 onSliderValueChange = {
-                    val maxIndex = activeList.size - 1
-                    val targetIndex = (it * maxIndex).toInt()
+                    val exactPosition = it * activeList.size
+                    val targetIndex = exactPosition.toInt().coerceIn(0, activeList.size - 1)
+                    val fraction = exactPosition - targetIndex
+
+                    // THE GUESS: Because the target chapter isn't on screen yet, we don't know its height.
+                    // We have to guess the offset based on the screen height.
+                    // Here we assume an average chapter is about 3 screens tall.
+                    val screenHeight = listState.layoutInfo.viewportSize.height
+                    val estimatedOffsetPixels = (fraction * (screenHeight * 3)).toInt()
 
                     scope.launch {
-                        listState.scrollToItem(targetIndex)
+                        listState.scrollToItem(targetIndex, estimatedOffsetPixels)
                     }
                 },
                 sliderValue = currentSliderValue,
