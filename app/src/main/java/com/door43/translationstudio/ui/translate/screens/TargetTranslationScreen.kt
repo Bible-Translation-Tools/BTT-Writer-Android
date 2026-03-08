@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.translate.screens
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Check
@@ -22,6 +23,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.ui.components.ConfirmDialog
@@ -47,6 +50,7 @@ import com.door43.translationstudio.ui.viewmodels.TargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import kotlin.math.max
 
 @Composable
 fun TargetTranslationScreen(
@@ -66,11 +70,12 @@ fun TargetTranslationScreen(
     val snackBarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val draftExistsStr = stringResource(R.string.draft_translation_exists)
-    val draftPreview = stringResource(R.string.preview)
-
     val menuItems = remember { mutableStateListOf<TranslateSideBarAction>() }
 
+    // Strings
+
+    val draftExistsStr = stringResource(R.string.draft_translation_exists)
+    val draftPreview = stringResource(R.string.preview)
     val menuActionHome = stringResource(R.string.action_translations)
     val menuActionDrafts = stringResource(R.string.view_available_drafts)
     val menuActionPreview = stringResource(R.string.title_review)
@@ -85,9 +90,96 @@ fun TargetTranslationScreen(
     var sourceToDownload by rememberSaveable { mutableStateOf<RCItem?>(null) }
     var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
 
+    var lastFocusChapterId by remember { mutableStateOf<String?>(null) }
+    var lastFocusFrameId by remember { mutableStateOf<String?>(null) }
+
+    val listState = rememberLazyListState()
+    var lastViewedChunk by remember { mutableStateOf<Chunk?>(null) }
+    var hasDoneInitialLoad by rememberSaveable { mutableStateOf(false) }
+
+    val activeList = remember(model.items, model.viewMode) {
+        if (model.viewMode == TranslationViewMode.READ) {
+            model.items.distinctBy { it.chapterSlug }
+        } else {
+            model.items
+        }
+    }
+
+    val dominantIndex by remember(activeList) {
+        derivedStateOf {
+            val visibleItems = listState.layoutInfo.visibleItemsInfo
+            if (visibleItems.isEmpty() || activeList.isEmpty()) return@derivedStateOf 0
+
+            val dominantItem = visibleItems.find { it.offset > -(it.size / 2) }
+            val rawIndex = dominantItem?.index ?: visibleItems.first().index
+
+            // Coerce protects us if the list suddenly shrinks before Compose finishes updating
+            rawIndex.coerceIn(0, maxOf(0, activeList.size - 1))
+        }
+    }
+
+    val currentSliderValue = if (activeList.size > 1) {
+        dominantIndex.toFloat() / (activeList.size - 1).toFloat()
+    } else {
+        0f
+    }
+
+    LaunchedEffect(activeList, lastFocusChapterId) {
+        if (!hasDoneInitialLoad && activeList.isNotEmpty() && lastFocusChapterId != null) {
+            // Try to find the exact chunk
+            var targetIndex = activeList.indexOfFirst {
+                it.chapterSlug == lastFocusChapterId && it.chunkSlug == lastFocusFrameId
+            }
+            // Fallback: If in READ mode, the specific chunkId might be filtered out. Find the chapter.
+            if (targetIndex == -1) {
+                targetIndex = activeList.indexOfFirst { it.chapterSlug == lastFocusChapterId }
+            }
+
+            if (targetIndex != -1) {
+                listState.scrollToItem(targetIndex)
+                lastViewedChunk = activeList[targetIndex]
+                hasDoneInitialLoad = true
+            }
+        }
+    }
+
+    LaunchedEffect(activeList) {
+        val chunkToFind = lastViewedChunk
+        if (hasDoneInitialLoad && chunkToFind != null && activeList.isNotEmpty()) {
+
+            // Try exact match first
+            var newIndex = activeList.indexOfFirst {
+                it.chapterSlug == chunkToFind.chapterSlug && it.chunkSlug == chunkToFind.chunkSlug
+            }
+
+            // Fallback: If we switched to READ mode,
+            // the exact chunk might be gone. Match by chapter.
+            if (newIndex == -1) {
+                newIndex = activeList.indexOfFirst { it.chapterSlug == chunkToFind.chapterSlug }
+            }
+
+            if (newIndex != -1) {
+                listState.scrollToItem(newIndex)
+            }
+        }
+    }
+
+    LaunchedEffect(dominantIndex, activeList) {
+        if (activeList.isNotEmpty()) {
+            val currentChunk = activeList[dominantIndex]
+            lastViewedChunk = currentChunk // Update our memory for the next mode swap
+            viewModel.setLastFocus(
+                currentChunk.chapterSlug,
+                currentChunk.chunkSlug
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         ContainerCache.empty()
         viewModel.setSelectedResourceContainer()
+        lastFocusChapterId = viewModel.getLastFocusChapterId()
+        lastFocusFrameId = viewModel.getLastFocusFrameId()
     }
 
     LaunchedEffect(model.draftAvailable, model.viewMode) {
@@ -215,7 +307,15 @@ fun TargetTranslationScreen(
                     // TODO Should toggle conflict items filter
                     viewModel.setLastViewMode(TranslationViewMode.REVIEW)
                 },
-                onSliderValueChange = {},
+                onSliderValueChange = {
+                    val maxIndex = activeList.size - 1
+                    val targetIndex = (it * maxIndex).toInt()
+
+                    scope.launch {
+                        listState.scrollToItem(targetIndex)
+                    }
+                },
+                sliderValue = currentSliderValue,
                 actions = menuItems
             )
 
@@ -234,19 +334,16 @@ fun TargetTranslationScreen(
                     when (model.viewMode) {
                         TranslationViewMode.READ -> {
                             ReadModeScreen(
-                                items = model.items,
+                                items = activeList,
+                                listState = listState,
                                 sourceTabs = model.sourceTabs,
                                 selectedSourceId = model.resourceContainer?.slug,
-                                lastFocusChapterId = viewModel.getLastFocusChapterId(),
                                 onSourceTabClick = viewModel::setSelectedResourceContainer,
                                 onAddNewSourceClick = {
                                     viewModel.loadAvailableSources()
                                     showSourceDialog = true
                                 },
-                                onRemoveSourceClick = viewModel::removeOpenSourceTranslation,
-                                onScrollToChapterId = {
-                                    viewModel.setLastFocus(it, null)
-                                }
+                                onRemoveSourceClick = viewModel::removeOpenSourceTranslation
                             )
                         }
                         TranslationViewMode.CHUNK -> {
@@ -305,5 +402,43 @@ fun TargetTranslationScreen(
             message = it.message ?: stringResource(R.string.loading),
             progressValue = it.progress.toFloat()
         )
+    }
+}
+
+private fun lastFocusIdsToSliderValue(
+    items: List<Chunk>,
+    viewMode: TranslationViewMode,
+    chapterId: String?,
+    frameId: String?
+): Float {
+    if (items.isEmpty()) return 0f
+
+    val (index, size) = if (viewMode == TranslationViewMode.READ) {
+        val chapterItems = items.distinctBy { it.chapterSlug }
+        val i = chapterItems.indexOfFirst { it.chapterSlug == chapterId }
+        i to chapterItems.size
+    } else {
+        val i = items.indexOfFirst { it.chapterSlug == chapterId && it.chunkSlug == frameId }
+        i to items.size
+    }
+    return max(0f, (index / size.toFloat()))
+}
+
+private fun sliderValueToFocusIds(
+    items: List<Chunk>,
+    viewMode: TranslationViewMode,
+    value: Float
+): Pair<String?, String?> {
+    if (items.isEmpty()) return null to null
+
+    return if (viewMode == TranslationViewMode.READ) {
+        val chapterItems = items.distinctBy { it.chapterSlug }
+        val index = (value * chapterItems.size).toInt() - 1
+        val chapterId = chapterItems.getOrNull(index)?.chapterSlug
+        chapterId to null
+    } else {
+        val index = (value * items.size).toInt()
+        val item = items.getOrNull(index)
+        item?.chapterSlug to item?.chunkSlug
     }
 }

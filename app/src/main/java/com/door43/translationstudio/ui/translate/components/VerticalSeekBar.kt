@@ -27,7 +27,7 @@ fun VerticalSeekBar(
     sliderValue: Float = 0f,
     onSliderValueChange: (Float) -> Unit
 ) {
-    var currentSliderValue by remember { mutableFloatStateOf(sliderValue) }
+    var currentSliderValue by remember(sliderValue) { mutableFloatStateOf(sliderValue) }
 
     Slider(
         value = currentSliderValue,
@@ -35,7 +35,7 @@ fun VerticalSeekBar(
             currentSliderValue = it
             onSliderValueChange(it)
         },
-        steps = 16,
+        //steps = 16,
         colors = SliderDefaults.colors(
             thumbColor = Color.White,
             activeTrackColor = Color.White,
