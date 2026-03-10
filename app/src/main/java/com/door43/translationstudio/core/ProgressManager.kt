@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -49,7 +48,7 @@ private class TaskContext(
     companion object Key : CoroutineContext.Key<TaskContext>
 }
 
-class ProgressManager(private val scope: CoroutineScope) : ProgressOwner {
+class ProgressManager(scope: CoroutineScope) : ProgressOwner {
     private val activeTasks = MutableStateFlow<Map<String, Progress>>(emptyMap())
 
     override val progress: StateFlow<Progress?> = activeTasks

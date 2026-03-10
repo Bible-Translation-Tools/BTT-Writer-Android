@@ -348,7 +348,8 @@ fun TargetTranslationScreen(
                                 items = activeList,
                                 listState = listState,
                                 sourceTabs = model.sourceTabs,
-                                selectedSourceId = model.resourceContainer?.slug,
+                                selectedSource = model.resourceContainer,
+                                targetTranslation = viewModel.targetTranslation,
                                 onSourceTabClick = viewModel::setSelectedResourceContainerAsync,
                                 onAddNewSourceClick = { showSourceDialog = true },
                                 onRemoveSourceClick = viewModel::removeOpenSourceTranslationAsync

@@ -19,16 +19,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 import com.door43.translationstudio.ui.viewmodels.SourceTabItem
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
 fun ReadModeScreen(
     items: List<Chunk>,
     listState: LazyListState,
     sourceTabs: List<SourceTabItem>,
-    selectedSourceId: String?,
+    selectedSource: ResourceContainer?,
+    targetTranslation: TargetTranslation,
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
     onRemoveSourceClick: (String) -> Unit
@@ -36,6 +41,8 @@ fun ReadModeScreen(
     val viewModel: ReadModeViewModel = koinViewModel()
 
     val model by viewModel.model.collectAsStateWithLifecycle()
+
+    val typography: Typography = koinInject()
 
     LaunchedEffect(items) {
         viewModel.initialize(items)
@@ -60,7 +67,9 @@ fun ReadModeScreen(
                         ReadCard(
                             chapter = chapter,
                             sourceTabs = sourceTabs,
-                            selectedSourceId = selectedSourceId,
+                            typography = typography,
+                            selectedSource = selectedSource,
+                            targetTranslation = targetTranslation,
                             onSourceTabClick = onSourceTabClick,
                             onAddNewSourceClick = onAddNewSourceClick,
                             onRemoveSourceClick = onRemoveSourceClick

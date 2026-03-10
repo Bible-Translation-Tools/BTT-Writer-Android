@@ -28,13 +28,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TextStyleType
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getComposeTextStyle
 
 @Composable
 fun ReadTargetCard(
     title: String,
     text: AnnotatedString,
+    targetTranslation: TargetTranslation,
+    typography: Typography,
     modifier: Modifier = Modifier
 ) {
+    val bodyStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.TARGET,
+        style = TextStyleType.NORMAL,
+        languageCode = targetTranslation.targetLanguage.slug,
+        direction = targetTranslation.targetLanguage.direction
+    )
+
     val inlineContentMap = mapOf(
         "note_icon" to InlineTextContent(
             Placeholder(
@@ -95,7 +109,7 @@ fun ReadTargetCard(
             Text(
                 text = text,
                 inlineContent = inlineContentMap,
-                style = MaterialTheme.typography.bodyLarge
+                style = bodyStyle
             )
         }
     }

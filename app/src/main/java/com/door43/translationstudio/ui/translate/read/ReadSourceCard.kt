@@ -24,20 +24,40 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.door43.translationstudio.core.TextStyleType
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.components.SourceTabRow
 import com.door43.translationstudio.ui.viewmodels.SourceTabItem
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
 fun ReadSourceCard(
     title: String,
     text: AnnotatedString,
     sourceTabs: List<SourceTabItem>,
-    selectedSourceId: String?,
+    typography: Typography,
+    selectedSource: ResourceContainer?,
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
     onRemoveSourceClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val titleStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.TITLE,
+        languageCode = selectedSource?.language?.slug,
+        direction = selectedSource?.language?.direction
+    )
+
+    val bodyStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.NORMAL,
+        languageCode = selectedSource?.language?.slug,
+        direction = selectedSource?.language?.direction
+    )
+
     val inlineContentMap = mapOf(
         "note_icon" to InlineTextContent(
             Placeholder(
@@ -75,7 +95,7 @@ fun ReadSourceCard(
             ) {
                 SourceTabRow(
                     sourceTabs = sourceTabs,
-                    selectedTag = selectedSourceId,
+                    selectedTag = selectedSource?.slug,
                     onSourceTabClick = onSourceTabClick,
                     onAddClick = onAddNewSourceClick,
                     onRemoveClick = onRemoveSourceClick
@@ -84,7 +104,7 @@ fun ReadSourceCard(
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineSmall,
+                style = titleStyle,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -94,7 +114,7 @@ fun ReadSourceCard(
             Text(
                 text = text,
                 inlineContent = inlineContentMap,
-                style = MaterialTheme.typography.bodyLarge,
+                style = bodyStyle,
                 modifier = Modifier.fillMaxWidth()
                     .padding(16.dp)
             )

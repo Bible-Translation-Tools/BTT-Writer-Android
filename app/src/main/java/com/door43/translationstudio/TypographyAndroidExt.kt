@@ -5,6 +5,16 @@ import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.sp
 import com.door43.data.AssetsProvider
 import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
@@ -100,4 +110,35 @@ fun getBestFontForLanguage(
         e.printStackTrace()
         Typeface.DEFAULT
     }
+}
+
+@Composable
+fun Typography.getComposeTextStyle(
+    translationType: TranslationType,
+    style: TextStyleType = TextStyleType.NORMAL,
+    languageCode: String? = null,
+    direction: String? = null,
+    isCenterAligned: Boolean = false
+): TextStyle {
+    val config = this.getFormatConfig(translationType, style, languageCode, direction)
+    val context = LocalContext.current
+
+    val fontFamily = remember(config.fontAssetPath) {
+        try {
+            FontFamily(Font(path = config.fontAssetPath, assetManager = context.assets))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            FontFamily.Default
+        }
+    }
+
+    val safeSizeSp = if (config.fontSizeSp > 0f) config.fontSizeSp else 18f
+
+    return TextStyle(
+        fontFamily = fontFamily,
+        fontSize = safeSizeSp.sp,
+        fontWeight = if (config.isBold) FontWeight.Bold else FontWeight.Normal,
+        textDirection = if (config.isRtl) TextDirection.Rtl else TextDirection.Ltr,
+        textAlign = if (isCenterAligned) TextAlign.Center else TextAlign.Start
+    )
 }

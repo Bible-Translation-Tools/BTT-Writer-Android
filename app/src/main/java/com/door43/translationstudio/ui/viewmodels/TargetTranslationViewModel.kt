@@ -22,6 +22,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.translate.ListItemOld
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
@@ -133,10 +134,8 @@ class TargetTranslationViewModel(
     }
 
     fun refreshSelectedResourceContainerAsync() {
-        viewModelScope.launch {
-            runTask(application.getString(R.string.loading)) {
-                refreshSelectedResourceContainer()
-            }
+        launchWithProgress(application.getString(R.string.loading)) {
+            refreshSelectedResourceContainer()
         }
     }
 
@@ -220,10 +219,8 @@ class TargetTranslationViewModel(
     }
 
     fun removeOpenSourceTranslationAsync(sourceTranslationId: String) {
-        viewModelScope.launch {
-            runTask {
-                removeOpenSourceTranslation(sourceTranslationId)
-            }
+        launchWithProgress {
+            removeOpenSourceTranslation(sourceTranslationId)
         }
     }
 
@@ -266,10 +263,8 @@ class TargetTranslationViewModel(
     }
 
     fun setSelectedResourceContainerAsync(sourceTranslationId: String) {
-        viewModelScope.launch {
-            runTask {
-                setSelectedResourceContainer(sourceTranslationId)
-            }
+        launchWithProgress {
+            setSelectedResourceContainer(sourceTranslationId)
         }
     }
 
@@ -296,33 +291,31 @@ class TargetTranslationViewModel(
     }
 
     fun confirmSelectedSources(selectedItems: List<RCItem>) {
-        viewModelScope.launch {
-            runTask {
-                val selectedIds = selectedItems.mapNotNull { it.containerSlug }.toSet()
+        launchWithProgress {
+            val selectedIds = selectedItems.mapNotNull { it.containerSlug }.toSet()
 
-                if (selectedItems.size > 3) return@runTask
+            if (selectedItems.size > 3) return@launchWithProgress
 
-                val oldSourceTranslationIds = getOpenSourceTranslations().toSet()
-                val toDelete = (oldSourceTranslationIds subtract selectedIds)
-                val toInsert = (selectedIds subtract oldSourceTranslationIds)
+            val oldSourceTranslationIds = getOpenSourceTranslations().toSet()
+            val toDelete = (oldSourceTranslationIds subtract selectedIds)
+            val toInsert = (selectedIds subtract oldSourceTranslationIds)
 
-                for (id in toDelete) {
-                    removeOpenSourceTranslation(id)
-                }
+            for (id in toDelete) {
+                removeOpenSourceTranslation(id)
+            }
 
-                setSelectedSources(selectedIds, toInsert)
+            setSelectedSources(selectedIds, toInsert)
 
-                if (selectedIds.isNotEmpty()) {
-                    val selectedSourceId = getSelectedSourceTranslationId()
-                    if (selectedSourceId == null) {
-                        getAvailableOpenTranslation()?.let {
-                            setSelectedResourceContainer(it)
-                        }
+            if (selectedIds.isNotEmpty()) {
+                val selectedSourceId = getSelectedSourceTranslationId()
+                if (selectedSourceId == null) {
+                    getAvailableOpenTranslation()?.let {
+                        setSelectedResourceContainer(it)
                     }
                 }
-
-                refreshSelectedResourceContainer()
             }
+
+            refreshSelectedResourceContainer()
         }
     }
 
