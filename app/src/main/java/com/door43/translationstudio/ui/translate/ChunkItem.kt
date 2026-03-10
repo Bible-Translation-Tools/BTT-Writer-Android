@@ -23,17 +23,35 @@ data class ChunkMeta(
 sealed class ChunkItem(
     val meta: ChunkMeta
 ) {
-    val sourceTitle: String
+    open val sourceTitle: String
         get() {
-            var title = meta.chunk.source.readChunk(meta.chunk.chapterSlug, "title").trim()
-            if (title.isBlank()) {
-                title = meta.chunk.source.readChunk("front", "title").trim()
-                if (meta.chunk.chapterSlug != "front") title += " " + meta.chunk.chapterSlug.toInt()
+            return if (isProjectTitle) {
+                ""
+            } else if (isChapter) {
+                meta.chunk.source.project.name.trim()
+            } else {
+                // TODO: we should read the title from a cache instead of doing file io again
+                var title = meta.chunk.source.readChunk(meta.chunk.chapterSlug, "title").trim()
+                if (title.isEmpty()) {
+                    title = try {
+                        "${meta.chunk.source.project.name.trim()} ${meta.chunk.chapterSlug.toInt()}"
+                    } catch (_: Exception) {
+                        "${meta.chunk.source.project.name.trim()} ${meta.chunk.chapterSlug}"
+                    }
+                }
+                val verseSpan = Frame.parseVerseTitle(meta.sourceText, meta.chunk.sourceTranslationFormat)
+                title += if (verseSpan.isEmpty()) {
+                    try {
+                        ":${meta.chunk.chunkSlug.toInt()}"
+                    } catch (_: Exception) {
+                        ":${meta.chunk.chunkSlug}"
+                    }
+                } else ":$verseSpan"
+                title
             }
-            return title
         }
 
-    val targetTitle: String
+    open val targetTitle: String
         get() {
             if (isProjectTitle) {
                 return removeConflicts(meta.chunk.target.targetLanguage.name)
@@ -79,7 +97,61 @@ sealed class ChunkItem(
 
     data class ReadMode(
         private val sharedMeta: ChunkMeta
-    ) : ChunkItem(sharedMeta)
+    ) : ChunkItem(sharedMeta) {
+        override val sourceTitle: String
+            get() {
+                var title = meta.chunk.source.readChunk(meta.chunk.chapterSlug, "title")
+                    .trim()
+                if (title.isEmpty()) {
+                    title = meta.chunk.source.readChunk("front", "title")
+                        .trim()
+                    if (meta.chunk.chapterSlug != "front") {
+                        title += " " + meta.chunk.chapterSlug.toInt()
+                    }
+                }
+                return title
+            }
+
+        override val targetTitle: String
+            get() {
+                var title: String
+                val chapterTranslation = meta.chunk.target
+                    .getChapterTranslation(meta.chunk.chapterSlug)
+                title = chapterTranslation.title.trim()
+
+                // if no target chapter title translation, fall back to source chapter title
+                if (title.isEmpty() && sourceTitle.trim().isNotEmpty()) {
+                    title = sourceTitle.trim()
+                }
+
+                // if no chapter titles, fall back to project title, try translated title first
+                if (title.isEmpty()) {
+                    val projTrans = meta.chunk.target.projectTranslation
+                    if (projTrans.title.trim().isNotEmpty()) {
+                        title = try {
+                            "${projTrans.title.trim()} ${meta.chunk.chapterSlug.toInt()}"
+                        } catch (_: Exception) {
+                            "${projTrans.title.trim()} ${meta.chunk.chapterSlug}"
+                        }
+                    }
+                }
+
+                // fall back to project source title
+                if (title.isEmpty()) {
+                    title = meta.chunk.source.readChunk("front", "title")
+                        .trim()
+                    if (meta.chunk.chapterSlug != "front") {
+                        title += try {
+                            " ${meta.chunk.chapterSlug.toInt()}"
+                        } catch (e: Exception) {
+                            " ${meta.chunk.chapterSlug}"
+                        }
+                    }
+                }
+
+                return "$title - ${meta.chunk.target.targetLanguage.name}"
+            }
+    }
 
     data class ChunkMode(
         private val sharedMeta: ChunkMeta

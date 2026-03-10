@@ -356,7 +356,16 @@ fun TargetTranslationScreen(
                             )
                         }
                         TranslationViewMode.CHUNK -> {
-                            ChunkModeScreen()
+                            ChunkModeScreen(
+                                items = activeList,
+                                listState = listState,
+                                sourceTabs = model.sourceTabs,
+                                selectedSource = model.resourceContainer,
+                                targetTranslation = viewModel.targetTranslation,
+                                onSourceTabClick = viewModel::setSelectedResourceContainerAsync,
+                                onAddNewSourceClick = { showSourceDialog = true },
+                                onRemoveSourceClick = viewModel::removeOpenSourceTranslationAsync
+                            )
                         }
                         TranslationViewMode.REVIEW -> {
                             ReviewModeScreen()

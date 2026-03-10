@@ -23,6 +23,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
+import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.viewmodels.ChooseSourcesViewModel
@@ -168,6 +169,7 @@ val appModule = module {
     viewModelOf(::NewTempLanguageViewModel)
     viewModelOf(::TermsOfUseViewModel)
     viewModelOf(::ReadModeViewModel)
+    viewModelOf(::ChunkModeViewModel)
     viewModelOf(::SourceSelectionViewModel)
 }
 
