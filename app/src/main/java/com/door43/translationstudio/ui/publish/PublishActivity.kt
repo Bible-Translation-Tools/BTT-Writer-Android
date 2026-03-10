@@ -75,7 +75,7 @@ class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
                 ) as? PublishStepFragment
             } else {
                 fragment = ValidationFragment()
-                var sourceTranslationId = viewModel.getSelectedSourceTranslationId()
+                var sourceTranslationId = viewModel.getSelectedSourceTranslationId2()
 
                 if (sourceTranslationId == null) {
                     // use the default target translation if they have not chosen one.
@@ -220,7 +220,7 @@ class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
         selectButtonForCurrentStep()
 
         val args = checkNotNull(intent.extras)
-        var sourceTranslationId = viewModel.getSelectedSourceTranslationId()
+        var sourceTranslationId = viewModel.getSelectedSourceTranslationId2()
         // TRICKY: if the user has not chosen a source translation (this is an empty translation) the id will be null
         if (sourceTranslationId == null) {
             sourceTranslationId = viewModel.getDefaultSourceTranslation()

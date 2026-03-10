@@ -13,8 +13,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ProgressDialog(
-    message: String,
-    progressValue: Float,
+    message: String? = null,
+    progress: Float = -1f,
     onDismissRequest: () -> Unit = {}
 ) {
     AlertDialog(
@@ -28,15 +28,17 @@ fun ProgressDialog(
                     .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(text = message)
+                message?.let {
+                    Text(text = it)
+                }
 
-                if (progressValue == -1F) {
+                if (progress == -1f) {
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
                     LinearProgressIndicator(
-                        progress = { progressValue },
+                        progress = { progress },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

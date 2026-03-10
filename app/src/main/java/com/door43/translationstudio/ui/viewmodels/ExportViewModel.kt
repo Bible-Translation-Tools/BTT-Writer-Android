@@ -338,10 +338,10 @@ class ExportViewModel(
         return library.index.getTranslation(sourceTranslationId)
     }
 
-    fun getOpenSourceTranslations(targetTranslationId: String?): Array<String> {
+    fun getOpenSourceTranslations(targetTranslationId: String?): List<String> {
         return targetTranslationId?.let {
             prefRepository.getOpenSourceTranslations(it)
-        } ?: arrayOf()
+        } ?: listOf()
     }
 
     private fun generateP2PKeys() {

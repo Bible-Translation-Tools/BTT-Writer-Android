@@ -38,19 +38,16 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
-import com.door43.translationstudio.ui.components.ConfirmDialog
 import com.door43.translationstudio.ui.components.ProgressDialog
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
-import com.door43.translationstudio.ui.translate.components.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
+import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadModeScreen
-import com.door43.translationstudio.ui.viewmodels.RCItem
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationModel
+import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import kotlin.math.max
 
 @Composable
 fun TargetTranslationScreen(
@@ -65,7 +62,8 @@ fun TargetTranslationScreen(
     onChunksDone: () -> Unit,
     onSettings: () -> Unit
 ) {
-    val model: TargetTranslationModel by viewModel.model.collectAsStateWithLifecycle()
+    val model: TargetTranslationState by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val snackBarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -87,8 +85,6 @@ fun TargetTranslationScreen(
     val menuActionSettings = stringResource(R.string.action_settings)
 
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
-    var sourceToDownload by rememberSaveable { mutableStateOf<RCItem?>(null) }
-    var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
 
     var lastFocusChapterId by remember { mutableStateOf<String?>(null) }
     var lastFocusFrameId by remember { mutableStateOf<String?>(null) }
@@ -132,6 +128,13 @@ fun TargetTranslationScreen(
             val absolutePosition = firstItem.index + itemFraction
             (absolutePosition / activeList.size).coerceIn(0f, 1f)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        ContainerCache.empty()
+        viewModel.refreshSelectedResourceContainerAsync()
+        lastFocusChapterId = viewModel.getLastFocusChapterId()
+        lastFocusFrameId = viewModel.getLastFocusFrameId()
     }
 
     LaunchedEffect(activeList, lastFocusChapterId) {
@@ -184,13 +187,6 @@ fun TargetTranslationScreen(
                 currentChunk.chunkSlug
             )
         }
-    }
-
-    LaunchedEffect(Unit) {
-        ContainerCache.empty()
-        viewModel.setSelectedResourceContainer()
-        lastFocusChapterId = viewModel.getLastFocusChapterId()
-        lastFocusFrameId = viewModel.getLastFocusFrameId()
     }
 
     LaunchedEffect(model.draftAvailable, model.viewMode) {
@@ -343,10 +339,7 @@ fun TargetTranslationScreen(
                     val projectTitle = "${project?.name} - ${viewModel.targetTranslation.targetLanguageName}"
                     NoSourceScreen(
                         projectTitle = projectTitle,
-                        onAddSourceClick = {
-                            viewModel.loadAvailableSources()
-                            showSourceDialog = true
-                        }
+                        onAddSourceClick = { showSourceDialog = true }
                     )
                 } else {
                     when (model.viewMode) {
@@ -356,12 +349,9 @@ fun TargetTranslationScreen(
                                 listState = listState,
                                 sourceTabs = model.sourceTabs,
                                 selectedSourceId = model.resourceContainer?.slug,
-                                onSourceTabClick = viewModel::setSelectedResourceContainer,
-                                onAddNewSourceClick = {
-                                    viewModel.loadAvailableSources()
-                                    showSourceDialog = true
-                                },
-                                onRemoveSourceClick = viewModel::removeOpenSourceTranslation
+                                onSourceTabClick = viewModel::setSelectedResourceContainerAsync,
+                                onAddNewSourceClick = { showSourceDialog = true },
+                                onRemoveSourceClick = viewModel::removeOpenSourceTranslationAsync
                             )
                         }
                         TranslationViewMode.CHUNK -> {
@@ -378,85 +368,20 @@ fun TargetTranslationScreen(
 
     if (showSourceDialog) {
         SourceSelectionDialog(
-            sources = model.availableSources,
+            targetTranslation = viewModel.targetTranslation,
             onDismissRequest = { showSourceDialog = false },
             onConfirm = {
                 showSourceDialog = false
-                viewModel.confirmSelectedSources()
+                viewModel.confirmSelectedSources(it)
             },
-            onUpdate = { },
-            onToggleSelection = viewModel::toggleSourceSelection,
-            onTriggerDownload = { sourceToDownload = it },
-            onTriggerDelete = { sourceToDelete = it }
+            onUpdateSources = {}
         )
     }
 
-    sourceToDownload?.let { source ->
-        ConfirmDialog(
-            title = stringResource(R.string.title_download_source_language),
-            message = stringResource(R.string.download_source_language, source.title),
-            onConfirm = {
-                sourceToDownload = null
-                viewModel.downloadResourceContainer(source)
-            },
-            onDismiss = { sourceToDownload = null }
-        )
-    }
-
-    sourceToDelete?.let { source ->
-        ConfirmDialog(
-            title = stringResource(R.string.label_delete),
-            message = stringResource(R.string.confirm_delete_project),
-            onConfirm = {
-                sourceToDelete = null
-                viewModel.deleteResourceContainer(source)
-            },
-            onDismiss = { sourceToDelete = null }
-        )
-    }
-
-    model.progress?.let {
+    progress?.let {
         ProgressDialog(
-            message = it.message ?: stringResource(R.string.loading),
-            progressValue = it.progress.toFloat()
+            message = it.message,
+            progress = it.value
         )
-    }
-}
-
-private fun lastFocusIdsToSliderValue(
-    items: List<Chunk>,
-    viewMode: TranslationViewMode,
-    chapterId: String?,
-    frameId: String?
-): Float {
-    if (items.isEmpty()) return 0f
-
-    val (index, size) = if (viewMode == TranslationViewMode.READ) {
-        val chapterItems = items.distinctBy { it.chapterSlug }
-        val i = chapterItems.indexOfFirst { it.chapterSlug == chapterId }
-        i to chapterItems.size
-    } else {
-        val i = items.indexOfFirst { it.chapterSlug == chapterId && it.chunkSlug == frameId }
-        i to items.size
-    }
-    return max(0f, (index / size.toFloat()))
-}
-
-private fun sliderValueToFocusIds(
-    items: List<Chunk>,
-    viewMode: TranslationViewMode,
-    value: Float
-): Pair<String?, String?> {
-    if (items.isEmpty()) return null to null
-
-    return if (viewMode == TranslationViewMode.READ) {
-        val chapterItems = items.distinctBy { it.chapterSlug }
-        val index = (value * chapterItems.size).toInt() - 1
-        val chapterId = chapterItems.getOrNull(index)?.chapterSlug
-        chapterId to null
-    } else {
-        val index = (value * items.size).toInt()
-        val item = items.getOrNull(index)
-        item?.chapterSlug to item?.chunkSlug
     }
 }

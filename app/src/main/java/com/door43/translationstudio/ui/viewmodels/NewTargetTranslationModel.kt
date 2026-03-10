@@ -98,7 +98,7 @@ class NewTargetTranslationModel(
         targetTranslation.normalizePath()
     }
 
-    fun getOpenSourceTranslations(translationId: String): Array<String> {
+    fun getOpenSourceTranslations(translationId: String): List<String> {
         return prefRepository.getOpenSourceTranslations(translationId)
     }
 

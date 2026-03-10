@@ -349,7 +349,7 @@ fun SettingsScreen(
     model.progress?.let { progressObj ->
         ProgressDialog(
             message = progressObj.message ?: "",
-            progressValue = (progressObj.progress.coerceIn(0, 100).toFloat()) / 100f
+            progress = (progressObj.progress.coerceIn(0, 100).toFloat()) / 100f
         )
     }
 

@@ -435,17 +435,9 @@ class Translator (
      * @return
      */
     fun getSelectedSourceTranslationId(targetTranslationId: String): String? {
-        var selectedSourceTranslationId = prefRepository.getPrivatePref<String>(
+        val selectedSourceTranslationId = prefRepository.getPrivatePref<String>(
             SELECTED_SOURCE_TRANSLATION + targetTranslationId
         )
-        if (selectedSourceTranslationId.isNullOrEmpty()) {
-            // default to first tab
-            val openSourceTranslationIds = prefRepository.getOpenSourceTranslations(targetTranslationId)
-            if (openSourceTranslationIds.isNotEmpty()) {
-                selectedSourceTranslationId = openSourceTranslationIds[0]
-                setSelectedSourceTranslation(targetTranslationId, selectedSourceTranslationId)
-            }
-        }
         return Migration.migrateSourceTranslationSlug(selectedSourceTranslationId)
     }
 

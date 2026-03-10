@@ -118,7 +118,7 @@ interface IPreferenceRepository {
      * @param targetTranslationId
      * @return
      */
-    fun getOpenSourceTranslations(targetTranslationId: String): Array<String>
+    fun getOpenSourceTranslations(targetTranslationId: String): List<String>
 
     /**
      * Adds a source translation to the list of open tabs on a target translation

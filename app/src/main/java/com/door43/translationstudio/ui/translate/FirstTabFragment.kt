@@ -46,16 +46,16 @@ class FirstTabFragment : BaseFragment(), ChooseSourceTranslationDialog.OnClickLi
 
         setupObservers()
 
-        try {
-            val p = viewModel.getProject()
-            binding.sourceTranslationTitle.text = "${p?.name} - ${viewModel.targetTranslation.targetLanguageName}"
-        } catch (e: Exception) {
-            Logger.e(
-                FirstTabFragment::class.java.simpleName,
-                "Error getting resource container for '${viewModel.targetTranslation.id}'",
-                e
-            )
-        }
+//        try {
+//            val p = viewModel.getProject()
+//            binding.sourceTranslationTitle.text = "${p?.name} - ${viewModel.targetTranslation.targetLanguageName}"
+//        } catch (e: Exception) {
+//            Logger.e(
+//                FirstTabFragment::class.java.simpleName,
+//                "Error getting resource container for '${viewModel.targetTranslation.id}'",
+//                e
+//            )
+//        }
 
         val clickListener = View.OnClickListener {
             val ft = parentFragmentManager.beginTransaction()
@@ -90,7 +90,7 @@ class FirstTabFragment : BaseFragment(), ChooseSourceTranslationDialog.OnClickLi
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.model
+                    viewModel.state
                         .map { it.items }
                         .distinctUntilChanged()
                         .collect { items ->
@@ -127,33 +127,33 @@ class FirstTabFragment : BaseFragment(), ChooseSourceTranslationDialog.OnClickLi
     override fun onCancelTabsDialog(targetTranslationId: String) {}
 
     override fun onConfirmTabsDialog(sourceTranslationIds: List<String>) {
-        val oldSourceTranslationIds = viewModel.getOpenSourceTranslations()
-        for (id in oldSourceTranslationIds) {
-            viewModel.removeOpenSourceTranslation(id)
-        }
+//        val oldSourceTranslationIds = viewModel.getOpenSourceTranslations()
+//        for (id in oldSourceTranslationIds) {
+//            viewModel.removeOpenSourceTranslation(id)
+//        }
 
         if (sourceTranslationIds.isNotEmpty()) {
             // save open source language tabs
             for (slug in sourceTranslationIds) {
-                val t = viewModel.getTranslation(slug)
-                if (t != null) {
-                    val modifiedAt = viewModel.getResourceContainerLastModified(t)
-                    try {
-                        viewModel.addOpenSourceTranslation(slug)
-                        val targetTranslation = viewModel.targetTranslation
-                        try {
-                            targetTranslation.addSourceTranslation(t, modifiedAt)
-                        } catch (e: JSONException) {
-                            Logger.e(
-                                this.javaClass.name,
-                                "Failed to record source translation ($slug) usage in the target translation ${targetTranslation.id}",
-                                e
-                            )
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+//                val t = viewModel.getTranslation(slug)
+//                if (t != null) {
+//                    val modifiedAt = viewModel.getResourceContainerLastModified(t)
+//                    try {
+////                        viewModel.addOpenSourceTranslation(slug)
+//                        val targetTranslation = viewModel.targetTranslation
+//                        try {
+//                            targetTranslation.addSourceTranslation(t, modifiedAt)
+//                        } catch (e: JSONException) {
+//                            Logger.e(
+//                                this.javaClass.name,
+//                                "Failed to record source translation ($slug) usage in the target translation ${targetTranslation.id}",
+//                                e
+//                            )
+//                        }
+//                    } catch (e: Exception) {
+//                        e.printStackTrace()
+//                    }
+//                }
             }
 
             // redirect back to previous mode

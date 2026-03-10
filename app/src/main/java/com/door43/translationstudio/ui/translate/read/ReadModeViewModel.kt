@@ -18,6 +18,8 @@ import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ChunkMeta
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -31,22 +33,26 @@ data class ReadModeModel(
 )
 
 class ReadModeViewModel(
-    private val application: Application
+    private val application: Application,
 ) : AndroidViewModel(application) {
 
     private val _model = MutableStateFlow(ReadModeModel())
     val model: StateFlow<ReadModeModel> = _model
 
-    fun initialize(items: List<Chunk>) {
+    fun initialize(chunks: List<Chunk>) {
         viewModelScope.launch {
-            val readItems = withContext(Dispatchers.IO) {
-                items
+            val readItems = withContext(Dispatchers.Default) {
+                chunks
                     .distinctBy { it.chapterSlug }
-                    .map(::prepareItem)
+                    .chunked(5)
+                    .flatMap { batch ->
+                        batch.map { async { prepareItem(it) } }
+                    }.awaitAll()
             }
             _model.update { it.copy(items = readItems) }
         }
     }
+
 
     fun clearNotes() {
         _model.update { it.copy(notes = null) }

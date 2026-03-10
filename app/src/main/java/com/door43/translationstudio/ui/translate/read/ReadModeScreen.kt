@@ -1,5 +1,7 @@
 package com.door43.translationstudio.ui.translate.read
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
+import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 import com.door43.translationstudio.ui.viewmodels.SourceTabItem
 import org.koin.androidx.compose.koinViewModel
 
@@ -34,26 +37,36 @@ fun ReadModeScreen(
 
     val model by viewModel.model.collectAsStateWithLifecycle()
 
-    LaunchedEffect(items, sourceTabs) {
+    LaunchedEffect(items) {
         viewModel.initialize(items)
     }
 
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(items = model.items, key = { it.meta.id }) { chapter ->
-                ReadCard(
-                    chapter = chapter,
-                    sourceTabs = sourceTabs,
-                    selectedSourceId = selectedSourceId,
-                    onSourceTabClick = onSourceTabClick,
-                    onAddNewSourceClick = onAddNewSourceClick,
-                    onRemoveSourceClick = onRemoveSourceClick
-                )
+        Crossfade(
+            targetState = model.items.isEmpty(),
+            animationSpec = tween(durationMillis = 500),
+            label = "list_fade"
+        ) { isLoading ->
+            if (isLoading) {
+                TranslateSkeletonList()
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(items = model.items, key = { it.meta.id }) { chapter ->
+                        ReadCard(
+                            chapter = chapter,
+                            sourceTabs = sourceTabs,
+                            selectedSourceId = selectedSourceId,
+                            onSourceTabClick = onSourceTabClick,
+                            onAddNewSourceClick = onAddNewSourceClick,
+                            onRemoveSourceClick = onRemoveSourceClick
+                        )
+                    }
+                }
             }
         }
     }

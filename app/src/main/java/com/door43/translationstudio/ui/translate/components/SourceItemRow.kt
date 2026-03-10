@@ -28,7 +28,7 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.door43.translationstudio.ui.viewmodels.RCItem
+import com.door43.translationstudio.ui.translate.dialogs.RCItem
 
 @Composable
 fun SourceHeaderRow(title: String, showStatusIcons: Boolean) {
@@ -80,9 +80,9 @@ fun SourceHeaderRow(title: String, showStatusIcons: Boolean) {
 @Composable
 fun SourceItemRow(
     item: RCItem,
-    onTriggerSelected: () -> Unit,
-    onTriggerDownload: () -> Unit,
-    onTriggerDelete: () -> Unit
+    onTriggerSelected: (RCItem) -> Unit,
+    onTriggerDownload: (RCItem) -> Unit,
+    onTriggerDelete: (RCItem) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -90,12 +90,12 @@ fun SourceItemRow(
             .combinedClickable(
                 onClick = {
                     if (!item.downloaded) {
-                        onTriggerDownload()
+                        onTriggerDownload(item)
                     } else {
-                        onTriggerSelected()
+                        onTriggerSelected(item)
                     }
                 },
-                onLongClick = onTriggerDelete
+                onLongClick = { onTriggerDelete(item) }
             )
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -116,7 +116,7 @@ fun SourceItemRow(
                 modifier = Modifier.size(24.dp)
                     .clickable {
                         if (!item.downloaded || item.hasUpdates) {
-                            onTriggerDownload()
+                            onTriggerDownload(item)
                         }
                     }
             )

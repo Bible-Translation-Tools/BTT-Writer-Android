@@ -166,16 +166,16 @@ class PreferenceRepository (private val context: Context) : IPreferenceRepositor
         return privatePrefs.getString(lastFocusFrame + targetTranslationId, null)
     }
 
-    override fun getOpenSourceTranslations(targetTranslationId: String): Array<String> {
+    override fun getOpenSourceTranslations(targetTranslationId: String): List<String> {
         val idSet = privatePrefs.getString(
             openSourceTranslations + targetTranslationId,
             ""
         )?.trim()
 
         if (idSet.isNullOrEmpty()) {
-            return arrayOf()
+            return listOf()
         } else {
-            val ids = idSet.split("\\|".toRegex()).toTypedArray()
+            val ids = idSet.split("\\|".toRegex()).toMutableList()
             for (i in ids.indices) {
                 Migration.migrateSourceTranslationSlug(ids[i])?.let {
                     ids[i] = it

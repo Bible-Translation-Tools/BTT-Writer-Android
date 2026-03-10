@@ -191,7 +191,7 @@ fun CrashReporterScreen(
     model.progress?.let { progress ->
         ProgressDialog(
             message = progress.message ?: stringResource(R.string.loading),
-            progressValue = progress.progress.toFloat()
+            progress = progress.progress.toFloat()
         )
     }
 }

@@ -124,7 +124,7 @@ abstract class ViewModeFragment : BaseFragment(),
         )
 
         setupObservers()
-        viewModel.setSelectedResourceContainer()
+        //viewModel.refreshSelectedResourceContainer()
 
         // notify activity contents changed
         adapter?.apply {
@@ -209,25 +209,25 @@ abstract class ViewModeFragment : BaseFragment(),
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.model
-                        .map { it.progress }
-                        .distinctUntilChanged()
-                        .collect { progress ->
-                            if (progress != null) {
-                                progressDialog?.apply {
-                                    show()
-                                    setProgress(progress.progress)
-                                    setMessage(progress.message)
-                                    setMax(progress.max)
-                                }
-                            } else {
-                                progressDialog?.dismiss()
-                            }
-                        }
+//                    viewModel.state
+//                        .map { it.progress }
+//                        .distinctUntilChanged()
+//                        .collect { progress ->
+//                            if (progress != null) {
+//                                progressDialog?.apply {
+//                                    show()
+//                                    setProgress(progress.progress)
+//                                    setMessage(progress.message)
+//                                    setMax(progress.max)
+//                                }
+//                            } else {
+//                                progressDialog?.dismiss()
+//                            }
+//                        }
                 }
 
                 launch {
-                    viewModel.model
+                    viewModel.state
                         .map { it.items }
                         .distinctUntilChanged()
                         .collect { items ->
@@ -290,7 +290,7 @@ abstract class ViewModeFragment : BaseFragment(),
      * Returns the currently selected resource container
      */
     protected fun getSelectedResourceContainer(): ResourceContainer? {
-        return viewModel.model.value.resourceContainer
+        return viewModel.state.value.resourceContainer
     }
 
     /**
@@ -497,21 +497,21 @@ abstract class ViewModeFragment : BaseFragment(),
         chapterSlug = null
         chunkSlug = null
         updateListStartPosition()
-        viewModel.setSelectedResourceContainer(sourceTranslationId)
+        //viewModel.setSelectedResourceContainer(sourceTranslationId)
     }
 
     override fun onSourceRemoveButtonClicked(sourceTranslationId: String) {
-        viewModel.removeOpenSourceTranslation(sourceTranslationId)
-        val sourceTranslationIds = viewModel.getOpenSourceTranslations()
-
-        if (sourceTranslationIds.isNotEmpty()) {
-            val selectedSourceId = viewModel.getSelectedSourceTranslationId()
-            if (selectedSourceId != null) {
-                viewModel.setSelectedResourceContainer(selectedSourceId)
-            }
-        } else {
-            listener?.onNoSourceTranslations()
-        }
+//        viewModel.removeOpenSourceTranslation(sourceTranslationId)
+//        val sourceTranslationIds = viewModel.getOpenSourceTranslations()
+//
+//        if (sourceTranslationIds.isNotEmpty()) {
+//            val selectedSourceId = viewModel.getSelectedSourceTranslationId()
+//            if (selectedSourceId != null) {
+//                viewModel.setSelectedResourceContainer(selectedSourceId)
+//            }
+//        } else {
+//            listener?.onNoSourceTranslations()
+//        }
     }
 
     override fun onNewSourceTranslationTabClick() {
@@ -568,19 +568,19 @@ abstract class ViewModeFragment : BaseFragment(),
     override fun onCancelTabsDialog(targetTranslationId: String) {}
 
     override fun onConfirmTabsDialog(sourceTranslationIds: List<String>) {
-        val oldSourceTranslationIds = viewModel.getOpenSourceTranslations()
-        for (id in oldSourceTranslationIds) {
-            viewModel.removeOpenSourceTranslation(id)
-        }
-        if (sourceTranslationIds.isNotEmpty()) {
-            setSelectedSources(sourceTranslationIds)
-            val selectedSourceId = viewModel.getSelectedSourceTranslationId()
-            if (selectedSourceId != null) {
-                viewModel.setSelectedResourceContainer(selectedSourceId)
-            }
-        } else {
-            listener?.onNoSourceTranslations()
-        }
+//        val oldSourceTranslationIds = viewModel.getOpenSourceTranslations()
+//        for (id in oldSourceTranslationIds) {
+//            viewModel.removeOpenSourceTranslation(id)
+//        }
+//        if (sourceTranslationIds.isNotEmpty()) {
+//            setSelectedSources(sourceTranslationIds)
+//            val selectedSourceId = viewModel.getSelectedSourceTranslationId()
+//            if (selectedSourceId != null) {
+//                viewModel.setSelectedResourceContainer(selectedSourceId)
+//            }
+//        } else {
+//            listener?.onNoSourceTranslations()
+//        }
     }
 
     /**
@@ -609,7 +609,7 @@ abstract class ViewModeFragment : BaseFragment(),
         val sources = ArrayList<SourceTranslation>()
         for (slug in sourceSlugs) {
             try {
-                viewModel.addOpenSourceTranslation(slug)
+//                viewModel.addOpenSourceTranslation(slug)
             } catch (e: Exception) {
                 Logger.e(
                     this.javaClass.name,
@@ -618,11 +618,11 @@ abstract class ViewModeFragment : BaseFragment(),
                 e.printStackTrace()
             }
 
-            val translation = viewModel.getTranslation(slug)
-            if (translation != null) {
-                val modifiedAt = viewModel.getResourceContainerLastModified(translation)
-                sources.add(SourceTranslation(translation, modifiedAt))
-            }
+//            val translation = viewModel.getTranslation(slug)
+//            if (translation != null) {
+//                val modifiedAt = viewModel.getResourceContainerLastModified(translation)
+//                sources.add(SourceTranslation(translation, modifiedAt))
+//            }
         }
 
         try {

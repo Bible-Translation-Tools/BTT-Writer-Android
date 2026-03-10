@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.translate
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -9,12 +8,9 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.MotionEvent
 import android.view.View
-import android.view.WindowManager
-import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.activity.compose.setContent
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
@@ -856,7 +852,7 @@ class TargetTranslationActivity : BaseActivity(),
     }
 
     override fun onHasSourceTranslations() {
-        val newFragment = when (viewModel.model.value.viewMode) {
+        val newFragment = when (viewModel.state.value.viewMode) {
             TranslationViewMode.READ -> ReadModeFragment()
             TranslationViewMode.CHUNK -> ChunkModeFragment()
             TranslationViewMode.REVIEW -> ReviewModeFragment()
