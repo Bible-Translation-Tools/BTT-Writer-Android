@@ -21,6 +21,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.ui.translate.chunk.ChunkAction
 import com.door43.translationstudio.ui.translate.chunk.ChunkCard
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
 import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
@@ -47,7 +48,7 @@ fun ChunkModeScreen(
     val typography: Typography = koinInject()
 
     LaunchedEffect(items) {
-        viewModel.initialize(items)
+        viewModel.onAction(ChunkAction.Init(items))
     }
 
     Box(
@@ -84,11 +85,11 @@ fun ChunkModeScreen(
 
     model.notes?.let { notes ->
         AlertDialog(
-            onDismissRequest = { viewModel.clearNotes() },
+            onDismissRequest = { viewModel.onAction(ChunkAction.ClearNotes) },
             title = { Text(stringResource(R.string.title_footnote)) },
             text = { Text(notes) },
             confirmButton = {
-                TextButton(onClick = { viewModel.clearNotes() }) {
+                TextButton(onClick = { viewModel.onAction(ChunkAction.ClearNotes) }) {
                     Text(stringResource(R.string.dismiss))
                 }
             }

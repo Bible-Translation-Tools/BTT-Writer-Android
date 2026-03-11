@@ -31,6 +31,11 @@ data class ChunkModeModel(
     val notes: String? = null
 )
 
+sealed interface ChunkAction {
+    data class Init(val chunks: List<Chunk>) : ChunkAction
+    object ClearNotes : ChunkAction
+}
+
 class ChunkModeViewModel(
     private val application: Application
 ) : AndroidViewModel(application) {
@@ -38,7 +43,14 @@ class ChunkModeViewModel(
     private val _model = MutableStateFlow(ChunkModeModel())
     val model: StateFlow<ChunkModeModel> = _model
 
-    fun initialize(chunks: List<Chunk>) {
+    fun onAction(action: ChunkAction) {
+        when (action) {
+            is ChunkAction.Init -> initialize(action.chunks)
+            ChunkAction.ClearNotes -> clearNotes()
+        }
+    }
+
+    private fun initialize(chunks: List<Chunk>) {
         viewModelScope.launch {
             val chunkItems = withContext(Dispatchers.Default) {
                 chunks
@@ -51,7 +63,7 @@ class ChunkModeViewModel(
         }
     }
 
-    fun clearNotes() {
+    private fun clearNotes() {
         _model.update { it.copy(notes = null) }
     }
 
