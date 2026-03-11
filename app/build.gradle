@@ -34,7 +34,7 @@ android {
         minSdk 22
         compileSdk 35
         targetSdk 35
-        versionCode 43
+        versionCode 44
         versionName "1.6.0"
 
         testBuildType "verify"
@@ -140,7 +140,7 @@ dependencies {
     implementation 'org.apmem.tools:layouts:1.10'
     implementation 'com.itextpdf:itextg:5.5.10'
     implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation 'org.bibletranslationtools:gogs-client:1.7.5'
+    implementation 'org.bibletranslationtools:gogs-client:1.7.6'
     implementation 'org.unfoldingword.tools:task-manager:1.5.3'
     implementation 'org.unfoldingword.tools:resource-container:0.7.19'
     implementation('org.bibletranslationtools:logger:2.3.1') {

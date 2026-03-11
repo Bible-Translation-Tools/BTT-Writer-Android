@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 
 public class OkHttpRequest implements RequestAPI {
     private OkHttpClient client;
-    private int readTimeout = 5000;
-    private int connectionTimeout = 5000;
+    private int readTimeout = 30000;
+    private int connectionTimeout = 30000;
     private final String baseUrl;
 
     public OkHttpRequest(String apiUrl) {
