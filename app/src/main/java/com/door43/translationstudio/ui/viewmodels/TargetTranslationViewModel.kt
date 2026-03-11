@@ -51,6 +51,9 @@ data class TargetTranslationState(
     val showDraftAvailable: Boolean = false,
     val sourceTabs: List<SourceTabItem> = emptyList(),
     val resourceContainer: ResourceContainer? = null,
+    val lastFocusChapterId: String? = null,
+    val lastFocusFrameId: String? = null,
+    val projectTitle: String? = null,
     val snackBarMessage: String? = null
 )
 
@@ -60,6 +63,16 @@ data class SourceTabItem(
     val language: String?,
     val direction: String?
 )
+
+sealed interface TargetAction {
+    object RefreshSelectedSource : TargetAction
+    data class RemoveSource(val sourceId: String) : TargetAction
+    data class SelectSource(val sourceId: String) : TargetAction
+    data class LastViewMode(val viewMode: TranslationViewMode) : TargetAction
+    data object OpenSourceTranslations : TargetAction
+    data class SaveLastFocus(val chapterId: String, val frameId: String?) : TargetAction
+    object InitLastFocus : TargetAction
+}
 
 class TargetTranslationViewModel(
     application: Application,
@@ -86,6 +99,28 @@ class TargetTranslationViewModel(
         progressManager.runTask(message, block)
     }
 
+    fun onAction(action: TargetAction) {
+        when (action) {
+            TargetAction.InitLastFocus -> {
+                initLastFocus()
+            }
+            TargetAction.RefreshSelectedSource -> launchWithProgress(
+                application.getString(R.string.loading)
+            ) {
+                refreshSelectedResourceContainer()
+            }
+            is TargetAction.RemoveSource -> launchWithProgress {
+                removeOpenSourceTranslation(action.sourceId)
+            }
+            is TargetAction.SelectSource -> launchWithProgress {
+                setSelectedResourceContainer(action.sourceId)
+            }
+            is TargetAction.LastViewMode -> setLastViewMode(action.viewMode)
+            TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
+            is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
+        }
+    }
+
     fun initialize(targetTranslationId: String): Boolean {
         val translation = translator.getTargetTranslation(targetTranslationId) ?: return false
 
@@ -94,28 +129,33 @@ class TargetTranslationViewModel(
         val draftAvailable = draftIsAvailable()
         val lastViewMode = translator.getLastViewMode(targetTranslation.id)
 
+        val projectTitle = "${getProject()?.name} - ${targetTranslation.targetLanguageName}"
+
         _state.update {
             it.copy(
                 viewMode = lastViewMode,
                 draftAvailable = draftAvailable,
-                showDraftAvailable = draftAvailable && targetTranslation.numTranslated == 0
+                showDraftAvailable = draftAvailable && targetTranslation.numTranslated == 0,
+                projectTitle = projectTitle
             )
         }
 
         return true
     }
 
-    fun openUsedSourceTranslations() {
-        val opened = prefRepository.getOpenSourceTranslations(
-            targetTranslation.id
-        )
-        if (opened.isEmpty()) {
-            val resourceContainerSlugs = targetTranslation.sourceTranslations
-            for (slug in resourceContainerSlugs) {
-                prefRepository.addOpenSourceTranslation(
-                    targetTranslation.id,
-                    slug
-                )
+    private fun openUsedSourceTranslations() {
+        viewModelScope.launch {
+            val opened = prefRepository.getOpenSourceTranslations(
+                targetTranslation.id
+            )
+            if (opened.isEmpty()) {
+                val resourceContainerSlugs = targetTranslation.sourceTranslations
+                for (slug in resourceContainerSlugs) {
+                    prefRepository.addOpenSourceTranslation(
+                        targetTranslation.id,
+                        slug
+                    )
+                }
             }
         }
     }
@@ -131,12 +171,6 @@ class TargetTranslationViewModel(
             _state.update { it.copy(items = emptyList()) }
         }
         refreshSourceTranslationTabs()
-    }
-
-    fun refreshSelectedResourceContainerAsync() {
-        launchWithProgress(application.getString(R.string.loading)) {
-            refreshSelectedResourceContainer()
-        }
     }
 
     /**
@@ -170,31 +204,26 @@ class TargetTranslationViewModel(
         _state.update { it.copy(items = items) }
     }
 
-    fun setLastViewMode(mode: TranslationViewMode) {
+    private fun setLastViewMode(mode: TranslationViewMode) {
         viewModelScope.launch {
             _state.update { it.copy(viewMode = mode) }
             translator.setLastViewMode(targetTranslation.id, mode)
         }
     }
 
-    fun setLastFocus(chapterId: String, frameId: String?) {
+    private fun initLastFocus() {
+        viewModelScope.launch {
+            val chapter = translator.getLastFocusChapterId(targetTranslation.id)
+            val frame = translator.getLastFocusFrameId(targetTranslation.id)
+            _state.update { it.copy(lastFocusChapterId = chapter, lastFocusFrameId = frame) }
+        }
+    }
+
+    private fun saveLastFocus(chapterId: String, frameId: String?) {
         translator.setLastFocus(targetTranslation.id, chapterId, frameId)
     }
 
-    fun getLastFocusChapterId(): String? {
-        return translator.getLastFocusChapterId(targetTranslation.id)
-    }
-
-    fun getLastFocusFrameId(): String? {
-        return translator.getLastFocusFrameId(targetTranslation.id)
-    }
-
     private fun getSelectedSourceTranslationId(): String? {
-        return translator.getSelectedSourceTranslationId(targetTranslation.id)
-    }
-
-    // TODO Removing after refactoring PublishActivity
-    fun getSelectedSourceTranslationId2(): String? {
         return translator.getSelectedSourceTranslationId(targetTranslation.id)
     }
 
@@ -216,12 +245,6 @@ class TargetTranslationViewModel(
             }
         }
         refreshSelectedResourceContainer()
-    }
-
-    fun removeOpenSourceTranslationAsync(sourceTranslationId: String) {
-        launchWithProgress {
-            removeOpenSourceTranslation(sourceTranslationId)
-        }
     }
 
     private fun getAvailableOpenTranslation(): String? {
@@ -262,12 +285,6 @@ class TargetTranslationViewModel(
         }
     }
 
-    fun setSelectedResourceContainerAsync(sourceTranslationId: String) {
-        launchWithProgress {
-            setSelectedResourceContainer(sourceTranslationId)
-        }
-    }
-
     private fun getTranslation(slug: String): Translation? {
         return library.index.getTranslation(slug)
     }
@@ -282,7 +299,7 @@ class TargetTranslationViewModel(
         } ?: -1
     }
 
-    fun getProject(): Project? {
+    private fun getProject(): Project? {
         return library.index.getProject(
             deviceLanguageCode,
             targetTranslation.projectId,
@@ -457,6 +474,11 @@ class TargetTranslationViewModel(
     fun cancelRenderJobs() {
         renderHelpJobs.forEach { it.cancel() }
         renderHelpJobs.clear()
+    }
+
+    // TODO Removing after refactoring PublishActivity
+    fun getSelectedSourceTranslationId2(): String? {
+        return translator.getSelectedSourceTranslationId(targetTranslation.id)
     }
 
 }

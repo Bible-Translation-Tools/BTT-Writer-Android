@@ -44,6 +44,7 @@ import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadModeScreen
+import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.launch
@@ -62,7 +63,7 @@ fun TargetTranslationScreen(
     onChunksDone: () -> Unit,
     onSettings: () -> Unit
 ) {
-    val model: TargetTranslationState by viewModel.state.collectAsStateWithLifecycle()
+    val state: TargetTranslationState by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -86,18 +87,15 @@ fun TargetTranslationScreen(
 
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
 
-    var lastFocusChapterId by remember { mutableStateOf<String?>(null) }
-    var lastFocusFrameId by remember { mutableStateOf<String?>(null) }
-
     val listState = rememberLazyListState()
     var lastViewedChunk by remember { mutableStateOf<Chunk?>(null) }
     var hasDoneInitialLoad by rememberSaveable { mutableStateOf(false) }
 
-    val activeList = remember(model.items, model.viewMode) {
-        if (model.viewMode == TranslationViewMode.READ) {
-            model.items.distinctBy { it.chapterSlug }
+    val activeList = remember(state.items, state.viewMode) {
+        if (state.viewMode == TranslationViewMode.READ) {
+            state.items.distinctBy { it.chapterSlug }
         } else {
-            model.items
+            state.items
         }
     }
 
@@ -132,21 +130,20 @@ fun TargetTranslationScreen(
 
     LaunchedEffect(Unit) {
         ContainerCache.empty()
-        viewModel.refreshSelectedResourceContainerAsync()
-        lastFocusChapterId = viewModel.getLastFocusChapterId()
-        lastFocusFrameId = viewModel.getLastFocusFrameId()
+        viewModel.onAction(TargetAction.RefreshSelectedSource)
+        viewModel.onAction(TargetAction.InitLastFocus)
     }
 
-    LaunchedEffect(activeList, lastFocusChapterId) {
-        if (!hasDoneInitialLoad && activeList.isNotEmpty() && lastFocusChapterId != null) {
+    LaunchedEffect(activeList, state.lastFocusChapterId) {
+        if (!hasDoneInitialLoad && activeList.isNotEmpty() && state.lastFocusChapterId != null) {
             // Try to find the exact chunk
             var targetIndex = activeList.indexOfFirst {
-                it.chapterSlug == lastFocusChapterId && it.chunkSlug == lastFocusFrameId
+                it.chapterSlug == state.lastFocusChapterId && it.chunkSlug == state.lastFocusFrameId
             }
             // Fallback: If in READ mode,
             // the specific chunkId might be filtered out. Find the chapter.
             if (targetIndex == -1) {
-                targetIndex = activeList.indexOfFirst { it.chapterSlug == lastFocusChapterId }
+                targetIndex = activeList.indexOfFirst { it.chapterSlug == state.lastFocusChapterId }
             }
 
             if (targetIndex != -1) {
@@ -180,16 +177,15 @@ fun TargetTranslationScreen(
 
     LaunchedEffect(dominantIndex, activeList) {
         if (activeList.isNotEmpty()) {
-            val currentChunk = activeList[dominantIndex]
-            lastViewedChunk = currentChunk // Update our memory for the next mode swap
-            viewModel.setLastFocus(
-                currentChunk.chapterSlug,
-                currentChunk.chunkSlug
+            val chunk = activeList[dominantIndex]
+            lastViewedChunk = chunk // Update our memory for the next mode swap
+            viewModel.onAction(
+                TargetAction.SaveLastFocus(chunk.chapterSlug, chunk.chunkSlug)
             )
         }
     }
 
-    LaunchedEffect(model.draftAvailable, model.viewMode) {
+    LaunchedEffect(state.draftAvailable, state.viewMode) {
         menuItems.clear()
         menuItems.add(
             TranslateSideBarAction(
@@ -198,7 +194,7 @@ fun TargetTranslationScreen(
                 onClick = onHomeClick
             )
         )
-        if (model.draftAvailable) {
+        if (state.draftAvailable) {
             menuItems.add(
                 TranslateSideBarAction(
                     title = menuActionDrafts,
@@ -231,7 +227,7 @@ fun TargetTranslationScreen(
                 )
             )
         )
-        if (model.viewMode == TranslationViewMode.REVIEW) {
+        if (state.viewMode == TranslationViewMode.REVIEW) {
             menuItems.addAll(
                 listOf(
                     TranslateSideBarAction(
@@ -256,16 +252,16 @@ fun TargetTranslationScreen(
         )
     }
 
-    LaunchedEffect(model.snackBarMessage) {
-        model.snackBarMessage?.let { message ->
+    LaunchedEffect(state.snackBarMessage) {
+        state.snackBarMessage?.let { message ->
             scope.launch {
                 snackBarHostState.showSnackbar(message)
             }
         }
     }
 
-    LaunchedEffect(model.showDraftAvailable) {
-        if (model.showDraftAvailable) {
+    LaunchedEffect(state.showDraftAvailable) {
+        if (state.showDraftAvailable) {
             scope.launch {
                 val result = snackBarHostState.showSnackbar(
                     message = draftExistsStr,
@@ -298,21 +294,21 @@ fun TargetTranslationScreen(
             modifier = Modifier.padding(paddingValues)
         ) {
             TranslateSideBar(
-                currentViewMode = model.viewMode,
+                currentViewMode = state.viewMode,
                 showMergeConflict = false, // TODO model.items.any { it.hasMergeConflicts },
                 onReadClick = {
-                    viewModel.setLastViewMode(TranslationViewMode.READ)
+                    viewModel.onAction(TargetAction.LastViewMode(TranslationViewMode.READ))
                 },
                 onChunkClick = {
-                    viewModel.setLastViewMode(TranslationViewMode.CHUNK)
+                    viewModel.onAction(TargetAction.LastViewMode(TranslationViewMode.CHUNK))
                 },
                 onReviewClick = {
                     // TODO Should reset conflict items filter
-                    viewModel.setLastViewMode(TranslationViewMode.REVIEW)
+                    viewModel.onAction(TargetAction.LastViewMode(TranslationViewMode.REVIEW))
                 },
                 onMergeConflictClick = {
                     // TODO Should toggle conflict items filter
-                    viewModel.setLastViewMode(TranslationViewMode.REVIEW)
+                    viewModel.onAction(TargetAction.LastViewMode(TranslationViewMode.REVIEW))
                 },
                 onSliderValueChange = {
                     val exactPosition = it * activeList.size
@@ -334,37 +330,43 @@ fun TargetTranslationScreen(
             )
 
             Box(modifier = Modifier.weight(1f)) {
-                if (model.items.isEmpty()) {
-                    val project = viewModel.getProject()
-                    val projectTitle = "${project?.name} - ${viewModel.targetTranslation.targetLanguageName}"
+                if (state.items.isEmpty()) {
                     NoSourceScreen(
-                        projectTitle = projectTitle,
+                        projectTitle = state.projectTitle ?: "",
                         onAddSourceClick = { showSourceDialog = true }
                     )
                 } else {
-                    when (model.viewMode) {
+                    when (state.viewMode) {
                         TranslationViewMode.READ -> {
                             ReadModeScreen(
                                 items = activeList,
                                 listState = listState,
-                                sourceTabs = model.sourceTabs,
-                                selectedSource = model.resourceContainer,
+                                sourceTabs = state.sourceTabs,
+                                selectedSource = state.resourceContainer,
                                 targetTranslation = viewModel.targetTranslation,
-                                onSourceTabClick = viewModel::setSelectedResourceContainerAsync,
+                                onSourceTabClick = {
+                                    viewModel.onAction(TargetAction.SelectSource(it))
+                                },
                                 onAddNewSourceClick = { showSourceDialog = true },
-                                onRemoveSourceClick = viewModel::removeOpenSourceTranslationAsync
+                                onRemoveSourceClick = {
+                                    viewModel.onAction(TargetAction.RemoveSource(it))
+                                }
                             )
                         }
                         TranslationViewMode.CHUNK -> {
                             ChunkModeScreen(
                                 items = activeList,
                                 listState = listState,
-                                sourceTabs = model.sourceTabs,
-                                selectedSource = model.resourceContainer,
+                                sourceTabs = state.sourceTabs,
+                                selectedSource = state.resourceContainer,
                                 targetTranslation = viewModel.targetTranslation,
-                                onSourceTabClick = viewModel::setSelectedResourceContainerAsync,
+                                onSourceTabClick = {
+                                    viewModel.onAction(TargetAction.SelectSource(it))
+                                },
                                 onAddNewSourceClick = { showSourceDialog = true },
-                                onRemoveSourceClick = viewModel::removeOpenSourceTranslationAsync
+                                onRemoveSourceClick = {
+                                    viewModel.onAction(TargetAction.RemoveSource(it))
+                                }
                             )
                         }
                         TranslationViewMode.REVIEW -> {

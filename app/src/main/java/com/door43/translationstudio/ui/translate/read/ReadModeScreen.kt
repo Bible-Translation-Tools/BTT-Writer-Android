@@ -45,7 +45,7 @@ fun ReadModeScreen(
     val typography: Typography = koinInject()
 
     LaunchedEffect(items) {
-        viewModel.initialize(items)
+        viewModel.onAction(ReadAction.Init(items))
     }
 
     Box(
@@ -82,11 +82,11 @@ fun ReadModeScreen(
 
     model.notes?.let { notes ->
         AlertDialog(
-            onDismissRequest = { viewModel.clearNotes() },
+            onDismissRequest = { viewModel.onAction(ReadAction.ClearNotes) },
             title = { Text(stringResource(R.string.title_footnote)) },
             text = { Text(notes) },
             confirmButton = {
-                TextButton(onClick = { viewModel.clearNotes() }) {
+                TextButton(onClick = { viewModel.onAction(ReadAction.ClearNotes) }) {
                     Text(stringResource(R.string.dismiss))
                 }
             }

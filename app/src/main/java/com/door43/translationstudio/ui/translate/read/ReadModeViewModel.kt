@@ -32,6 +32,11 @@ data class ReadModeModel(
     val notes: String? = null
 )
 
+sealed interface ReadAction {
+    data class Init(val chunks: List<Chunk>) : ReadAction
+    object ClearNotes : ReadAction
+}
+
 class ReadModeViewModel(
     private val application: Application,
 ) : AndroidViewModel(application) {
@@ -39,7 +44,14 @@ class ReadModeViewModel(
     private val _model = MutableStateFlow(ReadModeModel())
     val model: StateFlow<ReadModeModel> = _model
 
-    fun initialize(chunks: List<Chunk>) {
+    fun onAction(action: ReadAction) {
+        when (action) {
+            is ReadAction.Init -> initialize(action.chunks)
+            ReadAction.ClearNotes -> clearNotes()
+        }
+    }
+
+    private fun initialize(chunks: List<Chunk>) {
         viewModelScope.launch {
             val readItems = withContext(Dispatchers.Default) {
                 chunks
@@ -54,7 +66,7 @@ class ReadModeViewModel(
     }
 
 
-    fun clearNotes() {
+    private fun clearNotes() {
         _model.update { it.copy(notes = null) }
     }
 

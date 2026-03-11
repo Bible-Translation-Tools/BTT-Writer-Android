@@ -28,6 +28,7 @@ import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.translationstudio.ui.translate.screens.TargetTranslationScreen
+import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -102,12 +103,12 @@ class TargetTranslationActivity : BaseActivity(),
         }
 
         // open used source translations by default
-        viewModel.openUsedSourceTranslations()
+        viewModel.onAction(TargetAction.OpenSourceTranslations)
 
         // manual location settings
         val modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1)
         if (modeIndex > 0 && modeIndex < TranslationViewMode.entries.size) {
-            viewModel.setLastViewMode(TranslationViewMode.entries[modeIndex])
+            viewModel.onAction(TargetAction.LastViewMode(TranslationViewMode.entries[modeIndex]))
         }
 
 //        binding.searchPane.downSearch.setOnClickListener { moveSearch(true) }

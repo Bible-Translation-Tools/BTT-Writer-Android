@@ -234,10 +234,10 @@ abstract class ViewModeFragment : BaseFragment(),
                             if (items.isNotEmpty()) {
                                 adapter?.let {
                                     if (chapterSlug == null) {
-                                        chapterSlug = viewModel.getLastFocusChapterId()
+                                        // *** chapterSlug = viewModel.getLastFocusChapterId()
                                     }
                                     if (chunkSlug == null) {
-                                        chunkSlug = viewModel.getLastFocusFrameId()
+                                        // *** chunkSlug = viewModel.getLastFocusFrameId()
                                     }
                                     //it.initializeListItems(items, chapterSlug, chunkSlug)
                                     doScrollToPosition(it.startPosition, 0)
@@ -644,7 +644,7 @@ abstract class ViewModeFragment : BaseFragment(),
         val chapterId = adapter?.getFocusedChapterSlug(lastItemPosition)
         val frameId = adapter?.getFocusedChunkSlug(lastItemPosition)
         if (chapterId != null) {
-            viewModel.setLastFocus(chapterId, frameId)
+            // *** viewModel.setLastFocus(chapterId, frameId)
             adapter?.updateListStartPosition(lastItemPosition)
         }
     }
