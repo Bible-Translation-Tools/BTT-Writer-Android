@@ -17,7 +17,7 @@ class GetRepository(
         translation: TargetTranslation,
         progressListener: OnProgressListener? = null
     ): Repository? {
-        progressListener?.onProgress(-1, max, "Getting repository")
+        progressListener?.onProgress(-1f, "Getting repository")
 
         if (profile.gogsUser == null) {
             Logger.e(this.javaClass.name, "Gogs user is not set")

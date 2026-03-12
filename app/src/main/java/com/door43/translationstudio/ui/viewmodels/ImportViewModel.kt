@@ -84,12 +84,12 @@ class ImportViewModel(
                     userQuery,
                     repoQuery,
                     limit
-                ) { progress, max, message ->
+                ) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -105,12 +105,12 @@ class ImportViewModel(
                 application.getString(R.string.cloning_repository)
             )
             _cloneRepoResult.value = withContext(Dispatchers.IO) {
-                cloneRepository.execute(cloneUrl) { progress, max, message ->
+                cloneRepository.execute(cloneUrl) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -123,12 +123,12 @@ class ImportViewModel(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.import_source_text))
             val result = withContext(Dispatchers.IO) {
-                importProjects.importProject(path, mergeOverwrite) { progress, max, message ->
+                importProjects.importProject(path, mergeOverwrite) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -161,12 +161,12 @@ class ImportViewModel(
     fun registerSSHKeys(force: Boolean) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force) { progress, max, message ->
+                registerSSHKeys.execute(force) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -266,12 +266,12 @@ class ImportViewModel(
                 importProjects.importProject(
                     uri,
                     false
-                ) { progress, max, message ->
+                ) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }

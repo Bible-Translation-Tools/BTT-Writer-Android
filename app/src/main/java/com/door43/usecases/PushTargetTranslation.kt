@@ -56,7 +56,7 @@ class PushTargetTranslation(
 
     @Throws(JGitInternalException::class)
     private fun push(repo: Repo, remote: String, progressListener: OnProgressListener?): Result {
-        progressListener?.onProgress(-1, max, "Uploading translation")
+        progressListener?.onProgress(-1f, "Uploading translation")
 
         var status = Status.UNKNOWN
         val git: Git

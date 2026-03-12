@@ -24,7 +24,7 @@ class GetAvailableSources(
         val ntBookList = BibleCodes.getNtBooks()
         val otBookList = BibleCodes.getOtBooks()
 
-        progressListener?.onProgress(-1, max, "")
+        progressListener?.onProgress(-1f, "")
 
         val allSources = mutableListOf<Translation>()
 
@@ -77,7 +77,8 @@ class GetAvailableSources(
             val t: Translation = allSources[i]
 
             if (i % 16 == 0) {
-                progressListener?.onProgress(i, maxProgress, prefix)
+                val progress = i / maxProgress.toFloat()
+                progressListener?.onProgress(progress, prefix)
             }
 
             val language = t.language.slug

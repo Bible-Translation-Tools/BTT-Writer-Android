@@ -243,12 +243,12 @@ class HomeViewModel(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _updateSourceResult.value = withContext(Dispatchers.IO) {
-                updateSource.execute(message) { progress, max, message ->
+                updateSource.execute(message) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -261,12 +261,12 @@ class HomeViewModel(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _uploadCatalogResult.value = withContext(Dispatchers.IO) {
-                updateCatalogs.execute(true, message) { progress, max, message ->
+                updateCatalogs.execute(true, message) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -281,12 +281,12 @@ class HomeViewModel(
                 application.getString(R.string.registering_keys)
             )
             _registeredSSHKeys.value = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force) { progress, max, message ->
+                registerSSHKeys.execute(force) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }

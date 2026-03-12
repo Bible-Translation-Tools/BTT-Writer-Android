@@ -47,7 +47,7 @@ class ImportProjects(
         progressListener: OnProgressListener? = null
     ): ImportUriResult {
         val max = 100
-        progressListener?.onProgress(-1, max, "Importing...")
+        progressListener?.onProgress(-1f, "Importing...")
 
         var alreadyExists = false
         var success = false
@@ -103,22 +103,21 @@ class ImportProjects(
         overwrite: Boolean,
         progressListener: OnProgressListener? = null
     ): ImportUsfmResult {
-        progressListener?.onProgress(-1, 100, context.getString(R.string.importing_file))
+        progressListener?.onProgress(-1f, context.getString(R.string.importing_file))
 
-        val max = 100
         var count = 0
         val size = projects.size
         val numSteps = 4
-        val subStepSize = max / numSteps.toFloat() / size.toFloat()
+        val subStepSize = 1f / numSteps / size.toFloat()
         var success = true
         var conflictingTargetTranslation: TargetTranslation? = null
 
         try {
             for (project in projects) {
                 val dirName = project.name
-                val progress = max * count++ / size.toFloat()
+                val progress = count++ / size.toFloat()
 
-                progressListener?.onProgress(progress.toInt(), max, dirName)
+                progressListener?.onProgress(progress, dirName)
 
                 val newTargetTranslation = TargetTranslation.open(project) {
                     deleteProject(project)
@@ -127,7 +126,7 @@ class ImportProjects(
                 if (newTargetTranslation != null) {
                     newTargetTranslation.commitSync()
 
-                    progressListener?.onProgress((progress + subStepSize).toInt(), max, dirName)
+                    progressListener?.onProgress((progress + subStepSize), dirName)
 
                     val destTargetTranslationDir = File(translator.path, newTargetTranslation.id)
 
@@ -137,7 +136,7 @@ class ImportProjects(
                         // commit local changes to history
                         conflictingTargetTranslation.commitSync()
 
-                        progressListener?.onProgress((progress + 2 * subStepSize).toInt(), max, dirName)
+                        progressListener?.onProgress((progress + 2 * subStepSize), dirName)
 
                         // merge translations
                         try {
@@ -159,7 +158,7 @@ class ImportProjects(
                 }
             }
 
-            progressListener?.onProgress(max, max, "Completed!")
+            progressListener?.onProgress(1f, "Completed!")
         } catch (e: Exception) {
             Logger.e(this::class.simpleName, "Failed to import folder $projects", e)
             success = false

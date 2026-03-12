@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.translate.screens
+package com.door43.translationstudio.ui.translate
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,6 +21,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -33,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
@@ -40,7 +42,6 @@ import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.ProgressDialog
-import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.chunk.ChunkAction
 import com.door43.translationstudio.ui.translate.chunk.ChunkCard
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
@@ -404,7 +405,10 @@ fun TargetTranslationScreen(
                             }
                         }
                         TranslationViewMode.REVIEW -> {
-                            ReviewModeScreen()
+                            Text(
+                                text = "Review screen in development...",
+                                modifier = Modifier.padding(32.dp)
+                            )
                         }
                     }
                 }
@@ -418,7 +422,7 @@ fun TargetTranslationScreen(
             onDismissRequest = { showSourceDialog = false },
             onConfirm = {
                 showSourceDialog = false
-                viewModel.confirmSelectedSources(it)
+                viewModel.onAction(TargetAction.ConfirmSelectedSources(it))
             },
             onUpdateSources = {}
         )

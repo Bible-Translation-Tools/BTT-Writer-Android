@@ -27,7 +27,6 @@ import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.translate.review.SearchSubject
-import com.door43.translationstudio.ui.translate.screens.TargetTranslationScreen
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import org.koin.android.ext.android.inject

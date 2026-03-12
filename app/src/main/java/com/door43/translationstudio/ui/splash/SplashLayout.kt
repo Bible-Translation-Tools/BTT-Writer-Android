@@ -18,11 +18,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Progress
 
 @Composable
 fun SplashLayout(
-    progressMessage: String,
-    progressValue: Int?,
+    progress: Progress?,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -47,7 +47,7 @@ fun SplashLayout(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        if (progressValue == null) {
+        if (progress == null || progress.value < 0) {
             LinearProgressIndicator(
                 color = MaterialTheme.colorScheme.secondary,
                 trackColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -56,7 +56,7 @@ fun SplashLayout(
             )
         } else {
             LinearProgressIndicator(
-                progress = { progressValue / 100f },
+                progress = { progress.value },
                 color = MaterialTheme.colorScheme.secondary,
                 trackColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 gapSize = 0.dp,
@@ -67,7 +67,7 @@ fun SplashLayout(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = progressMessage.ifEmpty { stringResource(id = R.string.loading) },
+            text = progress?.message?.let { stringResource(id = R.string.loading) } ?: "",
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 2,

@@ -62,7 +62,8 @@ fun SourceSelectionDialog(
     val viewModel: SourceSelectionViewModel = koinViewModel {
         parametersOf(targetTranslation)
     }
-    val model by viewModel.model.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
@@ -73,10 +74,10 @@ fun SourceSelectionDialog(
     var sourceToDownload by rememberSaveable { mutableStateOf<RCItem?>(null) }
     var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
 
-    val uiState by remember(model.sources, searchQuery) {
+    val uiState by remember(state.sources, searchQuery) {
         derivedStateOf {
             prepareSourceState(
-                sources = model.sources,
+                sources = state.sources,
                 searchText = searchQuery,
                 selectedString = selectedString,
                 availableString = availableString,
@@ -89,14 +90,14 @@ fun SourceSelectionDialog(
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        viewModel.loadAvailableSources()
+        viewModel.onAction(SourceAction.LoadSources)
     }
 
-    LaunchedEffect(model.snackBarMessage) {
-        model.snackBarMessage?.let { message ->
+    LaunchedEffect(state.snackBarMessage) {
+        state.snackBarMessage?.let { message ->
             coroutineScope.launch {
                 snackBarHostState.showSnackbar(message)
-                viewModel.clearSnackBar()
+                viewModel.onAction(SourceAction.ClearSnackBar)
             }
         }
     }
@@ -151,7 +152,9 @@ fun SourceSelectionDialog(
                             } else {
                                 SourceItemRow(
                                     item = item,
-                                    onTriggerSelected = viewModel::toggleSourceSelection,
+                                    onTriggerSelected = {
+                                        viewModel.onAction(SourceAction.ToggleSelection(it))
+                                    },
                                     onTriggerDownload = { sourceToDownload = it },
                                     onTriggerDelete = {
                                         if (it.downloaded) {
@@ -187,7 +190,7 @@ fun SourceSelectionDialog(
                         }
                         TextButton(
                             onClick = {
-                                onConfirm(model.sources.filter { it.selected })
+                                onConfirm(state.sources.filter { it.selected })
                             }
                         ) {
                             Text(
@@ -208,10 +211,10 @@ fun SourceSelectionDialog(
         }
     }
 
-    model.progress?.let {
+    progress?.let {
         ProgressDialog(
-            message = it.message ?: stringResource(R.string.loading),
-            progress = it.progress.toFloat()
+            message = it.message,
+            progress = it.value
         )
     }
 
@@ -221,7 +224,7 @@ fun SourceSelectionDialog(
             message = stringResource(R.string.download_source_language, source.title),
             onConfirm = {
                 sourceToDownload = null
-                viewModel.downloadResourceContainer(source)
+                viewModel.onAction(SourceAction.DownloadSource(source))
             },
             onDismiss = { sourceToDownload = null }
         )
@@ -233,7 +236,7 @@ fun SourceSelectionDialog(
             message = stringResource(R.string.confirm_delete_project),
             onConfirm = {
                 sourceToDelete = null
-                viewModel.deleteResourceContainer(source)
+                viewModel.onAction(SourceAction.DeleteSource(source))
             },
             onDismiss = { sourceToDelete = null }
         )

@@ -21,7 +21,7 @@ class AdvancedGogsRepoSearch(
         // submit new language requests
         submitNewLanguageRequests.execute(progressListener)
 
-        progressListener?.onProgress(-1, max, "Searching for repositories")
+        progressListener?.onProgress(-1f, "Searching for repositories")
 
         val repoNameQuery = repoQuery.ifEmpty { "_" }
 

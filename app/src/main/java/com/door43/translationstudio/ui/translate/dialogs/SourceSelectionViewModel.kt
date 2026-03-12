@@ -2,14 +2,17 @@ package com.door43.translationstudio.ui.translate.dialogs
 
 import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
+import com.door43.translationstudio.core.ProgressManager
+import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.core.TaskHandle
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.DownloadResourceContainers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +21,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 
@@ -32,44 +37,63 @@ data class RCItem(
     val containerSlug: String? = sourceTranslation?.resourceContainerSlug
 }
 
-data class SourceModel(
+data class SourceState(
     val sources: List<RCItem> = emptyList(),
-    val snackBarMessage: String? = null,
-    val progress: ProgressHelper.Progress? = null
+    val snackBarMessage: String? = null
 )
 
+sealed interface SourceAction {
+    object LoadSources : SourceAction
+    object ClearSnackBar : SourceAction
+    data class ToggleSelection(val source: RCItem) : SourceAction
+    data class DownloadSource(val source: RCItem) : SourceAction
+    data class DeleteSource(val source: RCItem) : SourceAction
+}
+
 class SourceSelectionViewModel(
-    private val application: Application,
     private val library: Door43Client,
     private val prefRepository: IPreferenceRepository,
     private val downloadResourceContainers: DownloadResourceContainers,
     private val targetTranslation: TargetTranslation
-) : AndroidViewModel(application) {
+) : ViewModel(), KoinComponent, ProgressOwner {
 
-    private val _model = MutableStateFlow(SourceModel())
-    val model: StateFlow<SourceModel> = _model.asStateFlow()
+    private val application: Application by inject()
 
-    fun clearSnackBar() {
-        _model.value = _model.value.copy(snackBarMessage = null)
+    private val progressManager = ProgressManager(viewModelScope)
+    override val progress get() = progressManager.progress
+
+    private val _state = MutableStateFlow(SourceState())
+    val state: StateFlow<SourceState> = _state.asStateFlow()
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
     }
 
-    fun loadAvailableSources() {
-        viewModelScope.launch {
-            _model.update { it.copy(progress = ProgressHelper.Progress()) }
+    fun onAction(action: SourceAction) {
+        when (action) {
+            is SourceAction.LoadSources -> loadAvailableSources()
+            is SourceAction.ClearSnackBar -> clearSnackBar()
+            is SourceAction.ToggleSelection -> toggleSourceSelection(action.source)
+            is SourceAction.DownloadSource -> downloadSource(action.source)
+            is SourceAction.DeleteSource -> deleteSource(action.source)
+        }
+    }
 
+    private fun clearSnackBar() {
+        _state.value = _state.value.copy(snackBarMessage = null)
+    }
+
+    private fun loadAvailableSources() {
+        launchWithProgress { handle ->
             val rcItems = withContext(Dispatchers.IO) {
                 val items = arrayListOf<RCItem>()
                 // add selected source translations
-                val sourceTranslationSlugs = getOpenSourceTranslations()
+                val sourceTranslationSlugs = getOpenSources()
                 for (slug in sourceTranslationSlugs) {
                     val st = library.index.getTranslation(slug)
                     if (st != null) {
-                        _model.update {
-                            it.copy(
-                                progress = ProgressHelper.Progress(st.resourceContainerSlug)
-                            )
-                        }
-                        items.add(addSourceTranslation(st, true))
+                        handle.update(-1f, st.resourceContainerSlug)
+                        items.add(addSource(st, true))
                     }
                 }
 
@@ -83,32 +107,28 @@ class SourceSelectionViewModel(
                     -1
                 )
                 for (sourceTranslation in availableTranslations) {
-                    _model.update {
-                        it.copy(
-                            progress = ProgressHelper.Progress(sourceTranslation.resourceContainerSlug)
-                        )
-                    }
+                    handle.update(-1f, sourceTranslation.resourceContainerSlug)
                     if (!items.map { it.containerSlug }.contains(sourceTranslation.resourceContainerSlug)) {
-                        items.add(addSourceTranslation(sourceTranslation, false))
+                        items.add(addSource(sourceTranslation, false))
                     }
                 }
                 items
             }
-            _model.update {
-                it.copy(progress = null, sources = rcItems)
+            _state.update {
+                it.copy(sources = rcItems)
             }
         }
     }
 
-    fun getOpenSourceTranslations(): List<String> {
+    private fun getOpenSources(): List<String> {
         return prefRepository.getOpenSourceTranslations(targetTranslation.id)
     }
 
-    fun toggleSourceSelection(source: RCItem) {
-        val stackFull = model.value.sources.filter { it.selected }.size == 3
+    private fun toggleSourceSelection(source: RCItem) {
+        val stackFull = state.value.sources.filter { it.selected }.size == 3
 
         if (!stackFull || source.selected) {
-            _model.update { state ->
+            _state.update { state ->
                 state.copy(
                     sources = state.sources.map {
                         if (it.containerSlug == source.containerSlug) {
@@ -122,22 +142,13 @@ class SourceSelectionViewModel(
         }
     }
 
-    fun downloadResourceContainer(source: RCItem) {
+    private fun downloadSource(source: RCItem) {
         val translation = source.sourceTranslation ?: return
 
-        viewModelScope.launch {
-            _model.update { it.copy(progress = ProgressHelper.Progress()) }
+        launchWithProgress { handle ->
             val result = withContext(Dispatchers.IO) {
-                downloadResourceContainers.download(translation) { progress, max, message ->
-                    _model.update {
-                        it.copy(
-                            progress = ProgressHelper.Progress(
-                                message,
-                                progress,
-                                max
-                            )
-                        )
-                    }
+                downloadResourceContainers.download(translation) { progress, message ->
+                    handle.update(progress, message)
                 }
             }
 
@@ -152,13 +163,13 @@ class SourceSelectionViewModel(
                 application.getString(R.string.download_failed)
             }
 
-            _model.update { it.copy(progress = null, snackBarMessage = snackBarMessage) }
+            _state.update { it.copy(snackBarMessage = snackBarMessage) }
 
             loadAvailableSources()
         }
     }
 
-    fun deleteResourceContainer(source: RCItem) {
+    private fun deleteSource(source: RCItem) {
         viewModelScope.launch {
             source.containerSlug?.let {
                 library.delete(it)
@@ -167,7 +178,7 @@ class SourceSelectionViewModel(
         }
     }
 
-    private fun addSourceTranslation(sourceTranslation: Translation, selected: Boolean): RCItem {
+    private fun addSource(sourceTranslation: Translation, selected: Boolean): RCItem {
         val title = sourceTranslation.language.name + " (" + sourceTranslation.language.slug + ") - " + sourceTranslation.resource.name
         val isDownloaded = library.exists(sourceTranslation.resourceContainerSlug)
         var hasUpdates = false

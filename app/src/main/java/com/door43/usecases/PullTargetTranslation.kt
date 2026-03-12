@@ -95,7 +95,7 @@ class PullTargetTranslation(
         mergeStrategy: MergeStrategy,
         progressListener: OnProgressListener?
     ): Result {
-        progressListener?.onProgress(-1, max,"Downloading updates")
+        progressListener?.onProgress(-1f, "Downloading updates")
 
         var status = Status.UNKNOWN
         val git: Git

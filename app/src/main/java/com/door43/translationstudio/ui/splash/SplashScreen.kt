@@ -22,7 +22,8 @@ fun SplashScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToCrashReporter: () -> Unit
 ) {
-    val model by viewModel.model.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val openDirectoryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -40,12 +41,9 @@ fun SplashScreen(
         }
     }
 
-    SplashLayout(
-        progressMessage = model.progress?.message ?: "",
-        progressValue = model.progress?.progress
-    )
+    SplashLayout(progress = progress)
 
-    if (model.showHardwareWarning) {
+    if (state.showHardwareWarning) {
         AlertDialog(
             onDismissRequest = { /* Cannot cancel */ },
             title = { Text(stringResource(R.string.slow_device)) },
@@ -63,7 +61,7 @@ fun SplashScreen(
         )
     }
 
-    if (model.showMigrationDialog) {
+    if (state.showMigrationDialog) {
         AlertDialog(
             onDismissRequest = { /* Cannot cancel */ },
             title = { Text(stringResource(R.string.migrate_from_old_app)) },

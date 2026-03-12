@@ -21,7 +21,7 @@ class SearchGogsRepositories(
         limit: Int,
         progressListener: OnProgressListener? = null
     ): List<Repository> {
-        progressListener?.onProgress(-1, max, "Searching for repositories")
+        progressListener?.onProgress(-1f, "Searching for repositories")
         val repositories = arrayListOf<Repository>()
 
         val repoQuery = query.ifEmpty { "_" }

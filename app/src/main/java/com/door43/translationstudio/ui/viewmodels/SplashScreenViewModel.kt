@@ -2,35 +2,36 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ProgressManager
+import com.door43.translationstudio.core.ProgressOwner
+import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
-import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.MigrateTranslations
 import com.door43.usecases.UpdateApp
 import com.door43.util.RuntimeWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.unfoldingword.tools.logger.Logger
 
-data class SplashModel(
-    val progress: ProgressHelper.Progress? = null,
+data class SplashState(
     val showHardwareWarning: Boolean = false,
     val showMigrationDialog: Boolean = false
 )
@@ -42,64 +43,48 @@ sealed interface SplashEvent {
 }
 
 class SplashScreenViewModel(
-    private val application: Application,
     private val updateApp: UpdateApp,
     private val prefRepository: IPreferenceRepository,
     private val migrateTranslations: MigrateTranslations
-) : AndroidViewModel(application) {
+) : ViewModel(), KoinComponent, ProgressOwner {
 
-    private val _model = MutableStateFlow(SplashModel())
-    val model: StateFlow<SplashModel> = _model.asStateFlow()
+    private val application: Application by inject()
+
+    private val _state = MutableStateFlow(SplashState())
+    val state: StateFlow<SplashState> = _state.asStateFlow()
 
     private val _events = Channel<SplashEvent>()
     val events = _events.receiveAsFlow()
+
+    private val progressManager = ProgressManager(viewModelScope)
+    override val progress get() = progressManager.progress
 
     init {
         evaluateStartupPath()
     }
 
-    private fun evaluateStartupPath() {
-        if (checkHardware()) {
-            val numProcessors = RuntimeWrapper.availableProcessors
-            val maxMem = RuntimeWrapper.maxMemory
-
-            if (numProcessors < App.MINIMUM_NUMBER_OF_PROCESSORS || maxMem < App.MINIMUM_REQUIRED_RAM) {
-                _model.update { it.copy(showHardwareWarning = true) }
-            } else {
-                checkMigration()
-            }
-        } else {
-            checkMigration()
-        }
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
     }
 
     fun onHardwareWarningContinued() {
-        _model.update { it.copy(showHardwareWarning = false) }
+        _state.update { it.copy(showHardwareWarning = false) }
         checkMigration()
     }
 
     fun onHardwareWarningDismissedAndSaved() {
+        _state.update { it.copy(showHardwareWarning = false) }
         saveHardwareCheck(false)
-        _model.update { it.copy(showHardwareWarning = false) }
         checkMigration()
     }
 
-    private fun checkMigration() {
-        if (!checkMigrationShown()) {
-            setMigrationShown(true)
-            _model.update { it.copy(showMigrationDialog = true) }
-        } else {
-            startAppLogic()
-        }
-    }
-
     fun onMigrationAccepted() {
-        _model.update { it.copy(showMigrationDialog = false) }
+        _state.update { it.copy(showMigrationDialog = false) }
         viewModelScope.launch { _events.send(SplashEvent.LaunchDirectoryPicker) }
     }
 
     fun onMigrationDeclined() {
-        _model.update { it.copy(showMigrationDialog = false) }
+        _state.update { it.copy(showMigrationDialog = false) }
         startAppLogic()
     }
 
@@ -108,7 +93,31 @@ class SplashScreenViewModel(
             migrateOldAppdataFolder(uri)
         } else {
             setMigrationShown(false)
-            _model.update { it.copy(showMigrationDialog = true) }
+            _state.update { it.copy(showMigrationDialog = true) }
+        }
+    }
+
+    private fun evaluateStartupPath() {
+        if (checkHardware()) {
+            val numProcessors = RuntimeWrapper.availableProcessors
+            val maxMem = RuntimeWrapper.maxMemory
+
+            if (numProcessors < App.MINIMUM_NUMBER_OF_PROCESSORS || maxMem < App.MINIMUM_REQUIRED_RAM) {
+                _state.update { it.copy(showHardwareWarning = true) }
+            } else {
+                checkMigration()
+            }
+        } else {
+            checkMigration()
+        }
+    }
+
+    private fun checkMigration() {
+        if (!checkMigrationShown()) {
+            setMigrationShown(true)
+            _state.update { it.copy(showMigrationDialog = true) }
+        } else {
+            startAppLogic()
         }
     }
 
@@ -121,83 +130,62 @@ class SplashScreenViewModel(
             return
         }
 
-        if (_model.value.progress == null) {
-            updateApp()
-        }
+        updateApp()
     }
 
-    fun onMigrationFinished() {
-        _model.update { it.copy(progress = null) }
+    private fun onMigrationFinished() {
         startAppLogic()
     }
 
-    fun onUpdateFinished() {
+    private fun onUpdateFinished() {
         viewModelScope.launch { _events.send(SplashEvent.NavigateToProfile) }
     }
 
-    fun updateApp() {
-        viewModelScope.launch {
-            _model.update {
-                it.copy(progress = ProgressHelper.Progress(
-                    application.getString(R.string.updating_app)
-                ))
-            }
+    private fun updateApp() {
+        launchWithProgress(
+            application.getString(R.string.updating_app)
+        ) { handle ->
             withContext(Dispatchers.IO) {
-                updateApp.execute { progress, max, message ->
-                    _model.update {
-                        it.copy(progress = ProgressHelper.Progress(
-                            message,
-                            progress,
-                            max
-                        ))
-                    }
+                updateApp.execute { progress, message ->
+                    handle.update(progress, message)
                 }
             }
             onUpdateFinished()
         }
     }
 
-    fun migrateOldAppdataFolder(appDataFolder: Uri) {
-        viewModelScope.launch {
-            _model.update {
-                it.copy(progress = ProgressHelper.Progress(
-                    application.getString(R.string.migrating_translations)
-                ))
-            }
+    private fun migrateOldAppdataFolder(appDataFolder: Uri) {
+        launchWithProgress(
+            application.getString(R.string.migrating_translations)
+        ) { handle ->
             withContext(Dispatchers.IO) {
-                migrateTranslations.execute(appDataFolder) { progress, max, message ->
-                    _model.update {
-                        it.copy(progress = ProgressHelper.Progress(
-                            message,
-                            progress,
-                            max
-                        ))
-                    }
+                migrateTranslations.execute(appDataFolder) { progress, message ->
+                    handle.update(progress, message)
                 }
             }
             onMigrationFinished()
         }
     }
 
-    fun checkHardware(): Boolean {
+    private fun checkHardware(): Boolean {
         return prefRepository.getDefaultPref(
             KEY_PREF_CHECK_HARDWARE,
             true
         )
     }
 
-    fun saveHardwareCheck(check: Boolean) {
+    private fun saveHardwareCheck(check: Boolean) {
         prefRepository.setDefaultPref(KEY_PREF_CHECK_HARDWARE, check)
     }
 
-    fun checkMigrationShown(): Boolean {
+    private fun checkMigrationShown(): Boolean {
         return prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_MIGRATE_OLD_APP,
             false
         )
     }
 
-    fun setMigrationShown(shown: Boolean) {
+    private fun setMigrationShown(shown: Boolean) {
         prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MIGRATE_OLD_APP, shown)
     }
 }

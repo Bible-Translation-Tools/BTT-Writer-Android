@@ -28,12 +28,12 @@ class ImportIndexViewModel(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _indexDownloaded.value = withContext(Dispatchers.IO) {
-                downloadIndex.download { progress, max, message ->
+                downloadIndex.download { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }

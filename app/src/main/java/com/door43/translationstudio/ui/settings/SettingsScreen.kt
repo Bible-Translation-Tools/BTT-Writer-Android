@@ -35,7 +35,8 @@ fun SettingsScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToDeveloperTools: () -> Unit
 ) {
-    val model by viewModel.model.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     var showGogsApiDialog by rememberSaveable { mutableStateOf(false) }
@@ -64,8 +65,8 @@ fun SettingsScreen(
         uri?.let { viewModel.migrateOldAppData(it) }
     }
 
-    LaunchedEffect(model.loggedOut) {
-        if (model.loggedOut) {
+    LaunchedEffect(state.loggedOut) {
+        if (state.loggedOut) {
             onNavigateToProfile()
         }
     }
@@ -79,7 +80,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_color_theme),
-                    summary = model.currentThemeName,
+                    summary = state.currentThemeName,
                     onClick = { showThemeDialog = true }
                 )
             }
@@ -89,7 +90,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_translation_typeface),
-                    summary = model.currentTranslationFontName,
+                    summary = state.currentTranslationFontName,
                     onClick = { showTranslationFontDialog = true }
                 )
             }
@@ -99,7 +100,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_typeface_size),
-                    summary = model.currentTranslationFontSizeName,
+                    summary = state.currentTranslationFontSizeName,
                     onClick = { showTranslationFontSizeDialog = true }
                 )
             }
@@ -109,7 +110,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_source_typeface),
-                    summary = model.currentSourceFontName,
+                    summary = state.currentSourceFontName,
                     onClick = { showSourceFontDialog = true }
                 )
             }
@@ -119,7 +120,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_source_typeface_size),
-                    summary = model.currentSourceFontSizeName,
+                    summary = state.currentSourceFontSizeName,
                     onClick = { showSourceFontSizeDialog = true }
                 )
             }
@@ -130,7 +131,7 @@ fun SettingsScreen(
                 CheckboxPreference(
                     title = stringResource(R.string.pref_title_always_share),
                     summary = stringResource(R.string.pref_description_always_share),
-                    checked = model.alwaysShareEnabled,
+                    checked = state.alwaysShareEnabled,
                     onCheckedChange = { viewModel.setAlwaysShare(it) }
                 )
             }
@@ -160,7 +161,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.content_server),
-                    summary = model.currentContentServerName,
+                    summary = state.currentContentServerName,
                     onClick = { showContentServerDialog = true }
                 )
             }
@@ -170,7 +171,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_git_server_port),
-                    summary = model.gitServerPort,
+                    summary = state.gitServerPort,
                     onClick = { showGitPortDialog = true }
                 )
             }
@@ -180,7 +181,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_gogs_api),
-                    summary = model.currentGogsApiUrl,
+                    summary = state.currentGogsApiUrl,
                     onClick = { showGogsApiDialog = true }
                 )
             }
@@ -190,7 +191,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_media_server),
-                    summary = model.mediaServerUrl,
+                    summary = state.mediaServerUrl,
                     onClick = { showMediaServerUrlDialog = true }
                 )
             }
@@ -200,7 +201,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_reader_server),
-                    summary = model.readerServerUrl,
+                    summary = state.readerServerUrl,
                     onClick = { showReaderServerUrlDialog = true }
                 )
             }
@@ -210,7 +211,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_create_account_url),
-                    summary = model.accountCreationUrl,
+                    summary = state.accountCreationUrl,
                     onClick = { showAccountCreationUrlDialog = true }
                 )
             }
@@ -220,7 +221,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_language_url),
-                    summary = model.languagesUrl,
+                    summary = state.languagesUrl,
                     onClick = { showLanguageUrlDialog = true }
                 )
             }
@@ -230,7 +231,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_index_sqlite_url),
-                    summary = model.indexSqliteUrl,
+                    summary = state.indexSqliteUrl,
                     onClick = { showIndexSqliteUrlDialog = true }
                 )
             }
@@ -240,7 +241,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_tm_url),
-                    summary = model.tmLinksUrl,
+                    summary = state.tmLinksUrl,
                     onClick = { showTmLinksUrlDialog = true }
                 )
             }
@@ -299,7 +300,7 @@ fun SettingsScreen(
                 CheckboxPreference(
                     title = stringResource(R.string.pref_title_check_hardware_requirements),
                     summary = stringResource(R.string.pref_description_check_hardware_requirements),
-                    checked = model.checkHardwareEnabled,
+                    checked = state.checkHardwareEnabled,
                     onCheckedChange = { viewModel.setCheckHardwareEnabled(it) }
                 )
             }
@@ -310,7 +311,7 @@ fun SettingsScreen(
                 CheckboxPreference(
                     title = stringResource(R.string.pref_title_enable_tm_links),
                     summary = stringResource(R.string.pref_description_enable_tm_links),
-                    checked = model.tmLinksEnabled,
+                    checked = state.tmLinksEnabled,
                     onCheckedChange = { viewModel.setTmLinksEnabled(it) }
                 )
             }
@@ -320,7 +321,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = "Backup Interval",
-                    summary = model.currentBackupIntervalName,
+                    summary = state.currentBackupIntervalName,
                     onClick = { showBackupIntervalDialog = true }
                 )
             }
@@ -330,7 +331,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_logging_level),
-                    summary = model.currentLoggingLevelName,
+                    summary = state.currentLoggingLevelName,
                     onClick = { showLoggingLevelDialog = true }
                 )
             }
@@ -346,14 +347,14 @@ fun SettingsScreen(
         }
     }
 
-    model.progress?.let { progressObj ->
+    progress?.let { progressObj ->
         ProgressDialog(
-            message = progressObj.message ?: "",
-            progress = (progressObj.progress.coerceIn(0, 100).toFloat()) / 100f
+            message = progressObj.message,
+            progress = progressObj.value
         )
     }
 
-    model.releaseResult?.let { resultObj ->
+    state.releaseResult?.let { resultObj ->
         if (resultObj.release != null) {
             AlertDialog(
                 onDismissRequest = { viewModel.dismissUpdateResultDialog() },
@@ -393,7 +394,7 @@ fun SettingsScreen(
         }
     }
 
-    if (model.migrationFinished) {
+    if (state.migrationFinished) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissMigrationFinishedDialog() },
             title = {},
@@ -411,9 +412,9 @@ fun SettingsScreen(
     if (showThemeDialog) {
         ListPreferenceDialog(
             title = stringResource(R.string.pref_title_color_theme),
-            entries = model.themeNames,
-            entryValues = model.themeValues,
-            selectedValue = model.currentThemeValue,
+            entries = state.themeNames,
+            entryValues = state.themeValues,
+            selectedValue = state.currentThemeValue,
             onValueSelected = { newValue ->
                 showThemeDialog = false
                 viewModel.updateColorTheme(newValue)
@@ -423,7 +424,7 @@ fun SettingsScreen(
     }
 
     if (showTranslationFontDialog) {
-        if (model.isFontsLoading) {
+        if (state.isFontsLoading) {
             // Show a simple loading dialog if they click it before IO finishes
             AlertDialog(
                 onDismissRequest = { showTranslationFontDialog = false },
@@ -433,9 +434,9 @@ fun SettingsScreen(
         } else {
             ListPreferenceDialog(
                 title = stringResource(R.string.pref_title_translation_typeface),
-                entries = model.availableFonts.map { it.displayName },
-                entryValues = model.availableFonts.map { it.fileName },
-                selectedValue = model.currentTranslationTypefaceValue,
+                entries = state.availableFonts.map { it.displayName },
+                entryValues = state.availableFonts.map { it.fileName },
+                selectedValue = state.currentTranslationTypefaceValue,
                 onValueSelected = { newFileName ->
                     viewModel.updateTranslationTypeface(newFileName)
                     showTranslationFontDialog = false
@@ -448,9 +449,9 @@ fun SettingsScreen(
     if (showTranslationFontSizeDialog) {
         ListPreferenceDialog(
             title = stringResource(R.string.pref_title_typeface_size),
-            entries = model.fontSizeNames,
-            entryValues = model.fontSizeValues,
-            selectedValue = model.currentTranslationFontSizeValue,
+            entries = state.fontSizeNames,
+            entryValues = state.fontSizeValues,
+            selectedValue = state.currentTranslationFontSizeValue,
             onValueSelected = { newSizeValue ->
                 viewModel.updateTranslationFontSize(newSizeValue)
                 showTranslationFontSizeDialog = false
@@ -460,7 +461,7 @@ fun SettingsScreen(
     }
 
     if (showSourceFontDialog) {
-        if (model.isFontsLoading) {
+        if (state.isFontsLoading) {
             // Show a simple loading dialog if they click it before IO finishes
             AlertDialog(
                 onDismissRequest = { showSourceFontDialog = false },
@@ -470,9 +471,9 @@ fun SettingsScreen(
         } else {
             ListPreferenceDialog(
                 title = stringResource(R.string.pref_title_source_typeface),
-                entries = model.availableFonts.map { it.displayName },
-                entryValues = model.availableFonts.map { it.fileName },
-                selectedValue = model.currentSourceTypefaceValue,
+                entries = state.availableFonts.map { it.displayName },
+                entryValues = state.availableFonts.map { it.fileName },
+                selectedValue = state.currentSourceTypefaceValue,
                 onValueSelected = { newFileName ->
                     viewModel.updateSourceTypeface(newFileName)
                     showSourceFontDialog = false
@@ -485,9 +486,9 @@ fun SettingsScreen(
     if (showSourceFontSizeDialog) {
         ListPreferenceDialog(
             title = stringResource(R.string.pref_title_source_typeface_size),
-            entries = model.fontSizeNames,
-            entryValues = model.fontSizeValues,
-            selectedValue = model.currentSourceFontSizeValue,
+            entries = state.fontSizeNames,
+            entryValues = state.fontSizeValues,
+            selectedValue = state.currentSourceFontSizeValue,
             onValueSelected = { newSizeValue ->
                 viewModel.updateSourceFontSize(newSizeValue)
                 showSourceFontSizeDialog = false
@@ -499,9 +500,9 @@ fun SettingsScreen(
     if (showContentServerDialog) {
         ListPreferenceDialog(
             title = stringResource(R.string.content_server),
-            entries = model.contentServerNames,
-            entryValues = model.contentServerValues,
-            selectedValue = model.currentContentServerValue,
+            entries = state.contentServerNames,
+            entryValues = state.contentServerValues,
+            selectedValue = state.currentContentServerValue,
             onValueSelected = { newServerValue ->
                 viewModel.onContentServerChanged(newServerValue)
                 showContentServerDialog = false
@@ -513,7 +514,7 @@ fun SettingsScreen(
     if (showGitPortDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_git_server_port),
-            initialValue = model.gitServerPort,
+            initialValue = state.gitServerPort,
             onValueSaved = { newValue ->
                 viewModel.updateGitServerPort(newValue)
                 showGitPortDialog = false
@@ -525,7 +526,7 @@ fun SettingsScreen(
     if (showGogsApiDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_gogs_api),
-            initialValue = model.currentGogsApiUrl,
+            initialValue = state.currentGogsApiUrl,
             onValueSaved = { newValue ->
                 viewModel.updateGogsApiUrl(newValue)
             },
@@ -536,7 +537,7 @@ fun SettingsScreen(
     if (showMediaServerUrlDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_media_server),
-            initialValue = model.mediaServerUrl,
+            initialValue = state.mediaServerUrl,
             onValueSaved = { newValue ->
                 viewModel.updateMediaServerUrl(newValue)
                 showMediaServerUrlDialog = false
@@ -548,7 +549,7 @@ fun SettingsScreen(
     if (showReaderServerUrlDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_reader_server),
-            initialValue = model.readerServerUrl,
+            initialValue = state.readerServerUrl,
             onValueSaved = { newValue ->
                 viewModel.updateReaderServerUrl(newValue)
                 showReaderServerUrlDialog = false
@@ -560,7 +561,7 @@ fun SettingsScreen(
     if (showAccountCreationUrlDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_create_account_url),
-            initialValue = model.accountCreationUrl,
+            initialValue = state.accountCreationUrl,
             onValueSaved = { newValue ->
                 viewModel.updateAccountCreationUrl(newValue)
                 showAccountCreationUrlDialog = false
@@ -572,7 +573,7 @@ fun SettingsScreen(
     if (showLanguageUrlDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_language_url),
-            initialValue = model.languagesUrl,
+            initialValue = state.languagesUrl,
             onValueSaved = { newValue ->
                 viewModel.updateLanguageUrl(newValue)
                 showLanguageUrlDialog = false
@@ -584,7 +585,7 @@ fun SettingsScreen(
     if (showIndexSqliteUrlDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_index_sqlite_url),
-            initialValue = model.indexSqliteUrl,
+            initialValue = state.indexSqliteUrl,
             onValueSaved = { newValue ->
                 viewModel.updateIndexSqliteUrl(newValue)
                 showIndexSqliteUrlDialog = false
@@ -596,7 +597,7 @@ fun SettingsScreen(
     if (showTmLinksUrlDialog) {
         EditTextPreferenceDialog(
             title = stringResource(R.string.pref_title_tm_url),
-            initialValue = model.tmLinksUrl,
+            initialValue = state.tmLinksUrl,
             onValueSaved = { newValue ->
                 viewModel.updateTmLinksUrl(newValue)
                 showTmLinksUrlDialog = false
@@ -608,9 +609,9 @@ fun SettingsScreen(
     if (showBackupIntervalDialog) {
         ListPreferenceDialog(
             title = "Backup Interval",
-            entries = model.backupIntervalNames,
-            entryValues = model.backupIntervalValues,
-            selectedValue = model.currentBackupIntervalValue,
+            entries = state.backupIntervalNames,
+            entryValues = state.backupIntervalValues,
+            selectedValue = state.currentBackupIntervalValue,
             onValueSelected = { newIntervalValue ->
                 viewModel.updateBackupInterval(newIntervalValue)
                 showBackupIntervalDialog = false
@@ -622,9 +623,9 @@ fun SettingsScreen(
     if (showLoggingLevelDialog) {
         ListPreferenceDialog(
             title = stringResource(R.string.pref_title_logging_level),
-            entries = model.loggingLevelNames,
-            entryValues = model.loggingLevelValues,
-            selectedValue = model.currentLoggingLevelValue,
+            entries = state.loggingLevelNames,
+            entryValues = state.loggingLevelValues,
+            selectedValue = state.currentLoggingLevelValue,
             onValueSelected = { newLevelValue ->
                 viewModel.updateLoggingLevel(newLevelValue)
                 showLoggingLevelDialog = false

@@ -17,7 +17,7 @@ class ImportDraft(
         draftTranslation: ResourceContainer,
         progressListener: OnProgressListener? = null
     ): Result {
-        progressListener?.onProgress(-1, 100, context.getString(R.string.importing_draft))
+        progressListener?.onProgress(-1f, context.getString(R.string.importing_draft))
 
         val targetTranslation = translator.importDraftTranslation(
             profile.nativeSpeaker,

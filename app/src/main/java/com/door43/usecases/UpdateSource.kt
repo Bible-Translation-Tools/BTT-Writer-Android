@@ -25,9 +25,8 @@ class UpdateSource(
         var addedCount = 0
         var success = false
         var count = 0
-        var maxProgress = 100
 
-        progressListener?.onProgress(-1, maxProgress, message)
+        progressListener?.onProgress(-1f, message)
 
         var availableTranslationsAll = library.index.findTranslations(
             null,
@@ -39,11 +38,12 @@ class UpdateSource(
             -1
         )
         val previouslyUpdated = HashMap<String, Int>()
-        maxProgress = availableTranslationsAll.size
+        val total = availableTranslationsAll.size
 
         for (t in availableTranslationsAll) {
             if (++count % 16 == 0) {
-                progressListener?.onProgress(count, maxProgress, message)
+                val progress = count / total.toFloat()
+                progressListener?.onProgress(progress, message)
             }
 
             val id = t.resourceContainerSlug
@@ -55,7 +55,7 @@ class UpdateSource(
             previouslyUpdated[id] = lastModifiedOnServer
         }
 
-        progressListener?.onProgress(-1, 100, message)
+        progressListener?.onProgress(-1f, message)
 
         try {
             val server = prefRepository.getDefaultPref(
@@ -64,9 +64,9 @@ class UpdateSource(
             )
             val rootApiUrl = server + prefRepository.getRootCatalogApi()
             library.updateSources(rootApiUrl) { tag, max, complete ->
-                maxProgress = max
+                val progress = complete / max.toFloat()
                 val details = "$message $tag"
-                progressListener?.onProgress(complete, max, details)
+                progressListener?.onProgress(progress, details)
                 true
             }
             success = true
@@ -75,7 +75,7 @@ class UpdateSource(
         }
 
         if(success) { // check for changes
-            progressListener?.onProgress(-1, 100, message)
+            progressListener?.onProgress(-1f, message)
 
             availableTranslationsAll = library.index.findTranslations(
                 null,
@@ -87,12 +87,13 @@ class UpdateSource(
                 -1
             )
 
-            maxProgress = availableTranslationsAll.size
+            val total = availableTranslationsAll.size
             count = 0
 
             for (t in availableTranslationsAll) {
                 if (++count % 16 == 0) {
-                    progressListener?.onProgress(count, maxProgress, message)
+                    val progress = count / total.toFloat()
+                    progressListener?.onProgress(progress, message)
                 }
 
                 val id = t.resourceContainerSlug

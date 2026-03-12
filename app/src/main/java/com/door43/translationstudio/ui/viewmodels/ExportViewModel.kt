@@ -151,8 +151,8 @@ class ExportViewModel(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.downloading_images))
             _downloadResult.value = withContext(Dispatchers.IO) {
-                val imagesDir = downloadImages.download { progress, max, message ->
-                    _progress.postValue(ProgressHelper.Progress(message, progress, max))
+                val imagesDir = downloadImages.download { progress, message ->
+                    _progress.postValue(ProgressHelper.Progress(message, progress.toInt(), 1))
                 }
                 DownloadImages.Result(imagesDir?.exists() == true, imagesDir)
             }
@@ -171,12 +171,12 @@ class ExportViewModel(
                         targetTranslation,
                         strategy,
                         null
-                    ) { progress, max, message ->
+                    ) { progress, message ->
                         _progress.postValue(
                             ProgressHelper.Progress(
                                 message,
-                                progress,
-                                max
+                                progress.toInt(),
+                                1
                             )
                         )
                     }
@@ -192,12 +192,12 @@ class ExportViewModel(
                 _progress.value = ProgressHelper.Progress(application.getString(R.string.uploading))
                 _pullTranslationResult.value = null
                 _pushTranslationResult.value = withContext(Dispatchers.IO) {
-                    pushTargetTranslation.execute(targetTranslation) { progress, max, message ->
+                    pushTargetTranslation.execute(targetTranslation) { progress, message ->
                         _progress.postValue(
                             ProgressHelper.Progress(
                                 message,
-                                progress,
-                                max
+                                progress.toInt(),
+                                1
                             )
                         )
                     }
@@ -213,12 +213,12 @@ class ExportViewModel(
                 application.getString(R.string.registering_keys)
             )
             _registeredSSHKeys.value = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force) { progress, max, message ->
+                registerSSHKeys.execute(force) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -234,12 +234,12 @@ class ExportViewModel(
                     application.getString(R.string.creating_repository)
                 )
                 _repoCreated.value =
-                    createRepository.execute(targetTranslation) { progress, max, message ->
+                    createRepository.execute(targetTranslation) { progress, message ->
                         _progress.postValue(
                             ProgressHelper.Progress(
                                 message,
-                                progress,
-                                max
+                                progress.toInt(),
+                                1
                             )
                         )
                 }

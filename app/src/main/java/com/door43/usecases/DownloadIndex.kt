@@ -23,7 +23,7 @@ class DownloadIndex(
         var connection: HttpURLConnection? = null
         val message = context.resources.getString(R.string.downloading_index)
 
-        progressListener?.onProgress(-1, 100, message)
+        progressListener?.onProgress(-1f, message)
 
         return try {
             library.tearDown()
@@ -48,7 +48,8 @@ class DownloadIndex(
                         while ((input.read(data).also { count = it }) != -1) {
                             total += count
                             if (fileLength > 0) {
-                                progressListener?.onProgress(total, fileLength, message)
+                                val progress = total / fileLength.toFloat()
+                                progressListener?.onProgress(progress, message)
                             }
                             output.write(data, 0, count)
                         }

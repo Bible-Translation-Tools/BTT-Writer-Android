@@ -103,12 +103,12 @@ class ChooseSourcesViewModel(
             downloadItemPosition = position
             _progress.value = ProgressHelper.Progress()
             _downloadResult.value = withContext(Dispatchers.IO) {
-                downloadResourceContainers.download(sourceTranslation) { progress, max, message ->
+                downloadResourceContainers.download(sourceTranslation) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }

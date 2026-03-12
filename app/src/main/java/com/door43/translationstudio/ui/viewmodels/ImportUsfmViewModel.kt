@@ -159,7 +159,7 @@ class ImportUsfmViewModel(
         _usfm.value = null
     }
 
-    private val progressListener = OnProgressListener { progress, max, message ->
-        _progress.postValue(ProgressHelper.Progress(message, progress, max))
+    private val progressListener = OnProgressListener { progress, message ->
+        _progress.postValue(ProgressHelper.Progress(message, progress.toInt(), 1))
     }
 }

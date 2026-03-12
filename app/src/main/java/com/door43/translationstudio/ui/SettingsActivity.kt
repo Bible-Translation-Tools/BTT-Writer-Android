@@ -23,7 +23,7 @@ class SettingsActivity : BaseActivity() {
 
         setContent {
             val viewModel: SettingsViewModel = koinViewModel()
-            val model by viewModel.model.collectAsStateWithLifecycle()
+            val model by viewModel.state.collectAsStateWithLifecycle()
 
             val lightValue = resources.getString(R.string.theme_value_light)
             val darkValue = resources.getString(R.string.theme_value_dark)

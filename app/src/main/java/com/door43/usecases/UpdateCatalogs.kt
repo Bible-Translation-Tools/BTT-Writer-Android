@@ -18,7 +18,7 @@ class UpdateCatalogs(
         var success = false
         var maxProgress = 100
 
-        progressListener?.onProgress(-1, maxProgress, message)
+        progressListener?.onProgress(-1f, message)
 
         var targetLanguages = library.index.getTargetLanguages()
         val initialLanguages = HashSet<String>()
@@ -36,7 +36,8 @@ class UpdateCatalogs(
             library.updateCatalogs(updateCatalogs) { tag, max, complete ->
                 maxProgress = max
                 val details = "$message $tag"
-                progressListener?.onProgress(complete, max, details)
+                val progress = complete / maxProgress.toFloat()
+                progressListener?.onProgress(progress, details)
                 true
             }
             success = true

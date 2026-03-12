@@ -44,7 +44,7 @@ class SubmitNewLanguageRequests(
         val progressMessage = context.resources.getString(
             R.string.submitting_new_language_requests
         )
-        progressListener?.onProgress(-1, max, progressMessage)
+        progressListener?.onProgress(-1f, progressMessage)
 
         for (i in requests.indices) {
             val request = requests[i]
@@ -106,11 +106,8 @@ class SubmitNewLanguageRequests(
             } catch (e: Exception) {
                 Logger.e(this.javaClass.name, "Failed to submit the new language request", e)
             }
-            progressListener?.onProgress(
-                i+1,
-                requests.size,
-                progressMessage
-            )
+            val progress = (i+1).toFloat() / requests.size
+            progressListener?.onProgress(progress, progressMessage)
         }
     }
 

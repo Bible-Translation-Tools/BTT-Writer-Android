@@ -381,16 +381,14 @@ class ProcessUSFM {
             fileCount = 1
         }
 
-        val max = 100
         val importAmountDone = currentBook.toFloat() / fileCount
         val bookAmountDone = currentChapter.toFloat() / (chapterCount + 2)
-        val percentage = max * (importAmountDone + bookAmountDone / fileCount)
-        val percentDone = Math.round(percentage)
+        val progress = importAmountDone + bookAmountDone / fileCount
 
         if (!isMissing(bookShortName)) {
             status = "$bookShortName - $status"
         }
-        progressListener?.onProgress(percentDone, max, status)
+        progressListener?.onProgress(progress, status)
     }
 
     /**

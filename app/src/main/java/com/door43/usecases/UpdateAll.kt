@@ -16,11 +16,10 @@ class UpdateAll(
     data class Result(val success: Boolean)
 
     suspend fun execute(updateCatalogs: Boolean, progressListener: OnProgressListener? = null): Result {
-        var maxProgress = 100
         var success = false
         var overallSuccess = true
 
-        progressListener?.onProgress(-1, maxProgress, "")
+        progressListener?.onProgress(-1f, "")
 
         try {
             val server = prefRepository.getDefaultPref(
@@ -31,8 +30,8 @@ class UpdateAll(
             library.updateSources(
                 rootApiUrl
             ) { tag, max, complete ->
-                maxProgress = max
-                progressListener?.onProgress(complete, maxProgress, tag)
+                val progress = complete / max.toFloat()
+                progressListener?.onProgress(progress, tag)
                 true
             }
             success = true
@@ -43,12 +42,12 @@ class UpdateAll(
         overallSuccess = overallSuccess and success
         success = false
 
-        progressListener?.onProgress(-1, 100, "")
+        progressListener?.onProgress(-1f, "")
 
         try {
             library.updateCatalogs(updateCatalogs) { tag, max, complete ->
-                maxProgress = max
-                progressListener?.onProgress(complete, maxProgress, tag)
+                val progress = complete / max.toFloat()
+                progressListener?.onProgress(progress, tag)
                 true
             }
             success = true
@@ -59,12 +58,12 @@ class UpdateAll(
         overallSuccess = overallSuccess and success
         success = false
 
-        progressListener?.onProgress(-1, 100, "")
+        progressListener?.onProgress(-1f, "")
 
         try {
             library.updateChunks { tag, max, complete ->
-                maxProgress = max
-                progressListener?.onProgress(complete, maxProgress, tag)
+                val progress = complete / max.toFloat()
+                progressListener?.onProgress(progress, tag)
                 true
             }
             success = true

@@ -73,6 +73,7 @@ sealed interface TargetAction {
     data object OpenSourceTranslations : TargetAction
     data class SaveLastFocus(val chapterId: String, val frameId: String?) : TargetAction
     object InitLastFocus : TargetAction
+    data class ConfirmSelectedSources(val selectedItems: List<RCItem>) : TargetAction
 }
 
 class TargetTranslationViewModel(
@@ -120,6 +121,7 @@ class TargetTranslationViewModel(
             is TargetAction.LastViewMode -> setLastViewMode(action.viewMode)
             TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
             is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
+            is TargetAction.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
         }
     }
 
@@ -146,7 +148,7 @@ class TargetTranslationViewModel(
     }
 
     private fun openUsedSourceTranslations() {
-        viewModelScope.launch {
+        launchWithProgress {
             val opened = prefRepository.getOpenSourceTranslations(
                 targetTranslation.id
             )
@@ -309,9 +311,11 @@ class TargetTranslationViewModel(
         )
     }
 
-    fun confirmSelectedSources(selectedItems: List<RCItem>) {
+    private fun confirmSelectedSources(selectedItems: List<RCItem>) {
         launchWithProgress {
             val selectedIds = selectedItems.mapNotNull { it.containerSlug }.toSet()
+
+            println(selectedIds)
 
             if (selectedItems.size > 3) return@launchWithProgress
 

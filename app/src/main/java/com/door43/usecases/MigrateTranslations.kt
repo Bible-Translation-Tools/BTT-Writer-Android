@@ -46,8 +46,7 @@ class MigrateTranslations(
                 if (file.name == "cache") return@forEach
                 if (file.isDirectory) {
                     progressListener?.onProgress(
-                        -1,
-                        100,
+                        -1f,
                         context.getString(R.string.migrating_translation, file.name)
                     )
                     targetTranslationMigrator.migrate(file)
@@ -77,8 +76,7 @@ class MigrateTranslations(
                     val destFile = File(directoryProvider.backupsDir, file.name)
                     FileUtilities.copyFile(file, destFile)
                     progressListener?.onProgress(
-                        -1,
-                        100,
+                        -1f,
                         context.getString(R.string.copying_file, destFile.name)
                     )
                 }

@@ -50,7 +50,7 @@ class DownloadImages(
 
                 val outOf = context.getString(R.string.out_of)
                 val unpacking = context.getString(R.string.unpacking)
-                listener?.onProgress(0, TOTAL_FILE_COUNT, unpacking)
+                listener?.onProgress(0f, unpacking)
                 Log.i(TAG, "unpacking: ")
 
                 Zip.unzip(fullPath, tempDir)
@@ -61,6 +61,7 @@ class DownloadImages(
                     if (dir.isDirectory) {
                         for (f in dir.listFiles()!!) {
                             moveOrCopyQuietly(f, File(imagesDir, f.name))
+                            val progress = fileCount / TOTAL_FILE_COUNT.toFloat()
 
                             val message = String.format(
                                 "%s: %d %s %d",
@@ -69,7 +70,7 @@ class DownloadImages(
                                 outOf,
                                 TOTAL_FILE_COUNT
                             )
-                            listener?.onProgress(fileCount, TOTAL_FILE_COUNT, message)
+                            listener?.onProgress(progress, message)
                             // Log.i(TAG,  "Download progress - " + fileCount + " out of " + TOTAL_FILE_COUNT);
                         }
                     }
@@ -102,7 +103,7 @@ class DownloadImages(
                         max / (1024f * 1024f),
                         mbDownloaded
                     )
-                    listener.onProgress(progress.toInt(), max.toInt(), message)
+                    listener.onProgress(progress / max.toFloat(), message)
                     // Log.i(TAG,  "Download progress - " + progress + "out of " + max);
                 }
             }

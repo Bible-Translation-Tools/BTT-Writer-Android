@@ -29,10 +29,9 @@ class DownloadResourceContainers(
         onProgressListener: OnProgressListener? = null
     ): DownloadResult {
         var success = false
-        val max = 100
         val downloadedContainers = arrayListOf<ResourceContainer>()
 
-        onProgressListener?.onProgress(-1, max, "Downloading resource container")
+        onProgressListener?.onProgress(-1f, "Downloading resource container")
 
         try {
             val rc = library.download(
@@ -56,11 +55,11 @@ class DownloadResourceContainers(
                 // TODO: 11/2/16 only download these if there is an update
                 try {
                     if (translation.project.slug == "obs") {
-                        onProgressListener?.onProgress(-1, max, "Downloading obs translation words")
+                        onProgressListener?.onProgress(-1f, "Downloading obs translation words")
                         val rc = library.download(translation.language.slug, "bible-obs", "tw")
                         downloadedContainers.add(rc)
                     } else {
-                        onProgressListener?.onProgress(-1, max, "Downloading translation words")
+                        onProgressListener?.onProgress(-1f, "Downloading translation words")
                         val rc = library.download(translation.language.slug, "bible", "tw")
                         downloadedContainers.add(rc)
                     }
@@ -72,7 +71,7 @@ class DownloadResourceContainers(
                     )
                 }
                 try {
-                    onProgressListener?.onProgress(-1, max, "Downloading translation notes")
+                    onProgressListener?.onProgress(-1f, "Downloading translation notes")
                     val rc = library.download(
                         translation.language.slug,
                         translation.project.slug,
@@ -87,7 +86,7 @@ class DownloadResourceContainers(
                     )
                 }
                 try {
-                    onProgressListener?.onProgress(-1, max, "Downloading translation questions")
+                    onProgressListener?.onProgress(-1f, "Downloading translation questions")
                     val rc = library.download(
                         translation.language.slug,
                         translation.project.slug,
@@ -121,14 +120,15 @@ class DownloadResourceContainers(
 
         val maxProgress = translationIDs.size
 
-        progressListener?.onProgress(-1, maxProgress, "")
+        progressListener?.onProgress(-1f, "")
 
         for (index in 0 until maxProgress) {
             val resourceContainerSlug = translationIDs[index]
             var translation: Translation? = null
             var passSuccess = false
+            val progress = index.toFloat() / maxProgress.toFloat()
 
-            progressListener?.onProgress(index, maxProgress, resourceContainerSlug)
+            progressListener?.onProgress(progress, resourceContainerSlug)
 
             Logger.i(
                 this.javaClass.simpleName,
@@ -170,13 +170,12 @@ class DownloadResourceContainers(
                         try {
                             if (projectSlug == "obs") {
                                 passSuccess = downloadTranslationWords(
-                                    index,
+                                    progress,
                                     resourceContainerSlug,
                                     downloadedTwObsLanguages,
                                     languageSlug,
                                     "bible-obs",
                                     "OBS Words",
-                                    maxProgress,
                                     downloadedContainers,
                                     failedHelpsDownloads,
                                     failedSourceDownloads,
@@ -184,13 +183,12 @@ class DownloadResourceContainers(
                                 )
                             } else {
                                 passSuccess = downloadTranslationWords(
-                                    index,
+                                    progress,
                                     resourceContainerSlug,
                                     downloadedTwBibleLanguages,
                                     languageSlug,
                                     "bible",
                                     "Bible Words",
-                                    maxProgress,
                                     downloadedContainers,
                                     failedHelpsDownloads,
                                     failedSourceDownloads,
@@ -206,13 +204,12 @@ class DownloadResourceContainers(
                         }
 
                         passSuccess = passSuccess and downloadHelps(
-                            index,
+                            progress,
                             resourceContainerSlug,
                             languageSlug,
                             projectSlug,
                             "tn",
                             "Notes",
-                            maxProgress,
                             downloadedContainers,
                             failedHelpsDownloads,
                             failedSourceDownloads,
@@ -220,13 +217,12 @@ class DownloadResourceContainers(
                         )
 
                         passSuccess = passSuccess and downloadHelps(
-                            index,
+                            progress,
                             resourceContainerSlug,
                             languageSlug,
                             projectSlug,
                             "tq",
                             "Questions",
-                            maxProgress,
                             downloadedContainers,
                             failedHelpsDownloads,
                             failedSourceDownloads,
@@ -241,7 +237,7 @@ class DownloadResourceContainers(
             }
         }
 
-        progressListener?.onProgress(maxProgress, maxProgress, "")
+        progressListener?.onProgress(1f, "")
 
         return Result(
             downloadedContainers,
@@ -263,13 +259,12 @@ class DownloadResourceContainers(
      * @return
      */
     private suspend fun downloadTranslationWords(
-        progress: Int,
+        progress: Float,
         resourceContainerSlug: String,
         downloaded: MutableSet<String>,
         languageSlug: String,
         projectSlug: String,
         name: String,
-        maxProgress: Int,
         downloadedContainers: ArrayList<ResourceContainer>,
         failedHelpsDownloads: ArrayList<String>,
         failedSourceDownloads: ArrayList<String>,
@@ -284,7 +279,6 @@ class DownloadResourceContainers(
                 projectSlug,
                 "tw",
                 name,
-                maxProgress,
                 downloadedContainers,
                 failedHelpsDownloads,
                 failedSourceDownloads,
@@ -313,13 +307,12 @@ class DownloadResourceContainers(
      * @return
      */
     private suspend fun downloadHelps(
-        progress: Int,
+        progress: Float,
         resourceContainerSlug: String,
         languageSlug: String,
         projectSlug: String,
         resourceSlug: String,
         name: String,
-        maxProgress: Int,
         downloadedContainers: ArrayList<ResourceContainer>,
         failedHelpsDownloads: ArrayList<String>,
         failedSourceDownloads: ArrayList<String>,
@@ -348,7 +341,7 @@ class DownloadResourceContainers(
                     this.javaClass.simpleName,
                     "Loading " + name + " ID: " + help.resourceContainerSlug
                 )
-                progressListener?.onProgress(progress, maxProgress, help.resourceContainerSlug)
+                progressListener?.onProgress(progress, help.resourceContainerSlug)
                 val rc = library.download(help.language.slug, help.project.slug, help.resource.slug)
                 downloadedContainers.add(rc)
                 Logger.i(this.javaClass.simpleName, name + " download Success: " + rc.slug)

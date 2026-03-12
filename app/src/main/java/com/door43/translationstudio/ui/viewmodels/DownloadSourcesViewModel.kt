@@ -31,12 +31,12 @@ class DownloadSourcesViewModel(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _availableSources.value = withContext(Dispatchers.IO) {
-                getAvailableSources.execute(prefix) { progress, max, message ->
+                getAvailableSources.execute(prefix) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }
@@ -49,12 +49,12 @@ class DownloadSourcesViewModel(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _downloadedSources.value = withContext(Dispatchers.IO) {
-                downloadResourceContainers.download(selected) { progress, max, message ->
+                downloadResourceContainers.download(selected) { progress, message ->
                     _progress.postValue(
                         ProgressHelper.Progress(
                             message,
-                            progress,
-                            max
+                            progress.toInt(),
+                            1
                         )
                     )
                 }

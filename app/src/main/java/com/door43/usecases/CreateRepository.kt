@@ -23,7 +23,7 @@ class CreateRepository(
         targetTranslation: TargetTranslation,
         progressListener: OnProgressListener? = null
     ): Boolean {
-        progressListener?.onProgress(-1, max,"Preparing location on server")
+        progressListener?.onProgress(-1f, "Preparing location on server")
 
         val api = GogsAPI(
             prefRepo.getDefaultPref(

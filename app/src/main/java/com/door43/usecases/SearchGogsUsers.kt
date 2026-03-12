@@ -20,7 +20,7 @@ class SearchGogsUsers(
         limit: Int,
         progressListener: OnProgressListener? = null
     ): List<User> {
-        progressListener?.onProgress(-1, max, "Searching for users")
+        progressListener?.onProgress(-1f, "Searching for users")
 
         val api = GogsAPI(
             prefRepository.getDefaultPref(

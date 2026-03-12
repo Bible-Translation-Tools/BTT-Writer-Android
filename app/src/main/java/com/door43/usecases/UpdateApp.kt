@@ -18,11 +18,11 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.FileUtilities
+import kotlinx.io.IOException
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import java.io.IOException
 
 class UpdateApp(
     private val context: Context,
@@ -75,7 +75,7 @@ class UpdateApp(
             for (t in translations) {
                 try {
                     backupFiles.add(backupRC.backupResourceContainer(t))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     Logger.e("UpdateAppTask", "Failed exporting rc " + t.resourceContainerSlug)
                 }
             }
@@ -91,14 +91,14 @@ class UpdateApp(
                 directoryProvider.deployDefaultLibrary()
 
                 // restore backups
-                if (backupFiles.size > 0) Logger.i("UpdateAppTask", "Restoring backed up RCs")
+                if (backupFiles.isNotEmpty()) Logger.i("UpdateAppTask", "Restoring backed up RCs")
                 for (f in backupFiles) {
-                    // TRICKY: the backup generates closed RCs but the import requires opened RCs.
+                    // TRICKY: the backup generates closed RCs but the import requires RCs to be opened.
                     val opened = File("$f.tmp")
                     try {
                         ResourceContainer.open(f, opened)
                         library.importResourceContainer(opened)
-                    } catch (importE: java.lang.Exception) {
+                    } catch (_: Exception) {
                         Logger.e("UpdateAppTask", "Failed to restore RC from $f")
                     }
                     FileUtilities.deleteQuietly(opened)
@@ -121,7 +121,7 @@ class UpdateApp(
                 context.resources.getString(R.string.pref_default_language_url)
             )
             library.updateLanguageUrl(languageUrl)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -260,7 +260,7 @@ class UpdateApp(
      * Moved to the new object management system.
      */
     private fun upgradePre103(progressListener: OnProgressListener?) {
-        progressListener?.onProgress(-1, 100, "Updating translations")
+        progressListener?.onProgress(-1f, "Updating translations")
         Logger.i(this.javaClass.name, "Upgrading source data management from pre 103")
 
         // migrate target translations and profile
@@ -307,7 +307,7 @@ class UpdateApp(
      * Change default font to noto because most of the others do not work
      */
     private fun upgradePre87(progressListener: OnProgressListener?) {
-        progressListener?.onProgress(-1, 100, "Updating fonts")
+        progressListener?.onProgress(-1f, "Updating fonts")
         Logger.i(this.javaClass.name, "Upgrading fonts from pre 87")
 
         prefRepository.setDefaultPref(
@@ -320,7 +320,7 @@ class UpdateApp(
      * "NotoSans-Regular.ttf" font has been removed, replace with new default font
      */
     private fun upgradePre175(progressListener: OnProgressListener?) {
-        progressListener?.onProgress(-1, 100, "Updating fonts")
+        progressListener?.onProgress(-1f, "Updating fonts")
         Logger.i(this.javaClass.name, "Upgrading fonts from pre 175")
         // this has been removed, replace with new default font
         val oldDefault = "NotoSans-Regular.ttf"
