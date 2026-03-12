@@ -353,11 +353,12 @@ fun TargetTranslationScreen(
                             val readState by readVm.state.collectAsStateWithLifecycle()
 
                             ModeScreenTemplate(
+                                items = activeList,
                                 state = readState,
                                 viewModel = readVm,
                                 listState = listState,
                                 onInit = {
-                                    readVm.onAction(ReadAction.Init(activeList))
+                                    readVm.onAction(ReadAction.Init(it))
                                 }
                             ) { item ->
                                 ReadCard(
@@ -381,11 +382,12 @@ fun TargetTranslationScreen(
                             val chunkState by chunkVm.state.collectAsStateWithLifecycle()
 
                             ModeScreenTemplate(
+                                items = activeList,
                                 state = chunkState,
                                 viewModel = chunkVm,
                                 listState = listState,
                                 onInit = {
-                                    chunkVm.onAction(ChunkAction.Init(activeList))
+                                    chunkVm.onAction(ChunkAction.Init(it))
                                 }
                             ) { item ->
                                 ChunkCard(

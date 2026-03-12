@@ -268,22 +268,39 @@ class TargetTranslationViewModel(
 
     /**
      * Selects the source translation by id
+     * If the selected source is not downloaded,
+     * fallback to the first available downloaded source
      */
     private suspend fun setSelectedResourceContainer(sourceTranslationId: String) {
         withContext(Dispatchers.Default) {
-            translator.setSelectedSourceTranslation(
-                targetTranslation.id,
+            var resourceContainer = ContainerCache.get(sourceTranslationId) ?: ContainerCache.cache(
+                library,
                 sourceTranslationId
             )
-            val resourceContainer = library.index.getTranslation(
-                sourceTranslationId
-            )?.let { sourceTranslation ->
-                ContainerCache.cache(
-                    library,
-                    sourceTranslation.resourceContainerSlug
-                )
+
+            if (resourceContainer == null) {
+                val availableSources = getOpenSourceTranslations()
+                    .filter { it != sourceTranslationId }
+                    .toMutableList()
+
+                while (availableSources.isNotEmpty()) {
+                    val nextSource = availableSources.first()
+                    resourceContainer = ContainerCache.cache(library, nextSource)
+                    if (resourceContainer != null) {
+                        break
+                    } else {
+                        availableSources.removeAt(0)
+                    }
+                }
             }
-            _state.update { it.copy(resourceContainer = resourceContainer) }
+
+            resourceContainer?.let { rc ->
+                translator.setSelectedSourceTranslation(
+                    targetTranslation.id,
+                    rc.slug
+                )
+                _state.update { it.copy(resourceContainer = rc) }
+            }
 
             loadListItems()
         }
@@ -314,8 +331,6 @@ class TargetTranslationViewModel(
     private fun confirmSelectedSources(selectedItems: List<RCItem>) {
         launchWithProgress {
             val selectedIds = selectedItems.mapNotNull { it.containerSlug }.toSet()
-
-            println(selectedIds)
 
             if (selectedItems.size > 3) return@launchWithProgress
 
