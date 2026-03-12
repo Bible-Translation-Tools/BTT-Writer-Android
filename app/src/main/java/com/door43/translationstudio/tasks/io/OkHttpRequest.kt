@@ -14,8 +14,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 
 class OkHttpRequest(apiUrl: String) : RequestAPI {
     private val client: OkHttpClient
-    private val readTimeout = 5000L
-    private val connectionTimeout = 5000L
+    private val readTimeout = 30000L
+    private val connectionTimeout = 30000L
     private val baseUrl: String = apiUrl.replace("/+$".toRegex(), "")
 
     init {
