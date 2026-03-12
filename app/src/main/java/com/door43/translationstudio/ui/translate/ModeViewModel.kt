@@ -18,6 +18,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+interface ModeState<ITEM> {
+    val items: List<ITEM>
+}
+
 interface ModeAction {
     object ClearNotes : ModeAction
 }

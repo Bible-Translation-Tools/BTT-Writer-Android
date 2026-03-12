@@ -7,6 +7,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ChunkMeta
 import com.door43.translationstudio.ui.translate.ModeAction
+import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -17,9 +18,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class ChunkModeModel(
-    val items: List<ChunkItem.ChunkMode> = emptyList(),
-)
+data class ChunkState(
+    override val items: List<ChunkItem.ChunkMode> = emptyList(),
+) : ModeState<ChunkItem.ChunkMode>
 
 sealed interface ChunkAction : ModeAction {
     data class Init(val chunks: List<Chunk>) : ChunkAction
@@ -27,8 +28,8 @@ sealed interface ChunkAction : ModeAction {
 
 class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
 
-    private val _model = MutableStateFlow(ChunkModeModel())
-    val model: StateFlow<ChunkModeModel> = _model
+    private val _state = MutableStateFlow(ChunkState())
+    val state: StateFlow<ChunkState> = _state
 
     override fun onAction(action: ChunkAction) {
         when (action) {
@@ -43,7 +44,7 @@ class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
                     batch.map { async { prepareItem(it) } }
                 }.awaitAll()
             }
-            _model.update { it.copy(items = chunkItems) }
+            _state.update { it.copy(items = chunkItems) }
         }
     }
 

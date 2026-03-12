@@ -2,20 +2,13 @@ package com.door43.translationstudio.ui.translate.read
 
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewModelScope
-import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.Chunk
-import com.door43.translationstudio.core.FrameTranslation
-import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.core.TranslationFormat
-import com.door43.translationstudio.rendering.RenderNodeConverter
-import com.door43.translationstudio.rendering.RenderingGroup
-import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ChunkMeta
 import com.door43.translationstudio.ui.translate.ModeAction
+import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -27,9 +20,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
-data class ReadModeModel(
-    val items: List<ChunkItem.ReadMode> = emptyList()
-)
+data class ReadState(
+    override val items: List<ChunkItem.ReadMode> = emptyList()
+) : ModeState<ChunkItem.ReadMode>
 
 sealed interface ReadAction : ModeAction {
     data class Init(val chunks: List<Chunk>) : ReadAction
@@ -37,8 +30,8 @@ sealed interface ReadAction : ModeAction {
 
 class ReadModeViewModel : ModeViewModel<ReadAction>() {
 
-    private val _model = MutableStateFlow(ReadModeModel())
-    val model: StateFlow<ReadModeModel> = _model
+    private val _state = MutableStateFlow(ReadState())
+    val state: StateFlow<ReadState> = _state
 
     override fun onAction(action: ReadAction) {
         when (action) {
@@ -56,7 +49,7 @@ class ReadModeViewModel : ModeViewModel<ReadAction>() {
                         batch.map { async { prepareItem(it) } }
                     }.awaitAll()
             }
-            _model.update { it.copy(items = readItems) }
+            _state.update { it.copy(items = readItems) }
         }
     }
 

@@ -38,17 +38,25 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.ProgressDialog
+import com.door43.translationstudio.ui.translate.ModeScreenTemplate
+import com.door43.translationstudio.ui.translate.chunk.ChunkAction
+import com.door43.translationstudio.ui.translate.chunk.ChunkCard
+import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
-import com.door43.translationstudio.ui.translate.read.ReadModeScreen
+import com.door43.translationstudio.ui.translate.read.ReadAction
+import com.door43.translationstudio.ui.translate.read.ReadCard
+import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun TargetTranslationScreen(
@@ -63,6 +71,8 @@ fun TargetTranslationScreen(
     onChunksDone: () -> Unit,
     onSettings: () -> Unit
 ) {
+    val typography: Typography = koinInject()
+
     val state: TargetTranslationState by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
@@ -338,36 +348,60 @@ fun TargetTranslationScreen(
                 } else {
                     when (state.viewMode) {
                         TranslationViewMode.READ -> {
-                            ReadModeScreen(
-                                items = activeList,
+                            val readVm: ReadModeViewModel = koinViewModel()
+                            val readState by readVm.state.collectAsStateWithLifecycle()
+
+                            ModeScreenTemplate(
+                                state = readState,
+                                viewModel = readVm,
                                 listState = listState,
-                                sourceTabs = state.sourceTabs,
-                                selectedSource = state.resourceContainer,
-                                targetTranslation = viewModel.targetTranslation,
-                                onSourceTabClick = {
-                                    viewModel.onAction(TargetAction.SelectSource(it))
-                                },
-                                onAddNewSourceClick = { showSourceDialog = true },
-                                onRemoveSourceClick = {
-                                    viewModel.onAction(TargetAction.RemoveSource(it))
+                                onInit = {
+                                    readVm.onAction(ReadAction.Init(activeList))
                                 }
-                            )
+                            ) { item ->
+                                ReadCard(
+                                    item = item,
+                                    sourceTabs = state.sourceTabs,
+                                    typography = typography,
+                                    selectedSource = state.resourceContainer,
+                                    targetTranslation = viewModel.targetTranslation,
+                                    onSourceTabClick = {
+                                        viewModel.onAction(TargetAction.SelectSource(it))
+                                    },
+                                    onAddNewSourceClick = { showSourceDialog = true },
+                                    onRemoveSourceClick = {
+                                        viewModel.onAction(TargetAction.RemoveSource(it))
+                                    }
+                                )
+                            }
                         }
                         TranslationViewMode.CHUNK -> {
-                            ChunkModeScreen(
-                                items = activeList,
+                            val chunkVm: ChunkModeViewModel = koinViewModel()
+                            val chunkState by chunkVm.state.collectAsStateWithLifecycle()
+
+                            ModeScreenTemplate(
+                                state = chunkState,
+                                viewModel = chunkVm,
                                 listState = listState,
-                                sourceTabs = state.sourceTabs,
-                                selectedSource = state.resourceContainer,
-                                targetTranslation = viewModel.targetTranslation,
-                                onSourceTabClick = {
-                                    viewModel.onAction(TargetAction.SelectSource(it))
-                                },
-                                onAddNewSourceClick = { showSourceDialog = true },
-                                onRemoveSourceClick = {
-                                    viewModel.onAction(TargetAction.RemoveSource(it))
+                                onInit = {
+                                    chunkVm.onAction(ChunkAction.Init(activeList))
                                 }
-                            )
+                            ) { item ->
+                                ChunkCard(
+                                    item = item,
+                                    sourceTabs = state.sourceTabs,
+                                    typography = typography,
+                                    selectedSource = state.resourceContainer,
+                                    targetTranslation = viewModel.targetTranslation,
+                                    onSourceTabClick = {
+                                        viewModel.onAction(TargetAction.SelectSource(it))
+                                    },
+                                    onAddNewSourceClick = { showSourceDialog = true },
+                                    onRemoveSourceClick = {
+                                        viewModel.onAction(TargetAction.RemoveSource(it))
+                                    }
+                                )
+                            }
                         }
                         TranslationViewMode.REVIEW -> {
                             ReviewModeScreen()

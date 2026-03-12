@@ -12,7 +12,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
 fun ChunkCard(
-    chunk: ChunkItem.ChunkMode,
+    item: ChunkItem.ChunkMode,
     sourceTabs: List<SourceTabItem>,
     typography: Typography,
     selectedSource: ResourceContainer?,
@@ -28,8 +28,8 @@ fun ChunkCard(
         stackOffset = 32.dp,
         frontCard = {
             ChunkSourceCard(
-                title = chunk.sourceTitle,
-                text = chunk.meta.renderedSourceText,
+                title = item.sourceTitle,
+                text = item.meta.renderedSourceText,
                 sourceTabs = sourceTabs,
                 typography = typography,
                 selectedSource = selectedSource,
@@ -40,8 +40,8 @@ fun ChunkCard(
         },
         backCard = {
             ChunkTargetCard(
-                title = chunk.targetTitle,
-                text = chunk.meta.renderedTargetText,
+                title = item.targetTitle,
+                text = item.meta.renderedTargetText,
                 targetTranslation = targetTranslation,
                 typography = typography
             )

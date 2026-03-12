@@ -12,7 +12,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
 fun ReadCard(
-    chapter: ChunkItem.ReadMode,
+    item: ChunkItem.ReadMode,
     sourceTabs: List<SourceTabItem>,
     typography: Typography,
     selectedSource: ResourceContainer?,
@@ -28,8 +28,8 @@ fun ReadCard(
         stackOffset = 32.dp,
         frontCard = {
             ReadSourceCard(
-                title = chapter.sourceTitle,
-                text = chapter.meta.renderedSourceText,
+                title = item.sourceTitle,
+                text = item.meta.renderedSourceText,
                 sourceTabs = sourceTabs,
                 typography = typography,
                 selectedSource = selectedSource,
@@ -40,8 +40,8 @@ fun ReadCard(
         },
         backCard = {
             ReadTargetCard(
-                title = chapter.targetTitle,
-                text = chapter.meta.renderedTargetText,
+                title = item.targetTitle,
+                text = item.meta.renderedTargetText,
                 targetTranslation = targetTranslation,
                 typography = typography
             )
