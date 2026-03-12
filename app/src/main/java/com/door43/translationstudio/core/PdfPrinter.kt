@@ -63,6 +63,7 @@ class PdfPrinter(
     private val licenseFont: Font
     private val sourceContainer: ResourceContainer?
     private val superScriptFont: Font
+    private val footnoteFont: Font
     private val baseFont: BaseFont
     private val licenseBaseFont: BaseFont
     private var includeMedia = true
@@ -107,6 +108,12 @@ class PdfPrinter(
         subFont = Font(baseFont, targetLanguageFontSize, Font.ITALIC)
         superScriptFont = Font(baseFont, targetLanguageFontSize * 0.9f, Font.BOLD)
         superScriptFont.setColor(94, 94, 94)
+        footnoteFont = Font(
+            baseFont,
+            targetLanguageFontSize * 0.7f,
+            Font.NORMAL,
+            BaseColor.BLUE
+        )
 
         licenseBaseFont =
             BaseFont.createFont(licenseFontPath, BaseFont.IDENTITY_H, true)
@@ -454,13 +461,18 @@ class PdfPrinter(
 
                 chapterFootnotes.forEachIndexed { index, content ->
                     val fnIndex = index + 1
-                    val fnId = "${c.id}-$fnIndex"
+                    val fnId = "footnote-${c.id}-$fnIndex"
+                    val sourceId = "source-$fnId"
+
                     val p = Paragraph()
                     p.spacingAfter = 2f
                     p.indentationLeft = DEFAULT_INDENT_SPACING
 
-                    val numChunk = Chunk("$fnIndex. ", superScriptFont)
-                    numChunk.setLocalDestination("footnote-$fnId")
+                    val numChunk = Chunk("$fnIndex. ", footnoteFont).apply {
+                        textRise = targetLanguageFontSize / 2.5f
+                        setLocalGoto(sourceId)
+                        setLocalDestination(fnId)
+                    }
 
                     p.add(numChunk)
                     p.add(Chunk(content, bodyFont))
@@ -904,12 +916,6 @@ class PdfPrinter(
         val footnotes: MutableList<String>
     ) {
         val italicFont = Font(baseFont, targetLanguageFontSize, Font.ITALIC)
-        val footnoteFont = Font(
-            baseFont,
-            targetLanguageFontSize * 0.7f,
-            Font.NORMAL,
-            BaseColor.BLUE
-        )
 
         private var currentParagraph = createNewParagraph()
         private var currentFont = bodyFont
@@ -1045,12 +1051,14 @@ class PdfPrinter(
         private fun startFootnote() {
             inFootnote = true
             val index = footnotes.size + 1
-            val id = "$chapterId-$index"
+            val fnId = "footnote-$chapterId-$index"
+            val sourceId = "source-$fnId"
 
             val chunk = Chunk("$index", footnoteFont).apply {
                 textRise = targetLanguageFontSize / 2.5f
                 setUnderline(0.1f, 2.5f)
-                setLocalGoto("footnote-$id")
+                setLocalGoto(fnId)
+                setLocalDestination(sourceId)
             }
             val spacer = Chunk(" ")
             currentParagraph.add(chunk)
