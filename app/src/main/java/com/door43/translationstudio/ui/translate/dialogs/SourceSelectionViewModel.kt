@@ -84,7 +84,6 @@ class SourceSelectionViewModel(
     }
 
     private fun loadAvailableSources() {
-        println("DEBUG: LoadAvailableSources started")
         launchWithProgress { handle ->
             val rcItems = withContext(Dispatchers.IO) {
                 val items = arrayListOf<RCItem>()
@@ -115,7 +114,6 @@ class SourceSelectionViewModel(
                 }
                 items
             }
-            println("DEBUG: Found ${rcItems.size} sources")
             _state.update {
                 it.copy(sources = rcItems)
             }

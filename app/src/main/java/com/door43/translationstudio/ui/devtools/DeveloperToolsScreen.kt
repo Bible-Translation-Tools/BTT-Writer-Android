@@ -54,7 +54,8 @@ fun DeveloperToolsScreen(
     onDeleteLibrary: () -> Unit,
     onCalculateSystemResources: () -> Unit
 ) {
-    val model by viewModel.model.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val clipboardManager = LocalClipboard.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -90,8 +91,8 @@ fun DeveloperToolsScreen(
         }
     }
 
-    LaunchedEffect(showLogDialog, model.logs) {
-        if (showLogDialog && model.logs.isEmpty()) {
+    LaunchedEffect(showLogDialog, state.logs) {
+        if (showLogDialog && state.logs.isEmpty()) {
             snackbarHostState.showSnackbar(noLogsString)
             showLogDialog = false
         }
@@ -139,7 +140,7 @@ fun DeveloperToolsScreen(
             }
 
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(model.tools) { tool ->
+                items(state.tools) { tool ->
                     ToolListItem(tool = tool)
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
@@ -147,7 +148,7 @@ fun DeveloperToolsScreen(
         }
     }
 
-    if (model.keysRegenerated == true) {
+    if (state.keysRegenerated == true) {
         AlertDialog(
             onDismissRequest = viewModel::clearKeysRegenerated,
             title = { Text(stringResource(R.string.success)) },
@@ -160,9 +161,9 @@ fun DeveloperToolsScreen(
         )
     }
 
-    if (showLogDialog && model.logs.isNotEmpty()) {
+    if (showLogDialog && state.logs.isNotEmpty()) {
         ErrorLogDialog(
-            logs = model.logs,
+            logs = state.logs,
             onEmptyLog = {
                 Logger.flush()
                 showLogDialog = false
@@ -184,10 +185,10 @@ fun DeveloperToolsScreen(
         )
     }
 
-    model.progress?.let { progress ->
+    progress?.let { progress ->
         ProgressDialog(
-            message = progress.message ?: stringResource(R.string.loading),
-            progress = progress.progress.toFloat()
+            message = progress.message,
+            progress = progress.value
         )
     }
 }

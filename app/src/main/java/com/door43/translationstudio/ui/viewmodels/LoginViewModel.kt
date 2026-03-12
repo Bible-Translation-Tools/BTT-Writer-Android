@@ -1,42 +1,43 @@
 package com.door43.translationstudio.ui.viewmodels
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.core.ProgressManager
+import com.door43.translationstudio.core.ProgressOwner
+import com.door43.translationstudio.core.TaskHandle
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.GogsLogin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class LoginModel(
-    val result: GogsLogin.LoginResult? = null,
-    val progress: ProgressHelper.Progress? = null
+data class LoginState(
+    val result: GogsLogin.LoginResult? = null
 )
 
 class LoginViewModel(
-    application: Application,
     private val gogsLogin: GogsLogin
-) : AndroidViewModel(application) {
+) : ViewModel(), ProgressOwner {
 
-    private val _model = MutableStateFlow(LoginModel())
-    val model: StateFlow<LoginModel> = _model.asStateFlow()
+    private val progressManager = ProgressManager(viewModelScope)
+    override val progress get() = progressManager.progress
+
+    private val _state = MutableStateFlow(LoginState())
+    val state: StateFlow<LoginState> = _state.asStateFlow()
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
+    }
 
     fun login(username: String, password: String, fullName: String?) {
-        viewModelScope.launch {
-            _model.update {
-                it.copy(progress = ProgressHelper.Progress())
-            }
+        launchWithProgress {
             val result = withContext(Dispatchers.IO) {
                 gogsLogin.execute(username, password, fullName)
             }
-            _model.update {
-                it.copy(result = result, progress = null)
-            }
+            _state.update { it.copy(result = result) }
         }
     }
 }

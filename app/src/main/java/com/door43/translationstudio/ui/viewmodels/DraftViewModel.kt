@@ -1,17 +1,20 @@
 package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ProgressManager
+import com.door43.translationstudio.core.ProgressOwner
+import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.rendering.Clickables
-import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.RenderNodeConverter
-import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.ImportDraft
 import com.door43.util.sortNumerically
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +25,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONException
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.SourceLanguage
 import org.unfoldingword.door43client.models.Translation
@@ -33,22 +38,29 @@ data class ChapterContent(
     val textNodes: List<TextNode> = emptyList()
 )
 
-data class DraftModel(
+data class DraftState(
     val draftTranslations: List<Translation> = emptyList(),
     val importResult: ImportDraft.Result? = null,
-    val progress: ProgressHelper.Progress? = null,
     val chapterContent: ChapterContent? = null
 )
 
 class DraftViewModel (
-    private val application: Application,
     private val translator: Translator,
     private val library: Door43Client,
     private val importDraft: ImportDraft
-) : AndroidViewModel(application) {
+) : ViewModel(), KoinComponent, ProgressOwner {
 
-    private val _model = MutableStateFlow(DraftModel())
-    val model: StateFlow<DraftModel> = _model.asStateFlow()
+    private val application: Application by inject()
+
+    private val progressManager = ProgressManager(viewModelScope)
+    override val progress get() = progressManager.progress
+
+    private val _state = MutableStateFlow(DraftState())
+    val state: StateFlow<DraftState> = _state.asStateFlow()
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
+    }
 
     fun loadDraftTranslations(targetTranslationId: String?) {
         viewModelScope.launch {
@@ -64,7 +76,7 @@ class DraftViewModel (
                         -1
                     ).filter { it.resource.slug != "udb" }
 
-                    _model.update {
+                    _state.update {
                         it.copy(draftTranslations = translations)
                     }
                 }
@@ -73,18 +85,13 @@ class DraftViewModel (
     }
 
     fun importDraft(sourceContainer: ResourceContainer) {
-        viewModelScope.launch {
-            _model.update {
-                it.copy(progress = ProgressHelper.Progress(
-                application.getString(R.string.please_wait)
-                ))
-            }
+        launchWithProgress(
+            application.getString(R.string.please_wait)
+        ) {
             val result = withContext(Dispatchers.IO) {
                 importDraft.execute(sourceContainer)
             }
-            _model.update {
-                it.copy(importResult = result, progress = null)
-            }
+            _state.update { it.copy(importResult = result) }
         }
     }
 
@@ -140,7 +147,7 @@ class DraftViewModel (
                 target = true
             )
             renderer.setSuppressLeadingMajorSectionHeadings(true)
-            heading = renderer.getLeadingMajorSectionHeading(chapterBody).toString()
+            heading = renderer.getLeadingMajorSectionHeading(chapterBody)
         } else {
             sourceRendering.addEngine(renderingProvider.createDefaultRenderer())
         }

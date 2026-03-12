@@ -27,8 +27,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.components.ProgressDialog
 import com.door43.translationstudio.ui.viewmodels.ChapterContent
 import com.door43.translationstudio.ui.viewmodels.DraftViewModel
@@ -42,14 +42,15 @@ fun DraftScreen(
     renderingProvider: RenderingProvider,
     onFinish: () -> Unit
 ) {
-    val model by viewModel.model.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var showNoteDialog by remember { mutableStateOf<String?>(null) }
 
-    val draftData = remember(model.draftTranslations) {
-        model.draftTranslations.firstOrNull()?.let { draft ->
+    val draftData = remember(state.draftTranslations) {
+        state.draftTranslations.firstOrNull()?.let { draft ->
             val container = viewModel.getResourceContainer(draft.resourceContainerSlug)
             val language = container?.let { viewModel.getSourceLanguage(it) }
             if (container != null && language != null) {
@@ -58,8 +59,8 @@ fun DraftScreen(
         }
     }
 
-    LaunchedEffect(model.importResult) {
-        model.importResult?.let { result ->
+    LaunchedEffect(state.importResult) {
+        state.importResult?.let { result ->
             if (result.targetTranslation != null) {
                 onFinish()
             } else {
@@ -68,8 +69,8 @@ fun DraftScreen(
         }
     }
 
-    LaunchedEffect(model.draftTranslations) {
-        if (model.draftTranslations.isEmpty()) {
+    LaunchedEffect(state.draftTranslations) {
+        if (state.draftTranslations.isEmpty()) {
             onFinish()
         }
     }
@@ -173,10 +174,10 @@ fun DraftScreen(
         )
     }
 
-    model.progress?.let { progress ->
+    progress?.let { progress ->
         ProgressDialog(
-            message = progress.message ?: stringResource(R.string.loading),
-            progress = progress.progress.toFloat()
+            message = progress.message,
+            progress = progress.value
         )
     }
 }

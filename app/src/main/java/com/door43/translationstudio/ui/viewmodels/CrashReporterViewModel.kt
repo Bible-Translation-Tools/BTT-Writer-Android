@@ -1,10 +1,13 @@
 package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.core.ProgressManager
+import com.door43.translationstudio.core.ProgressOwner
+import com.door43.translationstudio.core.TaskHandle
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.UploadCrashReport
@@ -13,69 +16,67 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-data class CrashModel(
+data class CrashState(
     val result: CheckForLatestRelease.Result? = null,
-    val progress: ProgressHelper.Progress? = null,
     val crashReportUploaded: Boolean? = null
 )
 
 class CrashReporterViewModel(
-    private val application: Application,
     private val checkForLatestRelease: CheckForLatestRelease,
     private val downloadLatestRelease: DownloadLatestRelease,
     private val uploadCrashReport: UploadCrashReport
-) : AndroidViewModel(application) {
+) : ViewModel(), KoinComponent, ProgressOwner {
 
-    private val _model = MutableStateFlow(CrashModel())
-    val model: StateFlow<CrashModel> = _model.asStateFlow()
+    private val application: Application by inject()
+
+    private val progressManager = ProgressManager(viewModelScope)
+    override val progress get() = progressManager.progress
+
+    private val _state = MutableStateFlow(CrashState())
+    val state: StateFlow<CrashState> = _state.asStateFlow()
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
+    }
 
     fun checkForLatestRelease() {
-        viewModelScope.launch {
-            _model.update {
-                it.copy(progress = ProgressHelper.Progress(
-                    application.resources.getString(R.string.checking_for_updates)
-                ))
-            }
+        launchWithProgress(
+            application.resources.getString(R.string.checking_for_updates)
+        ) {
             val result = withContext(Dispatchers.IO) {
                 checkForLatestRelease.execute()
             }
-            _model.update {
-                it.copy(result = result, progress = null)
+            _state.update {
+                it.copy(result = result)
             }
         }
     }
 
     fun uploadCrashReport(message: String) {
-        viewModelScope.launch {
-            _model.update {
-                it.copy(progress = ProgressHelper.Progress(
-                    application.resources.getString(R.string.uploading)
-                ))
-            }
+        launchWithProgress(
+            application.resources.getString(R.string.uploading)
+        ) {
             val uploaded = withContext(Dispatchers.IO) {
                 uploadCrashReport.execute(message)
             }
-            _model.update {
-                it.copy(crashReportUploaded = uploaded, progress = null)
+            _state.update {
+                it.copy(crashReportUploaded = uploaded)
             }
         }
     }
 
     fun downloadLatestRelease() {
-        _model.value.result?.release?.let { release ->
-            viewModelScope.launch {
-                _model.update {
-                    it.copy(progress = ProgressHelper.Progress(
-                        application.resources.getString(R.string.downloading)
-                    ))
-                }
+        _state.value.result?.release?.let { release ->
+            launchWithProgress(
+                application.resources.getString(R.string.downloading)
+            ) {
                 withContext(Dispatchers.IO) {
                     downloadLatestRelease.execute(release)
                 }
-                _model.update { it.copy(progress = null) }
             }
         }
     }

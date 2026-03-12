@@ -50,6 +50,9 @@ fun LoginScreen(
     onLoginSuccess: (user: User) -> Unit,
     onCancel: () -> Unit
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
+
     val keyboardController = LocalSoftwareKeyboardController.current
 
     var username by rememberSaveable { mutableStateOf("") }
@@ -58,10 +61,8 @@ fun LoginScreen(
     
     var errorMessageId by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val model by viewModel.model.collectAsStateWithLifecycle()
-
-    LaunchedEffect(model.result) {
-        model.result?.let { result ->
+    LaunchedEffect(state.result) {
+        state.result?.let { result ->
             if (result.user != null) {
                 onLoginSuccess(result.user)
             } else {
@@ -152,10 +153,10 @@ fun LoginScreen(
         }
     }
 
-    model.progress?.let { progress ->
+    progress?.let { progress ->
         ProgressDialog(
-            message = progress.message ?: stringResource(R.string.loading),
-            progress = progress.progress.toFloat()
+            message = progress.message,
+            progress = progress.value
         )
     }
 

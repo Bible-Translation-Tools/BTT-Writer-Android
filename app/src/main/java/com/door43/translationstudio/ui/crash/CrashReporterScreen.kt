@@ -43,10 +43,11 @@ fun CrashReporterScreen(
     var showUpdateAvailableDialog by remember { mutableStateOf(false) }
     var showUploadErrorDialog by remember { mutableStateOf(false) }
 
-    val model by viewModel.model.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
-    LaunchedEffect(model.result) {
-        model.result?.let { result ->
+    LaunchedEffect(state.result) {
+        state.result?.let { result ->
             if (result.release != null) {
                 showUpdateAvailableDialog = true
             } else {
@@ -55,8 +56,8 @@ fun CrashReporterScreen(
         }
     }
 
-    LaunchedEffect(model.crashReportUploaded) {
-        model.crashReportUploaded?.let { uploaded ->
+    LaunchedEffect(state.crashReportUploaded) {
+        state.crashReportUploaded?.let { uploaded ->
             if (uploaded) {
                 onFlushAndSplash()
             } else {
@@ -188,10 +189,10 @@ fun CrashReporterScreen(
         )
     }
 
-    model.progress?.let { progress ->
+    progress?.let { progress ->
         ProgressDialog(
-            message = progress.message ?: stringResource(R.string.loading),
-            progress = progress.progress.toFloat()
+            message = progress.message,
+            progress = progress.value
         )
     }
 }

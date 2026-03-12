@@ -75,7 +75,6 @@ fun SourceSelectionDialog(
     var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
 
     val uiState by remember(state.sources, searchQuery) {
-        println("DEBUG: derivedStateOf block triggered. Sources: ${state.sources.size}")
         derivedStateOf {
             prepareSourceState(
                 sources = state.sources,
@@ -250,7 +249,6 @@ private fun prepareSourceState(
     availableString: String,
     availableOnlineString: String
 ): SourceSelectionState {
-    println("DEBUG: preparing source state. ${sources.size} sources")
     val filtered = if (searchText.isBlank()) {
         sources
     } else {
