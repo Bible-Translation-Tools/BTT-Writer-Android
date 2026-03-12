@@ -19,10 +19,15 @@ sealed class TextNode {
      * @param endVerse The last verse in a range, or **0** if this is a single verse.
      * @param pinned When true, display as a pinned icon (tap-to-navigate UI); when false, display as plain number text.
      * @param machineReadable The raw source-format string (e.g. `\v 1 ` for USFM, `<verse number="1" style="v"/>` for USX).
-     *   Empty string for synthesised missing-verse markers. Used by [Translator.compileTranslation] to reconstruct
+     *   Empty string for synthesized missing-verse markers.
      *   the machine-readable form after drag-and-drop.
      */
-    data class VerseMarker(val startVerse: Int, val endVerse: Int, val pinned: Boolean, val machineReadable: String = "") : TextNode()
+    data class VerseMarker(
+        val startVerse: Int,
+        val endVerse: Int,
+        val pinned: Boolean,
+        val machineReadable: String = ""
+    ) : TextNode()
 
     // TODO: Consider adding a stable id/verseRef field here if NoteMarker needs to be
     //       serialised (e.g. SavedStateHandle, analytics). Currently all fields are display strings.
@@ -33,7 +38,7 @@ sealed class TextNode {
         val notes: String,
         val noteStyle: NoteStyle,
         val highlighted: Boolean = false,
-        val machineReadable: String = ""  // The raw source-format string (e.g. `\f + \ft ... \f*` for USFM)
+        val machineReadable: String = ""
     ) : TextNode()
 
     /** A paragraph break with optional indent. */
@@ -64,9 +69,9 @@ sealed class TextNode {
 enum class NodeStyle {
     BOLD,
     ITALIC,
-    BOLD_CENTER,       // Major/minor section headings
-    ITALIC_RIGHT,      // Selah / right-aligned poetic lines
-    NORMAL,            // Explicit reset to normal (poetic lines)
+    BOLD_CENTER,
+    ITALIC_RIGHT,
+    NORMAL,
 }
 
 enum class NoteStyle {

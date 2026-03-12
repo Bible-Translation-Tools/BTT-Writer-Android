@@ -21,6 +21,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 import com.door43.translationstudio.ui.viewmodels.SourceTabItem
 import org.koin.androidx.compose.koinViewModel
@@ -41,6 +42,7 @@ fun ReadModeScreen(
     val viewModel: ReadModeViewModel = koinViewModel()
 
     val model by viewModel.model.collectAsStateWithLifecycle()
+    val footnote by viewModel.footnote.collectAsStateWithLifecycle()
 
     val typography: Typography = koinInject()
 
@@ -80,13 +82,14 @@ fun ReadModeScreen(
         }
     }
 
-    model.notes?.let { notes ->
+    footnote?.let { note ->
+        println("${note.start} - ${note.end}")
         AlertDialog(
-            onDismissRequest = { viewModel.onAction(ReadAction.ClearNotes) },
+            onDismissRequest = { viewModel.onSharedAction(ModeAction.ClearNotes) },
             title = { Text(stringResource(R.string.title_footnote)) },
-            text = { Text(notes) },
+            text = { Text(note.text) },
             confirmButton = {
-                TextButton(onClick = { viewModel.onAction(ReadAction.ClearNotes) }) {
+                TextButton(onClick = { viewModel.onSharedAction(ModeAction.ClearNotes) }) {
                     Text(stringResource(R.string.dismiss))
                 }
             }

@@ -2,8 +2,7 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.graphics.Typeface
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.application
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
@@ -36,6 +35,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONException
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
@@ -75,14 +76,15 @@ sealed interface TargetAction {
 }
 
 class TargetTranslationViewModel(
-    application: Application,
     private val translator: Translator,
     private val renderHelps: RenderHelps,
     private val library: Door43Client,
     private val prefRepository: IPreferenceRepository,
     private val typography: Typography,
     private val assetsProvider: AssetsProvider
-) : AndroidViewModel(application), ProgressOwner {
+) : ViewModel(), KoinComponent, ProgressOwner {
+
+    private val application: Application by inject()
 
     private val progressManager = ProgressManager(viewModelScope)
     override val progress get() = progressManager.progress

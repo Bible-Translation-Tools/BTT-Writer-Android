@@ -1,4 +1,3 @@
-// rendering/adapter/ComposeTextAdapter.kt
 package com.door43.translationstudio.rendering.adapter
 
 import androidx.compose.foundation.text.appendInlineContent
@@ -36,9 +35,9 @@ object ComposeTextAdapter {
         nodes: List<TextNode>,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
-        noteColor: Color = Color(0xFFFFD700), // amber
+        noteColor: Color = Color(0xFFFFD700),
         onVerseClick: (TextNode.VerseMarker) -> Unit = {},
-        onNoteClick: (TextNode.NoteMarker) -> Unit = {}
+        onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit = {_, _, _ ->}
     ): AnnotatedString = buildAnnotatedString {
 
         var currentPoeticalLineIndent = 0  // Track current poetic line indent level
@@ -59,7 +58,9 @@ object ComposeTextAdapter {
                 isFirstElementOfPoeticLine = false
                 verseMarkerAddedIndentation = false
                 lastWasPoeticLineMarker = false
-            } else if (node is TextNode.VerseMarker && isFirstElementOfPoeticLine && currentPoeticalLineIndent > 0) {
+            } else if (node is TextNode.VerseMarker
+                && isFirstElementOfPoeticLine
+                && currentPoeticalLineIndent > 0) {
                 // Verse marker as first element in poetic line will add indentation
                 verseMarkerAddedIndentation = true
                 lastWasPoeticLineMarker = false
@@ -72,7 +73,9 @@ object ComposeTextAdapter {
             }
 
             // Pass isFirstElementOfPoetic=true only for verse markers that are first, not for text nodes
-            val isFirstForNode = if (node is TextNode.VerseMarker) isFirstElementOfPoeticLine else false
+            val isFirstForNode = if (node is TextNode.VerseMarker) {
+                isFirstElementOfPoeticLine
+            } else false
 
             appendNode(
                 node = node,
@@ -94,14 +97,16 @@ object ComposeTextAdapter {
         verseColor: Color,
         noteColor: Color,
         onVerseClick: (TextNode.VerseMarker) -> Unit,
-        onNoteClick: (TextNode.NoteMarker) -> Unit,
+        onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit,
         poeticalLineIndent: Int = 0,
         isFirstElementOfPoetic: Boolean = false,
         verseMarkerAddedIndentation: Boolean = false
     ) {
         when (node) {
             is TextNode.Text -> {
-                if (poeticalLineIndent > 0 && !verseMarkerAddedIndentation && node.content.trim().isNotEmpty()) {
+                if (poeticalLineIndent > 0
+                    && !verseMarkerAddedIndentation
+                    && node.content.trim().isNotEmpty()) {
                     val padding = "    ".repeat(poeticalLineIndent)
                     append(padding)
                 }
@@ -158,7 +163,9 @@ object ComposeTextAdapter {
             }
 
             is TextNode.VerseMarker -> {
-                val label = if (node.endVerse > 0) "${node.startVerse}-${node.endVerse}" else "${node.startVerse}"
+                val label = if (node.endVerse > 0) {
+                    "${node.startVerse}-${node.endVerse}"
+                } else "${node.startVerse}"
                 val start = length
 
                 if (node.pinned) {
@@ -177,7 +184,9 @@ object ComposeTextAdapter {
                 // Click handler
                 if (node.pinned) {
                     addLink(
-                        LinkAnnotation.Clickable(tag = "VERSE_${node.startVerse}") { onVerseClick(node) },
+                        LinkAnnotation.Clickable(
+                            tag = "VERSE_${node.startVerse}"
+                        ) { onVerseClick(node) },
                         start = start,
                         end = end
                     )
@@ -206,7 +215,9 @@ object ComposeTextAdapter {
                 val end = length
 
                 addLink(
-                    LinkAnnotation.Clickable(tag = "NOTE") { onNoteClick(node) },
+                    LinkAnnotation.Clickable(tag = "NOTE") {
+                        onNoteClick(node, start, end)
+                    },
                     start = start,
                     end = end
                 )
@@ -232,13 +243,15 @@ object ComposeTextAdapter {
                 }
 
                 val start = length
-                pushStyle(SpanStyle(color = Color.Blue)) // Or extract to parameter
+                pushStyle(SpanStyle(color = Color.Blue))
                 append(title)
                 pop()
                 val end = length
 
                 addLink(
-                    LinkAnnotation.Clickable(tag = tag) { /* Hook up external link listener if needed */ },
+                    LinkAnnotation.Clickable(tag = tag) {
+                        // Hook up external link listener if needed
+                    },
                     start = start,
                     end = end
                 )
@@ -261,7 +274,14 @@ object ComposeTextAdapter {
                 addStyle(ParagraphStyle(textAlign = TextAlign.Right), start, end)
             }
             NodeStyle.NORMAL ->
-                addStyle(SpanStyle(fontWeight = FontWeight.Normal, fontStyle = FontStyle.Normal), start, end)
+                addStyle(
+                    SpanStyle(
+                        fontWeight = FontWeight.Normal,
+                        fontStyle = FontStyle.Normal
+                    ),
+                    start,
+                    end
+                )
         }
     }
 }
