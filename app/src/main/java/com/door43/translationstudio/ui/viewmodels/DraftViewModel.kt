@@ -12,6 +12,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.launchWithProgress
@@ -143,7 +144,7 @@ class DraftViewModel (
             val renderer = renderingProvider.setupRenderingGroup(
                 bodyFormat,
                 sourceRendering,
-                pinVerses = false,
+                verseDisplay = VerseDisplay.NUMBER,
                 target = true
             )
             renderer.setSuppressLeadingMajorSectionHeadings(true)

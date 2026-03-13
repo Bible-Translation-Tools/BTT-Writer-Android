@@ -19,11 +19,11 @@ import java.util.regex.Pattern
  * No Android framework code lives in this file.
  */
 class USFMRenderer(
-    private val pinVerses: Boolean = false
+    private val verseDisplay: VerseDisplay = VerseDisplay.NUMBER
 ) : ClickableRenderingEngine() {
 
     private var renderParagraphs = true
-    private var renderVerses = true
+    private var renderVerses = verseDisplay != VerseDisplay.RAW
     private var search: String? = null
     private var highlightColor = 0
     private var expectedVerseRange = IntArray(0)
@@ -326,7 +326,16 @@ class USFMRenderer(
         val matcher = Pattern.compile(USFMVerseSpan.PATTERN).matcher(text)
         val foundVerses = mutableListOf<Int>()
         while (matcher.find()) {
-            if (!renderVerses) continue
+            if (!renderVerses) {
+                // RAW mode: claim the range as plain text so stripRemainingMarkers won't eat it
+                tokens.add(
+                    Token(
+                        matcher.start(), matcher.end(),
+                        listOf(TextNode.Text(text.substring(matcher.start(), matcher.end())))
+                    )
+                )
+                continue
+            }
             val verseStr = matcher.group(1) ?: continue
             val parts = verseStr.split("-")
             val startVerse = parts[0].toIntOrNull() ?: continue
@@ -349,7 +358,7 @@ class USFMRenderer(
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.VerseMarker(startVerse, endVerse, pinVerses, text.substring(matcher.start(), matcher.end())))
+                    listOf(TextNode.VerseMarker(startVerse, endVerse, verseDisplay == VerseDisplay.PIN, text.substring(matcher.start(), matcher.end())))
                 )
             )
         }
@@ -501,13 +510,13 @@ class USFMRenderer(
         if (expectedVerseRange.size == 1) {
             val v = expectedVerseRange[0]
             if (!existingVerses.contains(v)) {
-                missing.add(TextNode.VerseMarker(v, 0, pinVerses, "\\v $v "))
+                missing.add(TextNode.VerseMarker(v, 0, verseDisplay == VerseDisplay.PIN, "\\v $v "))
                 addedMissingVerse = true
             }
         } else if (expectedVerseRange.size == 2) {
             for (v in expectedVerseRange[0]..expectedVerseRange[1]) {
                 if (!existingVerses.contains(v)) {
-                    missing.add(TextNode.VerseMarker(v, 0, pinVerses, "\\v $v "))
+                    missing.add(TextNode.VerseMarker(v, 0, verseDisplay == VerseDisplay.PIN, "\\v $v "))
                     addedMissingVerse = true
                 }
             }

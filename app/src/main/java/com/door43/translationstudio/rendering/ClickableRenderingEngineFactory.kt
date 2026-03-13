@@ -8,16 +8,16 @@ import com.door43.translationstudio.core.TranslationFormat
 object ClickableRenderingEngineFactory {
 
     /**
-     * Create appropriate rendering engine for format using a pinVerses flag.
+     * Create appropriate rendering engine for format using a verse display mode.
      * @param format
      * @param defaultFormat
-     * @param pinVerses true if verse markers should be pinned (i.e. clickable)
+     * @param verseDisplay how verse markers should be displayed
      * @return
      */
     fun create(
         format: TranslationFormat,
         defaultFormat: TranslationFormat,
-        pinVerses: Boolean = false
+        verseDisplay: VerseDisplay = VerseDisplay.NUMBER
     ): ClickableRenderingEngine {
         val resolvedFormat = if (format != TranslationFormat.USFM && format != TranslationFormat.USX) {
             defaultFormat
@@ -25,8 +25,8 @@ object ClickableRenderingEngineFactory {
             format
         }
         return when (resolvedFormat) {
-            TranslationFormat.USFM -> USFMRenderer(pinVerses = pinVerses)
-            TranslationFormat.USX -> USXRenderer(pinVerses = pinVerses)
+            TranslationFormat.USFM -> USFMRenderer(verseDisplay = verseDisplay)
+            TranslationFormat.USX -> USXRenderer(verseDisplay = verseDisplay)
             else -> throw IllegalArgumentException("Unsupported rendering format: $resolvedFormat")
         }
     }

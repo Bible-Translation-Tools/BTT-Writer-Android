@@ -11,6 +11,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
@@ -62,7 +63,7 @@ class ReviewModeViewModel(
             RenderingProvider().setupRenderingGroup(
                 format,
                 renderingGroup,
-                pinVerses = false,
+                verseDisplay = VerseDisplay.NUMBER,
                 target = false
             )
             val renderNodes = renderingGroup.startNodes()

@@ -191,10 +191,7 @@ class UsxBrokenRenderTest : KoinTest {
 
         renderingProvider.setupRenderingGroup(
             format,
-            renderingGroup,
-            null,
-            null,
-            false
+            renderingGroup
         )
 
         if (search != null) {

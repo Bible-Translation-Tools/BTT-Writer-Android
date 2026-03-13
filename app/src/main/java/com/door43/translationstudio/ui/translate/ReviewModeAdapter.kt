@@ -42,6 +42,7 @@ import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
@@ -487,7 +488,7 @@ open class ReviewModeAdapter(
             renderingProvider.setupRenderingGroup(
                 item.sourceTranslationFormat,
                 renderingGroup,
-                pinVerses = false,
+                verseDisplay = VerseDisplay.NUMBER,
                 target = false
             )
         } else {
@@ -1257,7 +1258,7 @@ open class ReviewModeAdapter(
             val renderer = renderingProvider.setupRenderingGroup(
                 format,
                 renderingGroup,
-                pinVerses = true,
+                verseDisplay = VerseDisplay.PIN,
                 target = true
             )
             val verseRange = RenderingProvider.getVerseRange(
@@ -1459,7 +1460,7 @@ open class ReviewModeAdapter(
             renderingProvider.setupRenderingGroup(
                 item.targetTranslationFormat,
                 renderingGroup,
-                pinVerses = !editable,
+                verseDisplay = if (editable) VerseDisplay.NUMBER else VerseDisplay.PIN,
                 target = true
             )
 

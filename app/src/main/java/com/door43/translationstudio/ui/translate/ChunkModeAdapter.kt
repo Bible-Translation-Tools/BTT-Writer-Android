@@ -30,6 +30,7 @@ import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
 import com.door43.translationstudio.rendering.model.TextNode
@@ -265,7 +266,7 @@ class ChunkModeAdapter(
             val renderer = renderingProvider.setupRenderingGroup(
                 format,
                 renderingGroup,
-                pinVerses = false,   // chunk mode never uses draggable pins
+                verseDisplay = VerseDisplay.NUMBER,   // chunk mode never uses draggable pins
                 target = true
             )
             renderer.setVersesEnabled(false)

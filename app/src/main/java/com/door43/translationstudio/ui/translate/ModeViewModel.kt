@@ -10,6 +10,7 @@ import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,7 +65,7 @@ abstract class ModeViewModel<T> : ViewModel(), KoinComponent {
             val renderingGroup = RenderingGroup()
             renderingGroup.init(sourceText)
             RenderingProvider().setupRenderingGroup(
-                translationFormat, renderingGroup, pinVerses = false, target = false
+                translationFormat, renderingGroup, verseDisplay = VerseDisplay.NUMBER, target = false
             )
             val renderNodes = renderingGroup.startNodes()
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
@@ -81,13 +82,17 @@ abstract class ModeViewModel<T> : ViewModel(), KoinComponent {
 
     protected fun renderTargetText(
         translationFormat: TranslationFormat,
-        targetText: String
+        targetText: String,
+        verseDisplay: VerseDisplay = VerseDisplay.RAW
     ): AnnotatedString {
         return try {
             val renderingGroup = RenderingGroup()
             renderingGroup.init(targetText)
             RenderingProvider().setupRenderingGroup(
-                translationFormat, renderingGroup, pinVerses = true, target = true
+                translationFormat,
+                renderingGroup,
+                verseDisplay,
+                target = true
             )
             val renderNodes = renderingGroup.startNodes()
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)

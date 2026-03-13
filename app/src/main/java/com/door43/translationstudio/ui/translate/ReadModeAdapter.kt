@@ -25,6 +25,7 @@ import com.door43.translationstudio.formatTitle
 import com.door43.translationstudio.rendering.ClickableRenderingEngine
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
@@ -178,7 +179,7 @@ class ReadModeAdapter(
             val renderer = renderingProvider.setupRenderingGroup(
                 bodyFormat,
                 sourceRendering,
-                pinVerses = false,   // source text never has draggable pins
+                verseDisplay = VerseDisplay.NUMBER,   // source text never has draggable pins
                 target = false
             ) as ClickableRenderingEngine
             renderer.setSuppressLeadingMajorSectionHeadings(true)
@@ -208,7 +209,7 @@ class ReadModeAdapter(
             val renderer = renderingProvider.setupRenderingGroup(
                 bodyFormat,
                 targetRendering,
-                pinVerses = false,   // read mode never has draggable pins
+                verseDisplay = VerseDisplay.NUMBER,   // read mode never has draggable pins
                 target = true
             ) as ClickableRenderingEngine
             renderer.setVersesEnabled(true)

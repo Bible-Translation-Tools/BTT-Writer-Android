@@ -16,6 +16,7 @@ import com.door43.translationstudio.formatSub
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.ui.textadapters.SpannableAdapter
@@ -115,7 +116,7 @@ class ValidationAdapter(
                             renderingProvider.setupRenderingGroup(
                                 format,
                                 renderingGroup,
-                                pinVerses = false,
+                                verseDisplay = VerseDisplay.NUMBER,
                                 target = true
                             )
                         } else {

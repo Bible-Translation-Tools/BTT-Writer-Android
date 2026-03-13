@@ -17,21 +17,21 @@ object Clickables {
     }
 
     /**
-     * Setup rendering group for translation format using a pinVerses flag.
+     * Setup rendering group for translation format using a verse display mode.
      * @param format
      * @param renderingGroup
-     * @param pinVerses true if verse markers should be pinned (i.e. clickable)
+     * @param verseDisplay how verse markers should be displayed
      * @param target - true if rendering target translations, false if source text
      * @return
      */
     fun setupRenderingGroup(
         format: TranslationFormat,
         renderingGroup: RenderingGroup,
-        pinVerses: Boolean = false,
+        verseDisplay: VerseDisplay = VerseDisplay.NUMBER,
         target: Boolean
     ): ClickableRenderingEngine {
         val defaultFormat = if (target) TranslationFormat.USFM else TranslationFormat.USX
-        val renderer = ClickableRenderingEngineFactory.create(format, defaultFormat, pinVerses)
+        val renderer = ClickableRenderingEngineFactory.create(format, defaultFormat, verseDisplay)
         renderingGroup.addEngine(renderer)
         return renderer
     }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ChunkMeta
 import com.door43.translationstudio.ui.translate.ModeAction
@@ -82,7 +83,11 @@ class ReadModeViewModel : ModeViewModel<ReadAction>() {
 
     private fun prepareTarget(chunk: Chunk): Pair<String, AnnotatedString> {
         val targetText = fetchTargetText(chunk.source, chunk.target, chunk.chapterSlug)
-        val renderedTargetText = renderTargetText(chunk.targetTranslationFormat, targetText)
+        val renderedTargetText = renderTargetText(
+            chunk.targetTranslationFormat,
+            targetText,
+            VerseDisplay.NUMBER
+        )
 
         return targetText to renderedTargetText
     }
