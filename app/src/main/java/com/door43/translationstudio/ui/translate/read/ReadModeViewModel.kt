@@ -10,7 +10,6 @@ import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
 import com.door43.translationstudio.ui.translate.Swipable
-import com.door43.translationstudio.ui.translate.SwipableAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.unfoldingword.resourcecontainer.ResourceContainer
@@ -19,11 +18,11 @@ data class ReadState(
     val test: String  = ""
 ) : ModeState
 
-sealed interface ReadAction : ModeAction, SwipableAction
+sealed interface ReadAction : ModeAction
 
 class ReadModeViewModel(
     chunks: StateFlow<List<Chunk>>
-) : ModeViewModel<SwipableAction, ReadItem>(chunks) {
+) : ModeViewModel<ReadItem>(chunks) {
 
     private val _state = MutableStateFlow(ReadState())
     val state: StateFlow<ReadState> = _state

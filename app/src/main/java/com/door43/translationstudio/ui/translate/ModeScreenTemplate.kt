@@ -20,9 +20,9 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 
 @Composable
-fun <VM : ModeViewModel<*, ITEM>,S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
+fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
     state: S,
-    viewModel: VM,
+    viewModel: ModeViewModel<ITEM>,
     listState: LazyListState,
     itemContent: @Composable (ITEM) -> Unit
 ) {
@@ -52,11 +52,15 @@ fun <VM : ModeViewModel<*, ITEM>,S : ModeState, ITEM : TranslateItem> ModeScreen
 
     footnote?.let { note ->
         AlertDialog(
-            onDismissRequest = { viewModel.onSharedAction(ModeAction.ClearNotes) },
+            onDismissRequest = {
+                viewModel.onAction(ModeAction.ClearNotes)
+            },
             title = { Text(stringResource(R.string.title_footnote)) },
             text = { Text(note.text) },
             confirmButton = {
-                TextButton(onClick = { viewModel.onSharedAction(ModeAction.ClearNotes) }) {
+                TextButton(onClick = {
+                    viewModel.onAction(ModeAction.ClearNotes)
+                }) {
                     Text(stringResource(R.string.dismiss))
                 }
             }

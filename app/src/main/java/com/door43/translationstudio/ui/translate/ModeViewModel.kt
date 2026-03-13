@@ -19,23 +19,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 
-interface ModeState
-
-interface ModeAction {
-    object ClearNotes : ModeAction
-}
-
-interface SwipableAction {
-    data class CardsSwiped(val item: Swipable, val sourceOnTop: Boolean) : SwipableAction
-}
-
 data class Footnote(
     val text: String,
     val start: Int,
     val end: Int
 )
 
-abstract class ModeViewModel<ACTION, ITEM: TranslateItem>(
+interface ModeState
+
+interface ModeAction {
+    object ClearNotes : ModeAction
+    data class CardsSwiped(val item: Swipable, val sourceOnTop: Boolean) : ModeAction
+}
+
+abstract class ModeViewModel<ITEM: TranslateItem>(
     private val chunks: StateFlow<List<Chunk>>
 ) : ViewModel(), KoinComponent {
 
@@ -55,14 +52,9 @@ abstract class ModeViewModel<ACTION, ITEM: TranslateItem>(
 
     abstract fun mapToChildType(chunks: List<Chunk>): List<ITEM>
 
-    open fun onAction(action: ACTION) {
+    open fun onAction(action: ModeAction) {
         when (action) {
-            is SwipableAction.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
-        }
-    }
-
-    fun onSharedAction(action: ModeAction) {
-        when(action) {
+            is ModeAction.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
             ModeAction.ClearNotes -> { _footnote.value = null }
         }
     }

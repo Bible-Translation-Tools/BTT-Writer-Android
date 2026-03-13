@@ -374,7 +374,7 @@ fun TargetTranslationScreen(
                                         viewModel.onAction(TargetAction.RemoveSource(it))
                                     },
                                     onCardsSwiped = {
-                                        readVm.onAction(SwipableAction.CardsSwiped(item, it))
+                                        readVm.onAction(ModeAction.CardsSwiped(item, it))
                                     }
                                 )
                             }
@@ -410,7 +410,7 @@ fun TargetTranslationScreen(
                                     },
                                     onCardsSwiped = { sourceOnTop ->
                                         chunkVm.onAction(
-                                            SwipableAction.CardsSwiped(item, sourceOnTop)
+                                            ModeAction.CardsSwiped(item, sourceOnTop)
                                         )
                                     }
                                 )

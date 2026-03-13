@@ -9,7 +9,6 @@ import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.Swipable
-import com.door43.translationstudio.ui.translate.SwipableAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,13 +17,13 @@ data class ChunkState(
     val test: String = ""
 ) : ModeState
 
-sealed interface ChunkAction : ModeAction, SwipableAction {
+sealed interface ChunkAction : ModeAction {
     data class ItemTextChanged(val item: ChunkItem, val text: String) : ChunkAction
 }
 
 class ChunkModeViewModel(
     chunks: StateFlow<List<Chunk>>
-) : ModeViewModel<SwipableAction, ChunkItem>(chunks) {
+) : ModeViewModel<ChunkItem>(chunks) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
@@ -35,7 +34,7 @@ class ChunkModeViewModel(
         }
     }
 
-    override fun onAction(action: SwipableAction) {
+    override fun onAction(action: ModeAction) {
         super.onAction(action)
         when (action) {
             is ChunkAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
