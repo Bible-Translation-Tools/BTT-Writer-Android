@@ -1,4 +1,4 @@
-package com.door43.translationstudio.rendering.adapter
+package com.door43.translationstudio.ui.textadapters
 
 import android.content.Context
 import android.graphics.Typeface
@@ -18,9 +18,11 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.FragmentVerseMarkerBinding
+import com.door43.translationstudio.rendering.adapter.NoteClickListener
+import com.door43.translationstudio.rendering.adapter.VerseClickListener
+import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
-import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.widget.LongClickableSpan
 import com.door43.widget.ViewUtil

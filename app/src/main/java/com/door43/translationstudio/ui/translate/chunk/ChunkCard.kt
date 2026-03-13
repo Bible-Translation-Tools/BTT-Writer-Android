@@ -43,7 +43,10 @@ fun ChunkCard(
                 title = item.targetTitle,
                 text = item.meta.renderedTargetText,
                 targetTranslation = targetTranslation,
-                typography = typography
+                typography = typography,
+                onTextChange = {
+                    println(it)
+                }
             )
         }
     )

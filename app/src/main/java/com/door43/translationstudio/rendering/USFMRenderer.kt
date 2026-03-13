@@ -1,6 +1,6 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.model.TextNode
@@ -8,6 +8,7 @@ import com.door43.translationstudio.ui.spannables.USFMChar
 import com.door43.translationstudio.ui.spannables.USFMNoteSpan
 import com.door43.translationstudio.ui.spannables.USFMParagraphSpan
 import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import java.util.regex.Pattern
 
 /**
@@ -28,10 +29,6 @@ class USFMRenderer(
     private var expectedVerseRange = IntArray(0)
     private var suppressLeadingMajorSectionHeadings = false
     private var addedMissingVerse = false
-
-    // -------------------------------------------------------------------------
-    // Configuration setters (no Android dependencies)
-    // -------------------------------------------------------------------------
 
     override fun setVersesEnabled(enable: Boolean) {
         renderVerses = enable
@@ -57,20 +54,14 @@ class USFMRenderer(
     override val isAddedMissingVerse: Boolean
         get() = addedMissingVerse
 
-    // -------------------------------------------------------------------------
-    // Public API — new pipeline
-    // -------------------------------------------------------------------------
-
     /**
-     * Render USFM input into a platform-agnostic List<TextNode>.
-     * This is the primary output of the new pipeline; Task 6 will make the base
-     * class return List<TextNode> directly.
+     * Render USFM input into a platform-agnostic List<RenderNode>.
      */
     override fun renderToNodes(input: String): List<RenderNode> {
         addedMissingVerse = false
         if (isStopped()) return emptyList()
 
-        // Phase 1: string pre-processing (pure String ops, no spans)
+        // string pre-processing (pure String ops, no spans)
         var text = trimWhitespace(input)
         if (isStopped()) return emptyList()
         text = stripCarriageReturns(text)
@@ -78,7 +69,7 @@ class USFMRenderer(
         text = stripChapterMarkers(text)   // strips \c N — USFM-specific
         if (isStopped()) return emptyList()
 
-        // Phase 2: collect all token matches simultaneously
+        // collect all token matches simultaneously
         val allTokens = mutableListOf<Token>()
         allTokens.addAll(findMajorSectionHeadings(text))
         allTokens.addAll(findSectionHeadings(text))
@@ -93,11 +84,11 @@ class USFMRenderer(
         allTokens.addAll(findUsfmParagraphMarkers(text))  // \p standalone markers — USFM-specific
         if (isStopped()) return emptyList()
 
-        // Phase 3: sort by position, remove overlapping tokens
+        // sort by position, remove overlapping tokens
         allTokens.sortBy { it.start }
         val tokens = removeOverlaps(allTokens)
 
-        // Phase 4: assemble node list, filling gaps with Text nodes
+        // assemble node list, filling gaps with Text nodes
         val nodes = mutableListOf<TextNode>()
         var lastIndex = 0
         for (token in tokens) {
@@ -115,10 +106,10 @@ class USFMRenderer(
             if (cleaned.isNotEmpty()) nodes.add(TextNode.Text(cleaned))
         }
 
-        // Phase 5: search highlights (post-process Text nodes)
+        // search highlights (post-process Text nodes)
         if (!isStopped()) applySearchHighlights(nodes)
 
-        // Phase 6: insert missing expected verses
+        // insert missing expected verses
         insertMissingVerses(nodes)
 
         return convertTextNodesToRenderNodes(nodes)
@@ -141,7 +132,7 @@ class USFMRenderer(
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     machineReadable = node.machineReadable,
-                    attributes = com.door43.translationstudio.rendering.model.NodeAttributes(
+                    attributes = NodeAttributes(
                         searchHighlighted = node.highlighted
                     )
                 )
@@ -162,7 +153,7 @@ class USFMRenderer(
                 is TextNode.ChapterLabel -> RenderNode.ChapterLabel(node.text)
                 is TextNode.Link -> RenderNode.Link(node.linkData)
                 is TextNode.SearchHighlight -> RenderNode.Text(node.content,
-                    attributes = com.door43.translationstudio.rendering.model.NodeAttributes(
+                    attributes = NodeAttributes(
                         searchHighlighted = true
                     )
                 )
@@ -172,10 +163,6 @@ class USFMRenderer(
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Shim overrides — keep existing callers compiling
-    // -------------------------------------------------------------------------
-
     /**
      * Shim: delegates to renderToNodes + SpannableAdapter.convert so that
      * RenderingEngine.start() and any direct callers of render() continue to work.
@@ -184,14 +171,6 @@ class USFMRenderer(
         val renderNodes = renderToNodes(input.toString())
         val textNodes = convertRenderNodesToTextNodes(renderNodes)
         return SpannableAdapter.convert(textNodes, searchHighlightColor = highlightColor)
-    }
-
-    /**
-     * Required by ClickableRenderingEngine. Returns the platform-agnostic hierarchical node list
-     * for the given verse input.
-     */
-    override fun renderVerse(input: CharSequence): List<RenderNode> {
-        return renderToNodes(input.toString())
     }
 
     private fun convertRenderNodesToTextNodes(renderNodes: List<RenderNode>): List<TextNode> {
@@ -238,24 +217,12 @@ class USFMRenderer(
         }
     }
 
-    // -------------------------------------------------------------------------
-    // getLeadingMajorSectionHeading
-    // -------------------------------------------------------------------------
-
     override fun getLeadingMajorSectionHeading(input: CharSequence): String {
         val matcher = paraPattern("ms").matcher(input.toString())
         return if (matcher.find() && matcher.start() == 0) matcher.group(1) ?: "" else ""
     }
 
-    // -------------------------------------------------------------------------
-    // Token data class
-    // -------------------------------------------------------------------------
-
     private data class Token(val start: Int, val end: Int, val nodes: List<TextNode>)
-
-    // -------------------------------------------------------------------------
-    // find* helpers — each returns List<Token>
-    // -------------------------------------------------------------------------
 
     private fun findMajorSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()

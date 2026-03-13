@@ -45,7 +45,7 @@ import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
-import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import com.door43.translationstudio.rendering.adapter.VerseClickListener
 import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
 import com.door43.translationstudio.rendering.model.TextNode
@@ -491,7 +491,7 @@ open class ReviewModeAdapter(
                 target = false
             )
         } else {
-            renderingGroup.addEngine(DefaultRenderer(context))
+            renderingGroup.addEngine(DefaultRenderer())
         }
 
         if (enableSearch) {
@@ -1266,7 +1266,7 @@ open class ReviewModeAdapter(
             )
             renderer.setPopulateVerseMarkers(verseRange)
         } else {
-            renderingGroup.addEngine(DefaultRenderer(context))
+            renderingGroup.addEngine(DefaultRenderer())
         }
 
         if (enableSearch) {
@@ -1470,7 +1470,7 @@ open class ReviewModeAdapter(
                 }
             }
         } else {
-            renderingGroup.addEngine(DefaultRenderer(context))
+            renderingGroup.addEngine(DefaultRenderer())
         }
 
         if (enableSearch) {

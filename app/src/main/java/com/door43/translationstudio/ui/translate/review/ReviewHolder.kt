@@ -34,7 +34,7 @@ import com.door43.translationstudio.databinding.FragmentResourcesListItemBinding
 import com.door43.translationstudio.format
 import com.door43.translationstudio.formatSub
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
-import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import com.door43.translationstudio.rendering.adapter.VerseClickListener
 import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
 import com.door43.translationstudio.ui.translate.ChooseSourceTranslationAdapter.Companion.MAX_SOURCE_ITEMS

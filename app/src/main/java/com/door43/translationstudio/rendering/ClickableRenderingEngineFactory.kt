@@ -1,6 +1,5 @@
 package com.door43.translationstudio.rendering
 
-import android.content.Context
 import com.door43.translationstudio.core.TranslationFormat
 
 /**
@@ -10,14 +9,12 @@ object ClickableRenderingEngineFactory {
 
     /**
      * Create appropriate rendering engine for format using a pinVerses flag.
-     * @param context (accepted for API symmetry but not stored)
      * @param format
      * @param defaultFormat
      * @param pinVerses true if verse markers should be pinned (i.e. clickable)
      * @return
      */
     fun create(
-        context: Context,
         format: TranslationFormat,
         defaultFormat: TranslationFormat,
         pinVerses: Boolean = false

@@ -28,7 +28,7 @@ import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
-import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.widget.ViewUtil
 import com.google.android.material.tabs.TabLayout

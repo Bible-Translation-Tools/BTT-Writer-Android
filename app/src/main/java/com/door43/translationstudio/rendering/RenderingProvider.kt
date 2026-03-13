@@ -1,16 +1,13 @@
 package com.door43.translationstudio.rendering
 
-import android.content.Context
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.TranslationFormat
 
-class RenderingProvider(
-    private val context: Context
-) {
+class RenderingProvider {
 
     fun createDefaultRenderer(): DefaultRenderer {
-        return DefaultRenderer(context)
+        return DefaultRenderer()
     }
 
     fun createHtmlRenderer(
@@ -33,7 +30,7 @@ class RenderingProvider(
         pinVerses: Boolean = false,
         target: Boolean = true
     ): ClickableRenderingEngine {
-        return Clickables.setupRenderingGroup(context, format, renderingGroup, pinVerses, target)
+        return Clickables.setupRenderingGroup(format, renderingGroup, pinVerses, target)
     }
 
     companion object {

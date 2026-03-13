@@ -1,6 +1,5 @@
 package com.door43.translationstudio.rendering
 
-import android.content.Context
 import com.door43.translationstudio.core.TranslationFormat
 
 /**
@@ -19,7 +18,6 @@ object Clickables {
 
     /**
      * Setup rendering group for translation format using a pinVerses flag.
-     * @param context
      * @param format
      * @param renderingGroup
      * @param pinVerses true if verse markers should be pinned (i.e. clickable)
@@ -27,14 +25,13 @@ object Clickables {
      * @return
      */
     fun setupRenderingGroup(
-        context: Context,
         format: TranslationFormat,
         renderingGroup: RenderingGroup,
         pinVerses: Boolean = false,
         target: Boolean
     ): ClickableRenderingEngine {
         val defaultFormat = if (target) TranslationFormat.USFM else TranslationFormat.USX
-        val renderer = ClickableRenderingEngineFactory.create(context, format, defaultFormat, pinVerses)
+        val renderer = ClickableRenderingEngineFactory.create(format, defaultFormat, pinVerses)
         renderingGroup.addEngine(renderer)
         return renderer
     }

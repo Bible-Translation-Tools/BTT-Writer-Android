@@ -1,7 +1,5 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.model.RenderNode
-
 /**
  * This is an abstract base class for clickable rendering engine. This handles all of the rendering
  * for USX formatted source and translation.
@@ -48,13 +46,6 @@ abstract class ClickableRenderingEngine : RenderingEngine() {
      * @param suppressLeadingMajorSectionHeadings The value to set
      */
     abstract fun setSuppressLeadingMajorSectionHeadings(suppressLeadingMajorSectionHeadings: Boolean)
-
-    /**
-     * Renders all verse tags
-     * @param input
-     * @return platform-agnostic hierarchical list of [RenderNode] describing the rendered verse
-     */
-    abstract fun renderVerse(input: CharSequence): List<RenderNode>
 
     abstract fun getLeadingMajorSectionHeading(input: CharSequence): String
 }

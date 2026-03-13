@@ -1,4 +1,4 @@
-package com.door43.translationstudio.rendering.adapter
+package com.door43.translationstudio.ui.textadapters
 
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
@@ -206,7 +206,7 @@ object ComposeTextAdapter {
                 }
 
                 // Placeholder for the note icon using inline content
-                appendInlineContent("note_icon", "[note]")
+                appendInlineContent("note_icon", "\uFFFC")
 
                 if (node.highlighted && searchHighlightColor != Color.Unspecified) {
                     pop()

@@ -24,6 +24,7 @@ data class ChunkState(
 
 sealed interface ChunkAction : ModeAction {
     data class Init(val chunks: List<Chunk>) : ChunkAction
+    data class ItemTextChanged(val item: ChunkItem.ChunkMode, val text: String) : ChunkAction
 }
 
 class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
@@ -34,6 +35,7 @@ class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
     override fun onAction(action: ChunkAction) {
         when (action) {
             is ChunkAction.Init -> initialize(action.chunks)
+            is ChunkAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
         }
     }
 
@@ -86,6 +88,21 @@ class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
                 "title" -> target.getChapterTranslation(chapterSlug).title
                 "reference" -> target.getChapterTranslation(chapterSlug).reference
                 else -> target.getFrameTranslation(chapterSlug, chunkSlug, target.format).body
+            }
+        }
+    }
+
+    private fun onItemTextChanged(item: ChunkItem.ChunkMode, text: String) {
+        viewModelScope.launch {
+            item.saveTranslation(text)
+            _state.update { state ->
+                state.copy(
+                    items = state.items.map { chunkItem ->
+                        if (chunkItem.meta.id == item.meta.id) {
+                            prepareItem(chunkItem.meta.chunk)
+                        } else chunkItem
+                    }
+                )
             }
         }
     }

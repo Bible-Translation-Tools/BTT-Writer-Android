@@ -95,6 +95,18 @@ sealed class ChunkItem(
     val isChapterReference: Boolean
         get() = meta.chunk.chapterSlug != "front" && meta.chunk.chapterSlug != "back" && meta.chunk.chunkSlug == "reference"
 
+    fun saveTranslation(text: String) {
+        if (isProjectTitle) {
+            meta.chunk.target.applyProjectTitleTranslation(text)
+        } else if (isChapterReference) {
+            meta.chunk.target.applyChapterReferenceTranslation(meta.ct, text)
+        } else if (isChapterTitle) {
+            meta.chunk.target.applyChapterTitleTranslation(meta.ct, text)
+        } else {
+            meta.chunk.target.applyFrameTranslation(meta.ft, text)
+        }
+    }
+
     data class ReadMode(
         private val sharedMeta: ChunkMeta
     ) : ChunkItem(sharedMeta) {

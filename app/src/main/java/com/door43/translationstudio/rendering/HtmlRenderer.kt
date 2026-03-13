@@ -1,11 +1,10 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.adapter.SpannableAdapter
+import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.rendering.model.NodeAttributes
-import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.ui.spannables.ArticleLinkSpan
 import com.door43.translationstudio.ui.spannables.MarkdownLinkSpan
 import com.door43.translationstudio.ui.spannables.MarkdownTitledLinkSpan
@@ -22,10 +21,6 @@ import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
 class HtmlRenderer(
     private val preprocessCallback: OnPreprocessLink
 ) : RenderingEngine() {
-
-    // -------------------------------------------------------------------------
-    // Public API — new pipeline
-    // -------------------------------------------------------------------------
 
     /**
      * Render HTML-formatted input into a platform-agnostic hierarchical List<RenderNode>.
@@ -56,10 +51,6 @@ class HtmlRenderer(
 
         return convertTextNodesToRenderNodes(nodes)
     }
-
-    // -------------------------------------------------------------------------
-    // Shim override — keeps existing callers compiling
-    // -------------------------------------------------------------------------
 
     /**
      * Shim: delegates to renderToNodes + conversion + SpannableAdapter.convert so that
@@ -158,15 +149,7 @@ class HtmlRenderer(
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Token data class
-    // -------------------------------------------------------------------------
-
     private data class Token(val start: Int, val end: Int, val nodes: List<TextNode>)
-
-    // -------------------------------------------------------------------------
-    // find* helpers — each returns List<Token>
-    // -------------------------------------------------------------------------
 
     /**
      * Finds Translation Academy address links.
@@ -177,22 +160,22 @@ class HtmlRenderer(
         val matcher = ArticleLinkSpan.ADDRESS_PATTERN.matcher(text)
         while (matcher.find()) {
             val rawAddress = matcher.group(2) ?: ""
-            // I1: fall back to the address slug, not the raw [[...]] match text
+            // fall back to the address slug, not the raw [[...]] match text
             val titleFallback = rawAddress.substringAfterLast(':').takeIf { it.isNotEmpty() } ?: rawAddress
             val title = matcher.group(4) ?: titleFallback
             val span = ArticleLinkSpan.parse(title, rawAddress)
-            // C2: only emit a Link node when the address parsed successfully (machineReadable non-empty)
+            // only emit a Link node when the address parsed successfully (machineReadable non-empty)
             if (span.machineReadable.isNotEmpty() && preprocessCallback.onPreprocess(span)) {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
                     TextNode.Link(LinkData.Article(
-                        address = span.machineReadable.toString(),
-                        title = span.humanReadable.toString()
+                        address = span.machineReadable,
+                        title = span.humanReadable
                     ))
                 )))
             } else {
                 // render as plain text (failed parse or preprocessor rejection)
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
-                    TextNode.Text(span.humanReadable.toString())
+                    TextNode.Text(span.humanReadable)
                 )))
             }
         }
@@ -207,23 +190,23 @@ class HtmlRenderer(
         val tokens = mutableListOf<Token>()
         val matcher = ArticleLinkSpan.LINK_PATTERN.matcher(text)
         while (matcher.find()) {
-            // I2: compute rawAddress once so it can be used for both title fallback and address
+            // compute rawAddress once so it can be used for both title fallback and address
             val rawAddress = matcher.group(3)?.replace("/", ":") ?: ""
             val titleFallback = rawAddress.substringAfterLast(':').takeIf { it.isNotEmpty() } ?: rawAddress
             val title = matcher.group(6) ?: titleFallback
             val span = ArticleLinkSpan.parse(title, rawAddress)
-            // C2: only emit a Link node when the address parsed successfully (machineReadable non-empty)
+            // only emit a Link node when the address parsed successfully (machineReadable non-empty)
             if (span.machineReadable.isNotEmpty() && preprocessCallback.onPreprocess(span)) {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
                     TextNode.Link(LinkData.Article(
-                        address = span.machineReadable.toString(),
-                        title = span.humanReadable.toString()
+                        address = span.machineReadable,
+                        title = span.humanReadable
                     ))
                 )))
             } else {
                 // render as plain text (failed parse or preprocessor rejection)
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
-                    TextNode.Text(span.humanReadable.toString())
+                    TextNode.Text(span.humanReadable)
                 )))
             }
         }
@@ -244,13 +227,13 @@ class HtmlRenderer(
             if (preprocessCallback.onPreprocess(span)) {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
                     TextNode.Link(LinkData.Passage(
-                        address = span.machineReadable.toString(),
-                        title = span.humanReadable.toString()
+                        address = span.machineReadable,
+                        title = span.humanReadable
                     ))
                 )))
             } else {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
-                    TextNode.Text(span.humanReadable.toString())
+                    TextNode.Text(span.humanReadable)
                 )))
             }
         }
@@ -269,11 +252,11 @@ class HtmlRenderer(
             val span = ShortReferenceSpan(ref)
             if (preprocessCallback.onPreprocess(span)) {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
-                    TextNode.Link(LinkData.ShortReference(ref = span.humanReadable.toString()))
+                    TextNode.Link(LinkData.ShortReference(ref = span.humanReadable))
                 )))
             } else {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
-                    TextNode.Text(span.humanReadable.toString())
+                    TextNode.Text(span.humanReadable)
                 )))
             }
         }
@@ -281,7 +264,7 @@ class HtmlRenderer(
     }
 
     /**
-     * Finds markdown titled links.
+     * Finds Markdown titled links.
      * Example: [My Title](http://example.com)
      */
     private fun findMarkdownLinks(text: String): List<Token> {
@@ -294,13 +277,13 @@ class HtmlRenderer(
             if (preprocessCallback.onPreprocess(span)) {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
                     TextNode.Link(LinkData.Markdown(
-                        address = span.machineReadable.toString(),
-                        title = span.humanReadable.toString()
+                        address = span.machineReadable,
+                        title = span.humanReadable
                     ))
                 )))
             } else {
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
-                    TextNode.Text(span.humanReadable.toString())
+                    TextNode.Text(span.humanReadable)
                 )))
             }
         }
@@ -334,14 +317,14 @@ class HtmlRenderer(
                             TextNode.Link(LinkData.TranslationWord(id = id))
                         )))
                     } else {
-                        // I4: preprocessor rejected — show word ID as plain text
+                        // preprocessor rejected — show word ID as plain text
                         tokens.add(Token(matcher.start(), matcher.end(), listOf(
                             TextNode.Text(id)
                         )))
                     }
                 }
             } else {
-                // C3: not a TW link — emit raw match text so the gap-filling doesn't show raw markup
+                // not a TW link — emit raw match text so the gap-filling doesn't show raw markup
                 tokens.add(Token(matcher.start(), matcher.end(), listOf(
                     TextNode.Text(matcher.group(0) ?: "")
                 )))
@@ -349,10 +332,6 @@ class HtmlRenderer(
         }
         return tokens
     }
-
-    // -------------------------------------------------------------------------
-    // Overlap removal
-    // -------------------------------------------------------------------------
 
     private fun removeOverlaps(sorted: List<Token>): List<Token> {
         val result = mutableListOf<Token>()
@@ -365,10 +344,6 @@ class HtmlRenderer(
         }
         return result
     }
-
-    // -------------------------------------------------------------------------
-    // Public interfaces
-    // -------------------------------------------------------------------------
 
     /**
      * Used to identify which links to render.

@@ -12,7 +12,7 @@ import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
+import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
@@ -59,7 +59,7 @@ class ReviewModeViewModel(
         return try {
             val renderingGroup = RenderingGroup()
             renderingGroup.init(sourceText)
-            RenderingProvider(application).setupRenderingGroup(
+            RenderingProvider().setupRenderingGroup(
                 format,
                 renderingGroup,
                 pinVerses = false,

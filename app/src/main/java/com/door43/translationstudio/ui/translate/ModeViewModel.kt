@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.translate
 
-import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import com.door43.translationstudio.core.ChapterTranslation
@@ -11,12 +10,11 @@ import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
+import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 interface ModeState<ITEM> {
     val items: List<ITEM>
@@ -33,7 +31,6 @@ data class Footnote(
 )
 
 abstract class ModeViewModel<T> : ViewModel(), KoinComponent {
-    protected val application: Application by inject()
 
     private val _footnote = MutableStateFlow<Footnote?>(null)
     val footnote: StateFlow<Footnote?> = _footnote.asStateFlow()
@@ -66,7 +63,7 @@ abstract class ModeViewModel<T> : ViewModel(), KoinComponent {
         return try {
             val renderingGroup = RenderingGroup()
             renderingGroup.init(sourceText)
-            RenderingProvider(application).setupRenderingGroup(
+            RenderingProvider().setupRenderingGroup(
                 translationFormat, renderingGroup, pinVerses = false, target = false
             )
             val renderNodes = renderingGroup.startNodes()
@@ -89,8 +86,8 @@ abstract class ModeViewModel<T> : ViewModel(), KoinComponent {
         return try {
             val renderingGroup = RenderingGroup()
             renderingGroup.init(targetText)
-            RenderingProvider(application).setupRenderingGroup(
-                translationFormat, renderingGroup, pinVerses = false, target = true
+            RenderingProvider().setupRenderingGroup(
+                translationFormat, renderingGroup, pinVerses = true, target = true
             )
             val renderNodes = renderingGroup.startNodes()
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)

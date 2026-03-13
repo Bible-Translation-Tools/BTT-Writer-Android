@@ -1,12 +1,12 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.adapter.SpannableAdapter
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.ui.spannables.USXChar
 import com.door43.translationstudio.ui.spannables.USXNoteSpan
 import com.door43.translationstudio.ui.spannables.USXVerseSpan
+import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import java.util.regex.Pattern
 
 /**
@@ -28,10 +28,6 @@ class USXRenderer(
     private var expectedVerseRange = IntArray(0)
     private var suppressLeadingMajorSectionHeadings = false
     private var addedMissingVerse = false
-
-    // -------------------------------------------------------------------------
-    // Configuration setters (no Android dependencies)
-    // -------------------------------------------------------------------------
 
     override fun setVersesEnabled(enable: Boolean) {
         renderVerses = enable
@@ -57,10 +53,6 @@ class USXRenderer(
     override val isAddedMissingVerse: Boolean
         get() = addedMissingVerse
 
-    // -------------------------------------------------------------------------
-    // Public API — new pipeline
-    // -------------------------------------------------------------------------
-
     /**
      * Render USX input into a platform-agnostic hierarchical List<RenderNode>.
      */
@@ -68,13 +60,13 @@ class USXRenderer(
         addedMissingVerse = false
         if (isStopped()) return emptyList()
 
-        // Phase 1: string pre-processing (pure String ops, no spans)
+        // string pre-processing (pure String ops, no spans)
         var text = trimWhitespace(input)
         if (isStopped()) return emptyList()
         text = removeLineBreaks(text)
         if (isStopped()) return emptyList()
 
-        // Phase 2: collect all token matches simultaneously
+        // collect all token matches simultaneously
         // NOTE: Selah (and other small tokens) are collected first so they don't get
         // shadowed by larger container tokens during overlap removal
         val allTokens = mutableListOf<Token>()
@@ -90,11 +82,11 @@ class USXRenderer(
         allTokens.addAll(findChapterLabels(text))
         if (isStopped()) return emptyList()
 
-        // Phase 3: sort by position, remove overlapping tokens
+        // sort by position, remove overlapping tokens
         allTokens.sortBy { it.start }
         val tokens = removeOverlaps(allTokens)
 
-        // Phase 4: assemble node list, filling gaps with Text nodes
+        // assemble node list, filling gaps with Text nodes
         val nodes = mutableListOf<TextNode>()
         var lastIndex = 0
         for (token in tokens) {
@@ -112,18 +104,14 @@ class USXRenderer(
             if (cleaned.isNotEmpty()) nodes.add(TextNode.Text(cleaned))
         }
 
-        // Phase 5: search highlights (post-process Text nodes)
+        // search highlights (post-process Text nodes)
         if (!isStopped()) applySearchHighlights(nodes)
 
-        // Phase 6: insert missing expected verses
+        // insert missing expected verses
         insertMissingVerses(nodes)
 
         return convertTextNodesToRenderNodes(nodes)
     }
-
-    // -------------------------------------------------------------------------
-    // Shim overrides — keep existing callers compiling
-    // -------------------------------------------------------------------------
 
     /**
      * Shim: delegates to renderToNodes + conversion to TextNode + SpannableAdapter.convert so that
@@ -134,14 +122,6 @@ class USXRenderer(
         val renderNodes = renderToNodes(input.toString())
         val textNodes = convertRenderNodesToTextNodes(renderNodes)
         return SpannableAdapter.convert(textNodes, searchHighlightColor = highlightColor)
-    }
-
-    /**
-     * Required by ClickableRenderingEngine. Returns the platform-agnostic hierarchical node list
-     * for the given verse input.
-     */
-    override fun renderVerse(input: CharSequence): List<RenderNode> {
-        return renderToNodes(input.toString())
     }
 
     /**
@@ -160,24 +140,12 @@ class USXRenderer(
         return render(input)
     }
 
-    // -------------------------------------------------------------------------
-    // getLeadingMajorSectionHeading
-    // -------------------------------------------------------------------------
-
     override fun getLeadingMajorSectionHeading(input: CharSequence): String {
         val matcher = paraPattern("ms").matcher(input.toString())
         return if (matcher.find() && matcher.start() == 0) matcher.group(1) ?: "" else ""
     }
 
-    // -------------------------------------------------------------------------
-    // Token data class
-    // -------------------------------------------------------------------------
-
     private data class Token(val start: Int, val end: Int, val nodes: List<TextNode>)
-
-    // -------------------------------------------------------------------------
-    // find* helpers — each returns List<Token>
-    // -------------------------------------------------------------------------
 
     private fun findMajorSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
@@ -377,10 +345,6 @@ class USXRenderer(
         return tokens
     }
 
-    // -------------------------------------------------------------------------
-    // Overlap removal
-    // -------------------------------------------------------------------------
-
     private fun removeOverlaps(sorted: List<Token>): List<Token> {
         val result = mutableListOf<Token>()
         var lastEnd = 0
@@ -393,10 +357,6 @@ class USXRenderer(
         }
         return result
     }
-
-    // -------------------------------------------------------------------------
-    // Gap text cleanup
-    // -------------------------------------------------------------------------
 
     /**
      * Strip any remaining USX para/char markers from gap text that wasn't
@@ -429,10 +389,6 @@ class USXRenderer(
         return sb.toString()
     }
 
-    // -------------------------------------------------------------------------
-    // Search highlight post-processing
-    // -------------------------------------------------------------------------
-
     private fun applySearchHighlights(nodes: MutableList<TextNode>) {
         val term = search ?: return
         val result = mutableListOf<TextNode>()
@@ -456,10 +412,6 @@ class USXRenderer(
         nodes.clear()
         nodes.addAll(result)
     }
-
-    // -------------------------------------------------------------------------
-    // Missing verse insertion
-    // -------------------------------------------------------------------------
 
     private fun insertMissingVerses(nodes: MutableList<TextNode>) {
         if (!renderVerses || expectedVerseRange.isEmpty()) return
@@ -492,19 +444,11 @@ class USXRenderer(
         }
     }
 
-    // -------------------------------------------------------------------------
-    // String pre-processing helpers (pure String ops, no Android)
-    // -------------------------------------------------------------------------
-
     private fun trimWhitespace(input: String): String =
         input.replace(Regex("^\\s+|\\s+$"), "")
 
     private fun removeLineBreaks(input: String): String =
         input.replace(Regex("\\s*\\n+\\s*"), " ")
-
-    // -------------------------------------------------------------------------
-    // Companion — patterns shared with old public methods kept for callers
-    // -------------------------------------------------------------------------
 
     companion object {
         val beginParagraphStyle: String = "<para\\s+style=\"\\w*\"\\s*>"

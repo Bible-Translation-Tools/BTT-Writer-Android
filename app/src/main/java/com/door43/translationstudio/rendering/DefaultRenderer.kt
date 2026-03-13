@@ -1,13 +1,9 @@
 package com.door43.translationstudio.rendering
 
-import android.content.Context
-
 /**
  * This is the default rendering engine.
  */
-class DefaultRenderer(
-    context: Context  // accepted for API symmetry; not stored
-) : RenderingEngine() {
+class DefaultRenderer : RenderingEngine() {
 
     private var search: String = ""
     private var highlightColor = 0
