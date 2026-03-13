@@ -430,10 +430,6 @@ class USFMRenderer(
         return tokens
     }
 
-    // -------------------------------------------------------------------------
-    // Overlap removal
-    // -------------------------------------------------------------------------
-
     private fun removeOverlaps(sorted: List<Token>): List<Token> {
         val result = mutableListOf<Token>()
         var lastEnd = 0
@@ -446,10 +442,6 @@ class USFMRenderer(
         }
         return result
     }
-
-    // -------------------------------------------------------------------------
-    // Gap text cleanup
-    // -------------------------------------------------------------------------
 
     /**
      * Strip any remaining USFM/para markers from gap text that wasn't
@@ -467,10 +459,6 @@ class USFMRenderer(
         out = out.replace(Regex("\\\\[a-zA-Z][a-zA-Z0-9]*\\*?"), "")
         return out
     }
-
-    // -------------------------------------------------------------------------
-    // Search highlight post-processing
-    // -------------------------------------------------------------------------
 
     private fun applySearchHighlights(nodes: MutableList<TextNode>) {
         val term = search ?: return
@@ -495,10 +483,6 @@ class USFMRenderer(
         nodes.clear()
         nodes.addAll(result)
     }
-
-    // -------------------------------------------------------------------------
-    // Missing verse insertion
-    // -------------------------------------------------------------------------
 
     private fun insertMissingVerses(nodes: MutableList<TextNode>) {
         if (!renderVerses || expectedVerseRange.isEmpty()) return
@@ -531,10 +515,6 @@ class USFMRenderer(
         }
     }
 
-    // -------------------------------------------------------------------------
-    // String pre-processing helpers (pure String ops, no Android)
-    // -------------------------------------------------------------------------
-
     private fun trimWhitespace(input: String): String =
         input.replace(Regex("^\\s+|\\s+$"), "")
 
@@ -549,10 +529,6 @@ class USFMRenderer(
      */
     private fun stripChapterMarkers(input: String): String =
         input.replace(Regex("\\\\c +\\d+ *"), "")
-
-    // -------------------------------------------------------------------------
-    // Companion — patterns
-    // -------------------------------------------------------------------------
 
     companion object {
         /**

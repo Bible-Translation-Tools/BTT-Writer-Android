@@ -90,9 +90,11 @@ class TargetTranslationActivity : BaseActivity(),
         val targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null)
         mergeConflictFilterEnabled = args.getBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, false)
 
-        val initialized = viewModel.initialize(targetTranslationId)
+        if (!viewModel.initialized) {
+            viewModel.initialize(targetTranslationId)
+        }
 
-        if (!initialized) {
+        if (!viewModel.initialized) {
             Logger.e(
                 TAG,
                 "A valid target translation id is required. Received $targetTranslationId but the translation could not be found"
@@ -107,7 +109,7 @@ class TargetTranslationActivity : BaseActivity(),
         // manual location settings
         val modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1)
         if (modeIndex > 0 && modeIndex < TranslationViewMode.entries.size) {
-            viewModel.onAction(TargetAction.LastViewMode(TranslationViewMode.entries[modeIndex]))
+            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.entries[modeIndex]))
         }
 
 //        binding.searchPane.downSearch.setOnClickListener { moveSearch(true) }

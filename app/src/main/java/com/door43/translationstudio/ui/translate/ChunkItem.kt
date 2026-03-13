@@ -8,8 +8,11 @@ import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProjectTranslation
 
+interface Identifiable {
+    val id: String
+}
+
 data class ChunkMeta(
-    val id: String,
     val chunk: Chunk,
     val sourceText: String,
     val targetText: String,
@@ -22,7 +25,7 @@ data class ChunkMeta(
 
 sealed class ChunkItem(
     val meta: ChunkMeta
-) {
+) : Identifiable {
     open val sourceTitle: String
         get() {
             return if (isProjectTitle) {
@@ -108,6 +111,8 @@ sealed class ChunkItem(
     }
 
     data class ReadMode(
+        override val id: String,
+        val sourceOnTop: Boolean,
         private val sharedMeta: ChunkMeta
     ) : ChunkItem(sharedMeta) {
         override val sourceTitle: String
@@ -166,10 +171,13 @@ sealed class ChunkItem(
     }
 
     data class ChunkMode(
+        override val id: String,
+        val sourceOnTop: Boolean,
         private val sharedMeta: ChunkMeta
     ) : ChunkItem(sharedMeta)
 
     data class ReviewMode(
+        override val id: String,
         private val sharedMeta: ChunkMeta
     ) : ChunkItem(sharedMeta)
 }

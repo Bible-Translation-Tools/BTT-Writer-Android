@@ -19,18 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
@@ -38,46 +32,12 @@ import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
-
-private const val OBJ_REPLACEMENT = '\uFFFC'
-
-class IconVisualTransformation(
-    private val iconFont: FontFamily,
-    private val iconColor: Color,
-    private val fontSize: TextUnit
-) : VisualTransformation {
-
-    override fun filter(text: AnnotatedString): TransformedText {
-        val builder = AnnotatedString.Builder()
-
-        for (char in text.text) {
-            if (char == OBJ_REPLACEMENT) {
-                builder.pushStyle(
-                    SpanStyle(
-                        fontFamily = iconFont,
-                        fontSize = fontSize,
-                        color = iconColor
-                    )
-                )
-                builder.append(char)
-                builder.pop()
-            } else {
-                builder.append(char)
-            }
-        }
-
-        // Identity mapping — no offset translation needed
-        return TransformedText(
-            builder.toAnnotatedString(),
-            OffsetMapping.Identity
-        )
-    }
-}
+import com.door43.translationstudio.ui.translate.components.RichEditField
 
 fun insertLink(current: TextFieldValue): TextFieldValue {
     val start = current.selection.start
     val newText = current.text.substring(0, start) +
-            OBJ_REPLACEMENT +
+            "\uFFFC" +
             current.text.substring(current.selection.end)
     return TextFieldValue(
         text = newText,
@@ -88,7 +48,8 @@ fun insertLink(current: TextFieldValue): TextFieldValue {
 @Composable
 fun ChunkTargetCard(
     title: String,
-    text: AnnotatedString,
+    rawText: String,
+    displayText: AnnotatedString,
     targetTranslation: TargetTranslation,
     typography: Typography,
     onTextChange: (String) -> Unit,
@@ -107,11 +68,6 @@ fun ChunkTargetCard(
         languageCode = targetTranslation.targetLanguage.slug,
         direction = targetTranslation.targetLanguage.direction
     )
-
-    val iconFontFamily = FontFamily(Font(R.font.icons))
-    var textFieldValue by remember {
-        mutableStateOf(TextFieldValue(text))
-    }
 
     Card(
         modifier = modifier.fillMaxSize(),
@@ -134,24 +90,20 @@ fun ChunkTargetCard(
                     .align(Alignment.End)
                     .padding(bottom = 16.dp, end = 8.dp)
                     .clickable {
-                        textFieldValue = insertLink(textFieldValue)
+                        //textFieldValue = insertLink(textFieldValue)
                     }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            BasicTextField(
-                value = textFieldValue,
-                onValueChange = {
-                    textFieldValue = it
-                    onTextChange(it.text)
+            RichEditField(
+                rawText = rawText,
+                displayText = displayText.text,
+                onRawTextChange = {
+                    onTextChange(it)
                 },
-                visualTransformation = IconVisualTransformation(
-                    iconFont = iconFontFamily,
-                    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = bodyStyle.fontSize
-                ),
-                textStyle = bodyStyle
+                textStyle = bodyStyle,
+                modifier = Modifier
             )
 
 //            Text(

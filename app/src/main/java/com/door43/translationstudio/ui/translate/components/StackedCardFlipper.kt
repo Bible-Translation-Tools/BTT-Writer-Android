@@ -30,11 +30,14 @@ import androidx.compose.ui.zIndex
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
+private const val DRAG_DISTANCE = 500
+
 @Composable
 fun StackedCardFlipper(
     modifier: Modifier = Modifier,
     containerPadding: Dp = 8.dp,
     stackOffset: Dp = 16.dp,
+    frontOnTop: Boolean = true,
     onAnimationEnd: (isFrontOnTop: Boolean) -> Unit = {},
     frontCard: @Composable () -> Unit,
     backCard: @Composable () -> Unit
@@ -45,13 +48,13 @@ fun StackedCardFlipper(
 
     val frontX = remember { Animatable(topOffset, Dp.VectorConverter) }
     val frontY = remember { Animatable(topOffset, Dp.VectorConverter) }
-    val frontZ = remember { Animatable(1f) }
+    val frontZ = remember { Animatable(if (frontOnTop) 1f else 0f) }
 
     val backX = remember { Animatable(stackOffset, Dp.VectorConverter) }
     val backY = remember { Animatable(stackOffset, Dp.VectorConverter) }
-    val backZ = remember { Animatable(0f) }
+    val backZ = remember { Animatable(if (!frontOnTop) 1f else 0f) }
 
-    var isFrontOnTop by remember { mutableStateOf(true) }
+    var isFrontOnTop by remember { mutableStateOf(frontOnTop) }
     var isAnimating by remember { mutableStateOf(false) }
 
     BoxWithConstraints(
@@ -110,8 +113,8 @@ fun StackedCardFlipper(
                     detectHorizontalDragGestures(
                         onDragStart = { accumulatedDrag = 0f },
                         onDragEnd = {
-                            if (accumulatedDrag > 50) triggerFlipAnimation(leftToRight = true)
-                            else if (accumulatedDrag < -50) triggerFlipAnimation(leftToRight = false)
+                            if (accumulatedDrag > DRAG_DISTANCE) triggerFlipAnimation(leftToRight = true)
+                            else if (accumulatedDrag < -DRAG_DISTANCE) triggerFlipAnimation(leftToRight = false)
                         }
                     ) { change, dragAmount ->
                         change.consume()

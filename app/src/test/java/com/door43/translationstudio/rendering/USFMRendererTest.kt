@@ -23,10 +23,6 @@ class USFMRendererTest {
 
     private fun renderer() = USFMRenderer()
 
-    // -------------------------------------------------------------------------
-    // Plain text
-    // -------------------------------------------------------------------------
-
     @Test
     fun `plain text passes through as Text node`() {
         val nodes = testRender("Hello world")
@@ -48,10 +44,6 @@ class USFMRendererTest {
         val hasNonBlankText = nodes.any { it is TextNode.Text && (it as TextNode.Text).content.isNotBlank() }
         assertFalse(hasNonBlankText)
     }
-
-    // -------------------------------------------------------------------------
-    // Section headings
-    // -------------------------------------------------------------------------
 
     @Test
     fun `section heading produces SectionHeading node`() {
@@ -108,10 +100,6 @@ class USFMRendererTest {
             nodes.getOrNull(headingIndex + 1) == TextNode.LineBreak
         )
     }
-
-    // -------------------------------------------------------------------------
-    // Verses (USFM uses \v N format)
-    // -------------------------------------------------------------------------
 
     @Test
     fun `verse tag produces VerseMarker node`() {
@@ -199,10 +187,6 @@ class USFMRendererTest {
         assertTrue(r.isAddedMissingVerse)
     }
 
-    // -------------------------------------------------------------------------
-    // Paragraph / blank line
-    // -------------------------------------------------------------------------
-
     @Test
     fun `blank line tag produces BlankLine node`() {
         val input = """text<para style="b"/>more"""
@@ -233,10 +217,6 @@ class USFMRendererTest {
         assertNotNull(para)
         assertTrue(para!!.indented)
     }
-
-    // -------------------------------------------------------------------------
-    // Poetic lines
-    // -------------------------------------------------------------------------
 
     @Test
     fun `poetic line produces PoeticLine node with correct indent`() {
@@ -275,10 +255,6 @@ class USFMRendererTest {
         assertEquals(TextNode.LineBreak, nodes[poeticIdx - 1])
     }
 
-    // -------------------------------------------------------------------------
-    // Chapter labels
-    // -------------------------------------------------------------------------
-
     @Test
     fun `chapter label produces ChapterLabel node`() {
         val input = """<para style="cl">Chapter One</para>"""
@@ -287,10 +263,6 @@ class USFMRendererTest {
         assertNotNull(label)
         assertEquals("Chapter One", label!!.text)
     }
-
-    // -------------------------------------------------------------------------
-    // Search highlights
-    // -------------------------------------------------------------------------
 
     @Test
     fun `search string produces SearchHighlight nodes`() {
@@ -348,10 +320,6 @@ class USFMRendererTest {
         assertFalse(nodes.any { it is TextNode.SearchHighlight })
     }
 
-    // -------------------------------------------------------------------------
-    // Note markers (USFM format: \f + \ft ... \f*)
-    // -------------------------------------------------------------------------
-
     @Test
     fun `note tag produces NoteMarker node`() {
         val input = """\f + \ft footnote text \f*"""
@@ -383,10 +351,6 @@ class USFMRendererTest {
         assertNotNull(note)
         assertFalse("Note should not be highlighted when search doesn't match", note!!.highlighted)
     }
-
-    // -------------------------------------------------------------------------
-    // Chapter marker stripped (USFM-specific)
-    // -------------------------------------------------------------------------
 
     @Test
     fun `chapter marker is stripped from output`() {
@@ -424,10 +388,6 @@ class USFMRendererTest {
         assertTrue(nodes.any { it is TextNode.VerseMarker })
     }
 
-    // -------------------------------------------------------------------------
-    // USFM paragraph markers \p (USFM-specific)
-    // -------------------------------------------------------------------------
-
     @Test
     fun `USFM paragraph marker produces Paragraph node with indented=false`() {
         // USFMParagraphSpan.PATTERN = "\\p\W?" — matches \p followed by optional non-word char
@@ -461,10 +421,6 @@ class USFMRendererTest {
         assertFalse("Standalone \\p should produce indented=false Paragraph", para!!.indented)
     }
 
-    // -------------------------------------------------------------------------
-    // Mixed content
-    // -------------------------------------------------------------------------
-
     @Test
     fun `mixed content produces correct node sequence`() {
         val input = """\v 1 text<para style="b"/>more text"""
@@ -476,10 +432,6 @@ class USFMRendererTest {
         assertTrue(textContent.contains("more text"))
     }
 
-    // -------------------------------------------------------------------------
-    // No-arg constructor (proves no Context is required)
-    // -------------------------------------------------------------------------
-
     @Test
     fun `no-arg constructor works without Context`() {
         val r = USFMRenderer()
@@ -488,10 +440,6 @@ class USFMRendererTest {
         val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes("hello"))
         assertFalse(nodes.isEmpty())
     }
-
-    // -------------------------------------------------------------------------
-    // getLeadingMajorSectionHeading
-    // -------------------------------------------------------------------------
 
     @Test
     fun `getLeadingMajorSectionHeading returns heading when leading`() {
@@ -507,10 +455,6 @@ class USFMRendererTest {
         assertEquals("", heading.toString())
     }
 
-    // -------------------------------------------------------------------------
-    // isAddedMissingVerse reset
-    // -------------------------------------------------------------------------
-
     @Test
     fun `isAddedMissingVerse is false when no verse is missing`() {
         val input = """\v 1 text"""
@@ -520,10 +464,6 @@ class USFMRendererTest {
         assertFalse("isAddedMissingVerse should be false when verse is present", r.isAddedMissingVerse)
     }
 
-    // -------------------------------------------------------------------------
-    // stripCarriageReturns
-    // -------------------------------------------------------------------------
-
     @Test
     fun `carriage returns are stripped from input`() {
         val input = "line one\r\nline two"
@@ -531,10 +471,6 @@ class USFMRendererTest {
         val allText = nodes.filterIsInstance<TextNode.Text>().joinToString("") { it.content }
         assertFalse("Carriage returns should be stripped", allText.contains("\r"))
     }
-
-    // -------------------------------------------------------------------------
-    // Note sub-marker leak
-    // -------------------------------------------------------------------------
 
     @Test
     fun `note sub-markers are not leaked as stray text nodes`() {
@@ -548,10 +484,6 @@ class USFMRendererTest {
         assertFalse("No raw note sub-markers in text nodes",
             textNodes.any { it.content.contains("\\fr") || it.content.contains("\\ft") })
     }
-
-    // -------------------------------------------------------------------------
-    // isAddedMissingVerse reset after render with all verses present
-    // -------------------------------------------------------------------------
 
     @Test
     fun `isAddedMissingVerse is false after render that does not insert missing verse`() {

@@ -20,12 +20,14 @@ fun ReadCard(
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
     onRemoveSourceClick: (String) -> Unit,
+    onCardsSwiped: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     StackedCardFlipper(
         modifier = modifier,
         containerPadding = 8.dp,
         stackOffset = 32.dp,
+        frontOnTop = item.sourceOnTop,
         frontCard = {
             ReadSourceCard(
                 title = item.sourceTitle,
@@ -45,6 +47,7 @@ fun ReadCard(
                 targetTranslation = targetTranslation,
                 typography = typography
             )
-        }
+        },
+        onAnimationEnd = onCardsSwiped
     )
 }

@@ -9,54 +9,50 @@ import com.door43.translationstudio.ui.translate.ChunkMeta
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 data class ChunkState(
-    override val items: List<ChunkItem.ChunkMode> = emptyList(),
-) : ModeState<ChunkItem.ChunkMode>
+    val test: String = ""
+) : ModeState
 
 sealed interface ChunkAction : ModeAction {
-    data class Init(val chunks: List<Chunk>) : ChunkAction
     data class ItemTextChanged(val item: ChunkItem.ChunkMode, val text: String) : ChunkAction
+    data class CardsSwiped(val item: ChunkItem.ChunkMode, val sourceOnTop: Boolean) : ChunkAction
 }
 
-class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
+class ChunkModeViewModel(
+    chunks: StateFlow<List<Chunk>>
+) : ModeViewModel<ChunkAction, ChunkItem.ChunkMode>(chunks) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
 
+    override fun mapToChildType(chunks: List<Chunk>): List<ChunkItem.ChunkMode> {
+        return chunks.chunked(5).flatMap { batch ->
+            batch.map { prepareItem(it) }
+        }
+    }
+
     override fun onAction(action: ChunkAction) {
         when (action) {
-            is ChunkAction.Init -> initialize(action.chunks)
             is ChunkAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
+            is ChunkAction.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
         }
     }
 
-    private fun initialize(chunks: List<Chunk>) {
-        viewModelScope.launch {
-            val chunkItems = withContext(Dispatchers.Default) {
-                chunks.chunked(5).flatMap { batch ->
-                    batch.map { async { prepareItem(it) } }
-                }.awaitAll()
-            }
-            _state.update { it.copy(items = chunkItems) }
-        }
+    private fun onCardsSwiped(item: ChunkItem.ChunkMode, sourceOnTop: Boolean) {
+        updateLocalItem(item.copy(sourceOnTop = sourceOnTop))
     }
 
-    private fun prepareItem(chunk: Chunk): ChunkItem.ChunkMode {
+    private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem.ChunkMode {
         val (sourceText, renderedSourceText) = prepareSource(chunk)
         val (targetText, renderedTargetText) = prepareTarget(chunk)
         val (pt, ct, ft) = prepareTranslations(chunk)
 
+        val id = "${chunk.chapterSlug}-${chunk.chunkSlug}"
         val meta = ChunkMeta(
-            id = "${chunk.chapterSlug}-${chunk.chunkSlug}",
             chunk = chunk,
             sourceText = sourceText,
             targetText = targetText,
@@ -67,7 +63,7 @@ class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
             ft = ft
         )
 
-        return ChunkItem.ChunkMode(meta)
+        return ChunkItem.ChunkMode(id, sourceOnTop, meta)
     }
 
     private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {
@@ -95,15 +91,9 @@ class ChunkModeViewModel : ModeViewModel<ChunkAction>() {
     private fun onItemTextChanged(item: ChunkItem.ChunkMode, text: String) {
         viewModelScope.launch {
             item.saveTranslation(text)
-            _state.update { state ->
-                state.copy(
-                    items = state.items.map { chunkItem ->
-                        if (chunkItem.meta.id == item.meta.id) {
-                            prepareItem(chunkItem.meta.chunk)
-                        } else chunkItem
-                    }
-                )
-            }
+            updateLocalItem(
+                prepareItem(item.meta.chunk, false)
+            )
         }
     }
 }

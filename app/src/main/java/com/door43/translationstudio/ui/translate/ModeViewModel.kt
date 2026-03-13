@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.translate
 
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.FrameTranslation
@@ -15,11 +16,10 @@ import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 
-interface ModeState<ITEM> {
-    val items: List<ITEM>
-}
+interface ModeState
 
 interface ModeAction {
     object ClearNotes : ModeAction
@@ -31,16 +31,39 @@ data class Footnote(
     val end: Int
 )
 
-abstract class ModeViewModel<T> : ViewModel(), KoinComponent {
+abstract class ModeViewModel<ACTION, ITEM: Identifiable>(
+    private val chunks: StateFlow<List<Chunk>>
+) : ViewModel(), KoinComponent {
 
     private val _footnote = MutableStateFlow<Footnote?>(null)
     val footnote: StateFlow<Footnote?> = _footnote.asStateFlow()
 
-    abstract fun onAction(action: T)
+    protected val _items = MutableStateFlow<List<ITEM>>(emptyList())
+    val items: StateFlow<List<ITEM>> = _items
+
+    init {
+        viewModelScope.launch {
+            chunks.collect { list ->
+                _items.value = mapToChildType(list)
+            }
+        }
+    }
+
+    abstract fun mapToChildType(chunks: List<Chunk>): List<ITEM>
+
+    abstract fun onAction(action: ACTION)
 
     fun onSharedAction(action: ModeAction) {
         when(action) {
             ModeAction.ClearNotes -> { _footnote.value = null }
+        }
+    }
+
+    fun updateLocalItem(updatedItem: ITEM) {
+        _items.value = _items.value.map {
+            if (it.id == updatedItem.id) {
+                updatedItem
+            } else it
         }
     }
 

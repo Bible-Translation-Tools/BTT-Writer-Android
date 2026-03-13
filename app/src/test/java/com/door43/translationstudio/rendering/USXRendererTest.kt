@@ -21,10 +21,6 @@ class USXRendererTest {
 
     private fun renderer() = USXRenderer()
 
-    // -------------------------------------------------------------------------
-    // Plain text
-    // -------------------------------------------------------------------------
-
     @Test
     fun `plain text passes through as Text node`() {
         val nodes = testRender("Hello world")
@@ -46,10 +42,6 @@ class USXRendererTest {
         val hasNonBlankText = nodes.any { it is TextNode.Text && (it as TextNode.Text).content.isNotBlank() }
         assertFalse(hasNonBlankText)
     }
-
-    // -------------------------------------------------------------------------
-    // Section headings
-    // -------------------------------------------------------------------------
 
     @Test
     fun `section heading produces SectionHeading node`() {
@@ -106,10 +98,6 @@ class USXRendererTest {
             nodes.getOrNull(headingIndex + 1) == TextNode.LineBreak
         )
     }
-
-    // -------------------------------------------------------------------------
-    // Verses
-    // -------------------------------------------------------------------------
 
     @Test
     fun `verse tag produces VerseMarker node`() {
@@ -197,10 +185,6 @@ class USXRendererTest {
         assertTrue(r.isAddedMissingVerse)
     }
 
-    // -------------------------------------------------------------------------
-    // Paragraph / blank line
-    // -------------------------------------------------------------------------
-
     @Test
     fun `blank line tag produces BlankLine node`() {
         val input = """text<para style="b"/>more"""
@@ -231,10 +215,6 @@ class USXRendererTest {
         assertNotNull(para)
         assertTrue(para!!.indented)
     }
-
-    // -------------------------------------------------------------------------
-    // Poetic lines
-    // -------------------------------------------------------------------------
 
     @Test
     fun `poetic line produces PoeticLine node with correct indent`() {
@@ -286,10 +266,6 @@ class USXRendererTest {
         assertEquals("Selah", selahLine.content)
     }
 
-    // -------------------------------------------------------------------------
-    // Chapter labels
-    // -------------------------------------------------------------------------
-
     @Test
     fun `chapter label produces ChapterLabel node`() {
         val input = """<para style="cl">Chapter One</para>"""
@@ -298,10 +274,6 @@ class USXRendererTest {
         assertNotNull(label)
         assertEquals("Chapter One", label!!.text)
     }
-
-    // -------------------------------------------------------------------------
-    // Search highlights
-    // -------------------------------------------------------------------------
 
     @Test
     fun `search string produces SearchHighlight nodes`() {
@@ -360,10 +332,6 @@ class USXRendererTest {
         assertFalse(nodes.any { it is TextNode.SearchHighlight })
     }
 
-    // -------------------------------------------------------------------------
-    // Overlapping token removal
-    // -------------------------------------------------------------------------
-
     @Test
     fun `mixed content produces correct node sequence`() {
         // verse + text + blank line
@@ -376,10 +344,6 @@ class USXRendererTest {
         assertTrue(textContent.contains("more text"))
     }
 
-    // -------------------------------------------------------------------------
-    // No-arg constructor (proves no Context is required)
-    // -------------------------------------------------------------------------
-
     @Test
     fun `no-arg constructor works without Context`() {
         val r = USXRenderer()
@@ -388,10 +352,6 @@ class USXRendererTest {
         val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes("hello"))
         assertFalse(nodes.isEmpty())
     }
-
-    // -------------------------------------------------------------------------
-    // getLeadingMajorSectionHeading
-    // -------------------------------------------------------------------------
 
     @Test
     fun `getLeadingMajorSectionHeading returns heading when leading`() {
@@ -406,10 +366,6 @@ class USXRendererTest {
         val heading = renderer().getLeadingMajorSectionHeading(input)
         assertEquals("", heading.toString())
     }
-
-    // -------------------------------------------------------------------------
-    // Note marker
-    // -------------------------------------------------------------------------
 
     @Test
     fun `note tag produces NoteMarker node`() {
@@ -443,10 +399,6 @@ class USXRendererTest {
         assertFalse("Note should not be highlighted when search doesn't match", note!!.highlighted)
     }
 
-    // -------------------------------------------------------------------------
-    // Overlap removal — char tag inside note span
-    // -------------------------------------------------------------------------
-
     @Test
     fun `char tag inside note span is not emitted as separate node`() {
         // The <char style="ft"> inside a <note> should be consumed by the note parser,
@@ -462,10 +414,6 @@ class USXRendererTest {
             textNodes.any { it.content.contains("<char") })
     }
 
-    // -------------------------------------------------------------------------
-    // isAddedMissingVerse reset
-    // -------------------------------------------------------------------------
-
     @Test
     fun `isAddedMissingVerse is false when no verse is missing`() {
         val input = """<verse number="1" style="v" />text"""
@@ -474,10 +422,6 @@ class USXRendererTest {
         RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
         assertFalse("isAddedMissingVerse should be false when verse is present", r.isAddedMissingVerse)
     }
-
-    // -------------------------------------------------------------------------
-    // verseDisplay constructor
-    // -------------------------------------------------------------------------
 
     @Test
     fun `verse markers are pinned when verseDisplay is PIN`() {

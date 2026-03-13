@@ -12,34 +12,26 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 
 @Composable
-fun <VM : ModeViewModel<*>,S : ModeState<ITEM>, ITEM> ModeScreenTemplate(
-    items: List<Chunk>,
+fun <VM : ModeViewModel<*, ITEM>,S : ModeState, ITEM : Identifiable> ModeScreenTemplate(
     state: S,
     viewModel: VM,
     listState: LazyListState,
-    onInit: (List<Chunk>) -> Unit,
     itemContent: @Composable (ITEM) -> Unit
 ) {
-
     val footnote by viewModel.footnote.collectAsStateWithLifecycle()
-
-    LaunchedEffect(items) {
-        onInit(items)
-    }
+    val stateItems by viewModel.items.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Crossfade(
-            targetState = state.items.isEmpty(),
+            targetState = stateItems.isEmpty(),
             animationSpec = tween(durationMillis = 500),
             label = "list_fade"
         ) { isLoading ->
@@ -50,7 +42,7 @@ fun <VM : ModeViewModel<*>,S : ModeState<ITEM>, ITEM> ModeScreenTemplate(
                     state = listState,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(items = state.items) { item ->
+                    items(items = stateItems, key = { it.id }) { item ->
                         itemContent(item)
                     }
                 }

@@ -69,10 +69,9 @@ sealed interface TargetAction {
     object RefreshSelectedSource : TargetAction
     data class RemoveSource(val sourceId: String) : TargetAction
     data class SelectSource(val sourceId: String) : TargetAction
-    data class LastViewMode(val viewMode: TranslationViewMode) : TargetAction
+    data class SaveLastViewMode(val viewMode: TranslationViewMode) : TargetAction
     data object OpenSourceTranslations : TargetAction
     data class SaveLastFocus(val chapterId: String, val frameId: String?) : TargetAction
-    object InitLastFocus : TargetAction
     data class ConfirmSelectedSources(val selectedItems: List<RCItem>) : TargetAction
 }
 
@@ -98,15 +97,15 @@ class TargetTranslationViewModel(
     private val _state = MutableStateFlow(TargetTranslationState())
     val state: StateFlow<TargetTranslationState> = _state.asStateFlow()
 
+    val initialized: Boolean
+        get() = this::targetTranslation.isInitialized
+
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
     fun onAction(action: TargetAction) {
         when (action) {
-            TargetAction.InitLastFocus -> {
-                initLastFocus()
-            }
             TargetAction.RefreshSelectedSource -> launchWithProgress(
                 application.getString(R.string.loading)
             ) {
@@ -118,15 +117,15 @@ class TargetTranslationViewModel(
             is TargetAction.SelectSource -> launchWithProgress {
                 setSelectedResourceContainer(action.sourceId)
             }
-            is TargetAction.LastViewMode -> setLastViewMode(action.viewMode)
+            is TargetAction.SaveLastViewMode -> setLastViewMode(action.viewMode)
             TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
             is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
             is TargetAction.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
         }
     }
 
-    fun initialize(targetTranslationId: String): Boolean {
-        val translation = translator.getTargetTranslation(targetTranslationId) ?: return false
+    fun initialize(targetTranslationId: String) {
+        val translation = translator.getTargetTranslation(targetTranslationId) ?: return
 
         targetTranslation = translation
 
@@ -144,7 +143,11 @@ class TargetTranslationViewModel(
             )
         }
 
-        return true
+        launchWithProgress {
+            ContainerCache.empty()
+            initLastFocus()
+            refreshSelectedResourceContainer()
+        }
     }
 
     private fun openUsedSourceTranslations() {
@@ -194,6 +197,7 @@ class TargetTranslationViewModel(
     }
 
     private fun loadListItems() {
+        val isReadMode = _state.value.viewMode == TranslationViewMode.READ
         val items = mutableListOf<Chunk>()
         _state.value.resourceContainer?.let { source ->
             val sorter = SlugSorter()
@@ -201,7 +205,9 @@ class TargetTranslationViewModel(
             for (chapterSlug: String in chapterSlugs) {
                 val chunkSlugs = sorter.sort(source.chunks(chapterSlug))
                 for (chunkSlug in chunkSlugs) {
-                    items.add(Chunk(chapterSlug, chunkSlug, source, targetTranslation))
+                    if (!isReadMode || !items.any { it.chapterSlug == chapterSlug }) {
+                        items.add(Chunk(chapterSlug, chunkSlug, source, targetTranslation))
+                    }
                 }
             }
         }
@@ -209,9 +215,10 @@ class TargetTranslationViewModel(
     }
 
     private fun setLastViewMode(mode: TranslationViewMode) {
-        viewModelScope.launch {
+        launchWithProgress {
             _state.update { it.copy(viewMode = mode) }
             translator.setLastViewMode(targetTranslation.id, mode)
+            loadListItems()
         }
     }
 

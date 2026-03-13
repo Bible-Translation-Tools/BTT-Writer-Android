@@ -39,9 +39,11 @@ class PublishActivity : BaseActivity(), PublishStepFragment.OnEventListener {
         val args = checkNotNull(intent.extras)
         val targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null)
 
-        val initialized = viewModel.initialize(targetTranslationId)
+        if (!viewModel.initialized) {
+            viewModel.initialize(targetTranslationId)
+        }
 
-        if (!initialized) {
+        if (!viewModel.initialized) {
             Logger.e(
                 PublishActivity::class.java.simpleName,
                 "A valid target translation id is required. Received $targetTranslationId but the translation could not be found"

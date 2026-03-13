@@ -1,7 +1,6 @@
 package com.door43.translationstudio.ui.translate.read
 
 import androidx.compose.ui.text.AnnotatedString
-import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
@@ -11,56 +10,51 @@ import com.door43.translationstudio.ui.translate.ChunkMeta
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 data class ReadState(
-    override val items: List<ChunkItem.ReadMode> = emptyList()
-) : ModeState<ChunkItem.ReadMode>
+    val test: String  = ""
+) : ModeState
 
 sealed interface ReadAction : ModeAction {
-    data class Init(val chunks: List<Chunk>) : ReadAction
+    data class CardsSwiped(val item: ChunkItem.ReadMode, val sourceOnTop: Boolean) : ReadAction
 }
 
-class ReadModeViewModel : ModeViewModel<ReadAction>() {
+class ReadModeViewModel(
+    chunks: StateFlow<List<Chunk>>
+) : ModeViewModel<ReadAction, ChunkItem.ReadMode>(chunks) {
 
     private val _state = MutableStateFlow(ReadState())
     val state: StateFlow<ReadState> = _state
 
+    override fun mapToChildType(chunks: List<Chunk>): List<ChunkItem.ReadMode> {
+        return chunks
+            .distinctBy { it.chapterSlug }
+            .chunked(5)
+            .flatMap { batch ->
+                batch.map { prepareItem(it) }
+            }
+    }
+
     override fun onAction(action: ReadAction) {
         when (action) {
-            is ReadAction.Init -> initialize(action.chunks)
+            is ReadAction.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
         }
     }
 
-    private fun initialize(chunks: List<Chunk>) {
-        viewModelScope.launch {
-            val readItems = withContext(Dispatchers.Default) {
-                chunks
-                    .distinctBy { it.chapterSlug }
-                    .chunked(5)
-                    .flatMap { batch ->
-                        batch.map { async { prepareItem(it) } }
-                    }.awaitAll()
-            }
-            _state.update { it.copy(items = readItems) }
-        }
+    private fun onCardsSwiped(item: ChunkItem.ReadMode, sourceOnTop: Boolean) {
+        updateLocalItem(item.copy(sourceOnTop = sourceOnTop))
     }
 
-    private fun prepareItem(chunk: Chunk): ChunkItem.ReadMode {
+    private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem.ReadMode {
         val (sourceText, renderedSourceText) = prepareSource(chunk)
         val (targetText, renderedTargetText) = prepareTarget(chunk)
         val (pt, ct, ft) = prepareTranslations(chunk)
 
+        val id = chunk.chapterSlug
         val meta = ChunkMeta(
-            id = chunk.chapterSlug,
             chunk = chunk,
             sourceText = sourceText,
             targetText = targetText,
@@ -71,7 +65,7 @@ class ReadModeViewModel : ModeViewModel<ReadAction>() {
             ft = ft
         )
 
-        return ChunkItem.ReadMode(meta)
+        return ChunkItem.ReadMode(id, sourceOnTop, meta)
     }
 
     private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {

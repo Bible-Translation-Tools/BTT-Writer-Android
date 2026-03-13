@@ -20,12 +20,15 @@ fun ChunkCard(
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
     onRemoveSourceClick: (String) -> Unit,
+    onTextChange: (String) -> Unit,
+    onCardsSwiped: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     StackedCardFlipper(
         modifier = modifier,
         containerPadding = 8.dp,
         stackOffset = 32.dp,
+        frontOnTop = item.sourceOnTop,
         frontCard = {
             ChunkSourceCard(
                 title = item.sourceTitle,
@@ -41,13 +44,13 @@ fun ChunkCard(
         backCard = {
             ChunkTargetCard(
                 title = item.targetTitle,
-                text = item.meta.renderedTargetText,
+                rawText = item.meta.targetText,
+                displayText = item.meta.renderedTargetText,
                 targetTranslation = targetTranslation,
                 typography = typography,
-                onTextChange = {
-                    println(it)
-                }
+                onTextChange = onTextChange
             )
-        }
+        },
+        onAnimationEnd = onCardsSwiped
     )
 }
