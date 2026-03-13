@@ -31,7 +31,7 @@ data class Footnote(
     val end: Int
 )
 
-abstract class ModeViewModel<ACTION, ITEM: Identifiable>(
+abstract class ModeViewModel<ACTION, ITEM: TranslateItem>(
     private val chunks: StateFlow<List<Chunk>>
 ) : ViewModel(), KoinComponent {
 

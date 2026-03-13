@@ -20,7 +20,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 
 @Composable
-fun <VM : ModeViewModel<*, ITEM>,S : ModeState, ITEM : Identifiable> ModeScreenTemplate(
+fun <VM : ModeViewModel<*, ITEM>,S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
     state: S,
     viewModel: VM,
     listState: LazyListState,

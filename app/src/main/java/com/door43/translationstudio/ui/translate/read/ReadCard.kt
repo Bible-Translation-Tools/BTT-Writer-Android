@@ -5,14 +5,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.ui.translate.ChunkItem
+import com.door43.translationstudio.ui.translate.ReadItem
 import com.door43.translationstudio.ui.translate.components.StackedCardFlipper
 import com.door43.translationstudio.ui.viewmodels.SourceTabItem
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
 fun ReadCard(
-    item: ChunkItem.ReadMode,
+    item: ReadItem,
     sourceTabs: List<SourceTabItem>,
     typography: Typography,
     selectedSource: ResourceContainer?,
@@ -31,7 +31,7 @@ fun ReadCard(
         frontCard = {
             ReadSourceCard(
                 title = item.sourceTitle,
-                text = item.meta.renderedSourceText,
+                text = item.renderedSourceText,
                 sourceTabs = sourceTabs,
                 typography = typography,
                 selectedSource = selectedSource,
@@ -43,7 +43,7 @@ fun ReadCard(
         backCard = {
             ReadTargetCard(
                 title = item.targetTitle,
-                text = item.meta.renderedTargetText,
+                text = item.renderedTargetText,
                 targetTranslation = targetTranslation,
                 typography = typography
             )

@@ -5,11 +5,10 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.rendering.VerseDisplay
-import com.door43.translationstudio.ui.translate.ChunkItem
-import com.door43.translationstudio.ui.translate.ChunkMeta
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
+import com.door43.translationstudio.ui.translate.ReadItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.unfoldingword.resourcecontainer.ResourceContainer
@@ -19,17 +18,17 @@ data class ReadState(
 ) : ModeState
 
 sealed interface ReadAction : ModeAction {
-    data class CardsSwiped(val item: ChunkItem.ReadMode, val sourceOnTop: Boolean) : ReadAction
+    data class CardsSwiped(val item: ReadItem, val sourceOnTop: Boolean) : ReadAction
 }
 
 class ReadModeViewModel(
     chunks: StateFlow<List<Chunk>>
-) : ModeViewModel<ReadAction, ChunkItem.ReadMode>(chunks) {
+) : ModeViewModel<ReadAction, ReadItem>(chunks) {
 
     private val _state = MutableStateFlow(ReadState())
     val state: StateFlow<ReadState> = _state
 
-    override fun mapToChildType(chunks: List<Chunk>): List<ChunkItem.ReadMode> {
+    override fun mapToChildType(chunks: List<Chunk>): List<ReadItem> {
         return chunks
             .distinctBy { it.chapterSlug }
             .chunked(5)
@@ -44,17 +43,17 @@ class ReadModeViewModel(
         }
     }
 
-    private fun onCardsSwiped(item: ChunkItem.ReadMode, sourceOnTop: Boolean) {
+    private fun onCardsSwiped(item: ReadItem, sourceOnTop: Boolean) {
         updateLocalItem(item.copy(sourceOnTop = sourceOnTop))
     }
 
-    private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem.ReadMode {
+    private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ReadItem {
         val (sourceText, renderedSourceText) = prepareSource(chunk)
         val (targetText, renderedTargetText) = prepareTarget(chunk)
         val (pt, ct, ft) = prepareTranslations(chunk)
 
-        val id = chunk.chapterSlug
-        val meta = ChunkMeta(
+        return ReadItem(
+            id = chunk.chapterSlug,
             chunk = chunk,
             sourceText = sourceText,
             targetText = targetText,
@@ -62,10 +61,9 @@ class ReadModeViewModel(
             renderedTargetText = renderedTargetText,
             pt = pt,
             ct = ct,
-            ft = ft
+            ft = ft,
+            sourceOnTop = sourceOnTop
         )
-
-        return ChunkItem.ReadMode(id, sourceOnTop, meta)
     }
 
     private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {

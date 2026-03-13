@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.translate.ChunkItem
-import com.door43.translationstudio.ui.translate.ChunkMeta
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
@@ -18,18 +17,18 @@ data class ChunkState(
 ) : ModeState
 
 sealed interface ChunkAction : ModeAction {
-    data class ItemTextChanged(val item: ChunkItem.ChunkMode, val text: String) : ChunkAction
-    data class CardsSwiped(val item: ChunkItem.ChunkMode, val sourceOnTop: Boolean) : ChunkAction
+    data class ItemTextChanged(val item: ChunkItem, val text: String) : ChunkAction
+    data class CardsSwiped(val item: ChunkItem, val sourceOnTop: Boolean) : ChunkAction
 }
 
 class ChunkModeViewModel(
     chunks: StateFlow<List<Chunk>>
-) : ModeViewModel<ChunkAction, ChunkItem.ChunkMode>(chunks) {
+) : ModeViewModel<ChunkAction, ChunkItem>(chunks) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
 
-    override fun mapToChildType(chunks: List<Chunk>): List<ChunkItem.ChunkMode> {
+    override fun mapToChildType(chunks: List<Chunk>): List<ChunkItem> {
         return chunks.chunked(5).flatMap { batch ->
             batch.map { prepareItem(it) }
         }
@@ -42,17 +41,17 @@ class ChunkModeViewModel(
         }
     }
 
-    private fun onCardsSwiped(item: ChunkItem.ChunkMode, sourceOnTop: Boolean) {
+    private fun onCardsSwiped(item: ChunkItem, sourceOnTop: Boolean) {
         updateLocalItem(item.copy(sourceOnTop = sourceOnTop))
     }
 
-    private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem.ChunkMode {
+    private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem {
         val (sourceText, renderedSourceText) = prepareSource(chunk)
         val (targetText, renderedTargetText) = prepareTarget(chunk)
         val (pt, ct, ft) = prepareTranslations(chunk)
 
-        val id = "${chunk.chapterSlug}-${chunk.chunkSlug}"
-        val meta = ChunkMeta(
+        return ChunkItem(
+            id  = "${chunk.chapterSlug}-${chunk.chunkSlug}",
             chunk = chunk,
             sourceText = sourceText,
             targetText = targetText,
@@ -60,10 +59,9 @@ class ChunkModeViewModel(
             renderedTargetText = renderedTargetText,
             pt = pt,
             ct = ct,
-            ft = ft
+            ft = ft,
+            sourceOnTop = sourceOnTop
         )
-
-        return ChunkItem.ChunkMode(id, sourceOnTop, meta)
     }
 
     private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {
@@ -88,11 +86,11 @@ class ChunkModeViewModel(
         }
     }
 
-    private fun onItemTextChanged(item: ChunkItem.ChunkMode, text: String) {
+    private fun onItemTextChanged(item: ChunkItem, text: String) {
         viewModelScope.launch {
             item.saveTranslation(text)
             updateLocalItem(
-                prepareItem(item.meta.chunk, false)
+                prepareItem(item.chunk, false)
             )
         }
     }
