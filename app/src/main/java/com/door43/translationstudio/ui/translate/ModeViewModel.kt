@@ -25,6 +25,10 @@ interface ModeAction {
     object ClearNotes : ModeAction
 }
 
+interface SwipableAction {
+    data class CardsSwiped(val item: Swipable, val sourceOnTop: Boolean) : SwipableAction
+}
+
 data class Footnote(
     val text: String,
     val start: Int,
@@ -51,7 +55,11 @@ abstract class ModeViewModel<ACTION, ITEM: TranslateItem>(
 
     abstract fun mapToChildType(chunks: List<Chunk>): List<ITEM>
 
-    abstract fun onAction(action: ACTION)
+    open fun onAction(action: ACTION) {
+        when (action) {
+            is SwipableAction.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
+        }
+    }
 
     fun onSharedAction(action: ModeAction) {
         when(action) {
@@ -59,11 +67,9 @@ abstract class ModeViewModel<ACTION, ITEM: TranslateItem>(
         }
     }
 
-    fun updateLocalItem(updatedItem: ITEM) {
+    fun updateItem(item: ITEM) {
         _items.value = _items.value.map {
-            if (it.id == updatedItem.id) {
-                updatedItem
-            } else it
+            if (it.id == item.id) item else it
         }
     }
 
@@ -129,4 +135,6 @@ abstract class ModeViewModel<ACTION, ITEM: TranslateItem>(
             AnnotatedString(targetText)
         }
     }
+
+    abstract fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean)
 }

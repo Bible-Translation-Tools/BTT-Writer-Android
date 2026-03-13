@@ -10,6 +10,7 @@ import com.door43.translationstudio.core.ProjectTranslation
 
 interface Swipable {
     val sourceOnTop: Boolean
+    fun selfCopy(sourceOnTop: Boolean = this.sourceOnTop): Swipable
 }
 
 abstract class TranslateItem {
@@ -121,6 +122,10 @@ data class ReadItem(
     override val sourceOnTop: Boolean
 ) : TranslateItem(), Swipable {
 
+    override fun selfCopy(sourceOnTop: Boolean): Swipable {
+        return copy(sourceOnTop = sourceOnTop)
+    }
+
     override val sourceTitle: String
         get() {
             var title = chunk.source.readChunk(chunk.chapterSlug, "title")
@@ -187,7 +192,12 @@ data class ChunkItem(
     override val ct: ChapterTranslation,
     override val ft: FrameTranslation,
     override val sourceOnTop: Boolean
-) : TranslateItem(), Swipable
+) : TranslateItem(), Swipable {
+
+    override fun selfCopy(sourceOnTop: Boolean): Swipable {
+        return copy(sourceOnTop = sourceOnTop)
+    }
+}
 
 data class ReviewItem(
     override val id: String,

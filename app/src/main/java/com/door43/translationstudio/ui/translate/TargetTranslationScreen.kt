@@ -49,7 +49,6 @@ import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar
 import com.door43.translationstudio.ui.translate.components.TranslateSideBarAction
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
-import com.door43.translationstudio.ui.translate.read.ReadAction
 import com.door43.translationstudio.ui.translate.read.ReadCard
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.viewmodels.TargetAction
@@ -375,7 +374,7 @@ fun TargetTranslationScreen(
                                         viewModel.onAction(TargetAction.RemoveSource(it))
                                     },
                                     onCardsSwiped = {
-                                        readVm.onAction(ReadAction.CardsSwiped(item, it))
+                                        readVm.onAction(SwipableAction.CardsSwiped(item, it))
                                     }
                                 )
                             }
@@ -411,7 +410,7 @@ fun TargetTranslationScreen(
                                     },
                                     onCardsSwiped = { sourceOnTop ->
                                         chunkVm.onAction(
-                                            ChunkAction.CardsSwiped(item, sourceOnTop)
+                                            SwipableAction.CardsSwiped(item, sourceOnTop)
                                         )
                                     }
                                 )

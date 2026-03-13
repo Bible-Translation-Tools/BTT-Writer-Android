@@ -8,6 +8,8 @@ import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
+import com.door43.translationstudio.ui.translate.Swipable
+import com.door43.translationstudio.ui.translate.SwipableAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -16,14 +18,13 @@ data class ChunkState(
     val test: String = ""
 ) : ModeState
 
-sealed interface ChunkAction : ModeAction {
+sealed interface ChunkAction : ModeAction, SwipableAction {
     data class ItemTextChanged(val item: ChunkItem, val text: String) : ChunkAction
-    data class CardsSwiped(val item: ChunkItem, val sourceOnTop: Boolean) : ChunkAction
 }
 
 class ChunkModeViewModel(
     chunks: StateFlow<List<Chunk>>
-) : ModeViewModel<ChunkAction, ChunkItem>(chunks) {
+) : ModeViewModel<SwipableAction, ChunkItem>(chunks) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
@@ -34,15 +35,15 @@ class ChunkModeViewModel(
         }
     }
 
-    override fun onAction(action: ChunkAction) {
+    override fun onAction(action: SwipableAction) {
+        super.onAction(action)
         when (action) {
             is ChunkAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
-            is ChunkAction.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
         }
     }
 
-    private fun onCardsSwiped(item: ChunkItem, sourceOnTop: Boolean) {
-        updateLocalItem(item.copy(sourceOnTop = sourceOnTop))
+    override fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {
+        updateItem(item.selfCopy(sourceOnTop = sourceOnTop) as ChunkItem)
     }
 
     private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem {
@@ -89,7 +90,7 @@ class ChunkModeViewModel(
     private fun onItemTextChanged(item: ChunkItem, text: String) {
         viewModelScope.launch {
             item.saveTranslation(text)
-            updateLocalItem(
+            updateItem(
                 prepareItem(item.chunk, false)
             )
         }
