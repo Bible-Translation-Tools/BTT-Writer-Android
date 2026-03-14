@@ -2,7 +2,12 @@ package com.door43.translationstudio.ui.translate.components
 
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -29,71 +34,48 @@ fun RichEditField(
     iconFont: FontFamily = FontFamily(Font(R.font.icons)),
     noteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
-    val mapping = remember(rawText, displayText) {
-        buildDisplayToRawMapping(rawText, displayText)
-    }
+    val mapping = remember(rawText, displayText) { buildDisplayToRawMapping(rawText, displayText) }
 
-    var textFieldValue by remember(displayText) {
-        mutableStateOf(TextFieldValue(text = displayText))
-    }
+    // Create a stable local state that persists across recompositions
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(text = displayText)) }
 
-    var lastEmittedRaw by remember { mutableStateOf(rawText) }
+    // Use a SideEffect to update local text when external text changes,
+    // WITHOUT resetting the selection/cursor.
+    LaunchedEffect(displayText) {
+        if (textFieldValue.text != displayText) {
+            val oldText = textFieldValue.text
+            val newText = displayText
 
-    LaunchedEffect(displayText, rawText) {
-        println(rawText)
-        println(lastEmittedRaw)
-
-        if (rawText != lastEmittedRaw) {
-            // External sync: preserve cursor position relative to the new text length
+            // Heuristic: If we are not currently editing (or text changed externally),
+            // calculate the offset shift to keep the cursor in the same relative position.
             val currentSel = textFieldValue.selection
-            textFieldValue = TextFieldValue(
-                text = displayText,
-                selection = TextRange(
-                    currentSel.start.coerceIn(0, displayText.length),
-                    currentSel.end.coerceIn(0, displayText.length)
-                )
-            )
-            lastEmittedRaw = rawText
-        } else if (textFieldValue.text != displayText) {
-            // Internal edit re-rendered: clamp existing selection
-            val sel = textFieldValue.selection
+
+            // If the user isn't typing, just sync the text
             textFieldValue = textFieldValue.copy(
-                text = displayText,
+                text = newText,
                 selection = TextRange(
-                    sel.start.coerceIn(0, displayText.length),
-                    sel.end.coerceIn(0, displayText.length)
-                ),
-                composition = textFieldValue.composition?.let {
-                    TextRange(
-                        it.start.coerceIn(0, displayText.length),
-                        it.end.coerceIn(0, displayText.length)
-                    )
-                }
+                    currentSel.start.coerceIn(0, newText.length),
+                    currentSel.end.coerceIn(0, newText.length)
+                )
             )
         }
     }
 
     BasicTextField(
         value = textFieldValue,
-        onValueChange = { new ->
-            if (textFieldValue.text == new.text) {
-                // Only cursor/selection changed, no text mutation
-                textFieldValue = new
-                return@BasicTextField
-            }
+        onValueChange = { newValue ->
+            // Update local state immediately for responsiveness
+            textFieldValue = newValue
 
-            val result = handleEdit(
-                oldDisplay = textFieldValue.text,
-                newDisplay = new.text,
-                rawText = rawText,
-                mapping = mapping
-            )
-
-            textFieldValue = new
-
-            if (result != rawText) {
-                lastEmittedRaw = result
-                onRawTextChange(result)
+            // Only trigger upstream update if the text content actually changed
+            if (newValue.text != displayText) {
+                val updatedRaw = handleEdit(
+                    oldDisplay = displayText, // Use the current source of truth
+                    newDisplay = newValue.text,
+                    rawText = rawText,
+                    mapping = mapping
+                )
+                onRawTextChange(updatedRaw)
             }
         },
         visualTransformation = remember(iconFont, noteColor, textStyle.fontSize) {
