@@ -76,11 +76,13 @@ fun StackedCardFlipper(
                 val duration = 400 
                 val easing = LinearEasing 
 
-                val topOutDelta = if (leftToRight) halfWidth else -halfWidth
-                val bottomOutDelta = if (leftToRight) -halfWidth else halfWidth
+                val swipeDelta = if (leftToRight) halfWidth else -halfWidth
 
-                val job1 = launch { frontX.animateTo(frontX.value + topOutDelta, tween(duration, easing = easing)) }
-                val job2 = launch { backX.animateTo(backX.value + bottomOutDelta, tween(duration, easing = easing)) }
+                val topCardX = if (isFrontOnTop) frontX else backX
+                val bottomCardX = if (isFrontOnTop) backX else frontX
+
+                val job1 = launch { topCardX.animateTo(topCardX.value + swipeDelta, tween(duration, easing = easing)) }
+                val job2 = launch { bottomCardX.animateTo(bottomCardX.value - swipeDelta, tween(duration, easing = easing)) }
                 joinAll(job1, job2) 
 
                 isFrontOnTop = !isFrontOnTop
