@@ -1,5 +1,8 @@
 package com.door43.translationstudio.ui.translate.components
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -11,7 +14,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -23,6 +29,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -32,7 +39,7 @@ import kotlin.math.min
 
 @OptIn(FlowPreview::class)
 @Composable
-fun RichEditField(
+fun RichEditText(
     rawText: String,
     displayText: String,
     onRawTextChange: (String) -> Unit,
@@ -41,6 +48,10 @@ fun RichEditField(
     iconFont: FontFamily = FontFamily(Font(R.font.icons)),
     noteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
+    val density = LocalDensity.current
+    val lineHeightPx = with(density) { textStyle.lineHeight.toPx() }
+    val lineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+
     var textFieldValue by remember { mutableStateOf(TextFieldValue(displayText)) }
 
     val currentRawText by rememberUpdatedState(rawText)
@@ -90,6 +101,28 @@ fun RichEditField(
         },
         textStyle = textStyle,
         modifier = modifier
+            .fillMaxWidth()
+            .drawBehind {
+                val strokeWidth = 1.dp.toPx()
+                val width = size.width
+                val height = size.height
+                var y = lineHeightPx
+
+                while (y <= height + (lineHeightPx / 2)) {
+                    drawLine(
+                        color = lineColor,
+                        start = Offset(0f, y),
+                        end = Offset(width, y),
+                        strokeWidth = strokeWidth
+                    )
+                    y += lineHeightPx
+                }
+            },
+        decorationBox = { innerTextField ->
+            Box(modifier = Modifier.padding(horizontal = 4.dp)) {
+                innerTextField()
+            }
+        }
     )
 }
 
@@ -98,7 +131,25 @@ private const val OBJ_CHAR = '\uFFFC'
 internal data class OffsetMap(
     val displayToRaw: IntArray,
     val footnoteDisplayOffsets: Set<Int>
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as OffsetMap
+
+        if (!displayToRaw.contentEquals(other.displayToRaw)) return false
+        if (footnoteDisplayOffsets != other.footnoteDisplayOffsets) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = displayToRaw.contentHashCode()
+        result = 31 * result + footnoteDisplayOffsets.hashCode()
+        return result
+    }
+}
 
 internal class IconVisualTransformation(
     private val iconFont: FontFamily,

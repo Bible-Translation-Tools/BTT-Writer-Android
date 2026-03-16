@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -139,6 +140,8 @@ fun Typography.getComposeTextStyle(
         fontSize = safeSizeSp.sp,
         fontWeight = if (config.isBold) FontWeight.Bold else FontWeight.Normal,
         textDirection = if (config.isRtl) TextDirection.Rtl else TextDirection.Ltr,
-        textAlign = if (isCenterAligned) TextAlign.Center else TextAlign.Start
+        textAlign = if (isCenterAligned) TextAlign.Center else TextAlign.Start,
+        lineHeight = (safeSizeSp * 1.4f).sp,
+        color = MaterialTheme.colorScheme.onSurface
     )
 }
