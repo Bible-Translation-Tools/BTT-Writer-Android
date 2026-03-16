@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,8 @@ fun StackedCardFlipper(
 
     var isFrontOnTop by remember { mutableStateOf(frontOnTop) }
     var isAnimating by remember { mutableStateOf(false) }
+
+    val currentOnAnimationEnd by rememberUpdatedState(onAnimationEnd)
 
     BoxWithConstraints(
         modifier = modifier
@@ -100,7 +103,7 @@ fun StackedCardFlipper(
                 joinAll(job3, job4)
 
                 isAnimating = false
-                onAnimationEnd(isFrontOnTop)
+                currentOnAnimationEnd(isFrontOnTop)
             }
         }
 
