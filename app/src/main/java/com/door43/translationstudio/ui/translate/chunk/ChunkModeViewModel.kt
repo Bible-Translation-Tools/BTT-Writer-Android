@@ -88,10 +88,8 @@ class ChunkModeViewModel(
 
     private fun onItemTextChanged(item: ChunkItem, text: String) {
         viewModelScope.launch {
+            println(text)
             item.saveTranslation(text)
-            updateItem(
-                prepareItem(item.chunk, false)
-            )
         }
     }
 }

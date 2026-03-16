@@ -7,7 +7,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -22,8 +24,13 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.TextUnit
 import com.door43.translationstudio.R
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlin.math.min
 
+@OptIn(FlowPreview::class)
 @Composable
 fun RichEditField(
     rawText: String,
@@ -34,49 +41,49 @@ fun RichEditField(
     iconFont: FontFamily = FontFamily(Font(R.font.icons)),
     noteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
-    val mapping = remember(rawText, displayText) { buildDisplayToRawMapping(rawText, displayText) }
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(displayText)) }
 
-    // Create a stable local state that persists across recompositions
-    var textFieldValue by remember { mutableStateOf(TextFieldValue(text = displayText)) }
+    val currentRawText by rememberUpdatedState(rawText)
+    val currentDisplayText by rememberUpdatedState(displayText)
+    val currentOnRawTextChange by rememberUpdatedState(onRawTextChange)
 
-    // Use a SideEffect to update local text when external text changes,
-    // WITHOUT resetting the selection/cursor.
     LaunchedEffect(displayText) {
         if (textFieldValue.text != displayText) {
-            val oldText = textFieldValue.text
-            val newText = displayText
-
-            // Heuristic: If we are not currently editing (or text changed externally),
-            // calculate the offset shift to keep the cursor in the same relative position.
             val currentSel = textFieldValue.selection
-
-            // If the user isn't typing, just sync the text
             textFieldValue = textFieldValue.copy(
-                text = newText,
+                text = displayText,
                 selection = TextRange(
-                    currentSel.start.coerceIn(0, newText.length),
-                    currentSel.end.coerceIn(0, newText.length)
+                    currentSel.start.coerceIn(0, displayText.length),
+                    currentSel.end.coerceIn(0, displayText.length)
                 )
             )
         }
     }
 
+    LaunchedEffect(Unit) {
+        snapshotFlow { textFieldValue.text }
+            .filter { it != currentDisplayText }
+            .debounce(500L)
+            .distinctUntilChanged()
+            .collect { currentDisplay ->
+                val mapping = buildDisplayToRawMapping(currentRawText, currentDisplayText)
+                val newRaw = handleEdit(
+                    oldDisplay = currentDisplayText,
+                    newDisplay = currentDisplay,
+                    rawText = currentRawText,
+                    mapping = mapping
+                )
+
+                if (newRaw != currentRawText) {
+                    currentOnRawTextChange(newRaw)
+                }
+            }
+    }
+
     BasicTextField(
         value = textFieldValue,
         onValueChange = { newValue ->
-            // Update local state immediately for responsiveness
             textFieldValue = newValue
-
-            // Only trigger upstream update if the text content actually changed
-            if (newValue.text != displayText) {
-                val updatedRaw = handleEdit(
-                    oldDisplay = displayText, // Use the current source of truth
-                    newDisplay = newValue.text,
-                    rawText = rawText,
-                    mapping = mapping
-                )
-                onRawTextChange(updatedRaw)
-            }
         },
         visualTransformation = remember(iconFont, noteColor, textStyle.fontSize) {
             IconVisualTransformation(iconFont, noteColor, textStyle.fontSize)
