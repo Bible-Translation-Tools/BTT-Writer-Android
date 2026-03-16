@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.translate.chunk
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.TargetTranslation
@@ -98,7 +96,6 @@ fun ChunkTargetCard(
                 if (item.isComplete) {
                     Box(
                         modifier = Modifier.fillMaxSize()
-                            .background(Color.Red.copy(alpha = 0.5f))
                             .clickable {
                                 if (!item.sourceOnTop) {
                                     waitingForFocus = true
