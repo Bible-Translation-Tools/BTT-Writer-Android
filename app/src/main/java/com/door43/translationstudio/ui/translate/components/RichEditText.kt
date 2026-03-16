@@ -15,9 +15,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -32,6 +36,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -44,6 +49,8 @@ fun RichEditText(
     displayText: String,
     onRawTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    shouldFocus: Boolean = false,
+    onFocusConsumed: () -> Unit = {},
     textStyle: TextStyle = TextStyle.Default,
     iconFont: FontFamily = FontFamily(Font(R.font.icons)),
     noteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -57,6 +64,9 @@ fun RichEditText(
     val currentRawText by rememberUpdatedState(rawText)
     val currentDisplayText by rememberUpdatedState(displayText)
     val currentOnRawTextChange by rememberUpdatedState(onRawTextChange)
+
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(displayText) {
         if (textFieldValue.text != displayText) {
@@ -91,6 +101,19 @@ fun RichEditText(
             }
     }
 
+    LaunchedEffect(shouldFocus) {
+        if (shouldFocus) {
+            delay(300)
+            textFieldValue = textFieldValue.copy(
+                selection = TextRange(textFieldValue.text.length)
+            )
+            focusRequester.requestFocus()
+            delay(100)
+            keyboardController?.show()
+            onFocusConsumed()
+        }
+    }
+
     BasicTextField(
         value = textFieldValue,
         onValueChange = { newValue ->
@@ -100,8 +123,10 @@ fun RichEditText(
             IconVisualTransformation(iconFont, noteColor, textStyle.fontSize)
         },
         textStyle = textStyle,
+        cursorBrush = SolidColor(textStyle.color),
         modifier = modifier
             .fillMaxWidth()
+            .focusRequester(focusRequester)
             .drawBehind {
                 val strokeWidth = 1.dp.toPx()
                 val width = size.width

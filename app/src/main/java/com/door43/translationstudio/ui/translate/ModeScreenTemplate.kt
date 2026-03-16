@@ -17,6 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.components.ConfirmDialog
+import com.door43.translationstudio.ui.translate.chunk.ChunkAction
+import com.door43.translationstudio.ui.translate.chunk.ChunkState
 import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 
 @Composable
@@ -64,6 +67,20 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
                     Text(stringResource(R.string.dismiss))
                 }
             }
+        )
+    }
+
+    if (state is ChunkState && state.chunkToReopen != null) {
+        ConfirmDialog(
+            title = stringResource(R.string.chunk_done_title),
+            message = stringResource(R.string.chunk_done_prompt),
+            onDismiss = { viewModel.onAction(ChunkAction.ReopenChunkConfirmed(false)) },
+            onConfirm = {
+                viewModel.onAction(
+                    ChunkAction.ReopenChunkConfirmed(true)
+                )
+            },
+            confirmText = stringResource(R.string.edit)
         )
     }
 }

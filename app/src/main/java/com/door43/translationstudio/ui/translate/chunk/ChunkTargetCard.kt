@@ -1,5 +1,8 @@
 package com.door43.translationstudio.ui.translate.chunk
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,9 +13,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.TargetTranslation
@@ -20,21 +27,21 @@ import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
+import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.components.RichEditText
 
 
 @Composable
 fun ChunkTargetCard(
-    title: String,
-    rawText: String,
-    displayText: AnnotatedString,
+    item: ChunkItem,
     targetTranslation: TargetTranslation,
     typography: Typography,
     onTextChange: (String) -> Unit,
+    onCompleteItemClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val titleStyle = typography.getComposeTextStyle(
-        translationType = TranslationType.SOURCE,
+        translationType = TranslationType.TARGET,
         style = TextStyleType.SUB,
         languageCode = targetTranslation.targetLanguage.slug,
         direction = targetTranslation.targetLanguage.direction
@@ -46,6 +53,8 @@ fun ChunkTargetCard(
         languageCode = targetTranslation.targetLanguage.slug,
         direction = targetTranslation.targetLanguage.direction
     )
+
+    var waitingForFocus by remember { mutableStateOf(false) }
 
     Card(
         modifier = modifier.fillMaxSize(),
@@ -61,7 +70,7 @@ fun ChunkTargetCard(
                 .padding(16.dp)
         ) {
             Text(
-                text = title,
+                text = item.targetTitle,
                 style = titleStyle,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -71,15 +80,34 @@ fun ChunkTargetCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RichEditText(
-                rawText = rawText,
-                displayText = displayText.text,
-                onRawTextChange = {
-                    onTextChange(it)
-                },
-                textStyle = bodyStyle,
+            Box(
                 modifier = Modifier.fillMaxSize()
-            )
+            ) {
+                RichEditText(
+                    rawText = item.targetText,
+                    displayText = item.renderedTargetText.text,
+                    onRawTextChange = {
+                        onTextChange(it)
+                    },
+                    textStyle = bodyStyle,
+                    shouldFocus = waitingForFocus && !item.isComplete,
+                    onFocusConsumed = { waitingForFocus = false },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                if (item.isComplete) {
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                            .background(Color.Red.copy(alpha = 0.5f))
+                            .clickable {
+                                if (!item.sourceOnTop) {
+                                    waitingForFocus = true
+                                    onCompleteItemClick()
+                                }
+                            }
+                    )
+                }
+            }
         }
     }
 }

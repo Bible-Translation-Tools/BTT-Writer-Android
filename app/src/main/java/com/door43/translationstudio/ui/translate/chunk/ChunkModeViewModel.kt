@@ -9,16 +9,20 @@ import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.Swipable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class ChunkState(
-    val test: String = ""
+    val chunkToReopen: ChunkItem? = null
 ) : ModeState
 
 sealed interface ChunkAction : ModeAction {
     data class ItemTextChanged(val item: ChunkItem, val text: String) : ChunkAction
+    data class ReopenChunkClicked(val item: ChunkItem) : ChunkAction
+    data class ReopenChunkConfirmed(val confirm: Boolean) : ChunkAction
 }
 
 class ChunkModeViewModel(
@@ -38,6 +42,8 @@ class ChunkModeViewModel(
         super.onAction(action)
         when (action) {
             is ChunkAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
+            is ChunkAction.ReopenChunkClicked -> onReopenChunkClicked(action.item)
+            is ChunkAction.ReopenChunkConfirmed -> onReopenChunkConfirmed(action.confirm)
         }
     }
 
@@ -88,8 +94,30 @@ class ChunkModeViewModel(
 
     private fun onItemTextChanged(item: ChunkItem, text: String) {
         viewModelScope.launch {
-            println(text)
             item.saveTranslation(text)
         }
+    }
+
+    private fun onReopenChunkClicked(item: ChunkItem) {
+        _state.value = _state.value.copy(
+            chunkToReopen = item
+        )
+    }
+
+    private fun onReopenChunkConfirmed(confirm: Boolean) {
+        viewModelScope.launch {
+            if (confirm) {
+                _state.value.chunkToReopen?.let {
+                    withContext(Dispatchers.IO) {
+                        it.reopen()
+                    }
+                    val updated = prepareItem(it.chunk, false)
+                    updateItem(updated)
+                }
+            }
+        }
+        _state.value = _state.value.copy(
+            chunkToReopen = null
+        )
     }
 }

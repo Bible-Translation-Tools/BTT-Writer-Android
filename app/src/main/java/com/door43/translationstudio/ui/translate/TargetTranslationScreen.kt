@@ -412,6 +412,9 @@ fun TargetTranslationScreen(
                                         chunkVm.onAction(
                                             ModeAction.CardsSwiped(item, sourceOnTop)
                                         )
+                                    },
+                                    onCompleteItemClick = {
+                                        chunkVm.onAction(ChunkAction.ReopenChunkClicked(item))
                                     }
                                 )
                             }

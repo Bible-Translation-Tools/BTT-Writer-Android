@@ -1,7 +1,10 @@
 package com.door43.translationstudio.ui.translate.chunk
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
@@ -22,8 +25,19 @@ fun ChunkCard(
     onRemoveSourceClick: (String) -> Unit,
     onTextChange: (String) -> Unit,
     onCardsSwiped: (Boolean) -> Unit,
+    onCompleteItemClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(item.sourceOnTop) {
+        if (item.sourceOnTop) {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        }
+    }
+
     StackedCardFlipper(
         modifier = modifier,
         containerPadding = 8.dp,
@@ -43,12 +57,11 @@ fun ChunkCard(
         },
         backCard = {
             ChunkTargetCard(
-                title = item.targetTitle,
-                rawText = item.targetText,
-                displayText = item.renderedTargetText,
+                item = item,
                 targetTranslation = targetTranslation,
                 typography = typography,
-                onTextChange = onTextChange
+                onTextChange = onTextChange,
+                onCompleteItemClick = onCompleteItemClick
             )
         },
         onAnimationEnd = onCardsSwiped
