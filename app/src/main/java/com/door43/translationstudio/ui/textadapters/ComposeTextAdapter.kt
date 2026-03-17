@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
 import com.door43.translationstudio.rendering.model.TextNode
@@ -34,7 +35,6 @@ object ComposeTextAdapter {
      */
     fun convert(
         nodes: List<TextNode>,
-        parseHtml: Boolean = false,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
         noteColor: Color = Color(0xFFFFD700),
@@ -82,7 +82,6 @@ object ComposeTextAdapter {
 
             appendNode(
                 node = node,
-                parseHtml = parseHtml,
                 searchHighlightColor = searchHighlightColor,
                 verseColor = verseColor,
                 noteColor = noteColor,
@@ -96,9 +95,81 @@ object ComposeTextAdapter {
         }
     }
 
+    /**
+     * Convert an HTML string (pre-processed by [HtmlRenderer.toAnnotatedHtml])
+     * into an AnnotatedString using the platform's `fromHtml()` parser.
+     *
+     * Wiki-style links have already been converted to `<a href="app://...">` tags,
+     * so the platform parser handles all HTML tags and entities correctly.
+     * This method post-processes the `app://` link annotations to add click handlers.
+     *
+     * @param html       Output of [HtmlRenderer.toAnnotatedHtml].
+     * @param onLinkClick Called when any link (wiki-style or regular `<a>`) is clicked.
+     */
+    fun convertHtml(
+        html: String,
+        onLinkClick: (LinkData) -> Unit = {}
+    ): AnnotatedString {
+        val parsed = AnnotatedString.fromHtml(html)
+
+        return buildAnnotatedString {
+            append(parsed.text)
+
+            // Copy all span styles (bold, italic, colors, etc.)
+            for (range in parsed.spanStyles) {
+                addStyle(range.item, range.start, range.end)
+            }
+
+            // Copy all paragraph styles
+            for (range in parsed.paragraphStyles) {
+                addStyle(range.item, range.start, range.end)
+            }
+
+            // Post-process link annotations: add click handlers for app:// links
+            val links = parsed.getLinkAnnotations(0, parsed.length)
+            for (range in links) {
+                when (val annotation = range.item) {
+                    is LinkAnnotation.Url -> {
+                        val linkData = HtmlRenderer.parseLinkUrl(annotation.url)
+                        if (linkData != null) {
+                            // Our custom app:// link — replace with clickable
+                            addLink(
+                                LinkAnnotation.Clickable(tag = linkTag(linkData)) {
+                                    onLinkClick(linkData)
+                                },
+                                range.start, range.end
+                            )
+                        } else {
+                            // Regular <a href="..."> — make clickable with Markdown data
+                            val mdData = LinkData.Markdown(
+                                address = annotation.url,
+                                title = parsed.text.substring(range.start, range.end)
+                            )
+                            addLink(
+                                LinkAnnotation.Clickable(tag = "MD") {
+                                    onLinkClick(mdData)
+                                },
+                                range.start, range.end
+                            )
+                        }
+                    }
+                    is LinkAnnotation.Clickable -> addLink(annotation, range.start, range.end)
+                }
+            }
+        }
+    }
+
+    private fun linkTag(data: LinkData): String = when (data) {
+        is LinkData.Article -> "TA"
+        is LinkData.TranslationWord -> "TW"
+        is LinkData.Passage -> "PASSAGE"
+        is LinkData.Markdown -> "MD"
+        is LinkData.ShortReference -> "REF"
+        is LinkData.AppLink -> data.linkType
+    }
+
     private fun AnnotatedString.Builder.appendNode(
         node: TextNode,
-        parseHtml: Boolean,
         searchHighlightColor: Color,
         verseColor: Color,
         noteColor: Color,
@@ -111,17 +182,13 @@ object ComposeTextAdapter {
     ) {
         when (node) {
             is TextNode.Text -> {
-                if (parseHtml && node.content.contains('<')) {
-                    append(AnnotatedString.fromHtml(node.content))
-                } else {
-                    if (poeticalLineIndent > 0
-                        && !verseMarkerAddedIndentation
-                        && node.content.trim().isNotEmpty()) {
-                        val padding = "    ".repeat(poeticalLineIndent)
-                        append(padding)
-                    }
-                    append(node.content)
+                if (poeticalLineIndent > 0
+                    && !verseMarkerAddedIndentation
+                    && node.content.trim().isNotEmpty()) {
+                    val padding = "    ".repeat(poeticalLineIndent)
+                    append(padding)
                 }
+                append(node.content)
             }
 
             is TextNode.Styled -> {

@@ -319,14 +319,10 @@ class ReviewModeViewModel(
             }
             result
         }
-        renderingGroup.addEngine(renderer)
-        val renderNodes = renderingGroup.startNodes()
-        val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-
+        val html = renderer.toAnnotatedHtml(note.body)
         val title = note.title
-        val body = ComposeTextAdapter.convert(
-            nodes = textNodes,
-            parseHtml = true,
+        val body = ComposeTextAdapter.convertHtml(
+            html = html,
             onLinkClick = { println(it) }
         )
 
@@ -403,14 +399,10 @@ class ReviewModeViewModel(
                 result
             }
 
-            renderingGroup.addEngine(renderer)
-            val renderNodes = renderingGroup.startNodes()
-            val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-
+            val html = renderer.toAnnotatedHtml(description)
             val title = link.title
-            val body = ComposeTextAdapter.convert(
-                nodes = textNodes,
-                parseHtml = true,
+            val body = ComposeTextAdapter.convertHtml(
+                html = html,
                 onLinkClick = { println(it) }
             )
 
@@ -488,14 +480,10 @@ class ReviewModeViewModel(
                 result
             }
 
-            renderingGroup.addEngine(renderer)
-            val renderNodes = renderingGroup.startNodes()
-            val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-
+            val html = renderer.toAnnotatedHtml(description)
             val title = link.title
-            val body = ComposeTextAdapter.convert(
-                nodes = textNodes,
-                parseHtml = true,
+            val body = ComposeTextAdapter.convertHtml(
+                html = html,
                 onLinkClick = { println(it) }
             )
 
