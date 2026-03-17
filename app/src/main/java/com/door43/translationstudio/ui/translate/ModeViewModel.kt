@@ -45,12 +45,14 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     init {
         viewModelScope.launch {
             chunks.collect { list ->
-                _items.value = mapToChildType(list)
+                mapToChildType(list) { items ->
+                    _items.value = items
+                }
             }
         }
     }
 
-    abstract fun mapToChildType(chunks: List<Chunk>): List<ITEM>
+    abstract fun mapToChildType(chunks: List<Chunk>, onReady: (List<ITEM>) -> Unit)
 
     open fun onAction(action: ModeAction) {
         when (action) {

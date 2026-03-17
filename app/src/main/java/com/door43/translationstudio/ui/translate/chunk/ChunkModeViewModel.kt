@@ -10,6 +10,8 @@ import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.Swipable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -32,9 +34,16 @@ class ChunkModeViewModel(
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
 
-    override fun mapToChildType(chunks: List<Chunk>): List<ChunkItem> {
-        return chunks.chunked(5).flatMap { batch ->
-            batch.map { prepareItem(it) }
+    override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ChunkItem>) -> Unit) {
+        viewModelScope.launch {
+            val items = withContext(Dispatchers.Default) {
+                chunks
+                    .chunked(5)
+                    .flatMap { batch ->
+                        batch.map { async { prepareItem(it) } }
+                    }.awaitAll()
+            }
+            onReady(items)
         }
     }
 

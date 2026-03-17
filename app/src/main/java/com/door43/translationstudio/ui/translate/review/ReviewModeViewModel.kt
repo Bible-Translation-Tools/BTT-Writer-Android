@@ -33,6 +33,8 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Compa
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -108,9 +110,16 @@ class ReviewModeViewModel(
     private val _state = MutableStateFlow(ReviewState())
     val state: StateFlow<ReviewState> = _state
 
-    override fun mapToChildType(chunks: List<Chunk>): List<ReviewItem> {
-        return chunks.chunked(5).flatMap { batch ->
-            batch.map { prepareItem(it) }
+    override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ReviewItem>) -> Unit) {
+        viewModelScope.launch {
+            val items = withContext(Dispatchers.Default) {
+                chunks
+                    .chunked(5)
+                    .flatMap { batch ->
+                        batch.map { async { prepareItem(it) } }
+                    }.awaitAll()
+            }
+            onReady(items)
         }
     }
 

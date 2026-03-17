@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.translate.read
 
 import androidx.compose.ui.text.AnnotatedString
+import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
@@ -10,8 +11,13 @@ import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
 import com.door43.translationstudio.ui.translate.Swipable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 object ReadState : ModeState
@@ -25,13 +31,18 @@ class ReadModeViewModel(
     private val _state = MutableStateFlow(ReadState)
     val state: StateFlow<ReadState> = _state
 
-    override fun mapToChildType(chunks: List<Chunk>): List<ReadItem> {
-        return chunks
-            .distinctBy { it.chapterSlug }
-            .chunked(5)
-            .flatMap { batch ->
-                batch.map { prepareItem(it) }
+    override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ReadItem>) -> Unit) {
+        viewModelScope.launch {
+            val items = withContext(Dispatchers.Default) {
+                chunks
+                    .distinctBy { it.chapterSlug }
+                    .chunked(5)
+                    .flatMap { batch ->
+                        batch.map { async { prepareItem(it) } }
+                    }.awaitAll()
             }
+            onReady(items)
+        }
     }
 
     override fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {
