@@ -57,6 +57,7 @@ import com.door43.translationstudio.ui.translate.components.TranslateSideBarActi
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadCard
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
+import com.door43.translationstudio.ui.translate.review.Help
 import com.door43.translationstudio.ui.translate.review.NotesCard
 import com.door43.translationstudio.ui.translate.review.QuestionsCard
 import com.door43.translationstudio.ui.translate.review.ReviewAction
@@ -475,9 +476,7 @@ fun TargetTranslationScreen(
                                     )
                                 }
 
-                                val helpVisible = reviewState.noteHelp != null
-                                        || reviewState.wordHelp != null
-                                        || reviewState.questionHelp != null
+                                val helpVisible = reviewState.help != null
 
                                 androidx.compose.animation.AnimatedVisibility(
                                     visible = helpVisible,
@@ -494,29 +493,25 @@ fun TargetTranslationScreen(
                                         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
                                     )
                                 ) {
-                                    when {
-                                        reviewState.noteHelp != null -> {
-                                            NotesCard(
-                                                title = reviewState.noteHelp!!.title,
-                                                body = reviewState.noteHelp!!.body,
+                                    reviewState.help?.let { help ->
+                                        when (help) {
+                                            is Help.Notes -> NotesCard(
+                                                title = help.title,
+                                                body = help.body,
                                                 onClose = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
                                                 }
                                             )
-                                        }
-                                        reviewState.wordHelp != null -> {
-                                            WordsCard(
-                                                title = reviewState.wordHelp!!.title,
-                                                body = reviewState.wordHelp!!.body,
+                                            is Help.Words -> WordsCard(
+                                                title = help.title,
+                                                body = help.body,
                                                 onClose = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
                                                 }
                                             )
-                                        }
-                                        reviewState.questionHelp != null -> {
-                                            QuestionsCard(
-                                                title = reviewState.questionHelp!!.question,
-                                                body = reviewState.questionHelp!!.answer,
+                                            is Help.Questions -> QuestionsCard(
+                                                title = help.title,
+                                                body = help.body,
                                                 onClose = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
                                                 }

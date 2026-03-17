@@ -21,7 +21,6 @@ import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.spannables.ArticleLinkSpan
 import com.door43.translationstudio.rendering.spannables.PassageLinkSpan
-import com.door43.translationstudio.rendering.spannables.ShortReferenceSpan
 import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
@@ -46,26 +45,29 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
 import java.util.regex.Pattern
 
-data class NoteHelp(
-    val title: String,
-    val body: AnnotatedString
-)
+sealed class Help {
+    abstract val title: String
+    abstract val body: AnnotatedString
 
-data class WordHelp(
-    val title: String,
-    val body: AnnotatedString
-)
+    data class Notes(
+        override val title: String,
+        override val body: AnnotatedString
+    ) : Help()
 
-data class QuestionHelp(
-    val question: String,
-    val answer: AnnotatedString
-)
+    data class Words(
+        override val title: String,
+        override val body: AnnotatedString
+    ) : Help()
+
+    data class Questions(
+        override val title: String,
+        override val body: AnnotatedString
+    ) : Help()
+}
 
 data class ReviewState(
     val resourcesOpen: Boolean = false,
-    val noteHelp: NoteHelp? = null,
-    val wordHelp: WordHelp? = null,
-    val questionHelp: QuestionHelp? = null,
+    val help: Help? = null,
     val url: String? = null
 ) : ModeState
 
@@ -105,7 +107,7 @@ class ReviewModeViewModel(
             is ReviewAction.OpenResources -> openResources(action.value)
             is ReviewAction.RenderHelps -> onRenderHelps(action.item)
             is ReviewAction.OpenHelp -> onOpenHelpItem(action.item)
-            ReviewAction.ClearHelp -> clearHelp()
+            ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
     }
@@ -270,17 +272,60 @@ class ReviewModeViewModel(
 
     private fun onOpenHelpItem(item: HelpItem) {
         when (item) {
-            is HelpItem.Note -> renderNote(item.data)
+            is HelpItem.Note -> renderTranslationHelp(item.data)
             is HelpItem.Word -> renderWord(item.rcSlug, item.data.chapter)
-            is HelpItem.Question -> renderQuestion(item.data)
+            is HelpItem.Question -> renderTranslationHelp(item.data, true)
         }
     }
 
-    private fun renderNote(note: TranslationHelp, isTq: Boolean = false) {
+    private fun renderTranslationHelp(note: TranslationHelp, isTq: Boolean = false) {
+        val title = note.title
+        val body = renderHelpContents(note.body)
+        val help = if (!isTq) {
+            Help.Notes(title, body)
+        } else Help.Questions(title, body)
+
+        _state.update { it.copy(help = help) }
+    }
+
+    private fun renderWord(rcSlug: String, chapterSlug: String) {
+        getResourceContainer(rcSlug)?.let { twRc ->
+            val word = twRc.readChunk(chapterSlug, "01")
+            val pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)")
+            val match = pattern.matcher(word)
+            var description = ""
+            var title = ""
+
+            if (match.find()) {
+                title = match.group(1) ?: ""
+                description = match.group(2) ?: ""
+            }
+
+            val body = renderHelpContents(description, twRc)
+
+            _state.update { it.copy(help = Help.Words(title, body)) }
+        }
+    }
+
+    private fun renderHelpContents(
+        contents: String,
+        twRc: ResourceContainer? = null
+    ): AnnotatedString {
         val enableTmLinks = prefRepository.getDefaultPref(
             KEY_PREF_ENABLE_TM_LINKS,
             false
         )
+
+        val sourceRC = getSelectedSourceTranslationId()?.let { id ->
+            ContainerCache.get(id) ?: ContainerCache.cache(library, id)
+        }
+        val closestRc = sourceRC?.let { rc ->
+            getClosestResourceContainer(
+                rc.language.slug,
+                "bible",
+                "tw"
+            )
+        }
 
         val renderer = renderingProvider.createHtmlRenderer { span ->
             var result = false
@@ -294,22 +339,33 @@ class ReviewModeViewModel(
                     span.setTitle(title)
                     result = enableTmLinks
                 }
-
                 is PassageLinkSpan -> {
-                    // Not implemented in original Java code
-                }
-
-                is TranslationWordLinkSpan -> {
-                    val currentRC = getSelectedSourceTranslationId()?.let { id ->
-                        ContainerCache.get(id) ?: ContainerCache.cache(library, id)
+                    twRc?.let { rc ->
+                        val chunk = rc.readChunk(span.chapterId, span.frameId)
+                        val verseTitle = Frame.parseVerseTitle(
+                            chunk,
+                            TranslationFormat.parse(rc.contentMimeType)
+                        )
+                        val chapterId = try {
+                            span.chapterId.toInt().toString()
+                        } catch (_: Exception) {
+                            span.chapterId
+                        }
+                        val title = "${rc.readChunk("front", "title")} $chapterId:$verseTitle"
+                        span.setTitle(title)
+                        result = chunk.isNotEmpty()
                     }
-                    if (currentRC != null) {
+                }
+                is TranslationWordLinkSpan -> {
+                    if (sourceRC != null) {
                         val titlePattern = Pattern.compile("#(.*)")
-                        val rc = getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
-                        if (rc != null) {
-                            val word = rc.readChunk(span.machineReadable, "01")
-                            if (word.isNotEmpty()) {
-                                val linkMatch = titlePattern.matcher(word.trim())
+                        closestRc?.let { rc ->
+                            val closestWord = rc.readChunk(
+                                span.machineReadable,
+                                "01"
+                            )
+                            if (closestWord.isNotEmpty()) {
+                                val linkMatch = titlePattern.matcher(closestWord.trim())
                                 var title = span.machineReadable
                                 if (linkMatch.find()) {
                                     title = linkMatch.group(1) ?: title
@@ -320,141 +376,40 @@ class ReviewModeViewModel(
                         }
                     }
                 }
-
-                is ShortReferenceSpan -> {
-                    // Not implemented fully in original Java code
-                }
             }
             result
         }
-        val html = renderer.toAnnotatedHtml(note.body)
-        val title = note.title
+
+        val html = renderer.toAnnotatedHtml(contents)
         val body = ComposeTextAdapter.convertHtml(
             html = html,
-            onLinkClick = { println(it) }
+            onLinkClick = { link ->
+                when (link) {
+                    is LinkData.TranslationWord -> {
+                        twRc?.let { rc ->
+                            _state.update { it.copy(help = null) }
+                            renderWord(rc.slug, link.id)
+                        }
+                    }
+                    is LinkData.Article -> {
+                        val baseUrl = prefRepository.getDefaultPref(
+                            KEY_PREF_TM_URL,
+                            application.getString(R.string.pref_default_tm_url),
+                            String::class.javaObjectType
+                        )
+                        val span = link.toSpan()
+                        val url = "$baseUrl?section=${span.section}#${span.slug}"
+                        _state.update { it.copy(url = url) }
+                    }
+                    else -> {}
+                }
+            },
+            linkFilter = {
+                it is LinkData.TranslationWord || it is LinkData.Article
+            }
         )
 
-        if (!isTq) {
-            _state.update { it.copy(noteHelp = NoteHelp(title, body)) }
-        } else {
-            _state.update { it.copy(questionHelp = QuestionHelp(title, body)) }
-        }
-    }
-
-    private fun renderWord(rcSlug: String, chapterSlug: String) {
-        getResourceContainer(rcSlug)?.let { twRc ->
-            val enableTmLinks = prefRepository.getDefaultPref(
-                KEY_PREF_ENABLE_TM_LINKS,
-                false
-            )
-            val sourceRC = getSelectedSourceTranslationId()?.let { id ->
-                ContainerCache.get(id) ?: ContainerCache.cache(library, id)
-            }
-            val closestRc = sourceRC?.let { rc ->
-                getClosestResourceContainer(
-                    rc.language.slug,
-                    "bible",
-                    "tw"
-                )
-            }
-
-            val word = twRc.readChunk(chapterSlug, "01")
-            val pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)")
-            val match = pattern.matcher(word)
-            var description = ""
-            var title = ""
-
-            if (match.find()) {
-                title = match.group(1) ?: ""
-                description = match.group(2) ?: ""
-            }
-
-            val renderer = renderingProvider.createHtmlRenderer { span ->
-                var result = false
-                when (span) {
-                    is ArticleLinkSpan -> {
-                        val title = application.getString(
-                            R.string.tm_title,
-                            span.section,
-                            span.slug
-                        )
-                        span.setTitle(title)
-                        result = enableTmLinks
-                    }
-                    is PassageLinkSpan -> {
-                        val chunk = twRc.readChunk(span.chapterId, span.frameId)
-                        val verseTitle = Frame.parseVerseTitle(
-                            chunk,
-                            TranslationFormat.parse(twRc.contentMimeType)
-                        )
-                        val chapterId = try {
-                            span.chapterId.toInt().toString()
-                        } catch (_: Exception) {
-                            span.chapterId
-                        }
-                        val title = "${twRc.readChunk("front", "title")} $chapterId:$verseTitle"
-                        span.setTitle(title)
-                        result = chunk.isNotEmpty()
-                    }
-                    is TranslationWordLinkSpan -> {
-                        if (sourceRC != null) {
-                            val titlePattern = Pattern.compile("#(.*)")
-                            closestRc?.let { rc ->
-                                val closestWord = rc.readChunk(
-                                    span.machineReadable,
-                                    "01"
-                                )
-                                if (closestWord.isNotEmpty()) {
-                                    val linkMatch = titlePattern.matcher(closestWord.trim())
-                                    var title = span.machineReadable
-                                    if (linkMatch.find()) {
-                                        title = linkMatch.group(1) ?: title
-                                    }
-                                    span.title = title
-                                    result = true
-                                }
-                            }
-                        }
-                    }
-                }
-                result
-            }
-
-            val html = renderer.toAnnotatedHtml(description)
-            val body = ComposeTextAdapter.convertHtml(
-                html = html,
-                onLinkClick = { link ->
-                    when (link) {
-                        is LinkData.TranslationWord -> {
-                            _state.update { it.copy(wordHelp = null) }
-                            renderWord(rcSlug, link.id)
-                        }
-                        is LinkData.Article -> {
-                            val baseUrl = prefRepository.getDefaultPref(
-                                KEY_PREF_TM_URL,
-                                application.getString(R.string.pref_default_tm_url),
-                                String::class.javaObjectType
-                            )
-                            val span = link.toSpan()
-                            val url = "$baseUrl?section=${span.section}#${span.slug}"
-                            _state.update { it.copy(url = url) }
-                        }
-                        else -> {}
-                    }
-                },
-                linkFilter = {
-                    it is LinkData.TranslationWord || it is LinkData.Article
-                }
-            )
-
-            _state.update {
-                it.copy(wordHelp = WordHelp(title, body))
-            }
-        }
-    }
-
-    private fun renderQuestion(question: TranslationHelp) {
-        renderNote(question, true)
+        return body
     }
 
     private fun getClosestResourceContainer(
@@ -471,9 +426,5 @@ class ReviewModeViewModel(
 
     private fun getResourceContainer(slug: String): ResourceContainer? {
         return ContainerCache.get(slug)
-    }
-
-    private fun clearHelp() {
-        _state.update { it.copy(noteHelp = null, wordHelp = null, questionHelp = null) }
     }
 }
