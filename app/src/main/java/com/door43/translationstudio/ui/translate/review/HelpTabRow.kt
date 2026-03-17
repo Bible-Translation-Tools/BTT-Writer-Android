@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.components
+package com.door43.translationstudio.ui.translate.review
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,19 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.LibraryAdd
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -30,24 +22,19 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
-import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 
 @Composable
-fun SourceTabRow(
-    sourceTabs: List<SourceTabItem>,
+fun HelpTabRow(
+    helpTabs: List<HelpTab>,
     selectedTag: String?,
-    onSourceTabClick: (String) -> Unit,
-    onRemoveClick: (String) -> Unit,
-    onAddClick: () -> Unit,
+    onHelpTabClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val selectedIndex = remember(sourceTabs, selectedTag) {
-        val index = sourceTabs.indexOfFirst { it.tag == selectedTag }
+    val selectedIndex = remember(helpTabs, selectedTag) {
+        val index = helpTabs.indexOfFirst { it.tag == selectedTag }
         if (index == -1) 0 else index
     }
 
@@ -63,7 +50,7 @@ fun SourceTabRow(
                 .horizontalScroll(rememberScrollState()),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            sourceTabs.forEachIndexed { index, tab ->
+            helpTabs.forEachIndexed { index, tab ->
                 val isSelected = (index == selectedIndex)
                 val color = if (isSelected) {
                     MaterialTheme.colorScheme.primary
@@ -76,7 +63,7 @@ fun SourceTabRow(
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = ripple(),
-                                onClick = { onSourceTabClick(tab.tag) }
+                                onClick = { onHelpTabClick(tab.tag) }
                             )
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -92,18 +79,6 @@ fun SourceTabRow(
                                 color = color,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close Tab",
-                                tint = color,
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
-                                    .clickable { onRemoveClick(tab.tag) }
-                            )
                         }
 
                         Box(
@@ -118,19 +93,6 @@ fun SourceTabRow(
                         )
                     }
                 }
-            }
-        }
-
-        if (sourceTabs.size < MAX_SOURCE_ITEMS) {
-            IconButton(
-                onClick = onAddClick,
-                modifier = Modifier.align(Alignment.CenterEnd)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LibraryAdd,
-                    contentDescription = "Add Source",
-                    tint = MaterialTheme.colorScheme.primary
-                )
             }
         }
     }

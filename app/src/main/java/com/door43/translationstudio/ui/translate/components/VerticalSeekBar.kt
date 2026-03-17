@@ -30,6 +30,8 @@ fun VerticalSeekBar(
     sliderValue: Float = 0f,
     onSliderValueChange: (Float) -> Unit
 ) {
+    val safeSliderValue = if (sliderValue.isNaN()) 0f else sliderValue
+
     val interactionSource = remember { MutableInteractionSource() }
     val isDragged by interactionSource.collectIsDraggedAsState()
     var internalDragValue by remember { mutableFloatStateOf(sliderValue) }
@@ -40,10 +42,10 @@ fun VerticalSeekBar(
         }
     }
 
-    val displayValue = if (isDragged) internalDragValue else sliderValue
+    val displayValue = if (isDragged) internalDragValue else safeSliderValue
 
     Slider(
-        value = displayValue,
+        value = if (displayValue.isNaN()) 0f else displayValue,
         onValueChange = {
             internalDragValue = it
             onSliderValueChange(it)

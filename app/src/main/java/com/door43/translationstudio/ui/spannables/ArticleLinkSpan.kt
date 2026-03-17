@@ -38,7 +38,7 @@ open class ArticleLinkSpan protected constructor(
         // e.g <a href="/en/ta/vol1/translate/figs_intro" title="en:ta:vol1:translate:figs_intro">Figures of Speech</a>
         val LINK_PATTERN: Pattern = Pattern.compile("<a(((?!</a>).)*)href=\"/?([-a-zA-Z0-9]+/ta/[-_a-z0-9]+/[-_a-z0-9]+/[-_a-z0-9]+)/?\"(((?!</a>).)*)>\\s*(((?!</a>).)*)\\s*</a>")
 
-        fun parse(address: String): ArticleLinkSpan? {
+        fun parse(address: String): ArticleLinkSpan {
             return parse("", address)
         }
 

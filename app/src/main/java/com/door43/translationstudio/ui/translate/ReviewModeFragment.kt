@@ -138,18 +138,18 @@ class ReviewModeFragment : ViewModeFragment(),
         super.setupObservers()
 
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.state
-                        .map { it.renderHelpsResult }
-                        .distinctUntilChanged()
-                        .collect { result ->
-                            if (result != null) {
-                                renderHelpsResult(result.item, result.helps)
-                            }
-                        }
-                }
-            }
+//            repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                launch {
+//                    viewModel.state
+//                        .map { it.renderHelpsResult }
+//                        .distinctUntilChanged()
+//                        .collect { result ->
+//                            if (result != null) {
+//                                renderHelpsResult(result.item, result.helps)
+//                            }
+//                        }
+//                }
+//            }
         }
     }
 
@@ -545,10 +545,10 @@ class ReviewModeFragment : ViewModeFragment(),
                             val titlePattern = Pattern.compile("#(.*)")
                             val rc = viewModel.getClosestResourceContainer(currentRC.language.slug, "bible", "tw")
                             if (rc != null) {
-                                val word = rc.readChunk(span.machineReadable.toString(), "01")
+                                val word = rc.readChunk(span.machineReadable, "01")
                                 if (word.isNotEmpty()) {
                                     val linkMatch = titlePattern.matcher(word.trim())
-                                    var title = span.machineReadable.toString()
+                                    var title = span.machineReadable
                                     if (linkMatch.find()) {
                                         title = linkMatch.group(1) ?: title
                                     }

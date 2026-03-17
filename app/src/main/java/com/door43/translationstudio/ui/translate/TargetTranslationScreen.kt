@@ -21,7 +21,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -51,6 +50,9 @@ import com.door43.translationstudio.ui.translate.components.TranslateSideBarActi
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadCard
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
+import com.door43.translationstudio.ui.translate.review.ReviewAction
+import com.door43.translationstudio.ui.translate.review.ReviewCard
+import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
@@ -413,17 +415,54 @@ fun TargetTranslationScreen(
                                             ModeAction.CardsSwiped(item, sourceOnTop)
                                         )
                                     },
-                                    onCompleteItemClick = {
+                                    onOpenChunkClick = {
                                         chunkVm.onAction(ChunkAction.ReopenChunkClicked(item))
                                     }
                                 )
                             }
                         }
                         TranslationViewMode.REVIEW -> {
-                            Text(
-                                text = "Review screen in development...",
-                                modifier = Modifier.padding(32.dp)
-                            )
+                            val reviewVm: ReviewModeViewModel = koinViewModel {
+                                parametersOf(itemsFlow, viewModel.targetTranslation)
+                            }
+                            val reviewState by reviewVm.state.collectAsStateWithLifecycle()
+
+                            ModeScreenTemplate(
+                                state = reviewState,
+                                viewModel = reviewVm,
+                                listState = listState
+                            ) { item ->
+                                ReviewCard(
+                                    item = item,
+                                    sourceTabs = state.sourceTabs,
+                                    typography = typography,
+                                    selectedSource = state.resourceContainer,
+                                    targetTranslation = viewModel.targetTranslation,
+                                    resourcesOpen = reviewState.resourcesOpen,
+                                    onSourceTabClick = {
+                                        viewModel.onAction(TargetAction.SelectSource(it))
+                                    },
+                                    onAddNewSourceClick = { showSourceDialog = true },
+                                    onRemoveSourceClick = {
+                                        viewModel.onAction(TargetAction.RemoveSource(it))
+                                    },
+                                    onTextChange = {
+                                        reviewVm.onAction(
+                                            ReviewAction.ItemTextChanged(item, it)
+                                        )
+                                    },
+                                    onExpandedChange = {
+                                        reviewVm.onAction(ReviewAction.OpenResources(it))
+                                    },
+                                    onRenderHelps = {
+                                        reviewVm.onAction(ReviewAction.RenderHelps(item))
+                                    },
+                                    onHelpClick = {
+                                        reviewVm.onAction(ReviewAction.OpenHelp(it))
+                                    },
+                                    modifier = Modifier.padding(start = 16.dp)
+                                )
+                            }
                         }
                     }
                 }

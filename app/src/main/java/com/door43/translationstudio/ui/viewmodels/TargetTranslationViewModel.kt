@@ -24,7 +24,9 @@ import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.translate.ListItemOld
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
+import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
+import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,7 +48,6 @@ import java.util.Locale
 
 data class TargetTranslationState(
     val items: List<Chunk> = emptyList(),
-    val renderHelpsResult: RenderHelps.RenderHelpsResult? = null,
     val viewMode: TranslationViewMode = TranslationViewMode.READ,
     val draftAvailable: Boolean = false,
     val showDraftAvailable: Boolean = false,
@@ -56,13 +57,6 @@ data class TargetTranslationState(
     val lastFocusFrameId: String? = null,
     val projectTitle: String? = null,
     val snackBarMessage: String? = null
-)
-
-data class SourceTabItem(
-    val tag: String,
-    val title: String,
-    val language: String?,
-    val direction: String?
 )
 
 sealed interface TargetAction {
@@ -339,7 +333,7 @@ class TargetTranslationViewModel(
         launchWithProgress {
             val selectedIds = selectedItems.mapNotNull { it.containerSlug }.toSet()
 
-            if (selectedItems.size > 3) return@launchWithProgress
+            if (selectedItems.size > MAX_SOURCE_ITEMS) return@launchWithProgress
 
             val oldSourceTranslationIds = getOpenSourceTranslations().toSet()
             val toDelete = (oldSourceTranslationIds subtract selectedIds)
@@ -491,10 +485,10 @@ class TargetTranslationViewModel(
     // TODO Make private after removing Fragments
     fun renderHelps(item: ListItemOld) {
         viewModelScope.launch {
-            val result = renderHelps.execute(item)
-            _state.update {
-                it.copy(renderHelpsResult = result)
-            }
+//            val result = renderHelps.execute(item)
+//            _state.update {
+//                it.copy(renderHelpsResult = result)
+//            }
         }.also(renderHelpJobs::add)
     }
 

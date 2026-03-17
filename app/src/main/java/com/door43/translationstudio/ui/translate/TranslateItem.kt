@@ -8,6 +8,8 @@ import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProjectTranslation
 
+typealias ChunkConfig = Map<String, List<String>>
+
 interface Swipable {
     val sourceOnTop: Boolean
     fun selfCopy(sourceOnTop: Boolean = this.sourceOnTop): Swipable
@@ -114,6 +116,12 @@ abstract class TranslateItem {
                 }
             }
         }
+
+    val chunkConfig: ChunkConfig
+        get() = ((chunk.source.config?.get("content") as? Map<*, *>)
+            ?.get(chunk.chapterSlug) as? Map<*, *>)
+            ?.get(chunk.chunkSlug) as? ChunkConfig
+            ?: emptyMap()
 
     fun saveTranslation(text: String) {
         if (isProjectTitle) {
@@ -239,7 +247,8 @@ data class ReviewItem(
     override val renderedTargetText: AnnotatedString,
     override val pt: ProjectTranslation,
     override val ct: ChapterTranslation,
-    override val ft: FrameTranslation
+    override val ft: FrameTranslation,
+    val helps: Map<String, Any> = emptyMap()
 ) : TranslateItem()
 
 private fun removeConflicts(text: String): String {

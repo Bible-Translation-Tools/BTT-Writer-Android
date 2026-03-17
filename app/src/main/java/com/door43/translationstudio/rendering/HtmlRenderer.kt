@@ -12,6 +12,7 @@ import com.door43.translationstudio.ui.spannables.PassageLinkSpan
 import com.door43.translationstudio.ui.spannables.ShortReferenceSpan
 import com.door43.translationstudio.ui.spannables.Span
 import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
+import java.util.regex.Pattern
 
 /**
  * HTML rendering engine. Produces a List<TextNode> via renderToNodes().
@@ -30,10 +31,11 @@ class HtmlRenderer(
         val allTokens = mutableListOf<Token>()
         allTokens.addAll(findTranslationAcademyAddresses(input))
         allTokens.addAll(findTranslationAcademyLinks(input))
-        allTokens.addAll(findPassageLinks(input))
+        //allTokens.addAll(findPassageLinks(input))
         allTokens.addAll(findShortReferenceLinks(input))
         allTokens.addAll(findMarkdownLinks(input))
         allTokens.addAll(findTranslationWordLinks(input))
+        allTokens.addAll(findAppLinks(input))
 
         allTokens.sortBy { it.start }
         val tokens = removeOverlaps(allTokens)
@@ -333,6 +335,30 @@ class HtmlRenderer(
         return tokens
     }
 
+    /**
+     * Finds app-link HTML tags.
+     * Example: <app-link href="/ta/figs" type="ta">Figures of Speech</app-link>
+     */
+    private fun findAppLinks(text: String): List<Token> {
+        val tokens = mutableListOf<Token>()
+        val matcher = APP_LINK_PATTERN.matcher(text)
+        while (matcher.find()) {
+            val href = matcher.group(1) ?: ""
+            val type = matcher.group(2) ?: ""
+            val title = matcher.group(3) ?: ""
+            if (title.isNotEmpty()) {
+                tokens.add(Token(matcher.start(), matcher.end(), listOf(
+                    TextNode.Link(LinkData.AppLink(
+                        href = href,
+                        linkType = type,
+                        title = title
+                    ))
+                )))
+            }
+        }
+        return tokens
+    }
+
     private fun removeOverlaps(sorted: List<Token>): List<Token> {
         val result = mutableListOf<Token>()
         var lastEnd = 0
@@ -350,5 +376,12 @@ class HtmlRenderer(
      */
     fun interface OnPreprocessLink {
         fun onPreprocess(span: Span): Boolean
+    }
+
+    companion object {
+        private val APP_LINK_PATTERN: Pattern = Pattern.compile(
+            """<app-link\s+href="([^"]*?)"\s+type="([^"]*?)">(.*?)</app-link>""",
+            Pattern.CASE_INSENSITIVE or Pattern.DOTALL
+        )
     }
 }

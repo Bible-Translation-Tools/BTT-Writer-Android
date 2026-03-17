@@ -26,6 +26,7 @@ import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
+import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
 import com.door43.translationstudio.ui.viewmodels.ChooseSourcesViewModel
 import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel
 import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel
@@ -170,6 +171,7 @@ val appModule = module {
     viewModelOf(::TermsOfUseViewModel)
     viewModelOf(::ReadModeViewModel)
     viewModelOf(::ChunkModeViewModel)
+    viewModelOf(::ReviewModeViewModel)
     viewModelOf(::SourceSelectionViewModel)
 }
 

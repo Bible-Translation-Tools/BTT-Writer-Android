@@ -10,7 +10,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.components.StackedCardFlipper
-import com.door43.translationstudio.ui.viewmodels.SourceTabItem
+import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
@@ -25,7 +25,7 @@ fun ChunkCard(
     onRemoveSourceClick: (String) -> Unit,
     onTextChange: (String) -> Unit,
     onCardsSwiped: (Boolean) -> Unit,
-    onCompleteItemClick: () -> Unit,
+    onOpenChunkClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -61,7 +61,7 @@ fun ChunkCard(
                 targetTranslation = targetTranslation,
                 typography = typography,
                 onTextChange = onTextChange,
-                onCompleteItemClick = onCompleteItemClick
+                onCompleteItemClick = onOpenChunkClick
             )
         },
         onAnimationEnd = onCardsSwiped

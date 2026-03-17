@@ -80,15 +80,7 @@ class RenderingGroup {
         val result: List<RenderNode> = if (mEngines.isEmpty()) {
             listOf(RenderNode.Text(mInput))
         } else {
-            val engine = mEngines.first()
-            if (engine is ClickableRenderingEngine) {
-                // ClickableRenderingEngine properly overrides renderToNodes()
-                engine.renderToNodes(mInput)
-            } else {
-                // Other engines (e.g. DefaultRenderer) only override render(), not renderToNodes().
-                // Fall back to render() and wrap the text content in a plain RenderNode.
-                listOf(RenderNode.Text(engine.render(mInput).toString()))
-            }
+            mEngines.first().renderToNodes(mInput)
         }
         mRunning = false
         return result

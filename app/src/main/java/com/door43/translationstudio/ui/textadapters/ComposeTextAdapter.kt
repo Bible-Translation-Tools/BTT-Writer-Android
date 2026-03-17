@@ -9,6 +9,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.rendering.model.LinkData
@@ -33,11 +34,13 @@ object ComposeTextAdapter {
      */
     fun convert(
         nodes: List<TextNode>,
+        parseHtml: Boolean = false,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
         noteColor: Color = Color(0xFFFFD700),
         onVerseClick: (TextNode.VerseMarker) -> Unit = {},
-        onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit = {_, _, _ ->}
+        onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit = {_, _, _ ->},
+        onLinkClick: (TextNode.Link) -> Unit = {}
     ): AnnotatedString = buildAnnotatedString {
 
         var currentPoeticalLineIndent = 0  // Track current poetic line indent level
@@ -79,11 +82,13 @@ object ComposeTextAdapter {
 
             appendNode(
                 node = node,
+                parseHtml = parseHtml,
                 searchHighlightColor = searchHighlightColor,
                 verseColor = verseColor,
                 noteColor = noteColor,
                 onVerseClick = onVerseClick,
                 onNoteClick = onNoteClick,
+                onLinkClick = onLinkClick,
                 poeticalLineIndent = currentPoeticalLineIndent,
                 isFirstElementOfPoetic = isFirstForNode,
                 verseMarkerAddedIndentation = verseMarkerAddedIndentation
@@ -93,24 +98,30 @@ object ComposeTextAdapter {
 
     private fun AnnotatedString.Builder.appendNode(
         node: TextNode,
+        parseHtml: Boolean,
         searchHighlightColor: Color,
         verseColor: Color,
         noteColor: Color,
         onVerseClick: (TextNode.VerseMarker) -> Unit,
         onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit,
+        onLinkClick: (TextNode.Link) -> Unit,
         poeticalLineIndent: Int = 0,
         isFirstElementOfPoetic: Boolean = false,
         verseMarkerAddedIndentation: Boolean = false
     ) {
         when (node) {
             is TextNode.Text -> {
-                if (poeticalLineIndent > 0
-                    && !verseMarkerAddedIndentation
-                    && node.content.trim().isNotEmpty()) {
-                    val padding = "    ".repeat(poeticalLineIndent)
-                    append(padding)
+                if (parseHtml && node.content.contains('<')) {
+                    append(AnnotatedString.fromHtml(node.content))
+                } else {
+                    if (poeticalLineIndent > 0
+                        && !verseMarkerAddedIndentation
+                        && node.content.trim().isNotEmpty()) {
+                        val padding = "    ".repeat(poeticalLineIndent)
+                        append(padding)
+                    }
+                    append(node.content)
                 }
-                append(node.content)
             }
 
             is TextNode.Styled -> {
@@ -250,7 +261,7 @@ object ComposeTextAdapter {
 
                 addLink(
                     LinkAnnotation.Clickable(tag = tag) {
-                        // Hook up external link listener if needed
+                        onLinkClick(node)
                     },
                     start = start,
                     end = end

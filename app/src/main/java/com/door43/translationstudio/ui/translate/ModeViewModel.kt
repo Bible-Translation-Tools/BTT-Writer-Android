@@ -128,5 +128,5 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
         }
     }
 
-    abstract fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean)
+    protected open fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {}
 }

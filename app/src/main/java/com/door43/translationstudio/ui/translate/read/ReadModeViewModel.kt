@@ -14,9 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
-data class ReadState(
-    val test: String  = ""
-) : ModeState
+object ReadState : ModeState
 
 sealed interface ReadAction : ModeAction
 
@@ -24,7 +22,7 @@ class ReadModeViewModel(
     chunks: StateFlow<List<Chunk>>
 ) : ModeViewModel<ReadItem>(chunks) {
 
-    private val _state = MutableStateFlow(ReadState())
+    private val _state = MutableStateFlow(ReadState)
     val state: StateFlow<ReadState> = _state
 
     override fun mapToChildType(chunks: List<Chunk>): List<ReadItem> {

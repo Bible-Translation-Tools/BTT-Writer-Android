@@ -7,7 +7,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.ReadItem
 import com.door43.translationstudio.ui.translate.components.StackedCardFlipper
-import com.door43.translationstudio.ui.viewmodels.SourceTabItem
+import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable

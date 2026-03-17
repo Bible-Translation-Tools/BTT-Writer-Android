@@ -1,8 +1,9 @@
 package com.door43.usecases
 
+import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Util
-import com.door43.translationstudio.ui.translate.ListItemOld
+import com.door43.translationstudio.ui.translate.ChunkConfig
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Link
@@ -12,9 +13,7 @@ import java.util.regex.Pattern
 class RenderHelps(
     private val library: Door43Client
 ) {
-    data class RenderHelpsResult(val item: ListItemOld, val helps: Map<String, Any>)
-
-    fun execute(item: ListItemOld): RenderHelpsResult {
+    fun execute(chunk: Chunk, config: ChunkConfig?): Map<String, Any> {
 
         // init default values
         val result: MutableMap<String, Any> = HashMap()
@@ -22,38 +21,36 @@ class RenderHelps(
         result["questions"] = ArrayList<Any>()
         result["notes"] = ArrayList<Any>()
 
-        val config = item.chunkConfig
-
         if (config != null && config.containsKey("words")) {
-            val links = getWordsLinks(config["words"]!!, item)
+            val links = getWordsLinks(config["words"]!!, chunk)
             if (links.isNotEmpty()) {
                 result["words"] = links
             }
         }
-        val translationQuestions = getTranslationQuestions(item)
+        val translationQuestions = getTranslationQuestions(chunk)
         if (translationQuestions.isNotEmpty()) {
             result["questions"] = translationQuestions
         }
-        val translationNotes = getTranslationNotes(item)
+        val translationNotes = getTranslationNotes(chunk)
         if (translationNotes.isNotEmpty()) {
             result["notes"] = translationNotes
         }
 
-        return RenderHelpsResult(item, result)
+        return result
     }
 
-    private fun getWordsLinks(config: List<String>, item: ListItemOld): List<Link> {
+    private fun getWordsLinks(config: List<String>, chunk: Chunk): List<Link> {
         val links = ContainerCache.cacheFromLinks(
             library,
             config,
-            item.source.language
+            chunk.source.language
         )
         val titlePattern = Pattern.compile("#(.*)")
         for (link in links) {
             try {
                 val rc = ContainerCache.cacheClosest(
                     library,
-                    item.source.language.slug,
+                    chunk.source.language.slug,
                     link.project,
                     link.resource
                 )
@@ -78,11 +75,11 @@ class RenderHelps(
         return links
     }
 
-    private fun getTranslationQuestions(item: ListItemOld): List<TranslationHelp> {
+    private fun getTranslationQuestions(chunk: Chunk): List<TranslationHelp> {
         val translationQuestions = arrayListOf<TranslationHelp>()
         val questionTranslations = library.index.findTranslations(
-            item.source.language.slug,
-            item.source.project.slug,
+            chunk.source.language.slug,
+            chunk.source.project.slug,
             "tq",
             "help",
             null,
@@ -97,18 +94,18 @@ class RenderHelps(
                 )
                 if(rc != null) {
                     // TRICKY: questions are id'd by verse not chunk
-                    val verses = rc.chunks(item.chapterSlug)
+                    val verses = rc.chunks(chunk.chapterSlug)
                     var rawQuestions = ""
                     // TODO: 2/21/17 this is very inefficient.
                     //  We should only have to map chunk id's once, not for every chunk.
                     for (verse in verses) {
-                        val chunk = Util.mapVerseToChunk(
-                            item.source,
-                            item.chapterSlug,
+                        val vChunk = Util.mapVerseToChunk(
+                            chunk.source,
+                            chunk.chapterSlug,
                             verse
                         )
-                        if (verse == chunk) {
-                            rawQuestions += "\n\n${rc.readChunk(item.chapterSlug, verse)}"
+                        if (verse == vChunk) {
+                            rawQuestions += "\n\n${rc.readChunk(chunk.chapterSlug, verse)}"
                         }
                     }
                     val helps: List<TranslationHelp> = parseHelps(rawQuestions.trim())
@@ -127,11 +124,11 @@ class RenderHelps(
         return translationQuestions
     }
 
-    private fun getTranslationNotes(item: ListItemOld): List<TranslationHelp> {
+    private fun getTranslationNotes(chunk: Chunk): List<TranslationHelp> {
         val translationNotes = arrayListOf<TranslationHelp>()
         val noteTranslations = library.index.findTranslations(
-            item.source.language.slug,
-            item.source.project.slug,
+            chunk.source.language.slug,
+            chunk.source.project.slug,
             "tn",
             "help",
             null,
@@ -145,7 +142,7 @@ class RenderHelps(
                     noteTranslations[0].resourceContainerSlug
                 )
                 if (rc != null) {
-                    val rawNotes = rc.readChunk(item.chapterSlug, item.chunkSlug)
+                    val rawNotes = rc.readChunk(chunk.chapterSlug, chunk.chunkSlug)
                     if (rawNotes.isNotEmpty()) {
                         val helps: List<TranslationHelp> = parseHelps(rawNotes)
                         translationNotes.addAll(helps)

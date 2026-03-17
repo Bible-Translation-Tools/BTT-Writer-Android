@@ -25,7 +25,7 @@ class PassageLinkSpan(
 
     companion object {
         // e.g. [[:en:bible:notes:gen:01:03|1:5]]
-        val PATTERN: Pattern = Pattern.compile("\\[\\[:(((?!]]).)*)\\|(((?!]]).)*)]]") //\\[\\[:((?!\\]\\])(.*)\\|(.*))\\]\\]"
+        val PATTERN: Pattern = Pattern.compile("\\[\\[:(((?!]]).)*)\\|(((?!]]).)*)]]")
     }
 
     init {
