@@ -42,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TranslationViewMode
@@ -68,10 +67,6 @@ import com.door43.translationstudio.ui.translate.review.WordsCard
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -119,17 +114,6 @@ fun TargetTranslationScreen(
     val listState = rememberLazyListState()
     var lastViewedChunk by remember { mutableStateOf<Chunk?>(null) }
     var hasDoneInitialLoad by rememberSaveable { mutableStateOf(false) }
-
-    val itemsFlow = remember(viewModel) {
-        viewModel.state
-            .map { it.items }
-            .distinctUntilChanged()
-            .stateIn(
-                scope = viewModel.viewModelScope,
-                started = SharingStarted.Eagerly,
-                initialValue = viewModel.state.value.items
-            )
-    }
 
     val dominantIndex by remember(state.items) {
         derivedStateOf {
@@ -365,7 +349,7 @@ fun TargetTranslationScreen(
                     when (state.viewMode) {
                         TranslationViewMode.READ -> {
                             val readVm: ReadModeViewModel = koinViewModel {
-                                parametersOf(itemsFlow)
+                                parametersOf(viewModel.itemsFlow)
                             }
                             val readState by readVm.state.collectAsStateWithLifecycle()
 
@@ -395,7 +379,7 @@ fun TargetTranslationScreen(
                         }
                         TranslationViewMode.CHUNK -> {
                             val chunkVm: ChunkModeViewModel = koinViewModel {
-                                parametersOf(itemsFlow)
+                                parametersOf(viewModel.itemsFlow)
                             }
                             val chunkState by chunkVm.state.collectAsStateWithLifecycle()
 
@@ -435,7 +419,11 @@ fun TargetTranslationScreen(
                         }
                         TranslationViewMode.REVIEW -> {
                             val reviewVm: ReviewModeViewModel = koinViewModel {
-                                parametersOf(itemsFlow, viewModel.targetTranslation)
+                                parametersOf(
+                                    viewModel.itemsFlow,
+                                    viewModel.sourceContainerFlow,
+                                    viewModel.targetTranslation
+                                )
                             }
                             val reviewState by reviewVm.state.collectAsStateWithLifecycle()
 

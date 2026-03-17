@@ -13,7 +13,6 @@ import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
-import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
@@ -35,6 +34,7 @@ import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -97,18 +97,31 @@ sealed interface ReviewAction : ModeAction {
 
 class ReviewModeViewModel(
     chunks: StateFlow<List<Chunk>>,
-    private val targetTranslation: TargetTranslation,
+    private val sourceContainer: StateFlow<ResourceContainer?>,
     private val prefRepository: IPreferenceRepository,
     private val renderHelps: RenderHelps,
     private val renderingProvider: RenderingProvider,
     private val library: Door43Client,
-    private val translator: Translator
 ) : ModeViewModel<ReviewItem>(chunks), KoinComponent {
 
     private val application: Application by inject()
 
     private val _state = MutableStateFlow(ReviewState())
     val state: StateFlow<ReviewState> = _state
+
+    init {
+        viewModelScope.launch {
+            sourceContainer.collect { rc ->
+                if (_state.value.resourcesOpen) {
+                    _state.update { it.copy(resourcesOpen = false, help = null) }
+                    if (rc != null) {
+                        delay(500)
+                        _state.update { it.copy(resourcesOpen = true) }
+                    }
+                }
+            }
+        }
+    }
 
     override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ReviewItem>) -> Unit) {
         viewModelScope.launch {
@@ -344,9 +357,7 @@ class ReviewModeViewModel(
             false
         )
 
-        val sourceRC = getSelectedSourceTranslationId()?.let { id ->
-            ContainerCache.get(id) ?: ContainerCache.cache(library, id)
-        }
+        val sourceRC = sourceContainer.value
         val closestRc = sourceRC?.let { rc ->
             getClosestResourceContainer(
                 rc.language.slug,
@@ -466,10 +477,6 @@ class ReviewModeViewModel(
         resourceSlug: String
     ): ResourceContainer? {
         return ContainerCache.cacheClosest(library, languageSlug, projectSlug, resourceSlug)
-    }
-
-    private fun getSelectedSourceTranslationId(): String? {
-        return translator.getSelectedSourceTranslationId(targetTranslation.id)
     }
 
     private fun getResourceContainer(slug: String): ResourceContainer? {

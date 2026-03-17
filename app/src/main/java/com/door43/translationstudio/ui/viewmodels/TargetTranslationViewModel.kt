@@ -27,12 +27,14 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Compa
 import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
 import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
-import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,7 +73,6 @@ sealed interface TargetAction {
 
 class TargetTranslationViewModel(
     private val translator: Translator,
-    private val renderHelps: RenderHelps,
     private val library: Door43Client,
     private val prefRepository: IPreferenceRepository,
     private val typography: Typography,
@@ -83,13 +84,29 @@ class TargetTranslationViewModel(
     private val progressManager = ProgressManager(viewModelScope)
     override val progress get() = progressManager.progress
 
-    private val renderHelpJobs = arrayListOf<Job>()
-
     lateinit var targetTranslation: TargetTranslation
         private set
 
     private val _state = MutableStateFlow(TargetTranslationState())
     val state: StateFlow<TargetTranslationState> = _state.asStateFlow()
+
+    val itemsFlow: StateFlow<List<Chunk>> = state
+        .map { it.items }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = state.value.items
+        )
+
+    val sourceContainerFlow: StateFlow<ResourceContainer?> = state
+        .map { it.resourceContainer }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = state.value.resourceContainer
+        )
 
     val initialized: Boolean
         get() = this::targetTranslation.isInitialized
@@ -489,13 +506,13 @@ class TargetTranslationViewModel(
 //            _state.update {
 //                it.copy(renderHelpsResult = result)
 //            }
-        }.also(renderHelpJobs::add)
+        }/*.also(renderHelpJobs::add)*/
     }
 
     // TODO Make private after removing Fragments
     fun cancelRenderJobs() {
-        renderHelpJobs.forEach { it.cancel() }
-        renderHelpJobs.clear()
+//        renderHelpJobs.forEach { it.cancel() }
+//        renderHelpJobs.clear()
     }
 
     // TODO Removing after refactoring PublishActivity
