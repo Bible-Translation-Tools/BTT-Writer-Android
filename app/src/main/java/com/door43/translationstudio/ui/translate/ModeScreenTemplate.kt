@@ -4,15 +4,11 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -100,49 +96,6 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
             }
         }
         is ReviewState -> {
-            if (state.noteHelp != null) {
-                AlertDialog(
-                    onDismissRequest = {
-                        viewModel.onAction(ReviewAction.ClearHelp)
-                    },
-                    title = { Text(state.noteHelp.title) },
-                    text = { Text(state.noteHelp.body) },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            viewModel.onAction(ReviewAction.ClearHelp)
-                        }) {
-                            Text(stringResource(R.string.dismiss))
-                        }
-                    }
-                )
-            }
-            if (state.wordHelp != null) {
-                val scrollState = rememberScrollState()
-                AlertDialog(
-                    onDismissRequest = {
-                        viewModel.onAction(ReviewAction.ClearHelp)
-                    },
-                    title = { Text(state.wordHelp.title) },
-                    text = {
-                        Column(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth()
-                                .verticalScroll(scrollState)
-                        ) {
-                            Text(state.wordHelp.body)
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            viewModel.onAction(ReviewAction.ClearHelp)
-                        }) {
-                            Text(stringResource(R.string.dismiss))
-                        }
-                    }
-                )
-            }
-
             LaunchedEffect(state.url) {
                 if (state.url != null) {
                     urlHandler.openUri(state.url)

@@ -47,7 +47,7 @@ fun ReviewCard(
     resourcesOpen: Boolean = false,
     onRenderHelps: () -> Unit = {},
     onHelpClick: (HelpItem) -> Unit,
-    onExpandedChange: (Boolean) -> Unit = {}
+    onExpandedChange: (Boolean) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current

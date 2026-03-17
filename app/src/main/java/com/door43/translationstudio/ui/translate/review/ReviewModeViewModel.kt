@@ -56,10 +56,16 @@ data class WordHelp(
     val body: AnnotatedString
 )
 
+data class QuestionHelp(
+    val question: String,
+    val answer: AnnotatedString
+)
+
 data class ReviewState(
     val resourcesOpen: Boolean = false,
     val noteHelp: NoteHelp? = null,
     val wordHelp: WordHelp? = null,
+    val questionHelp: QuestionHelp? = null,
     val url: String? = null
 ) : ModeState
 
@@ -99,7 +105,7 @@ class ReviewModeViewModel(
             is ReviewAction.OpenResources -> openResources(action.value)
             is ReviewAction.RenderHelps -> onRenderHelps(action.item)
             is ReviewAction.OpenHelp -> onOpenHelpItem(action.item)
-            ReviewAction.ClearHelp -> _state.update { it.copy(noteHelp = null, wordHelp = null) }
+            ReviewAction.ClearHelp -> clearHelp()
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
     }
@@ -270,7 +276,7 @@ class ReviewModeViewModel(
         }
     }
 
-    private fun renderNote(note: TranslationHelp) {
+    private fun renderNote(note: TranslationHelp, isTq: Boolean = false) {
         val enableTmLinks = prefRepository.getDefaultPref(
             KEY_PREF_ENABLE_TM_LINKS,
             false
@@ -328,8 +334,10 @@ class ReviewModeViewModel(
             onLinkClick = { println(it) }
         )
 
-        _state.update {
-            it.copy(noteHelp = NoteHelp(title, body))
+        if (!isTq) {
+            _state.update { it.copy(noteHelp = NoteHelp(title, body)) }
+        } else {
+            _state.update { it.copy(questionHelp = QuestionHelp(title, body)) }
         }
     }
 
@@ -446,7 +454,7 @@ class ReviewModeViewModel(
     }
 
     private fun renderQuestion(question: TranslationHelp) {
-        renderNote(question)
+        renderNote(question, true)
     }
 
     private fun getClosestResourceContainer(
@@ -463,5 +471,9 @@ class ReviewModeViewModel(
 
     private fun getResourceContainer(slug: String): ResourceContainer? {
         return ContainerCache.get(slug)
+    }
+
+    private fun clearHelp() {
+        _state.update { it.copy(noteHelp = null, wordHelp = null, questionHelp = null) }
     }
 }

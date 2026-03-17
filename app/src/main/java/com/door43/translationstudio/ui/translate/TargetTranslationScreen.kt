@@ -1,7 +1,13 @@
 package com.door43.translationstudio.ui.translate
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -31,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -50,9 +57,12 @@ import com.door43.translationstudio.ui.translate.components.TranslateSideBarActi
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadCard
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
+import com.door43.translationstudio.ui.translate.review.NotesCard
+import com.door43.translationstudio.ui.translate.review.QuestionsCard
 import com.door43.translationstudio.ui.translate.review.ReviewAction
 import com.door43.translationstudio.ui.translate.review.ReviewCard
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
+import com.door43.translationstudio.ui.translate.review.WordsCard
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
@@ -427,41 +437,93 @@ fun TargetTranslationScreen(
                             }
                             val reviewState by reviewVm.state.collectAsStateWithLifecycle()
 
-                            ModeScreenTemplate(
-                                state = reviewState,
-                                viewModel = reviewVm,
-                                listState = listState
-                            ) { item ->
-                                ReviewCard(
-                                    item = item,
-                                    sourceTabs = state.sourceTabs,
-                                    typography = typography,
-                                    selectedSource = state.resourceContainer,
-                                    targetTranslation = viewModel.targetTranslation,
-                                    resourcesOpen = reviewState.resourcesOpen,
-                                    onSourceTabClick = {
-                                        viewModel.onAction(TargetAction.SelectSource(it))
-                                    },
-                                    onAddNewSourceClick = { showSourceDialog = true },
-                                    onRemoveSourceClick = {
-                                        viewModel.onAction(TargetAction.RemoveSource(it))
-                                    },
-                                    onTextChange = {
-                                        reviewVm.onAction(
-                                            ReviewAction.ItemTextChanged(item, it)
-                                        )
-                                    },
-                                    onExpandedChange = {
-                                        reviewVm.onAction(ReviewAction.OpenResources(it))
-                                    },
-                                    onRenderHelps = {
-                                        reviewVm.onAction(ReviewAction.RenderHelps(item))
-                                    },
-                                    onHelpClick = {
-                                        reviewVm.onAction(ReviewAction.OpenHelp(it))
-                                    },
-                                    modifier = Modifier.padding(start = 16.dp)
-                                )
+                            Box {
+                                ModeScreenTemplate(
+                                    state = reviewState,
+                                    viewModel = reviewVm,
+                                    listState = listState
+                                ) { item ->
+                                    ReviewCard(
+                                        item = item,
+                                        sourceTabs = state.sourceTabs,
+                                        typography = typography,
+                                        selectedSource = state.resourceContainer,
+                                        targetTranslation = viewModel.targetTranslation,
+                                        resourcesOpen = reviewState.resourcesOpen,
+                                        onSourceTabClick = {
+                                            viewModel.onAction(TargetAction.SelectSource(it))
+                                        },
+                                        onAddNewSourceClick = { showSourceDialog = true },
+                                        onRemoveSourceClick = {
+                                            viewModel.onAction(TargetAction.RemoveSource(it))
+                                        },
+                                        onTextChange = {
+                                            reviewVm.onAction(
+                                                ReviewAction.ItemTextChanged(item, it)
+                                            )
+                                        },
+                                        onExpandedChange = { expanded ->
+                                            reviewVm.onAction(ReviewAction.OpenResources(expanded))
+                                        },
+                                        onRenderHelps = {
+                                            reviewVm.onAction(ReviewAction.RenderHelps(item))
+                                        },
+                                        onHelpClick = {
+                                            reviewVm.onAction(ReviewAction.OpenHelp(it))
+                                        },
+                                        modifier = Modifier.padding(start = 16.dp)
+                                    )
+                                }
+
+                                val helpVisible = reviewState.noteHelp != null
+                                        || reviewState.wordHelp != null
+                                        || reviewState.questionHelp != null
+
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = helpVisible,
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(1f / 3f)
+                                        .align(Alignment.CenterEnd),
+                                    enter = slideInHorizontally(
+                                        initialOffsetX = { it },
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                                    ),
+                                    exit = slideOutHorizontally(
+                                        targetOffsetX = { it },
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                                    )
+                                ) {
+                                    when {
+                                        reviewState.noteHelp != null -> {
+                                            NotesCard(
+                                                title = reviewState.noteHelp!!.title,
+                                                body = reviewState.noteHelp!!.body,
+                                                onClose = {
+                                                    reviewVm.onAction(ReviewAction.ClearHelp)
+                                                }
+                                            )
+                                        }
+                                        reviewState.wordHelp != null -> {
+                                            WordsCard(
+                                                title = reviewState.wordHelp!!.title,
+                                                body = reviewState.wordHelp!!.body,
+                                                onClose = {
+                                                    reviewVm.onAction(ReviewAction.ClearHelp)
+                                                }
+                                            )
+                                        }
+                                        reviewState.questionHelp != null -> {
+                                            QuestionsCard(
+                                                title = reviewState.questionHelp!!.question,
+                                                body = reviewState.questionHelp!!.answer,
+                                                onClose = {
+                                                    reviewVm.onAction(ReviewAction.ClearHelp)
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
