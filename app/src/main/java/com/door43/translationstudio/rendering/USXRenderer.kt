@@ -3,9 +3,9 @@ package com.door43.translationstudio.rendering
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.model.TextNode
-import com.door43.translationstudio.ui.spannables.USXChar
-import com.door43.translationstudio.ui.spannables.USXNoteSpan
-import com.door43.translationstudio.ui.spannables.USXVerseSpan
+import com.door43.translationstudio.rendering.spannables.USXChar
+import com.door43.translationstudio.rendering.spannables.USXNoteSpan
+import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import java.util.regex.Pattern
 

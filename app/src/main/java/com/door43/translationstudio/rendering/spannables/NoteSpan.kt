@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.spannables
+package com.door43.translationstudio.rendering.spannables
 
 /**
  * abstract base class for NoteSpans

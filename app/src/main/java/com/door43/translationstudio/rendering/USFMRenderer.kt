@@ -4,10 +4,10 @@ import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.model.TextNode
-import com.door43.translationstudio.ui.spannables.USFMChar
-import com.door43.translationstudio.ui.spannables.USFMNoteSpan
-import com.door43.translationstudio.ui.spannables.USFMParagraphSpan
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.translationstudio.rendering.spannables.USFMChar
+import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
+import com.door43.translationstudio.rendering.spannables.USFMParagraphSpan
+import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import java.util.regex.Pattern
 

@@ -1,7 +1,8 @@
-package com.door43.translationstudio.ui.spannables
+package com.door43.translationstudio.rendering.spannables
 
 import org.unfoldingword.tools.logger.Logger
 import org.w3c.dom.Element
+import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.ByteArrayOutputStream
 import java.io.StringReader
@@ -87,7 +88,7 @@ class USXNoteSpan(
          * @param note the note
          */
         fun generateFootnote(note: CharSequence): USXNoteSpan {
-            val chars = listOf(USXChar(USXChar.STYLE_FOOTNOTE_TEXT, note))
+            val chars = listOf(USXChar(USXChar.Companion.STYLE_FOOTNOTE_TEXT, note))
             return USXNoteSpan("f", DEFAULT_CALLER, chars)
         }
 
@@ -124,7 +125,7 @@ class USXNoteSpan(
                 val childNodes = root.childNodes
                 for (i in 0 until childNodes.length) {
                     val child = childNodes.item(i)
-                    if (child.nodeType == org.w3c.dom.Node.TEXT_NODE) {
+                    if (child.nodeType == Node.TEXT_NODE) {
                         val text = child.textContent?.trim() ?: ""
                         if (text.isNotEmpty()) {
                             chars.add(USXChar("ft", text))
@@ -148,13 +149,13 @@ class USXNoteSpan(
 
         for (c in chars) {
             when (c.style) {
-                USXChar.STYLE_PASSAGE_TEXT -> {
+                USXChar.Companion.STYLE_PASSAGE_TEXT -> {
                     passageText = "$passageText${c.value}"
                 }
-                USXChar.STYLE_FOOTNOTE_QUOTATION -> {
+                USXChar.Companion.STYLE_FOOTNOTE_QUOTATION -> {
                     quotation = "$quotation${c.value}"
                 }
-                USXChar.STYLE_FOOTNOTE_ALT_QUOTATION -> {
+                USXChar.Companion.STYLE_FOOTNOTE_ALT_QUOTATION -> {
                     if (noteBuilder.isNotEmpty()) noteBuilder.append(" ")
                     noteBuilder.append("\"").append(c.value).append("\"")
                 }

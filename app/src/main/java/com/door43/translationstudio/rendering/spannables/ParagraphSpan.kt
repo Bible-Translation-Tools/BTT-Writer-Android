@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.spannables
+package com.door43.translationstudio.rendering.spannables
 
 open class ParagraphSpan internal constructor(
     humanReadable: String,

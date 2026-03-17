@@ -50,8 +50,8 @@ import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import com.door43.translationstudio.rendering.adapter.VerseClickListener
 import com.door43.translationstudio.rendering.adapter.VerseLongClickListener
 import com.door43.translationstudio.rendering.model.TextNode
-import com.door43.translationstudio.ui.spannables.USFMNoteSpan
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
+import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.ui.translate.review.OnReviewModeListener
 import com.door43.translationstudio.ui.translate.review.ReviewHolder
 import com.door43.translationstudio.ui.translate.review.SearchSubject

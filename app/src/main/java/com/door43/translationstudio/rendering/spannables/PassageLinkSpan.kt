@@ -1,5 +1,4 @@
-package com.door43.translationstudio.ui.spannables
-
+package com.door43.translationstudio.rendering.spannables
 import org.unfoldingword.tools.logger.Logger
 import java.util.regex.Pattern
 

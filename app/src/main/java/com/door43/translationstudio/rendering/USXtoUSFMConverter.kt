@@ -1,12 +1,12 @@
 package com.door43.translationstudio.rendering
 
 import android.text.TextUtils
-import com.door43.translationstudio.ui.spannables.USFMChar
-import com.door43.translationstudio.ui.spannables.USFMNoteSpan
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan
-import com.door43.translationstudio.ui.spannables.USXChar
-import com.door43.translationstudio.ui.spannables.USXNoteSpan
-import com.door43.translationstudio.ui.spannables.USXVerseSpan
+import com.door43.translationstudio.rendering.spannables.USFMChar
+import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
+import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
+import com.door43.translationstudio.rendering.spannables.USXChar
+import com.door43.translationstudio.rendering.spannables.USXNoteSpan
+import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import java.util.regex.Pattern
 
 /**

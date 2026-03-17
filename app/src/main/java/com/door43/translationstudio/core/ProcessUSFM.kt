@@ -10,8 +10,8 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator.Companion.TXT_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
-import com.door43.translationstudio.ui.spannables.USFMNoteSpan
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
+import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import com.door43.util.sortNumerically

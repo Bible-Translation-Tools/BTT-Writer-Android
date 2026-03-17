@@ -309,8 +309,9 @@ object SpannableAdapter {
                 val title = when (val d = node.linkData) {
                     is LinkData.Article -> d.title
                     is LinkData.Passage -> d.title
-                    is LinkData.TranslationWord -> d.id
+                    is LinkData.TranslationWord -> d.title
                     is LinkData.Markdown -> d.title
+                    is LinkData.RcLink -> d.title
                     is LinkData.ShortReference -> d.ref
                     is LinkData.AppLink -> d.title
                 }

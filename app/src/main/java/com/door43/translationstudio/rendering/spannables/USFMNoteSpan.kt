@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.spannables
+package com.door43.translationstudio.rendering.spannables
 
 import java.util.regex.Pattern
 
@@ -25,7 +25,7 @@ class USFMNoteSpan(
             val tag = StringBuilder("\\f $caller ")
             for (c in chars) {
                 when (c.style) {
-                    USFMChar.STYLE_FOOTNOTE_VERSE -> tag.append("\\fv ").append(c.value).append("\\fv*")
+                    USFMChar.Companion.STYLE_FOOTNOTE_VERSE -> tag.append("\\fv ").append(c.value).append("\\fv*")
                     else -> tag.append("\\").append(c.style).append(" ").append(c.value).append(" ")
                 }
             }
@@ -38,7 +38,7 @@ class USFMNoteSpan(
          * @param note the note
          */
         fun generateFootnote(note: CharSequence): USFMNoteSpan {
-            val chars = listOf(USFMChar(USFMChar.STYLE_FOOTNOTE_TEXT, note))
+            val chars = listOf(USFMChar(USFMChar.Companion.STYLE_FOOTNOTE_TEXT, note))
             return USFMNoteSpan("f", DEFAULT_CALLER, chars)
         }
 
@@ -66,7 +66,7 @@ class USFMNoteSpan(
 
             if (lastIndex < noteText.length) { // if extra text, add it
                 noteBuilder.append(noteText.subSequence(lastIndex, noteText.length))
-                chars.add(USFMChar(USFMChar.STYLE_PASSAGE_TEXT, noteBuilder.toString()))
+                chars.add(USFMChar(USFMChar.Companion.STYLE_PASSAGE_TEXT, noteBuilder.toString()))
             }
             return USFMNoteSpan("f", caller.toString(), chars)
         }
@@ -81,9 +81,9 @@ class USFMNoteSpan(
 
         for (c in chars) {
             when (c.style) {
-                USFMChar.STYLE_PASSAGE_TEXT -> passageText = c.value
-                USFMChar.STYLE_FOOTNOTE_QUOTATION -> quotation = c.value
-                USFMChar.STYLE_FOOTNOTE_ALT_QUOTATION -> altQuotation = c.value
+                USFMChar.Companion.STYLE_PASSAGE_TEXT -> passageText = c.value
+                USFMChar.Companion.STYLE_FOOTNOTE_QUOTATION -> quotation = c.value
+                USFMChar.Companion.STYLE_FOOTNOTE_ALT_QUOTATION -> altQuotation = c.value
                 else -> {
                     // TODO: implement better. We may need to format the values
                     noteBuilder.append(c.value)

@@ -1,17 +1,17 @@
-package com.door43.translationstudio.ui.spannables
+package com.door43.translationstudio.rendering.spannables
 
 import java.util.regex.Pattern
 
 /**
- * Represents a char element according to the usfm specification
- * See http://ubs-icap.org/chm/usfm/2.4/index.html
+ * Represents a char element according to the usx specification
+ * See http://dbl.ubs-icap.org:8090/display/DBLDOCS/USX#USX-char
  */
-class USFMChar(style: String, val value: CharSequence) {
+class USXChar(style: String, val value: CharSequence) {
 
     val style: String = style.trim().lowercase()
 
     companion object {
-        // passage styles (custom tag not defined in USFM)
+        // passage styles (custom tag not defined in USX)
         const val STYLE_PASSAGE_TEXT = "pt"
 
         // footnote styles
@@ -25,6 +25,10 @@ class USFMChar(style: String, val value: CharSequence) {
         const val STYLE_FOOTNOTE_VERSE = "fv"
         const val STYLE_FOOTNOTE_DEUTEROCANONICAL_APOCRYPHA = "fdc"
 
+        const val PATTERN = "<char\\s+((?:(?!>).)*)\\s*>\\s*((?:(?!(?:<\\/char>)).)*)\\s*<\\/char>"
+        const val CHAR_ATTRIBUTES_GROUP = 1
+        const val CHAR_TEXT_GROUP = 2
+
         // selah styles
         const val STYLE_SELAH = "qs"
 
@@ -32,7 +36,10 @@ class USFMChar(style: String, val value: CharSequence) {
          * Returns the compiled pattern to match this char
          */
         fun getPattern(style: String): Pattern {
-            return Pattern.compile("\\\\f$style+\\s([^\\\\]+)", Pattern.DOTALL) // \\f(\S)+\s([^\\]+)
+            return Pattern.compile(
+                "<char\\s+style=\"$style\"\\s*>\\s*(((?!</char>).)*)</char>",
+                Pattern.DOTALL
+            )
         }
     }
 }

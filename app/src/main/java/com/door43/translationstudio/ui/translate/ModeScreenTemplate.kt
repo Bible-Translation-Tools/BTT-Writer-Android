@@ -17,8 +17,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +41,8 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
 ) {
     val footnote by viewModel.footnote.collectAsStateWithLifecycle()
     val stateItems by viewModel.items.collectAsStateWithLifecycle()
+
+    val urlHandler = LocalUriHandler.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         Crossfade(
@@ -137,6 +141,13 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
                         }
                     }
                 )
+            }
+
+            LaunchedEffect(state.url) {
+                if (state.url != null) {
+                    urlHandler.openUri(state.url)
+                    viewModel.onAction(ReviewAction.CleanUrl)
+                }
             }
         }
     }

@@ -1,13 +1,13 @@
 package com.door43.translationstudio.rendering
 
 import com.door43.translationstudio.rendering.model.LinkData
-import com.door43.translationstudio.ui.spannables.ArticleLinkSpan
-import com.door43.translationstudio.ui.spannables.MarkdownLinkSpan
-import com.door43.translationstudio.ui.spannables.MarkdownTitledLinkSpan
-import com.door43.translationstudio.ui.spannables.PassageLinkSpan
-import com.door43.translationstudio.ui.spannables.ShortReferenceSpan
-import com.door43.translationstudio.ui.spannables.Span
-import com.door43.translationstudio.ui.spannables.TranslationWordLinkSpan
+import com.door43.translationstudio.rendering.spannables.ArticleLinkSpan
+import com.door43.translationstudio.rendering.spannables.MarkdownLinkSpan
+import com.door43.translationstudio.rendering.spannables.MarkdownTitledLinkSpan
+import com.door43.translationstudio.rendering.spannables.PassageLinkSpan
+import com.door43.translationstudio.rendering.spannables.ShortReferenceSpan
+import com.door43.translationstudio.rendering.spannables.Span
+import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
 
 /**
  * HTML rendering engine for help content (translation notes, words, questions).
@@ -151,9 +151,18 @@ class HtmlRenderer(
             val address = matcher.group(3) ?: ""
             val span = MarkdownTitledLinkSpan(title, address)
             if (preprocessCallback.onPreprocess(span)) {
+                val (scheme, data) = when {
+                    address.startsWith("rc://") -> "rc" to span.machineReadable
+                    address.endsWith(".md") -> {
+                        val wordId = address.substringAfterLast('/')
+                            .substringBeforeLast('.')
+                        "tw" to wordId
+                    }
+                    else -> "md" to span.machineReadable
+                }
                 tokens.add(HtmlToken(
                     matcher.start(), matcher.end(),
-                    buildAnchor("md", span.machineReadable, span.humanReadable)
+                    buildAnchor(scheme, data, span.humanReadable)
                 ))
             } else {
                 tokens.add(HtmlToken(matcher.start(), matcher.end(), span.humanReadable))
@@ -215,6 +224,7 @@ class HtmlRenderer(
                 "tw" -> LinkData.TranslationWord(id = data)
                 "passage" -> LinkData.Passage(address = data, title = "")
                 "md" -> LinkData.Markdown(address = data, title = "")
+                "rc" -> LinkData.RcLink(address = data, title = "")
                 "ref" -> LinkData.ShortReference(ref = data)
                 else -> null
             }

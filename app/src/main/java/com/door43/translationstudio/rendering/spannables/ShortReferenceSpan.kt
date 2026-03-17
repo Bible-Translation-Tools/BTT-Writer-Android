@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.spannables
+package com.door43.translationstudio.rendering.spannables
 
 import com.door43.util.StringUtilities
 import java.util.regex.Pattern

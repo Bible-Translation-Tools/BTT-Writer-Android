@@ -71,6 +71,39 @@ class HtmlRendererTest {
         assertTrue("Shows word id", html.contains("assign"))
     }
 
+    // --- Relative .md word link ---
+
+    @Test
+    fun `relative md word link uses tw scheme with extracted id`() {
+        val input = "[altar of incense](../other/altarofincense.md)"
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Expected tw scheme", html.contains("<a href=\"app://tw/altarofincense\">"))
+        assertTrue("Expected title", html.contains("altar of incense"))
+    }
+
+    @Test
+    fun `parseLinkUrl parses tw from md word link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://tw/altarofincense")
+        assertTrue(data is LinkData.TranslationWord)
+        assertEquals("altarofincense", (data as LinkData.TranslationWord).id)
+    }
+
+    // --- RC link ---
+
+    @Test
+    fun `rc link uses rc scheme`() {
+        val input = "[Genesis 8:20](rc://en/tn/help/gen/08/20)"
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Expected rc scheme", html.contains("<a href=\"app://rc/"))
+        assertTrue("Expected title", html.contains("Genesis 8:20"))
+    }
+
+    @Test
+    fun `parseLinkUrl parses rc link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://rc/rc://en/tn/help/gen/08/20")
+        assertTrue(data is LinkData.RcLink)
+    }
+
     // --- Plain text ---
 
     @Test
@@ -144,6 +177,7 @@ class HtmlRendererTest {
     fun `parseLinkUrl parses passage link`() {
         val data = HtmlRenderer.parseLinkUrl("app://passage/gen/01/02")
         assertTrue(data is LinkData.Passage)
+        assertEquals("gen/01/02", (data as LinkData.Passage).address)
     }
 
     @Test
@@ -156,6 +190,14 @@ class HtmlRendererTest {
     fun `parseLinkUrl parses ref link`() {
         val data = HtmlRenderer.parseLinkUrl("app://ref/1:2")
         assertTrue(data is LinkData.ShortReference)
+        assertEquals("1:2", (data as LinkData.ShortReference).ref)
+    }
+
+    @Test
+    fun `parseLinkUrl parses rc link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://rc/rc://en/tn/help/gen/08/20")
+        assertTrue(data is LinkData.RcLink)
+        assertEquals("rc://en/tn/help/gen/08/20", (data as LinkData.RcLink).address)
     }
 
     @Test

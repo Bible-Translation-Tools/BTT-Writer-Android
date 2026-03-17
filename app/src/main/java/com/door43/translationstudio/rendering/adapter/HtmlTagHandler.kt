@@ -15,7 +15,7 @@ import android.text.style.TypefaceSpan
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.spannables.LinkSpan
+import com.door43.translationstudio.rendering.spannables.LinkSpan
 import org.xml.sax.XMLReader
 import java.util.Vector
 

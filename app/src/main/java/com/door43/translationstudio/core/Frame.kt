@@ -1,8 +1,8 @@
 package com.door43.translationstudio.core
 
 import com.door43.translationstudio.rendering.Clickables
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan
-import com.door43.translationstudio.ui.spannables.USXVerseSpan
+import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
+import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import org.json.JSONException
 import org.json.JSONObject
 

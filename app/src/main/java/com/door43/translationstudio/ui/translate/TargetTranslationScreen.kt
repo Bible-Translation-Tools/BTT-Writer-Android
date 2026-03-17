@@ -86,7 +86,7 @@ fun TargetTranslationScreen(
     val snackBarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val menuItems = rememberSaveable { mutableStateListOf<TranslateSideBarAction>() }
+    val menuItems = remember { mutableStateListOf<TranslateSideBarAction>() }
 
     // Strings
 

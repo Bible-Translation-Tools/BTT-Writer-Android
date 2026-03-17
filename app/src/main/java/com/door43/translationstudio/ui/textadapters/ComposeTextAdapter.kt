@@ -108,7 +108,8 @@ object ComposeTextAdapter {
      */
     fun convertHtml(
         html: String,
-        onLinkClick: (LinkData) -> Unit = {}
+        onLinkClick: (LinkData) -> Unit = {},
+        linkFilter: (LinkData) -> Boolean = { true }
     ): AnnotatedString {
         val parsed = AnnotatedString.fromHtml(html)
 
@@ -131,23 +132,25 @@ object ComposeTextAdapter {
                 when (val annotation = range.item) {
                     is LinkAnnotation.Url -> {
                         val linkData = HtmlRenderer.parseLinkUrl(annotation.url)
-                        if (linkData != null) {
-                            // Our custom app:// link — replace with clickable
-                            addLink(
-                                LinkAnnotation.Clickable(tag = linkTag(linkData)) {
-                                    onLinkClick(linkData)
-                                },
-                                range.start, range.end
-                            )
+                        val data = if (linkData != null) {
+                            linkData
                         } else {
-                            // Regular <a href="..."> — make clickable with Markdown data
-                            val mdData = LinkData.Markdown(
-                                address = annotation.url,
-                                title = parsed.text.substring(range.start, range.end)
-                            )
+                            val url = annotation.url
+                            val title = parsed.text.substring(range.start, range.end)
+                            when {
+                                url.endsWith(".md") -> {
+                                    val wordId = url.substringAfterLast('/')
+                                        .substringBeforeLast('.')
+                                    LinkData.TranslationWord(id = wordId, title = title)
+                                }
+                                url.startsWith("rc://") -> LinkData.RcLink(address = url, title = title)
+                                else -> LinkData.Markdown(address = url, title = title)
+                            }
+                        }
+                        if (linkFilter(data)) {
                             addLink(
-                                LinkAnnotation.Clickable(tag = "MD") {
-                                    onLinkClick(mdData)
+                                LinkAnnotation.Clickable(tag = linkTag(data)) {
+                                    onLinkClick(data)
                                 },
                                 range.start, range.end
                             )
@@ -164,6 +167,7 @@ object ComposeTextAdapter {
         is LinkData.TranslationWord -> "TW"
         is LinkData.Passage -> "PASSAGE"
         is LinkData.Markdown -> "MD"
+        is LinkData.RcLink -> "RC"
         is LinkData.ShortReference -> "REF"
         is LinkData.AppLink -> data.linkType
     }
@@ -314,8 +318,9 @@ object ComposeTextAdapter {
                 val (tag, annotation, title) = when (val d = node.linkData) {
                     is LinkData.Article -> Triple("TA", d.address, d.title)
                     is LinkData.Passage -> Triple("PASSAGE", d.address, d.title)
-                    is LinkData.TranslationWord -> Triple("TW", d.id, d.id)
+                    is LinkData.TranslationWord -> Triple("TW", d.id, d.title)
                     is LinkData.Markdown -> Triple("MD", d.address, d.title)
+                    is LinkData.RcLink -> Triple("RC", d.address, d.title)
                     is LinkData.ShortReference -> Triple("REF", d.ref, d.ref)
                     is LinkData.AppLink -> Triple(d.linkType, d.href, d.title)
                 }
