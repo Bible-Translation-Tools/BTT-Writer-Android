@@ -395,7 +395,8 @@ class ReviewModeFragment : ViewModeFragment(),
                 }
             )
 
-            wordBinding.description.text = renderer.render(description)
+            // TODO: replace with Compose path (toAnnotatedHtml + convertHtml)
+            //wordBinding.description.text = renderer.render(description)
             wordBinding.description.movementMethod = LocalLinkMovementMethod.getInstance()
             wordBinding.description.formatSub(
                 typography,
@@ -577,7 +578,8 @@ class ReviewModeFragment : ViewModeFragment(),
                 sourceLanguage.slug,
                 sourceLanguage.direction
             )
-            noteBinding.description.text = renderer.render(note.body)
+            // TODO: replace with Compose path (toAnnotatedHtml + convertHtml)
+            //noteBinding.description.text = renderer.render(note.body)
             noteBinding.description.formatSub(
                 typography,
                 assetsProvider,

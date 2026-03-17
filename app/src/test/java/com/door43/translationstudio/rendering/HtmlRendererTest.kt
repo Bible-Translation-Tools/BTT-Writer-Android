@@ -1,21 +1,10 @@
 package com.door43.translationstudio.rendering
 
 import com.door43.translationstudio.rendering.model.LinkData
-import com.door43.translationstudio.rendering.model.TextNode
 import org.junit.Assert.*
 import org.junit.Test
 
 class HtmlRendererTest {
-
-    private fun testRender(input: String): List<TextNode> {
-        val renderNodes = renderer().renderToNodes(input)
-        return RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-    }
-
-    private fun testRender(allowAll: Boolean, input: String): List<TextNode> {
-        val renderNodes = renderer(allowAll).renderToNodes(input)
-        return RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-    }
 
     private fun renderer(allowAll: Boolean = true) =
         HtmlRenderer(preprocessCallback = { allowAll })
@@ -23,87 +12,78 @@ class HtmlRendererTest {
     // --- Translation Academy address ---
 
     @Test
-    fun `TA address pattern produces Article link node`() {
+    fun `TA address pattern produces anchor tag`() {
         val input = "[[en:ta:vol1:translate:figs_intro | Figures of Speech]]"
-        val nodes = testRender(input)
-        val link = nodes.filterIsInstance<TextNode.Link>().firstOrNull()
-        assertNotNull("Expected Link node", link)
-        assertTrue(link!!.linkData is LinkData.Article)
-    }
-
-    @Test
-    fun `TA address title is preserved in Article link`() {
-        val input = "[[en:ta:vol1:translate:figs_intro | Figures of Speech]]"
-        val nodes = testRender(input)
-        val link = nodes.filterIsInstance<TextNode.Link>().firstOrNull()
-        assertNotNull(link)
-        assertEquals("Figures of Speech", (link!!.linkData as LinkData.Article).title.trim())
-    }
-
-    @Test
-    fun `TA address address is preserved in Article link`() {
-        val input = "[[en:ta:vol1:translate:figs_intro | Figures of Speech]]"
-        val nodes = testRender(input)
-        val link = nodes.filterIsInstance<TextNode.Link>().firstOrNull()
-        assertNotNull(link)
-        // ArticleLinkSpan.parse() replaces underscores with dashes in the slug,
-        // so "figs_intro" becomes "figs-intro" in machineReadable.
-        val address = (link!!.linkData as LinkData.Article).address
-        assertTrue("Address should contain 'figs'", address.contains("figs"))
-        assertTrue("Address should contain 'translate'", address.contains("translate"))
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Expected <a> tag", html.contains("<a href=\"app://ta/"))
+        assertTrue("Expected title in anchor", html.contains("Figures of Speech"))
     }
 
     @Test
     fun `TA address rejected by preprocessor renders as plain text`() {
         val input = "[[en:ta:vol1:translate:figs_intro | Figures of Speech]]"
-        val nodes = testRender(false, input)
-        assertFalse("No Link when preprocessor rejects", nodes.any { it is TextNode.Link })
-        val text = nodes.filterIsInstance<TextNode.Text>().joinToString("") { it.content }
-        assertTrue("Rejected link shows as plain text", text.isNotEmpty())
+        val html = renderer(false).toAnnotatedHtml(input)
+        assertFalse("No <a> tag when preprocessor rejects", html.contains("<a "))
+        assertTrue("Rejected link shows title as plain text", html.contains("Figures of Speech"))
     }
 
     // --- Markdown titled link ---
 
     @Test
-    fun `markdown titled link produces Markdown link node`() {
+    fun `markdown titled link produces anchor tag`() {
         val input = "[My Title](http://example.com)"
-        val nodes = testRender(input)
-        val link = nodes.filterIsInstance<TextNode.Link>().firstOrNull()
-        assertNotNull("Expected Link node for markdown link", link)
-        assertTrue(link!!.linkData is LinkData.Markdown)
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Expected <a> tag", html.contains("<a href=\"app://md/"))
+        assertTrue("Expected title", html.contains("My Title"))
     }
 
     @Test
-    fun `markdown link title is preserved`() {
+    fun `markdown link rejected by preprocessor renders as plain text`() {
         val input = "[My Title](http://example.com)"
-        val nodes = testRender(input)
-        val link = nodes.filterIsInstance<TextNode.Link>().first()
-        assertEquals("My Title", (link.linkData as LinkData.Markdown).title)
+        val html = renderer(false).toAnnotatedHtml(input)
+        assertFalse("No <a> tag", html.contains("<a "))
+        assertTrue("Shows title as plain text", html.contains("My Title"))
+    }
+
+    // --- Passage link ---
+
+    @Test
+    fun `passage link produces anchor tag`() {
+        val input = "[[en:bible:notes:gen:01:02|Genesis 1:2]]"
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Expected <a> tag", html.contains("<a href=\"app://passage/"))
+    }
+
+    // --- Translation Word link ---
+
+    @Test
+    fun `TW link produces anchor tag`() {
+        val input = "[[:en:obe:other:assign]]"
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Expected <a> tag with tw scheme", html.contains("<a href=\"app://tw/"))
     }
 
     @Test
-    fun `markdown link address is preserved`() {
-        val input = "[My Title](http://example.com)"
-        val nodes = testRender(input)
-        val link = nodes.filterIsInstance<TextNode.Link>().first()
-        assertEquals("http://example.com", (link.linkData as LinkData.Markdown).address)
+    fun `TW link rejected by preprocessor renders word id`() {
+        val input = "[[:en:obe:other:assign]]"
+        val html = renderer(false).toAnnotatedHtml(input)
+        assertFalse("No <a> tag", html.contains("<a "))
+        assertTrue("Shows word id", html.contains("assign"))
     }
 
     // --- Plain text ---
 
     @Test
-    fun `plain text with no links passes through as Text node`() {
+    fun `plain text with no links passes through unchanged`() {
         val input = "Simple text with no links."
-        val nodes = testRender(input)
-        assertFalse(nodes.any { it is TextNode.Link })
-        val text = nodes.filterIsInstance<TextNode.Text>().joinToString("") { it.content }
-        assertTrue(text.contains("Simple text"))
+        val html = renderer().toAnnotatedHtml(input)
+        assertEquals(input, html)
     }
 
     @Test
-    fun `empty input produces empty list`() {
-        val nodes = testRender("")
-        assertTrue(nodes.isEmpty())
+    fun `empty input returns empty string`() {
+        val html = renderer().toAnnotatedHtml("")
+        assertEquals("", html)
     }
 
     // --- Mixed content ---
@@ -111,47 +91,87 @@ class HtmlRendererTest {
     @Test
     fun `text before and after link is preserved`() {
         val input = "Before [[en:ta:vol1:translate:figs_intro | Title]] after"
-        val nodes = testRender(input)
-        val texts = nodes.filterIsInstance<TextNode.Text>().map { it.content }
-        assertTrue("Text before link preserved", texts.any { it.contains("Before") })
-        assertTrue("Text after link preserved", texts.any { it.contains("after") })
-        assertTrue("Link node present", nodes.any { it is TextNode.Link })
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Text before link preserved", html.contains("Before"))
+        assertTrue("Text after link preserved", html.contains("after"))
+        assertTrue("Link present", html.contains("<a "))
     }
 
     @Test
     fun `multiple different link types in same input`() {
         val input = "See [[en:ta:vol1:translate:figs_intro | TA Article]] and [Markdown](http://x.com)"
-        val nodes = testRender(input)
-        val links = nodes.filterIsInstance<TextNode.Link>()
-        assertEquals("Expected 2 links", 2, links.size)
-        assertTrue(links.any { it.linkData is LinkData.Article })
-        assertTrue(links.any { it.linkData is LinkData.Markdown })
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("TA link present", html.contains("app://ta/"))
+        assertTrue("Markdown link present", html.contains("app://md/"))
     }
 
-    // --- No-arg / context-free constructor ---
+    // --- HTML preservation ---
 
     @Test
-    fun `renderer can be constructed without Context`() {
-        val r = HtmlRenderer(preprocessCallback = { true })
-        assertNotNull(r)
-        val nodes = r.renderToNodes("hello")
-        assertTrue(nodes.isNotEmpty())
-    }
-
-    @Test
-    fun `preprocessor rejecting TW link falls back to plain text`() {
-        val input = "[[en:obe:other:word]]"
-        val nodes = HtmlRenderer(preprocessCallback = { false }).renderToNodes(input)
-        // Should not produce a Link node; the word ID or raw text should appear
-        assertTrue("Expected no Link node", nodes.none { it is TextNode.Link })
+    fun `existing HTML tags are preserved`() {
+        val input = "<p>See <b>this</b> [[en:ta:vol1:translate:figs_intro | link]]</p>"
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("p tag preserved", html.contains("<p>"))
+        assertTrue("b tag preserved", html.contains("<b>"))
+        assertTrue("Link converted", html.contains("<a href=\"app://ta/"))
     }
 
     @Test
-    fun `preprocessor rejecting TA address falls back to plain text`() {
-        val input = "[[en:ta:vol1:translate:figs_intro | Figures of Speech]]"
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(HtmlRenderer(preprocessCallback = { false }).renderToNodes(input))
-        assertTrue("Expected no Link node", nodes.none { it is TextNode.Link })
-        val text = nodes.filterIsInstance<TextNode.Text>().joinToString("") { it.content }
-        assertTrue("Expected title text in output", text.contains("Figures of Speech"))
+    fun `HTML entities in link titles are escaped`() {
+        val input = "[[en:ta:vol1:translate:figs_intro | A & B < C]]"
+        val html = renderer().toAnnotatedHtml(input)
+        assertTrue("Ampersand escaped", html.contains("&amp;"))
+        assertTrue("Less-than escaped", html.contains("&lt;"))
+    }
+
+    // --- parseLinkUrl ---
+
+    @Test
+    fun `parseLinkUrl parses ta link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://ta/translate/figs-intro")
+        assertTrue(data is LinkData.Article)
+        assertEquals("translate/figs-intro", (data as LinkData.Article).address)
+    }
+
+    @Test
+    fun `parseLinkUrl parses tw link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://tw/assign")
+        assertTrue(data is LinkData.TranslationWord)
+        assertEquals("assign", (data as LinkData.TranslationWord).id)
+    }
+
+    @Test
+    fun `parseLinkUrl parses passage link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://passage/gen/01/02")
+        assertTrue(data is LinkData.Passage)
+    }
+
+    @Test
+    fun `parseLinkUrl parses md link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://md/http://example.com")
+        assertTrue(data is LinkData.Markdown)
+    }
+
+    @Test
+    fun `parseLinkUrl parses ref link`() {
+        val data = HtmlRenderer.parseLinkUrl("app://ref/1:2")
+        assertTrue(data is LinkData.ShortReference)
+    }
+
+    @Test
+    fun `parseLinkUrl returns null for non-app urls`() {
+        assertNull(HtmlRenderer.parseLinkUrl("http://example.com"))
+    }
+
+    @Test
+    fun `parseLinkUrl returns null for unknown type`() {
+        assertNull(HtmlRenderer.parseLinkUrl("app://unknown/data"))
+    }
+
+    @Test
+    fun `parseLinkUrl decodes percent-encoded characters`() {
+        val data = HtmlRenderer.parseLinkUrl("app://ta/translate%20intro")
+        assertTrue(data is LinkData.Article)
+        assertEquals("translate intro", (data as LinkData.Article).address)
     }
 }
