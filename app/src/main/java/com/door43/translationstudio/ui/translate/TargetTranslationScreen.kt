@@ -58,6 +58,7 @@ import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadCard
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.translate.review.Help
+import com.door43.translationstudio.ui.translate.review.IndexCard
 import com.door43.translationstudio.ui.translate.review.NotesCard
 import com.door43.translationstudio.ui.translate.review.QuestionsCard
 import com.door43.translationstudio.ui.translate.review.ReviewAction
@@ -465,6 +466,7 @@ fun TargetTranslationScreen(
                                         },
                                         onExpandedChange = { expanded ->
                                             reviewVm.onAction(ReviewAction.OpenResources(expanded))
+                                            if (!expanded) reviewVm.onAction(ReviewAction.ClearHelp)
                                         },
                                         onRenderHelps = {
                                             reviewVm.onAction(ReviewAction.RenderHelps(item))
@@ -505,8 +507,11 @@ fun TargetTranslationScreen(
                                             is Help.Words -> WordsCard(
                                                 title = help.title,
                                                 body = help.body,
-                                                onClose = {
+                                                onCloseClick = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
+                                                },
+                                                onIndexClick = {
+                                                    reviewVm.onAction(ReviewAction.OpenIndex(help.rcSlug))
                                                 }
                                             )
                                             is Help.Questions -> QuestionsCard(
@@ -514,6 +519,15 @@ fun TargetTranslationScreen(
                                                 body = help.body,
                                                 onClose = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
+                                                }
+                                            )
+                                            is Help.Index -> IndexCard(
+                                                words = help.words,
+                                                onCloseClick = {
+                                                    reviewVm.onAction(ReviewAction.ClearHelp)
+                                                },
+                                                onItemClick = {
+                                                    reviewVm.onAction(ReviewAction.OpenWord(help.rcSlug, it.slug))
                                                 }
                                             )
                                         }

@@ -45,9 +45,14 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
 import java.util.regex.Pattern
 
+data class IndexWord(
+    val slug: String,
+    val title: String
+)
+
 sealed class Help {
-    abstract val title: String
-    abstract val body: AnnotatedString
+    open val title: String = ""
+    open val body: AnnotatedString = AnnotatedString("")
 
     data class Notes(
         override val title: String,
@@ -56,12 +61,18 @@ sealed class Help {
 
     data class Words(
         override val title: String,
-        override val body: AnnotatedString
+        override val body: AnnotatedString,
+        val rcSlug: String
     ) : Help()
 
     data class Questions(
         override val title: String,
         override val body: AnnotatedString
+    ) : Help()
+
+    data class Index(
+        val rcSlug: String,
+        val words: List<IndexWord>
     ) : Help()
 }
 
@@ -76,6 +87,8 @@ sealed interface ReviewAction : ModeAction {
     data class OpenResources(val value: Boolean) : ReviewAction
     data class RenderHelps(val item: ReviewItem) : ReviewAction
     data class OpenHelp(val item: HelpItem) : ReviewAction
+    data class OpenIndex(val rcSlug: String) : ReviewAction
+    data class OpenWord(val rcSlug: String, val slug: String) : ReviewAction
     object ClearHelp : ReviewAction
     object CleanUrl : ReviewAction
 }
@@ -107,6 +120,8 @@ class ReviewModeViewModel(
             is ReviewAction.OpenResources -> openResources(action.value)
             is ReviewAction.RenderHelps -> onRenderHelps(action.item)
             is ReviewAction.OpenHelp -> onOpenHelpItem(action.item)
+            is ReviewAction.OpenIndex -> openIndex(action.rcSlug)
+            is ReviewAction.OpenWord -> renderWord(action.rcSlug, action.slug)
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
@@ -263,7 +278,7 @@ class ReviewModeViewModel(
         if (!item.helps.isEmpty()) return
 
         viewModelScope.launch {
-            val helps = withContext(Dispatchers.Default) {
+            val helps = withContext(Dispatchers.IO) {
                 renderHelps.execute(item.chunk, item.chunkConfig)
             }
             updateItem(item.copy(helps = helps))
@@ -289,21 +304,25 @@ class ReviewModeViewModel(
     }
 
     private fun renderWord(rcSlug: String, chapterSlug: String) {
-        getResourceContainer(rcSlug)?.let { twRc ->
-            val word = twRc.readChunk(chapterSlug, "01")
-            val pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)")
-            val match = pattern.matcher(word)
-            var description = ""
-            var title = ""
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                getResourceContainer(rcSlug)?.let { twRc ->
+                    val word = twRc.readChunk(chapterSlug, "01")
+                    val pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)")
+                    val match = pattern.matcher(word)
+                    var description = ""
+                    var title = ""
 
-            if (match.find()) {
-                title = match.group(1) ?: ""
-                description = match.group(2) ?: ""
+                    if (match.find()) {
+                        title = match.group(1) ?: ""
+                        description = match.group(2) ?: ""
+                    }
+
+                    val body = renderHelpContents(description, twRc)
+
+                    _state.update { it.copy(help = Help.Words(title, body, rcSlug)) }
+                }
             }
-
-            val body = renderHelpContents(description, twRc)
-
-            _state.update { it.copy(help = Help.Words(title, body)) }
         }
     }
 
@@ -410,6 +429,26 @@ class ReviewModeViewModel(
         )
 
         return body
+    }
+
+    private fun openIndex(rcSlug: String) {
+        viewModelScope.launch {
+            val words = withContext(Dispatchers.IO) {
+                getResourceContainer(rcSlug)?.let { rc ->
+                    val chapters = rc.chapters()
+                    val words = listOf(*chapters).sorted()
+                    val titlePattern = Pattern.compile("#(.*)")
+
+                    words.map { slug ->
+                        val match = titlePattern.matcher(rc.readChunk(slug, "01"))
+                        val title = if (match.find()) match.group(1) else slug
+                        IndexWord(slug, title)
+                    }
+                } ?: emptyList()
+            }
+
+            _state.update { it.copy(help = Help.Index(rcSlug, words)) }
+        }
     }
 
     private fun getClosestResourceContainer(
