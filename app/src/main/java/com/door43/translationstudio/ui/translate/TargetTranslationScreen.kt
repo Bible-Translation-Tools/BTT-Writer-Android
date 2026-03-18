@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -67,6 +68,7 @@ import com.door43.translationstudio.ui.translate.review.WordsCard
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -114,6 +116,7 @@ fun TargetTranslationScreen(
     val listState = rememberLazyListState()
     var lastViewedChunk by remember { mutableStateOf<Chunk?>(null) }
     var hasDoneInitialLoad by rememberSaveable { mutableStateOf(false) }
+    var pendingScrollChapter by remember { mutableStateOf<String?>(null) }
 
     val dominantIndex by remember(state.items) {
         derivedStateOf {
@@ -164,10 +167,30 @@ fun TargetTranslationScreen(
         }
     }
 
+    LaunchedEffect(pendingScrollChapter) {
+        val scrollTarget = pendingScrollChapter ?: return@LaunchedEffect
+
+        // Wait for state.items to contain the target chapter
+        snapshotFlow { state.items }
+            .first { items -> items.any { it.chapterSlug == scrollTarget } }
+
+        val targetIndex = state.items.indexOfFirst { it.chapterSlug == scrollTarget }
+        if (targetIndex != -1) {
+            // Wait for the LazyList to actually have enough items rendered
+            snapshotFlow { listState.layoutInfo.totalItemsCount }
+                .first { it > targetIndex }
+
+            listState.scrollToItem(targetIndex)
+            lastViewedChunk = state.items[targetIndex]
+        }
+        pendingScrollChapter = null
+    }
+
     LaunchedEffect(state.items) {
         val chunkToFind = lastViewedChunk
-        if (hasDoneInitialLoad && chunkToFind != null && state.items.isNotEmpty()) {
-
+        if (hasDoneInitialLoad && chunkToFind != null && state.items.isNotEmpty()
+            && pendingScrollChapter == null
+        ) {
             // Try exact match first
             var newIndex = state.items.indexOfFirst {
                 it.chapterSlug == chunkToFind.chapterSlug && it.chunkSlug == chunkToFind.chunkSlug
@@ -186,7 +209,7 @@ fun TargetTranslationScreen(
     }
 
     LaunchedEffect(dominantIndex, state.items) {
-        if (state.items.isNotEmpty()) {
+        if (state.items.isNotEmpty() && pendingScrollChapter == null) {
             val chunk = state.items[dominantIndex]
             lastViewedChunk = chunk // Update our memory for the next mode swap
             viewModel.onAction(
@@ -325,7 +348,8 @@ fun TargetTranslationScreen(
                     val targetIndex = exactPosition.toInt().coerceIn(0, state.items.size - 1)
                     val fraction = exactPosition - targetIndex
 
-                    // THE GUESS: Because the target chapter isn't on screen yet, we don't know its height.
+                    // THE GUESS: Because the target chapter isn't on screen yet,
+                    // we don't know its height.
                     // We have to guess the offset based on the screen height.
                     // Here we assume an average chapter is about 3 screens tall.
                     val screenHeight = listState.layoutInfo.viewportSize.height
@@ -372,7 +396,15 @@ fun TargetTranslationScreen(
                                         viewModel.onAction(TargetAction.RemoveSource(it))
                                     },
                                     onCardsSwiped = {
-                                        readVm.onAction(ModeAction.CardsSwiped(item, it))
+                                        readVm.onAction(
+                                            ModeAction.CardsSwiped(item, it)
+                                        )
+                                    },
+                                    onBeginTranslation = {
+                                        pendingScrollChapter = it
+                                        viewModel.onAction(
+                                            TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK)
+                                        )
                                     }
                                 )
                             }
@@ -451,7 +483,9 @@ fun TargetTranslationScreen(
                                             )
                                         },
                                         onExpandedChange = { expanded ->
-                                            reviewVm.onAction(ReviewAction.OpenResources(expanded))
+                                            reviewVm.onAction(
+                                                ReviewAction.OpenResources(expanded)
+                                            )
                                             if (!expanded) reviewVm.onAction(ReviewAction.ClearHelp)
                                         },
                                         onRenderHelps = {

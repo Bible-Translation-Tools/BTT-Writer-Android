@@ -40,7 +40,8 @@ fun ReadTargetCard(
     text: AnnotatedString,
     targetTranslation: TargetTranslation,
     typography: Typography,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBeginTranslationClick: () -> Unit
 ) {
     val bodyStyle = typography.getComposeTextStyle(
         translationType = TranslationType.TARGET,
@@ -89,7 +90,7 @@ fun ReadTargetCard(
 
             if (text.isBlank()) {
                 Button(
-                    onClick = { /* Handle translation start */ },
+                    onClick = onBeginTranslationClick,
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
