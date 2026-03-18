@@ -245,8 +245,7 @@ object SpannableAdapter {
                 // When verse marker is the first element of a poetic line, add indentation after it
                 // for the subsequent text to appear at the poetic line indent level
                 if (isFirstElementOfPoetic && poeticalLineIndent > 0) {
-                    val padding = "    ".repeat(poeticalLineIndent)
-                    sb.append(padding)
+                    sb.append(" ")
                 }
                 Unit
             }

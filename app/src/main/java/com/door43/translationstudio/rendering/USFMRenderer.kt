@@ -106,6 +106,9 @@ class USFMRenderer(
             if (cleaned.isNotEmpty()) nodes.add(TextNode.Text(cleaned))
         }
 
+        // insert implicit poetry line markers before bare verse markers in poetry context
+        addImplicitPoeticLineMarkers(nodes)
+
         // search highlights (post-process Text nodes)
         if (!isStopped()) applySearchHighlights(nodes)
 
@@ -482,6 +485,49 @@ class USFMRenderer(
         }
         nodes.clear()
         nodes.addAll(result)
+    }
+
+    /**
+     * In USX/USFM, verse markers can appear between poetry `<para style="q">` blocks without
+     * being wrapped in their own `<para style="q">` tag. These "bare" verses should still render
+     * as q1-level poetic lines. This function inserts implicit PoeticLine markers before them.
+     */
+    private fun addImplicitPoeticLineMarkers(nodes: MutableList<TextNode>) {
+        var i = 0
+        while (i < nodes.size) {
+            if (nodes[i] is TextNode.VerseMarker) {
+                val inPoetry = hasPoeticLineInContext(nodes, i, lookBack = true)
+                    || hasPoeticLineInContext(nodes, i, lookBack = false)
+
+                if (inPoetry) {
+                    var prevIdx = i - 1
+                    while (prevIdx >= 0 && nodes[prevIdx] is TextNode.Text
+                        && (nodes[prevIdx] as TextNode.Text).content.trim().isEmpty()) {
+                        prevIdx--
+                    }
+                    if (prevIdx < 0 || nodes[prevIdx] !is TextNode.PoeticLine) {
+                        nodes.add(i, TextNode.PoeticLine("", indentLevel = 1, rightAligned = false))
+                        i++
+                    }
+                }
+            }
+            i++
+        }
+    }
+
+    private fun hasPoeticLineInContext(
+        nodes: List<TextNode>, fromIndex: Int, lookBack: Boolean
+    ): Boolean {
+        val range = if (lookBack) (fromIndex - 1 downTo 0) else (fromIndex + 1 until nodes.size)
+        for (j in range) {
+            when (nodes[j]) {
+                is TextNode.PoeticLine -> return true
+                is TextNode.Paragraph, is TextNode.SectionHeading,
+                    TextNode.BlankLine -> return false
+                else -> { /* skip Text, VerseMarker, NoteMarker, etc. */ }
+            }
+        }
+        return false
     }
 
     private fun insertMissingVerses(nodes: MutableList<TextNode>) {

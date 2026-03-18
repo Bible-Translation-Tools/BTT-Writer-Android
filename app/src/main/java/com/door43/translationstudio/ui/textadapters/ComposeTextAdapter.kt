@@ -275,8 +275,7 @@ object ComposeTextAdapter {
                 }
 
                 if (isFirstElementOfPoetic && poeticalLineIndent > 0) {
-                    val padding = "    ".repeat(poeticalLineIndent)
-                    append(padding)
+                    append(" ")
                 }
             }
 

@@ -442,6 +442,162 @@ class USXRendererTest {
     }
 
     @Test
+    fun `bare verse markers in poetry context get implicit PoeticLine markers`() {
+        // Actual USX format: verse markers appear OUTSIDE <para style="q"> tags
+        // but are still part of the poetry section
+        val input = """<verse number="9" style="v" />
+Therefore pray like this:
+<para style="b"/>
+<para style="q1">
+'Our Father in heaven,
+</para>
+<para style="q2">
+may your name be honored as holy.
+</para>
+<verse number="10" style="v" />
+May your kingdom come.
+<para style="q1">
+May your will be done
+</para>
+<para style="q2">
+on earth as it is in heaven.
+</para>
+<verse number="11" style="v" />
+Give us today our daily bread.
+<verse number="12" style="v" />
+Forgive us our debts,
+<para style="q2">
+as we also have forgiven our debtors.
+</para>
+<verse number="13" style="v" />
+Do not bring us into temptation,
+<para style="q2">
+but deliver us from the evil one.'
+</para>"""
+
+        val nodes = testRender(input)
+
+        // Verify each verse (10, 11, 12, 13) has a PoeticLine before it
+        for (verseNum in listOf(10, 11, 12, 13)) {
+            val verseIdx = nodes.indexOfFirst {
+                it is TextNode.VerseMarker && (it as TextNode.VerseMarker).startVerse == verseNum
+            }
+            assertTrue("Verse $verseNum should exist", verseIdx >= 0)
+
+            var prevIdx = verseIdx - 1
+            while (prevIdx >= 0 && nodes[prevIdx] is TextNode.Text
+                && (nodes[prevIdx] as TextNode.Text).content.trim().isEmpty()) {
+                prevIdx--
+            }
+            assertTrue(
+                "Verse $verseNum should be preceded by PoeticLine, got: ${nodes.getOrNull(prevIdx)}",
+                nodes.getOrNull(prevIdx) is TextNode.PoeticLine
+            )
+        }
+
+        // Verse 9 should NOT get an implicit PoeticLine (it's before the poetry section)
+        val verse9Idx = nodes.indexOfFirst {
+            it is TextNode.VerseMarker && (it as TextNode.VerseMarker).startVerse == 9
+        }
+        assertTrue("Verse 9 should exist", verse9Idx >= 0)
+        var prevIdx9 = verse9Idx - 1
+        while (prevIdx9 >= 0 && nodes[prevIdx9] is TextNode.Text
+            && (nodes[prevIdx9] as TextNode.Text).content.trim().isEmpty()) {
+            prevIdx9--
+        }
+        assertFalse(
+            "Verse 9 should NOT be preceded by PoeticLine (it's before poetry context)",
+            nodes.getOrNull(prevIdx9) is TextNode.PoeticLine
+        )
+    }
+
+    @Test
+    fun `first verse in poetry section gets implicit PoeticLine via look-ahead`() {
+        // Verse 3 is the FIRST verse in the poetry section — it appears before
+        // any <para style="q"> tag but should still get a PoeticLine marker
+        // because look-ahead finds PoeticLine(q2) after it.
+        val input = """<verse number="2" style="v" />
+He opened his mouth and taught them, saying,
+<para style="b"/>
+<verse number="3" style="v" />
+"Blessed are the poor in spirit,
+<para style="q2">
+for theirs is the kingdom of heaven.
+</para>
+<verse number="4" style="v" />
+Blessed are those who mourn,
+<para style="q2">
+for they will be comforted.
+</para>
+<para style="p">
+</para>
+<verse number="11" style="v" />
+"Blessed are you when people insult you"""
+
+        val nodes = testRender(input)
+
+        // Verse 3 should get an implicit PoeticLine (first verse in poetry section)
+        val verse3Idx = nodes.indexOfFirst {
+            it is TextNode.VerseMarker && (it as TextNode.VerseMarker).startVerse == 3
+        }
+        assertTrue("Verse 3 should exist", verse3Idx >= 0)
+        var prevIdx3 = verse3Idx - 1
+        while (prevIdx3 >= 0 && nodes[prevIdx3] is TextNode.Text
+            && (nodes[prevIdx3] as TextNode.Text).content.trim().isEmpty()) {
+            prevIdx3--
+        }
+        assertTrue(
+            "Verse 3 should be preceded by PoeticLine (look-ahead finds poetry), got: ${nodes.getOrNull(prevIdx3)}",
+            nodes.getOrNull(prevIdx3) is TextNode.PoeticLine
+        )
+
+        // Verse 4 should also get an implicit PoeticLine (look-back finds poetry)
+        val verse4Idx = nodes.indexOfFirst {
+            it is TextNode.VerseMarker && (it as TextNode.VerseMarker).startVerse == 4
+        }
+        assertTrue("Verse 4 should exist", verse4Idx >= 0)
+        var prevIdx4 = verse4Idx - 1
+        while (prevIdx4 >= 0 && nodes[prevIdx4] is TextNode.Text
+            && (nodes[prevIdx4] as TextNode.Text).content.trim().isEmpty()) {
+            prevIdx4--
+        }
+        assertTrue(
+            "Verse 4 should be preceded by PoeticLine, got: ${nodes.getOrNull(prevIdx4)}",
+            nodes.getOrNull(prevIdx4) is TextNode.PoeticLine
+        )
+
+        // Verse 2 should NOT get a PoeticLine (before poetry section, separated by BlankLine)
+        val verse2Idx = nodes.indexOfFirst {
+            it is TextNode.VerseMarker && (it as TextNode.VerseMarker).startVerse == 2
+        }
+        assertTrue("Verse 2 should exist", verse2Idx >= 0)
+        var prevIdx2 = verse2Idx - 1
+        while (prevIdx2 >= 0 && nodes[prevIdx2] is TextNode.Text
+            && (nodes[prevIdx2] as TextNode.Text).content.trim().isEmpty()) {
+            prevIdx2--
+        }
+        assertFalse(
+            "Verse 2 should NOT be preceded by PoeticLine",
+            nodes.getOrNull(prevIdx2) is TextNode.PoeticLine
+        )
+
+        // Verse 11 should NOT get a PoeticLine (after <para style="p"> ends poetry)
+        val verse11Idx = nodes.indexOfFirst {
+            it is TextNode.VerseMarker && (it as TextNode.VerseMarker).startVerse == 11
+        }
+        assertTrue("Verse 11 should exist", verse11Idx >= 0)
+        var prevIdx11 = verse11Idx - 1
+        while (prevIdx11 >= 0 && nodes[prevIdx11] is TextNode.Text
+            && (nodes[prevIdx11] as TextNode.Text).content.trim().isEmpty()) {
+            prevIdx11--
+        }
+        assertFalse(
+            "Verse 11 should NOT be preceded by PoeticLine (after paragraph break)",
+            nodes.getOrNull(prevIdx11) is TextNode.PoeticLine
+        )
+    }
+
+    @Test
     fun `missing verse marker is pinned when verseDisplay is PIN`() {
         // USX with verse 2 present but verse 1 missing; expected range includes verse 1
         val renderer = USXRenderer(verseDisplay = VerseDisplay.PIN)
