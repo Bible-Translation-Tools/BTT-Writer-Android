@@ -185,7 +185,13 @@ internal class IconVisualTransformation(
         val builder = AnnotatedString.Builder(text.text.length)
         for (char in text.text) {
             if (char == OBJ_CHAR) {
-                builder.pushStyle(SpanStyle(fontFamily = iconFont, fontSize = iconSize, color = iconColor))
+                builder.pushStyle(
+                    SpanStyle(
+                        fontFamily = iconFont,
+                        fontSize = iconSize / 1.2,
+                        color = iconColor
+                    )
+                )
                 builder.append(char)
                 builder.pop()
             } else {
