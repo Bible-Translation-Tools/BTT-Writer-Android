@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
@@ -22,7 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -40,34 +46,31 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.ReviewItem
-
-private val VersePinColor = Color(0xFF00A56C)
+import com.door43.translationstudio.ui.translate.components.RichEditText
 
 @Composable
 fun ReviewTargetCard(
     item: ReviewItem,
     typography: Typography,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEditToggle: () -> Unit,
+    onDoneToggle: (Boolean) -> Unit
 ) {
+    val currentItem by rememberUpdatedState(item)
+
     val titleStyle = typography.getComposeTextStyle(
         translationType = TranslationType.TARGET,
         style = TextStyleType.SUB,
-        languageCode = item.chunk.target.targetLanguage.slug,
-        direction = item.chunk.target.targetLanguage.direction
+        languageCode = currentItem.chunk.target.targetLanguage.slug,
+        direction = currentItem.chunk.target.targetLanguage.direction
     )
 
     val bodyStyle = typography.getComposeTextStyle(
         translationType = TranslationType.TARGET,
         style = TextStyleType.NORMAL,
-        languageCode = item.chunk.target.targetLanguage.slug,
-        direction = item.chunk.target.targetLanguage.direction
+        languageCode = currentItem.chunk.target.targetLanguage.slug,
+        direction = currentItem.chunk.target.targetLanguage.direction
     )
-
-    val showUndo = false
-    val showRedo = false
-    val showAddNote = false
-    val isEditing = false
-    val isDone = false
 
     val inlineContentMap = mapOf(
         "note_icon" to InlineTextContent(
@@ -88,7 +91,7 @@ fun ReviewTargetCard(
             Placeholder(
                 width = bodyStyle.fontSize * 2.0,
                 height = bodyStyle.fontSize * 2.0,
-                placeholderVerticalAlign = PlaceholderVerticalAlign.TextBottom
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
             )
         ) { verseLabel ->
             val pinFontSize = bodyStyle.fontSize / when {
@@ -98,13 +101,16 @@ fun ReviewTargetCard(
                 else -> 1.6
             }
             Box(
-                contentAlignment = Alignment.TopCenter,
+                contentAlignment = BiasAlignment(
+                    horizontalBias = 0f,
+                    verticalBias = -0.35f
+                ),
                 modifier = Modifier.fillMaxSize()
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_verse_black_48dp),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(VersePinColor),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary),
                     modifier = Modifier.fillMaxSize()
                 )
                 Text(
@@ -114,7 +120,6 @@ fun ReviewTargetCard(
                     color = Color.White,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
-                    modifier = Modifier.padding(top = 24.dp)
                 )
             }
         }
@@ -145,68 +150,68 @@ fun ReviewTargetCard(
                         .padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (showUndo) {
+                    if (currentItem.targetMode == TargetMode.EDIT) {
                         IconButton(onClick = /*onUndoClick*/{}) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_undo_secondary_24dp),
+                                imageVector = Icons.AutoMirrored.Filled.Undo,
                                 contentDescription = "Undo",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-
-                    if (showRedo) {
                         IconButton(onClick = /*onRedoClick*/{}) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_redo_secondary_24dp),
+                                imageVector = Icons.AutoMirrored.Filled.Redo,
                                 contentDescription = "Redo",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-
-                    if (showAddNote) {
                         IconButton(onClick = /*onAddNoteClick*/{}) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_note_add_secondary_24dp),
+                                imageVector = Icons.AutoMirrored.Filled.NoteAdd,
                                 contentDescription = "Add note",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
                     Text(
-                        text = item.targetTitle,
+                        text = currentItem.targetTitle,
                         style = titleStyle,
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 8.dp)
                     )
 
-                    IconButton(onClick = /*onEditClick*/{}) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit translation",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
+                    if (currentItem.targetMode != TargetMode.COMPLETE) {
+                        IconButton(onClick = onEditToggle) {
+                            Icon(
+                                imageVector = if (currentItem.targetMode == TargetMode.EDIT) {
+                                    Icons.Default.Check
+                                } else Icons.Default.Edit,
+                                contentDescription = "toggle edit",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (isEditing) {
-                    BasicTextField(
-                        value = item.targetText,
-                        onValueChange = /*onBodyTextChange*/{},
+                if (currentItem.targetMode == TargetMode.EDIT) {
+                    RichEditText(
+                        rawText = currentItem.targetText,
+                        displayText = currentItem.renderedTargetText.text,
+                        onRawTextChange = { println(it) },
+                        shouldFocus = false,
+                        onFocusConsumed = {},
                         textStyle = bodyStyle,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .padding(horizontal = 8.dp)
                     )
                 } else {
                     Text(
-                        text = item.renderedTargetText,
+                        text = currentItem.renderedTargetText,
                         inlineContent = inlineContentMap,
                         style = bodyStyle,
                         modifier = Modifier
@@ -217,22 +222,24 @@ fun ReviewTargetCard(
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(id = R.string.mark_done),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.weight(1f)
-                )
-                Switch(
-                    checked = isDone,
-                    onCheckedChange = /*onDoneChanged*/{}
-                )
+            if (currentItem.targetMode != TargetMode.EDIT) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.mark_done),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = currentItem.targetMode == TargetMode.COMPLETE,
+                        onCheckedChange = onDoneToggle
+                    )
+                }
             }
         }
     }

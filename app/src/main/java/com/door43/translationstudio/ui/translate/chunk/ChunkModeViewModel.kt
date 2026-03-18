@@ -6,6 +6,7 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ModeAction
+import com.door43.translationstudio.ui.translate.ModeInput
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.Swipable
@@ -28,8 +29,8 @@ sealed interface ChunkAction : ModeAction {
 }
 
 class ChunkModeViewModel(
-    chunks: StateFlow<List<Chunk>>
-) : ModeViewModel<ChunkItem>(chunks) {
+    modeInput: StateFlow<ModeInput>
+) : ModeViewModel<ChunkItem>(modeInput) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
@@ -126,15 +127,15 @@ class ChunkModeViewModel(
             if (confirm) {
                 _state.value.chunkToReopen?.let {
                     withContext(Dispatchers.IO) {
-                        it.reopen()
+                        it.reopenChunk()
                     }
                     val updated = prepareItem(it.chunk, false)
                     updateItem(updated)
                 }
             }
+            _state.value = _state.value.copy(
+                chunkToReopen = null
+            )
         }
-        _state.value = _state.value.copy(
-            chunkToReopen = null
-        )
     }
 }

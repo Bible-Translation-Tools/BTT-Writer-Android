@@ -330,14 +330,20 @@ fun TargetTranslationScreen(
                 currentViewMode = state.viewMode,
                 showMergeConflict = false, // TODO model.items.any { it.hasMergeConflicts },
                 onReadClick = {
-                    viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.READ))
+                    if (state.viewMode != TranslationViewMode.READ) {
+                        viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.READ))
+                    }
                 },
                 onChunkClick = {
-                    viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK))
+                    if (state.viewMode != TranslationViewMode.CHUNK) {
+                        viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK))
+                    }
                 },
                 onReviewClick = {
                     // TODO Should reset conflict items filter
-                    viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+                    if (state.viewMode != TranslationViewMode.REVIEW) {
+                        viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+                    }
                 },
                 onMergeConflictClick = {
                     // TODO Should toggle conflict items filter
@@ -373,7 +379,7 @@ fun TargetTranslationScreen(
                     when (state.viewMode) {
                         TranslationViewMode.READ -> {
                             val readVm: ReadModeViewModel = koinViewModel {
-                                parametersOf(viewModel.itemsFlow)
+                                parametersOf(viewModel.sharedStateFlow)
                             }
                             val readState by readVm.state.collectAsStateWithLifecycle()
 
@@ -411,7 +417,7 @@ fun TargetTranslationScreen(
                         }
                         TranslationViewMode.CHUNK -> {
                             val chunkVm: ChunkModeViewModel = koinViewModel {
-                                parametersOf(viewModel.itemsFlow)
+                                parametersOf(viewModel.sharedStateFlow)
                             }
                             val chunkState by chunkVm.state.collectAsStateWithLifecycle()
 
@@ -452,8 +458,7 @@ fun TargetTranslationScreen(
                         TranslationViewMode.REVIEW -> {
                             val reviewVm: ReviewModeViewModel = koinViewModel {
                                 parametersOf(
-                                    viewModel.itemsFlow,
-                                    viewModel.sourceContainerFlow,
+                                    viewModel.sharedStateFlow,
                                     viewModel.targetTranslation
                                 )
                             }
@@ -493,6 +498,12 @@ fun TargetTranslationScreen(
                                         },
                                         onHelpClick = {
                                             reviewVm.onAction(ReviewAction.OpenHelp(it))
+                                        },
+                                        onEditToggle = {
+                                            reviewVm.onAction(ReviewAction.ToggleEdit(item))
+                                        },
+                                        onDoneToggle = {
+                                            reviewVm.onAction(ReviewAction.ToggleDoneClicked(item))
                                         },
                                         modifier = Modifier.padding(start = 16.dp)
                                     )

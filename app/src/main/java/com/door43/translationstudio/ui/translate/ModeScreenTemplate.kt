@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
@@ -85,7 +87,9 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
                 ConfirmDialog(
                     title = stringResource(R.string.chunk_done_title),
                     message = stringResource(R.string.chunk_done_prompt),
-                    onDismiss = { viewModel.onAction(ChunkAction.ReopenChunkConfirmed(false)) },
+                    onDismiss = {
+                        viewModel.onAction(ChunkAction.ReopenChunkConfirmed(false))
+                    },
                     onConfirm = {
                         viewModel.onAction(
                             ChunkAction.ReopenChunkConfirmed(true)
@@ -101,6 +105,23 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
                     urlHandler.openUri(state.url)
                     viewModel.onAction(ReviewAction.CleanUrl)
                 }
+            }
+
+            if (state.chunkToDone != null) {
+                ConfirmDialog(
+                    title = stringResource(R.string.chunk_checklist_title),
+                    message = AnnotatedString.fromHtml(
+                        stringResource(R.string.chunk_checklist_body)
+                    ),
+                    onDismiss = {
+                        viewModel.onAction(ReviewAction.ToggleDoneConfirmed(false))
+                    },
+                    onConfirm = {
+                        viewModel.onAction(
+                            ReviewAction.ToggleDoneConfirmed(true)
+                        )
+                    }
+                )
             }
         }
     }

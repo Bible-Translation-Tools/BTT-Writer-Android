@@ -23,6 +23,7 @@ import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.translate.ListItemOld
+import com.door43.translationstudio.ui.translate.ModeInput
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
@@ -90,22 +91,13 @@ class TargetTranslationViewModel(
     private val _state = MutableStateFlow(TargetTranslationState())
     val state: StateFlow<TargetTranslationState> = _state.asStateFlow()
 
-    val itemsFlow: StateFlow<List<Chunk>> = state
-        .map { it.items }
+    val sharedStateFlow: StateFlow<ModeInput> = state
+        .map { ModeInput(it.items, it.resourceContainer, it.viewMode) }
         .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = state.value.items
-        )
-
-    val sourceContainerFlow: StateFlow<ResourceContainer?> = state
-        .map { it.resourceContainer }
-        .distinctUntilChanged()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = state.value.resourceContainer
+            initialValue = ModeInput()
         )
 
     val initialized: Boolean

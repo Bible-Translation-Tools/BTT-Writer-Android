@@ -7,6 +7,7 @@ import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.translate.ModeAction
+import com.door43.translationstudio.ui.translate.ModeInput
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
@@ -25,8 +26,8 @@ object ReadState : ModeState
 sealed interface ReadAction : ModeAction
 
 class ReadModeViewModel(
-    chunks: StateFlow<List<Chunk>>
-) : ModeViewModel<ReadItem>(chunks) {
+    modeInput: StateFlow<ModeInput>
+) : ModeViewModel<ReadItem>(modeInput) {
 
     private val _state = MutableStateFlow(ReadState)
     val state: StateFlow<ReadState> = _state

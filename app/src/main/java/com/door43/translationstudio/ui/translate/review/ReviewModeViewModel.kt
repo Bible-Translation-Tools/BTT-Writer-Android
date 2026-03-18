@@ -22,6 +22,7 @@ import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABL
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.ModeAction
+import com.door43.translationstudio.ui.translate.ModeInput
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReviewItem
@@ -33,6 +34,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -74,10 +77,17 @@ sealed class Help {
     ) : Help()
 }
 
+enum class TargetMode {
+    MARKER,
+    EDIT,
+    COMPLETE
+}
+
 data class ReviewState(
     val resourcesOpen: Boolean = false,
     val help: Help? = null,
-    val url: String? = null
+    val url: String? = null,
+    val chunkToDone: ReviewItem? = null
 ) : ModeState
 
 sealed interface ReviewAction : ModeAction {
@@ -87,31 +97,39 @@ sealed interface ReviewAction : ModeAction {
     data class OpenHelp(val item: HelpItem) : ReviewAction
     data class OpenIndex(val rcSlug: String) : ReviewAction
     data class OpenWord(val rcSlug: String, val slug: String) : ReviewAction
+    data class ToggleEdit(val item: ReviewItem) : ReviewAction
+    data class ToggleDoneClicked(val item: ReviewItem) : ReviewAction
+    data class ToggleDoneConfirmed(val confirm: Boolean) : ReviewAction
     object ClearHelp : ReviewAction
     object CleanUrl : ReviewAction
 }
 
 class ReviewModeViewModel(
-    chunks: StateFlow<List<Chunk>>,
-    private val sourceContainer: StateFlow<ResourceContainer?>,
+    modeInput: StateFlow<ModeInput>,
     private val prefRepository: IPreferenceRepository,
     private val renderHelps: RenderHelps,
     private val renderingProvider: RenderingProvider,
     private val library: Door43Client,
-) : ModeViewModel<ReviewItem>(chunks), KoinComponent {
+) : ModeViewModel<ReviewItem>(modeInput), KoinComponent {
 
     private val application: Application by inject()
 
     private val _state = MutableStateFlow(ReviewState())
     val state: StateFlow<ReviewState> = _state
 
+    private val sourceContainer: ResourceContainer?
+        get() = sharedState.value.sourceContainer
+
     init {
         viewModelScope.launch {
-            sourceContainer.collect {
-                if (_state.value.resourcesOpen) {
-                    _state.update { it.copy(help = null) }
+            modeInput
+                .map { it.sourceContainer }
+                .distinctUntilChanged()
+                .collect {
+                    if (_state.value.resourcesOpen) {
+                        _state.update { it.copy(help = null) }
+                    }
                 }
-            }
         }
     }
 
@@ -136,26 +154,42 @@ class ReviewModeViewModel(
             is ReviewAction.OpenHelp -> onOpenHelpItem(action.item)
             is ReviewAction.OpenIndex -> openIndex(action.rcSlug)
             is ReviewAction.OpenWord -> renderWord(action.rcSlug, action.slug)
+            is ReviewAction.ToggleEdit -> toggleEdit(action.item)
+            is ReviewAction.ToggleDoneClicked -> toggleDoneClicked(action.item)
+            is ReviewAction.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
     }
 
-    private fun prepareItem(chunk: Chunk): ReviewItem {
-        val (sourceText, renderedSourceText) = prepareSource(chunk)
-        val (targetText, renderedTargetText) = prepareTarget(chunk)
+    private fun prepareItem(
+        chunk: Chunk,
+        targetMode: TargetMode = TargetMode.MARKER
+    ): ReviewItem {
         val (pt, ct, ft) = prepareTranslations(chunk)
+        val (sourceText, renderedSourceText) = prepareSource(chunk)
 
-        return ReviewItem(
+        val item = ReviewItem(
             id  = "${chunk.chapterSlug}-${chunk.chunkSlug}",
             chunk = chunk,
             sourceText = sourceText,
-            targetText = targetText,
+            targetText = "",
             renderedSourceText = renderedSourceText,
-            renderedTargetText = renderedTargetText,
+            renderedTargetText = AnnotatedString(""),
             pt = pt,
             ct = ct,
-            ft = ft
+            ft = ft,
+            targetMode = targetMode
+        )
+
+        // Chunk completion status overrides target mode
+        val realTargetMode = if (item.isComplete) TargetMode.COMPLETE else targetMode
+        val (targetText, renderedTargetText) = prepareTarget(chunk, realTargetMode)
+
+        return item.copy(
+            targetText = targetText,
+            renderedTargetText = renderedTargetText,
+            targetMode = realTargetMode
         )
     }
 
@@ -164,12 +198,20 @@ class ReviewModeViewModel(
         return text to renderSourceText(chunk.sourceTranslationFormat, text)
     }
 
-    private fun prepareTarget(chunk: Chunk): Pair<String, AnnotatedString> {
+    private fun prepareTarget(
+        chunk: Chunk,
+        targetMode: TargetMode
+    ): Pair<String, AnnotatedString> {
         val text = fetchTargetText(chunk.target, chunk.chapterSlug, chunk.chunkSlug)
+        val verseDisplay = when (targetMode) {
+            TargetMode.MARKER -> VerseDisplay.PIN
+            TargetMode.EDIT -> VerseDisplay.RAW
+            TargetMode.COMPLETE -> VerseDisplay.NUMBER
+        }
         return text to renderTargetText(
             translationFormat = chunk.targetTranslationFormat,
             targetText = text,
-            verseDisplay = VerseDisplay.PIN
+            verseDisplay = verseDisplay
         )
     }
 
@@ -275,7 +317,7 @@ class ReviewModeViewModel(
             false
         )
 
-        val sourceRC = sourceContainer.value
+        val sourceRC = sourceContainer
         val closestRc = sourceRC?.let { rc ->
             getClosestResourceContainer(
                 rc.language.slug,
@@ -387,6 +429,49 @@ class ReviewModeViewModel(
 
             _state.update { it.copy(help = Help.Index(rcSlug, words)) }
         }
+    }
+
+    private fun toggleEdit(item: ReviewItem) {
+        val targetMode = if (item.targetMode == TargetMode.EDIT) {
+            TargetMode.MARKER
+        } else TargetMode.EDIT
+        updateItem(item.copy(targetMode = targetMode))
+    }
+
+    private fun toggleDoneClicked(item: ReviewItem) {
+        viewModelScope.launch {
+            val shouldComplete = item.targetMode != TargetMode.COMPLETE
+            if (shouldComplete) {
+                _state.value = _state.value.copy(chunkToDone = item)
+            } else {
+                updateDoneStatus(item, false)
+            }
+        }
+    }
+
+    private fun toggleDoneConfirmed(confirm: Boolean) {
+        viewModelScope.launch {
+            if (confirm) {
+                _state.value.chunkToDone?.let { item ->
+                    updateDoneStatus(item, true)
+                }
+            }
+            _state.value = _state.value.copy(
+                chunkToDone = null
+            )
+        }
+    }
+
+    private suspend fun updateDoneStatus(item: ReviewItem, shouldComplete: Boolean) {
+        val updated = withContext(Dispatchers.IO) {
+            if (shouldComplete) {
+                item.closeChunk()
+            } else {
+                item.reopenChunk()
+            }
+            prepareItem(item.chunk)
+        }
+        updateItem(updated)
     }
 
     private fun getClosestResourceContainer(

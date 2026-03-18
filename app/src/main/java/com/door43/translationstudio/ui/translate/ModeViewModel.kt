@@ -8,6 +8,7 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
@@ -16,8 +17,11 @@ import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
 data class Footnote(
     val text: String,
@@ -32,8 +36,14 @@ interface ModeAction {
     data class CardsSwiped(val item: Swipable, val sourceOnTop: Boolean) : ModeAction
 }
 
+data class ModeInput(
+    val items: List<Chunk> = emptyList(),
+    val sourceContainer: ResourceContainer? = null,
+    val viewMode: TranslationViewMode = TranslationViewMode.READ
+)
+
 abstract class ModeViewModel<ITEM: TranslateItem>(
-    private val chunks: StateFlow<List<Chunk>>
+    protected val sharedState: StateFlow<ModeInput>
 ) : ViewModel(), KoinComponent {
 
     private val _footnote = MutableStateFlow<Footnote?>(null)
@@ -44,11 +54,14 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
 
     init {
         viewModelScope.launch {
-            chunks.collect { list ->
-                mapToChildType(list) { items ->
-                    _items.value = items
+            sharedState
+                .map { it.items }
+                .distinctUntilChanged()
+                .collect { list ->
+                    mapToChildType(list) { items ->
+                        _items.value = items
+                    }
                 }
-            }
         }
     }
 
@@ -123,6 +136,9 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 textNodes,
                 onNoteClick = { notes, start, end ->
                     _footnote.value = Footnote(notes.notes, start, end)
+                },
+                onVerseClick = {
+                    println(it)
                 }
             )
         } catch (_: Exception) {

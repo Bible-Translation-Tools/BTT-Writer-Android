@@ -7,6 +7,7 @@ import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProjectTranslation
+import com.door43.translationstudio.ui.translate.review.TargetMode
 
 typealias ChunkConfig = Map<String, List<String>>
 
@@ -135,15 +136,27 @@ abstract class TranslateItem {
         }
     }
 
-    fun reopen() {
-        if (isChapterReference) {
-            chunk.target.reopenChapterReference(chunk.chapterSlug)
+    fun reopenChunk() {
+        if (isProjectTitle) {
+            chunk.target.openProjectTitle()
         } else if (isChapterTitle) {
             chunk.target.reopenChapterTitle(chunk.chapterSlug)
-        } else if (isProjectTitle) {
-            chunk.target.openProjectTitle()
+        } else if (isChapterReference) {
+            chunk.target.reopenChapterReference(chunk.chapterSlug)
         } else {
             chunk.target.reopenFrame(chunk.chapterSlug, chunk.chunkSlug)
+        }
+    }
+
+    fun closeChunk() {
+        if (isProjectTitle) {
+            chunk.target.closeProjectTitle()
+        } else if (isChapterTitle) {
+            chunk.target.finishChapterTitle(chunk.chapterSlug)
+        } else if (isChapterReference) {
+            chunk.target.finishChapterReference(chunk.chapterSlug)
+        } else {
+            chunk.target.finishFrame(chunk.chapterSlug, chunk.chunkSlug)
         }
     }
 }
@@ -248,7 +261,8 @@ data class ReviewItem(
     override val pt: ProjectTranslation,
     override val ct: ChapterTranslation,
     override val ft: FrameTranslation,
-    val helps: Map<String, Any> = emptyMap()
+    val helps: Map<String, Any> = emptyMap(),
+    val targetMode: TargetMode
 ) : TranslateItem()
 
 private fun removeConflicts(text: String): String {
