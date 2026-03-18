@@ -14,6 +14,7 @@ import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,19 +37,24 @@ interface ModeAction {
     data class CardsSwiped(val item: Swipable, val sourceOnTop: Boolean) : ModeAction
 }
 
-data class ModeInput(
+data class SharedState(
     val items: List<Chunk> = emptyList(),
     val sourceContainer: ResourceContainer? = null,
     val viewMode: TranslationViewMode = TranslationViewMode.READ
 )
 
 abstract class ModeViewModel<ITEM: TranslateItem>(
-    protected val sharedState: StateFlow<ModeInput>,
-    val targetViewMode: TranslationViewMode
+    protected val sharedState: StateFlow<SharedState>,
+    val targetViewMode: TranslationViewMode,
+    private val snackBar: SendChannel<String>
 ) : ViewModel(), KoinComponent {
 
     private val _footnote = MutableStateFlow<Footnote?>(null)
     val footnote: StateFlow<Footnote?> = _footnote.asStateFlow()
+
+    protected fun showSnackBar(message: String) {
+        snackBar.trySend(message)
+    }
 
     protected val _items = MutableStateFlow<List<ITEM>>(emptyList())
     val items: StateFlow<List<ITEM>> = _items

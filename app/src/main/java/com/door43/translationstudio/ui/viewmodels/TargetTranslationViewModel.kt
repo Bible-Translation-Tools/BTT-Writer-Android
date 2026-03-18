@@ -23,18 +23,21 @@ import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.translate.ListItemOld
-import com.door43.translationstudio.ui.translate.ModeInput
+import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
 import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -58,8 +61,7 @@ data class TargetTranslationState(
     val resourceContainer: ResourceContainer? = null,
     val lastFocusChapterId: String? = null,
     val lastFocusFrameId: String? = null,
-    val projectTitle: String? = null,
-    val snackBarMessage: String? = null
+    val projectTitle: String? = null
 )
 
 sealed interface TargetAction {
@@ -70,7 +72,6 @@ sealed interface TargetAction {
     data object OpenSourceTranslations : TargetAction
     data class SaveLastFocus(val chapterId: String, val frameId: String?) : TargetAction
     data class ConfirmSelectedSources(val selectedItems: List<RCItem>) : TargetAction
-    object ClearSnackBarMessage : TargetAction
 }
 
 class TargetTranslationViewModel(
@@ -92,13 +93,17 @@ class TargetTranslationViewModel(
     private val _state = MutableStateFlow(TargetTranslationState())
     val state: StateFlow<TargetTranslationState> = _state.asStateFlow()
 
-    val sharedStateFlow: StateFlow<ModeInput> = state
-        .map { ModeInput(it.items, it.resourceContainer, it.viewMode) }
+    private val _snackBar = Channel<String>(Channel.BUFFERED)
+    val snackBar = _snackBar.receiveAsFlow()
+    val snackBarSender: SendChannel<String> = _snackBar
+
+    val sharedStateFlow: StateFlow<SharedState> = state
+        .map { SharedState(it.items, it.resourceContainer, it.viewMode) }
         .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = ModeInput()
+            initialValue = SharedState()
         )
 
     val initialized: Boolean
@@ -125,7 +130,6 @@ class TargetTranslationViewModel(
             is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
             is TargetAction.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
             TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
-            TargetAction.ClearSnackBarMessage -> _state.update { it.copy(snackBarMessage = null) }
         }
     }
 

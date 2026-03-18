@@ -4,10 +4,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TranslationViewMode
+import kotlinx.coroutines.channels.SendChannel
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ModeAction
-import com.door43.translationstudio.ui.translate.ModeInput
+import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.Swipable
@@ -30,8 +31,9 @@ sealed interface ChunkAction : ModeAction {
 }
 
 class ChunkModeViewModel(
-    modeInput: StateFlow<ModeInput>
-) : ModeViewModel<ChunkItem>(modeInput, TranslationViewMode.CHUNK) {
+    sharedState: StateFlow<SharedState>,
+    snackBar: SendChannel<String>
+) : ModeViewModel<ChunkItem>(sharedState, TranslationViewMode.CHUNK, snackBar) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state

@@ -285,12 +285,9 @@ fun TargetTranslationScreen(
         )
     }
 
-    LaunchedEffect(state.snackBarMessage) {
-        state.snackBarMessage?.let { message ->
-            scope.launch {
-                snackBarHostState.showSnackbar(message)
-                viewModel.onAction(TargetAction.ClearSnackBarMessage)
-            }
+    LaunchedEffect(viewModel) {
+        viewModel.snackBar.collect {
+            snackBarHostState.showSnackbar(it)
         }
     }
 
@@ -380,7 +377,7 @@ fun TargetTranslationScreen(
                     when (state.viewMode) {
                         TranslationViewMode.READ -> {
                             val readVm: ReadModeViewModel = koinViewModel {
-                                parametersOf(viewModel.sharedStateFlow)
+                                parametersOf(viewModel.sharedStateFlow, viewModel.snackBarSender)
                             }
                             val readState by readVm.state.collectAsStateWithLifecycle()
 
@@ -418,7 +415,7 @@ fun TargetTranslationScreen(
                         }
                         TranslationViewMode.CHUNK -> {
                             val chunkVm: ChunkModeViewModel = koinViewModel {
-                                parametersOf(viewModel.sharedStateFlow)
+                                parametersOf(viewModel.sharedStateFlow, viewModel.snackBarSender)
                             }
                             val chunkState by chunkVm.state.collectAsStateWithLifecycle()
 
@@ -460,7 +457,7 @@ fun TargetTranslationScreen(
                             val reviewVm: ReviewModeViewModel = koinViewModel {
                                 parametersOf(
                                     viewModel.sharedStateFlow,
-                                    viewModel.targetTranslation
+                                    viewModel.snackBarSender
                                 )
                             }
                             val reviewState by reviewVm.state.collectAsStateWithLifecycle()

@@ -4,11 +4,12 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TranslationViewMode
+import kotlinx.coroutines.channels.SendChannel
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.translate.ModeAction
-import com.door43.translationstudio.ui.translate.ModeInput
+import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
@@ -27,8 +28,9 @@ object ReadState : ModeState
 sealed interface ReadAction : ModeAction
 
 class ReadModeViewModel(
-    modeInput: StateFlow<ModeInput>
-) : ModeViewModel<ReadItem>(modeInput, TranslationViewMode.READ) {
+    sharedState: StateFlow<SharedState>,
+    snackBar: SendChannel<String>
+) : ModeViewModel<ReadItem>(sharedState, TranslationViewMode.READ, snackBar) {
 
     private val _state = MutableStateFlow(ReadState)
     val state: StateFlow<ReadState> = _state

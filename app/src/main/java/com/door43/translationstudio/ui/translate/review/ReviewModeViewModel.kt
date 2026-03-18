@@ -9,6 +9,7 @@ import com.door43.data.setDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
+import kotlinx.coroutines.channels.SendChannel
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
@@ -24,7 +25,7 @@ import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABL
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.ModeAction
-import com.door43.translationstudio.ui.translate.ModeInput
+import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReviewItem
@@ -119,14 +120,16 @@ sealed interface ReviewAction : ModeAction {
 }
 
 class ReviewModeViewModel(
-    modeInput: StateFlow<ModeInput>,
+    sharedState: StateFlow<SharedState>,
+    snackBar: SendChannel<String>,
     private val prefRepository: IPreferenceRepository,
     private val renderHelps: RenderHelps,
     private val renderingProvider: RenderingProvider,
     private val library: Door43Client,
 ) : ModeViewModel<ReviewItem>(
-    modeInput,
-    TranslationViewMode.REVIEW
+    sharedState,
+    TranslationViewMode.REVIEW,
+    snackBar
 ), KoinComponent {
 
     private val application: Application by inject()
@@ -135,11 +138,11 @@ class ReviewModeViewModel(
     val state: StateFlow<ReviewState> = _state
 
     private val sourceContainer: ResourceContainer?
-        get() = sharedState.value.sourceContainer
+        get() = this@ReviewModeViewModel.sharedState.value.sourceContainer
 
     init {
         viewModelScope.launch {
-            modeInput
+            sharedState
                 .map { it.sourceContainer }
                 .distinctUntilChanged()
                 .collect {
@@ -493,8 +496,7 @@ class ReviewModeViewModel(
                 item.chunk.target.commit()
                 prepareItem(item.chunk)
             } catch (e: IllegalStateException) {
-                // TODO Should emit snackbar message to the main screen
-                println(e.message)
+                e.message?.let { showSnackBar(it) }
                 item
             }
         }
