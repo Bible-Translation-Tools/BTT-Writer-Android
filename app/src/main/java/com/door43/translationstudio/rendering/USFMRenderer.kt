@@ -95,7 +95,7 @@ class USFMRenderer(
             if (token.start > lastIndex) {
                 val gap = text.substring(lastIndex, token.start)
                 val cleaned = stripRemainingMarkers(gap)
-                if (cleaned.isNotEmpty()) nodes.add(TextNode.Text(cleaned))
+                if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned))
             }
             nodes.addAll(token.nodes)
             lastIndex = token.end
@@ -103,7 +103,7 @@ class USFMRenderer(
         if (lastIndex < text.length) {
             val tail = text.substring(lastIndex)
             val cleaned = stripRemainingMarkers(tail)
-            if (cleaned.isNotEmpty()) nodes.add(TextNode.Text(cleaned))
+            if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned))
         }
 
         // insert implicit poetry line markers before bare verse markers in poetry context
@@ -260,13 +260,15 @@ class USFMRenderer(
 
     private fun findParagraphBreaks(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("p").matcher(text)
-        while (matcher.find()) {
-            val content = matcher.group(1)?.trim() ?: ""
-            val nodes = mutableListOf<TextNode>(TextNode.Paragraph(indented = true))
-            if (content.isNotEmpty()) nodes.add(TextNode.Text(content))
-            nodes.add(TextNode.LineBreak)
-            tokens.add(Token(matcher.start(), matcher.end(), nodes))
+        for (style in listOf("p", "m")) {
+            val matcher = paraPattern(style).matcher(text)
+            while (matcher.find()) {
+                val content = matcher.group(1)?.trim() ?: ""
+                val nodes = mutableListOf<TextNode>(TextNode.Paragraph(indented = false))
+                if (content.isNotEmpty()) nodes.add(TextNode.Text(content))
+                nodes.add(TextNode.LineBreak)
+                tokens.add(Token(matcher.start(), matcher.end(), nodes))
+            }
         }
         return tokens
     }
