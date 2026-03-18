@@ -25,20 +25,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.chunk.ChunkSourceCard
 import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
 fun ReviewCard(
     item: ReviewItem,
     sourceTabs: List<SourceTabItem>,
     typography: Typography,
-    selectedSource: ResourceContainer?,
-    targetTranslation: TargetTranslation,
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
     onRemoveSourceClick: (String) -> Unit,
@@ -91,7 +87,7 @@ fun ReviewCard(
             text = item.renderedSourceText,
             sourceTabs = sourceTabs,
             typography = typography,
-            selectedSource = selectedSource,
+            selectedSource = item.chunk.source,
             onSourceTabClick = onSourceTabClick,
             onAddNewSourceClick = onAddNewSourceClick,
             onRemoveSourceClick = onRemoveSourceClick,
@@ -120,6 +116,7 @@ fun ReviewCard(
         ResourcesCard(
             helps = item.helps,
             sourceLanguage = item.chunk.source.language,
+            typography = typography,
             resourcesOpen = resourcesOpen,
             onHelpClick = onHelpClick,
             modifier = Modifier.weight(peekWeight)

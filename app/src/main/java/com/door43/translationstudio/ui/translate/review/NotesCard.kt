@@ -21,17 +21,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TextStyleType
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getComposeTextStyle
+import org.unfoldingword.resourcecontainer.Language
 
 @Composable
 fun NotesCard(
     title: String,
     body: AnnotatedString,
+    sourceLanguage: Language?,
+    typography: Typography,
     onClose: () -> Unit
 ) {
+    val titleStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.NORMAL,
+        languageCode = sourceLanguage?.slug,
+        direction = sourceLanguage?.direction
+    )
+
+    val bodyStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.SUB,
+        languageCode = sourceLanguage?.slug,
+        direction = sourceLanguage?.direction
+    )
+
     val scrollState = rememberScrollState()
 
     LaunchedEffect(body) {
@@ -70,13 +89,13 @@ fun NotesCard(
             ) {
                 Text(
                     text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp
+                    style = titleStyle,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
                     text = body,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = bodyStyle,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

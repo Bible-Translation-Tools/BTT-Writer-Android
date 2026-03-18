@@ -1,13 +1,15 @@
 package com.door43.translationstudio.ui.translate.review
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,10 +19,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TextStyleType
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import org.unfoldingword.resourcecontainer.Language
 import org.unfoldingword.resourcecontainer.Link
@@ -46,14 +54,24 @@ sealed class HelpItem {
 fun ResourcesCard(
     helps: Map<String, Any>,
     sourceLanguage: Language,
+    typography: Typography,
     resourcesOpen: Boolean,
     onHelpClick: (HelpItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val titleStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.SUB,
+        languageCode = sourceLanguage.slug,
+        direction = sourceLanguage.direction
+    )
+
     val cornerSize by animateDpAsState(
         targetValue = if (resourcesOpen) 16.dp else 0.dp,
         label = "cornerSize"
     )
+
+    val loaded by remember(helps) { mutableStateOf(helps.isNotEmpty()) }
 
     val notesStr = stringResource(R.string.label_translation_notes)
     val wordsStr = stringResource(R.string.translation_words)
@@ -106,28 +124,46 @@ fun ResourcesCard(
             bottomEnd = cornerSize
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopStart
         ) {
             if (resourcesOpen) {
-                HelpTabRow(
-                    helpTabs = tabs,
-                    selectedTag = selectedTag,
-                    onHelpTabClick = { selectedTag = it }
-                )
+                if (loaded) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        HelpTabRow(
+                            helpTabs = tabs,
+                            selectedTag = selectedTag,
+                            onHelpTabClick = { selectedTag = it }
+                        )
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    activeList.forEach {
-                        TextButton(onClick = {
-                            onHelpClick(it)
-                        }) {
-                            Text(text = it.title)
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            activeList.forEach {
+                                TextButton(onClick = {
+                                    onHelpClick(it)
+                                }) {
+                                    Text(
+                                        text = it.title,
+                                        textAlign = TextAlign.Start,
+                                        style = titleStyle.copy(
+                                            color = MaterialTheme.colorScheme.primary
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
                         }
                     }
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
             }
         }

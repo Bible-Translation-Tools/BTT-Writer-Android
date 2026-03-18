@@ -21,17 +21,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TextStyleType
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getComposeTextStyle
+import org.unfoldingword.resourcecontainer.Language
 
 @Composable
 fun QuestionsCard(
     title: String,
     body: AnnotatedString,
+    sourceLanguage: Language?,
+    typography: Typography,
     onClose: () -> Unit
 ) {
+    val titleStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.TITLE,
+        languageCode = sourceLanguage?.slug,
+        direction = sourceLanguage?.direction
+    )
+
+    val bodyStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.SUB,
+        languageCode = sourceLanguage?.slug,
+        direction = sourceLanguage?.direction
+    )
+
     val scrollState = rememberScrollState()
 
     LaunchedEffect(body) {
@@ -70,22 +89,25 @@ fun QuestionsCard(
             ) {
                 Text(
                     text = stringResource(R.string.question),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp
+                    style = titleStyle,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
-                    text = title
+                    text = title,
+                    style = bodyStyle,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
                     text = stringResource(R.string.answer),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp
+                    style = titleStyle,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
                     text = body,
+                    style = bodyStyle,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

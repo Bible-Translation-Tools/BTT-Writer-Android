@@ -20,13 +20,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.TextStyleType
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getComposeTextStyle
+import org.unfoldingword.resourcecontainer.Language
 
 @Composable
 fun IndexCard(
     words: List<IndexWord>,
+    sourceLanguage: Language?,
+    typography: Typography,
     onCloseClick: () -> Unit,
     onItemClick: (IndexWord) -> Unit
 ) {
+    val titleStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.SOURCE,
+        style = TextStyleType.SUB,
+        languageCode = sourceLanguage?.slug,
+        direction = sourceLanguage?.direction
+    )
+
     Card(
         modifier = Modifier.fillMaxSize(),
         shape = RoundedCornerShape(
@@ -59,7 +73,11 @@ fun IndexCard(
                 items(words, key = { it.slug }) {
                     TextButton(onClick = { onItemClick(it) }) {
                         Text(
-                            text = it.title
+                            text = it.title,
+                            style = titleStyle.copy(
+                                color = MaterialTheme.colorScheme.primary
+                            ),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }

@@ -437,8 +437,6 @@ fun TargetTranslationScreen(
                                         item = item,
                                         sourceTabs = state.sourceTabs,
                                         typography = typography,
-                                        selectedSource = state.resourceContainer,
-                                        targetTranslation = viewModel.targetTranslation,
                                         resourcesOpen = reviewState.resourcesOpen,
                                         onSourceTabClick = {
                                             viewModel.onAction(TargetAction.SelectSource(it))
@@ -476,11 +474,15 @@ fun TargetTranslationScreen(
                                         .align(Alignment.CenterEnd),
                                     enter = slideInHorizontally(
                                         initialOffsetX = { it },
-                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy
+                                        )
                                     ),
                                     exit = slideOutHorizontally(
                                         targetOffsetX = { it },
-                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy
+                                        )
                                     )
                                 ) {
                                     reviewState.help?.let { help ->
@@ -488,6 +490,8 @@ fun TargetTranslationScreen(
                                             is Help.Notes -> NotesCard(
                                                 title = help.title,
                                                 body = help.body,
+                                                typography = typography,
+                                                sourceLanguage = state.resourceContainer?.language,
                                                 onClose = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
                                                 }
@@ -495,27 +499,37 @@ fun TargetTranslationScreen(
                                             is Help.Words -> WordsCard(
                                                 title = help.title,
                                                 body = help.body,
+                                                typography = typography,
+                                                sourceLanguage = state.resourceContainer?.language,
                                                 onCloseClick = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
                                                 },
                                                 onIndexClick = {
-                                                    reviewVm.onAction(ReviewAction.OpenIndex(help.rcSlug))
+                                                    reviewVm.onAction(
+                                                        ReviewAction.OpenIndex(help.rcSlug)
+                                                    )
                                                 }
                                             )
                                             is Help.Questions -> QuestionsCard(
                                                 title = help.title,
                                                 body = help.body,
+                                                typography = typography,
+                                                sourceLanguage = state.resourceContainer?.language,
                                                 onClose = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
                                                 }
                                             )
                                             is Help.Index -> IndexCard(
                                                 words = help.words,
+                                                typography = typography,
+                                                sourceLanguage = state.resourceContainer?.language,
                                                 onCloseClick = {
                                                     reviewVm.onAction(ReviewAction.ClearHelp)
                                                 },
                                                 onItemClick = {
-                                                    reviewVm.onAction(ReviewAction.OpenWord(help.rcSlug, it.slug))
+                                                    reviewVm.onAction(
+                                                        ReviewAction.OpenWord(help.rcSlug, it.slug)
+                                                    )
                                                 }
                                             )
                                         }
