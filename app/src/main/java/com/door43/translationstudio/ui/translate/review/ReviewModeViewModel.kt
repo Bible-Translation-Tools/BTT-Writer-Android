@@ -453,10 +453,18 @@ class ReviewModeViewModel(
     }
 
     private fun toggleEdit(item: ReviewItem) {
-        val targetMode = if (item.targetMode == TargetMode.EDIT) {
-            TargetMode.MARKER
-        } else TargetMode.EDIT
-        updateItem(prepareItem(item.chunk, targetMode))
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val targetMode = if (item.targetMode == TargetMode.EDIT) {
+                    TargetMode.MARKER
+                } else TargetMode.EDIT
+
+                if (targetMode == TargetMode.MARKER) {
+                    item.chunk.target.commit()
+                }
+                updateItem(prepareItem(item.chunk, targetMode))
+            }
+        }
     }
 
     private fun toggleDoneClicked(item: ReviewItem) {
