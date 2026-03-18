@@ -45,7 +45,7 @@ data class SharedState(
 
 abstract class ModeViewModel<ITEM: TranslateItem>(
     protected val sharedState: StateFlow<SharedState>,
-    val targetViewMode: TranslationViewMode,
+    private val viewMode: TranslationViewMode,
     private val snackBar: SendChannel<String>
 ) : ViewModel(), KoinComponent {
 
@@ -65,7 +65,7 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 .map { it.items to it.viewMode }
                 .distinctUntilChanged()
                 .collect { (list, mode) ->
-                    if (mode == targetViewMode) {
+                    if (mode == viewMode) {
                         mapToChildType(list) { items ->
                             _items.value = items
                         }

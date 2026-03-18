@@ -9,7 +9,6 @@ import com.door43.data.setDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
-import kotlinx.coroutines.channels.SendChannel
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
@@ -25,16 +24,17 @@ import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABL
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.ModeAction
-import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReviewItem
+import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -138,7 +138,7 @@ class ReviewModeViewModel(
     val state: StateFlow<ReviewState> = _state
 
     private val sourceContainer: ResourceContainer?
-        get() = this@ReviewModeViewModel.sharedState.value.sourceContainer
+        get() = sharedState.value.sourceContainer
 
     init {
         viewModelScope.launch {
@@ -453,12 +453,10 @@ class ReviewModeViewModel(
     }
 
     private fun toggleEdit(item: ReviewItem) {
-        val updatedItem = if (item.targetMode == TargetMode.EDIT) {
-            prepareItem(item.chunk, TargetMode.MARKER)
-        } else {
-            item.copy(targetMode = TargetMode.EDIT)
-        }
-        updateItem(updatedItem)
+        val targetMode = if (item.targetMode == TargetMode.EDIT) {
+            TargetMode.MARKER
+        } else TargetMode.EDIT
+        updateItem(prepareItem(item.chunk, targetMode))
     }
 
     private fun toggleDoneClicked(item: ReviewItem) {
