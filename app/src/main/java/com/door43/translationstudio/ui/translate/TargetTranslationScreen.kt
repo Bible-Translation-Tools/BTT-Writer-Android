@@ -289,6 +289,7 @@ fun TargetTranslationScreen(
         state.snackBarMessage?.let { message ->
             scope.launch {
                 snackBarHostState.showSnackbar(message)
+                viewModel.onAction(TargetAction.ClearSnackBarMessage)
             }
         }
     }

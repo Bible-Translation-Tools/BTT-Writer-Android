@@ -8,17 +8,18 @@ import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
-import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.spannables.ArticleLinkSpan
 import com.door43.translationstudio.rendering.spannables.PassageLinkSpan
 import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
+import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
@@ -46,6 +47,18 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.util.Locale
 import java.util.regex.Pattern
+
+private val USFM_CONSECUTIVE_VERSE_MARKERS =
+    Pattern.compile("\\\\v\\s(\\d+(-\\d+)?)\\s*\\\\v\\s(\\d+(-\\d+)?)")
+
+private val CONSECUTIVE_VERSE_MARKERS =
+    Pattern.compile("(<verse [^>]+/>\\s*){2}")
+
+private val VERSE_MARKER =
+    Pattern.compile("<verse\\s+number=\"(\\d+)\"[^>]*>")
+
+private val USFM_VERSE_MARKER =
+    Pattern.compile(USFMVerseSpan.PATTERN)
 
 data class IndexWord(
     val slug: String,
@@ -111,7 +124,10 @@ class ReviewModeViewModel(
     private val renderHelps: RenderHelps,
     private val renderingProvider: RenderingProvider,
     private val library: Door43Client,
-) : ModeViewModel<ReviewItem>(modeInput, TranslationViewMode.REVIEW), KoinComponent {
+) : ModeViewModel<ReviewItem>(
+    modeInput,
+    TranslationViewMode.REVIEW
+), KoinComponent {
 
     private val application: Application by inject()
 
@@ -158,6 +174,7 @@ class ReviewModeViewModel(
             is ReviewAction.ToggleEdit -> toggleEdit(action.item)
             is ReviewAction.ToggleDoneClicked -> toggleDoneClicked(action.item)
             is ReviewAction.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
+            is ReviewAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
@@ -433,10 +450,12 @@ class ReviewModeViewModel(
     }
 
     private fun toggleEdit(item: ReviewItem) {
-        val targetMode = if (item.targetMode == TargetMode.EDIT) {
-            TargetMode.MARKER
-        } else TargetMode.EDIT
-        updateItem(item.copy(targetMode = targetMode))
+        val updatedItem = if (item.targetMode == TargetMode.EDIT) {
+            prepareItem(item.chunk, TargetMode.MARKER)
+        } else {
+            item.copy(targetMode = TargetMode.EDIT)
+        }
+        updateItem(updatedItem)
     }
 
     private fun toggleDoneClicked(item: ReviewItem) {
@@ -465,14 +484,138 @@ class ReviewModeViewModel(
 
     private suspend fun updateDoneStatus(item: ReviewItem, shouldComplete: Boolean) {
         val updated = withContext(Dispatchers.IO) {
-            if (shouldComplete) {
-                item.closeChunk()
-            } else {
-                item.reopenChunk()
+            try {
+                if (shouldComplete) {
+                    markChunkCompleted(item)
+                } else {
+                    item.reopenChunk()
+                }
+                item.chunk.target.commit()
+                prepareItem(item.chunk)
+            } catch (e: IllegalStateException) {
+                // TODO Should emit snackbar message to the main screen
+                println(e.message)
+                item
             }
-            prepareItem(item.chunk)
         }
         updateItem(updated)
+    }
+
+    /**
+     * Performs some validation, and commits changes if ready.
+     *
+     * @throws IllegalStateException If there is an error with the chunk
+     */
+    private fun markChunkCompleted(item: ReviewItem) {
+        // Check for empty translation.
+        if (item.targetText.isEmpty()) {
+            throw IllegalStateException(application.getString(R.string.translate_first))
+        }
+
+        var lowVerse = -1
+        var highVerse = 999999999
+        val range = RenderingProvider.getVerseRange(
+            item.targetText,
+            item.chunk.targetTranslationFormat
+        )
+        if (range.isNotEmpty()) {
+            lowVerse = range[0]
+            highVerse = lowVerse
+            if (range.size > 1) {
+                highVerse = range[1]
+            }
+        }
+
+        // Check for contiguous verse numbers.
+        var matcher = if (item.chunk.targetTranslationFormat == TranslationFormat.USFM) {
+            USFM_CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText)
+        } else {
+            CONSECUTIVE_VERSE_MARKERS.matcher(item.targetText)
+        }
+        if (matcher.find()) {
+            throw IllegalStateException(
+                application.getString(R.string.consecutive_verse_markers)
+            )
+        }
+
+        // check for invalid verse markers
+        var error = 0
+        matcher = if (item.chunk.targetTranslationFormat == TranslationFormat.USFM) {
+            USFM_VERSE_MARKER.matcher(item.targetText)
+        } else {
+            VERSE_MARKER.matcher(item.targetText)
+        }
+        val sourceVerseRange = RenderingProvider.getVerseRange(
+            item.sourceText,
+            item.chunk.sourceTranslationFormat
+        )
+        if (sourceVerseRange.isNotEmpty()) {
+            val min = sourceVerseRange[0]
+            var max = min
+            if (sourceVerseRange.size == 2) max = sourceVerseRange[1]
+            while (matcher.find()) {
+                val verseStr = matcher.group(1)
+                var verse = -1
+                if (verseStr != null) {
+                    try {
+                        verse = verseStr.toInt()
+                    } catch (_: Exception) {}
+                }
+                if (verse !in min..max) {
+                    error = R.string.outofrange_verse_marker
+                    break
+                }
+            }
+        }
+        if (error > 0) {
+            throw IllegalStateException(application.getString(error))
+        }
+
+        // Check for out-of-order verse markers.
+        matcher = if (item.chunk.targetTranslationFormat == TranslationFormat.USFM) {
+            USFM_VERSE_MARKER.matcher(item.targetText)
+        } else {
+            VERSE_MARKER.matcher(item.targetText)
+        }
+        var lastVerseSeen = 0
+        while (matcher.find()) {
+            val verseStr = matcher.group(1)
+            var currentVerse = -1
+            if (verseStr != null) {
+                try {
+                    currentVerse = verseStr.toInt()
+                } catch (_: Exception) {}
+            }
+            if (currentVerse <= lastVerseSeen) {
+                error = if (currentVerse == lastVerseSeen) {
+                    R.string.duplicate_verse_marker
+                } else {
+                    R.string.outoforder_verse_markers
+                }
+                break
+            } else if (currentVerse !in lowVerse..highVerse) {
+                error = R.string.outofrange_verse_marker
+                break
+            } else {
+                lastVerseSeen = currentVerse
+            }
+        }
+        if (error > 0) {
+            throw IllegalStateException(application.getString(error))
+        }
+
+        // Everything looks good so far.
+        val success = item.closeChunk()
+
+        if (!success) {
+            throw IllegalStateException(application.getString(R.string.failed_to_commit_chunk))
+        }
+    }
+
+    private fun onItemTextChanged(item: ReviewItem, text: String) {
+        viewModelScope.launch {
+            item.saveTranslation(text)
+        }
     }
 
     private fun getClosestResourceContainer(

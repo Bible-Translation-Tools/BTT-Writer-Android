@@ -136,8 +136,8 @@ abstract class TranslateItem {
         }
     }
 
-    fun reopenChunk() {
-        if (isProjectTitle) {
+    fun reopenChunk(): Boolean {
+        return if (isProjectTitle) {
             chunk.target.openProjectTitle()
         } else if (isChapterTitle) {
             chunk.target.reopenChapterTitle(chunk.chapterSlug)
@@ -148,8 +148,8 @@ abstract class TranslateItem {
         }
     }
 
-    fun closeChunk() {
-        if (isProjectTitle) {
+    fun closeChunk(): Boolean {
+        return if (isProjectTitle) {
             chunk.target.closeProjectTitle()
         } else if (isChapterTitle) {
             chunk.target.finishChapterTitle(chunk.chapterSlug)

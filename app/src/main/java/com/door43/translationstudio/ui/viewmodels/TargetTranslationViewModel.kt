@@ -70,6 +70,7 @@ sealed interface TargetAction {
     data object OpenSourceTranslations : TargetAction
     data class SaveLastFocus(val chapterId: String, val frameId: String?) : TargetAction
     data class ConfirmSelectedSources(val selectedItems: List<RCItem>) : TargetAction
+    object ClearSnackBarMessage : TargetAction
 }
 
 class TargetTranslationViewModel(
@@ -121,9 +122,10 @@ class TargetTranslationViewModel(
                 setSelectedResourceContainer(action.sourceId)
             }
             is TargetAction.SaveLastViewMode -> setLastViewMode(action.viewMode)
-            TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
             is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
             is TargetAction.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
+            TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
+            TargetAction.ClearSnackBarMessage -> _state.update { it.copy(snackBarMessage = null) }
         }
     }
 

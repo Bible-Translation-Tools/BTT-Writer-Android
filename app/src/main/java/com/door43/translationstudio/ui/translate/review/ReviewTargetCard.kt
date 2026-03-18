@@ -54,7 +54,8 @@ fun ReviewTargetCard(
     typography: Typography,
     modifier: Modifier = Modifier,
     onEditToggle: () -> Unit,
-    onDoneToggle: (Boolean) -> Unit
+    onDoneToggle: (Boolean) -> Unit,
+    onTextChange: (String) -> Unit
 ) {
     val currentItem by rememberUpdatedState(item)
 
@@ -201,9 +202,10 @@ fun ReviewTargetCard(
                     RichEditText(
                         rawText = currentItem.targetText,
                         displayText = currentItem.renderedTargetText.text,
-                        onRawTextChange = { println(it) },
-                        shouldFocus = false,
-                        onFocusConsumed = {},
+                        onRawTextChange = {
+                            onTextChange(it)
+                        },
+                        shouldFocus = true,
                         textStyle = bodyStyle,
                         modifier = Modifier
                             .fillMaxWidth()
