@@ -11,7 +11,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
@@ -29,7 +28,6 @@ object ComposeTextAdapter {
      * @param nodes                The platform-agnostic node list from a renderer.
      * @param searchHighlightColor Color for search highlight nodes.
      * @param verseColor           Color for regular verse markers.
-     * @param noteColor            Color for note markers.
      * @param onVerseClick         Optional click handler for verse markers.
      * @param onNoteClick          Optional click handler for note markers.
      */
@@ -37,7 +35,6 @@ object ComposeTextAdapter {
         nodes: List<TextNode>,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
-        noteColor: Color = Color(0xFFFFD700),
         onVerseClick: (TextNode.VerseMarker) -> Unit = {},
         onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit = {_, _, _ ->},
         onLinkClick: (TextNode.Link) -> Unit = {}
@@ -84,7 +81,6 @@ object ComposeTextAdapter {
                 node = node,
                 searchHighlightColor = searchHighlightColor,
                 verseColor = verseColor,
-                noteColor = noteColor,
                 onVerseClick = onVerseClick,
                 onNoteClick = onNoteClick,
                 onLinkClick = onLinkClick,
@@ -176,7 +172,6 @@ object ComposeTextAdapter {
         node: TextNode,
         searchHighlightColor: Color,
         verseColor: Color,
-        noteColor: Color,
         onVerseClick: (TextNode.VerseMarker) -> Unit,
         onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit,
         onLinkClick: (TextNode.Link) -> Unit,
@@ -251,13 +246,9 @@ object ComposeTextAdapter {
                 val start = length
 
                 if (node.pinned) {
-                    // In Compose, you would typically use appendInlineContent here
-                    // to render the custom pin UI, but we'll use styling as a fallback
-                    pushStyle(SpanStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold))
-                    append("[$label]") // Bracket placeholder for pinned verse
-                    pop()
+                    appendInlineContent("verse_pin", label)
                 } else {
-                    pushStyle(SpanStyle(fontSize = 12.sp, color = verseColor))
+                    pushStyle(SpanStyle(color = verseColor))
                     append(label)
                     pop()
                 }
@@ -281,7 +272,7 @@ object ComposeTextAdapter {
 
             is TextNode.NoteMarker -> {
                 val start = length
-                pushStyle(SpanStyle(color = noteColor))
+                pushStyle(SpanStyle())
                 if (node.highlighted && searchHighlightColor != Color.Unspecified) {
                     pushStyle(SpanStyle(background = searchHighlightColor))
                 }

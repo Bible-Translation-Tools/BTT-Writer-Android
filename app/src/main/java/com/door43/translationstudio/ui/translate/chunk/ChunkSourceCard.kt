@@ -60,9 +60,9 @@ fun ChunkSourceCard(
     val inlineContentMap = mapOf(
         "note_icon" to InlineTextContent(
             Placeholder(
-                width = 18.sp,
-                height = 18.sp,
-                placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                width = bodyStyle.fontSize,
+                height = bodyStyle.fontSize,
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
             )
         ) {
             Icon(

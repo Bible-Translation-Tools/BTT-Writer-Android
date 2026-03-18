@@ -95,23 +95,12 @@ fun ReviewCard(
                 .fillMaxHeight()
         )
 
-        Card(
-            modifier = Modifier.fillMaxHeight()
-                .weight(mainWeight),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text("Target")
-            }
-        }
+        ReviewTargetCard(
+            item = item,
+            typography = typography,
+            modifier = Modifier.weight(mainWeight)
+                .fillMaxHeight()
+        )
 
         ResourcesCard(
             helps = item.helps,

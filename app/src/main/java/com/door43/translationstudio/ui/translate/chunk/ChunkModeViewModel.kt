@@ -89,14 +89,22 @@ class ChunkModeViewModel(
         return text to renderTargetText(chunk.targetTranslationFormat, text)
     }
 
-    private fun fetchTargetText(target: TargetTranslation, chapterSlug: String, chunkSlug: String): String {
+    private fun fetchTargetText(
+        target: TargetTranslation,
+        chapterSlug: String,
+        chunkSlug: String
+    ): String {
         return when (chapterSlug) {
             "front" -> if (chunkSlug == "title") target.projectTranslation.title else ""
             "back" -> ""
             else -> when (chunkSlug) {
                 "title" -> target.getChapterTranslation(chapterSlug).title
                 "reference" -> target.getChapterTranslation(chapterSlug).reference
-                else -> target.getFrameTranslation(chapterSlug, chunkSlug, target.format).body
+                else -> target.getFrameTranslation(
+                    chapterSlug,
+                    chunkSlug,
+                    target.format
+                ).body
             }
         }
     }

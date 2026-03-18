@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -53,8 +54,11 @@ fun SourceTabRow(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
+        Spacer(modifier = Modifier.weight(1f))
+
         sourceTabs.forEachIndexed { index, tab ->
             val isSelected = (index == selectedIndex)
             val color = if (isSelected) {
@@ -64,13 +68,13 @@ fun SourceTabRow(
             key(tab.tag) {
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .width(IntrinsicSize.Max)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = ripple(),
                             onClick = { onSourceTabClick(tab.tag) }
                         )
-                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Row(
@@ -84,7 +88,6 @@ fun SourceTabRow(
                             overflow = TextOverflow.Ellipsis,
                             color = color,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.weight(1f, fill = false)
                         )
 
                         Spacer(modifier = Modifier.width(4.dp))
@@ -113,6 +116,8 @@ fun SourceTabRow(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
 
         if (sourceTabs.size < MAX_SOURCE_ITEMS) {
             IconButton(onClick = onAddClick) {

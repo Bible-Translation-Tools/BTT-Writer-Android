@@ -10,11 +10,8 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Frame
-import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
-import com.door43.translationstudio.rendering.RenderNodeConverter
-import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.LinkData
@@ -169,7 +166,11 @@ class ReviewModeViewModel(
 
     private fun prepareTarget(chunk: Chunk): Pair<String, AnnotatedString> {
         val text = fetchTargetText(chunk.target, chunk.chapterSlug, chunk.chunkSlug)
-        return text to renderTargetText(chunk.targetTranslationFormat, text)
+        return text to renderTargetText(
+            translationFormat = chunk.targetTranslationFormat,
+            targetText = text,
+            verseDisplay = VerseDisplay.PIN
+        )
     }
 
     private fun fetchTargetText(
@@ -207,84 +208,6 @@ class ReviewModeViewModel(
             SEARCH_SOURCE,
             subject.name.uppercase(Locale.getDefault())
         )
-    }
-
-    private fun fetchSourceText(source: ResourceContainer, chapterSlug: String, chunkSlug: String?): String {
-        return if (chunkSlug != null) {
-            source.readChunk(chapterSlug, chunkSlug)
-        } else {
-            var chapterBody = ""
-            val sorter = SlugSorter()
-            val chunks = sorter.sort(source.chunks(chapterSlug))
-            for (chunk in chunks) {
-                if(chunk != "title") {
-                    chapterBody += source.readChunk(chapterSlug, chunk);
-                }
-            }
-            chapterBody
-        }
-    }
-
-    private fun renderSourceText(sourceText: String, format: TranslationFormat): AnnotatedString {
-        return try {
-            val renderingGroup = RenderingGroup()
-            renderingGroup.init(sourceText)
-            RenderingProvider().setupRenderingGroup(
-                format,
-                renderingGroup,
-                verseDisplay = VerseDisplay.NUMBER,
-                target = false
-            )
-            val renderNodes = renderingGroup.startNodes()
-            val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-            ComposeTextAdapter.convert(textNodes/*, onNoteClick = onNoteClick*/)
-        } catch (_: Exception) {
-            AnnotatedString(sourceText)
-        }
-    }
-
-    private fun fetchTargetText(
-        source: ResourceContainer,
-        target: TargetTranslation,
-        chapterSlug: String,
-        chunkSlug: String?
-    ): String {
-        return if (chunkSlug != null) {
-            when (chapterSlug) {
-                "front" -> {
-                    // project stuff
-                    if (chunkSlug == "title") {
-                        target.projectTranslation.title
-                    } else ""
-                }
-                "back" -> ""
-                else -> {
-                    // chapter stuff
-                    when (chunkSlug) {
-                        "title" -> target.getChapterTranslation(chapterSlug).title
-                        "reference" -> target.getChapterTranslation(chapterSlug).reference
-                        else -> target.getFrameTranslation(
-                            chapterSlug,
-                            chunkSlug,
-                            target.format
-                        ).body
-                    }
-                }
-            }
-        } else {
-            var chapterBody = ""
-            val sorter = SlugSorter()
-            val chunks = sorter.sort(source.chunks(chapterSlug))
-            for (chunk in chunks) {
-                val translation = target.getFrameTranslation(chapterSlug, chunk, target.format)
-                chapterBody += " " + translation.body
-            }
-            chapterBody
-        }
-    }
-
-    private fun renderTargetText(targetText: String): AnnotatedString {
-        return AnnotatedString(targetText)
     }
 
     private fun openResources(value: Boolean) {

@@ -23,7 +23,6 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
@@ -61,8 +60,8 @@ fun ReadSourceCard(
     val inlineContentMap = mapOf(
         "note_icon" to InlineTextContent(
             Placeholder(
-                width = 18.sp,
-                height = 18.sp,
+                width = bodyStyle.fontSize,
+                height = bodyStyle.fontSize,
                 placeholderVerticalAlign = PlaceholderVerticalAlign.Center
             )
         ) {
