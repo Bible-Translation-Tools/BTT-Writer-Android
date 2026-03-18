@@ -55,9 +55,9 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     init {
         viewModelScope.launch {
             sharedState
-                .map { it.items }
+                .map { it.items to it.viewMode }
                 .distinctUntilChanged()
-                .collect { list ->
+                .collect { (list, _) ->
                     mapToChildType(list) { items ->
                         _items.value = items
                     }
