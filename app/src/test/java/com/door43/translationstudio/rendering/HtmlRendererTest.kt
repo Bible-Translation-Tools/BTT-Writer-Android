@@ -49,7 +49,7 @@ class HtmlRendererTest {
 
     @Test
     fun `passage link produces anchor tag`() {
-        val input = "[[en:bible:notes:gen:01:02|Genesis 1:2]]"
+        val input = "[[:en:bible:notes:gen:01:02|Genesis 1:2]]"
         val html = renderer().toAnnotatedHtml(input)
         assertTrue("Expected <a> tag", html.contains("<a href=\"app://passage/"))
     }

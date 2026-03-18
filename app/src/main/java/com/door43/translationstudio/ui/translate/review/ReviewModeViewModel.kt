@@ -34,7 +34,6 @@ import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -111,13 +110,9 @@ class ReviewModeViewModel(
 
     init {
         viewModelScope.launch {
-            sourceContainer.collect { rc ->
+            sourceContainer.collect {
                 if (_state.value.resourcesOpen) {
-                    _state.update { it.copy(resourcesOpen = false, help = null) }
-                    if (rc != null) {
-                        delay(500)
-                        _state.update { it.copy(resourcesOpen = true) }
-                    }
+                    _state.update { it.copy(help = null) }
                 }
             }
         }

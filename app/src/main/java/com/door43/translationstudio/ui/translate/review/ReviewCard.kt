@@ -64,7 +64,7 @@ fun ReviewCard(
         label = "endPadding"
     )
 
-    LaunchedEffect(resourcesOpen) {
+    LaunchedEffect(resourcesOpen, item.chunk.source) {
         if (resourcesOpen) onRenderHelps()
     }
 
