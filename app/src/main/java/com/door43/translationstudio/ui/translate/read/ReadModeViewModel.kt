@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.translate.read
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.rendering.VerseDisplay
@@ -27,7 +28,7 @@ sealed interface ReadAction : ModeAction
 
 class ReadModeViewModel(
     modeInput: StateFlow<ModeInput>
-) : ModeViewModel<ReadItem>(modeInput) {
+) : ModeViewModel<ReadItem>(modeInput, TranslationViewMode.READ) {
 
     private val _state = MutableStateFlow(ReadState)
     val state: StateFlow<ReadState> = _state

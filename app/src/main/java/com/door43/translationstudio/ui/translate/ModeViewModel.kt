@@ -43,7 +43,8 @@ data class ModeInput(
 )
 
 abstract class ModeViewModel<ITEM: TranslateItem>(
-    protected val sharedState: StateFlow<ModeInput>
+    protected val sharedState: StateFlow<ModeInput>,
+    val targetViewMode: TranslationViewMode
 ) : ViewModel(), KoinComponent {
 
     private val _footnote = MutableStateFlow<Footnote?>(null)
@@ -57,9 +58,13 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
             sharedState
                 .map { it.items to it.viewMode }
                 .distinctUntilChanged()
-                .collect { (list, _) ->
-                    mapToChildType(list) { items ->
-                        _items.value = items
+                .collect { (list, mode) ->
+                    if (mode == targetViewMode) {
+                        mapToChildType(list) { items ->
+                            _items.value = items
+                        }
+                    } else {
+                        _items.value = emptyList()
                     }
                 }
         }

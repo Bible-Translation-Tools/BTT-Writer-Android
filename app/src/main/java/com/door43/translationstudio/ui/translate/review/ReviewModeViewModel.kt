@@ -8,6 +8,7 @@ import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.TargetTranslation
@@ -110,7 +111,7 @@ class ReviewModeViewModel(
     private val renderHelps: RenderHelps,
     private val renderingProvider: RenderingProvider,
     private val library: Door43Client,
-) : ModeViewModel<ReviewItem>(modeInput), KoinComponent {
+) : ModeViewModel<ReviewItem>(modeInput, TranslationViewMode.REVIEW), KoinComponent {
 
     private val application: Application by inject()
 

@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.translate.chunk
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ModeAction
@@ -30,7 +31,7 @@ sealed interface ChunkAction : ModeAction {
 
 class ChunkModeViewModel(
     modeInput: StateFlow<ModeInput>
-) : ModeViewModel<ChunkItem>(modeInput) {
+) : ModeViewModel<ChunkItem>(modeInput, TranslationViewMode.CHUNK) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
