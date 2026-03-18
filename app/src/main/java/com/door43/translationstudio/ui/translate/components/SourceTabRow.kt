@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.components
+package com.door43.translationstudio.ui.translate.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

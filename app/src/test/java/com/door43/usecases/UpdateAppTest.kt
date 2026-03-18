@@ -126,7 +126,7 @@ class UpdateAppTest {
         every { translator.targetTranslations }.returns(arrayOf())
         every { TargetTranslation.updateGenerator(any(), any()) }.just(runs)
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
 
         mockkStatic(PreferenceManager::class)
         every { PreferenceManager.setDefaultValues(any(), any(), any()) }.just(runs)
@@ -583,7 +583,7 @@ class UpdateAppTest {
     }
 
     private fun verifyUpgradePre103(called: Boolean = true) {
-        verify(inverse = !called) { progressListener.onProgress(any(), any(), "Updating translations") }
+        verify(inverse = !called) { progressListener.onProgress(any(), "Updating translations") }
         verify(inverse = !called) { directoryProvider.cacheDir }
         verify(inverse = !called) { context.externalCacheDir }
     }
@@ -604,7 +604,7 @@ class UpdateAppTest {
     }
 
     private fun verifyUpgradePre175(called: Boolean = true) {
-        verify(inverse = !called) { progressListener.onProgress(any(), any(), "Updating fonts") }
+        verify(inverse = !called) { progressListener.onProgress(any(), "Updating fonts") }
         verify(inverse = !called) { prefRepository.getDefaultPref(
             SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
             any<String>()

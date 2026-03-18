@@ -69,7 +69,7 @@ class PushTargetTranslationTest {
             )
         }.returns("22")
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { repository.sshUrl }.returns("ssh://repo.git")
         every { getRepository.execute(targetTranslation, progressListener) }.returns(repository)
 
@@ -155,7 +155,7 @@ class PushTargetTranslationTest {
 
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
-        verify(exactly = 0) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 0) { progressListener.onProgress(any(), any()) }
         verify(exactly = 0) { repository.sshUrl }
         verify(exactly = 0) { getRepository.execute(targetTranslation, progressListener) }
     }
@@ -231,7 +231,7 @@ class PushTargetTranslationTest {
         verify(exactly = 0) { pushCommand.call() }
         verify { repo.deleteRemote(any()) }
         verify(exactly = 0) { repo.setRemote(any(), any()) }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { repository.sshUrl }
         verify { getRepository.execute(targetTranslation, progressListener) }
     }
@@ -543,7 +543,7 @@ class PushTargetTranslationTest {
         verify { pushCommand.call() }
         verify { repo.deleteRemote(any()) }
         verify { repo.setRemote(any(), any()) }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { repository.sshUrl }
         verify { getRepository.execute(targetTranslation, progressListener) }
     }

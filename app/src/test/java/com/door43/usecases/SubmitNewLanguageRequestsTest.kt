@@ -46,7 +46,7 @@ class SubmitNewLanguageRequestsTest {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
 
         every { resources.getString(R.string.submitting_new_language_requests) }
             .returns("Submitting new language requests...")
@@ -94,8 +94,8 @@ class SubmitNewLanguageRequestsTest {
         ).execute(progressListener)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Submitting new language requests...")
-            progressListener.onProgress(1, 1, "Submitting new language requests...")
+            progressListener.onProgress(any(), "Submitting new language requests...")
+            progressListener.onProgress(1f, "Submitting new language requests...")
         }
 
         verify { FileUtilities.writeStringToFile(any(), any()) }
@@ -137,8 +137,8 @@ class SubmitNewLanguageRequestsTest {
         ).execute(progressListener)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Submitting new language requests...")
-            progressListener.onProgress(1, 1, "Submitting new language requests...")
+            progressListener.onProgress(any(), "Submitting new language requests...")
+            progressListener.onProgress(1f, "Submitting new language requests...")
         }
 
         verify(exactly = 1) { FileUtilities.writeStringToFile(any(), any()) }
@@ -174,8 +174,8 @@ class SubmitNewLanguageRequestsTest {
         ).execute(progressListener)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Submitting new language requests...")
-            progressListener.onProgress(1, 1, "Submitting new language requests...")
+            progressListener.onProgress(any(), "Submitting new language requests...")
+            progressListener.onProgress(1f, "Submitting new language requests...")
         }
 
         verify { FileUtilities.writeStringToFile(any(), any()) }
@@ -211,8 +211,8 @@ class SubmitNewLanguageRequestsTest {
         ).execute(progressListener)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Submitting new language requests...")
-            progressListener.onProgress(1, 1, "Submitting new language requests...")
+            progressListener.onProgress(any(), "Submitting new language requests...")
+            progressListener.onProgress(1f, "Submitting new language requests...")
         }
 
         verify { FileUtilities.writeStringToFile(any(), any()) }
@@ -248,8 +248,8 @@ class SubmitNewLanguageRequestsTest {
         ).execute(progressListener)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Submitting new language requests...")
-            progressListener.onProgress(1, 1, "Submitting new language requests...")
+            progressListener.onProgress(any(), "Submitting new language requests...")
+            progressListener.onProgress(1f, "Submitting new language requests...")
         }
 
         verify(exactly = 0) { FileUtilities.writeStringToFile(any(), any()) }

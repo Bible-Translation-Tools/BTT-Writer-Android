@@ -48,7 +48,7 @@ class UpdateSourceTest {
         every { context.resources }.returns(resources)
         every { library.index } returns index
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { library.getResourceContainerLastModified(any(), any(), any()) }
             .returns(1234567890)
         coEvery { library.updateSources(any(), any()) }.just(runs)
@@ -173,7 +173,7 @@ class UpdateSourceTest {
         assertEquals(0, result.updatedCount)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), any(), "Test") }
+        verify { progressListener.onProgress(any(), "Test") }
         verify(exactly = 1) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 1) { library.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }
@@ -181,7 +181,7 @@ class UpdateSourceTest {
     }
 
     private fun verifyCommonStuff() {
-        verify { progressListener.onProgress(any(), any(), "Test") }
+        verify { progressListener.onProgress(any(), "Test") }
         verify(exactly = 2) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 2) { library.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }

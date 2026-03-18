@@ -54,7 +54,7 @@ class DownloadResourceContainersTest {
         every { translation.resource } returns resource
         every { translation.resourceContainerSlug } returns "en_mat_ulb"
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { library.index } returns index
     }
 
@@ -93,10 +93,10 @@ class DownloadResourceContainersTest {
         assertEquals(tqUlb, result.containers[3])
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Downloading resource container")
-            progressListener.onProgress(any(), any(), "Downloading translation words")
-            progressListener.onProgress(any(), any(), "Downloading translation notes")
-            progressListener.onProgress(any(), any(), "Downloading translation questions")
+            progressListener.onProgress(any(), "Downloading resource container")
+            progressListener.onProgress(any(), "Downloading translation words")
+            progressListener.onProgress(any(), "Downloading translation notes")
+            progressListener.onProgress(any(), "Downloading translation questions")
         }
 
         coVerify { library.download(language.slug, project.slug, resource.slug) }
@@ -126,7 +126,7 @@ class DownloadResourceContainersTest {
         assertEquals(1, result.containers.size)
         assertEquals(twUlb, result.containers[0])
 
-        verify { progressListener.onProgress(any(), any(), "Downloading resource container") }
+        verify { progressListener.onProgress(any(), "Downloading resource container") }
         coVerify { library.download(language.slug, projectSlug, resourceSlug) }
     }
 
@@ -150,7 +150,7 @@ class DownloadResourceContainersTest {
         assertEquals(1, result.containers.size)
         assertEquals(tnUlb, result.containers[0])
 
-        verify { progressListener.onProgress(any(), any(), "Downloading resource container") }
+        verify { progressListener.onProgress(any(), "Downloading resource container") }
         coVerify { library.download(language.slug, project.slug, resourceSlug) }
     }
 
@@ -174,7 +174,7 @@ class DownloadResourceContainersTest {
         assertEquals(1, result.containers.size)
         assertEquals(tqUlb, result.containers[0])
 
-        verify { progressListener.onProgress(any(), any(), "Downloading resource container") }
+        verify { progressListener.onProgress(any(), "Downloading resource container") }
         coVerify { library.download(language.slug, project.slug, resourceSlug) }
     }
 
@@ -208,10 +208,10 @@ class DownloadResourceContainersTest {
         assertEquals(tqUlb, result.containers[3])
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Downloading resource container")
-            progressListener.onProgress(any(), any(), "Downloading obs translation words")
-            progressListener.onProgress(any(), any(), "Downloading translation notes")
-            progressListener.onProgress(any(), any(), "Downloading translation questions")
+            progressListener.onProgress(any(), "Downloading resource container")
+            progressListener.onProgress(any(), "Downloading obs translation words")
+            progressListener.onProgress(any(), "Downloading translation notes")
+            progressListener.onProgress(any(), "Downloading translation questions")
         }
 
         coVerify { library.download(language.slug, project.slug, resource.slug) }
@@ -237,7 +237,7 @@ class DownloadResourceContainersTest {
         assertFalse(result.success)
         assertEquals(0, result.containers.size)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading resource container") }
+        verify { progressListener.onProgress(any(), "Downloading resource container") }
         coVerify { library.download(language.slug, project.slug, resource.slug) }
     }
 
@@ -272,10 +272,10 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(twUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Downloading resource container")
-            progressListener.onProgress(any(), any(), "Downloading translation words")
-            progressListener.onProgress(any(), any(), "Downloading translation notes")
-            progressListener.onProgress(any(), any(), "Downloading translation questions")
+            progressListener.onProgress(any(), "Downloading resource container")
+            progressListener.onProgress(any(), "Downloading translation words")
+            progressListener.onProgress(any(), "Downloading translation notes")
+            progressListener.onProgress(any(), "Downloading translation questions")
         }
 
         coVerify { library.download(language.slug, project.slug, resource.slug) }
@@ -315,10 +315,10 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(tnUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Downloading resource container")
-            progressListener.onProgress(any(), any(), "Downloading translation words")
-            progressListener.onProgress(any(), any(), "Downloading translation notes")
-            progressListener.onProgress(any(), any(), "Downloading translation questions")
+            progressListener.onProgress(any(), "Downloading resource container")
+            progressListener.onProgress(any(), "Downloading translation words")
+            progressListener.onProgress(any(), "Downloading translation notes")
+            progressListener.onProgress(any(), "Downloading translation questions")
         }
 
         coVerify { library.download(language.slug, project.slug, resource.slug) }
@@ -358,10 +358,10 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(tqUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Downloading resource container")
-            progressListener.onProgress(any(), any(), "Downloading translation words")
-            progressListener.onProgress(any(), any(), "Downloading translation notes")
-            progressListener.onProgress(any(), any(), "Downloading translation questions")
+            progressListener.onProgress(any(), "Downloading resource container")
+            progressListener.onProgress(any(), "Downloading translation words")
+            progressListener.onProgress(any(), "Downloading translation notes")
+            progressListener.onProgress(any(), "Downloading translation questions")
         }
 
         coVerify { library.download(language.slug, project.slug, resource.slug) }
@@ -402,10 +402,10 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(twUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Downloading resource container")
-            progressListener.onProgress(any(), any(), "Downloading obs translation words")
-            progressListener.onProgress(any(), any(), "Downloading translation notes")
-            progressListener.onProgress(any(), any(), "Downloading translation questions")
+            progressListener.onProgress(any(), "Downloading resource container")
+            progressListener.onProgress(any(), "Downloading obs translation words")
+            progressListener.onProgress(any(), "Downloading translation notes")
+            progressListener.onProgress(any(), "Downloading translation questions")
         }
 
         coVerify { library.download(language.slug, project.slug, resource.slug) }
@@ -479,19 +479,19 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 8) { library.download(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 10) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 10) { progressListener.onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1, 2, "")
-            progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, "en_bible_tw")
-            progressListener.onProgress(0, 2, "en_mrk_tn")
-            progressListener.onProgress(0, 2, "en_mrk_tq")
-            progressListener.onProgress(1, 2, "id_gen_ayt")
-            progressListener.onProgress(1, 2, "id_bible_tw")
-            progressListener.onProgress(1, 2, "id_gen_tn")
-            progressListener.onProgress(1, 2, "id_gen_tq")
-            progressListener.onProgress(2, 2, "")
+            progressListener.onProgress(-1f, "")
+            progressListener.onProgress(0f, "en_mrk_ulb")
+            progressListener.onProgress(0f, "en_bible_tw")
+            progressListener.onProgress(0f, "en_mrk_tn")
+            progressListener.onProgress(0f, "en_mrk_tq")
+            progressListener.onProgress(0.5f, "id_gen_ayt")
+            progressListener.onProgress(0.5f, "id_bible_tw")
+            progressListener.onProgress(0.5f, "id_gen_tn")
+            progressListener.onProgress(0.5f, "id_gen_tq")
+            progressListener.onProgress(1f, "")
         }
     }
 
@@ -563,16 +563,16 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 4) { library.download(any(), any(), any()) }
         verify(exactly = 3) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 7) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 7) { progressListener.onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1, 2, "")
-            progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, "en_bible_tw")
-            progressListener.onProgress(0, 2, "en_mrk_tn")
-            progressListener.onProgress(0, 2, "en_mrk_tq")
-            progressListener.onProgress(1, 2, "id_gen_ayt")
-            progressListener.onProgress(2, 2, "")
+            progressListener.onProgress(-1f, "")
+            progressListener.onProgress(0f, "en_mrk_ulb")
+            progressListener.onProgress(0f, "en_bible_tw")
+            progressListener.onProgress(0f, "en_mrk_tn")
+            progressListener.onProgress(0f, "en_mrk_tq")
+            progressListener.onProgress(0.5f, "id_gen_ayt")
+            progressListener.onProgress(1f, "")
         }
     }
 
@@ -645,16 +645,16 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 5) { library.download(any(), any(), any()) }
         verify(exactly = 3) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 7) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 7) { progressListener.onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1, 2, "")
-            progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, "en_bible_tw")
-            progressListener.onProgress(0, 2, "en_mrk_tn")
-            progressListener.onProgress(0, 2, "en_mrk_tq")
-            progressListener.onProgress(1, 2, "id_gen_ayt")
-            progressListener.onProgress(2, 2, "")
+            progressListener.onProgress(-1f, "")
+            progressListener.onProgress(0f, "en_mrk_ulb")
+            progressListener.onProgress(0f, "en_bible_tw")
+            progressListener.onProgress(0f, "en_mrk_tn")
+            progressListener.onProgress(0f, "en_mrk_tq")
+            progressListener.onProgress(0.5f, "id_gen_ayt")
+            progressListener.onProgress(1f, "")
         }
     }
 
@@ -727,19 +727,19 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 8) { library.download(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 10) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 10) { progressListener.onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1, 2, "")
-            progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, "en_bible_tw")
-            progressListener.onProgress(0, 2, "en_mrk_tn")
-            progressListener.onProgress(0, 2, "en_mrk_tq")
-            progressListener.onProgress(1, 2, "id_gen_ayt")
-            progressListener.onProgress(1, 2, "id_bible_tw")
-            progressListener.onProgress(1, 2, "id_gen_tn")
-            progressListener.onProgress(1, 2, "id_gen_tq")
-            progressListener.onProgress(2, 2, "")
+            progressListener.onProgress(-1f, "")
+            progressListener.onProgress(0f, "en_mrk_ulb")
+            progressListener.onProgress(0f, "en_bible_tw")
+            progressListener.onProgress(0f, "en_mrk_tn")
+            progressListener.onProgress(0f, "en_mrk_tq")
+            progressListener.onProgress(0.5f, "id_gen_ayt")
+            progressListener.onProgress(0.5f, "id_bible_tw")
+            progressListener.onProgress(0.5f, "id_gen_tn")
+            progressListener.onProgress(0.5f, "id_gen_tq")
+            progressListener.onProgress(1f, "")
         }
     }
 
@@ -808,19 +808,19 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 8) { library.download(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 10) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 10) { progressListener.onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1, 2, "")
-            progressListener.onProgress(0, 2, "en_mrk_ulb")
-            progressListener.onProgress(0, 2, "en_bible_tw")
-            progressListener.onProgress(0, 2, "en_mrk_tn")
-            progressListener.onProgress(0, 2, "en_mrk_tq")
-            progressListener.onProgress(1, 2, "id_obs_ulb")
-            progressListener.onProgress(1, 2, "id_bible-obs_tw")
-            progressListener.onProgress(1, 2, "id_obs_tn")
-            progressListener.onProgress(1, 2, "id_obs_tq")
-            progressListener.onProgress(2, 2, "")
+            progressListener.onProgress(-1f, "")
+            progressListener.onProgress(0f, "en_mrk_ulb")
+            progressListener.onProgress(0f, "en_bible_tw")
+            progressListener.onProgress(0f, "en_mrk_tn")
+            progressListener.onProgress(0f, "en_mrk_tq")
+            progressListener.onProgress(0.5f, "id_obs_ulb")
+            progressListener.onProgress(0.5f, "id_bible-obs_tw")
+            progressListener.onProgress(0.5f, "id_obs_tn")
+            progressListener.onProgress(0.5f, "id_obs_tq")
+            progressListener.onProgress(1f, "")
         }
     }
 

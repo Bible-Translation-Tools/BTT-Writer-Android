@@ -34,7 +34,7 @@ class SearchGogsRepositoriesTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any(), any()) } just runs
+        every { progressListener.onProgress(any(), any()) } just runs
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }
             .returns(apiUrl)
         every { context.getString(R.string.pref_default_gogs_api) }
@@ -65,7 +65,7 @@ class SearchGogsRepositoriesTest {
 
         assertEquals(1, repositories.size)
 
-        verify { progressListener.onProgress(any(), any(), "Searching for repositories") }
+        verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
@@ -90,7 +90,7 @@ class SearchGogsRepositoriesTest {
         assertEquals(1, repositories.size)
 
         verify { user.id }
-        verify { progressListener.onProgress(any(), any(), "Searching for repositories") }
+        verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
@@ -111,7 +111,7 @@ class SearchGogsRepositoriesTest {
 
         assertEquals(1, repositories.size)
 
-        verify { progressListener.onProgress(any(), any(), "Searching for repositories") }
+        verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     private fun createRepoResponse(): MockResponse {

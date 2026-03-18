@@ -33,7 +33,7 @@ class GetAvailableSourcesTest {
 
         every { library.index } returns index
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
     }
 
     @After
@@ -69,7 +69,7 @@ class GetAvailableSourcesTest {
         assertEquals(2, result.otherBooks["bible"]!!.size)
 
         verify(exactly = 2) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
     }
 
     private fun mockLanguage(slug: String): Language {

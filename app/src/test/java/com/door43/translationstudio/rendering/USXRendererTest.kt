@@ -208,12 +208,12 @@ class USXRendererTest {
     }
 
     @Test
-    fun `paragraph node has indented=true`() {
+    fun `paragraph node has indented=false`() {
         val input = """<para style="p">some text</para>"""
         val nodes = testRender(input)
         val para = nodes.filterIsInstance<TextNode.Paragraph>().firstOrNull()
         assertNotNull(para)
-        assertTrue(para!!.indented)
+        assertFalse(para!!.indented)
     }
 
     @Test

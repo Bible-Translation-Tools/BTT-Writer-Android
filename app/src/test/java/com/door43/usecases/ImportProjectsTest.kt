@@ -94,7 +94,7 @@ class ImportProjectsTest {
         mockkObject(FileUtilities)
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { context.getString(R.string.importing_file) }.returns("Importing file")
 
         mockkObject(MergeConflictsHandler)
@@ -427,13 +427,13 @@ class ImportProjectsTest {
         assertEquals(localTranslation, result.conflictingTargetTranslation)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Importing file")
-            progressListener.onProgress(0, any(), project1.name)
-            progressListener.onProgress(12, any(), project1.name)
-            progressListener.onProgress(50, any(), project2.name)
-            progressListener.onProgress(62, any(), project2.name)
-            progressListener.onProgress(75, any(), project2.name)
-            progressListener.onProgress(100, any(), "Completed!")
+            progressListener.onProgress(any(), "Importing file")
+            progressListener.onProgress(0f, project1.name)
+            progressListener.onProgress(0.125f, project1.name)
+            progressListener.onProgress(0.5f, project2.name)
+            progressListener.onProgress(0.625f, project2.name)
+            progressListener.onProgress(0.75f, project2.name)
+            progressListener.onProgress(1f,  "Completed!")
         }
 
         verify { translator.getConflictingTargetTranslation(any()) }
@@ -471,11 +471,11 @@ class ImportProjectsTest {
         assertEquals(localTranslation, result.conflictingTargetTranslation)
 
         verifySequence {
-            progressListener.onProgress(any(), any(), "Importing file")
-            progressListener.onProgress(0, any(), project.name)
-            progressListener.onProgress(25, any(), project.name)
-            progressListener.onProgress(50, any(), project.name)
-            progressListener.onProgress(100, any(), "Completed!")
+            progressListener.onProgress(any(), "Importing file")
+            progressListener.onProgress(0f, project.name)
+            progressListener.onProgress(0.25f, project.name)
+            progressListener.onProgress(0.5f, project.name)
+            progressListener.onProgress(1f, "Completed!")
         }
 
         verify { translator.getConflictingTargetTranslation(any()) }

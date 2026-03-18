@@ -80,7 +80,7 @@ class PullTargetTranslationTest {
         every { submitNewLanguageRequests.execute(progressListener) }.just(runs)
         every { targetTranslation.commitSync() }.returns(true)
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { git.branchDelete() }.returns(deleteCommand)
         every { git.branchCreate() }.returns(createCommand)
         every { git.pull() }.returns(pullCommand)
@@ -154,7 +154,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.UP_TO_DATE, result.status)
         assertEquals("Pulled Successfully!", result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }
@@ -220,7 +220,7 @@ class PullTargetTranslationTest {
 
         verify { profile.gogsUser }
         verify(exactly = 0) {
-            progressListener.onProgress(any(), any(), "Downloading updates")
+            progressListener.onProgress(any(), "Downloading updates")
         }
         verify(exactly = 0) { getRepository.execute(any(), any()) }
         verify(exactly = 0) { targetTranslation.repo }
@@ -259,7 +259,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.UNKNOWN, result.status)
         assertEquals("Delete origin failed.", result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }
@@ -315,7 +315,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.MERGE_CONFLICTS, result.status)
         assertEquals("Pulled Successfully!", result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }
@@ -367,7 +367,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.AUTH_FAILURE, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }
@@ -411,7 +411,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.NO_REMOTE_REPO, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }
@@ -454,7 +454,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.NO_REMOTE_REPO, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }
@@ -494,7 +494,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.OUT_OF_MEMORY, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }
@@ -534,7 +534,7 @@ class PullTargetTranslationTest {
         assertEquals(PullTargetTranslation.Status.UNKNOWN, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
+        verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         verify { getRepository.execute(any(), any()) }

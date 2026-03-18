@@ -46,7 +46,7 @@ class CreateRepositoryTest {
 
         every { context.resources }.returns(resources)
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }.returns(apiUrl)
 
         every { targetTranslation.id }.returns("aa_gen_text_reg")
@@ -78,7 +78,7 @@ class CreateRepositoryTest {
         assertTrue(request.has("description"))
         assertTrue(request.has("private"))
 
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
         verify { targetTranslation.id }
         verify { resources.getString(R.string.pref_default_gogs_api) }
@@ -103,7 +103,7 @@ class CreateRepositoryTest {
         assertTrue(request.has("description"))
         assertTrue(request.has("private"))
 
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
         verify { targetTranslation.id }
         verify { resources.getString(R.string.pref_default_gogs_api) }
@@ -119,7 +119,7 @@ class CreateRepositoryTest {
 
         assertFalse(success)
 
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
         verify(exactly = 0) { targetTranslation.id }
         verify { resources.getString(R.string.pref_default_gogs_api) }

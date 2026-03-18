@@ -34,7 +34,7 @@ class UpdateCatalogsTest {
         MockKAnnotations.init(this)
 
         every { library.index } returns index
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         coEvery { library.updateCatalogs(any(), any()) }.just(runs)
     }
 
@@ -59,7 +59,7 @@ class UpdateCatalogsTest {
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), any(), message) }
+        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(false, any()) }
     }
@@ -91,7 +91,7 @@ class UpdateCatalogsTest {
         assertTrue(result.success)
         assertEquals(1, result.addedCount)
 
-        verify { progressListener.onProgress(any(), any(), message) }
+        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(false, any()) }
     }
@@ -109,7 +109,7 @@ class UpdateCatalogsTest {
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), any(), message) }
+        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(true, any()) }
     }
@@ -128,7 +128,7 @@ class UpdateCatalogsTest {
         assertFalse(result.success)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), any(), message) }
+        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 1) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(true, any()) }
     }

@@ -37,7 +37,7 @@ class UpdateAllTest {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
 
         every { prefRepository.getRootCatalogApi() }.returns("/api")
         every { prefRepository.getDefaultPref(
@@ -71,7 +71,7 @@ class UpdateAllTest {
         coVerify { library.updateSources(any(), any()) }
         coVerify { library.updateCatalogs(true, any()) }
         coVerify { library.updateChunks(any()) }
-        verify(exactly = 3) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 3) { progressListener.onProgress(any(), any()) }
     }
 
     @Test
@@ -87,7 +87,7 @@ class UpdateAllTest {
         coVerify { library.updateSources(any(), any()) }
         coVerify { library.updateChunks(any()) }
         coVerify { library.updateCatalogs(false, any()) }
-        verify(exactly = 3) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 3) { progressListener.onProgress(any(), any()) }
     }
 
     @Test
@@ -105,6 +105,6 @@ class UpdateAllTest {
         coVerify { library.updateSources(any(), any()) }
         coVerify { library.updateChunks(any()) }
         coVerify { library.updateCatalogs(false, any()) }
-        verify(exactly = 3) { progressListener.onProgress(any(), any(), any()) }
+        verify(exactly = 3) { progressListener.onProgress(any(), any()) }
     }
 }

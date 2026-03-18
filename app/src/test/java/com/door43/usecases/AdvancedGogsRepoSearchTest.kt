@@ -28,7 +28,7 @@ class AdvancedGogsRepoSearchTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any(), any()) } just runs
+        every { progressListener.onProgress(any(), any()) } just runs
         every { submitNewLanguageRequests.execute(progressListener) } just runs
     }
 
@@ -67,7 +67,7 @@ class AdvancedGogsRepoSearchTest {
         verify { submitNewLanguageRequests.execute(progressListener) }
         verify { searchGogsUsers.execute(userQuery, limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
-        verify { progressListener.onProgress(any(), any(), "Searching for repositories") }
+        verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
@@ -102,7 +102,7 @@ class AdvancedGogsRepoSearchTest {
         verify { submitNewLanguageRequests.execute(progressListener) }
         verify { searchGogsUsers.execute(userQuery, limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
-        verify { progressListener.onProgress(any(), any(), "Searching for repositories") }
+        verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
@@ -127,7 +127,7 @@ class AdvancedGogsRepoSearchTest {
         verify { submitNewLanguageRequests.execute(progressListener) }
         verify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
-        verify { progressListener.onProgress(any(), any(), "Searching for repositories") }
+        verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
@@ -155,6 +155,6 @@ class AdvancedGogsRepoSearchTest {
         verify { submitNewLanguageRequests.execute(progressListener) }
         verify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), any(), limit, progressListener) }
-        verify { progressListener.onProgress(any(), any(), "Searching for repositories") }
+        verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 }

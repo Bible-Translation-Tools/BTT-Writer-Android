@@ -80,7 +80,7 @@ class ProcessUSFMTest {
         mockStringResources()
 
         every { directoryProvider.cacheDir } returns File("/cache")
-        every { progressListener.onProgress(any(), any(), any()) } just runs
+        every { progressListener.onProgress(any(), any()) } just runs
 
         every { index.getVersifications("en") } returns listOf(
             Versification("en", "English")
@@ -630,7 +630,7 @@ class ProcessUSFMTest {
         verify { TargetTranslation.create(any(), any(), any(), any(), any(),
             any(), any(), any(), any()) }
         verify { directoryProvider.cacheDir }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { index.getVersifications("en") }
         verify { FileUtilities.forceMkdir(any()) }
         verify { FileUtilities.writeStringToFile(any(), any()) }

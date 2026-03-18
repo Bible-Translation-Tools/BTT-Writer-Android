@@ -60,7 +60,7 @@ class CloneRepositoryTest {
         every {
             prefRepository.getDefaultPref(any(), any(), String::class.java)
         }.returns("22")
-        every { progressListener.onProgress(any(), any(), any()) } just runs
+        every { progressListener.onProgress(any(), any()) } just runs
 
         every { resources.getString(R.string.downloading) }.returns("Downloading...")
         every { resources.getString(R.string.pref_default_git_server_port) }.returns("22")
@@ -248,7 +248,7 @@ class CloneRepositoryTest {
 
         verify { context.resources }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
 
         verify { resources.getString(R.string.downloading) }
         verify { resources.getString(R.string.pref_default_git_server_port) }

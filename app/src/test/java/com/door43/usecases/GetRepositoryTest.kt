@@ -34,7 +34,7 @@ class GetRepositoryTest {
         MockKAnnotations.init(this)
 
         every { createRepository.execute(any(), any()) }.returns(true)
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
 
         every { targetTranslation.id }.returns("aa_gen_text_reg")
     }
@@ -70,7 +70,7 @@ class GetRepositoryTest {
         verify { profile.gogsUser }
         verify { searchRepository.execute(any(), any(), any(), any()) }
         verify { createRepository.execute(any(), any()) }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 
@@ -94,7 +94,7 @@ class GetRepositoryTest {
         verify { profile.gogsUser }
         verify { searchRepository.execute(any(), any(), any(), any()) }
         verify { createRepository.execute(any(), any()) }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 
@@ -116,7 +116,7 @@ class GetRepositoryTest {
         verify { profile.gogsUser }
         verify { searchRepository.execute(any(), any(), any(), any()) }
         verify { createRepository.execute(any(), any()) }
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 

@@ -50,7 +50,7 @@ class DownloadIndexTest {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
 
         every { resources.getString(R.string.downloading_index) }
             .returns("Downloading index")
@@ -84,7 +84,7 @@ class DownloadIndexTest {
         assertTrue(success)
         assertEquals("1234567890", directoryProvider.databaseFile.readText())
 
-        verify { progressListener.onProgress(any(), any(), "Downloading index") }
+        verify { progressListener.onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
         verify { resources.getString(R.string.pref_default_index_sqlite_url) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
@@ -101,7 +101,7 @@ class DownloadIndexTest {
 
         assertFalse(success)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading index") }
+        verify { progressListener.onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
         verify { library.tearDown() }
     }
@@ -115,7 +115,7 @@ class DownloadIndexTest {
 
         assertFalse(success)
 
-        verify { progressListener.onProgress(any(), any(), "Downloading index") }
+        verify { progressListener.onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
         verify { library.tearDown() }
     }

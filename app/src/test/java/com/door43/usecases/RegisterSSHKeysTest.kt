@@ -56,7 +56,7 @@ class RegisterSSHKeysTest {
         every { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }.returns(mockk())
 
         every { context.resources }.returns(resources)
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { directoryProvider.generateSSHKeys() }.just(runs)
         every { directoryProvider.publicKey }.returns(mockk())
 
@@ -110,7 +110,7 @@ class RegisterSSHKeysTest {
 
         verify { profile.gogsUser }
         verify { App.udid() }
-        verify { progressListener.onProgress(any(), any(), "Authenticating") }
+        verify { progressListener.onProgress(any(), "Authenticating") }
 
         verify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
@@ -274,6 +274,6 @@ class RegisterSSHKeysTest {
         verify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         verify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }
         verify { directoryProvider.publicKey }
-        verify { progressListener.onProgress(any(), any(), "Authenticating") }
+        verify { progressListener.onProgress(any(), "Authenticating") }
     }
 }

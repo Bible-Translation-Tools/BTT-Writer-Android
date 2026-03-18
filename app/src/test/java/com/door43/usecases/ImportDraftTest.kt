@@ -33,7 +33,7 @@ class ImportDraftTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any(), any()) }.just(runs)
+        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { context.getString(R.string.importing_draft) }
             .returns("Importing draft...")
         every { profile.nativeSpeaker }.returns(mockk())
@@ -56,7 +56,7 @@ class ImportDraftTest {
         assertNotNull(result.targetTranslation)
         assertEquals(targetTranslation, result.targetTranslation)
 
-        verify { progressListener.onProgress(any(), any(), any()) }
+        verify { progressListener.onProgress(any(), any()) }
         verify { context.getString(R.string.importing_draft) }
     }
 }

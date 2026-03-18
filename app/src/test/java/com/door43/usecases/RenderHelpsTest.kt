@@ -1,7 +1,9 @@
 package com.door43.usecases
 
 import com.door43.TestUtils
+import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
+import com.door43.translationstudio.ui.translate.ChunkConfig
 import com.door43.translationstudio.ui.translate.ListItemOld
 import io.mockk.MockKAnnotations
 import io.mockk.every
@@ -65,9 +67,8 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps has all resources`() {
-        val listItem: ListItemOld = mockk {
-            every { chunkConfig }.returns(mockTw())
-        }
+        val listItem: Chunk = mockk()
+        val config: ChunkConfig = mockTw()
 
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
@@ -80,14 +81,13 @@ class RenderHelpsTest {
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(library).execute(listItem, config)
 
-        assertEquals(3, result.helps.size)
-        assertEquals(3, (result.helps["questions"]!! as List<*>).size)
-        assertEquals(3, (result.helps["notes"]!! as List<*>).size)
-        assertEquals(2, (result.helps["words"]!! as List<*>).size)
+        assertEquals(3, result.size)
+        assertEquals(3, (result["questions"]!! as List<*>).size)
+        assertEquals(3, (result["notes"]!! as List<*>).size)
+        assertEquals(2, (result["words"]!! as List<*>).size)
 
-        verify { listItem.chunkConfig }
         verify { source.chunks(any()) }
         verify { ContainerCache.cacheFromLinks(any(), any(), any()) }
         verify { ContainerCache.cacheClosest(any(), any(), any(), any()) }
@@ -95,9 +95,7 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tW resource`() {
-        val listItem: ListItemOld = mockk {
-            every { chunkConfig }.returns(null)
-        }
+        val listItem: Chunk = mockk()
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -108,14 +106,13 @@ class RenderHelpsTest {
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(library).execute(listItem, null)
 
-        assertEquals(3, result.helps.size)
-        assertEquals(3, (result.helps["questions"]!! as List<*>).size)
-        assertEquals(3, (result.helps["notes"]!! as List<*>).size)
-        assertEquals(0, (result.helps["words"]!! as List<*>).size)
+        assertEquals(3, result.size)
+        assertEquals(3, (result["questions"]!! as List<*>).size)
+        assertEquals(3, (result["notes"]!! as List<*>).size)
+        assertEquals(0, (result["words"]!! as List<*>).size)
 
-        verify { listItem.chunkConfig }
         verify { source.chunks(any()) }
         verify(exactly = 0) { ContainerCache.cacheFromLinks(any(), any(), any()) }
         verify(exactly = 0) { ContainerCache.cacheClosest(any(), any(), any(), any()) }
@@ -123,9 +120,8 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tQ resource`() {
-        val listItem: ListItemOld = mockk {
-            every { chunkConfig }.returns(mockTw())
-        }
+        val listItem: Chunk = mockk()
+        val config: ChunkConfig = mockTw()
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -139,14 +135,13 @@ class RenderHelpsTest {
         every { index.findTranslations(any(), any(), "tq", any(), any(), any(), any()) }
             .returns(listOf())
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(library).execute(listItem, config)
 
-        assertEquals(3, result.helps.size)
-        assertEquals(0, (result.helps["questions"]!! as List<*>).size)
-        assertEquals(3, (result.helps["notes"]!! as List<*>).size)
-        assertEquals(2, (result.helps["words"]!! as List<*>).size)
+        assertEquals(3, result.size)
+        assertEquals(0, (result["questions"]!! as List<*>).size)
+        assertEquals(3, (result["notes"]!! as List<*>).size)
+        assertEquals(2, (result["words"]!! as List<*>).size)
 
-        verify { listItem.chunkConfig }
         verify(exactly = 0) { source.chunks(any()) }
         verify { ContainerCache.cacheFromLinks(any(), any(), any()) }
         verify { ContainerCache.cacheClosest(any(), any(), any(), any()) }
@@ -154,9 +149,8 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tQ resource, no rc`() {
-        val listItem: ListItemOld = mockk {
-            every { chunkConfig }.returns(mockTw())
-        }
+        val listItem: Chunk = mockk()
+        val config: ChunkConfig = mockTw()
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -170,14 +164,13 @@ class RenderHelpsTest {
         every { ContainerCache.cache(library, "en_mrk_tq") }
             .returns(null)
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(library).execute(listItem, config)
 
-        assertEquals(3, result.helps.size)
-        assertEquals(0, (result.helps["questions"]!! as List<*>).size)
-        assertEquals(3, (result.helps["notes"]!! as List<*>).size)
-        assertEquals(2, (result.helps["words"]!! as List<*>).size)
+        assertEquals(3, result.size)
+        assertEquals(0, (result["questions"]!! as List<*>).size)
+        assertEquals(3, (result["notes"]!! as List<*>).size)
+        assertEquals(2, (result["words"]!! as List<*>).size)
 
-        verify { listItem.chunkConfig }
         verify(exactly = 0) { source.chunks(any()) }
         verify { ContainerCache.cacheFromLinks(any(), any(), any()) }
         verify { ContainerCache.cacheClosest(any(), any(), any(), any()) }
@@ -185,9 +178,8 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tN resource`() {
-        val listItem: ListItemOld = mockk {
-            every { chunkConfig }.returns(mockTw())
-        }
+        val listItem: Chunk = mockk()
+        val config: ChunkConfig = mockTw()
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -201,14 +193,13 @@ class RenderHelpsTest {
         every { index.findTranslations(any(), any(), "tn", any(), any(), any(), any()) }
             .returns(listOf())
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(library).execute(listItem, config)
 
-        assertEquals(3, result.helps.size)
-        assertEquals(3, (result.helps["questions"]!! as List<*>).size)
-        assertEquals(0, (result.helps["notes"]!! as List<*>).size)
-        assertEquals(2, (result.helps["words"]!! as List<*>).size)
+        assertEquals(3, result.size)
+        assertEquals(3, (result["questions"]!! as List<*>).size)
+        assertEquals(0, (result["notes"]!! as List<*>).size)
+        assertEquals(2, (result["words"]!! as List<*>).size)
 
-        verify { listItem.chunkConfig }
         verify { source.chunks(any()) }
         verify { ContainerCache.cacheFromLinks(any(), any(), any()) }
         verify { ContainerCache.cacheClosest(any(), any(), any(), any()) }
@@ -216,9 +207,8 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tN resource, no rc`() {
-        val listItem: ListItemOld = mockk {
-            every { chunkConfig }.returns(mockTw())
-        }
+        val listItem: Chunk = mockk()
+        val config: ChunkConfig = mockTw()
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -232,14 +222,13 @@ class RenderHelpsTest {
         every { ContainerCache.cache(library, "en_mrk_tn") }
             .returns(null)
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(library).execute(listItem, config)
 
-        assertEquals(3, result.helps.size)
-        assertEquals(3, (result.helps["questions"]!! as List<*>).size)
-        assertEquals(0, (result.helps["notes"]!! as List<*>).size)
-        assertEquals(2, (result.helps["words"]!! as List<*>).size)
+        assertEquals(3, result.size)
+        assertEquals(3, (result["questions"]!! as List<*>).size)
+        assertEquals(0, (result["notes"]!! as List<*>).size)
+        assertEquals(2, (result["words"]!! as List<*>).size)
 
-        verify { listItem.chunkConfig }
         verify { source.chunks(any()) }
         verify { ContainerCache.cacheFromLinks(any(), any(), any()) }
         verify { ContainerCache.cacheClosest(any(), any(), any(), any()) }

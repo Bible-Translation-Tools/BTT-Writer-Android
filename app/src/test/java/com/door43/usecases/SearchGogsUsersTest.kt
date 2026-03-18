@@ -31,7 +31,7 @@ class SearchGogsUsersTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any(), any()) } just runs
+        every { progressListener.onProgress(any(), any()) } just runs
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }
             .returns(apiUrl)
         every { context.getString(R.string.pref_default_gogs_api) }
@@ -58,7 +58,7 @@ class SearchGogsUsersTest {
 
         assertEquals(1, users.size)
 
-        verify { progressListener.onProgress(any(), any(), "Searching for users") }
+        verify { progressListener.onProgress(any(), "Searching for users") }
     }
 
     @Test
@@ -73,7 +73,7 @@ class SearchGogsUsersTest {
 
         assertEquals(0, users.size)
 
-        verify { progressListener.onProgress(any(), any(), "Searching for users") }
+        verify { progressListener.onProgress(any(), "Searching for users") }
     }
 
     private fun createUsersResponse(): MockResponse {

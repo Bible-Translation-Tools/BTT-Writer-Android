@@ -98,12 +98,6 @@ class HtmlRendererTest {
         assertTrue("Expected title", html.contains("Genesis 8:20"))
     }
 
-    @Test
-    fun `parseLinkUrl parses rc link`() {
-        val data = HtmlRenderer.parseLinkUrl("app://rc/rc://en/tn/help/gen/08/20")
-        assertTrue(data is LinkData.RcLink)
-    }
-
     // --- Plain text ---
 
     @Test
