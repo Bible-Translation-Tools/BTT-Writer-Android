@@ -20,6 +20,7 @@ import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.spannables.ArticleLinkSpan
 import com.door43.translationstudio.rendering.spannables.PassageLinkSpan
 import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
+import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
@@ -773,8 +774,7 @@ class ReviewModeViewModel(
         showFootnoteEditor(
             Footnote(
                 text = "",
-                start = 0,
-                end = 0,
+                machineReadable = "",
                 chunkId = item.id,
                 editable = true
             )
@@ -793,7 +793,7 @@ class ReviewModeViewModel(
 
     override fun onDeleteFootnote(note: Footnote) {
         super.onDeleteFootnote(note)
-        println(note)
+        replaceFootnoteInTarget(note, replacement = "")
     }
 
     override fun onOpenFootnoteEditor(note: Footnote) {
@@ -803,7 +803,48 @@ class ReviewModeViewModel(
 
     override fun onSaveFootnote(note: Footnote) {
         super.onSaveFootnote(note)
-        println(note)
+        val newCode = if (note.text.isNotEmpty()) {
+            USFMNoteSpan.generateFootnote(note.text).machineReadable
+        } else ""
+
+        if (note.machineReadable.isEmpty()) {
+            // New footnote — append at end of target text
+            insertFootnoteInTarget(note, newCode)
+        } else {
+            replaceFootnoteInTarget(note, newCode)
+        }
+    }
+
+    private fun replaceFootnoteInTarget(note: Footnote, replacement: String) {
+        val item = _items.value.find { it.id == note.chunkId } ?: return
+        val currentText = fetchTargetText(
+            item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
+        )
+        val idx = currentText.indexOf(note.machineReadable)
+        if (idx < 0) return
+
+        val newText = currentText.substring(0, idx) +
+                replacement +
+                currentText.substring(idx + note.machineReadable.length)
+        saveAndRefreshItem(item, newText)
+    }
+
+    private fun insertFootnoteInTarget(note: Footnote, footnoteCode: String) {
+        val item = _items.value.find { it.id == note.chunkId } ?: return
+        val currentText = fetchTargetText(
+            item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
+        )
+        val newText = currentText + footnoteCode
+        saveAndRefreshItem(item, newText)
+    }
+
+    private fun saveAndRefreshItem(item: ReviewItem, newText: String) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                item.saveTranslation(newText)
+                updateItem(prepareItem(item.chunk, item.targetMode))
+            }
+        }
     }
 
     private fun getClosestTwRc(languageSlug: String): ResourceContainer? {

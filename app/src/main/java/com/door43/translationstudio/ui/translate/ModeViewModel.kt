@@ -28,8 +28,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 
 data class Footnote(
     val text: String,
-    val start: Int,
-    val end: Int,
+    val machineReadable: String,
     val chunkId: String,
     val editable: Boolean
 )
@@ -153,12 +152,11 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             ComposeTextAdapter.convert(
                 textNodes,
-                onNoteClick = { notes, start, end ->
+                onNoteClick = { notes, _, _ ->
                     _modeState.update {
                         it.copy(footnote = Footnote(
                             text = notes.notes,
-                            start = start,
-                            end = end,
+                            machineReadable = notes.machineReadable,
                             chunkId = chunkId,
                             editable = false
                         ))
@@ -190,12 +188,11 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             ComposeTextAdapter.convert(
                 nodes = textNodes,
-                onNoteClick = { notes, start, end ->
+                onNoteClick = { notes, _, _ ->
                     _modeState.update {
                         it.copy(footnote = Footnote(
                             text = notes.notes,
-                            start = start,
-                            end = end,
+                            machineReadable = notes.machineReadable,
                             chunkId = chunkId,
                             editable = footnoteEditable
                         ))
