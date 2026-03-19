@@ -201,7 +201,6 @@ fun ReviewTargetCard(
                 if (currentItem.targetMode == TargetMode.EDIT) {
                     RichEditText(
                         rawText = currentItem.targetText,
-                        displayText = currentItem.renderedTargetText.text,
                         onRawTextChange = {
                             onTextChange(it)
                         },

@@ -83,7 +83,6 @@ fun ChunkTargetCard(
             ) {
                 RichEditText(
                     rawText = item.targetText,
-                    displayText = item.renderedTargetText.text,
                     onRawTextChange = {
                         onTextChange(it)
                     },
