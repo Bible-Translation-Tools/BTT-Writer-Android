@@ -51,6 +51,7 @@ fun TranslateSideBar(
     onSliderValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     sliderValue: Float = 0f,
+    chapterLabel: String? = null,
     actions: List<TranslateSideBarAction>
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -102,7 +103,8 @@ fun TranslateSideBar(
         ) {
             VerticalSeekBar(
                 sliderValue = sliderValue,
-                onSliderValueChange = onSliderValueChange
+                onSliderValueChange = onSliderValueChange,
+                tooltipLabel = chapterLabel
             )
         }
 

@@ -119,6 +119,7 @@ fun TargetTranslationScreen(
     var lastViewedChunk by remember { mutableStateOf<Chunk?>(null) }
     var hasDoneInitialLoad by rememberSaveable { mutableStateOf(false) }
     var pendingScrollChapter by remember { mutableStateOf<String?>(null) }
+    var sliderChapterLabel by remember { mutableStateOf<String?>(null) }
 
     val dominantIndex by remember(state.items) {
         derivedStateOf {
@@ -362,6 +363,11 @@ fun TargetTranslationScreen(
                     val targetIndex = exactPosition.toInt().coerceIn(0, state.items.size - 1)
                     val fraction = exactPosition - targetIndex
 
+                    if (state.items.isNotEmpty()) {
+                        val slug = state.items[targetIndex].chapterSlug
+                        sliderChapterLabel = slug.toIntOrNull()?.toString() ?: slug
+                    }
+
                     // THE GUESS: Because the target chapter isn't on screen yet,
                     // we don't know its height.
                     // We have to guess the offset based on the screen height.
@@ -374,6 +380,7 @@ fun TargetTranslationScreen(
                     }
                 },
                 sliderValue = currentSliderValue,
+                chapterLabel = sliderChapterLabel,
                 actions = menuItems
             )
 

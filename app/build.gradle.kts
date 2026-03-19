@@ -22,7 +22,7 @@ android {
         applicationId = "org.bibletranslationtools.writer.android"
         minSdk = 26
         compileSdk = 35
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 44
         versionName = "1.6.0"
 

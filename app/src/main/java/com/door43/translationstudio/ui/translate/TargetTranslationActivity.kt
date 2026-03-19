@@ -539,7 +539,8 @@ class TargetTranslationActivity : BaseActivity(),
 
     override fun onResume() {
         super.onResume()
-        notifyDatasetChanged()
+
+        //notifyDatasetChanged()
         //setMergeConflictFilter(mMergeConflictFilterEnabled, mMergeConflictFilterEnabled); // restore last state
     }
 
