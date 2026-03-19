@@ -20,6 +20,7 @@ import com.door43.translationstudio.rendering.spannables.ArticleLinkSpan
 import com.door43.translationstudio.rendering.spannables.PassageLinkSpan
 import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
+import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
@@ -460,11 +461,67 @@ class ReviewModeViewModel(
                 } else TargetMode.EDIT
 
                 if (targetMode == TargetMode.MARKER) {
+                    addMissingVerses(item)
                     item.chunk.target.commit()
                 }
                 updateItem(prepareItem(item.chunk, targetMode))
             }
         }
+    }
+
+    private fun addMissingVerses(item: ReviewItem) {
+        if (item.isComplete) return
+
+        val currentText = fetchTargetText(
+            item.chunk.target,
+            item.chunk.chapterSlug,
+            item.chunk.chunkSlug
+        )
+        if (currentText.isEmpty()) return
+
+        val sourceVerseRange = RenderingProvider.getVerseRange(
+            item.sourceText,
+            item.chunk.sourceTranslationFormat
+        )
+        if (sourceVerseRange.isEmpty()) return
+
+        val format = item.chunk.targetTranslationFormat
+        val versePattern = if (format == TranslationFormat.USFM) {
+            Pattern.compile(USFMVerseSpan.PATTERN)
+        } else {
+            Pattern.compile(USXVerseSpan.PATTERN)
+        }
+
+        val existingVerses = mutableSetOf<Int>()
+        val matcher = versePattern.matcher(currentText)
+        while (matcher.find()) {
+            val group = matcher.group(1) ?: continue
+            val dashIndex = group.indexOf('-')
+            if (dashIndex > 0) {
+                val start = group.substring(0, dashIndex).toIntOrNull() ?: continue
+                val end = group.substring(dashIndex + 1).toIntOrNull() ?: continue
+                for (v in start..end) existingVerses.add(v)
+            } else {
+                group.toIntOrNull()?.let { existingVerses.add(it) }
+            }
+        }
+
+        val min = sourceVerseRange[0]
+        val max = if (sourceVerseRange.size > 1) sourceVerseRange[1] else min
+
+        val missing = (min..max).filter { it !in existingVerses }
+        if (missing.isEmpty()) return
+
+        val prefix = missing.joinToString("") { v ->
+            if (format == TranslationFormat.USFM) {
+                "\\v $v "
+            } else {
+                "<verse number=\"$v\" style=\"v\" />"
+            }
+        }
+
+        val updatedText = prefix + currentText
+        item.saveTranslation(updatedText)
     }
 
     private fun toggleDoneClicked(item: ReviewItem) {
