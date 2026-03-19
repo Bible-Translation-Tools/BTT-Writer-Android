@@ -519,8 +519,8 @@ fun TargetTranslationScreen(
                                         onRedoClick = {
                                             reviewVm.onAction(ReviewAction.Redo(item))
                                         },
-                                        onAddNoteClick = {
-                                            reviewVm.onAction(ReviewAction.AddNoteClicked(item))
+                                        onAddNoteClick = { caretPos ->
+                                            reviewVm.onAction(ReviewAction.AddNoteClicked(item, caretPos))
                                         },
                                         modifier = Modifier.padding(start = 16.dp)
                                     )

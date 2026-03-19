@@ -53,6 +53,7 @@ fun UsfmEditText(
     modifier: Modifier = Modifier,
     shouldFocus: Boolean = false,
     onFocusConsumed: () -> Unit = {},
+    onCursorPositionChange: (Int) -> Unit = {},
     textStyle: TextStyle = TextStyle.Default,
     noteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
@@ -64,6 +65,7 @@ fun UsfmEditText(
     val textFieldState = remember { TextFieldState(text) }
 
     val currentOnTextChange by rememberUpdatedState(onTextChange)
+    val currentOnCursorPositionChange by rememberUpdatedState(onCursorPositionChange)
 
     // Track the last value we emitted to the parent, so we can distinguish
     // "parent echoing our value back" from "parent changed text externally"
@@ -102,6 +104,15 @@ fun UsfmEditText(
             .collect { newRaw ->
                 lastEmittedText = newRaw
                 currentOnTextChange(newRaw)
+            }
+    }
+
+    // Track cursor position and emit to parent
+    LaunchedEffect(Unit) {
+        snapshotFlow { textFieldState.selection.start }
+            .distinctUntilChanged()
+            .collect { cursorPos ->
+                currentOnCursorPositionChange(cursorPos)
             }
     }
 

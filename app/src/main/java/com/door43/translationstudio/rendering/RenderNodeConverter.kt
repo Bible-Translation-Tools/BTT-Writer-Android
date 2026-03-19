@@ -31,6 +31,8 @@ object RenderNodeConverter {
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     machineReadable = node.machineReadable,
+                    start = node.start,
+                    end = node.end,
                     attributes = NodeAttributes(searchHighlighted = node.highlighted)
                 )
                 is TextNode.Paragraph -> RenderNode.Paragraph(
@@ -89,7 +91,9 @@ object RenderNodeConverter {
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     highlighted = node.attributes.searchHighlighted,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    start = node.start,
+                    end = node.end
                 ))
                 is RenderNode.Paragraph -> {
                     val result = mutableListOf<TextNode>()

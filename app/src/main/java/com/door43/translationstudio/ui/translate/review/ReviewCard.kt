@@ -42,7 +42,7 @@ fun ReviewCard(
     onDoneToggle: (Boolean) -> Unit,
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
-    onAddNoteClick: () -> Unit,
+    onAddNoteClick: (caretPosition: Int) -> Unit,
     onExpandedChange: (Boolean) -> Unit
 ) {
     val focusManager = LocalFocusManager.current

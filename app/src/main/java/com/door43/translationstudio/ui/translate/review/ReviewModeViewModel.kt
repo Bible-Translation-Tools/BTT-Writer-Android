@@ -124,7 +124,7 @@ sealed interface ReviewAction : ModeAction {
     data class ToggleDoneConfirmed(val confirm: Boolean) : ReviewAction
     data class Undo(val item: ReviewItem) : ReviewAction
     data class Redo(val item: ReviewItem) : ReviewAction
-    data class AddNoteClicked(val item: ReviewItem) : ReviewAction
+    data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : ReviewAction
     object ClearHelp : ReviewAction
     object CleanUrl : ReviewAction
 }
@@ -190,7 +190,7 @@ class ReviewModeViewModel(
             is ReviewAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
             is ReviewAction.Undo -> onUndo(action.item)
             is ReviewAction.Redo -> onRedo(action.item)
-            is ReviewAction.AddNoteClicked -> onAddNoteClicked(action.item)
+            is ReviewAction.AddNoteClicked -> onAddNoteClicked(action.item, action.caretPosition)
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
@@ -770,13 +770,14 @@ class ReviewModeViewModel(
         }
     }
 
-    private fun onAddNoteClicked(item: ReviewItem) {
+    private fun onAddNoteClicked(item: ReviewItem, caretPosition: Int = -1) {
         showFootnoteEditor(
             Footnote(
                 text = "",
                 machineReadable = "",
                 chunkId = item.id,
-                editable = true
+                editable = true,
+                insertPosition = caretPosition
             )
         )
     }
@@ -820,12 +821,26 @@ class ReviewModeViewModel(
         val currentText = fetchTargetText(
             item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
         )
-        val idx = currentText.indexOf(note.machineReadable)
-        if (idx < 0) return
 
-        val newText = currentText.substring(0, idx) +
+        val start: Int
+        val end: Int
+        if (note.start >= 0 && note.end >= 0 &&
+            note.end <= currentText.length
+        ) {
+            // Use precise raw positions from the renderer
+            start = note.start
+            end = note.end
+        } else {
+            // Fallback to string search
+            val idx = currentText.indexOf(note.machineReadable)
+            if (idx < 0) return
+            start = idx
+            end = idx + note.machineReadable.length
+        }
+
+        val newText = currentText.substring(0, start) +
                 replacement +
-                currentText.substring(idx + note.machineReadable.length)
+                currentText.substring(end)
         saveAndRefreshItem(item, newText)
     }
 
@@ -834,7 +849,12 @@ class ReviewModeViewModel(
         val currentText = fetchTargetText(
             item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
         )
-        val newText = currentText + footnoteCode
+        val pos = note.insertPosition
+        val newText = if (pos in 0..currentText.length) {
+            currentText.substring(0, pos) + footnoteCode + currentText.substring(pos)
+        } else {
+            currentText + footnoteCode
+        }
         saveAndRefreshItem(item, newText)
     }
 

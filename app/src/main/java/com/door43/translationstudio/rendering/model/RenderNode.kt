@@ -52,6 +52,8 @@ sealed class RenderNode {
         val notes: String,
         val noteStyle: NoteStyle,
         val machineReadable: String = "",
+        val start: Int = -1,
+        val end: Int = -1,
         override val attributes: NodeAttributes = NodeAttributes()
     ) : RenderNode()
 

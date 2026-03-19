@@ -26,7 +26,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -58,9 +61,10 @@ fun ReviewTargetCard(
     onTextChange: (String) -> Unit,
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
-    onAddNoteClick: () -> Unit
+    onAddNoteClick: (caretPosition: Int) -> Unit
 ) {
     val currentItem by rememberUpdatedState(item)
+    var cursorPosition by remember { mutableIntStateOf(0) }
 
     val titleStyle = typography.getComposeTextStyle(
         translationType = TranslationType.TARGET,
@@ -176,7 +180,7 @@ fun ReviewTargetCard(
                             }
                         }
 
-                        IconButton(onClick = onAddNoteClick) {
+                        IconButton(onClick = { onAddNoteClick(cursorPosition) }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.NoteAdd,
                                 contentDescription = "Add note",
@@ -211,11 +215,12 @@ fun ReviewTargetCard(
                 if (currentItem.targetMode == TargetMode.EDIT) {
                     UsfmEditText(
                         text = currentItem.targetText,
+                        shouldFocus = true,
+                        textStyle = bodyStyle,
                         onTextChange = {
                             onTextChange(it)
                         },
-                        shouldFocus = true,
-                        textStyle = bodyStyle,
+                        onCursorPositionChange = { cursorPosition = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)

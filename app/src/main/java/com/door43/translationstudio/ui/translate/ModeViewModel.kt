@@ -30,7 +30,10 @@ data class Footnote(
     val text: String,
     val machineReadable: String,
     val chunkId: String,
-    val editable: Boolean
+    val editable: Boolean,
+    val start: Int = -1,
+    val end: Int = -1,
+    val insertPosition: Int = -1
 )
 
 interface ModeState
@@ -158,7 +161,9 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                             text = notes.notes,
                             machineReadable = notes.machineReadable,
                             chunkId = chunkId,
-                            editable = false
+                            editable = false,
+                            start = notes.start,
+                            end = notes.end
                         ))
                     }
                 }
@@ -194,7 +199,9 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                             text = notes.notes,
                             machineReadable = notes.machineReadable,
                             chunkId = chunkId,
-                            editable = footnoteEditable
+                            editable = footnoteEditable,
+                            start = notes.start,
+                            end = notes.end
                         ))
                     }
                 },

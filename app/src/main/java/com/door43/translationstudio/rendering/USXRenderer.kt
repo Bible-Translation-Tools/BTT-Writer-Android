@@ -330,7 +330,9 @@ class USXRenderer(
                                 notes = note.notes.toString(),
                                 noteStyle = style,
                                 highlighted = highlighted,
-                                machineReadable = noteText  // Store original USX footnote code
+                                machineReadable = noteText,
+                                start = matcher.start(),
+                                end = matcher.end()
                             )
                         )
                     )
@@ -565,6 +567,8 @@ class USXRenderer(
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     machineReadable = node.machineReadable,
+                    start = node.start,
+                    end = node.end,
                     attributes = com.door43.translationstudio.rendering.model.NodeAttributes(
                         searchHighlighted = node.highlighted
                     )
@@ -619,7 +623,9 @@ class USXRenderer(
                     passage = node.passage,
                     notes = node.notes,
                     noteStyle = node.noteStyle,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    start = node.start,
+                    end = node.end
                 ))
                 is RenderNode.Paragraph -> {
                     val result = mutableListOf<TextNode>()

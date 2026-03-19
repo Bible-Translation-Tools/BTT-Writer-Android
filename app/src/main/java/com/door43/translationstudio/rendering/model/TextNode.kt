@@ -31,14 +31,20 @@ sealed class TextNode {
 
     // TODO: Consider adding a stable id/verseRef field here if NoteMarker needs to be
     //       serialised (e.g. SavedStateHandle, analytics). Currently all fields are display strings.
-    /** A note marker (footnote or cross-reference). highlighted=true when search matches. */
+    /**
+     * A note marker (footnote or cross-reference). highlighted=true when search matches.
+     * @param start Start position of the footnote in the original raw input text (-1 if unknown).
+     * @param end End position of the footnote in the original raw input text (-1 if unknown).
+     */
     data class NoteMarker(
         val caller: String,
         val passage: String,
         val notes: String,
         val noteStyle: NoteStyle,
         val highlighted: Boolean = false,
-        val machineReadable: String = ""
+        val machineReadable: String = "",
+        val start: Int = -1,
+        val end: Int = -1
     ) : TextNode()
 
     /** A paragraph break with optional indent. */

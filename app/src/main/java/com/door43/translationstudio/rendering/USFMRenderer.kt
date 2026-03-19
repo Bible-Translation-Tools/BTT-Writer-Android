@@ -135,6 +135,8 @@ class USFMRenderer(
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     machineReadable = node.machineReadable,
+                    start = node.start,
+                    end = node.end,
                     attributes = NodeAttributes(
                         searchHighlighted = node.highlighted
                     )
@@ -192,7 +194,9 @@ class USFMRenderer(
                     passage = node.passage,
                     notes = node.notes,
                     noteStyle = node.noteStyle,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    start = node.start,
+                    end = node.end
                 ))
                 is RenderNode.Paragraph -> {
                     val result = mutableListOf<TextNode>()
@@ -391,7 +395,9 @@ class USFMRenderer(
                                 notes = note.notes.toString(),
                                 noteStyle = style,
                                 highlighted = highlighted,
-                                machineReadable = matcher.group()  // Store original USFM footnote code
+                                machineReadable = matcher.group(),
+                                start = matcher.start(),
+                                end = matcher.end()
                             )
                         )
                     )
