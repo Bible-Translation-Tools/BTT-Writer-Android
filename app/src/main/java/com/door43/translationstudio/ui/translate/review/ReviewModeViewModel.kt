@@ -31,6 +31,7 @@ import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.TranslationHelp
+import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -47,6 +48,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.tools.logger.Logger
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -116,13 +118,16 @@ sealed interface ReviewAction : ModeAction {
     data class ToggleEdit(val item: ReviewItem) : ReviewAction
     data class ToggleDoneClicked(val item: ReviewItem) : ReviewAction
     data class ToggleDoneConfirmed(val confirm: Boolean) : ReviewAction
+    data class Undo(val item: ReviewItem) : ReviewAction
+    data class Redo(val item: ReviewItem) : ReviewAction
+    data class AddNoteClicked(val item: ReviewItem) : ReviewAction
     object ClearHelp : ReviewAction
     object CleanUrl : ReviewAction
 }
 
 class ReviewModeViewModel(
     sharedState: StateFlow<SharedState>,
-    snackBar: SendChannel<String>,
+    event: SendChannel<TargetEvent>,
     private val prefRepository: IPreferenceRepository,
     private val renderHelps: RenderHelps,
     private val renderingProvider: RenderingProvider,
@@ -130,7 +135,7 @@ class ReviewModeViewModel(
 ) : ModeViewModel<ReviewItem>(
     sharedState,
     TranslationViewMode.REVIEW,
-    snackBar
+    event
 ), KoinComponent {
 
     private val application: Application by inject()
@@ -179,6 +184,9 @@ class ReviewModeViewModel(
             is ReviewAction.ToggleDoneClicked -> toggleDoneClicked(action.item)
             is ReviewAction.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
             is ReviewAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
+            is ReviewAction.Undo -> onUndo(action.item)
+            is ReviewAction.Redo -> onRedo(action.item)
+            is ReviewAction.AddNoteClicked -> onAddNoteClicked(action.item)
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
@@ -186,7 +194,8 @@ class ReviewModeViewModel(
 
     private fun prepareItem(
         chunk: Chunk,
-        targetMode: TargetMode = TargetMode.MARKER
+        targetMode: TargetMode = TargetMode.MARKER,
+        loadHistory: Boolean = false
     ): ReviewItem {
         val (pt, ct, ft) = prepareTranslations(chunk)
         val (sourceText, renderedSourceText) = prepareSource(chunk)
@@ -208,11 +217,17 @@ class ReviewModeViewModel(
         val realTargetMode = if (item.isComplete) TargetMode.COMPLETE else targetMode
         val (targetText, renderedTargetText) = prepareTarget(chunk, realTargetMode)
 
-        return item.copy(
+        val finalItem = item.copy(
             targetText = targetText,
             renderedTargetText = renderedTargetText,
             targetMode = realTargetMode
         )
+
+        if (loadHistory) {
+            finalItem.fileHistory?.loadCommits()
+        }
+
+        return finalItem
     }
 
     private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {
@@ -460,11 +475,16 @@ class ReviewModeViewModel(
                     TargetMode.MARKER
                 } else TargetMode.EDIT
 
+                val loadHistory: Boolean
                 if (targetMode == TargetMode.MARKER) {
                     addMissingVerses(item)
                     item.chunk.target.commit()
+                    loadHistory = false
+                } else {
+                    loadHistory = true
                 }
-                updateItem(prepareItem(item.chunk, targetMode))
+                val updated = prepareItem(item.chunk, targetMode, loadHistory)
+                updateItem(updated)
             }
         }
     }
@@ -681,6 +701,98 @@ class ReviewModeViewModel(
         viewModelScope.launch {
             item.saveTranslation(text)
         }
+    }
+
+    private fun onUndo(item: ReviewItem) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                item.fileHistory?.let { history ->
+                    if (history.atHead) {
+                        if (!item.chunk.target.isClean) {
+                            try {
+                                item.chunk.target.commitSync()
+                                history.loadCommits()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                    history.previous?.let { commit ->
+                        var text: String? = null
+                        try {
+                            text = history.read(commit)
+                        } catch (e: IllegalStateException) {
+                            Logger.w(
+                                this@ReviewModeViewModel::class.simpleName,
+                                "Undo is past end of history for specific file",
+                                e
+                            )
+                            text = "" // graceful recovery
+                        } catch (e: Exception) {
+                            Logger.w(
+                                this@ReviewModeViewModel::class.simpleName,
+                                "Undo Read Exception",
+                                e
+                            )
+                        }
+
+                        if (text != null) {
+                            // TRICKY: prevent history from getting rolled back soon after the user views it
+                            restartAutoCommitTimer()
+                            item.saveTranslation(text)
+
+                            val updated = prepareItem(item.chunk, item.targetMode, true)
+                            updateItem(updated)
+
+                            //updateMergeConflict() TODO
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onRedo(item: ReviewItem) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                item.fileHistory?.let { history ->
+                    history.next?.let { commit ->
+                        var text: String? = null
+                        try {
+                            text = history.read(commit)
+                        } catch (e: IllegalStateException) {
+                            Logger.w(
+                                this@ReviewModeViewModel::class.simpleName,
+                                "Redo is past end of history for specific file",
+                                e
+                            )
+                            text = "" // graceful recovery
+                        } catch (e: Exception) {
+                            Logger.w(
+                                this@ReviewModeViewModel::class.simpleName,
+                                "Redo Read Exception",
+                                e
+                            )
+                        }
+
+                        if (text != null) {
+                            // TRICKY: prevent history from getting rolled back soon after the user views it
+                            restartAutoCommitTimer()
+                            item.saveTranslation(text)
+
+                            val updated = prepareItem(item.chunk, item.targetMode, true)
+                            updateItem(updated)
+
+                            //updateMergeConflict() TODO
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onAddNoteClicked(item: ReviewItem) {
+
     }
 
     private fun getClosestResourceContainer(

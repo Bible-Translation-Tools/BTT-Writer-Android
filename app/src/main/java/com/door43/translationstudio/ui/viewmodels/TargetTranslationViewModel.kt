@@ -74,6 +74,11 @@ sealed interface TargetAction {
     data class ConfirmSelectedSources(val selectedItems: List<RCItem>) : TargetAction
 }
 
+sealed interface TargetEvent {
+    data class ShowMessage(val message: String) : TargetEvent
+    object RestartAutoCommitTimer : TargetEvent
+}
+
 class TargetTranslationViewModel(
     private val translator: Translator,
     private val library: Door43Client,
@@ -93,9 +98,9 @@ class TargetTranslationViewModel(
     private val _state = MutableStateFlow(TargetTranslationState())
     val state: StateFlow<TargetTranslationState> = _state.asStateFlow()
 
-    private val _snackBar = Channel<String>(Channel.BUFFERED)
-    val snackBar = _snackBar.receiveAsFlow()
-    val snackBarSender: SendChannel<String> = _snackBar
+    private val _event = Channel<TargetEvent>(Channel.BUFFERED)
+    val event = _event.receiveAsFlow()
+    val eventSender: SendChannel<TargetEvent> = _event
 
     val sharedStateFlow: StateFlow<SharedState> = state
         .map { SharedState(it.items, it.resourceContainer, it.viewMode) }

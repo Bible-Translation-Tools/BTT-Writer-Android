@@ -236,8 +236,12 @@ class TargetTranslationActivity : BaseActivity(),
                     onSearch = {},
                     onChunksDone = {},
                     onSettings = {
-                        startActivity(Intent(this@TargetTranslationActivity, SettingsActivity::class.java))
+                        startActivity(Intent(
+                            this@TargetTranslationActivity,
+                            SettingsActivity::class.java
+                        ))
                     },
+                    onRestartAutoCommitTimer = ::restartAutoCommitTimer
                 )
             }
         }

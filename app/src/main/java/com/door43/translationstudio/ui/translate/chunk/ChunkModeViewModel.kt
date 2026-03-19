@@ -3,18 +3,19 @@ package com.door43.translationstudio.ui.translate.chunk
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
-import com.door43.translationstudio.core.TranslationViewMode
-import kotlinx.coroutines.channels.SendChannel
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ModeAction
-import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
+import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.Swipable
+import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -32,8 +33,8 @@ sealed interface ChunkAction : ModeAction {
 
 class ChunkModeViewModel(
     sharedState: StateFlow<SharedState>,
-    snackBar: SendChannel<String>
-) : ModeViewModel<ChunkItem>(sharedState, TranslationViewMode.CHUNK, snackBar) {
+    event: SendChannel<TargetEvent>
+) : ModeViewModel<ChunkItem>(sharedState, TranslationViewMode.CHUNK, event) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state

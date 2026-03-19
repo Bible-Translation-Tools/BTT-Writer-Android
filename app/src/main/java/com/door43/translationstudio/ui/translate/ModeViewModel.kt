@@ -14,6 +14,7 @@ import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
+import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,14 +47,18 @@ data class SharedState(
 abstract class ModeViewModel<ITEM: TranslateItem>(
     protected val sharedState: StateFlow<SharedState>,
     private val viewMode: TranslationViewMode,
-    private val snackBar: SendChannel<String>
+    private val event: SendChannel<TargetEvent>
 ) : ViewModel(), KoinComponent {
 
     private val _footnote = MutableStateFlow<Footnote?>(null)
     val footnote: StateFlow<Footnote?> = _footnote.asStateFlow()
 
     protected fun showSnackBar(message: String) {
-        snackBar.trySend(message)
+        event.trySend(TargetEvent.ShowMessage(message))
+    }
+
+    protected fun restartAutoCommitTimer() {
+        event.trySend(TargetEvent.RestartAutoCommitTimer)
     }
 
     protected val _items = MutableStateFlow<List<ITEM>>(emptyList())

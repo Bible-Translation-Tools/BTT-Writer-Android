@@ -14,6 +14,7 @@ import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
 import com.door43.translationstudio.ui.translate.Swipable
+import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -29,8 +30,8 @@ sealed interface ReadAction : ModeAction
 
 class ReadModeViewModel(
     sharedState: StateFlow<SharedState>,
-    snackBar: SendChannel<String>
-) : ModeViewModel<ReadItem>(sharedState, TranslationViewMode.READ, snackBar) {
+    event: SendChannel<TargetEvent>
+) : ModeViewModel<ReadItem>(sharedState, TranslationViewMode.READ, event) {
 
     private val _state = MutableStateFlow(ReadState)
     val state: StateFlow<ReadState> = _state

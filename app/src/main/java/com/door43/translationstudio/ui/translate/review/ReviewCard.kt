@@ -40,6 +40,9 @@ fun ReviewCard(
     onHelpClick: (HelpItem) -> Unit,
     onEditToggle: () -> Unit,
     onDoneToggle: (Boolean) -> Unit,
+    onUndoClick: () -> Unit,
+    onRedoClick: () -> Unit,
+    onAddNoteClick: () -> Unit,
     onExpandedChange: (Boolean) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
@@ -98,6 +101,9 @@ fun ReviewCard(
             onEditToggle = onEditToggle,
             onDoneToggle = onDoneToggle,
             onTextChange = onTextChange,
+            onUndoClick = onUndoClick,
+            onRedoClick = onRedoClick,
+            onAddNoteClick = onAddNoteClick,
             modifier = Modifier.weight(mainWeight)
                 .fillMaxHeight()
         )

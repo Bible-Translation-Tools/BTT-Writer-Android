@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.translate
 import androidx.compose.ui.text.AnnotatedString
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.Chunk
+import com.door43.translationstudio.core.FileHistory
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -123,6 +124,9 @@ abstract class TranslateItem {
             ?.get(chunk.chapterSlug) as? Map<*, *>)
             ?.get(chunk.chunkSlug) as? ChunkConfig
             ?: emptyMap()
+
+    val hasMergeConflicts: Boolean
+        get() = MergeConflictsHandler.isMergeConflicted(targetText)
 
     fun saveTranslation(text: String) {
         if (isProjectTitle) {
@@ -263,7 +267,16 @@ data class ReviewItem(
     override val ft: FrameTranslation,
     val helps: Map<String, Any> = emptyMap(),
     val targetMode: TargetMode
-) : TranslateItem()
+) : TranslateItem() {
+
+    val fileHistory: FileHistory? = when {
+        isChapterReference -> chunk.target.getChapterReferenceHistory(ct)
+        isChapterTitle -> chunk.target.getChapterTitleHistory(ct)
+        isProjectTitle -> chunk.target.projectTitleHistory
+        isChunk -> chunk.target.getFrameHistory(ft)
+        else -> null
+    }
+}
 
 private fun removeConflicts(text: String): String {
     if (MergeConflictsHandler.isMergeConflicted(text)) {

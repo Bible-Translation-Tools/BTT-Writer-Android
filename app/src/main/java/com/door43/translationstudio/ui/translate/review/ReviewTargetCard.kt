@@ -55,7 +55,10 @@ fun ReviewTargetCard(
     modifier: Modifier = Modifier,
     onEditToggle: () -> Unit,
     onDoneToggle: (Boolean) -> Unit,
-    onTextChange: (String) -> Unit
+    onTextChange: (String) -> Unit,
+    onUndoClick: () -> Unit,
+    onRedoClick: () -> Unit,
+    onAddNoteClick: () -> Unit
 ) {
     val currentItem by rememberUpdatedState(item)
 
@@ -152,21 +155,28 @@ fun ReviewTargetCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (currentItem.targetMode == TargetMode.EDIT) {
-                        IconButton(onClick = /*onUndoClick*/{}) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Undo,
-                                contentDescription = "Undo",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+
+                        if (currentItem.fileHistory?.hasPrevious == true) {
+                            IconButton(onClick = onUndoClick) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Undo,
+                                    contentDescription = "Undo",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                        IconButton(onClick = /*onRedoClick*/{}) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Redo,
-                                contentDescription = "Redo",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+
+                        if (currentItem.fileHistory?.hasNext == true) {
+                            IconButton(onClick = onRedoClick) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Redo,
+                                    contentDescription = "Redo",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                        IconButton(onClick = /*onAddNoteClick*/{}) {
+
+                        IconButton(onClick = onAddNoteClick) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.NoteAdd,
                                 contentDescription = "Add note",

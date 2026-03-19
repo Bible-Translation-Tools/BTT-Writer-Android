@@ -66,6 +66,7 @@ import com.door43.translationstudio.ui.translate.review.ReviewCard
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
 import com.door43.translationstudio.ui.translate.review.WordsCard
 import com.door43.translationstudio.ui.viewmodels.TargetAction
+import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.flow.first
@@ -85,7 +86,8 @@ fun TargetTranslationScreen(
     onFeedback: () -> Unit,
     onSearch: () -> Unit,
     onChunksDone: () -> Unit,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    onRestartAutoCommitTimer: () -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -286,8 +288,16 @@ fun TargetTranslationScreen(
     }
 
     LaunchedEffect(viewModel) {
-        viewModel.snackBar.collect {
-            snackBarHostState.showSnackbar(it)
+        viewModel.event.collect { event ->
+            when (event) {
+                is TargetEvent.ShowMessage -> {
+                    snackBarHostState.showSnackbar(event.message)
+                }
+                TargetEvent.RestartAutoCommitTimer -> {
+                    onRestartAutoCommitTimer()
+                }
+            }
+
         }
     }
 
@@ -377,7 +387,7 @@ fun TargetTranslationScreen(
                     when (state.viewMode) {
                         TranslationViewMode.READ -> {
                             val readVm: ReadModeViewModel = koinViewModel {
-                                parametersOf(viewModel.sharedStateFlow, viewModel.snackBarSender)
+                                parametersOf(viewModel.sharedStateFlow, viewModel.eventSender)
                             }
                             val readState by readVm.state.collectAsStateWithLifecycle()
 
@@ -415,7 +425,7 @@ fun TargetTranslationScreen(
                         }
                         TranslationViewMode.CHUNK -> {
                             val chunkVm: ChunkModeViewModel = koinViewModel {
-                                parametersOf(viewModel.sharedStateFlow, viewModel.snackBarSender)
+                                parametersOf(viewModel.sharedStateFlow, viewModel.eventSender)
                             }
                             val chunkState by chunkVm.state.collectAsStateWithLifecycle()
 
@@ -457,7 +467,7 @@ fun TargetTranslationScreen(
                             val reviewVm: ReviewModeViewModel = koinViewModel {
                                 parametersOf(
                                     viewModel.sharedStateFlow,
-                                    viewModel.snackBarSender
+                                    viewModel.eventSender
                                 )
                             }
                             val reviewState by reviewVm.state.collectAsStateWithLifecycle()
@@ -502,6 +512,15 @@ fun TargetTranslationScreen(
                                         },
                                         onDoneToggle = {
                                             reviewVm.onAction(ReviewAction.ToggleDoneClicked(item))
+                                        },
+                                        onUndoClick = {
+                                            reviewVm.onAction(ReviewAction.Undo(item))
+                                        },
+                                        onRedoClick = {
+                                            reviewVm.onAction(ReviewAction.Redo(item))
+                                        },
+                                        onAddNoteClick = {
+                                            reviewVm.onAction(ReviewAction.AddNoteClicked(item))
                                         },
                                         modifier = Modifier.padding(start = 16.dp)
                                     )
