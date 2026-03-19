@@ -42,7 +42,7 @@ sealed class HelpItem {
         override val title = data.title
     }
     data class Word(val data: Link, val rcSlug: String) : HelpItem() {
-        override val title: String = data.title
+        override val title: String = data.title ?: ""
     }
     data class Question(val data: TranslationHelp) : HelpItem() {
         override val title = data.title
