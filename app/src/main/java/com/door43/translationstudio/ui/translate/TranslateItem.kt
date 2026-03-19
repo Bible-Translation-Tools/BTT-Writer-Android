@@ -266,17 +266,9 @@ data class ReviewItem(
     override val ct: ChapterTranslation,
     override val ft: FrameTranslation,
     val helps: Map<String, Any> = emptyMap(),
-    val targetMode: TargetMode
-) : TranslateItem() {
-
-    val fileHistory: FileHistory? = when {
-        isChapterReference -> chunk.target.getChapterReferenceHistory(ct)
-        isChapterTitle -> chunk.target.getChapterTitleHistory(ct)
-        isProjectTitle -> chunk.target.projectTitleHistory
-        isChunk -> chunk.target.getFrameHistory(ft)
-        else -> null
-    }
-}
+    val targetMode: TargetMode,
+    val fileHistory: FileHistory? = null
+) : TranslateItem()
 
 private fun removeConflicts(text: String): String {
     if (MergeConflictsHandler.isMergeConflicted(text)) {

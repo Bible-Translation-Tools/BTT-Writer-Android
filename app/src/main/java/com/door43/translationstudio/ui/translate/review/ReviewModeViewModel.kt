@@ -9,6 +9,7 @@ import com.door43.data.setDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
+import com.door43.translationstudio.core.FileHistory
 import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
@@ -217,17 +218,16 @@ class ReviewModeViewModel(
         val realTargetMode = if (item.isComplete) TargetMode.COMPLETE else targetMode
         val (targetText, renderedTargetText) = prepareTarget(chunk, realTargetMode)
 
-        val finalItem = item.copy(
+        val history = if (loadHistory) {
+            createFileHistory(item)?.also { it.loadCommits() }
+        } else null
+
+        return item.copy(
             targetText = targetText,
             renderedTargetText = renderedTargetText,
-            targetMode = realTargetMode
+            targetMode = realTargetMode,
+            fileHistory = history
         )
-
-        if (loadHistory) {
-            finalItem.fileHistory?.loadCommits()
-        }
-
-        return finalItem
     }
 
     private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {
@@ -741,10 +741,16 @@ class ReviewModeViewModel(
                             restartAutoCommitTimer()
                             item.saveTranslation(text)
 
-                            val updated = prepareItem(item.chunk, item.targetMode, true)
-                            updateItem(updated)
-
-                            //updateMergeConflict() TODO
+                            val rendered = renderTargetText(
+                                item.chunk.targetTranslationFormat,
+                                text,
+                                VerseDisplay.RAW
+                            )
+                            updateItem(item.copy(
+                                targetText = text,
+                                renderedTargetText = rendered
+                            ))
+                            //updateMergeConflict() TODO Don't remove
                         }
                     }
                 }
@@ -780,10 +786,16 @@ class ReviewModeViewModel(
                             restartAutoCommitTimer()
                             item.saveTranslation(text)
 
-                            val updated = prepareItem(item.chunk, item.targetMode, true)
-                            updateItem(updated)
-
-                            //updateMergeConflict() TODO
+                            val rendered = renderTargetText(
+                                item.chunk.targetTranslationFormat,
+                                text,
+                                VerseDisplay.RAW
+                            )
+                            updateItem(item.copy(
+                                targetText = text,
+                                renderedTargetText = rendered
+                            ))
+                            //updateMergeConflict() TODO Don't remove
                         }
                     }
                 }
@@ -793,6 +805,16 @@ class ReviewModeViewModel(
 
     private fun onAddNoteClicked(item: ReviewItem) {
 
+    }
+
+    private fun createFileHistory(item: ReviewItem): FileHistory? {
+        return when {
+            item.isChapterReference -> item.chunk.target.getChapterReferenceHistory(item.ct)
+            item.isChapterTitle -> item.chunk.target.getChapterTitleHistory(item.ct)
+            item.isProjectTitle -> item.chunk.target.projectTitleHistory
+            item.isChunk -> item.chunk.target.getFrameHistory(item.ft)
+            else -> null
+        }
     }
 
     private fun getClosestResourceContainer(
