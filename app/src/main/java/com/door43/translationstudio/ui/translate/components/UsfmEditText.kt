@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -72,7 +71,6 @@ fun UsfmEditText(
     var lastEmittedText by remember { mutableStateOf(text) }
 
     val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     // Icon rendering setup
     val iconPainter = rememberVectorPainter(Icons.Default.Description)
@@ -122,7 +120,6 @@ fun UsfmEditText(
             delay(300)
             focusRequester.requestFocus()
             delay(100)
-            keyboardController?.show()
             onFocusConsumed()
         }
     }
