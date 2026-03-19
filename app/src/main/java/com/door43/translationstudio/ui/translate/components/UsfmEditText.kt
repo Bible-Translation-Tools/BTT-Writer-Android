@@ -63,8 +63,11 @@ fun UsfmEditText(
 
     val textFieldState = remember { TextFieldState(text) }
 
-    val currentRawText by rememberUpdatedState(text)
-    val currentOnRawTextChange by rememberUpdatedState(onTextChange)
+    val currentOnTextChange by rememberUpdatedState(onTextChange)
+
+    // Track the last value we emitted to the parent, so we can distinguish
+    // "parent echoing our value back" from "parent changed text externally"
+    var lastEmittedText by remember { mutableStateOf(text) }
 
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -80,13 +83,15 @@ fun UsfmEditText(
         RawUsfmClipboard(platformClipboard, textFieldState)
     }
 
-    // Sync external rawText into TextFieldState
+    // Sync external text into TextFieldState only for genuine external changes
+    // (e.g., footnote dialog, undo from viewmodel), not echoed-back values from our own edits
     LaunchedEffect(text) {
-        if (textFieldState.text.toString() != text) {
+        if (text != lastEmittedText && textFieldState.text.toString() != text) {
             textFieldState.edit {
                 replace(0, length, text)
             }
         }
+        lastEmittedText = text
     }
 
     // Observe TextFieldState changes and notify parent
@@ -95,9 +100,8 @@ fun UsfmEditText(
             .distinctUntilChanged()
             .debounce(500L)
             .collect { newRaw ->
-                if (newRaw != currentRawText) {
-                    currentOnRawTextChange(newRaw)
-                }
+                lastEmittedText = newRaw
+                currentOnTextChange(newRaw)
             }
     }
 
