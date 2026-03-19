@@ -26,7 +26,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.ChunkItem
-import com.door43.translationstudio.ui.translate.components.RichEditText
+import com.door43.translationstudio.ui.translate.components.UsfmEditText
 
 
 @Composable
@@ -81,9 +81,9 @@ fun ChunkTargetCard(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                RichEditText(
-                    rawText = item.targetText,
-                    onRawTextChange = {
+                UsfmEditText(
+                    text = item.targetText,
+                    onTextChange = {
                         onTextChange(it)
                     },
                     textStyle = bodyStyle,

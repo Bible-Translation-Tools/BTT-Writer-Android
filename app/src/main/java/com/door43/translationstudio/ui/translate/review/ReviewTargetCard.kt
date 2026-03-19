@@ -46,7 +46,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.ReviewItem
-import com.door43.translationstudio.ui.translate.components.RichEditText
+import com.door43.translationstudio.ui.translate.components.UsfmEditText
 
 @Composable
 fun ReviewTargetCard(
@@ -199,9 +199,9 @@ fun ReviewTargetCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (currentItem.targetMode == TargetMode.EDIT) {
-                    RichEditText(
-                        rawText = currentItem.targetText,
-                        onRawTextChange = {
+                    UsfmEditText(
+                        text = currentItem.targetText,
+                        onTextChange = {
                             onTextChange(it)
                         },
                         shouldFocus = true,

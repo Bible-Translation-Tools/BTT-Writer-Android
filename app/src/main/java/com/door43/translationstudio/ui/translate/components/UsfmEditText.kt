@@ -28,8 +28,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -37,7 +37,6 @@ import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import com.door43.translationstudio.ui.translate.components.footnote.FootnoteInputTransformation
 import com.door43.translationstudio.ui.translate.components.footnote.FootnoteOutputTransformation
 import com.door43.translationstudio.ui.translate.components.footnote.OBJ_CHAR
 import com.door43.translationstudio.ui.translate.components.footnote.visualToRaw
@@ -48,9 +47,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(FlowPreview::class)
 @Composable
-fun RichEditText(
-    rawText: String,
-    onRawTextChange: (String) -> Unit,
+fun UsfmEditText(
+    text: String,
+    onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     shouldFocus: Boolean = false,
     onFocusConsumed: () -> Unit = {},
@@ -62,11 +61,10 @@ fun RichEditText(
     val fontSizePx = with(density) { textStyle.fontSize.toPx() }
     val lineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
 
-    val textFieldState = remember { TextFieldState(rawText) }
-    val footnoteInputTransformation = remember { FootnoteInputTransformation() }
+    val textFieldState = remember { TextFieldState(text) }
 
-    val currentRawText by rememberUpdatedState(rawText)
-    val currentOnRawTextChange by rememberUpdatedState(onRawTextChange)
+    val currentRawText by rememberUpdatedState(text)
+    val currentOnRawTextChange by rememberUpdatedState(onTextChange)
 
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -83,10 +81,10 @@ fun RichEditText(
     }
 
     // Sync external rawText into TextFieldState
-    LaunchedEffect(rawText) {
-        if (textFieldState.text.toString() != rawText) {
+    LaunchedEffect(text) {
+        if (textFieldState.text.toString() != text) {
             textFieldState.edit {
-                replace(0, length, rawText)
+                replace(0, length, text)
             }
         }
     }
@@ -117,7 +115,6 @@ fun RichEditText(
     CompositionLocalProvider(LocalClipboard provides rawClipboard) {
         BasicTextField(
             state = textFieldState,
-            inputTransformation = footnoteInputTransformation,
             outputTransformation = FootnoteOutputTransformation,
             textStyle = textStyle,
             cursorBrush = SolidColor(textStyle.color),
