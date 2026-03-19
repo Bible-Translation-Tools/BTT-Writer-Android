@@ -3,21 +3,21 @@ package com.door43.translationstudio.ui.translate.read
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
-import com.door43.translationstudio.core.TranslationViewMode
-import kotlinx.coroutines.channels.SendChannel
 import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.translate.ModeAction
-import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
+import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.Swipable
 import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -75,7 +75,11 @@ class ReadModeViewModel(
 
     private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {
         val sourceText = fetchSourceText(chunk.source, chunk.chapterSlug)
-        val renderedSourceText = renderSourceText(chunk.sourceTranslationFormat, sourceText)
+        val renderedSourceText = renderSourceText(
+            chunkId = chunk.chapterSlug,
+            translationFormat = chunk.sourceTranslationFormat,
+            sourceText = sourceText
+        )
 
         return sourceText to renderedSourceText
     }
@@ -83,9 +87,11 @@ class ReadModeViewModel(
     private fun prepareTarget(chunk: Chunk): Pair<String, AnnotatedString> {
         val targetText = fetchTargetText(chunk.source, chunk.target, chunk.chapterSlug)
         val renderedTargetText = renderTargetText(
-            chunk.targetTranslationFormat,
-            targetText,
-            VerseDisplay.NUMBER
+            chunkId = chunk.chapterSlug,
+            translationFormat = chunk.targetTranslationFormat,
+            targetText = targetText,
+            verseDisplay = VerseDisplay.NUMBER,
+            footnoteEditable = false
         )
 
         return targetText to renderedTargetText

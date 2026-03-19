@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.unfoldingword.resourcecontainer.ResourceContainer
@@ -28,14 +29,25 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 data class Footnote(
     val text: String,
     val start: Int,
-    val end: Int
+    val end: Int,
+    val chunkId: String,
+    val editable: Boolean
 )
 
 interface ModeState
 
+data class LocalModeState(
+    val footnote: Footnote? = null,
+    val footnoteToEdit: Footnote? = null
+) : ModeState
+
 interface ModeAction {
-    object ClearNotes : ModeAction
     data class CardsSwiped(val item: Swipable, val sourceOnTop: Boolean) : ModeAction
+    data class DeleteNote(val note: Footnote) : ModeAction
+    data class OpenFootnoteEditor(val note: Footnote) : ModeAction
+    data class SaveFootnote(val note: Footnote) : ModeAction
+    object ClearFootnote : ModeAction
+    object ClearFootnoteToEdit : ModeAction
 }
 
 data class SharedState(
@@ -50,8 +62,8 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     private val event: SendChannel<TargetEvent>
 ) : ViewModel(), KoinComponent {
 
-    private val _footnote = MutableStateFlow<Footnote?>(null)
-    val footnote: StateFlow<Footnote?> = _footnote.asStateFlow()
+    private val _modeState = MutableStateFlow(LocalModeState())
+    val modeState: StateFlow<LocalModeState> = _modeState.asStateFlow()
 
     protected fun showSnackBar(message: String) {
         event.trySend(TargetEvent.ShowMessage(message))
@@ -86,7 +98,13 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     open fun onAction(action: ModeAction) {
         when (action) {
             is ModeAction.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
-            ModeAction.ClearNotes -> { _footnote.value = null }
+            is ModeAction.DeleteNote -> onDeleteFootnote(action.note)
+            is ModeAction.OpenFootnoteEditor -> onOpenFootnoteEditor(action.note)
+            is ModeAction.SaveFootnote -> onSaveFootnote(action.note)
+            ModeAction.ClearFootnote -> { _modeState.update { it.copy(footnote = null) } }
+            ModeAction.ClearFootnoteToEdit -> {
+                _modeState.update { it.copy(footnoteToEdit = null) }
+            }
         }
     }
 
@@ -94,6 +112,14 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
         _items.value = _items.value.map {
             if (it.id == item.id) item else it
         }
+    }
+
+    fun showFootnoteViewer(note: Footnote) {
+        _modeState.update { it.copy(footnote = note) }
+    }
+
+    fun showFootnoteEditor(note: Footnote) {
+        _modeState.update { it.copy(footnoteToEdit = note) }
     }
 
     protected fun prepareTranslations(
@@ -110,6 +136,7 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     }
 
     protected fun renderSourceText(
+        chunkId: String,
         translationFormat: TranslationFormat,
         sourceText: String
     ): AnnotatedString {
@@ -117,14 +144,25 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
             val renderingGroup = RenderingGroup()
             renderingGroup.init(sourceText)
             RenderingProvider().setupRenderingGroup(
-                translationFormat, renderingGroup, verseDisplay = VerseDisplay.NUMBER, target = false
+                format = translationFormat,
+                renderingGroup = renderingGroup,
+                verseDisplay = VerseDisplay.NUMBER,
+                target = false
             )
             val renderNodes = renderingGroup.startNodes()
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             ComposeTextAdapter.convert(
                 textNodes,
                 onNoteClick = { notes, start, end ->
-                    _footnote.value = Footnote(notes.notes, start, end)
+                    _modeState.update {
+                        it.copy(footnote = Footnote(
+                            text = notes.notes,
+                            start = start,
+                            end = end,
+                            chunkId = chunkId,
+                            editable = false
+                        ))
+                    }
                 }
             )
         } catch (_: Exception) {
@@ -133,9 +171,11 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     }
 
     protected fun renderTargetText(
+        chunkId: String,
         translationFormat: TranslationFormat,
         targetText: String,
-        verseDisplay: VerseDisplay = VerseDisplay.RAW
+        verseDisplay: VerseDisplay = VerseDisplay.RAW,
+        footnoteEditable: Boolean
     ): AnnotatedString {
         return try {
             val renderingGroup = RenderingGroup()
@@ -149,9 +189,17 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
             val renderNodes = renderingGroup.startNodes()
             val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             ComposeTextAdapter.convert(
-                textNodes,
+                nodes = textNodes,
                 onNoteClick = { notes, start, end ->
-                    _footnote.value = Footnote(notes.notes, start, end)
+                    _modeState.update {
+                        it.copy(footnote = Footnote(
+                            text = notes.notes,
+                            start = start,
+                            end = end,
+                            chunkId = chunkId,
+                            editable = footnoteEditable
+                        ))
+                    }
                 },
                 onVerseClick = {
                     println(it)
@@ -163,4 +211,15 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     }
 
     protected open fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {}
+
+    protected open fun onDeleteFootnote(note: Footnote) {
+        _modeState.update { it.copy(footnote = null) }
+    }
+    protected open fun onOpenFootnoteEditor(note: Footnote) {
+        _modeState.update { it.copy(footnote = null) }
+    }
+
+    protected open fun onSaveFootnote(note: Footnote) {
+        _modeState.update { it.copy(footnoteToEdit = null) }
+    }
 }

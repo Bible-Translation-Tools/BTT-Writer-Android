@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
@@ -66,12 +67,14 @@ class ChunkModeViewModel(
     }
 
     private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem {
-        val (sourceText, renderedSourceText) = prepareSource(chunk)
-        val (targetText, renderedTargetText) = prepareTarget(chunk)
+        val chunkId = "${chunk.chapterSlug}-${chunk.chunkSlug}"
+
+        val (sourceText, renderedSourceText) = prepareSource(chunkId, chunk)
+        val (targetText, renderedTargetText) = prepareTarget(chunkId, chunk)
         val (pt, ct, ft) = prepareTranslations(chunk)
 
         return ChunkItem(
-            id  = "${chunk.chapterSlug}-${chunk.chunkSlug}",
+            id  = chunkId,
             chunk = chunk,
             sourceText = sourceText,
             targetText = targetText,
@@ -84,14 +87,24 @@ class ChunkModeViewModel(
         )
     }
 
-    private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {
+    private fun prepareSource(chunkId: String, chunk: Chunk): Pair<String, AnnotatedString> {
         val text = chunk.source.readChunk(chunk.chapterSlug, chunk.chunkSlug)
-        return text to renderSourceText(chunk.sourceTranslationFormat, text)
+        return text to renderSourceText(
+            chunkId = chunkId,
+            translationFormat = chunk.sourceTranslationFormat,
+            sourceText = text
+        )
     }
 
-    private fun prepareTarget(chunk: Chunk): Pair<String, AnnotatedString> {
+    private fun prepareTarget(chunkId: String, chunk: Chunk): Pair<String, AnnotatedString> {
         val text = fetchTargetText(chunk.target, chunk.chapterSlug, chunk.chunkSlug)
-        return text to renderTargetText(chunk.targetTranslationFormat, text)
+        return text to renderTargetText(
+            chunkId = chunkId,
+            translationFormat = chunk.targetTranslationFormat,
+            targetText = text,
+            verseDisplay = VerseDisplay.RAW,
+            footnoteEditable = false
+        )
     }
 
     private fun fetchTargetText(

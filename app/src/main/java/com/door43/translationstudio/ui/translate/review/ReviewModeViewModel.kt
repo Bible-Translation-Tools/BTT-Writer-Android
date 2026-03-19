@@ -25,6 +25,7 @@ import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
+import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
@@ -199,11 +200,12 @@ class ReviewModeViewModel(
         targetMode: TargetMode = TargetMode.MARKER,
         loadHistory: Boolean = false
     ): ReviewItem {
+        val chunkId = "${chunk.chapterSlug}-${chunk.chunkSlug}"
         val (pt, ct, ft) = prepareTranslations(chunk)
-        val (sourceText, renderedSourceText) = prepareSource(chunk)
+        val (sourceText, renderedSourceText) = prepareSource(chunkId, chunk)
 
         val item = ReviewItem(
-            id  = "${chunk.chapterSlug}-${chunk.chunkSlug}",
+            id = chunkId,
             chunk = chunk,
             sourceText = sourceText,
             targetText = "",
@@ -217,7 +219,7 @@ class ReviewModeViewModel(
 
         // Chunk completion status overrides target mode
         val realTargetMode = if (item.isComplete) TargetMode.COMPLETE else targetMode
-        val (targetText, renderedTargetText) = prepareTarget(chunk, realTargetMode)
+        val (targetText, renderedTargetText) = prepareTarget(chunkId, chunk, realTargetMode)
 
         val history = if (loadHistory) {
             createFileHistory(item)?.also { it.loadCommits() }
@@ -231,12 +233,13 @@ class ReviewModeViewModel(
         )
     }
 
-    private fun prepareSource(chunk: Chunk): Pair<String, AnnotatedString> {
+    private fun prepareSource(chunkId: String, chunk: Chunk): Pair<String, AnnotatedString> {
         val text = chunk.source.readChunk(chunk.chapterSlug, chunk.chunkSlug)
-        return text to renderSourceText(chunk.sourceTranslationFormat, text)
+        return text to renderSourceText(chunkId, chunk.sourceTranslationFormat, text)
     }
 
     private fun prepareTarget(
+        chunkId: String,
         chunk: Chunk,
         targetMode: TargetMode
     ): Pair<String, AnnotatedString> {
@@ -247,9 +250,11 @@ class ReviewModeViewModel(
             TargetMode.COMPLETE -> VerseDisplay.NUMBER
         }
         return text to renderTargetText(
+            chunkId = chunkId,
             translationFormat = chunk.targetTranslationFormat,
             targetText = text,
-            verseDisplay = verseDisplay
+            verseDisplay = verseDisplay,
+            footnoteEditable = targetMode != TargetMode.COMPLETE
         )
     }
 
@@ -357,11 +362,7 @@ class ReviewModeViewModel(
 
         val sourceRC = sourceContainer
         val closestRc = sourceRC?.let { rc ->
-            getClosestResourceContainer(
-                rc.language.slug,
-                "bible",
-                "tw"
-            )
+            getClosestTwRc(rc.language.slug)
         }
 
         val renderer = renderingProvider.createHtmlRenderer { span ->
@@ -753,9 +754,11 @@ class ReviewModeViewModel(
                 item.saveTranslation(text)
 
                 val rendered = renderTargetText(
-                    item.chunk.targetTranslationFormat,
-                    text,
-                    VerseDisplay.RAW
+                    chunkId = item.id,
+                    translationFormat = item.chunk.targetTranslationFormat,
+                    targetText = text,
+                    verseDisplay = VerseDisplay.RAW,
+                    footnoteEditable = true
                 )
                 updateItem(item.copy(
                     targetText = text,
@@ -767,7 +770,15 @@ class ReviewModeViewModel(
     }
 
     private fun onAddNoteClicked(item: ReviewItem) {
-
+        showFootnoteEditor(
+            Footnote(
+                text = "",
+                start = 0,
+                end = 0,
+                chunkId = item.id,
+                editable = true
+            )
+        )
     }
 
     private fun createFileHistory(item: ReviewItem): FileHistory? {
@@ -780,12 +791,28 @@ class ReviewModeViewModel(
         }
     }
 
-    private fun getClosestResourceContainer(
-        languageSlug: String,
-        projectSlug: String,
-        resourceSlug: String
-    ): ResourceContainer? {
-        return ContainerCache.cacheClosest(library, languageSlug, projectSlug, resourceSlug)
+    override fun onDeleteFootnote(note: Footnote) {
+        super.onDeleteFootnote(note)
+        println(note)
+    }
+
+    override fun onOpenFootnoteEditor(note: Footnote) {
+        super.onOpenFootnoteEditor(note)
+        showFootnoteEditor(note)
+    }
+
+    override fun onSaveFootnote(note: Footnote) {
+        super.onSaveFootnote(note)
+        println(note)
+    }
+
+    private fun getClosestTwRc(languageSlug: String): ResourceContainer? {
+        return ContainerCache.cacheClosest(
+            library,
+            languageSlug,
+            "bible",
+            "tw"
+        )
     }
 
     private fun getResourceContainer(slug: String): ResourceContainer? {
