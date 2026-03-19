@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.eclipse.jgit.revwalk.RevCommit
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
@@ -704,101 +705,63 @@ class ReviewModeViewModel(
     }
 
     private fun onUndo(item: ReviewItem) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                item.fileHistory?.let { history ->
-                    if (history.atHead) {
-                        if (!item.chunk.target.isClean) {
-                            try {
-                                item.chunk.target.commitSync()
-                                history.loadCommits()
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                    }
-                    history.previous?.let { commit ->
-                        var text: String? = null
-                        try {
-                            text = history.read(commit)
-                        } catch (e: IllegalStateException) {
-                            Logger.w(
-                                this@ReviewModeViewModel::class.simpleName,
-                                "Undo is past end of history for specific file",
-                                e
-                            )
-                            text = "" // graceful recovery
-                        } catch (e: Exception) {
-                            Logger.w(
-                                this@ReviewModeViewModel::class.simpleName,
-                                "Undo Read Exception",
-                                e
-                            )
-                        }
-
-                        if (text != null) {
-                            // TRICKY: prevent history from getting rolled back soon after the user views it
-                            restartAutoCommitTimer()
-                            item.saveTranslation(text)
-
-                            val rendered = renderTargetText(
-                                item.chunk.targetTranslationFormat,
-                                text,
-                                VerseDisplay.RAW
-                            )
-                            updateItem(item.copy(
-                                targetText = text,
-                                renderedTargetText = rendered
-                            ))
-                            //updateMergeConflict() TODO Don't remove
-                        }
-                    }
+        navigateHistory(item) { history ->
+            if (history.atHead && !item.chunk.target.isClean) {
+                try {
+                    item.chunk.target.commitSync()
+                    history.loadCommits()
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
+            history.previous
         }
     }
 
     private fun onRedo(item: ReviewItem) {
+        navigateHistory(item) { it.next }
+    }
+
+    private fun navigateHistory(
+        item: ReviewItem,
+        navigate: (FileHistory) -> RevCommit?
+    ) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                item.fileHistory?.let { history ->
-                    history.next?.let { commit ->
-                        var text: String? = null
-                        try {
-                            text = history.read(commit)
-                        } catch (e: IllegalStateException) {
-                            Logger.w(
-                                this@ReviewModeViewModel::class.simpleName,
-                                "Redo is past end of history for specific file",
-                                e
-                            )
-                            text = "" // graceful recovery
-                        } catch (e: Exception) {
-                            Logger.w(
-                                this@ReviewModeViewModel::class.simpleName,
-                                "Redo Read Exception",
-                                e
-                            )
-                        }
+                val history = item.fileHistory ?: return@withContext
+                val commit = navigate(history) ?: return@withContext
 
-                        if (text != null) {
-                            // TRICKY: prevent history from getting rolled back soon after the user views it
-                            restartAutoCommitTimer()
-                            item.saveTranslation(text)
+                val text = try {
+                    history.read(commit)
+                } catch (e: IllegalStateException) {
+                    Logger.w(
+                        this@ReviewModeViewModel::class.simpleName,
+                        "History navigation past end of file history",
+                        e
+                    )
+                    ""
+                } catch (e: Exception) {
+                    Logger.w(
+                        this@ReviewModeViewModel::class.simpleName,
+                        "History read exception",
+                        e
+                    )
+                    null
+                } ?: return@withContext
 
-                            val rendered = renderTargetText(
-                                item.chunk.targetTranslationFormat,
-                                text,
-                                VerseDisplay.RAW
-                            )
-                            updateItem(item.copy(
-                                targetText = text,
-                                renderedTargetText = rendered
-                            ))
-                            //updateMergeConflict() TODO Don't remove
-                        }
-                    }
-                }
+                restartAutoCommitTimer()
+                item.saveTranslation(text)
+
+                val rendered = renderTargetText(
+                    item.chunk.targetTranslationFormat,
+                    text,
+                    VerseDisplay.RAW
+                )
+                updateItem(item.copy(
+                    targetText = text,
+                    renderedTargetText = rendered
+                ))
+                //updateMergeConflict() TODO Don't remove
             }
         }
     }
