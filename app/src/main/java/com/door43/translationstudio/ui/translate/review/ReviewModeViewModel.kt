@@ -589,11 +589,6 @@ class ReviewModeViewModel(
         updateItem(updated)
     }
 
-    /**
-     * Performs some validation, and commits changes if ready.
-     *
-     * @throws IllegalStateException If there is an error with the chunk
-     */
     private fun markChunkCompleted(item: ReviewItem) {
         // Check for empty translation.
         if (item.targetText.isEmpty()) {
@@ -809,7 +804,6 @@ class ReviewModeViewModel(
         } else ""
 
         if (note.machineReadable.isEmpty()) {
-            // New footnote — append at end of target text
             insertFootnoteInTarget(note, newCode)
         } else {
             replaceFootnoteInTarget(note, newCode)
@@ -827,7 +821,6 @@ class ReviewModeViewModel(
         if (note.start >= 0 && note.end >= 0 &&
             note.end <= currentText.length
         ) {
-            // Use precise raw positions from the renderer
             start = note.start
             end = note.end
         } else {

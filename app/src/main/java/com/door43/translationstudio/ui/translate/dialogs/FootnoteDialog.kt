@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,8 +50,6 @@ fun FootnoteDialog(
     onEditNote: () -> Unit = {},
     onSaveText: (String) -> Unit = {}
 ) {
-    // Track pending dismiss triggered by clicking outside / back press.
-    // The dialog content observes this and hides keyboard before actually dismissing.
     var pendingDismiss by remember { mutableStateOf(false) }
 
     Dialog(
@@ -59,13 +57,10 @@ fun FootnoteDialog(
     ) {
         val focusManager = LocalFocusManager.current
         val focusRequester = remember { FocusRequester() }
-        val keyboardController = LocalSoftwareKeyboardController.current
         val scope = rememberCoroutineScope()
 
-        // When outside-click / back triggers dismiss, hide keyboard then call real dismiss
         LaunchedEffect(pendingDismiss) {
             if (pendingDismiss) {
-                //keyboardController?.hide()
                 focusManager.clearFocus()
                 delay(100)
                 onDismissRequest()
@@ -74,7 +69,6 @@ fun FootnoteDialog(
 
         // Hide keyboard first, then dismiss after it has time to process
         val dismissWithKeyboard: (() -> Unit) -> Unit = { action ->
-            //keyboardController?.hide()
             focusManager.clearFocus()
             scope.launch {
                 delay(100)
@@ -111,6 +105,12 @@ fun FootnoteDialog(
 
                         TextField(
                             state = textFieldState,
+                            lineLimits = TextFieldLineLimits.SingleLine,
+                            onKeyboardAction = {
+                                dismissWithKeyboard {
+                                    onSaveText(textFieldState.text.toString())
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester)
