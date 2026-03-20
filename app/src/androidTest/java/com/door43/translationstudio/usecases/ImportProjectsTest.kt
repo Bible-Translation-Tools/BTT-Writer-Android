@@ -129,7 +129,7 @@ class ImportProjectsTest : KoinAndroidTest() {
         val projectUri = Uri.fromFile(projectFile)
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -155,7 +155,7 @@ class ImportProjectsTest : KoinAndroidTest() {
         val projectUri = Uri.fromFile(projectFile)
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 

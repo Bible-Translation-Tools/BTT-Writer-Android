@@ -274,7 +274,7 @@ class ChunkModeAdapter(
             renderingGroup.addEngine(DefaultRenderer())
         }
         renderingGroup.init(text)
-        val renderNodes = renderingGroup.startNodes()
+        val renderNodes = renderingGroup.start()
         return emptyList()//RenderNodeConverter.renderNodesToTextNodes(renderNodes)
     }
 

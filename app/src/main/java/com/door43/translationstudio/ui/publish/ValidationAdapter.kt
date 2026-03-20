@@ -18,7 +18,6 @@ import com.door43.translationstudio.rendering.DefaultRenderer
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import com.door43.widget.ViewUtil
 
 /**
@@ -122,7 +121,7 @@ class ValidationAdapter(
                             renderingGroup.addEngine(DefaultRenderer())
                         }
                         renderingGroup.init(item.body)
-                        val renderNodes = renderingGroup.startNodes()
+                        val renderNodes = renderingGroup.start()
 //                        val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
 //                        @Suppress("DEPRECATION")
 //                        renderedText[position] = SpannableAdapter.convert(textNodes, context = context)

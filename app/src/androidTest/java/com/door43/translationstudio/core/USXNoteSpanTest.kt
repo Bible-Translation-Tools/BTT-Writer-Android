@@ -3,7 +3,7 @@ package com.door43.translationstudio.core
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.door43.translationstudio.IntegrationTest
-import com.door43.translationstudio.ui.spannables.USXNoteSpan
+import com.door43.translationstudio.rendering.spannables.USXNoteSpan
 import junit.framework.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

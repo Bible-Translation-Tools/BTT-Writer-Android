@@ -93,7 +93,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -124,7 +124,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -155,7 +155,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -186,7 +186,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -217,7 +217,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -249,7 +249,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -279,7 +279,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
     @Test
     fun testPushTargetTranslationUnAuthorized() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -299,7 +299,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -330,7 +330,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -359,7 +359,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -388,7 +388,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -417,7 +417,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -442,7 +442,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 

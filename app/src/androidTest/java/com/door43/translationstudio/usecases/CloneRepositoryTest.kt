@@ -38,7 +38,7 @@ class CloneRepositoryTest : KoinAndroidTest() {
     fun cloneRepositorySuccessfully() {
         val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/en_ulb.git"
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -63,7 +63,7 @@ class CloneRepositoryTest : KoinAndroidTest() {
         val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/non_existing_repo.git"
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 

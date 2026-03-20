@@ -73,7 +73,7 @@ class RenderingGroup {
      * For any other engine (e.g. DefaultRenderer), only [RenderingEngine.render] is overridden,
      * so this method calls render() and wraps the result in a plain [RenderNode.Text].
      */
-    fun startNodes(): List<RenderNode> {
+    fun start(): List<RenderNode> {
         if (mRunning || mInput.isEmpty()) return emptyList()
         mRunning = true
         mStopped = false

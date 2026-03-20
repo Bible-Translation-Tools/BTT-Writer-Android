@@ -52,7 +52,7 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
         server.enqueue(createRepoResponse())
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
         val repos = advancedGogsRepoSearch.execute(user, "", 5, progressListener)

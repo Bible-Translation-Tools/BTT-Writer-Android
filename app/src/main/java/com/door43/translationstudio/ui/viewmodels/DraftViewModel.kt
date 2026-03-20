@@ -153,7 +153,7 @@ class DraftViewModel (
         }
 
         sourceRendering.init(chapterBody)
-        val renderNodes = sourceRendering.startNodes()
+        val renderNodes = sourceRendering.start()
 
         ChapterContent(
             heading = heading,

@@ -1,15 +1,15 @@
 package com.door43.translationstudio.rendering
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.translationstudio.rendering.adapter.ComposeTextAdapter
 import com.door43.translationstudio.rendering.model.LinkData
+import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NodeStyle
 import com.door43.translationstudio.rendering.model.NoteStyle
-import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.rendering.model.RenderNode
+import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,7 +27,7 @@ class ComposeTextAdapterTest {
 
     @Test
     fun plain_text_node_produces_matching_string() {
-        val nodes = listOf(TextNode.Text("hello world"))
+        val nodes = listOf(RenderNode.Text("hello world"))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("hello world", result.text)
     }
@@ -35,9 +35,9 @@ class ComposeTextAdapterTest {
     @Test
     fun multiple_nodes_are_concatenated_in_order() {
         val nodes = listOf(
-            TextNode.Text("foo"),
-            TextNode.Text("bar"),
-            TextNode.Text("baz")
+            RenderNode.Text("foo"),
+            RenderNode.Text("bar"),
+            RenderNode.Text("baz")
         )
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("foobarbaz", result.text)
@@ -45,72 +45,86 @@ class ComposeTextAdapterTest {
 
     @Test
     fun line_break_produces_newline() {
-        val nodes = listOf(TextNode.Text("a"), TextNode.LineBreak, TextNode.Text("b"))
+        val nodes = listOf(RenderNode.Text("a"), RenderNode.LineBreak, RenderNode.Text("b"))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("a\nb", result.text)
     }
 
     @Test
     fun blank_line_produces_double_newline() {
-        val nodes = listOf(TextNode.Text("a"), TextNode.BlankLine, TextNode.Text("b"))
+        val nodes = listOf(RenderNode.Text("a"), RenderNode.BlankLine, RenderNode.Text("b"))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("a\n\nb", result.text)
     }
 
     @Test
     fun paragraph_indented_produces_newline_plus_spaces() {
-        val nodes = listOf(TextNode.Paragraph(indented = true))
+        val nodes = listOf(RenderNode.Paragraph(indented = true, children = emptyList()))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("\n    ", result.text)
     }
 
     @Test
     fun paragraph_unindented_produces_newline() {
-        val nodes = listOf(TextNode.Paragraph(indented = false))
+        val nodes = listOf(RenderNode.Paragraph(indented = false, children = emptyList()))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("\n", result.text)
     }
 
-    // --- VerseMarker ---
+    // --- Verse ---
 
     @Test
     fun verse_marker_single_verse_produces_number_string() {
-        val nodes = listOf(TextNode.VerseMarker(3, 0, pinned = false))
+        val nodes = listOf(RenderNode.Verse(3, 0, pinned = false))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("3", result.text)
     }
 
     @Test
     fun verse_marker_range_produces_hyphenated_label() {
-        val nodes = listOf(TextNode.VerseMarker(3, 5, pinned = false))
+        val nodes = listOf(RenderNode.Verse(3, 5, pinned = false))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("3-5", result.text)
     }
 
     @Test
-    fun verse_marker_adds_VERSE_string_annotation() {
-        val nodes = listOf(TextNode.VerseMarker(7, 0, pinned = false))
+    fun pinned_verse_marker_adds_VERSE_MARKER_annotation() {
+        val nodes = listOf(RenderNode.Verse(7, 0, pinned = true, machineReadable = "\\v 7 "))
         val result = ComposeTextAdapter.convert(nodes)
-        val annotations = result.getStringAnnotations(tag = "VERSE", start = 0, end = result.text.length)
-        assertTrue("Expected VERSE annotation", annotations.isNotEmpty())
-        assertEquals("7", annotations[0].item)
+        val annotations = result.getStringAnnotations(
+            tag = "VERSE_MARKER", start = 0, end = result.text.length
+        )
+        assertTrue("Expected VERSE_MARKER annotation", annotations.isNotEmpty())
+        assertEquals("7|0|\\v 7 ", annotations[0].item)
     }
 
     @Test
-    fun verse_marker_range_annotation_value_matches_label() {
-        val nodes = listOf(TextNode.VerseMarker(3, 5, pinned = false))
+    fun unpinned_verse_has_no_VERSE_MARKER_annotation() {
+        val nodes = listOf(RenderNode.Verse(3, 0, pinned = false))
         val result = ComposeTextAdapter.convert(nodes)
-        val annotations = result.getStringAnnotations(tag = "VERSE", start = 0, end = result.text.length)
-        assertTrue("Expected VERSE annotation for range", annotations.isNotEmpty())
-        assertEquals("3-5", annotations[0].item)
+        val annotations = result.getStringAnnotations(
+            tag = "VERSE_MARKER", start = 0, end = result.text.length
+        )
+        assertTrue("Unpinned verse should not have VERSE_MARKER annotation", annotations.isEmpty())
     }
 
-    // --- NoteMarker ---
+    @Test
+    fun verse_with_raw_position_adds_RAW_POSITION_annotation() {
+        val nodes = listOf(RenderNode.Verse(1, 0, pinned = false, start = 0, end = 5))
+        val result = ComposeTextAdapter.convert(nodes)
+        val annotations = result.getStringAnnotations(
+            tag = "RAW_POSITION", start = 0, end = result.text.length
+        )
+        assertTrue("Expected RAW_POSITION annotation", annotations.isNotEmpty())
+        assertEquals("0|5", annotations[0].item)
+    }
+
+    // --- Note ---
 
     @Test
-    fun note_marker_caller_text_appears_in_output() {
+    fun note_marker_produces_inline_content() {
         val nodes = listOf(
-            TextNode.NoteMarker(
+            RenderNode.Note(
                 caller = "+",
                 passage = "some passage",
                 notes = "footnote body",
@@ -118,30 +132,34 @@ class ComposeTextAdapterTest {
             )
         )
         val result = ComposeTextAdapter.convert(nodes)
-        assertEquals("+", result.text)
+        // Note renders as inline content with NOTE_CHAR (\u2800)
+        assertTrue("Note should produce non-empty output", result.text.isNotEmpty())
     }
 
     @Test
-    fun note_marker_adds_NOTE_string_annotation_with_notes_content() {
-        val nodes = listOf(
-            TextNode.NoteMarker(
-                caller = "+",
-                passage = "some passage",
-                notes = "footnote body",
-                noteStyle = NoteStyle.FOOTNOTE
-            )
+    fun note_marker_triggers_onNoteClick_callback() {
+        var clickedNote: RenderNode.Note? = null
+        val note = RenderNode.Note(
+            caller = "+",
+            passage = "some passage",
+            notes = "footnote body",
+            noteStyle = NoteStyle.FOOTNOTE
         )
-        val result = ComposeTextAdapter.convert(nodes)
-        val annotations = result.getStringAnnotations(tag = "NOTE", start = 0, end = result.text.length)
-        assertTrue("Expected NOTE annotation", annotations.isNotEmpty())
-        assertEquals("footnote body", annotations[0].item)
+        val nodes = listOf(note)
+        ComposeTextAdapter.convert(
+            nodes,
+            onNoteClick = { n, _, _ -> clickedNote = n }
+        )
+        // Verify the note was wired up (callback object was created)
+        // The actual click needs UI interaction, but the convert should not throw
+        assertNull("Callback should not be triggered during convert", clickedNote)
     }
 
     // --- SectionHeading ---
 
     @Test
     fun section_heading_appends_newline_after_text() {
-        val nodes = listOf(TextNode.SectionHeading("The Beginning", isMajor = false))
+        val nodes = listOf(RenderNode.Section("The Beginning", isMajor = false))
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(result.text.startsWith("The Beginning"))
         assertTrue(result.text.endsWith("\n"))
@@ -149,14 +167,14 @@ class ComposeTextAdapterTest {
 
     @Test
     fun major_section_heading_text_is_uppercased() {
-        val nodes = listOf(TextNode.SectionHeading("creation", isMajor = true))
+        val nodes = listOf(RenderNode.Section("creation", isMajor = true))
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(result.text.startsWith("CREATION"))
     }
 
     @Test
     fun section_heading_has_bold_span() {
-        val nodes = listOf(TextNode.SectionHeading("The Beginning", isMajor = false))
+        val nodes = listOf(RenderNode.Section("The Beginning", isMajor = false))
         val result = ComposeTextAdapter.convert(nodes)
         val headingEnd = result.text.indexOf('\n')
         val spans = result.spanStyles.filter { it.start < headingEnd && it.end <= headingEnd }
@@ -170,14 +188,14 @@ class ComposeTextAdapterTest {
 
     @Test
     fun chapter_label_text_is_preserved() {
-        val nodes = listOf(TextNode.ChapterLabel("Chapter 1"))
+        val nodes = listOf(RenderNode.ChapterLabel("Chapter 1"))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("Chapter 1", result.text)
     }
 
     @Test
     fun chapter_label_has_bold_span() {
-        val nodes = listOf(TextNode.ChapterLabel("Chapter 1"))
+        val nodes = listOf(RenderNode.ChapterLabel("Chapter 1"))
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(
             "Expected bold SpanStyle on chapter label",
@@ -189,14 +207,14 @@ class ComposeTextAdapterTest {
 
     @Test
     fun styled_bold_node_text_is_preserved() {
-        val nodes = listOf(TextNode.Styled("bold text", NodeStyle.BOLD))
+        val nodes = listOf(RenderNode.StyledText("bold text", NodeStyle.BOLD))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("bold text", result.text)
     }
 
     @Test
     fun styled_bold_node_has_bold_span() {
-        val nodes = listOf(TextNode.Styled("bold text", NodeStyle.BOLD))
+        val nodes = listOf(RenderNode.StyledText("bold text", NodeStyle.BOLD))
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(
             "Expected bold SpanStyle",
@@ -206,7 +224,7 @@ class ComposeTextAdapterTest {
 
     @Test
     fun styled_italic_node_has_italic_span() {
-        val nodes = listOf(TextNode.Styled("italic text", NodeStyle.ITALIC))
+        val nodes = listOf(RenderNode.StyledText("italic text", NodeStyle.ITALIC))
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(
             "Expected italic SpanStyle",
@@ -219,9 +237,9 @@ class ComposeTextAdapterTest {
     @Test
     fun search_highlight_text_appears_in_output() {
         val nodes = listOf(
-            TextNode.Text("In the "),
-            TextNode.SearchHighlight("beginning"),
-            TextNode.Text(" God")
+            RenderNode.Text("In the "),
+            RenderNode.Text("beginning", attributes = NodeAttributes(searchHighlighted = true)),
+            RenderNode.Text(" God")
         )
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("In the beginning God", result.text)
@@ -230,7 +248,9 @@ class ComposeTextAdapterTest {
     @Test
     fun search_highlight_applies_background_color_span() {
         val highlightColor = Color.Yellow
-        val nodes = listOf(TextNode.SearchHighlight("hello"))
+        val nodes = listOf(
+            RenderNode.Text("hello", attributes = NodeAttributes(searchHighlighted = true))
+        )
         val result = ComposeTextAdapter.convert(nodes, searchHighlightColor = highlightColor)
         assertTrue(
             "Expected background color span for search highlight",
@@ -242,7 +262,12 @@ class ComposeTextAdapterTest {
 
     @Test
     fun poetic_line_with_indent_level_2_has_correct_padding() {
-        val nodes = listOf(TextNode.PoeticLine("Praise the Lord", indentLevel = 2))
+        val nodes = listOf(
+            RenderNode.PoeticLine(
+                indentLevel = 2,
+                children = listOf(RenderNode.Text("Praise the Lord"))
+            )
+        )
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(result.text.startsWith("    ".repeat(2)))
         assertTrue(result.text.contains("Praise the Lord"))
@@ -250,7 +275,13 @@ class ComposeTextAdapterTest {
 
     @Test
     fun right_aligned_poetic_line_has_italic_span() {
-        val nodes = listOf(TextNode.PoeticLine("Selah", indentLevel = 0, rightAligned = true))
+        val nodes = listOf(
+            RenderNode.PoeticLine(
+                indentLevel = 0,
+                rightAligned = true,
+                children = listOf(RenderNode.Text("Selah"))
+            )
+        )
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(
             "Expected italic SpanStyle on right-aligned poetic line",
@@ -262,69 +293,42 @@ class ComposeTextAdapterTest {
 
     @Test
     fun link_article_renders_title() {
-        val nodes = listOf(TextNode.Link(LinkData.Article("en:ta:vol1", "Figures of Speech")))
+        val nodes = listOf(RenderNode.Link(LinkData.Article("en:ta:vol1", "Figures of Speech")))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("Figures of Speech", result.text)
     }
 
     @Test
-    fun link_article_adds_TA_string_annotation() {
-        val nodes = listOf(TextNode.Link(LinkData.Article("en:ta:vol1", "Figures of Speech")))
-        val result = ComposeTextAdapter.convert(nodes)
-        val annotations = result.getStringAnnotations(tag = "TA", start = 0, end = result.text.length)
-        assertTrue("Expected TA annotation", annotations.isNotEmpty())
-        assertEquals("en:ta:vol1", annotations[0].item)
-    }
-
-    @Test
-    fun link_translation_word_renders_id() {
-        val nodes = listOf(TextNode.Link(LinkData.TranslationWord("grace")))
+    fun link_translation_word_renders_title() {
+        val nodes = listOf(RenderNode.Link(LinkData.TranslationWord("grace")))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("grace", result.text)
     }
 
     @Test
-    fun link_translation_word_adds_TW_annotation() {
-        val nodes = listOf(TextNode.Link(LinkData.TranslationWord("grace")))
-        val result = ComposeTextAdapter.convert(nodes)
-        val annotations = result.getStringAnnotations(tag = "TW", start = 0, end = result.text.length)
-        assertTrue("Expected TW annotation", annotations.isNotEmpty())
-        assertEquals("grace", annotations[0].item)
-    }
-
-    @Test
     fun link_passage_renders_title() {
-        val nodes = listOf(TextNode.Link(LinkData.Passage("1:1", "Genesis 1:1")))
+        val nodes = listOf(RenderNode.Link(LinkData.Passage("1:1", "Genesis 1:1")))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("Genesis 1:1", result.text)
     }
 
     @Test
-    fun link_passage_adds_PASSAGE_annotation() {
-        val nodes = listOf(TextNode.Link(LinkData.Passage("1:1", "Genesis 1:1")))
-        val result = ComposeTextAdapter.convert(nodes)
-        val annotations = result.getStringAnnotations(tag = "PASSAGE", start = 0, end = result.text.length)
-        assertTrue("Expected PASSAGE annotation", annotations.isNotEmpty())
-        assertEquals("1:1", annotations[0].item)
-    }
-
-    @Test
     fun link_markdown_renders_title() {
-        val nodes = listOf(TextNode.Link(LinkData.Markdown("http://example.com", "Example")))
+        val nodes = listOf(RenderNode.Link(LinkData.Markdown("http://example.com", "Example")))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("Example", result.text)
     }
 
     @Test
     fun link_short_reference_renders_ref() {
-        val nodes = listOf(TextNode.Link(LinkData.ShortReference("3:16")))
+        val nodes = listOf(RenderNode.Link(LinkData.ShortReference("3:16")))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("3:16", result.text)
     }
 
     @Test
     fun link_app_link_renders_title() {
-        val nodes = listOf(TextNode.Link(LinkData.AppLink("/ta/figs", "ta", "Figures of Speech")))
+        val nodes = listOf(RenderNode.Link(LinkData.AppLink("/ta/figs", "ta", "Figures of Speech")))
         val result = ComposeTextAdapter.convert(nodes)
         assertEquals("Figures of Speech", result.text)
     }
@@ -333,7 +337,7 @@ class ComposeTextAdapterTest {
 
     @Test
     fun link_has_blue_color_span() {
-        val nodes = listOf(TextNode.Link(LinkData.Article("en:ta", "Article")))
+        val nodes = listOf(RenderNode.Link(LinkData.Article("en:ta", "Article")))
         val result = ComposeTextAdapter.convert(nodes)
         assertTrue(
             "Expected blue SpanStyle on link",

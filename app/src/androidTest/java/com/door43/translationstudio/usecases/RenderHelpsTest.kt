@@ -7,10 +7,11 @@ import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
+import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.translate.ReviewListItem
+import com.door43.translationstudio.ui.translate.ChunkConfig
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.RenderHelps
@@ -50,40 +51,41 @@ class RenderHelpsTest : KoinAndroidTest() {
 
         val rc = library.open("en_mrk_ulb")
 
-        val item = ReviewListItem(
+        val chunk = Chunk(
             "01",
             "01",
             rc,
             targetTranslation!!,
-            { _: String, _: String? -> "" },
-            { _: String, _: String? -> "" },
-            { listOf() }
         )
+        val chunkConfig = ((chunk.source.config?.get("content") as? Map<*, *>)
+            ?.get(chunk.chapterSlug) as? Map<*, *>)
+            ?.get(chunk.chunkSlug) as? ChunkConfig
+            ?: emptyMap()
 
-        val result = renderHelps.execute(item)
+        val result = renderHelps.execute(chunk, chunkConfig)
 
-        assertTrue("Helps should not be empty", result.helps.isNotEmpty())
-        assertEquals("There should be 3 helps", 3, result.helps.size)
-        assertTrue("There should be a notes help", result.helps.containsKey("notes"))
-        assertEquals("There should be 10 notes", 10, (result.helps["notes"] as List<*>).size)
-        assertTrue("There should be a questions help", result.helps.containsKey("questions"))
-        assertEquals("There should be 8 questions", 8, (result.helps["questions"] as List<*>).size)
-        assertTrue("There should be a words help", result.helps.containsKey("words"))
-        assertEquals("There should be 9 words", 9, (result.helps["words"] as List<*>).size)
+        assertTrue("Helps should not be empty", result.isNotEmpty())
+        assertEquals("There should be 3 helps", 3, result.size)
+        assertTrue("There should be a notes help", result.containsKey("notes"))
+        assertEquals("There should be 10 notes", 10, (result["notes"] as List<*>).size)
+        assertTrue("There should be a questions help", result.containsKey("questions"))
+        assertEquals("There should be 8 questions", 8, (result["questions"] as List<*>).size)
+        assertTrue("There should be a words help", result.containsKey("words"))
+        assertEquals("There should be 9 words", 9, (result["words"] as List<*>).size)
 
-        val note = (result.helps["notes"] as List<*>).firstOrNull {
+        val note = (result["notes"] as List<*>).firstOrNull {
             (it as TranslationHelp).title == "Son of God"
         }
         assertNotNull(note)
         assertTrue((note!! as TranslationHelp).body.contains("Jesus"))
 
-        val question = (result.helps["questions"] as List<*>).firstOrNull {
+        val question = (result["questions"] as List<*>).firstOrNull {
             (it as TranslationHelp).title.contains("before the sun rose?", ignoreCase = true)
         }
         assertNotNull(question)
         assertTrue((question!! as TranslationHelp).body.contains("before the sun rose", ignoreCase = true))
 
-        val word = (result.helps["words"] as List<*>).firstOrNull {
+        val word = (result["words"] as List<*>).firstOrNull {
             (it as Link).chapter == "goodnews"
         }
         assertNotNull(word)

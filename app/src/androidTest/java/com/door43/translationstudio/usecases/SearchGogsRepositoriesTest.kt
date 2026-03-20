@@ -87,7 +87,7 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
         server.enqueue(MockResponse().setBody(repoResponse).setResponseCode(200))
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
         val repos = searchGogsRepositories.execute(gogsUser!!.id, "", 3, progressListener)

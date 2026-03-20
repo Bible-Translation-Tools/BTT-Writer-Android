@@ -4,9 +4,10 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.translationstudio.IntegrationTest
+import android.graphics.Color
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.translate.ReviewModeAdapter
+import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.util.FileUtilities
 import org.junit.Assert
 import org.junit.Before
@@ -195,10 +196,51 @@ class UsxBrokenRenderTest : KoinTest {
         )
 
         if (search != null) {
-            renderingGroup.setSearchString(search, ReviewModeAdapter.HIGHLIGHT_COLOR)
+            renderingGroup.setSearchString(search, Color.YELLOW)
         }
         renderingGroup.init(testText)
-        return renderingGroup.start().toString()
+        val nodes = renderingGroup.start()
+        return nodesToString(nodes)
+    }
+
+    private fun nodesToString(nodes: List<RenderNode>): String {
+        val sb = StringBuilder()
+        for (node in nodes) {
+            when (node) {
+                is RenderNode.Text -> sb.append(node.content)
+                is RenderNode.StyledText -> sb.append(node.content)
+                is RenderNode.Verse -> {
+                    val label = if (node.endVerse > 0) {
+                        "${node.startVerse}-${node.endVerse}"
+                    } else "${node.startVerse}"
+                    sb.append(label)
+                }
+                is RenderNode.Note -> sb.append(node.caller)
+                is RenderNode.Section -> {
+                    sb.append(if (node.isMajor) node.text.uppercase() else node.text)
+                    sb.append("\n")
+                }
+                is RenderNode.ChapterLabel -> sb.append(node.text)
+                is RenderNode.PoeticLine -> {
+                    if (node.children.isEmpty()) {
+                        sb.append("\n")
+                    } else {
+                        val padding = "    ".repeat(node.indentLevel)
+                        sb.append(padding)
+                        sb.append(nodesToString(node.children))
+                        sb.append("\n")
+                    }
+                }
+                is RenderNode.Paragraph -> {
+                    sb.append(if (node.indented) "\n    " else "\n")
+                    sb.append(nodesToString(node.children))
+                }
+                RenderNode.LineBreak -> sb.append("\n")
+                RenderNode.BlankLine -> sb.append("\n\n")
+                is RenderNode.Link -> {}
+            }
+        }
+        return sb.toString()
     }
 
     private fun verifyProcessedText(expectedText: String, out: String?) {

@@ -501,7 +501,7 @@ open class ReviewModeAdapter(
         }
 
         renderingGroup.init(item.sourceText)
-        val renderNodes = renderingGroup.startNodes()
+        val renderNodes = renderingGroup.start()
 //        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         item.hasMissingVerses = renderingGroup.isAddedMissingVerse
         return emptyList()
@@ -1277,7 +1277,7 @@ open class ReviewModeAdapter(
 
         if (!text.isNullOrBlank()) {
             renderingGroup.init(text)
-            val renderNodes = renderingGroup.startNodes()
+            val renderNodes = renderingGroup.start()
 //            val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             item.hasMissingVerses = renderingGroup.isAddedMissingVerse
             return emptyList()
@@ -1480,7 +1480,7 @@ open class ReviewModeAdapter(
         }
 
         renderingGroup.init(item.targetText)
-        val renderNodes = renderingGroup.startNodes()
+        val renderNodes = renderingGroup.start()
 //        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         item.hasMissingVerses = renderingGroup.isAddedMissingVerse
         return emptyList()

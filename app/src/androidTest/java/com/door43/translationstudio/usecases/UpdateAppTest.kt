@@ -43,7 +43,7 @@ class UpdateAppTest : KoinAndroidTest() {
     @Test
     fun testUpdateAppNewInstall() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 

@@ -189,7 +189,7 @@ class ReadModeAdapter(
             sourceRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
         sourceRendering.init(sourceChapterBody)
-        val renderNodes = sourceRendering.startNodes()
+        val renderNodes = sourceRendering.start()
 //        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         renderedSourceBody[position] = emptyList()
         return emptyList()
@@ -216,7 +216,7 @@ class ReadModeAdapter(
             targetRendering.addEngine(renderingProvider.createDefaultRenderer())
         }
         targetRendering.init(chapterBody)
-        val renderNodes = targetRendering.startNodes()
+        val renderNodes = targetRendering.start()
         //val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
         renderedTargetBody[position] = emptyList()
         return emptyList()

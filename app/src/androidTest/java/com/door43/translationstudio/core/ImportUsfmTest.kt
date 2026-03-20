@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
-import com.door43.translationstudio.ui.spannables.USFMVerseSpan
+import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
 import junit.framework.TestCase.assertFalse
 import org.json.JSONArray

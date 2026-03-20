@@ -21,7 +21,7 @@ class GetAvailableSourcesTest : KoinAndroidTest() {
     fun testAvailableResources() {
         val prefixMessage = "test_prefix"
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 

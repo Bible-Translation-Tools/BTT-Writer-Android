@@ -111,7 +111,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
     @Test
     fun createRepositoryWithoutAuthenticationFails() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
         val created = createRepository.execute(targetTranslation, progressListener)

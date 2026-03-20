@@ -64,12 +64,12 @@ android {
             }
         }
     }
-//    packaging {
-//        resources {
-//            merges += listOf("plugin.properties")
-//            excludes += listOf("/META-INF/*")
-//        }
-//    }
+    packaging {
+        resources {
+            merges += listOf("plugin.properties")
+            excludes += listOf("/META-INF/LICENSE.md", "/META-INF/LICENSE-notice.md")
+        }
+    }
     lint {
         abortOnError = false
         checkReleaseBuilds = false

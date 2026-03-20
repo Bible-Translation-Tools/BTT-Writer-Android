@@ -45,7 +45,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
     @Test
     fun migrateOldAppDataEmpty() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -61,7 +61,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
     @Test
     fun migrateOldAppDataWithTranslations() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -86,7 +86,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
     @Test
     fun migrateOldAppDataWithBackups() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 

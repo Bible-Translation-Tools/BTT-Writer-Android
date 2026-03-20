@@ -707,7 +707,7 @@ class ExportUsfmTest : KoinTest {
         )
         // if none selected, try list of selected translations
         if (sourceTranslationSlug == null) {
-            val sourceTranslationSlugs: Array<String> = prefRepository.getOpenSourceTranslations(
+            val sourceTranslationSlugs: List<String> = prefRepository.getOpenSourceTranslations(
                 targetTranslation.id
             )
             if (sourceTranslationSlugs.isNotEmpty()) {

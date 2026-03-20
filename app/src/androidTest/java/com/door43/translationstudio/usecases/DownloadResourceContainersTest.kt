@@ -43,7 +43,7 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
         assertNotNull("Translation should not be null", translation)
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -65,7 +65,7 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
         val translationIds = listOf("en_gen_ulb", "id_gen_ayt")
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 

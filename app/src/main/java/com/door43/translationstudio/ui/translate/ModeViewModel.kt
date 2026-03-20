@@ -151,7 +151,7 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 verseDisplay = VerseDisplay.NUMBER,
                 target = false
             )
-            val renderNodes = renderingGroup.startNodes()
+            val renderNodes = renderingGroup.start()
             ComposeTextAdapter.convert(
                 renderNodes,
                 onNoteClick = { note, _, _ ->
@@ -189,7 +189,7 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 verseDisplay,
                 target = true
             )
-            val renderNodes = renderingGroup.startNodes()
+            val renderNodes = renderingGroup.start()
             ComposeTextAdapter.convert(
                 nodes = renderNodes,
                 onNoteClick = { note, _, _ ->

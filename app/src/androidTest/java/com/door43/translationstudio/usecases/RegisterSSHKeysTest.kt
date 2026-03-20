@@ -65,7 +65,7 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
@@ -101,7 +101,7 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
     @Test
     fun testRegisterSSHKeys_noUser() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, _, message ->
+        val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
