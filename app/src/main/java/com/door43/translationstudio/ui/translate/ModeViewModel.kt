@@ -9,11 +9,10 @@ import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
-import com.door43.translationstudio.rendering.RenderNodeConverter
-import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
+import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import kotlinx.coroutines.channels.SendChannel
@@ -153,18 +152,17 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 target = false
             )
             val renderNodes = renderingGroup.startNodes()
-            val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             ComposeTextAdapter.convert(
-                textNodes,
-                onNoteClick = { notes, _, _ ->
+                renderNodes,
+                onNoteClick = { note, _, _ ->
                     _modeState.update {
                         it.copy(footnote = Footnote(
-                            text = notes.notes,
-                            machineReadable = notes.machineReadable,
+                            text = note.notes,
+                            machineReadable = note.machineReadable,
                             chunkId = chunkId,
                             editable = false,
-                            start = notes.startPos,
-                            end = notes.endPos
+                            start = note.startPos,
+                            end = note.endPos
                         ))
                     }
                 }
@@ -180,7 +178,7 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
         targetText: String,
         verseDisplay: VerseDisplay = VerseDisplay.RAW,
         footnoteEditable: Boolean,
-        onVerseClick: ((TextNode.VerseMarker) -> Unit)? = null
+        onVerseClick: ((RenderNode.Verse) -> Unit)? = null
     ): AnnotatedString {
         return try {
             val renderingGroup = RenderingGroup()
@@ -192,18 +190,17 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 target = true
             )
             val renderNodes = renderingGroup.startNodes()
-            val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
             ComposeTextAdapter.convert(
-                nodes = textNodes,
-                onNoteClick = { notes, _, _ ->
+                nodes = renderNodes,
+                onNoteClick = { note, _, _ ->
                     _modeState.update {
                         it.copy(footnote = Footnote(
-                            text = notes.notes,
-                            machineReadable = notes.machineReadable,
+                            text = note.notes,
+                            machineReadable = note.machineReadable,
                             chunkId = chunkId,
                             editable = footnoteEditable,
-                            start = notes.startPos,
-                            end = notes.endPos
+                            start = note.startPos,
+                            end = note.endPos
                         ))
                     }
                 },

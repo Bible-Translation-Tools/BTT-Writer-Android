@@ -4,6 +4,7 @@ package com.door43.translationstudio.rendering.model
  * Platform-agnostic intermediate representation of styled/annotated text.
  * No android.* imports allowed in this file.
  */
+@Deprecated("Remove when migrated to compose")
 sealed class TextNode {
     abstract val startPos: Int
     abstract val endPos: Int

@@ -10,11 +10,10 @@ import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.rendering.Clickables
-import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.ImportDraft
 import com.door43.util.sortNumerically
@@ -36,7 +35,7 @@ import org.unfoldingword.resourcecontainer.ResourceContainer
 data class ChapterContent(
     val heading: String,
     val title: String,
-    val textNodes: List<TextNode> = emptyList()
+    val renderNodes: List<RenderNode> = emptyList()
 )
 
 data class DraftState(
@@ -155,12 +154,11 @@ class DraftViewModel (
 
         sourceRendering.init(chapterBody)
         val renderNodes = sourceRendering.startNodes()
-        val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
 
         ChapterContent(
             heading = heading,
             title = title,
-            textNodes = textNodes
+            renderNodes = renderNodes
         )
     }
 }

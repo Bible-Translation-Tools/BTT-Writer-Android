@@ -27,7 +27,6 @@ import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.RenderNodeConverter
 import com.door43.translationstudio.rendering.adapter.NoteClickListener
 import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import com.door43.translationstudio.rendering.model.TextNode
@@ -191,9 +190,9 @@ class ReadModeAdapter(
         }
         sourceRendering.init(sourceChapterBody)
         val renderNodes = sourceRendering.startNodes()
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-        renderedSourceBody[position] = nodes
-        return nodes
+//        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
+        renderedSourceBody[position] = emptyList()
+        return emptyList()
     }
 
     override fun onRenderTargetText(holder: ViewHolder): List<TextNode> {
@@ -218,9 +217,9 @@ class ReadModeAdapter(
         }
         targetRendering.init(chapterBody)
         val renderNodes = targetRendering.startNodes()
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
-        renderedTargetBody[position] = nodes
-        return nodes
+        //val nodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
+        renderedTargetBody[position] = emptyList()
+        return emptyList()
     }
 
     override fun onOpenTranslationMode(chapterSlug: String) {

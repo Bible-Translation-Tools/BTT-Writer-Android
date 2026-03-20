@@ -103,10 +103,10 @@ fun DraftChapterCard(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                if (content.textNodes.isNotEmpty()) {
-                    val annotatedBody = remember(content.textNodes) {
+                if (content.renderNodes.isNotEmpty()) {
+                    val annotatedBody = remember(content.renderNodes) {
                         ComposeTextAdapter.convert(
-                            content.textNodes,
+                            content.renderNodes,
                             onNoteClick = { note, _, _ -> onNoteClick(note.notes) }
                         )
                     }

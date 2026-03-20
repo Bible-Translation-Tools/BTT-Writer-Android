@@ -14,17 +14,17 @@ import androidx.compose.ui.text.style.TextAlign
 import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
-import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
 
 /**
- * Converts a List<TextNode> to Compose AnnotatedString.
+ * Converts a List<RenderNode> to Compose AnnotatedString.
  * All Compose-specific styling lives here — the core renderers have no UI imports.
  */
 object ComposeTextAdapter {
 
     /**
-     * Convert a list of TextNodes to an AnnotatedString.
+     * Convert a list of RenderNodes to an AnnotatedString.
      *
      * @param nodes                The platform-agnostic node list from a renderer.
      * @param searchHighlightColor Color for search highlight nodes.
@@ -33,48 +33,43 @@ object ComposeTextAdapter {
      * @param onNoteClick          Optional click handler for note markers.
      */
     fun convert(
-        nodes: List<TextNode>,
+        nodes: List<RenderNode>,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
-        onVerseClick: ((TextNode.VerseMarker) -> Unit)? = null,
-        onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit = {_, _, _ ->},
-        onLinkClick: (TextNode.Link) -> Unit = {}
+        onVerseClick: ((RenderNode.Verse) -> Unit)? = null,
+        onNoteClick: (RenderNode.Note, Int, Int) -> Unit = { _, _, _ -> },
+        onLinkClick: (RenderNode.Link) -> Unit = {}
     ): AnnotatedString = buildAnnotatedString {
 
-        var currentPoeticalLineIndent = 0  // Track current poetic line indent level
-        var isFirstElementOfPoeticLine = true  // Track if next element is first child of poetic line
-        var verseMarkerAddedIndentation = false  // Track if verse marker already added indentation
-        var lastWasPoeticLineMarker = false  // Track if previous node was a PoeticLine marker
+        var currentPoeticalLineIndent = 0
+        var isFirstElementOfPoeticLine = true
+        var verseMarkerAddedIndentation = false
+        var lastWasPoeticLineMarker = false
 
         for (node in nodes) {
-            // Update poetic line context when we encounter a PoeticLine marker
-            if (node is TextNode.PoeticLine && node.content.isEmpty()) {
+            if (node is RenderNode.PoeticLine && node.children.isEmpty()) {
                 currentPoeticalLineIndent = node.indentLevel
                 isFirstElementOfPoeticLine = true
                 verseMarkerAddedIndentation = false
                 lastWasPoeticLineMarker = true
-            } else if (node is TextNode.LineBreak || node is TextNode.Paragraph) {
-                // Reset context at line/paragraph boundaries
+            } else if (node is RenderNode.LineBreak || node is RenderNode.Paragraph) {
                 currentPoeticalLineIndent = 0
                 isFirstElementOfPoeticLine = false
                 verseMarkerAddedIndentation = false
                 lastWasPoeticLineMarker = false
-            } else if (node is TextNode.VerseMarker
+            } else if (node is RenderNode.Verse
                 && isFirstElementOfPoeticLine
                 && currentPoeticalLineIndent > 0) {
-                // Verse marker as first element in poetic line will add indentation
                 verseMarkerAddedIndentation = true
                 lastWasPoeticLineMarker = false
-            } else if (node !is TextNode.PoeticLine) {
-                // Mark that we've processed a non-poetic-marker element
-                if (node !is TextNode.VerseMarker) {
+            } else if (node !is RenderNode.PoeticLine) {
+                if (node !is RenderNode.Verse) {
                     isFirstElementOfPoeticLine = false
                 }
                 lastWasPoeticLineMarker = false
             }
 
-            // Pass isFirstElementOfPoetic=true only for verse markers that are first, not for text nodes
-            val isFirstForNode = if (node is TextNode.VerseMarker) {
+            val isFirstForNode = if (node is RenderNode.Verse) {
                 isFirstElementOfPoeticLine
             } else false
 
@@ -170,18 +165,18 @@ object ComposeTextAdapter {
     }
 
     private fun AnnotatedString.Builder.appendNode(
-        node: TextNode,
+        node: RenderNode,
         searchHighlightColor: Color,
         verseColor: Color,
-        onVerseClick: ((TextNode.VerseMarker) -> Unit)?,
-        onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit,
-        onLinkClick: (TextNode.Link) -> Unit,
+        onVerseClick: ((RenderNode.Verse) -> Unit)?,
+        onNoteClick: (RenderNode.Note, Int, Int) -> Unit,
+        onLinkClick: (RenderNode.Link) -> Unit,
         poeticalLineIndent: Int = 0,
         isFirstElementOfPoetic: Boolean = false,
         verseMarkerAddedIndentation: Boolean = false
     ) {
         when (node) {
-            is TextNode.Text -> {
+            is RenderNode.Text -> {
                 if (poeticalLineIndent > 0
                     && !verseMarkerAddedIndentation
                     && node.content.trim().isNotEmpty()) {
@@ -191,30 +186,34 @@ object ComposeTextAdapter {
                 val start = length
                 append(node.content)
                 val end = length
-                if (node.startPos >= 0) {
+                if (node.start >= 0) {
                     addStringAnnotation(
                         tag = "RAW_POSITION",
-                        annotation = "${node.startPos}|${node.endPos}",
+                        annotation = "${node.start}|${node.end}",
                         start = start,
                         end = end
                     )
                 }
+                if (node.attributes.searchHighlighted
+                    && searchHighlightColor != Color.Unspecified) {
+                    addStyle(SpanStyle(background = searchHighlightColor), start, end)
+                }
             }
 
-            is TextNode.Styled -> {
+            is RenderNode.StyledText -> {
                 val start = length
                 append(node.content)
                 val end = length
                 applyNodeStyle(node.style, start, end)
             }
 
-            TextNode.LineBreak -> append("\n")
+            RenderNode.LineBreak -> append("\n")
 
-            TextNode.BlankLine -> append("\n\n")
+            RenderNode.BlankLine -> append("\n\n")
 
-            is TextNode.Paragraph -> append(if (node.indented) "\n    " else "\n")
+            is RenderNode.Paragraph -> append(if (node.indented) "\n    " else "\n")
 
-            is TextNode.SectionHeading -> {
+            is RenderNode.Section -> {
                 val start = length
                 val text = if (node.isMajor) node.text.uppercase() else node.text
                 append(text)
@@ -225,21 +224,31 @@ object ComposeTextAdapter {
                 append("\n")
             }
 
-            is TextNode.ChapterLabel -> {
+            is RenderNode.ChapterLabel -> {
                 val start = length
                 append(node.text)
                 val end = length
                 addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
             }
 
-            is TextNode.PoeticLine -> {
-                if (node.content.isEmpty()) {
+            is RenderNode.PoeticLine -> {
+                if (node.children.isEmpty()) {
                     append("\n")
                 } else {
+                    // PoeticLine with content children — render them recursively
                     val padding = "    ".repeat(node.indentLevel)
                     val start = length
                     append(padding)
-                    append(node.content)
+                    for (child in node.children) {
+                        appendNode(
+                            node = child,
+                            searchHighlightColor = searchHighlightColor,
+                            verseColor = verseColor,
+                            onVerseClick = onVerseClick,
+                            onNoteClick = onNoteClick,
+                            onLinkClick = onLinkClick
+                        )
+                    }
                     val end = length
 
                     if (node.rightAligned) {
@@ -250,7 +259,7 @@ object ComposeTextAdapter {
                 }
             }
 
-            is TextNode.VerseMarker -> {
+            is RenderNode.Verse -> {
                 val label = if (node.endVerse > 0) {
                     "${node.startVerse}-${node.endVerse}"
                 } else "${node.startVerse}"
@@ -275,10 +284,10 @@ object ComposeTextAdapter {
                     )
                 }
 
-                if (node.startPos >= 0) {
+                if (node.start >= 0) {
                     addStringAnnotation(
                         tag = "RAW_POSITION",
-                        annotation = "${node.startPos}|${node.endPos}",
+                        annotation = "${node.start}|${node.end}",
                         start = start,
                         end = end
                     )
@@ -300,17 +309,19 @@ object ComposeTextAdapter {
                 }
             }
 
-            is TextNode.NoteMarker -> {
+            is RenderNode.Note -> {
                 val start = length
                 pushStyle(SpanStyle())
-                if (node.highlighted && searchHighlightColor != Color.Unspecified) {
+                if (node.attributes.searchHighlighted
+                    && searchHighlightColor != Color.Unspecified) {
                     pushStyle(SpanStyle(background = searchHighlightColor))
                 }
 
                 // Placeholder for the note icon using inline content
                 appendInlineContent("note_icon", NOTE_CHAR.toString())
 
-                if (node.highlighted && searchHighlightColor != Color.Unspecified) {
+                if (node.attributes.searchHighlighted
+                    && searchHighlightColor != Color.Unspecified) {
                     pop()
                 }
                 pop()
@@ -334,16 +345,7 @@ object ComposeTextAdapter {
                 }
             }
 
-            is TextNode.SearchHighlight -> {
-                val start = length
-                append(node.content)
-                val end = length
-                if (searchHighlightColor != Color.Unspecified) {
-                    addStyle(SpanStyle(background = searchHighlightColor), start, end)
-                }
-            }
-
-            is TextNode.Link -> {
+            is RenderNode.Link -> {
                 val (tag, annotation, title) = when (val d = node.linkData) {
                     is LinkData.Article -> Triple("TA", d.address, d.title)
                     is LinkData.Passage -> Triple("PASSAGE", d.address, d.title)
