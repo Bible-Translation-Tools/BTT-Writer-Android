@@ -52,7 +52,7 @@ class USFMRenderer(
     /**
      * Render USFM input into a platform-agnostic List<RenderNode>.
      */
-    override fun renderToNodes(input: String): List<RenderNode> {
+    override fun render(input: String): List<RenderNode> {
         addedMissingVerse = false
         if (isStopped()) return emptyList()
 

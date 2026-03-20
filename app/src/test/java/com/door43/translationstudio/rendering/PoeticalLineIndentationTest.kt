@@ -8,7 +8,7 @@ class PoeticalLineIndentationTest {
 
     private fun testRender(input: String): List<TextNode> {
         val renderer = USXRenderer()
-        val renderNodes = renderer.renderToNodes(input)
+        val renderNodes = renderer.render(input)
         return RenderNodeConverter.renderNodesToTextNodes(renderNodes)
     }
 

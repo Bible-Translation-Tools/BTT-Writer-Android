@@ -20,7 +20,7 @@ abstract class RenderingEngine {
 
         thread {
             try {
-                val output = renderToNodes(input.toString())
+                val output = render(input.toString())
                 callback.onComplete(output)
             } catch (e: Exception) {
                 callback.onError(input.toString())
@@ -55,7 +55,7 @@ abstract class RenderingEngine {
      * @param input the raw input string
      * @return list of platform-agnostic nodes describing the rendered output
      */
-    open fun renderToNodes(input: String): List<RenderNode> {
+    open fun render(input: String): List<RenderNode> {
         return listOf(RenderNode.Text(input))
     }
 

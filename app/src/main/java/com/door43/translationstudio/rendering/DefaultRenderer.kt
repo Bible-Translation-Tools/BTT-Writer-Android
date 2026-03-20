@@ -11,12 +11,12 @@ class DefaultRenderer : RenderingEngine() {
     private var highlightColor = 0
     private var renderer: USXRenderer? = null
 
-    override fun renderToNodes(input: String): List<RenderNode> {
+    override fun render(input: String): List<RenderNode> {
         val usxRenderer = USXRenderer()
         usxRenderer.setSearchString(search, highlightColor)
         this.renderer = usxRenderer
         if (isStopped()) return listOf(RenderNode.Text(input))
-        return usxRenderer.renderToNodes(input)
+        return usxRenderer.render(input)
     }
 
     override fun onStop() {

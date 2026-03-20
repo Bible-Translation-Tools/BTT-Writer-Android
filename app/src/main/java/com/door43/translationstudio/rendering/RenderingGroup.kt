@@ -68,7 +68,7 @@ class RenderingGroup {
     /**
      * Runs the pipeline and returns a platform-agnostic hierarchical List<RenderNode>.
      *
-     * If the first engine is a [ClickableRenderingEngine], its [RenderingEngine.renderToNodes]
+     * If the first engine is a [ClickableRenderingEngine], its [RenderingEngine.render]
      * override is used directly (it handles notes, highlights, etc. natively).
      * For any other engine (e.g. DefaultRenderer), only [RenderingEngine.render] is overridden,
      * so this method calls render() and wraps the result in a plain [RenderNode.Text].
@@ -80,7 +80,7 @@ class RenderingGroup {
         val result: List<RenderNode> = if (mEngines.isEmpty()) {
             listOf(RenderNode.Text(mInput))
         } else {
-            mEngines.first().renderToNodes(mInput)
+            mEngines.first().render(mInput)
         }
         mRunning = false
         return result

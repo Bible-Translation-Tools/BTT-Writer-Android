@@ -17,7 +17,7 @@ import org.junit.Test
 class USFMRendererTest {
 
     private fun testRender(input: String): List<TextNode> {
-        val renderNodes = renderer().renderToNodes(input)
+        val renderNodes = renderer().render(input)
         return RenderNodeConverter.renderNodesToTextNodes(renderNodes)
     }
 
@@ -70,7 +70,7 @@ class USFMRendererTest {
         val input = """<para style="ms">INTRO</para> rest of text"""
         val r = renderer()
         r.setSuppressLeadingMajorSectionHeadings(true)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertFalse(
             "Suppressed heading should not appear",
             nodes.any { it is TextNode.SectionHeading && (it as TextNode.SectionHeading).isMajor }
@@ -82,7 +82,7 @@ class USFMRendererTest {
         val input = """\v 1 text <para style="ms">MID SECTION</para>"""
         val r = renderer()
         r.setSuppressLeadingMajorSectionHeadings(true)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertTrue(
             "Non-leading major heading should still appear",
             nodes.any { it is TextNode.SectionHeading && (it as TextNode.SectionHeading).isMajor }
@@ -137,7 +137,7 @@ class USFMRendererTest {
         val input = """\v 1 text"""
         val r = renderer()
         r.setVersesEnabled(false)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertFalse(nodes.any { it is TextNode.VerseMarker })
     }
 
@@ -146,7 +146,7 @@ class USFMRendererTest {
         val input = """\v 3 text"""
         val r = renderer()
         r.setPopulateVerseMarkers(intArrayOf(1, 2)) // only verses 1-2 expected
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertFalse(
             "Verse 3 should be filtered out",
             nodes.filterIsInstance<TextNode.VerseMarker>().any { it.startVerse == 3 }
@@ -158,7 +158,7 @@ class USFMRendererTest {
         val input = """\v 2 text"""
         val r = renderer()
         r.setPopulateVerseMarkers(intArrayOf(1)) // expect verse 1, which is not present
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertTrue(
             "Missing verse 1 should be inserted",
             nodes.filterIsInstance<TextNode.VerseMarker>().any { it.startVerse == 1 }
@@ -171,7 +171,7 @@ class USFMRendererTest {
         val input = """\v 2 text"""
         val r = renderer()
         r.setPopulateVerseMarkers(intArrayOf(1))
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         val firstVerse = nodes.filterIsInstance<TextNode.VerseMarker>().first()
         assertEquals("Missing verse should be first", 1, firstVerse.startVerse)
     }
@@ -181,7 +181,7 @@ class USFMRendererTest {
         val input = "no verses here"
         val r = renderer()
         r.setPopulateVerseMarkers(intArrayOf(1, 3))
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         val verses = nodes.filterIsInstance<TextNode.VerseMarker>().map { it.startVerse }.toSet()
         assertTrue(verses.containsAll(listOf(1, 2, 3)))
         assertTrue(r.isAddedMissingVerse)
@@ -269,7 +269,7 @@ class USFMRendererTest {
         val input = """\v 1 In the beginning God created"""
         val r = renderer()
         r.setSearchString("beginning", 0xFF0000)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         val highlights = nodes.filterIsInstance<TextNode.SearchHighlight>()
         assertTrue("Expected SearchHighlight node", highlights.isNotEmpty())
         assertEquals("beginning", highlights.first().content)
@@ -280,7 +280,7 @@ class USFMRendererTest {
         val input = "In the beginning God"
         val r = renderer()
         r.setSearchString("beginning", 0xFF0000)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         val allText = nodes.joinToString("") {
             when (it) {
                 is TextNode.Text -> it.content
@@ -296,7 +296,7 @@ class USFMRendererTest {
         val input = "In the Beginning God"
         val r = renderer()
         r.setSearchString("beginning", 0xFF0000)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertTrue(nodes.any { it is TextNode.SearchHighlight })
     }
 
@@ -305,7 +305,7 @@ class USFMRendererTest {
         val input = "In the Beginning God"
         val r = renderer()
         r.setSearchString("beginning", 0xFF0000)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         val highlight = nodes.filterIsInstance<TextNode.SearchHighlight>().firstOrNull()
         assertNotNull(highlight)
         assertEquals("Beginning", highlight!!.content)
@@ -316,7 +316,7 @@ class USFMRendererTest {
         val input = "In the beginning"
         val r = renderer()
         r.setSearchString("", 0xFF0000)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertFalse(nodes.any { it is TextNode.SearchHighlight })
     }
 
@@ -335,7 +335,7 @@ class USFMRendererTest {
         val input = """\f + \ft special footnote text \f*"""
         val r = renderer()
         r.setSearchString("special", 0xFF0000)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         val note = nodes.filterIsInstance<TextNode.NoteMarker>().firstOrNull()
         assertNotNull(note)
         assertTrue("Note should be highlighted when search matches", note!!.highlighted)
@@ -346,7 +346,7 @@ class USFMRendererTest {
         val input = """\f + \ft footnote text \f*"""
         val r = renderer()
         r.setSearchString("xyz", 0xFF0000)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         val note = nodes.filterIsInstance<TextNode.NoteMarker>().firstOrNull()
         assertNotNull(note)
         assertFalse("Note should not be highlighted when search doesn't match", note!!.highlighted)
@@ -403,7 +403,7 @@ class USFMRendererTest {
         val input = """\p some text"""
         val r = renderer()
         r.setParagraphsEnabled(false)
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertFalse(
             "\\p marker should not produce a Paragraph node when paragraphs disabled",
             nodes.any { it is TextNode.Paragraph }
@@ -437,7 +437,7 @@ class USFMRendererTest {
         val r = USFMRenderer()
         assertNotNull(r)
         // Calling renderToNodes does not throw due to missing context
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes("hello"))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(r.render("hello"))
         assertFalse(nodes.isEmpty())
     }
 
@@ -460,7 +460,7 @@ class USFMRendererTest {
         val input = """\v 1 text"""
         val r = renderer()
         r.setPopulateVerseMarkers(intArrayOf(1)) // verse 1 is present
-        RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertFalse("isAddedMissingVerse should be false when verse is present", r.isAddedMissingVerse)
     }
 
@@ -477,7 +477,7 @@ class USFMRendererTest {
         // USFMNoteSpan.PATTERN = "\\f\s(\S)\s([\s\S]+?)\f*"
         // A minimal valid note: \f + \fr 1:1 \ft footnote text\f*
         val input = """\f + \fr 1:1 \ft footnote text\f*"""
-        val nodes = RenderNodeConverter.renderNodesToTextNodes(USFMRenderer().renderToNodes(input))
+        val nodes = RenderNodeConverter.renderNodesToTextNodes(USFMRenderer().render(input))
         val noteMarkers = nodes.filterIsInstance<TextNode.NoteMarker>()
         assertEquals("Expected one NoteMarker", 1, noteMarkers.size)
         val textNodes = nodes.filterIsInstance<TextNode.Text>()
@@ -490,7 +490,7 @@ class USFMRendererTest {
         val input = """\v 1 text"""
         val r = USFMRenderer()
         r.setPopulateVerseMarkers(intArrayOf(1)) // verse 1 is present
-        RenderNodeConverter.renderNodesToTextNodes(r.renderToNodes(input))
+        RenderNodeConverter.renderNodesToTextNodes(r.render(input))
         assertFalse("isAddedMissingVerse should be false when all verses are present", r.isAddedMissingVerse)
     }
 }

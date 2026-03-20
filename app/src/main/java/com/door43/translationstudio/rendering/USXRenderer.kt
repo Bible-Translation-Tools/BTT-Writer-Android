@@ -52,7 +52,7 @@ class USXRenderer(
     /**
      * Render USX input into a platform-agnostic hierarchical List<RenderNode>.
      */
-    override fun renderToNodes(input: String): List<RenderNode> {
+    override fun render(input: String): List<RenderNode> {
         addedMissingVerse = false
         if (isStopped()) return emptyList()
 
