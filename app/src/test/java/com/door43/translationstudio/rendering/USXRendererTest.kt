@@ -602,4 +602,5 @@ for they will be comforted.
         assertNotNull("Expected verse 1 to be inserted as missing", missing)
         assertTrue("Expected missing verse marker to be pinned when verseDisplay=PIN", missing!!.pinned)
     }
+
 }

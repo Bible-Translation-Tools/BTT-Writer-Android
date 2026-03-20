@@ -773,7 +773,7 @@ open class ReviewModeAdapter(
         AlertDialog.Builder(context, R.style.AppTheme_Dialog)
             .setTitle(R.string.title_add_footnote)
             .setPositiveButton(R.string.label_ok) { dialog, _ ->
-                val footnote = footnoteBinding.footnoteText.text
+                val footnote = footnoteBinding.footnoteText.text?.toString()
                 placeNewFootnote(footnote, holder, item, insertPos)
                 dialog.dismiss()
             }
@@ -802,7 +802,7 @@ open class ReviewModeAdapter(
         AlertDialog.Builder(context, R.style.AppTheme_Dialog)
             .setTitle(R.string.title_add_footnote)
             .setPositiveButton(R.string.label_ok) { dialog, _ ->
-                val footnote = footnoteBinding.footnoteText.text
+                val footnote = footnoteBinding.footnoteText.text?.toString()
                 placeFootnote(footnote, marker, holder, item)
                 dialog.dismiss()
             }
@@ -832,12 +832,12 @@ open class ReviewModeAdapter(
      * Insert a new footnote at the specified position in item.targetText (USFM source).
      */
     private fun placeNewFootnote(
-        footnote: CharSequence?,
+        footnote: String?,
         holder: ReviewHolder,
         item: ReviewListItemOld,
         insertPos: Int
     ) {
-        var footnotecode: CharSequence = ""
+        var footnotecode: String = ""
         var actualFootnote = footnote
         if (actualFootnote != null) {
             if (actualFootnote.isEmpty()) {
@@ -880,12 +880,12 @@ open class ReviewModeAdapter(
     }
 
     private fun placeFootnote(
-        footnote: CharSequence?,
+        footnote: String?,
         marker: TextNode.NoteMarker,
         holder: ReviewHolder,
         item: ReviewListItemOld
     ) {
-        var footnotecode: CharSequence = ""
+        var footnotecode: String = ""
         var actualFootnote = footnote
         if (actualFootnote != null) {
             // sanity checks

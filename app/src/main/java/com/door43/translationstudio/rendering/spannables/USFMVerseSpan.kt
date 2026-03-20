@@ -38,7 +38,7 @@ open class USFMVerseSpan : VerseSpan {
          * @param text the text to search
          * @return IntArray of size 0 if no verses, size 1 if one verse, size 2 if a range of verses
          */
-        fun getVerseRange(text: CharSequence): IntArray {
+        fun getVerseRange(text: String): IntArray {
             // locate verse range
             val pattern = Pattern.compile(PATTERN)
             val matcher = pattern.matcher(text)

@@ -78,7 +78,7 @@ data class Frame(
         /**
          * Returns the range of verses that a chunk of text spans
          */
-        fun getVerseRange(text: CharSequence, format: TranslationFormat): IntArray {
+        fun getVerseRange(text: String, format: TranslationFormat): IntArray {
             return when (format) {
                 TranslationFormat.USX -> USXVerseSpan.getVerseRange(text)
                 TranslationFormat.USFM -> USFMVerseSpan.getVerseRange(text)
@@ -121,7 +121,7 @@ data class Frame(
     /**
      * Returns the range of verses that a chunk of text spans
      */
-    fun getVerseRange(text: CharSequence): IntArray {
+    fun getVerseRange(text: String): IntArray {
         return getVerseRange(text, format)
     }
 }

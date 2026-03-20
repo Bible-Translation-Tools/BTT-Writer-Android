@@ -6,7 +6,7 @@ import java.util.regex.Pattern
  * Represents a char element according to the usx specification
  * See http://dbl.ubs-icap.org:8090/display/DBLDOCS/USX#USX-char
  */
-class USXChar(style: String, val value: CharSequence) {
+class USXChar(style: String, val value: String) {
 
     val style: String = style.trim().lowercase()
 

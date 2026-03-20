@@ -6,7 +6,7 @@ import java.util.regex.Pattern
  * Represents a char element according to the usfm specification
  * See http://ubs-icap.org/chm/usfm/2.4/index.html
  */
-class USFMChar(style: String, val value: CharSequence) {
+class USFMChar(style: String, val value: String) {
 
     val style: String = style.trim().lowercase()
 

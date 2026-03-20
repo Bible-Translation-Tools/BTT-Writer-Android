@@ -222,17 +222,13 @@ class UsxBrokenRenderTest : KoinTest {
                 }
                 is RenderNode.ChapterLabel -> sb.append(node.text)
                 is RenderNode.PoeticLine -> {
-                    if (node.children.isEmpty()) {
-                        sb.append("\n")
-                    } else {
-                        val padding = "    ".repeat(node.indentLevel)
-                        sb.append(padding)
-                        sb.append(nodesToString(node.children))
-                        sb.append("\n")
-                    }
+                    if (sb.isNotEmpty()) sb.append("\n")
+                    sb.append("  ".repeat(node.indentLevel))
+                    sb.append(nodesToString(node.children))
                 }
                 is RenderNode.Paragraph -> {
-                    sb.append(if (node.indented) "\n    " else "\n")
+                    if (sb.isNotEmpty()) sb.append("\n")
+                    if (node.indented) sb.append("    ")
                     sb.append(nodesToString(node.children))
                 }
                 RenderNode.LineBreak -> sb.append("\n")

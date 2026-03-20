@@ -162,7 +162,7 @@ class USXRenderer(
             if (tagText.contains("style=\"p\"") || tagText.contains("style=\"m\"")) {
                 tokens.add(Token(
                     matcher.start(), matcher.end(),
-                    listOf(RenderNode.Paragraph(indented = false, children = emptyList()), RenderNode.LineBreak)
+                    listOf(RenderNode.Paragraph(indented = false, children = emptyList()))
                 ))
             }
         }
@@ -407,8 +407,13 @@ class USXRenderer(
         var i = 0
         while (i < nodes.size) {
             if (nodes[i] is RenderNode.Verse) {
-                val inPoetry = hasPoeticLineInContext(nodes, i, lookBack = true)
-                    || hasPoeticLineInContext(nodes, i, lookBack = false)
+                // Only add implicit poetry marker if the verse is in a poetry context.
+                // Look-back takes priority: if a Paragraph is found before any PoeticLine,
+                // this verse belongs to prose even if poetry follows.
+                val lookBackResult = hasPoeticLineInContext(nodes, i, lookBack = true)
+                val lookBackHitParagraph = !lookBackResult && hasBoundaryBefore(nodes, i)
+                val inPoetry = if (lookBackHitParagraph) false
+                    else lookBackResult || hasPoeticLineInContext(nodes, i, lookBack = false)
 
                 if (inPoetry) {
                     var prevIdx = i - 1
@@ -438,6 +443,22 @@ class USXRenderer(
             when (nodes[j]) {
                 is RenderNode.PoeticLine -> return true
                 is RenderNode.Paragraph, is RenderNode.Section,
+                    RenderNode.BlankLine -> return false
+                else -> { /* skip Text, Verse, Note, etc. */ }
+            }
+        }
+        return false
+    }
+
+    /**
+     * Checks whether scanning backward from [fromIndex] hits a Paragraph boundary
+     * (meaning the verse belongs to prose, not poetry).
+     */
+    private fun hasBoundaryBefore(nodes: List<RenderNode>, fromIndex: Int): Boolean {
+        for (j in (fromIndex - 1) downTo 0) {
+            when (nodes[j]) {
+                is RenderNode.Paragraph -> return true
+                is RenderNode.PoeticLine, is RenderNode.Section,
                     RenderNode.BlankLine -> return false
                 else -> { /* skip Text, Verse, Note, etc. */ }
             }

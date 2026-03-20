@@ -3,7 +3,6 @@ package com.door43.translationstudio.rendering.spannables
 import org.unfoldingword.tools.logger.Logger
 import org.w3c.dom.Element
 import org.w3c.dom.Node
-import org.w3c.dom.NodeList
 import java.io.ByteArrayOutputStream
 import java.io.StringReader
 import java.util.Properties
@@ -24,8 +23,8 @@ class USXNoteSpan(
     val chars: List<USXChar>
 ) : NoteSpan() {
 
-    override val notes: CharSequence
-    override val passage: CharSequence
+    override val notes: String
+    override val passage: String
 
     var isHighlight: Boolean = false
 
@@ -36,7 +35,7 @@ class USXNoteSpan(
         /**
          * Generates the passage note tag with additional attributes
          */
-        fun generateTag(style: String, caller: String, title: CharSequence, chars: List<USXChar>): CharSequence {
+        fun generateTag(style: String, caller: String, title: String, chars: List<USXChar>): String {
             val dbf = DocumentBuilderFactory.newInstance()
             val db = try {
                 dbf.newDocumentBuilder()
@@ -55,7 +54,7 @@ class USXNoteSpan(
             for (c in chars) {
                 val element = document.createElement("char")
                 element.setAttribute("style", c.style)
-                element.textContent = c.value.toString().replace("\n", "\\n")
+                element.textContent = c.value.replace("\n", "\\n")
                 rootElement.appendChild(element)
             }
 
@@ -87,7 +86,7 @@ class USXNoteSpan(
          * Generates a footnote span
          * @param note the note
          */
-        fun generateFootnote(note: CharSequence): USXNoteSpan {
+        fun generateFootnote(note: String): USXNoteSpan {
             val chars = listOf(USXChar(USXChar.Companion.STYLE_FOOTNOTE_TEXT, note))
             return USXNoteSpan("f", DEFAULT_CALLER, chars)
         }
@@ -100,11 +99,11 @@ class USXNoteSpan(
          *
          * Uses javax.xml DOM parsing (JVM standard, no Android SDK dependency).
          */
-        fun parseNote(usx: CharSequence): USXNoteSpan? {
+        fun parseNote(usx: String): USXNoteSpan? {
             return try {
                 val dbf = DocumentBuilderFactory.newInstance()
                 val db = dbf.newDocumentBuilder()
-                val document = db.parse(InputSource(StringReader(usx.toString())))
+                val document = db.parse(InputSource(StringReader(usx)))
                 val root = document.documentElement ?: return null
                 if (root.tagName != "note") return null
 
@@ -112,23 +111,26 @@ class USXNoteSpan(
                 val caller = root.getAttribute("caller").takeIf { it.isNotEmpty() } ?: DEFAULT_CALLER
 
                 val chars = ArrayList<USXChar>()
-                val charNodes: NodeList = root.getElementsByTagName("char")
-                for (i in 0 until charNodes.length) {
-                    val charEl = charNodes.item(i) as? Element ?: continue
-                    val charStyle = charEl.getAttribute("style") ?: continue
-                    val charText = charEl.textContent?.trim() ?: ""
-                    if (charText.isNotEmpty()) {
-                        chars.add(USXChar(charStyle, charText))
-                    }
-                }
-                // Also handle bare text directly inside <note> (not in a <char>)
+                // Iterate child nodes in document order to preserve interleaving
+                // of <char> elements and bare text nodes
                 val childNodes = root.childNodes
                 for (i in 0 until childNodes.length) {
                     val child = childNodes.item(i)
-                    if (child.nodeType == Node.TEXT_NODE) {
-                        val text = child.textContent?.trim() ?: ""
-                        if (text.isNotEmpty()) {
-                            chars.add(USXChar("ft", text))
+                    when (child.nodeType) {
+                        Node.ELEMENT_NODE -> {
+                            val charEl = child as? Element ?: continue
+                            if (charEl.tagName != "char") continue
+                            val charStyle = charEl.getAttribute("style") ?: continue
+                            val charText = charEl.textContent?.trim() ?: ""
+                            if (charText.isNotEmpty()) {
+                                chars.add(USXChar(charStyle, charText))
+                            }
+                        }
+                        Node.TEXT_NODE -> {
+                            val text = child.textContent?.trim() ?: ""
+                            if (text.isNotEmpty()) {
+                                chars.add(USXChar("ft", text))
+                            }
                         }
                     }
                 }
@@ -142,9 +144,9 @@ class USXNoteSpan(
     }
 
     init {
-        var spanTitle: CharSequence = ""
-        var quotation: CharSequence = ""
-        var passageText: CharSequence = ""
+        var spanTitle = ""
+        var quotation = ""
+        var passageText = ""
         val noteBuilder = StringBuilder()
 
         for (c in chars) {
@@ -175,10 +177,10 @@ class USXNoteSpan(
             spanTitle = quotation
         }
 
-        init(spanTitle.toString(), generateTag(style, caller, spanTitle, chars).toString())
+        init(spanTitle, generateTag(style, caller, spanTitle, chars))
 
         passage = spanTitle
-        notes = noteBuilder
+        notes = noteBuilder.toString()
     }
 
     /**

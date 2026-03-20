@@ -8,8 +8,8 @@ class USFMNoteSpan(
     chars: List<USFMChar>
 ) : NoteSpan() {
 
-    override val notes: CharSequence
-    override val passage: CharSequence
+    override val notes: String
+    override val passage: String
 
     var isHighlight: Boolean = false
 
@@ -21,7 +21,7 @@ class USFMNoteSpan(
         /**
          * Generates the passage note tag with additional attributes
          */
-        fun generateTag(style: String, caller: String, title: CharSequence, chars: List<USFMChar>): CharSequence {
+        fun generateTag(style: String, caller: String, title: String, chars: List<USFMChar>): String {
             val tag = StringBuilder("\\f $caller ")
             for (c in chars) {
                 when (c.style) {
@@ -37,7 +37,7 @@ class USFMNoteSpan(
          * Generates a footnote span
          * @param note the note
          */
-        fun generateFootnote(note: CharSequence): USFMNoteSpan {
+        fun generateFootnote(note: String): USFMNoteSpan {
             val chars = listOf(USFMChar(USFMChar.Companion.STYLE_FOOTNOTE_TEXT, note))
             return USFMNoteSpan("f", DEFAULT_CALLER, chars)
         }
@@ -48,7 +48,7 @@ class USFMNoteSpan(
          * we are using usfm for footnotes and our own variant for user notes
          * http://ubs-icap.org/chm/usfm/2.4/index.html
          */
-        fun parseNote(caller: CharSequence, noteText: CharSequence): USFMNoteSpan {
+        fun parseNote(caller: String, noteText: String): USFMNoteSpan {
             val chars = mutableListOf<USFMChar>()
             val pattern = Pattern.compile(CHAR_PATTERN)
             val matcher = pattern.matcher(noteText)
@@ -58,26 +58,26 @@ class USFMNoteSpan(
             while (matcher.find()) {
                 val start = matcher.start()
                 if (start > lastIndex) {
-                    noteBuilder.append(noteText.subSequence(lastIndex, start))
+                    noteBuilder.append(noteText.substring(lastIndex, start))
                 }
                 chars.add(USFMChar("f" + matcher.group(1), matcher.group(2) ?: ""))
                 lastIndex = matcher.end()
             }
 
             if (lastIndex < noteText.length) { // if extra text, add it
-                noteBuilder.append(noteText.subSequence(lastIndex, noteText.length))
+                noteBuilder.append(noteText.substring(lastIndex, noteText.length))
                 chars.add(USFMChar(USFMChar.Companion.STYLE_PASSAGE_TEXT, noteBuilder.toString()))
             }
-            return USFMNoteSpan("f", caller.toString(), chars)
+            return USFMNoteSpan("f", caller, chars)
         }
     }
 
     init {
-        var spanTitle: CharSequence = ""
+        var spanTitle = ""
         val noteBuilder = StringBuilder()
-        var quotation: CharSequence = ""
-        var altQuotation: CharSequence = ""
-        var passageText: CharSequence = ""
+        var quotation = ""
+        var altQuotation = ""
+        var passageText = ""
 
         for (c in chars) {
             when (c.style) {
@@ -98,7 +98,7 @@ class USFMNoteSpan(
             spanTitle = quotation
         }
 
-        init(spanTitle.toString(), generateTag(style, caller, spanTitle, chars).toString())
+        init(spanTitle, generateTag(style, caller, spanTitle, chars))
 
         passage = spanTitle
         notes = "$noteBuilder $altQuotation"

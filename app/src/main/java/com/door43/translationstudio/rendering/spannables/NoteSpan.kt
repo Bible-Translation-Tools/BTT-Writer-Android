@@ -18,10 +18,10 @@ abstract class NoteSpan : Span() {
     /**
      * Returns the notes regarding the passage
      */
-    abstract val notes: CharSequence
+    abstract val notes: String
 
     /**
      * Returns the text upon which the notes are made
      */
-    abstract val passage: CharSequence
+    abstract val passage: String
 }
