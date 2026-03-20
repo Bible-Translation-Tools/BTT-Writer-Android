@@ -15,6 +15,7 @@ import com.door43.translationstudio.rendering.HtmlRenderer
 import com.door43.translationstudio.rendering.model.LinkData
 import com.door43.translationstudio.rendering.model.NodeStyle
 import com.door43.translationstudio.rendering.model.TextNode
+import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
 
 /**
  * Converts a List<TextNode> to Compose AnnotatedString.
@@ -307,7 +308,7 @@ object ComposeTextAdapter {
                 }
 
                 // Placeholder for the note icon using inline content
-                appendInlineContent("note_icon", "\uFFFC")
+                appendInlineContent("note_icon", NOTE_CHAR.toString())
 
                 if (node.highlighted && searchHighlightColor != Color.Unspecified) {
                     pop()

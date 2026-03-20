@@ -14,7 +14,7 @@ class FootnoteOutputTransformationTest {
     }
 
     @Test
-    fun `single footnote replaced with OBJ_CHAR`() {
+    fun `single footnote replaced with NOTE_CHAR`() {
         val result = replaceFootnotesForDisplay("hello \\f + \\ft note \\f* world")
         assertEquals("hello \u2800 world", result.displayText)
         assertEquals(1, result.footnoteRanges.size)
@@ -30,7 +30,7 @@ class FootnoteOutputTransformationTest {
     }
 
     @Test
-    fun `adjacent footnotes produce adjacent OBJ_CHARs`() {
+    fun `adjacent footnotes produce adjacent NOTE_CHARs`() {
         val result = replaceFootnotesForDisplay("\\f + \\ft one \\f*\\f + \\ft two \\f*")
         assertEquals("\u2800\u2800", result.displayText)
         assertEquals(2, result.footnoteRanges.size)

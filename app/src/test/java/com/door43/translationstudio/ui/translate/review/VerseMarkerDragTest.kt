@@ -95,10 +95,10 @@ class VerseMarkerDragTest {
 
     @Test
     fun `closestWordBoundary snaps to USFFC char`() {
-        val text = "hello \uFFFCworld"
-        // On \uFFFC — return its position (it's a token)
+        val text = "hello \u2800world"
+        // On \u2800 — return its position (it's a token)
         assertEquals(6, VerseMarkerDrag.closestWordBoundary(text, 6))
-        // On 'w' of "world" — walk back to word start (stops at \uFFFC)
+        // On 'w' of "world" — walk back to word start (stops at \u2800)
         assertEquals(7, VerseMarkerDrag.closestWordBoundary(text, 7))
     }
 
@@ -112,8 +112,8 @@ class VerseMarkerDragTest {
 
     @Test
     fun `countWordStartsBefore counts words and USFFC tokens`() {
-        val text = "hello \uFFFC world"
-        // Tokens before offset 8: "hello"=1, \uFFFC=2
+        val text = "hello \u2800 world"
+        // Tokens before offset 8: "hello"=1, \u2800=2
         assertEquals(2, VerseMarkerDrag.countWordStartsBefore(text, 8))
     }
 
@@ -177,7 +177,7 @@ class VerseMarkerDragTest {
 
     @Test
     fun `mapByCharRatio maps midpoint correctly`() {
-        val rendered = "\uFFFC\u4F60\u597D\u4E16\u754C"  // [pin]你好世界
+        val rendered = "\u2800\u4F60\u597D\u4E16\u754C"  // [pin]你好世界
         val usfm = "\\v 1 \u4F60\u597D\u4E16\u754C"      // \v 1 你好世界
         // Tap at offset 3 (after pin + 你好): 2 visible chars / 4 total = 0.5 ratio
         val result = VerseMarkerDrag.mapByCharRatio(rendered, 3, usfm, TranslationFormat.USFM)
@@ -188,14 +188,14 @@ class VerseMarkerDragTest {
 
     @Test
     fun `mapByCharRatio at start returns first non-markup position`() {
-        val rendered = "\uFFFC text"
+        val rendered = "\u2800 text"
         val usfm = "\\v 1 text"
         assertEquals(5, VerseMarkerDrag.mapByCharRatio(rendered, 0, usfm, TranslationFormat.USFM))
     }
 
     @Test
     fun `mapByCharRatio at end returns usfm length`() {
-        val rendered = "\uFFFC text"
+        val rendered = "\u2800 text"
         val usfm = "\\v 1 text"
         assertEquals(9, VerseMarkerDrag.mapByCharRatio(rendered, 6, usfm, TranslationFormat.USFM))
     }

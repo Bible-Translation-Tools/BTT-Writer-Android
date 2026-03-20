@@ -468,6 +468,7 @@ class ReadModeAdapter(
             if (sourceNodes == null) {
                 sourceNodes = readModeListener?.onRenderSourceText(this) ?: emptyList()
             }
+            @Suppress("DEPRECATION")
             binding.sourceTranslationBody.setText(
                 SpannableAdapter.convert(
                     sourceNodes,
@@ -485,6 +486,7 @@ class ReadModeAdapter(
             if (targetNodes == null) {
                 targetNodes = readModeListener?.onRenderTargetText(this) ?: emptyList()
             }
+            @Suppress("DEPRECATION")
             val targetSpannable = SpannableAdapter.convert(
                 targetNodes,
                 context = context,

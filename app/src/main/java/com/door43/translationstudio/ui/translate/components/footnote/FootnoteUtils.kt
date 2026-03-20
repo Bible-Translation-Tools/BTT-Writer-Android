@@ -2,9 +2,8 @@ package com.door43.translationstudio.ui.translate.components.footnote
 
 import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
-import kotlin.text.iterator
 
-internal const val OBJ_CHAR = '\u2800' // Braille Pattern Blank — renders as blank space
+internal const val NOTE_CHAR = '\u2800' // Braille Pattern Blank — renders as blank space
 
 // Custom regex that won't match across \f openers (prevents greedy matching
 // when user is typing a new footnote before an existing one).
@@ -16,11 +15,11 @@ internal fun findFootnoteBlocks(text: CharSequence): List<MatchResult> {
 }
 
 /**
- * Reconstruct raw USFM from visual text by replacing OBJ_CHAR placeholders
+ * Reconstruct raw USFM from visual text by replacing NOTE_CHAR placeholders
  * with their corresponding footnote blocks from the full raw text.
  */
 internal fun visualToRaw(visualText: String, fullRawText: String): String {
-    if (OBJ_CHAR !in visualText) return visualText
+    if (NOTE_CHAR !in visualText) return visualText
 
     val footnotes = findFootnoteBlocks(fullRawText)
     if (footnotes.isEmpty()) return visualText
@@ -29,12 +28,12 @@ internal fun visualToRaw(visualText: String, fullRawText: String): String {
     val copyStart = fullVisual.indexOf(visualText)
     if (copyStart == -1) return visualText
 
-    val footnoteOffset = fullVisual.substring(0, copyStart).count { it == OBJ_CHAR }
+    val footnoteOffset = fullVisual.substring(0, copyStart).count { it == NOTE_CHAR }
 
     val sb = StringBuilder()
     var footnoteIdx = footnoteOffset
     for (ch in visualText) {
-        if (ch == OBJ_CHAR && footnoteIdx < footnotes.size) {
+        if (ch == NOTE_CHAR && footnoteIdx < footnotes.size) {
             sb.append(footnotes[footnoteIdx].value)
             footnoteIdx++
         } else {
@@ -61,7 +60,7 @@ internal fun replaceFootnotesForDisplay(rawText: String): FootnoteDisplayResult 
 
     for (block in blocks) {
         sb.append(rawText, lastEnd, block.range.first)
-        sb.append(OBJ_CHAR)
+        sb.append(NOTE_CHAR)
         ranges.add(block.range)
         lastEnd = block.range.last + 1
     }
@@ -75,7 +74,7 @@ internal object FootnoteOutputTransformation : OutputTransformation {
         val text = toString()
         val blocks = findFootnoteBlocks(text)
         for (block in blocks.reversed()) {
-            replace(block.range.first, block.range.last + 1, OBJ_CHAR.toString())
+            replace(block.range.first, block.range.last + 1, NOTE_CHAR.toString())
         }
     }
 }

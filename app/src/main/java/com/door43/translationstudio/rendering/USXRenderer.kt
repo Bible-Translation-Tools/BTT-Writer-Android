@@ -1,19 +1,15 @@
 package com.door43.translationstudio.rendering
 
+import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
-import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.rendering.spannables.USXChar
 import com.door43.translationstudio.rendering.spannables.USXNoteSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
-import com.door43.translationstudio.ui.textadapters.SpannableAdapter
 import java.util.regex.Pattern
 
 /**
- * USX rendering engine. Produces a List<TextNode> via renderToNodes().
- * The render(CharSequence) override is a shim that calls renderToNodes + SpannableAdapter.convert
- * so that existing callers continue to work.
- *
+ * USX rendering engine. Produces a hierarchical List<RenderNode> via renderToNodes().
  * No Android framework code lives in this file.
  */
 class USXRenderer(
@@ -87,13 +83,13 @@ class USXRenderer(
         val tokens = removeOverlaps(allTokens)
 
         // assemble node list, filling gaps with Text nodes
-        val nodes = mutableListOf<TextNode>()
+        val nodes = mutableListOf<RenderNode>()
         var lastIndex = 0
         for (token in tokens) {
             if (token.start > lastIndex) {
                 val gap = text.substring(lastIndex, token.start)
                 val cleaned = stripRemainingMarkers(gap)
-                if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned, startPos = lastIndex, endPos = token.start))
+                if (cleaned.isNotBlank()) nodes.add(RenderNode.Text(cleaned, start = lastIndex, end = token.start))
             }
             nodes.addAll(token.nodes)
             lastIndex = token.end
@@ -101,7 +97,7 @@ class USXRenderer(
         if (lastIndex < text.length) {
             val tail = text.substring(lastIndex)
             val cleaned = stripRemainingMarkers(tail)
-            if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned, startPos = lastIndex, endPos = text.length))
+            if (cleaned.isNotBlank()) nodes.add(RenderNode.Text(cleaned, start = lastIndex, end = text.length))
         }
 
         // insert implicit poetry line markers before bare verse markers in poetry context
@@ -113,34 +109,7 @@ class USXRenderer(
         // insert missing expected verses
         insertMissingVerses(nodes)
 
-        return convertTextNodesToRenderNodes(nodes)
-    }
-
-    /**
-     * Shim: delegates to renderToNodes + conversion to TextNode + SpannableAdapter.convert so that
-     * RenderingEngine.start() and any direct callers of render() continue to work.
-     * TODO: Update SpannableAdapter to work directly with RenderNode
-     */
-    override fun render(input: CharSequence): CharSequence {
-        val renderNodes = renderToNodes(input.toString())
-        val textNodes = convertRenderNodesToTextNodes(renderNodes)
-        return SpannableAdapter.convert(textNodes, searchHighlightColor = highlightColor)
-    }
-
-    /**
-     * Shim: DefaultRenderer calls renderNote() directly on a USXRenderer instance.
-     * We delegate to the full render() pipeline so the output is consistent.
-     */
-    fun renderNote(input: CharSequence): CharSequence {
-        return render(input)
-    }
-
-    /**
-     * Shim: DefaultRenderer calls renderHighlightSearch() directly.
-     * We delegate to the full render() pipeline.
-     */
-    fun renderHighlightSearch(input: CharSequence): CharSequence {
-        return render(input)
+        return nodes
     }
 
     override fun getLeadingMajorSectionHeading(input: CharSequence): String {
@@ -148,11 +117,10 @@ class USXRenderer(
         return if (matcher.find() && matcher.start() == 0) matcher.group(1) ?: "" else ""
     }
 
-    private data class Token(val start: Int, val end: Int, val nodes: List<TextNode>)
+    private data class Token(val start: Int, val end: Int, val nodes: List<RenderNode>)
 
     private fun findMajorSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        // Match only opening <para style="ms"> tags, extracting content after >
         val pattern = Pattern.compile("<para\\s+style=\"ms\"\\s*>\\s*([^<]*?)\\s*(?=<|$)")
         val matcher = pattern.matcher(text)
         while (matcher.find()) {
@@ -162,7 +130,7 @@ class USXRenderer(
             tokens.add(
                 Token(
                     matcher.start(), tokenEnd,
-                    listOf(TextNode.SectionHeading(content, isMajor = true, startPos = matcher.start(), endPos = tokenEnd), TextNode.LineBreak)
+                    listOf(RenderNode.Section(text = content, isMajor = true), RenderNode.LineBreak)
                 )
             )
         }
@@ -171,7 +139,6 @@ class USXRenderer(
 
     private fun findSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        // Match only opening <para style="s"> tags, extracting content after >
         val pattern = Pattern.compile("<para\\s+style=\"s\"\\s*>\\s*([^<]*?)\\s*(?=<|$)")
         val matcher = pattern.matcher(text)
         while (matcher.find()) {
@@ -180,7 +147,7 @@ class USXRenderer(
             tokens.add(
                 Token(
                     matcher.start(), tokenEnd,
-                    listOf(TextNode.SectionHeading(content, isMajor = false, startPos = matcher.start(), endPos = tokenEnd), TextNode.LineBreak)
+                    listOf(RenderNode.Section(text = content, isMajor = false), RenderNode.LineBreak)
                 )
             )
         }
@@ -189,18 +156,13 @@ class USXRenderer(
 
     private fun findParagraphBreaks(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        // Match only opening <para> tags, not the entire block
-        // This allows verses/notes inside paragraphs to be processed separately
         val matcher = beginParagraphPattern.matcher(text)
         while (matcher.find()) {
             val tagText = matcher.group() ?: continue
-            // Create tokens for paragraph-type styles: "p" and "m"
-            // These act as paragraph breaks (blank line) and reset poetry context.
-            // No indentation is added — verse markers handle their own positioning.
             if (tagText.contains("style=\"p\"") || tagText.contains("style=\"m\"")) {
                 tokens.add(Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.Paragraph(indented = false, startPos = matcher.start(), endPos = matcher.end()), TextNode.LineBreak)
+                    listOf(RenderNode.Paragraph(indented = false, children = emptyList()), RenderNode.LineBreak)
                 ))
             }
         }
@@ -211,15 +173,13 @@ class USXRenderer(
         val tokens = mutableListOf<Token>()
         val matcher = paraShortPattern("b").matcher(text)
         while (matcher.find()) {
-            tokens.add(Token(matcher.start(), matcher.end(), listOf(TextNode.BlankLine)))
+            tokens.add(Token(matcher.start(), matcher.end(), listOf(RenderNode.BlankLine)))
         }
         return tokens
     }
 
     private fun findPoeticLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        // Match only opening <para style="q\d+"> tags, not entire blocks
-        // This allows verses inside poetic lines to be processed separately
         val pattern = Pattern.compile("<para\\s+style=\"q(\\d+)\"\\s*>")
         val matcher = pattern.matcher(text)
         while (matcher.find()) {
@@ -227,7 +187,7 @@ class USXRenderer(
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.PoeticLine("", indentLevel = level, rightAligned = false, startPos = matcher.start(), endPos = matcher.end()))
+                    listOf(RenderNode.PoeticLine(indentLevel = level, rightAligned = false, children = emptyList()))
                 )
             )
         }
@@ -236,7 +196,6 @@ class USXRenderer(
 
     private fun findRightAlignedPoeticLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        // Match only opening <para style="qr"> tags, not entire blocks
         val pattern = Pattern.compile("<para\\s+style=\"qr\"\\s*>")
         val matcher = pattern.matcher(text)
         while (matcher.find()) {
@@ -244,8 +203,8 @@ class USXRenderer(
                 Token(
                     matcher.start(), matcher.end(),
                     listOf(
-                        TextNode.LineBreak,
-                        TextNode.PoeticLine("", indentLevel = 0, rightAligned = true, startPos = matcher.start(), endPos = matcher.end())
+                        RenderNode.LineBreak,
+                        RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = emptyList())
                     )
                 )
             )
@@ -255,13 +214,12 @@ class USXRenderer(
 
     private fun findChapterLabels(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        // Match only opening <para style="cl"> tags, extracting content after >
         val pattern = Pattern.compile("<para\\s+style=\"cl\"\\s*>\\s*([^<]*?)\\s*(?=<|$)")
         val matcher = pattern.matcher(text)
         while (matcher.find()) {
             val content = matcher.group(1)?.trim() ?: ""
             val tokenEnd = matcher.start() + matcher.group().length
-            tokens.add(Token(matcher.start(), tokenEnd, listOf(TextNode.ChapterLabel(content, startPos = matcher.start(), endPos = tokenEnd))))
+            tokens.add(Token(matcher.start(), tokenEnd, listOf(RenderNode.ChapterLabel(content))))
         }
         return tokens
     }
@@ -272,11 +230,10 @@ class USXRenderer(
         val foundVerses = mutableListOf<Int>()
         while (matcher.find()) {
             if (!renderVerses) {
-                // RAW mode: claim the range as plain text so stripRemainingMarkers won't eat it
                 tokens.add(
                     Token(
                         matcher.start(), matcher.end(),
-                        listOf(TextNode.Text(text.substring(matcher.start(), matcher.end()), startPos = matcher.start(), endPos = matcher.end()))
+                        listOf(RenderNode.Text(text.substring(matcher.start(), matcher.end()), start = matcher.start(), end = matcher.end()))
                     )
                 )
                 continue
@@ -286,13 +243,11 @@ class USXRenderer(
             val startVerse = parts[0].toIntOrNull() ?: continue
             val endVerse = if (parts.size == 2) parts[1].toIntOrNull() ?: 0 else 0
 
-            // Deduplication
             val versesToAdd = if (endVerse > 0) (startVerse..endVerse).toList() else listOf(startVerse)
             val alreadyRendered = versesToAdd.any { foundVerses.contains(it) }
             if (alreadyRendered) continue
             foundVerses.addAll(versesToAdd)
 
-            // Range filtering
             if (expectedVerseRange.isNotEmpty()) {
                 val minV = expectedVerseRange[0]
                 val maxV = if (expectedVerseRange.size > 1) expectedVerseRange[1] else minV
@@ -303,12 +258,13 @@ class USXRenderer(
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.VerseMarker(
-                        startVerse, endVerse,
-                        verseDisplay == VerseDisplay.PIN,
-                        text.substring(matcher.start(), matcher.end()),
-                        startPos = matcher.start(),
-                        endPos = matcher.end()
+                    listOf(RenderNode.Verse(
+                        startVerse = startVerse,
+                        endVerse = endVerse,
+                        pinned = verseDisplay == VerseDisplay.PIN,
+                        machineReadable = text.substring(matcher.start(), matcher.end()),
+                        start = matcher.start(),
+                        end = matcher.end()
                     ))
                 )
             )
@@ -333,21 +289,20 @@ class USXRenderer(
                     Token(
                         matcher.start(), matcher.end(),
                         listOf(
-                            TextNode.NoteMarker(
+                            RenderNode.Note(
                                 caller = note.caller,
                                 passage = note.passage.toString(),
                                 notes = note.notes.toString(),
                                 noteStyle = style,
-                                highlighted = highlighted,
                                 machineReadable = noteText,
                                 startPos = matcher.start(),
-                                endPos = matcher.end()
+                                endPos = matcher.end(),
+                                attributes = NodeAttributes(searchHighlighted = highlighted)
                             )
                         )
                     )
                 )
             }
-            // If note parsing fails, the text will fall through as gap text and be cleaned up
         }
         return tokens
     }
@@ -361,8 +316,8 @@ class USXRenderer(
                 Token(
                     matcher.start(), matcher.end(),
                     listOf(
-                        TextNode.LineBreak,
-                        TextNode.PoeticLine(content.trim(), indentLevel = 0, rightAligned = true, startPos = matcher.start(), endPos = matcher.end())
+                        RenderNode.LineBreak,
+                        RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = listOf(RenderNode.Text(content.trim())))
                     )
                 )
             )
@@ -414,22 +369,22 @@ class USXRenderer(
         return sb.toString()
     }
 
-    private fun applySearchHighlights(nodes: MutableList<TextNode>) {
+    private fun applySearchHighlights(nodes: MutableList<RenderNode>) {
         val term = search ?: return
-        val result = mutableListOf<TextNode>()
+        val result = mutableListOf<RenderNode>()
         for (node in nodes) {
             if (isStopped()) return
-            if (node is TextNode.Text) {
+            if (node is RenderNode.Text && !node.attributes.searchHighlighted) {
                 val lower = node.content.lowercase()
                 var last = 0
                 while (true) {
                     val pos = lower.indexOf(term, last)
                     if (pos < 0) break
-                    if (pos > last) result.add(TextNode.Text(node.content.substring(last, pos)))
-                    result.add(TextNode.SearchHighlight(node.content.substring(pos, pos + term.length)))
+                    if (pos > last) result.add(RenderNode.Text(node.content.substring(last, pos)))
+                    result.add(RenderNode.Text(node.content.substring(pos, pos + term.length), attributes = NodeAttributes(searchHighlighted = true)))
                     last = pos + term.length
                 }
-                if (last < node.content.length) result.add(TextNode.Text(node.content.substring(last)))
+                if (last < node.content.length) result.add(RenderNode.Text(node.content.substring(last)))
             } else {
                 result.add(node)
             }
@@ -448,24 +403,22 @@ class USXRenderer(
      * before it (look-back) or after it (look-ahead), without crossing a structural boundary
      * (Paragraph, BlankLine, or SectionHeading).
      */
-    private fun addImplicitPoeticLineMarkers(nodes: MutableList<TextNode>) {
+    private fun addImplicitPoeticLineMarkers(nodes: MutableList<RenderNode>) {
         var i = 0
         while (i < nodes.size) {
-            if (nodes[i] is TextNode.VerseMarker) {
+            if (nodes[i] is RenderNode.Verse) {
                 val inPoetry = hasPoeticLineInContext(nodes, i, lookBack = true)
                     || hasPoeticLineInContext(nodes, i, lookBack = false)
 
                 if (inPoetry) {
-                    // Check if there's already a PoeticLine immediately before this verse
-                    // (skipping whitespace-only Text nodes)
                     var prevIdx = i - 1
-                    while (prevIdx >= 0 && nodes[prevIdx] is TextNode.Text
-                        && (nodes[prevIdx] as TextNode.Text).content.trim().isEmpty()) {
+                    while (prevIdx >= 0 && nodes[prevIdx] is RenderNode.Text
+                        && (nodes[prevIdx] as RenderNode.Text).content.trim().isEmpty()) {
                         prevIdx--
                     }
-                    if (prevIdx < 0 || nodes[prevIdx] !is TextNode.PoeticLine) {
-                        nodes.add(i, TextNode.PoeticLine("", indentLevel = 1, rightAligned = false))
-                        i++ // skip past the inserted node
+                    if (prevIdx < 0 || nodes[prevIdx] !is RenderNode.PoeticLine) {
+                        nodes.add(i, RenderNode.PoeticLine(indentLevel = 1, rightAligned = false, children = emptyList()))
+                        i++
                     }
                 }
             }
@@ -475,50 +428,48 @@ class USXRenderer(
 
     /**
      * Scans backward or forward from [fromIndex] looking for a PoeticLine node.
-     * Stops at structural boundaries (Paragraph, BlankLine, SectionHeading).
+     * Stops at structural boundaries (Paragraph, BlankLine, Section).
      */
     private fun hasPoeticLineInContext(
-        nodes: List<TextNode>, fromIndex: Int, lookBack: Boolean
+        nodes: List<RenderNode>, fromIndex: Int, lookBack: Boolean
     ): Boolean {
         val range = if (lookBack) (fromIndex - 1 downTo 0) else (fromIndex + 1 until nodes.size)
         for (j in range) {
             when (nodes[j]) {
-                is TextNode.PoeticLine -> return true
-                is TextNode.Paragraph, is TextNode.SectionHeading,
-                    TextNode.BlankLine -> return false
-                else -> { /* skip Text, VerseMarker, NoteMarker, etc. */ }
+                is RenderNode.PoeticLine -> return true
+                is RenderNode.Paragraph, is RenderNode.Section,
+                    RenderNode.BlankLine -> return false
+                else -> { /* skip Text, Verse, Note, etc. */ }
             }
         }
         return false
     }
 
-    private fun insertMissingVerses(nodes: MutableList<TextNode>) {
+    private fun insertMissingVerses(nodes: MutableList<RenderNode>) {
         if (!renderVerses || expectedVerseRange.isEmpty()) return
         if (isStopped()) return
-        val existingVerses = nodes.filterIsInstance<TextNode.VerseMarker>()
+        val existingVerses = nodes.filterIsInstance<RenderNode.Verse>()
             .flatMap { if (it.endVerse > 0) (it.startVerse..it.endVerse).toList() else listOf(it.startVerse) }
             .toSet()
-        val missing = mutableListOf<TextNode.VerseMarker>()
+        val missing = mutableListOf<RenderNode.Verse>()
         if (expectedVerseRange.size == 1) {
             val v = expectedVerseRange[0]
             if (!existingVerses.contains(v)) {
-                missing.add(TextNode.VerseMarker(v, 0, verseDisplay == VerseDisplay.PIN, "\\v $v "))
+                missing.add(RenderNode.Verse(startVerse = v, endVerse = 0, pinned = verseDisplay == VerseDisplay.PIN, machineReadable = "\\v $v "))
                 addedMissingVerse = true
             }
         } else if (expectedVerseRange.size == 2) {
             for (v in expectedVerseRange[0]..expectedVerseRange[1]) {
                 if (!existingVerses.contains(v)) {
-                    missing.add(TextNode.VerseMarker(v, 0, verseDisplay == VerseDisplay.PIN, "\\v $v "))
+                    missing.add(RenderNode.Verse(startVerse = v, endVerse = 0, pinned = verseDisplay == VerseDisplay.PIN, machineReadable = "\\v $v "))
                     addedMissingVerse = true
                 }
             }
         }
-        // Prepend missing verses at the front
         if (missing.isNotEmpty()) {
             nodes.addAll(0, missing)
-            // Add space separator between inserted verses and existing content
             if (nodes.size > missing.size) {
-                nodes.add(missing.size, TextNode.Text(" "))
+                nodes.add(missing.size, RenderNode.Text(" "))
             }
         }
     }
@@ -555,119 +506,4 @@ class USXRenderer(
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Temporary conversion from TextNode to RenderNode
-    // TODO: Refactor renderers to build RenderNode tree directly
-    // -------------------------------------------------------------------------
-
-    private fun convertTextNodesToRenderNodes(textNodes: List<TextNode>): List<RenderNode> {
-        return textNodes.map { node ->
-            when (node) {
-                is TextNode.Text -> RenderNode.Text(node.content, start = node.startPos, end = node.endPos)
-                is TextNode.Styled -> RenderNode.StyledText(node.content, node.style)
-                is TextNode.VerseMarker -> RenderNode.Verse(
-                    startVerse = node.startVerse,
-                    endVerse = node.endVerse,
-                    pinned = node.pinned,
-                    machineReadable = node.machineReadable,
-                    start = node.startPos,
-                    end = node.endPos
-                )
-                is TextNode.NoteMarker -> RenderNode.Note(
-                    caller = node.caller,
-                    passage = node.passage,
-                    notes = node.notes,
-                    noteStyle = node.noteStyle,
-                    machineReadable = node.machineReadable,
-                    startPos = node.startPos,
-                    endPos = node.endPos,
-                    attributes = com.door43.translationstudio.rendering.model.NodeAttributes(
-                        searchHighlighted = node.highlighted
-                    )
-                )
-                is TextNode.Paragraph -> RenderNode.Paragraph(
-                    indented = node.indented,
-                    children = emptyList()  // TODO: Properly nest children
-                )
-                is TextNode.SectionHeading -> RenderNode.Section(
-                    text = node.text,
-                    isMajor = node.isMajor,
-                    children = emptyList()
-                )
-                is TextNode.PoeticLine -> {
-                    val children = if (node.content.isNotEmpty()) {
-                        listOf(RenderNode.Text(node.content))
-                    } else {
-                        emptyList()
-                    }
-                    RenderNode.PoeticLine(
-                        indentLevel = node.indentLevel,
-                        rightAligned = node.rightAligned,
-                        children = children
-                    )
-                }
-                is TextNode.ChapterLabel -> RenderNode.ChapterLabel(node.text)
-                is TextNode.Link -> RenderNode.Link(node.linkData)
-                is TextNode.SearchHighlight -> RenderNode.Text(node.content,
-                    attributes = com.door43.translationstudio.rendering.model.NodeAttributes(
-                        searchHighlighted = true
-                    )
-                )
-                TextNode.LineBreak -> RenderNode.LineBreak
-                TextNode.BlankLine -> RenderNode.BlankLine
-            }
-        }
-    }
-
-    private fun convertRenderNodesToTextNodes(renderNodes: List<RenderNode>): List<TextNode> {
-        return renderNodes.flatMap { node ->
-            when (node) {
-                is RenderNode.Text -> listOf(TextNode.Text(node.content, startPos = node.start, endPos = node.end))
-                is RenderNode.StyledText -> listOf(TextNode.Styled(node.content, node.style))
-                is RenderNode.Verse -> listOf(TextNode.VerseMarker(
-                    startVerse = node.startVerse,
-                    endVerse = node.endVerse,
-                    pinned = node.pinned,
-                    machineReadable = node.machineReadable,
-                    startPos = node.start,
-                    endPos = node.end
-                ))
-                is RenderNode.Note -> listOf(TextNode.NoteMarker(
-                    caller = node.caller,
-                    passage = node.passage,
-                    notes = node.notes,
-                    noteStyle = node.noteStyle,
-                    machineReadable = node.machineReadable,
-                    startPos = node.startPos,
-                    endPos = node.endPos
-                ))
-                is RenderNode.Paragraph -> {
-                    val result = mutableListOf<TextNode>()
-                    result.add(TextNode.Paragraph(indented = node.indented))
-                    result.addAll(convertRenderNodesToTextNodes(node.children))
-                    result
-                }
-                is RenderNode.Section -> {
-                    val result = mutableListOf<TextNode>()
-                    result.add(TextNode.SectionHeading(text = node.text, isMajor = node.isMajor))
-                    result.addAll(convertRenderNodesToTextNodes(node.children))
-                    result
-                }
-                is RenderNode.PoeticLine -> {
-                    // Extract text content from children for the PoeticLine content field
-                    val content = node.children.joinToString("") { child ->
-                        when (child) {
-                            is RenderNode.Text -> child.content
-                            else -> ""
-                        }
-                    }
-                    listOf(TextNode.PoeticLine(content = content, indentLevel = node.indentLevel, rightAligned = node.rightAligned))
-                }
-                is RenderNode.ChapterLabel -> listOf(TextNode.ChapterLabel(node.text))
-                is RenderNode.Link -> listOf(TextNode.Link(node.linkData))
-                RenderNode.LineBreak -> listOf(TextNode.LineBreak)
-                RenderNode.BlankLine -> listOf(TextNode.BlankLine)
-            }
-        }
-    }
 }

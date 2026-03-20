@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.translate.review
 
 import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
 import java.util.regex.Pattern
 
 object VerseMarkerDrag {
@@ -37,7 +38,7 @@ object VerseMarkerDrag {
 
     /**
      * Snap [offset] to the nearest token start in [text].
-     * Treats \uFFFC (inline content: footnotes, verse pins) as individual tokens.
+     * Treats NOTE_CHAR (inline content: footnotes, verse pins) as individual tokens.
      */
     fun closestWordBoundary(text: String, offset: Int): Int {
         if (offset <= 0) return 0
@@ -45,8 +46,8 @@ object VerseMarkerDrag {
 
         val ch = text[offset]
 
-        // Inline content (\uFFFC) is its own token — snap to it
-        if (ch == '\uFFFC') return offset
+        // Inline content (NOTE_CHAR) is its own token — snap to it
+        if (ch == NOTE_CHAR) return offset
 
         // Whitespace — move forward to next token (word or inline content)
         if (ch.isWhitespace()) {
@@ -57,7 +58,7 @@ object VerseMarkerDrag {
 
         // In a word — move to start of this word
         var pos = offset
-        while (pos > 0 && !text[pos - 1].isWhitespace() && text[pos - 1] != '\uFFFC') {
+        while (pos > 0 && !text[pos - 1].isWhitespace() && text[pos - 1] != NOTE_CHAR) {
             pos--
         }
         return pos
@@ -65,7 +66,7 @@ object VerseMarkerDrag {
 
     /**
      * Count tokens before [offset] in rendered text.
-     * A "token" is either a word start or a \uFFFC char (inline content: footnote, verse pin).
+     * A "token" is either a word start or a NOTE_CHAR char (inline content: footnote, verse pin).
      */
     fun countWordStartsBefore(text: String, offset: Int): Int {
         var count = 0
@@ -73,13 +74,13 @@ object VerseMarkerDrag {
         val end = offset.coerceAtMost(text.length)
         while (i < end) {
             val ch = text[i]
-            if (ch == '\uFFFC') {
+            if (ch == NOTE_CHAR) {
                 count++
                 i++
             } else if (!ch.isWhitespace()) {
                 count++
                 // Skip to end of word
-                while (i < end && !text[i].isWhitespace() && text[i] != '\uFFFC') {
+                while (i < end && !text[i].isWhitespace() && text[i] != NOTE_CHAR) {
                     i++
                 }
             } else {
@@ -137,11 +138,11 @@ object VerseMarkerDrag {
         usfm: String,
         format: TranslationFormat
     ): Int {
-        // Count visible chars (exclude \uFFFC) before tap and total
+        // Count visible chars (exclude NOTE_CHAR) before tap and total
         var visibleBefore = 0
         var visibleTotal = 0
         for (i in renderedText.indices) {
-            if (renderedText[i] != '\uFFFC') {
+            if (renderedText[i] != NOTE_CHAR) {
                 if (i < tapOffset) visibleBefore++
                 visibleTotal++
             }

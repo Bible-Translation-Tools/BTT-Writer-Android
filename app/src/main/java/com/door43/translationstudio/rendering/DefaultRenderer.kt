@@ -1,7 +1,9 @@
 package com.door43.translationstudio.rendering
 
+import com.door43.translationstudio.rendering.model.RenderNode
+
 /**
- * This is the default rendering engine.
+ * Default rendering engine. Delegates to USXRenderer for note/search rendering.
  */
 class DefaultRenderer : RenderingEngine() {
 
@@ -9,36 +11,18 @@ class DefaultRenderer : RenderingEngine() {
     private var highlightColor = 0
     private var renderer: USXRenderer? = null
 
-    /**
-     * Renders the input into a readable format
-     * @param input the raw input string
-     * @return
-     */
-    override fun render(input: CharSequence): CharSequence {
-        var out = input
-
+    override fun renderToNodes(input: String): List<RenderNode> {
         val usxRenderer = USXRenderer()
         usxRenderer.setSearchString(search, highlightColor)
         this.renderer = usxRenderer
-
-        if (isStopped()) return input
-        out = usxRenderer.renderNote(out)
-        if (isStopped()) return input
-        out = usxRenderer.renderHighlightSearch(out)
-
-        return out
+        if (isStopped()) return listOf(RenderNode.Text(input))
+        return usxRenderer.renderToNodes(input)
     }
 
     override fun onStop() {
         renderer?.stop()
     }
 
-    /**
-     * If set to not empty matched strings will be highlighted.
-     *
-     * @param searchString - empty string disables highlighting
-     * @param highlightColor
-     */
     override fun setSearchString(searchString: CharSequence, highlightColor: Int) {
         this@DefaultRenderer.highlightColor = highlightColor
         search = if (searchString.isNotEmpty()) {

@@ -54,7 +54,7 @@ fun DraftChapterCard(
     )
 
     val inlineIconMap = mapOf(
-        "footnote_icon" to InlineTextContent(
+        "note_icon" to InlineTextContent(
             Placeholder(
                 width = 1.2.em,
                 height = 1.2.em,

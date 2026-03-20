@@ -37,7 +37,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.ui.translate.components.footnote.FootnoteOutputTransformation
-import com.door43.translationstudio.ui.translate.components.footnote.OBJ_CHAR
+import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
 import com.door43.translationstudio.ui.translate.components.footnote.visualToRaw
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -153,11 +153,11 @@ fun UsfmEditText(
                         y += lineHeightPx
                     }
 
-                    // Draw footnote icons at OBJ_CHAR positions
+                    // Draw footnote icons at NOTE_CHAR positions
                     layoutResult?.let { result ->
                         val outputText = result.layoutInput.text.text
                         for (i in outputText.indices) {
-                            if (outputText[i] == OBJ_CHAR) {
+                            if (outputText[i] == NOTE_CHAR) {
                                 val rect = result.getBoundingBox(i)
                                 val iconSize = Size(fontSizePx, fontSizePx)
                                 val offsetX = rect.left + (rect.width - iconSize.width) / 2
@@ -192,7 +192,7 @@ private class RawUsfmClipboard(
         val clipData = clipEntry.clipData
         if (clipData.itemCount > 0) {
             val visualText = clipData.getItemAt(0).text?.toString() ?: ""
-            if (OBJ_CHAR in visualText) {
+            if (NOTE_CHAR in visualText) {
                 val rawText = textFieldState.text.toString()
                 val reconstructed = visualToRaw(visualText, rawText)
                 val newClipData = ClipData.newPlainText(

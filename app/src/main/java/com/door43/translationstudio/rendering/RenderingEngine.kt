@@ -60,16 +60,6 @@ abstract class RenderingEngine {
     }
 
     /**
-     * Renders the input string to a [CharSequence].
-     * Subclasses override this to apply format-specific rendering.
-     * The base implementation returns [input] unchanged.
-     *
-     * @param input the raw input string
-     * @return the rendered output as a CharSequence
-     */
-    open fun render(input: CharSequence): CharSequence = input
-
-    /**
      * If set to not empty, matched strings will be highlighted.
      *
      * @param searchString - empty string disables highlighting

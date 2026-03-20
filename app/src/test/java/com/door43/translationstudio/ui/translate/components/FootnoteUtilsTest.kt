@@ -1,6 +1,6 @@
 package com.door43.translationstudio.ui.translate.components
 
-import com.door43.translationstudio.ui.translate.components.footnote.OBJ_CHAR
+import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
 import com.door43.translationstudio.ui.translate.components.footnote.findFootnoteBlocks
 import com.door43.translationstudio.ui.translate.components.footnote.replaceFootnotesForDisplay
 import com.door43.translationstudio.ui.translate.components.footnote.visualToRaw
@@ -56,26 +56,26 @@ class FootnoteUtilsTest {
     }
 
     @Test
-    fun `OBJ_CHAR constant is Braille Pattern Blank`() {
-        assertEquals('\u2800', OBJ_CHAR)
+    fun `NOTE_CHAR constant is Braille Pattern Blank`() {
+        assertEquals('\u2800', NOTE_CHAR)
     }
 
     @Test
-    fun `visualToRaw passes through text without OBJ_CHAR`() {
+    fun `visualToRaw passes through text without NOTE_CHAR`() {
         assertEquals("hello world", visualToRaw("hello world", "hello world"))
     }
 
     @Test
     fun `visualToRaw reconstructs single footnote`() {
         val raw = "hello \\f + \\ft note \\f* world"
-        val visual = "hello ${OBJ_CHAR} world"
+        val visual = "hello ${NOTE_CHAR} world"
         assertEquals(raw, visualToRaw(visual, raw))
     }
 
     @Test
     fun `visualToRaw reconstructs multiple footnotes`() {
         val raw = "a \\f + \\ft one \\f* b \\f + \\ft two \\f* c"
-        val visual = "a ${OBJ_CHAR} b ${OBJ_CHAR} c"
+        val visual = "a ${NOTE_CHAR} b ${NOTE_CHAR} c"
         assertEquals(raw, visualToRaw(visual, raw))
     }
 

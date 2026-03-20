@@ -125,6 +125,7 @@ class ValidationAdapter(
                         renderingGroup.init(item.body)
                         val renderNodes = renderingGroup.startNodes()
                         val textNodes = RenderNodeConverter.renderNodesToTextNodes(renderNodes)
+                        @Suppress("DEPRECATION")
                         renderedText[position] = SpannableAdapter.convert(textNodes, context = context)
                     }
                     holder.binding.body.text = renderedText[position]

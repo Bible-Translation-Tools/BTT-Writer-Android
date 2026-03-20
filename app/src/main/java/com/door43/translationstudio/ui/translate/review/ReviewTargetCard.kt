@@ -62,6 +62,7 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.components.UsfmEditText
+import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
 
 @Composable
 fun ReviewTargetCard(
@@ -515,17 +516,17 @@ private fun wordRangeAt(layout: TextLayoutResult, text: String, position: Offset
     if (ch.isWhitespace()) return null
 
     // Inline content (footnote icon) — single-char range
-    if (ch == '\uFFFC') return charOffset..charOffset + 1
+    if (ch == NOTE_CHAR) return charOffset..charOffset + 1
 
     // Find word start
     var wordStart = charOffset
-    while (wordStart > 0 && !text[wordStart - 1].isWhitespace() && text[wordStart - 1] != '\uFFFC') {
+    while (wordStart > 0 && !text[wordStart - 1].isWhitespace() && text[wordStart - 1] != NOTE_CHAR) {
         wordStart--
     }
 
     // Find word end
     var wordEnd = charOffset
-    while (wordEnd < text.length && !text[wordEnd].isWhitespace() && text[wordEnd] != '\uFFFC') {
+    while (wordEnd < text.length && !text[wordEnd].isWhitespace() && text[wordEnd] != NOTE_CHAR) {
         wordEnd++
     }
 

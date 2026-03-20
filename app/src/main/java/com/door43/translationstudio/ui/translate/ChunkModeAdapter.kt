@@ -611,6 +611,7 @@ class ChunkModeAdapter(
                     item.sourceText, item.sourceTranslationFormat
                 )
             }
+            @Suppress("DEPRECATION")
             binding.sourceTranslationBody.setText(
                 SpannableAdapter.convert(
                     item.renderedSourceNodes ?: emptyList(),
@@ -627,6 +628,7 @@ class ChunkModeAdapter(
                     item.targetText, item.targetTranslationFormat
                 )
             }
+            @Suppress("DEPRECATION")
             binding.targetTranslationBody.setText(
                 TextUtils.concat(
                     SpannableAdapter.convert(
