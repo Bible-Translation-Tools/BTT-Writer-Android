@@ -40,49 +40,14 @@ object ComposeTextAdapter {
         onNoteClick: (RenderNode.Note, Int, Int) -> Unit = { _, _, _ -> },
         onLinkClick: (RenderNode.Link) -> Unit = {}
     ): AnnotatedString = buildAnnotatedString {
-
-        var currentPoeticalLineIndent = 0
-        var isFirstElementOfPoeticLine = true
-        var verseMarkerAddedIndentation = false
-        var lastWasPoeticLineMarker = false
-
         for (node in nodes) {
-            if (node is RenderNode.PoeticLine && node.children.isEmpty()) {
-                currentPoeticalLineIndent = node.indentLevel
-                isFirstElementOfPoeticLine = true
-                verseMarkerAddedIndentation = false
-                lastWasPoeticLineMarker = true
-            } else if (node is RenderNode.LineBreak || node is RenderNode.Paragraph) {
-                currentPoeticalLineIndent = 0
-                isFirstElementOfPoeticLine = false
-                verseMarkerAddedIndentation = false
-                lastWasPoeticLineMarker = false
-            } else if (node is RenderNode.Verse
-                && isFirstElementOfPoeticLine
-                && currentPoeticalLineIndent > 0) {
-                verseMarkerAddedIndentation = true
-                lastWasPoeticLineMarker = false
-            } else if (node !is RenderNode.PoeticLine) {
-                if (node !is RenderNode.Verse) {
-                    isFirstElementOfPoeticLine = false
-                }
-                lastWasPoeticLineMarker = false
-            }
-
-            val isFirstForNode = if (node is RenderNode.Verse) {
-                isFirstElementOfPoeticLine
-            } else false
-
             appendNode(
                 node = node,
                 searchHighlightColor = searchHighlightColor,
                 verseColor = verseColor,
                 onVerseClick = onVerseClick,
                 onNoteClick = onNoteClick,
-                onLinkClick = onLinkClick,
-                poeticalLineIndent = currentPoeticalLineIndent,
-                isFirstElementOfPoetic = isFirstForNode,
-                verseMarkerAddedIndentation = verseMarkerAddedIndentation
+                onLinkClick = onLinkClick
             )
         }
     }
@@ -164,25 +129,20 @@ object ComposeTextAdapter {
         is LinkData.AppLink -> data.linkType
     }
 
+    private fun AnnotatedString.Builder.ensureNewline() {
+        if (length > 0 && toAnnotatedString().text.last() != '\n') append("\n")
+    }
+
     private fun AnnotatedString.Builder.appendNode(
         node: RenderNode,
         searchHighlightColor: Color,
         verseColor: Color,
         onVerseClick: ((RenderNode.Verse) -> Unit)?,
         onNoteClick: (RenderNode.Note, Int, Int) -> Unit,
-        onLinkClick: (RenderNode.Link) -> Unit,
-        poeticalLineIndent: Int = 0,
-        isFirstElementOfPoetic: Boolean = false,
-        verseMarkerAddedIndentation: Boolean = false
+        onLinkClick: (RenderNode.Link) -> Unit
     ) {
         when (node) {
             is RenderNode.Text -> {
-                if (poeticalLineIndent > 0
-                    && !verseMarkerAddedIndentation
-                    && node.content.trim().isNotEmpty()) {
-                    val padding = "    ".repeat(poeticalLineIndent)
-                    append(padding)
-                }
                 val start = length
                 append(node.content)
                 val end = length
@@ -207,11 +167,24 @@ object ComposeTextAdapter {
                 applyNodeStyle(node.style, start, end)
             }
 
-            RenderNode.LineBreak -> append("\n")
+            RenderNode.LineBreak -> ensureNewline()
 
-            RenderNode.BlankLine -> append("\n\n")
+            RenderNode.BlankLine -> ensureNewline()
 
-            is RenderNode.Paragraph -> append(if (node.indented) "\n    " else "\n")
+            is RenderNode.Paragraph -> {
+                ensureNewline()
+                if (node.indented) append("    ")
+                for (child in node.children) {
+                    appendNode(
+                        node = child,
+                        searchHighlightColor = searchHighlightColor,
+                        verseColor = verseColor,
+                        onVerseClick = onVerseClick,
+                        onNoteClick = onNoteClick,
+                        onLinkClick = onLinkClick
+                    )
+                }
+            }
 
             is RenderNode.Section -> {
                 val start = length
@@ -221,7 +194,7 @@ object ComposeTextAdapter {
 
                 addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
                 addStyle(ParagraphStyle(textAlign = TextAlign.Center), start, end)
-                append("\n")
+                ensureNewline()
             }
 
             is RenderNode.ChapterLabel -> {
@@ -232,30 +205,25 @@ object ComposeTextAdapter {
             }
 
             is RenderNode.PoeticLine -> {
-                if (node.children.isEmpty()) {
-                    append("\n")
-                } else {
-                    // PoeticLine with content children — render them recursively
-                    val padding = "    ".repeat(node.indentLevel)
-                    val start = length
-                    append(padding)
-                    for (child in node.children) {
-                        appendNode(
-                            node = child,
-                            searchHighlightColor = searchHighlightColor,
-                            verseColor = verseColor,
-                            onVerseClick = onVerseClick,
-                            onNoteClick = onNoteClick,
-                            onLinkClick = onLinkClick
-                        )
-                    }
-                    val end = length
+                ensureNewline()
+                val padding = "    ".repeat(node.indentLevel)
+                val start = length
+                append(padding)
+                for (child in node.children) {
+                    appendNode(
+                        node = child,
+                        searchHighlightColor = searchHighlightColor,
+                        verseColor = verseColor,
+                        onVerseClick = onVerseClick,
+                        onNoteClick = onNoteClick,
+                        onLinkClick = onLinkClick
+                    )
+                }
+                val end = length
 
-                    if (node.rightAligned) {
-                        addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
-                        addStyle(ParagraphStyle(textAlign = TextAlign.Right), start, end)
-                    }
-                    append("\n")
+                if (node.rightAligned) {
+                    addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
+                    addStyle(ParagraphStyle(textAlign = TextAlign.Right), start, end)
                 }
             }
 
@@ -302,10 +270,6 @@ object ComposeTextAdapter {
                         start = start,
                         end = end
                     )
-                }
-
-                if (isFirstElementOfPoetic && poeticalLineIndent > 0) {
-                    append(" ")
                 }
             }
 

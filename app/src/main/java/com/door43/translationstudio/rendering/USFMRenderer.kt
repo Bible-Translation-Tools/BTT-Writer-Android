@@ -3,14 +3,13 @@ package com.door43.translationstudio.rendering
 import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
-import com.door43.translationstudio.rendering.spannables.USFMChar
 import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
-import com.door43.translationstudio.rendering.spannables.USFMParagraphSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import java.util.regex.Pattern
 
 /**
  * USFM rendering engine. Produces a hierarchical List<RenderNode> via renderToNodes().
+ * Handles pure USFM backslash markers (\p, \v, \q, \s, etc.) — no XML/USX tags.
  * No Android framework code lives in this file.
  */
 class USFMRenderer(
@@ -61,7 +60,7 @@ class USFMRenderer(
         if (isStopped()) return emptyList()
         text = stripCarriageReturns(text)
         if (isStopped()) return emptyList()
-        text = stripChapterMarkers(text)   // strips \c N — USFM-specific
+        text = stripChapterMarkers(text)   // strips \c N
         if (isStopped()) return emptyList()
 
         // collect all token matches simultaneously
@@ -76,7 +75,6 @@ class USFMRenderer(
         allTokens.addAll(findVerses(text))
         allTokens.addAll(findNotes(text))
         allTokens.addAll(findSelah(text))
-        allTokens.addAll(findUsfmParagraphMarkers(text))  // \p standalone markers — USFM-specific
         if (isStopped()) return emptyList()
 
         // sort by position, remove overlapping tokens
@@ -101,28 +99,26 @@ class USFMRenderer(
             if (cleaned.isNotBlank()) nodes.add(RenderNode.Text(cleaned, start = lastIndex, end = text.length))
         }
 
-        // insert implicit poetry line markers before bare verse markers in poetry context
-        addImplicitPoeticLineMarkers(nodes)
-
         // search highlights (post-process Text nodes)
         if (!isStopped()) applySearchHighlights(nodes)
 
         // insert missing expected verses
         insertMissingVerses(nodes)
 
-        return nodes
+        // build tree: group inline nodes into block node children
+        return buildTree(nodes)
     }
 
     override fun getLeadingMajorSectionHeading(input: CharSequence): String {
-        val matcher = paraPattern("ms").matcher(input.toString())
-        return if (matcher.find() && matcher.start() == 0) matcher.group(1) ?: "" else ""
+        val matcher = MAJOR_SECTION_PATTERN.matcher(input.toString())
+        return if (matcher.find() && matcher.start() == 0) matcher.group(1)?.trim() ?: "" else ""
     }
 
     private data class Token(val start: Int, val end: Int, val nodes: List<RenderNode>)
 
     private fun findMajorSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("ms").matcher(text)
+        val matcher = MAJOR_SECTION_PATTERN.matcher(text)
         while (matcher.find()) {
             if (suppressLeadingMajorSectionHeadings && matcher.start() == 0) continue
             val content = matcher.group(1)?.trim() ?: continue
@@ -138,7 +134,7 @@ class USFMRenderer(
 
     private fun findSectionHeadings(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("s").matcher(text)
+        val matcher = SECTION_PATTERN.matcher(text)
         while (matcher.find()) {
             val content = matcher.group(1)?.trim() ?: continue
             tokens.add(
@@ -152,44 +148,36 @@ class USFMRenderer(
     }
 
     private fun findParagraphBreaks(text: String): List<Token> {
+        if (!renderParagraphs) return emptyList()
         val tokens = mutableListOf<Token>()
-        for (style in listOf("p", "m")) {
-            val matcher = paraPattern(style).matcher(text)
-            while (matcher.find()) {
-                val content = matcher.group(1)?.trim() ?: ""
-                val nodes = mutableListOf<RenderNode>(
-                    RenderNode.Paragraph(indented = false, children = emptyList())
-                )
-                if (content.isNotEmpty()) nodes.add(
-                    RenderNode.Text(content, start = matcher.start(), end = matcher.end())
-                )
-                nodes.add(RenderNode.LineBreak)
-                tokens.add(Token(matcher.start(), matcher.end(), nodes))
-            }
+        val matcher = PARAGRAPH_PATTERN.matcher(text)
+        while (matcher.find()) {
+            tokens.add(Token(
+                matcher.start(), matcher.end(),
+                listOf(RenderNode.Paragraph(indented = false, children = emptyList()))
+            ))
         }
         return tokens
     }
 
     private fun findBlankLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraShortPattern("b").matcher(text)
+        val matcher = BLANK_LINE_PATTERN.matcher(text)
         while (matcher.find()) {
-            tokens.add(Token(matcher.start(), matcher.end(), listOf(RenderNode.BlankLine)))
+            tokens.add(Token(matcher.start(), matcher.end(), listOf(RenderNode.LineBreak)))
         }
         return tokens
     }
 
     private fun findPoeticLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("q(\\d+)").matcher(text)
+        val matcher = POETRY_PATTERN.matcher(text)
         while (matcher.find()) {
             val level = matcher.group(1)?.toIntOrNull() ?: 1
-            val content = matcher.group(2)?.trim() ?: ""
-            val children = if (content.isNotEmpty()) listOf(RenderNode.Text(content)) else emptyList()
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(RenderNode.PoeticLine(indentLevel = level, rightAligned = false, children = children))
+                    listOf(RenderNode.PoeticLine(indentLevel = level, rightAligned = false, children = emptyList()))
                 )
             )
         }
@@ -198,17 +186,12 @@ class USFMRenderer(
 
     private fun findRightAlignedPoeticLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("qr").matcher(text)
+        val matcher = RIGHT_ALIGNED_POETRY_PATTERN.matcher(text)
         while (matcher.find()) {
-            val content = matcher.group(1)?.trim() ?: ""
-            val children = if (content.isNotEmpty()) listOf(RenderNode.Text(content)) else emptyList()
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(
-                        RenderNode.LineBreak,
-                        RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = children)
-                    )
+                    listOf(RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = emptyList()))
                 )
             )
         }
@@ -217,7 +200,7 @@ class USFMRenderer(
 
     private fun findChapterLabels(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = paraPattern("cl").matcher(text)
+        val matcher = CHAPTER_LABEL_PATTERN.matcher(text)
         while (matcher.find()) {
             val content = matcher.group(1)?.trim() ?: ""
             tokens.add(Token(matcher.start(), matcher.end(), listOf(RenderNode.ChapterLabel(content))))
@@ -312,40 +295,15 @@ class USFMRenderer(
 
     private fun findSelah(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
-        val matcher = USFMChar.getPattern(USFMChar.STYLE_SELAH).matcher(text)
+        val matcher = SELAH_PATTERN.matcher(text)
         while (matcher.find()) {
             val content = matcher.group(1) ?: continue
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
                     listOf(
-                        RenderNode.LineBreak,
                         RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = listOf(RenderNode.Text(content.trim())))
                     )
-                )
-            )
-        }
-        return tokens
-    }
-
-    /**
-     * Finds standalone USFM paragraph markers (\p) and emits Paragraph nodes.
-     * Only active when renderParagraphs is true.
-     */
-    private fun findUsfmParagraphMarkers(text: String): List<Token> {
-        val tokens = mutableListOf<Token>()
-        if (!renderParagraphs) return tokens
-        val matcher = Pattern.compile(
-            USFMParagraphSpan.PATTERN,
-            Pattern.DOTALL
-        ).matcher(text)
-
-        while (matcher.find()) {
-            tokens.add(
-                Token(
-                    matcher.start(),
-                    matcher.end(),
-                    listOf(RenderNode.Paragraph(indented = false, children = emptyList()))
                 )
             )
         }
@@ -366,20 +324,13 @@ class USFMRenderer(
     }
 
     /**
-     * Strip any remaining USFM/para markers from gap text that wasn't
+     * Strip any remaining USFM backslash markers from gap text that wasn't
      * claimed by any token (broken or unknown markers).
      */
     private fun stripRemainingMarkers(text: String): String {
-        var out = text
-        // Remove open/close para tags (XML-style, shared with USX input format)
-        out = out.replace(Regex("<para\\s+style=\"\\w*\"\\s*>"), "")
-        out = out.replace("</para>", "")
-        // Remove self-closing para tags
-        out = out.replace(Regex("<para\\s+style=\"\\w*\"\\s*/>"), "")
         // Strip remaining USFM backslash markers (e.g. \fr, \ft, \fv, \fk, \fq, \fqa, \f*)
         // Pattern: backslash followed by one or more word chars, optionally ending with *
-        out = out.replace(Regex("\\\\[a-zA-Z][a-zA-Z0-9]*\\*?"), "")
-        return out
+        return text.replace(Regex("\\\\[a-zA-Z][a-zA-Z0-9]*\\*?"), "")
     }
 
     private fun applySearchHighlights(nodes: MutableList<RenderNode>) {
@@ -413,54 +364,6 @@ class USFMRenderer(
         }
         nodes.clear()
         nodes.addAll(result)
-    }
-
-    /**
-     * In USX/USFM, verse markers can appear between poetry `<para style="q">` blocks without
-     * being wrapped in their own `<para style="q">` tag. These "bare" verses should still render
-     * as q1-level poetic lines. This function inserts implicit PoeticLine markers before them.
-     */
-    private fun addImplicitPoeticLineMarkers(nodes: MutableList<RenderNode>) {
-        var i = 0
-        while (i < nodes.size) {
-            if (nodes[i] is RenderNode.Verse) {
-                val inPoetry = hasPoeticLineInContext(nodes, i, lookBack = true)
-                    || hasPoeticLineInContext(nodes, i, lookBack = false)
-
-                if (inPoetry) {
-                    var prevIdx = i - 1
-                    while (prevIdx >= 0 && nodes[prevIdx] is RenderNode.Text
-                        && (nodes[prevIdx] as RenderNode.Text).content.trim().isEmpty()) {
-                        prevIdx--
-                    }
-                    if (prevIdx < 0 || nodes[prevIdx] !is RenderNode.PoeticLine) {
-                        nodes.add(
-                            index = i,
-                            element = RenderNode.PoeticLine(indentLevel = 1, rightAligned = false, children = emptyList())
-                        )
-                        i++
-                    }
-                }
-            }
-            i++
-        }
-    }
-
-    private fun hasPoeticLineInContext(
-        nodes: List<RenderNode>, fromIndex: Int, lookBack: Boolean
-    ): Boolean {
-        val range = if (lookBack) {
-            (fromIndex - 1 downTo 0)
-        } else (fromIndex + 1 until nodes.size)
-        for (j in range) {
-            when (nodes[j]) {
-                is RenderNode.PoeticLine -> return true
-                is RenderNode.Paragraph, is RenderNode.Section,
-                    RenderNode.BlankLine -> return false
-                else -> { /* skip Text, Verse, Note, etc. */ }
-            }
-        }
-        return false
     }
 
     private fun insertMissingVerses(nodes: MutableList<RenderNode>) {
@@ -512,22 +415,28 @@ class USFMRenderer(
         input.replace(Regex("\\\\c +\\d+ *"), "")
 
     companion object {
-        /**
-         * Returns a pattern that matches a para tag pair: <para style="STYLE">CONTENT</para>
-         * Group 1 = content (or first capture inside STYLE if STYLE itself has a group).
-         */
-        private fun paraPattern(style: String): Pattern {
-            return Pattern.compile(
-                "<para\\s+style=\"$style\"\\s*>\\s*(((?!</para>).)*)</para>",
-                Pattern.DOTALL
-            )
-        }
+        // \p or \m followed by non-word char or end of string
+        private val PARAGRAPH_PATTERN = Pattern.compile("\\\\[pm](?=\\W|$)")
 
-        /**
-         * Returns a pattern that matches a self-closing para tag: <para style="STYLE"/>
-         */
-        private fun paraShortPattern(style: String): Pattern {
-            return Pattern.compile("<para\\s+style=\"$style\"\\s*/>", Pattern.DOTALL)
-        }
+        // \q followed by digit(s), then non-word char or end
+        private val POETRY_PATTERN = Pattern.compile("\\\\q(\\d+)(?=\\W|$)")
+
+        // \qr followed by non-word char or end
+        private val RIGHT_ALIGNED_POETRY_PATTERN = Pattern.compile("\\\\qr(?=\\W|$)")
+
+        // \s followed by optional digit(s), then space and content to end of line or next marker
+        private val SECTION_PATTERN = Pattern.compile("\\\\s\\d*\\s(.+?)(?=\\\\|\\n|$)", Pattern.MULTILINE)
+
+        // \ms followed by optional digit(s), then space and content to end of line or next marker
+        private val MAJOR_SECTION_PATTERN = Pattern.compile("\\\\ms\\d*\\s(.+?)(?=\\\\|\\n|$)", Pattern.MULTILINE)
+
+        // \b followed by non-word char or end
+        private val BLANK_LINE_PATTERN = Pattern.compile("\\\\b(?=\\W|$)")
+
+        // \cl followed by space and content to end of line or next marker
+        private val CHAPTER_LABEL_PATTERN = Pattern.compile("\\\\cl\\s(.+?)(?=\\\\|\\n|$)", Pattern.MULTILINE)
+
+        // \qs content\qs* — Selah char style
+        private val SELAH_PATTERN = Pattern.compile("\\\\qs\\s(.+?)\\\\qs\\*")
     }
 }

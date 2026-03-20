@@ -185,10 +185,10 @@ class USXRendererTest {
     }
 
     @Test
-    fun `blank line tag produces BlankLine node`() {
+    fun `blank line tag produces LineBreak node`() {
         val input = """text<para style="b"/>more"""
         val nodes = testRender(input)
-        assertTrue(nodes.any { it is RenderNode.BlankLine })
+        assertTrue(nodes.any { it is RenderNode.LineBreak })
     }
 
     @Test
@@ -199,11 +199,13 @@ class USXRendererTest {
     }
 
     @Test
-    fun `paragraph content is preserved as Text node`() {
+    fun `paragraph content is preserved as Text node in children`() {
         val input = """<para style="p">paragraph content</para>"""
         val nodes = testRender(input)
-        val allText = nodes.filterIsInstance<RenderNode.Text>().joinToString("") { it.content }
-        assertTrue("Paragraph content should be in Text nodes", allText.contains("paragraph content"))
+        val para = nodes.filterIsInstance<RenderNode.Paragraph>().firstOrNull()
+        assertNotNull("Expected Paragraph node", para)
+        val childText = para!!.children.filterIsInstance<RenderNode.Text>().joinToString("") { it.content }
+        assertTrue("Paragraph children should contain text", childText.contains("paragraph content"))
     }
 
     @Test
@@ -244,12 +246,12 @@ class USXRendererTest {
     }
 
     @Test
-    fun `right-aligned poetic line is preceded by LineBreak`() {
+    fun `right-aligned poetic line has rightAligned flag`() {
         val input = """<para style="qr">Selah</para>"""
         val nodes = testRender(input)
-        val poeticIdx = nodes.indexOfFirst { it is RenderNode.PoeticLine }
-        assertTrue(poeticIdx > 0)
-        assertEquals(RenderNode.LineBreak, nodes[poeticIdx - 1])
+        val poetic = nodes.filterIsInstance<RenderNode.PoeticLine>().firstOrNull()
+        assertNotNull(poetic)
+        assertTrue("Expected rightAligned=true", poetic!!.rightAligned)
     }
 
     @Test
@@ -332,7 +334,7 @@ class USXRendererTest {
         val input = """<verse number="1" style="v" />text<para style="b"/>more text"""
         val nodes = testRender(input)
         assertTrue(nodes.any { it is RenderNode.Verse })
-        assertTrue(nodes.any { it is RenderNode.BlankLine })
+        assertTrue(nodes.any { it is RenderNode.LineBreak })
         val textContent = nodes.filterIsInstance<RenderNode.Text>().joinToString("") { it.content }
         assertTrue(textContent.contains("text"))
         assertTrue(textContent.contains("more text"))
@@ -436,9 +438,10 @@ class USXRendererTest {
     }
 
     @Test
-    fun `bare verse markers in poetry context get implicit PoeticLine markers`() {
-        // Actual USX format: verse markers appear OUTSIDE <para style="q"> tags
-        // but are still part of the poetry section
+    fun `bare verse markers between poetry blocks are wrapped in implicit Paragraphs`() {
+        // Actual USX format: verse markers appear OUTSIDE <para style="q"> tags.
+        // The </para> close token creates a block boundary, so orphan verses after
+        // a closing tag are wrapped in implicit Paragraphs.
         val input = """<verse number="9" style="v" />
 Therefore pray like this:
 <para style="b"/>
@@ -471,45 +474,35 @@ but deliver us from the evil one.'
 
         val nodes = testRender(input)
 
-        // Verify each verse (10, 11, 12, 13) has a PoeticLine before it
+        // Verse 9 is an orphan at top level (before any block node)
+        assertTrue("Verse 9 should be at top level",
+            nodes.any { it is RenderNode.Verse && it.startVerse == 9 })
+
+        // Helper to find verses inside block node children
+        fun findVerseInBlockChildren(verseNum: Int): Boolean =
+            nodes.any { block ->
+                val children = when (block) {
+                    is RenderNode.Paragraph -> block.children
+                    is RenderNode.PoeticLine -> block.children
+                    else -> emptyList()
+                }
+                children.any { it is RenderNode.Verse && it.startVerse == verseNum }
+            }
+
+        // Verses 10, 11, 12, 13 should be inside block node children
+        // (wrapped in implicit Paragraphs from </para> close tokens)
         for (verseNum in listOf(10, 11, 12, 13)) {
-            val verseIdx = nodes.indexOfFirst {
-                it is RenderNode.Verse && (it as RenderNode.Verse).startVerse == verseNum
-            }
-            assertTrue("Verse $verseNum should exist", verseIdx >= 0)
-
-            var prevIdx = verseIdx - 1
-            while (prevIdx >= 0 && nodes[prevIdx] is RenderNode.Text
-                && (nodes[prevIdx] as RenderNode.Text).content.trim().isEmpty()) {
-                prevIdx--
-            }
-            assertTrue(
-                "Verse $verseNum should be preceded by PoeticLine, got: ${nodes.getOrNull(prevIdx)}",
-                nodes.getOrNull(prevIdx) is RenderNode.PoeticLine
-            )
+            assertTrue("Verse $verseNum should be inside a block node's children",
+                findVerseInBlockChildren(verseNum))
         }
-
-        // Verse 9 should NOT get an implicit PoeticLine (it's before the poetry section)
-        val verse9Idx = nodes.indexOfFirst {
-            it is RenderNode.Verse && (it as RenderNode.Verse).startVerse == 9
-        }
-        assertTrue("Verse 9 should exist", verse9Idx >= 0)
-        var prevIdx9 = verse9Idx - 1
-        while (prevIdx9 >= 0 && nodes[prevIdx9] is RenderNode.Text
-            && (nodes[prevIdx9] as RenderNode.Text).content.trim().isEmpty()) {
-            prevIdx9--
-        }
-        assertFalse(
-            "Verse 9 should NOT be preceded by PoeticLine (it's before poetry context)",
-            nodes.getOrNull(prevIdx9) is RenderNode.PoeticLine
-        )
     }
 
     @Test
-    fun `first verse in poetry section gets implicit PoeticLine via look-ahead`() {
-        // Verse 3 is the FIRST verse in the poetry section — it appears before
-        // any <para style="q"> tag but should still get a PoeticLine marker
-        // because look-ahead finds PoeticLine(q2) after it.
+    fun `tree structure groups verses into correct block nodes`() {
+        // Tests that buildTree + </para> tokenization correctly groups verses.
+        // Verse 2, 3 are orphans (before any block). Verse 4 is wrapped in an
+        // implicit Paragraph (from </para> after q2). Verse 11 is wrapped in a
+        // Paragraph (from </para> after <para style="p">).
         val input = """<verse number="2" style="v" />
 He opened his mouth and taught them, saying,
 <para style="b"/>
@@ -530,65 +523,25 @@ for they will be comforted.
 
         val nodes = testRender(input)
 
-        // Verse 3 should get an implicit PoeticLine (first verse in poetry section)
-        val verse3Idx = nodes.indexOfFirst {
-            it is RenderNode.Verse && (it as RenderNode.Verse).startVerse == 3
-        }
-        assertTrue("Verse 3 should exist", verse3Idx >= 0)
-        var prevIdx3 = verse3Idx - 1
-        while (prevIdx3 >= 0 && nodes[prevIdx3] is RenderNode.Text
-            && (nodes[prevIdx3] as RenderNode.Text).content.trim().isEmpty()) {
-            prevIdx3--
-        }
-        assertTrue(
-            "Verse 3 should be preceded by PoeticLine (look-ahead finds poetry), got: ${nodes.getOrNull(prevIdx3)}",
-            nodes.getOrNull(prevIdx3) is RenderNode.PoeticLine
-        )
+        // Verse 2 is at top level (orphan before any block)
+        assertTrue("Verse 2 should be at top level",
+            nodes.any { it is RenderNode.Verse && it.startVerse == 2 })
 
-        // Verse 4 should also get an implicit PoeticLine (look-back finds poetry)
-        val verse4Idx = nodes.indexOfFirst {
-            it is RenderNode.Verse && (it as RenderNode.Verse).startVerse == 4
-        }
-        assertTrue("Verse 4 should exist", verse4Idx >= 0)
-        var prevIdx4 = verse4Idx - 1
-        while (prevIdx4 >= 0 && nodes[prevIdx4] is RenderNode.Text
-            && (nodes[prevIdx4] as RenderNode.Text).content.trim().isEmpty()) {
-            prevIdx4--
-        }
-        assertTrue(
-            "Verse 4 should be preceded by PoeticLine, got: ${nodes.getOrNull(prevIdx4)}",
-            nodes.getOrNull(prevIdx4) is RenderNode.PoeticLine
-        )
+        // Verse 3 is at top level (orphan before first block)
+        assertTrue("Verse 3 should be at top level",
+            nodes.any { it is RenderNode.Verse && it.startVerse == 3 })
 
-        // Verse 2 should NOT get a PoeticLine (before poetry section, separated by BlankLine)
-        val verse2Idx = nodes.indexOfFirst {
-            it is RenderNode.Verse && (it as RenderNode.Verse).startVerse == 2
+        // Verse 4 is inside a Paragraph (implicit, from </para> close token)
+        val verse4InParagraph = nodes.filterIsInstance<RenderNode.Paragraph>().any { p ->
+            p.children.any { it is RenderNode.Verse && it.startVerse == 4 }
         }
-        assertTrue("Verse 2 should exist", verse2Idx >= 0)
-        var prevIdx2 = verse2Idx - 1
-        while (prevIdx2 >= 0 && nodes[prevIdx2] is RenderNode.Text
-            && (nodes[prevIdx2] as RenderNode.Text).content.trim().isEmpty()) {
-            prevIdx2--
-        }
-        assertFalse(
-            "Verse 2 should NOT be preceded by PoeticLine",
-            nodes.getOrNull(prevIdx2) is RenderNode.PoeticLine
-        )
+        assertTrue("Verse 4 should be inside a Paragraph's children", verse4InParagraph)
 
-        // Verse 11 should NOT get a PoeticLine (after <para style="p"> ends poetry)
-        val verse11Idx = nodes.indexOfFirst {
-            it is RenderNode.Verse && (it as RenderNode.Verse).startVerse == 11
+        // Verse 11 is inside a Paragraph (from </para> after <para style="p">)
+        val verse11InParagraph = nodes.filterIsInstance<RenderNode.Paragraph>().any { p ->
+            p.children.any { it is RenderNode.Verse && it.startVerse == 11 }
         }
-        assertTrue("Verse 11 should exist", verse11Idx >= 0)
-        var prevIdx11 = verse11Idx - 1
-        while (prevIdx11 >= 0 && nodes[prevIdx11] is RenderNode.Text
-            && (nodes[prevIdx11] as RenderNode.Text).content.trim().isEmpty()) {
-            prevIdx11--
-        }
-        assertFalse(
-            "Verse 11 should NOT be preceded by PoeticLine (after paragraph break)",
-            nodes.getOrNull(prevIdx11) is RenderNode.PoeticLine
-        )
+        assertTrue("Verse 11 should be inside a Paragraph's children", verse11InParagraph)
     }
 
     @Test

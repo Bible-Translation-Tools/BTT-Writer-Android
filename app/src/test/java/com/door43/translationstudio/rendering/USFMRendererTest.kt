@@ -11,8 +11,7 @@ import org.junit.Test
  * These run on the JVM (not on device) because USFMRenderer itself has no Android imports
  * beyond android.content.Context (used only by legacy constructors).
  *
- * USFM input uses the same <para style="..."> XML wrapper as USX for most tags,
- * plus USFM-specific markers such as \v, \c, and \p.
+ * USFM input uses pure backslash markers (\p, \v, \q, \s, \ms, \b, \cl, \qr, etc.).
  */
 class USFMRendererTest {
 
@@ -60,7 +59,7 @@ class USFMRendererTest {
 
     @Test
     fun `section heading produces Section node`() {
-        val input = """<para style="s">The Beginning</para>"""
+        val input = """\s The Beginning"""
         val nodes = testRender(input)
         val heading = flatten(nodes).filterIsInstance<RenderNode.Section>().firstOrNull()
         assertNotNull("Expected Section node", heading)
@@ -70,7 +69,7 @@ class USFMRendererTest {
 
     @Test
     fun `major section heading produces isMajor=true Section`() {
-        val input = """<para style="ms">CREATION</para>"""
+        val input = """\ms CREATION"""
         val nodes = testRender(input)
         val heading = flatten(nodes).filterIsInstance<RenderNode.Section>().firstOrNull()
         assertNotNull(heading)
@@ -80,7 +79,7 @@ class USFMRendererTest {
 
     @Test
     fun `suppressed leading major section heading is excluded`() {
-        val input = """<para style="ms">INTRO</para> rest of text"""
+        val input = """\ms INTRO"""
         val r = renderer()
         r.setSuppressLeadingMajorSectionHeadings(true)
         val nodes = r.render(input)
@@ -92,7 +91,8 @@ class USFMRendererTest {
 
     @Test
     fun `non-leading major section heading is NOT suppressed`() {
-        val input = """\v 1 text <para style="ms">MID SECTION</para>"""
+        val input = """\v 1 text
+\ms MID SECTION"""
         val r = renderer()
         r.setSuppressLeadingMajorSectionHeadings(true)
         val nodes = r.render(input)
@@ -104,7 +104,7 @@ class USFMRendererTest {
 
     @Test
     fun `section heading is followed by LineBreak`() {
-        val input = """<para style="s">Heading</para>"""
+        val input = """\s Heading"""
         val nodes = testRender(input)
         val flat = flatten(nodes)
         val headingIndex = flat.indexOfFirst { it is RenderNode.Section }
@@ -202,30 +202,30 @@ class USFMRendererTest {
     }
 
     @Test
-    fun `blank line tag produces BlankLine node`() {
-        val input = """text<para style="b"/>more"""
+    fun `blank line marker produces LineBreak node`() {
+        val input = """text \b more"""
         val nodes = testRender(input)
-        assertTrue(flatten(nodes).any { it is RenderNode.BlankLine })
+        assertTrue(flatten(nodes).any { it is RenderNode.LineBreak })
     }
 
     @Test
-    fun `paragraph tag produces Paragraph node`() {
-        val input = """<para style="p">paragraph content</para>"""
+    fun `paragraph marker produces Paragraph node`() {
+        val input = """\p paragraph content"""
         val nodes = testRender(input)
         assertTrue("Expected Paragraph node", flatten(nodes).any { it is RenderNode.Paragraph })
     }
 
     @Test
     fun `paragraph content is preserved as Text node`() {
-        val input = """<para style="p">paragraph content</para>"""
+        val input = """\p paragraph content"""
         val nodes = testRender(input)
         val allText = flatten(nodes).filterIsInstance<RenderNode.Text>().joinToString("") { it.content }
         assertTrue("Paragraph content should be in Text nodes", allText.contains("paragraph content"))
     }
 
     @Test
-    fun `paragraph node from para tag has indented=false`() {
-        val input = """<para style="p">some text</para>"""
+    fun `paragraph node from p marker has indented=false`() {
+        val input = """\p some text"""
         val nodes = testRender(input)
         val para = flatten(nodes).filterIsInstance<RenderNode.Paragraph>().firstOrNull()
         assertNotNull(para)
@@ -234,7 +234,7 @@ class USFMRendererTest {
 
     @Test
     fun `poetic line produces PoeticLine node with correct indent`() {
-        val input = """<para style="q2">Praise the Lord</para>"""
+        val input = """\q2 Praise the Lord"""
         val nodes = testRender(input)
         val poetic = flatten(nodes).filterIsInstance<RenderNode.PoeticLine>().firstOrNull()
         assertNotNull(poetic)
@@ -244,7 +244,7 @@ class USFMRendererTest {
 
     @Test
     fun `q1 poetic line has indentLevel 1`() {
-        val input = """<para style="q1">first indent</para>"""
+        val input = """\q1 first indent"""
         val nodes = testRender(input)
         val poetic = flatten(nodes).filterIsInstance<RenderNode.PoeticLine>().firstOrNull()
         assertNotNull(poetic)
@@ -253,7 +253,7 @@ class USFMRendererTest {
 
     @Test
     fun `right-aligned poetic line produces rightAligned=true PoeticLine`() {
-        val input = """<para style="qr">Selah</para>"""
+        val input = """\qr Selah"""
         val nodes = testRender(input)
         val poetic = flatten(nodes).filterIsInstance<RenderNode.PoeticLine>().firstOrNull()
         assertNotNull(poetic)
@@ -261,18 +261,17 @@ class USFMRendererTest {
     }
 
     @Test
-    fun `right-aligned poetic line is preceded by LineBreak`() {
-        val input = """<para style="qr">Selah</para>"""
+    fun `right-aligned poetic line has rightAligned flag`() {
+        val input = """\qr Selah"""
         val nodes = testRender(input)
-        val flat = flatten(nodes)
-        val poeticIdx = flat.indexOfFirst { it is RenderNode.PoeticLine }
-        assertTrue(poeticIdx > 0)
-        assertEquals(RenderNode.LineBreak, flat[poeticIdx - 1])
+        val poetic = flatten(nodes).filterIsInstance<RenderNode.PoeticLine>().firstOrNull()
+        assertNotNull(poetic)
+        assertTrue("Expected rightAligned=true", poetic!!.rightAligned)
     }
 
     @Test
     fun `chapter label produces ChapterLabel node`() {
-        val input = """<para style="cl">Chapter One</para>"""
+        val input = """\cl Chapter One"""
         val nodes = testRender(input)
         val label = flatten(nodes).filterIsInstance<RenderNode.ChapterLabel>().firstOrNull()
         assertNotNull(label)
@@ -437,11 +436,11 @@ class USFMRendererTest {
 
     @Test
     fun `mixed content produces correct node sequence`() {
-        val input = """\v 1 text<para style="b"/>more text"""
+        val input = """\v 1 text \b more text"""
         val nodes = testRender(input)
         val flat = flatten(nodes)
         assertTrue(flat.any { it is RenderNode.Verse })
-        assertTrue(flat.any { it is RenderNode.BlankLine })
+        assertTrue(flat.any { it is RenderNode.LineBreak })
         val textContent = flat.filterIsInstance<RenderNode.Text>().joinToString("") { it.content }
         assertTrue(textContent.contains("text"))
         assertTrue(textContent.contains("more text"))
@@ -458,14 +457,14 @@ class USFMRendererTest {
 
     @Test
     fun `getLeadingMajorSectionHeading returns heading when leading`() {
-        val input = """<para style="ms">GENESIS</para> rest"""
+        val input = """\ms GENESIS"""
         val heading = renderer().getLeadingMajorSectionHeading(input)
         assertEquals("GENESIS", heading.toString())
     }
 
     @Test
     fun `getLeadingMajorSectionHeading returns empty when not leading`() {
-        val input = """some text <para style="ms">GENESIS</para>"""
+        val input = """some text \ms GENESIS"""
         val heading = renderer().getLeadingMajorSectionHeading(input)
         assertEquals("", heading.toString())
     }

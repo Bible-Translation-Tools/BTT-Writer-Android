@@ -42,7 +42,7 @@ object SpannableAdapter {
                 is TextNode.SearchHighlight -> sb.append(node.content)
                 is TextNode.Link -> sb.append("")
                 TextNode.LineBreak -> sb.append("\n")
-                TextNode.BlankLine -> sb.append("\n\n")
+                TextNode.BlankLine -> sb.append("\n")
             }
         }
         return sb

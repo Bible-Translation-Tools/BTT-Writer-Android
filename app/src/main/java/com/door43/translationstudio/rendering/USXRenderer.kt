@@ -72,6 +72,7 @@ class USXRenderer(
         allTokens.addAll(findMajorSectionHeadings(text))
         allTokens.addAll(findSectionHeadings(text))
         allTokens.addAll(findParagraphBreaks(text))
+        allTokens.addAll(findParagraphCloseTokens(text))
         allTokens.addAll(findBlankLines(text))
         allTokens.addAll(findPoeticLines(text))
         allTokens.addAll(findRightAlignedPoeticLines(text))
@@ -100,16 +101,15 @@ class USXRenderer(
             if (cleaned.isNotBlank()) nodes.add(RenderNode.Text(cleaned, start = lastIndex, end = text.length))
         }
 
-        // insert implicit poetry line markers before bare verse markers in poetry context
-        addImplicitPoeticLineMarkers(nodes)
-
         // search highlights (post-process Text nodes)
         if (!isStopped()) applySearchHighlights(nodes)
 
         // insert missing expected verses
         insertMissingVerses(nodes)
 
-        return nodes
+        // build tree: group inline nodes into block node children
+        // Filter out empty Paragraphs from </para> close tokens that had no orphan content
+        return buildTree(nodes).filter { !(it is RenderNode.Paragraph && it.children.isEmpty()) }
     }
 
     override fun getLeadingMajorSectionHeading(input: CharSequence): String {
@@ -169,11 +169,29 @@ class USXRenderer(
         return tokens
     }
 
+    /**
+     * Tokenizes </para> closing tags as implicit Paragraph markers.
+     * This ensures that content after a closing </para> is not absorbed into the
+     * preceding block node's children. Empty implicit Paragraphs (e.g., after poetry
+     * closing tags) are filtered out by buildTree.
+     */
+    private fun findParagraphCloseTokens(text: String): List<Token> {
+        val tokens = mutableListOf<Token>()
+        val matcher = endParagraphPattern.matcher(text)
+        while (matcher.find()) {
+            tokens.add(Token(
+                matcher.start(), matcher.end(),
+                listOf(RenderNode.Paragraph(indented = false, children = emptyList()))
+            ))
+        }
+        return tokens
+    }
+
     private fun findBlankLines(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
         val matcher = paraShortPattern("b").matcher(text)
         while (matcher.find()) {
-            tokens.add(Token(matcher.start(), matcher.end(), listOf(RenderNode.BlankLine)))
+            tokens.add(Token(matcher.start(), matcher.end(), listOf(RenderNode.LineBreak)))
         }
         return tokens
     }
@@ -203,7 +221,6 @@ class USXRenderer(
                 Token(
                     matcher.start(), matcher.end(),
                     listOf(
-                        RenderNode.LineBreak,
                         RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = emptyList())
                     )
                 )
@@ -316,7 +333,6 @@ class USXRenderer(
                 Token(
                     matcher.start(), matcher.end(),
                     listOf(
-                        RenderNode.LineBreak,
                         RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = listOf(RenderNode.Text(content.trim())))
                     )
                 )
@@ -391,79 +407,6 @@ class USXRenderer(
         }
         nodes.clear()
         nodes.addAll(result)
-    }
-
-    /**
-     * In USX, verse markers can appear between poetry `<para style="q">` blocks without being
-     * wrapped in their own `<para style="q">` tag. These "bare" verses should still render as
-     * q1-level poetic lines (with a line break before them). This function detects such cases
-     * and inserts implicit PoeticLine markers before the bare verse markers.
-     *
-     * A verse is considered to be in a poetry context if there is a PoeticLine node either
-     * before it (look-back) or after it (look-ahead), without crossing a structural boundary
-     * (Paragraph, BlankLine, or SectionHeading).
-     */
-    private fun addImplicitPoeticLineMarkers(nodes: MutableList<RenderNode>) {
-        var i = 0
-        while (i < nodes.size) {
-            if (nodes[i] is RenderNode.Verse) {
-                // Only add implicit poetry marker if the verse is in a poetry context.
-                // Look-back takes priority: if a Paragraph is found before any PoeticLine,
-                // this verse belongs to prose even if poetry follows.
-                val lookBackResult = hasPoeticLineInContext(nodes, i, lookBack = true)
-                val lookBackHitParagraph = !lookBackResult && hasBoundaryBefore(nodes, i)
-                val inPoetry = if (lookBackHitParagraph) false
-                    else lookBackResult || hasPoeticLineInContext(nodes, i, lookBack = false)
-
-                if (inPoetry) {
-                    var prevIdx = i - 1
-                    while (prevIdx >= 0 && nodes[prevIdx] is RenderNode.Text
-                        && (nodes[prevIdx] as RenderNode.Text).content.trim().isEmpty()) {
-                        prevIdx--
-                    }
-                    if (prevIdx < 0 || nodes[prevIdx] !is RenderNode.PoeticLine) {
-                        nodes.add(i, RenderNode.PoeticLine(indentLevel = 1, rightAligned = false, children = emptyList()))
-                        i++
-                    }
-                }
-            }
-            i++
-        }
-    }
-
-    /**
-     * Scans backward or forward from [fromIndex] looking for a PoeticLine node.
-     * Stops at structural boundaries (Paragraph, BlankLine, Section).
-     */
-    private fun hasPoeticLineInContext(
-        nodes: List<RenderNode>, fromIndex: Int, lookBack: Boolean
-    ): Boolean {
-        val range = if (lookBack) (fromIndex - 1 downTo 0) else (fromIndex + 1 until nodes.size)
-        for (j in range) {
-            when (nodes[j]) {
-                is RenderNode.PoeticLine -> return true
-                is RenderNode.Paragraph, is RenderNode.Section,
-                    RenderNode.BlankLine -> return false
-                else -> { /* skip Text, Verse, Note, etc. */ }
-            }
-        }
-        return false
-    }
-
-    /**
-     * Checks whether scanning backward from [fromIndex] hits a Paragraph boundary
-     * (meaning the verse belongs to prose, not poetry).
-     */
-    private fun hasBoundaryBefore(nodes: List<RenderNode>, fromIndex: Int): Boolean {
-        for (j in (fromIndex - 1) downTo 0) {
-            when (nodes[j]) {
-                is RenderNode.Paragraph -> return true
-                is RenderNode.PoeticLine, is RenderNode.Section,
-                    RenderNode.BlankLine -> return false
-                else -> { /* skip Text, Verse, Note, etc. */ }
-            }
-        }
-        return false
     }
 
     private fun insertMissingVerses(nodes: MutableList<RenderNode>) {
