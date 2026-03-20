@@ -17,13 +17,15 @@ object RenderNodeConverter {
     fun textNodesToRenderNodes(textNodes: List<TextNode>): List<RenderNode> {
         return textNodes.map { node ->
             when (node) {
-                is TextNode.Text -> RenderNode.Text(node.content)
+                is TextNode.Text -> RenderNode.Text(node.content, start = node.startPos, end = node.endPos)
                 is TextNode.Styled -> RenderNode.StyledText(node.content, node.style)
                 is TextNode.VerseMarker -> RenderNode.Verse(
                     startVerse = node.startVerse,
                     endVerse = node.endVerse,
                     pinned = node.pinned,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    start = node.startPos,
+                    end = node.endPos
                 )
                 is TextNode.NoteMarker -> RenderNode.Note(
                     caller = node.caller,
@@ -31,8 +33,8 @@ object RenderNodeConverter {
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     machineReadable = node.machineReadable,
-                    start = node.start,
-                    end = node.end,
+                    startPos = node.startPos,
+                    endPos = node.endPos,
                     attributes = NodeAttributes(searchHighlighted = node.highlighted)
                 )
                 is TextNode.Paragraph -> RenderNode.Paragraph(
@@ -72,9 +74,9 @@ object RenderNodeConverter {
             when (node) {
                 is RenderNode.Text -> {
                     val textNode = if (node.attributes.searchHighlighted) {
-                        TextNode.SearchHighlight(node.content)
+                        TextNode.SearchHighlight(node.content, startPos = node.start, endPos = node.end)
                     } else {
-                        TextNode.Text(node.content)
+                        TextNode.Text(node.content, startPos = node.start, endPos = node.end)
                     }
                     listOf(textNode)
                 }
@@ -83,7 +85,9 @@ object RenderNodeConverter {
                     startVerse = node.startVerse,
                     endVerse = node.endVerse,
                     pinned = node.pinned,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    startPos = node.start,
+                    endPos = node.end
                 ))
                 is RenderNode.Note -> listOf(TextNode.NoteMarker(
                     caller = node.caller,
@@ -92,8 +96,8 @@ object RenderNodeConverter {
                     noteStyle = node.noteStyle,
                     highlighted = node.attributes.searchHighlighted,
                     machineReadable = node.machineReadable,
-                    start = node.start,
-                    end = node.end
+                    startPos = node.startPos,
+                    endPos = node.endPos
                 ))
                 is RenderNode.Paragraph -> {
                     val result = mutableListOf<TextNode>()

@@ -5,12 +5,23 @@ package com.door43.translationstudio.rendering.model
  * No android.* imports allowed in this file.
  */
 sealed class TextNode {
+    abstract val startPos: Int
+    abstract val endPos: Int
 
     /** Raw text segment, no styling. */
-    data class Text(val content: String) : TextNode()
+    data class Text(
+        val content: String,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /** A text segment with a specific visual style applied. */
-    data class Styled(val content: String, val style: NodeStyle) : TextNode()
+    data class Styled(
+        val content: String,
+        val style: NodeStyle,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /**
      * A verse marker parsed from the source text.
@@ -26,15 +37,15 @@ sealed class TextNode {
         val startVerse: Int,
         val endVerse: Int,
         val pinned: Boolean,
-        val machineReadable: String = ""
+        val machineReadable: String = "",
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
     ) : TextNode()
 
-    // TODO: Consider adding a stable id/verseRef field here if NoteMarker needs to be
-    //       serialised (e.g. SavedStateHandle, analytics). Currently all fields are display strings.
     /**
      * A note marker (footnote or cross-reference). highlighted=true when search matches.
-     * @param start Start position of the footnote in the original raw input text (-1 if unknown).
-     * @param end End position of the footnote in the original raw input text (-1 if unknown).
+     * @param startPos Start position of the footnote in the original raw input text (-1 if unknown).
+     * @param endPos End position of the footnote in the original raw input text (-1 if unknown).
      */
     data class NoteMarker(
         val caller: String,
@@ -43,33 +54,66 @@ sealed class TextNode {
         val noteStyle: NoteStyle,
         val highlighted: Boolean = false,
         val machineReadable: String = "",
-        val start: Int = -1,
-        val end: Int = -1
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
     ) : TextNode()
 
     /** A paragraph break with optional indent. */
-    data class Paragraph(val indented: Boolean = false) : TextNode()
+    data class Paragraph(
+        val indented: Boolean = false,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /** A blank line / spacer. */
-    object BlankLine : TextNode()
+    object BlankLine : TextNode() {
+        override val startPos: Int = -1
+        override val endPos: Int = -1
+    }
 
     /** A section heading. isMajor=true for \ms / <para style="ms">. */
-    data class SectionHeading(val text: String, val isMajor: Boolean) : TextNode()
+    data class SectionHeading(
+        val text: String,
+        val isMajor: Boolean,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /** A poetic line. indentLevel 0 = no indent; rightAligned = true for \qr. */
-    data class PoeticLine(val content: String, val indentLevel: Int, val rightAligned: Boolean = false) : TextNode()
+    data class PoeticLine(
+        val content: String,
+        val indentLevel: Int,
+        val rightAligned: Boolean = false,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /** A chapter label (bold, from \cl or <para style="cl">). */
-    data class ChapterLabel(val text: String) : TextNode()
+    data class ChapterLabel(
+        val text: String,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /** A clickable link. */
-    data class Link(val linkData: LinkData) : TextNode()
+    data class Link(
+        val linkData: LinkData,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /** Text segment highlighted because it matches the current search string. */
-    data class SearchHighlight(val content: String) : TextNode()
+    data class SearchHighlight(
+        val content: String,
+        override val startPos: Int = -1,
+        override val endPos: Int = -1
+    ) : TextNode()
 
     /** A line break (\n). */
-    object LineBreak : TextNode()
+    object LineBreak : TextNode() {
+        override val startPos: Int = -1
+        override val endPos: Int = -1
+    }
 }
 
 enum class NodeStyle {

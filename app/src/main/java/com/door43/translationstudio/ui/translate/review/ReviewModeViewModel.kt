@@ -127,6 +127,13 @@ sealed interface ReviewAction : ModeAction {
     data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : ReviewAction
     object ClearHelp : ReviewAction
     object CleanUrl : ReviewAction
+    data class DragDropVerse(
+        val item: ReviewItem,
+        val machineReadable: String,
+        val verseRawStart: Int,
+        val verseRawEnd: Int,
+        val targetRawPosition: Int
+    ) : ReviewAction
 }
 
 class ReviewModeViewModel(
@@ -191,6 +198,7 @@ class ReviewModeViewModel(
             is ReviewAction.Undo -> onUndo(action.item)
             is ReviewAction.Redo -> onRedo(action.item)
             is ReviewAction.AddNoteClicked -> onAddNoteClicked(action.item, action.caretPosition)
+            is ReviewAction.DragDropVerse -> onDragDropVerse(action)
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
         }
@@ -255,8 +263,31 @@ class ReviewModeViewModel(
             translationFormat = chunk.targetTranslationFormat,
             targetText = text,
             verseDisplay = verseDisplay,
-            footnoteEditable = targetMode != TargetMode.COMPLETE
+            footnoteEditable = targetMode != TargetMode.COMPLETE,
+            onVerseClick = {
+                showSnackBar(application.getString(R.string.long_click_to_drag))
+            }
         )
+    }
+
+    private fun onDragDropVerse(action: ReviewAction.DragDropVerse) {
+        val item = action.item
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val originalText = fetchTargetText(
+                    item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
+                )
+                val newText = VerseMarkerDrag.moveVerseByRawPosition(
+                    text = originalText,
+                    verseRawStart = action.verseRawStart,
+                    verseRawEnd = action.verseRawEnd,
+                    marker = action.machineReadable,
+                    targetRawPosition = action.targetRawPosition
+                )
+                item.saveTranslation(newText)
+                updateItem(prepareItem(item.chunk, TargetMode.MARKER))
+            }
+        }
     }
 
     private fun fetchTargetText(

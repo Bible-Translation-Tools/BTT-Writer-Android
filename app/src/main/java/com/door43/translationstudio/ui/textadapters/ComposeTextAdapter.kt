@@ -35,7 +35,7 @@ object ComposeTextAdapter {
         nodes: List<TextNode>,
         searchHighlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
-        onVerseClick: (TextNode.VerseMarker) -> Unit = {},
+        onVerseClick: ((TextNode.VerseMarker) -> Unit)? = null,
         onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit = {_, _, _ ->},
         onLinkClick: (TextNode.Link) -> Unit = {}
     ): AnnotatedString = buildAnnotatedString {
@@ -172,7 +172,7 @@ object ComposeTextAdapter {
         node: TextNode,
         searchHighlightColor: Color,
         verseColor: Color,
-        onVerseClick: (TextNode.VerseMarker) -> Unit,
+        onVerseClick: ((TextNode.VerseMarker) -> Unit)?,
         onNoteClick: (TextNode.NoteMarker, Int, Int) -> Unit,
         onLinkClick: (TextNode.Link) -> Unit,
         poeticalLineIndent: Int = 0,
@@ -187,7 +187,17 @@ object ComposeTextAdapter {
                     val padding = "    ".repeat(poeticalLineIndent)
                     append(padding)
                 }
+                val start = length
                 append(node.content)
+                val end = length
+                if (node.startPos >= 0) {
+                    addStringAnnotation(
+                        tag = "RAW_POSITION",
+                        annotation = "${node.startPos}|${node.endPos}",
+                        start = start,
+                        end = end
+                    )
+                }
             }
 
             is TextNode.Styled -> {
@@ -254,8 +264,27 @@ object ComposeTextAdapter {
                 }
                 val end = length
 
-                // Click handler
+                // Verse marker annotation for long-press drag identification
                 if (node.pinned) {
+                    addStringAnnotation(
+                        tag = "VERSE_MARKER",
+                        annotation = "${node.startVerse}|${node.endVerse}|${node.machineReadable}",
+                        start = start,
+                        end = end
+                    )
+                }
+
+                if (node.startPos >= 0) {
+                    addStringAnnotation(
+                        tag = "RAW_POSITION",
+                        annotation = "${node.startPos}|${node.endPos}",
+                        start = start,
+                        end = end
+                    )
+                }
+
+                // Click handler
+                if (node.pinned && onVerseClick != null) {
                     addLink(
                         LinkAnnotation.Clickable(
                             tag = "VERSE_${node.startVerse}"
@@ -293,6 +322,15 @@ object ComposeTextAdapter {
                     start = start,
                     end = end
                 )
+
+                if (node.startPos >= 0) {
+                    addStringAnnotation(
+                        tag = "RAW_POSITION",
+                        annotation = "${node.startPos}|${node.endPos}",
+                        start = start,
+                        end = end
+                    )
+                }
             }
 
             is TextNode.SearchHighlight -> {

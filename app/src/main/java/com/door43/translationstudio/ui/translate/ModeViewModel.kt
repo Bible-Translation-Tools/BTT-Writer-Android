@@ -10,6 +10,7 @@ import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.RenderNodeConverter
+import com.door43.translationstudio.rendering.model.TextNode
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
@@ -162,8 +163,8 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                             machineReadable = notes.machineReadable,
                             chunkId = chunkId,
                             editable = false,
-                            start = notes.start,
-                            end = notes.end
+                            start = notes.startPos,
+                            end = notes.endPos
                         ))
                     }
                 }
@@ -178,7 +179,8 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
         translationFormat: TranslationFormat,
         targetText: String,
         verseDisplay: VerseDisplay = VerseDisplay.RAW,
-        footnoteEditable: Boolean
+        footnoteEditable: Boolean,
+        onVerseClick: ((TextNode.VerseMarker) -> Unit)? = null
     ): AnnotatedString {
         return try {
             val renderingGroup = RenderingGroup()
@@ -200,14 +202,12 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                             machineReadable = notes.machineReadable,
                             chunkId = chunkId,
                             editable = footnoteEditable,
-                            start = notes.start,
-                            end = notes.end
+                            start = notes.startPos,
+                            end = notes.endPos
                         ))
                     }
                 },
-                onVerseClick = {
-                    println(it)
-                }
+                onVerseClick = onVerseClick
             )
         } catch (_: Exception) {
             AnnotatedString(targetText)

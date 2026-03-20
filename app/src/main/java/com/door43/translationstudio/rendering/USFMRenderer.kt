@@ -95,7 +95,7 @@ class USFMRenderer(
             if (token.start > lastIndex) {
                 val gap = text.substring(lastIndex, token.start)
                 val cleaned = stripRemainingMarkers(gap)
-                if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned))
+                if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned, startPos = lastIndex, endPos = token.start))
             }
             nodes.addAll(token.nodes)
             lastIndex = token.end
@@ -103,7 +103,7 @@ class USFMRenderer(
         if (lastIndex < text.length) {
             val tail = text.substring(lastIndex)
             val cleaned = stripRemainingMarkers(tail)
-            if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned))
+            if (cleaned.isNotBlank()) nodes.add(TextNode.Text(cleaned, startPos = lastIndex, endPos = text.length))
         }
 
         // insert implicit poetry line markers before bare verse markers in poetry context
@@ -121,13 +121,15 @@ class USFMRenderer(
     private fun convertTextNodesToRenderNodes(textNodes: List<TextNode>): List<RenderNode> {
         return textNodes.map { node ->
             when (node) {
-                is TextNode.Text -> RenderNode.Text(node.content)
+                is TextNode.Text -> RenderNode.Text(node.content, start = node.startPos, end = node.endPos)
                 is TextNode.Styled -> RenderNode.StyledText(node.content, node.style)
                 is TextNode.VerseMarker -> RenderNode.Verse(
                     startVerse = node.startVerse,
                     endVerse = node.endVerse,
                     pinned = node.pinned,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    start = node.startPos,
+                    end = node.endPos
                 )
                 is TextNode.NoteMarker -> RenderNode.Note(
                     caller = node.caller,
@@ -135,8 +137,8 @@ class USFMRenderer(
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     machineReadable = node.machineReadable,
-                    start = node.start,
-                    end = node.end,
+                    startPos = node.startPos,
+                    endPos = node.endPos,
                     attributes = NodeAttributes(
                         searchHighlighted = node.highlighted
                     )
@@ -181,13 +183,15 @@ class USFMRenderer(
     private fun convertRenderNodesToTextNodes(renderNodes: List<RenderNode>): List<TextNode> {
         return renderNodes.flatMap { node ->
             when (node) {
-                is RenderNode.Text -> listOf(TextNode.Text(node.content))
+                is RenderNode.Text -> listOf(TextNode.Text(node.content, startPos = node.start, endPos = node.end))
                 is RenderNode.StyledText -> listOf(TextNode.Styled(node.content, node.style))
                 is RenderNode.Verse -> listOf(TextNode.VerseMarker(
                     startVerse = node.startVerse,
                     endVerse = node.endVerse,
                     pinned = node.pinned,
-                    machineReadable = node.machineReadable
+                    machineReadable = node.machineReadable,
+                    startPos = node.start,
+                    endPos = node.end
                 ))
                 is RenderNode.Note -> listOf(TextNode.NoteMarker(
                     caller = node.caller,
@@ -195,8 +199,8 @@ class USFMRenderer(
                     notes = node.notes,
                     noteStyle = node.noteStyle,
                     machineReadable = node.machineReadable,
-                    start = node.start,
-                    end = node.end
+                    startPos = node.startPos,
+                    endPos = node.endPos
                 ))
                 is RenderNode.Paragraph -> {
                     val result = mutableListOf<TextNode>()
@@ -240,7 +244,15 @@ class USFMRenderer(
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.SectionHeading(content, isMajor = true), TextNode.LineBreak)
+                    listOf(
+                        TextNode.SectionHeading(
+                            content,
+                            isMajor = true,
+                            startPos = matcher.start(),
+                            endPos = matcher.end()
+                        ),
+                        TextNode.LineBreak
+                    )
                 )
             )
         }
@@ -255,7 +267,15 @@ class USFMRenderer(
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.SectionHeading(content, isMajor = false), TextNode.LineBreak)
+                    listOf(
+                        TextNode.SectionHeading(
+                            content,
+                            isMajor = false,
+                            startPos = matcher.start(),
+                            endPos = matcher.end()
+                        ),
+                        TextNode.LineBreak
+                    )
                 )
             )
         }
@@ -268,8 +288,20 @@ class USFMRenderer(
             val matcher = paraPattern(style).matcher(text)
             while (matcher.find()) {
                 val content = matcher.group(1)?.trim() ?: ""
-                val nodes = mutableListOf<TextNode>(TextNode.Paragraph(indented = false))
-                if (content.isNotEmpty()) nodes.add(TextNode.Text(content))
+                val nodes = mutableListOf<TextNode>(
+                    TextNode.Paragraph(
+                        indented = false,
+                        startPos = matcher.start(),
+                        endPos = matcher.end()
+                    )
+                )
+                if (content.isNotEmpty()) nodes.add(
+                    TextNode.Text(
+                        content,
+                        startPos = matcher.start(),
+                        endPos = matcher.end()
+                    )
+                )
                 nodes.add(TextNode.LineBreak)
                 tokens.add(Token(matcher.start(), matcher.end(), nodes))
             }
@@ -281,7 +313,13 @@ class USFMRenderer(
         val tokens = mutableListOf<Token>()
         val matcher = paraShortPattern("b").matcher(text)
         while (matcher.find()) {
-            tokens.add(Token(matcher.start(), matcher.end(), listOf(TextNode.BlankLine)))
+            tokens.add(
+                Token(
+                    matcher.start(),
+                    matcher.end(),
+                    listOf(TextNode.BlankLine)
+                )
+            )
         }
         return tokens
     }
@@ -295,7 +333,15 @@ class USFMRenderer(
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.PoeticLine(content, indentLevel = level, rightAligned = false))
+                    listOf(
+                        TextNode.PoeticLine(
+                            content,
+                            indentLevel = level,
+                            rightAligned = false,
+                            startPos = matcher.start(),
+                            endPos = matcher.end()
+                        )
+                    )
                 )
             )
         }
@@ -312,7 +358,13 @@ class USFMRenderer(
                     matcher.start(), matcher.end(),
                     listOf(
                         TextNode.LineBreak,
-                        TextNode.PoeticLine(content, indentLevel = 0, rightAligned = true)
+                        TextNode.PoeticLine(
+                            content,
+                            indentLevel = 0,
+                            rightAligned = true,
+                            startPos = matcher.start(),
+                            endPos = matcher.end()
+                        )
                     )
                 )
             )
@@ -325,7 +377,19 @@ class USFMRenderer(
         val matcher = paraPattern("cl").matcher(text)
         while (matcher.find()) {
             val content = matcher.group(1)?.trim() ?: ""
-            tokens.add(Token(matcher.start(), matcher.end(), listOf(TextNode.ChapterLabel(content))))
+            tokens.add(
+                Token(
+                    matcher.start(),
+                    matcher.end(),
+                    listOf(
+                        TextNode.ChapterLabel(
+                            content,
+                            startPos = matcher.start(),
+                            endPos = matcher.end()
+                        )
+                    )
+                )
+            )
         }
         return tokens
     }
@@ -340,7 +404,13 @@ class USFMRenderer(
                 tokens.add(
                     Token(
                         matcher.start(), matcher.end(),
-                        listOf(TextNode.Text(text.substring(matcher.start(), matcher.end())))
+                        listOf(
+                            TextNode.Text(
+                                text.substring(matcher.start(), matcher.end()),
+                                startPos = matcher.start(),
+                                endPos = matcher.end()
+                            )
+                        )
                     )
                 )
                 continue
@@ -351,7 +421,9 @@ class USFMRenderer(
             val endVerse = if (parts.size == 2) parts[1].toIntOrNull() ?: 0 else 0
 
             // Deduplication
-            val versesToAdd = if (endVerse > 0) (startVerse..endVerse).toList() else listOf(startVerse)
+            val versesToAdd = if (endVerse > 0) {
+                (startVerse..endVerse).toList()
+            } else listOf(startVerse)
             val alreadyRendered = versesToAdd.any { foundVerses.contains(it) }
             if (alreadyRendered) continue
             foundVerses.addAll(versesToAdd)
@@ -367,7 +439,13 @@ class USFMRenderer(
             tokens.add(
                 Token(
                     matcher.start(), matcher.end(),
-                    listOf(TextNode.VerseMarker(startVerse, endVerse, verseDisplay == VerseDisplay.PIN, text.substring(matcher.start(), matcher.end())))
+                    listOf(TextNode.VerseMarker(
+                        startVerse, endVerse,
+                        verseDisplay == VerseDisplay.PIN,
+                        text.substring(matcher.start(), matcher.end()),
+                        startPos = matcher.start(),
+                        endPos = matcher.end()
+                    ))
                 )
             )
         }
@@ -396,13 +474,13 @@ class USFMRenderer(
                                 noteStyle = style,
                                 highlighted = highlighted,
                                 machineReadable = matcher.group(),
-                                start = matcher.start(),
-                                end = matcher.end()
+                                startPos = matcher.start(),
+                                endPos = matcher.end()
                             )
                         )
                     )
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // failed to parse note — skip
             }
         }
@@ -419,7 +497,13 @@ class USFMRenderer(
                     matcher.start(), matcher.end(),
                     listOf(
                         TextNode.LineBreak,
-                        TextNode.PoeticLine(content.trim(), indentLevel = 0, rightAligned = true)
+                        TextNode.PoeticLine(
+                            content.trim(),
+                            indentLevel = 0,
+                            rightAligned = true,
+                            startPos = matcher.start(),
+                            endPos = matcher.end()
+                        )
                     )
                 )
             )
@@ -434,9 +518,25 @@ class USFMRenderer(
     private fun findUsfmParagraphMarkers(text: String): List<Token> {
         val tokens = mutableListOf<Token>()
         if (!renderParagraphs) return tokens
-        val matcher = Pattern.compile(USFMParagraphSpan.PATTERN, Pattern.DOTALL).matcher(text)
+        val matcher = Pattern.compile(
+            USFMParagraphSpan.PATTERN,
+            Pattern.DOTALL
+        ).matcher(text)
+
         while (matcher.find()) {
-            tokens.add(Token(matcher.start(), matcher.end(), listOf(TextNode.Paragraph(indented = false))))
+            tokens.add(
+                Token(
+                    matcher.start(),
+                    matcher.end(),
+                    listOf(
+                        TextNode.Paragraph(
+                            indented = false,
+                            startPos = matcher.start(),
+                            endPos = matcher.end()
+                        )
+                    )
+                )
+            )
         }
         return tokens
     }
@@ -482,11 +582,19 @@ class USFMRenderer(
                 while (true) {
                     val pos = lower.indexOf(term, last)
                     if (pos < 0) break
-                    if (pos > last) result.add(TextNode.Text(node.content.substring(last, pos)))
-                    result.add(TextNode.SearchHighlight(node.content.substring(pos, pos + term.length)))
+                    if (pos > last) {
+                        result.add(TextNode.Text(node.content.substring(last, pos)))
+                    }
+                    result.add(
+                        TextNode.SearchHighlight(
+                            node.content.substring(pos, pos + term.length)
+                        )
+                    )
                     last = pos + term.length
                 }
-                if (last < node.content.length) result.add(TextNode.Text(node.content.substring(last)))
+                if (last < node.content.length) {
+                    result.add(TextNode.Text(node.content.substring(last)))
+                }
             } else {
                 result.add(node)
             }
@@ -514,7 +622,14 @@ class USFMRenderer(
                         prevIdx--
                     }
                     if (prevIdx < 0 || nodes[prevIdx] !is TextNode.PoeticLine) {
-                        nodes.add(i, TextNode.PoeticLine("", indentLevel = 1, rightAligned = false))
+                        nodes.add(
+                            index = i,
+                            element = TextNode.PoeticLine(
+                                "",
+                                indentLevel = 1,
+                                rightAligned = false
+                            )
+                        )
                         i++
                     }
                 }
@@ -526,7 +641,9 @@ class USFMRenderer(
     private fun hasPoeticLineInContext(
         nodes: List<TextNode>, fromIndex: Int, lookBack: Boolean
     ): Boolean {
-        val range = if (lookBack) (fromIndex - 1 downTo 0) else (fromIndex + 1 until nodes.size)
+        val range = if (lookBack) {
+            (fromIndex - 1 downTo 0)
+        } else (fromIndex + 1 until nodes.size)
         for (j in range) {
             when (nodes[j]) {
                 is TextNode.PoeticLine -> return true
@@ -542,19 +659,37 @@ class USFMRenderer(
         if (!renderVerses || expectedVerseRange.isEmpty()) return
         if (isStopped()) return
         val existingVerses = nodes.filterIsInstance<TextNode.VerseMarker>()
-            .flatMap { if (it.endVerse > 0) (it.startVerse..it.endVerse).toList() else listOf(it.startVerse) }
+            .flatMap {
+                if (it.endVerse > 0) {
+                    (it.startVerse..it.endVerse).toList()
+                } else listOf(it.startVerse)
+            }
             .toSet()
         val missing = mutableListOf<TextNode.VerseMarker>()
         if (expectedVerseRange.size == 1) {
             val v = expectedVerseRange[0]
             if (!existingVerses.contains(v)) {
-                missing.add(TextNode.VerseMarker(v, 0, verseDisplay == VerseDisplay.PIN, "\\v $v "))
+                missing.add(
+                    TextNode.VerseMarker(
+                        v,
+                        0,
+                        verseDisplay == VerseDisplay.PIN,
+                        "\\v $v "
+                    )
+                )
                 addedMissingVerse = true
             }
         } else if (expectedVerseRange.size == 2) {
             for (v in expectedVerseRange[0]..expectedVerseRange[1]) {
                 if (!existingVerses.contains(v)) {
-                    missing.add(TextNode.VerseMarker(v, 0, verseDisplay == VerseDisplay.PIN, "\\v $v "))
+                    missing.add(
+                        TextNode.VerseMarker(
+                            v,
+                            0,
+                            verseDisplay == VerseDisplay.PIN,
+                            "\\v $v "
+                        )
+                    )
                     addedMissingVerse = true
                 }
             }

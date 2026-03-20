@@ -43,6 +43,8 @@ sealed class RenderNode {
         val endVerse: Int = 0,
         val pinned: Boolean = false,
         val machineReadable: String = "",
+        val start: Int = -1,
+        val end: Int = -1,
         override val attributes: NodeAttributes = NodeAttributes()
     ) : RenderNode()
 
@@ -52,13 +54,15 @@ sealed class RenderNode {
         val notes: String,
         val noteStyle: NoteStyle,
         val machineReadable: String = "",
-        val start: Int = -1,
-        val end: Int = -1,
+        val startPos: Int = -1,
+        val endPos: Int = -1,
         override val attributes: NodeAttributes = NodeAttributes()
     ) : RenderNode()
 
     data class Text(
         val content: String,
+        val start: Int = -1,
+        val end: Int = -1,
         override val attributes: NodeAttributes = NodeAttributes()
     ) : RenderNode()
 

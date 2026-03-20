@@ -43,6 +43,7 @@ fun ReviewCard(
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
     onAddNoteClick: (caretPosition: Int) -> Unit,
+    onDragDropVerse: (machineReadable: String, verseRawStart: Int, verseRawEnd: Int, targetRawPosition: Int) -> Unit = { _, _, _, _ -> },
     onExpandedChange: (Boolean) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
@@ -104,6 +105,7 @@ fun ReviewCard(
             onUndoClick = onUndoClick,
             onRedoClick = onRedoClick,
             onAddNoteClick = onAddNoteClick,
+            onDragDropVerse = onDragDropVerse,
             modifier = Modifier.weight(mainWeight)
                 .fillMaxHeight()
         )

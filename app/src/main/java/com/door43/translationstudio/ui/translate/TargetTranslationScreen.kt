@@ -529,6 +529,11 @@ fun TargetTranslationScreen(
                                         onAddNoteClick = { caretPos ->
                                             reviewVm.onAction(ReviewAction.AddNoteClicked(item, caretPos))
                                         },
+                                        onDragDropVerse = { machineReadable, verseRawStart, verseRawEnd, targetRawPosition ->
+                                            reviewVm.onAction(ReviewAction.DragDropVerse(
+                                                item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
+                                            ))
+                                        },
                                         modifier = Modifier.padding(start = 16.dp)
                                     )
                                 }
