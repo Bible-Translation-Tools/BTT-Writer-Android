@@ -941,13 +941,18 @@ class ProcessUSFM {
                     success = processChapterGap(section, lastChapter, currentChapter)
                     lastChapter = currentChapter - 1
                 } else {
-                    Logger.e(TAG, "out of order chapter $chapter after $lastChapter")
-                    addError(
-                        R.string.chapter_out_of_order,
-                        chapter,
-                        lastChapter.toString()
-                    )
-                    return false
+                    // The chapter repeated, we'll try again
+                    if (currentChapter == lastChapter) {
+                        continue
+                    } else {
+                        Logger.e(TAG, "out of order chapter $chapter after $lastChapter")
+                        addError(
+                            R.string.chapter_out_of_order,
+                            chapter,
+                            lastChapter.toString()
+                        )
+                        return false
+                    }
                 }
             } else {
                 success = breakUpChapter(section, chapter)
