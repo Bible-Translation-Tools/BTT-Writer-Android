@@ -5,6 +5,5 @@ package com.door43.translationstudio.ui.translate.review
  */
 enum class SearchSubject {
     SOURCE,
-    TARGET,
-    BOTH
+    TARGET
 }

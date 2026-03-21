@@ -1840,7 +1840,7 @@ open class ReviewModeAdapter(
         if (constraint != null) {
             searchText = constraint.toString().lowercase().trim()
             searchSubject = subject
-            searchingTarget = subject == SearchSubject.TARGET || subject == SearchSubject.BOTH
+            searchingTarget = subject == SearchSubject.TARGET
 
             searchItems(initialPosition)
         } else {

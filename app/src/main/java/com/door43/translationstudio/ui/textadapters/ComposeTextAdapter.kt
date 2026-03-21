@@ -156,7 +156,14 @@ object ComposeTextAdapter {
                 }
                 if (node.attributes.searchHighlighted
                     && searchHighlightColor != Color.Unspecified) {
-                    addStyle(SpanStyle(background = searchHighlightColor), start, end)
+                    addStyle(
+                        SpanStyle(
+                            background = searchHighlightColor,
+                            color = Color.Black
+                        ),
+                        start,
+                        end
+                    )
                 }
             }
 

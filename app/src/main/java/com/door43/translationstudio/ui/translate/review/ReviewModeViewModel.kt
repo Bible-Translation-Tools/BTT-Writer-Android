@@ -14,6 +14,7 @@ import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.LinkData
@@ -105,11 +106,25 @@ enum class TargetMode {
     COMPLETE
 }
 
+data class SearchState(
+    val active: Boolean = false,
+    val query: String = "",
+    val subject: SearchSubject = SearchSubject.SOURCE,
+    val matchingItemIds: List<String> = emptyList(),
+    val currentMatchIndex: Int = -1
+) {
+    val matchCount: Int
+        get() = matchingItemIds.size
+    val currentItemId: String?
+        get() = matchingItemIds.getOrNull(currentMatchIndex)
+}
+
 data class ReviewState(
     val resourcesOpen: Boolean = false,
     val help: Help? = null,
     val url: String? = null,
-    val chunkToDone: ReviewItem? = null
+    val chunkToDone: ReviewItem? = null,
+    val search: SearchState = SearchState()
 ) : ModeState
 
 sealed interface ReviewAction : ModeAction {
@@ -127,6 +142,12 @@ sealed interface ReviewAction : ModeAction {
     data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : ReviewAction
     object ClearHelp : ReviewAction
     object CleanUrl : ReviewAction
+    object OpenSearch : ReviewAction
+    object CloseSearch : ReviewAction
+    data class UpdateSearchQuery(val query: String) : ReviewAction
+    data class SetSearchSubject(val subject: SearchSubject) : ReviewAction
+    object NextMatch : ReviewAction
+    object PrevMatch : ReviewAction
     data class DragDropVerse(
         val item: ReviewItem,
         val machineReadable: String,
@@ -201,6 +222,12 @@ class ReviewModeViewModel(
             is ReviewAction.DragDropVerse -> onDragDropVerse(action)
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
+            ReviewAction.OpenSearch -> openSearch()
+            ReviewAction.CloseSearch -> closeSearch()
+            is ReviewAction.UpdateSearchQuery -> updateSearchQuery(action.query)
+            is ReviewAction.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
+            ReviewAction.NextMatch -> navigateMatch(forward = true)
+            ReviewAction.PrevMatch -> navigateMatch(forward = false)
         }
     }
 
@@ -234,11 +261,32 @@ class ReviewModeViewModel(
             createFileHistory(item)?.also { it.loadCommits() }
         } else null
 
-        return item.copy(
+        val prepared = item.copy(
             targetText = targetText,
             renderedTargetText = renderedTargetText,
             targetMode = realTargetMode,
             fileHistory = history
+        )
+        return applySearchHighlightIfActive(prepared)
+    }
+
+    private fun applySearchHighlightIfActive(item: ReviewItem): ReviewItem {
+        val search = _state.value.search
+        if (!search.active || search.query.length < 2) return item
+
+        val query = search.query
+        val searchSource = search.subject == SearchSubject.SOURCE
+        val renderedSource = renderSourceTextWithSearch(
+            item.id, item.chunk.sourceTranslationFormat, item.sourceText,
+            if (searchSource) query else null
+        )
+        val renderedTarget = renderTargetTextWithSearch(
+            item.id, item.chunk, item.targetText, item.targetMode,
+            if (!searchSource) query else null
+        )
+        return item.copy(
+            renderedSourceText = renderedSource,
+            renderedTargetText = renderedTarget
         )
     }
 
@@ -307,6 +355,224 @@ class ReviewModeViewModel(
                     target.format
                 ).body
             }
+        }
+    }
+
+    private fun openSearch() {
+        val lastSubject = try {
+            SearchSubject.valueOf(getLastSearchSource())
+        } catch (_: Exception) {
+            SearchSubject.SOURCE
+        }
+        _state.update {
+            it.copy(search = SearchState(active = true, subject = lastSubject))
+        }
+    }
+
+    private fun closeSearch() {
+        _state.update { it.copy(search = SearchState()) }
+        // Re-render items without search highlighting
+        viewModelScope.launch {
+            reRenderAllItems(searchQuery = null)
+        }
+    }
+
+    private fun updateSearchQuery(query: String) {
+        _state.update {
+            it.copy(search = it.search.copy(query = query))
+        }
+        if (query.length >= 2) {
+            viewModelScope.launch {
+                performSearch(query, _state.value.search.subject)
+            }
+        } else if (query.isEmpty()) {
+            _state.update {
+                it.copy(search = it.search.copy(
+                    matchingItemIds = emptyList(),
+                    currentMatchIndex = -1
+                ))
+            }
+            viewModelScope.launch {
+                reRenderAllItems(searchQuery = null)
+            }
+        }
+    }
+
+    private fun setSearchSubjectAndSearch(subject: SearchSubject) {
+        setLastSearchSource(subject)
+        _state.update {
+            it.copy(search = it.search.copy(subject = subject))
+        }
+        val query = _state.value.search.query
+        if (query.length >= 2) {
+            viewModelScope.launch {
+                performSearch(query, subject)
+            }
+        }
+    }
+
+    private fun navigateMatch(forward: Boolean) {
+        _state.update { state ->
+            val search = state.search
+            if (search.matchingItemIds.isEmpty()) return@update state
+            val newIndex = if (forward) {
+                if (search.currentMatchIndex < search.matchCount - 1) {
+                    search.currentMatchIndex + 1
+                } else 0
+            } else {
+                if (search.currentMatchIndex > 0) {
+                    search.currentMatchIndex - 1
+                } else search.matchCount - 1
+            }
+            state.copy(search = search.copy(currentMatchIndex = newIndex))
+        }
+    }
+
+    private suspend fun performSearch(query: String, subject: SearchSubject) {
+        withContext(Dispatchers.Default) {
+            val items = _items.value
+            if (items.isEmpty()) return@withContext
+
+            val lowerQuery = query.lowercase()
+            val matchingIds = mutableListOf<String>()
+
+            val updatedItems = items.map { item ->
+                val chunkId = item.id
+                val searchSource = subject == SearchSubject.SOURCE
+                val renderedSource = renderSourceTextWithSearch(
+                    chunkId, item.chunk.sourceTranslationFormat, item.sourceText,
+                    if (searchSource) query else null
+                )
+                val renderedTarget = renderTargetTextWithSearch(
+                    chunkId, item.chunk, item.targetText, item.targetMode,
+                    if (!searchSource) query else null
+                )
+
+                // Check matches against rendered text, plus raw text for EDIT mode
+                val hasMatch = if (searchSource) {
+                    renderedSource.text.lowercase().contains(lowerQuery)
+                } else {
+                    renderedTarget.text.lowercase().contains(lowerQuery)
+                            || item.targetText.lowercase().contains(lowerQuery)
+                }
+                if (hasMatch) matchingIds.add(item.id)
+
+                item.copy(
+                    renderedSourceText = renderedSource,
+                    renderedTargetText = renderedTarget
+                )
+            }
+
+            _items.value = updatedItems
+            _state.update { state ->
+                state.copy(search = state.search.copy(
+                    matchingItemIds = matchingIds,
+                    currentMatchIndex = if (matchingIds.isNotEmpty()) 0 else -1
+                ))
+            }
+        }
+    }
+
+    private suspend fun reRenderAllItems(searchQuery: String?) {
+        withContext(Dispatchers.Default) {
+            val items = _items.value
+            val updatedItems = items.map { item ->
+                val chunkId = item.id
+                val renderedSource = renderSourceTextWithSearch(
+                    chunkId, item.chunk.sourceTranslationFormat, item.sourceText, searchQuery
+                )
+                val renderedTarget = renderTargetTextWithSearch(
+                    chunkId, item.chunk, item.targetText, item.targetMode, searchQuery
+                )
+                item.copy(
+                    renderedSourceText = renderedSource,
+                    renderedTargetText = renderedTarget
+                )
+            }
+            _items.value = updatedItems
+        }
+    }
+
+    private fun renderSourceTextWithSearch(
+        chunkId: String,
+        translationFormat: TranslationFormat,
+        sourceText: String,
+        searchQuery: String?
+    ): AnnotatedString {
+        return try {
+            val renderingGroup = RenderingGroup()
+            renderingGroup.init(sourceText)
+            RenderingProvider().setupRenderingGroup(
+                format = translationFormat,
+                renderingGroup = renderingGroup,
+                verseDisplay = VerseDisplay.NUMBER,
+                target = false
+            )
+            if (!searchQuery.isNullOrEmpty()) {
+                renderingGroup.setSearchString(searchQuery, android.graphics.Color.YELLOW)
+            }
+            val renderNodes = renderingGroup.start()
+            ComposeTextAdapter.convert(
+                renderNodes,
+                onNoteClick = { note, _, _ ->
+                    showFootnoteViewer(Footnote(
+                        text = note.notes,
+                        machineReadable = note.machineReadable,
+                        chunkId = chunkId,
+                        editable = false,
+                        start = note.startPos,
+                        end = note.endPos
+                    ))
+                }
+            )
+        } catch (_: Exception) {
+            AnnotatedString(sourceText)
+        }
+    }
+
+    private fun renderTargetTextWithSearch(
+        chunkId: String,
+        chunk: Chunk,
+        targetText: String,
+        targetMode: TargetMode,
+        searchQuery: String?
+    ): AnnotatedString {
+        val verseDisplay = when (targetMode) {
+            TargetMode.MARKER -> VerseDisplay.PIN
+            TargetMode.EDIT -> VerseDisplay.RAW
+            TargetMode.COMPLETE -> VerseDisplay.NUMBER
+        }
+        return try {
+            val renderingGroup = RenderingGroup()
+            renderingGroup.init(targetText)
+            RenderingProvider().setupRenderingGroup(
+                chunk.targetTranslationFormat,
+                renderingGroup,
+                verseDisplay,
+                target = true
+            )
+            if (!searchQuery.isNullOrEmpty()) {
+                renderingGroup.setSearchString(searchQuery, android.graphics.Color.YELLOW)
+            }
+            val renderNodes = renderingGroup.start()
+            ComposeTextAdapter.convert(
+                nodes = renderNodes,
+                onNoteClick = { note, _, _ ->
+                    showFootnoteViewer(Footnote(
+                        text = note.notes,
+                        machineReadable = note.machineReadable,
+                        chunkId = chunkId,
+                        editable = targetMode != TargetMode.COMPLETE,
+                        start = note.startPos,
+                        end = note.endPos
+                    ))
+                },
+                onVerseClick = if (targetMode == TargetMode.MARKER) { _ ->
+                    showSnackBar(application.getString(R.string.long_click_to_drag))
+                } else null
+            )
+        } catch (_: Exception) {
+            AnnotatedString(targetText)
         }
     }
 

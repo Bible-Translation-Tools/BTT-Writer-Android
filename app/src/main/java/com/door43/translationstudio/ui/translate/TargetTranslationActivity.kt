@@ -233,7 +233,6 @@ class TargetTranslationActivity : BaseActivity(),
                         val dialog = FeedbackDialog()
                         dialog.show(ft, "bugDialog")
                     },
-                    onSearch = {},
                     onChunksDone = {},
                     onSettings = {
                         startActivity(Intent(

@@ -75,7 +75,8 @@ fun ReviewTargetCard(
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
     onAddNoteClick: (caretPosition: Int) -> Unit,
-    onDragDropVerse: (machineReadable: String, verseRawStart: Int, verseRawEnd: Int, targetRawPosition: Int) -> Unit = { _, _, _, _ -> }
+    onDragDropVerse: (machineReadable: String, verseRawStart: Int, verseRawEnd: Int, targetRawPosition: Int) -> Unit = { _, _, _, _ -> },
+    searchQuery: String? = null
 ) {
     val currentItem by rememberUpdatedState(item)
     var cursorPosition by remember { mutableIntStateOf(0) }
@@ -240,6 +241,7 @@ fun ReviewTargetCard(
                             onTextChange(it)
                         },
                         onCursorPositionChange = { cursorPosition = it },
+                        searchQuery = searchQuery,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)

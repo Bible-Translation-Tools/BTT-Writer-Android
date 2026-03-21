@@ -54,7 +54,8 @@ fun UsfmEditText(
     onFocusConsumed: () -> Unit = {},
     onCursorPositionChange: (Int) -> Unit = {},
     textStyle: TextStyle = TextStyle.Default,
-    noteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
+    noteColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    searchQuery: String? = null
 ) {
     val density = LocalDensity.current
     val lineHeightPx = with(density) { textStyle.lineHeight.toPx() }
@@ -138,6 +139,24 @@ fun UsfmEditText(
                 .padding(horizontal = 4.dp)
                 .focusRequester(focusRequester)
                 .drawWithContent {
+                    // Draw search highlights behind text
+                    if (!searchQuery.isNullOrEmpty()) {
+                        layoutResult?.let { result ->
+                            val outputText = result.layoutInput.text.text
+                            val lowerOutput = outputText.lowercase()
+                            val lowerQuery = searchQuery.lowercase()
+                            var searchStart = 0
+                            while (true) {
+                                val pos = lowerOutput.indexOf(lowerQuery, searchStart)
+                                if (pos < 0) break
+                                val end = pos + lowerQuery.length
+                                val boxes = result.getPathForRange(pos, end)
+                                drawPath(boxes, color = Color.Yellow)
+                                searchStart = end
+                            }
+                        }
+                    }
+
                     drawContent()
 
                     // Draw notebook lines

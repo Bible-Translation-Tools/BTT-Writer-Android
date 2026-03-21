@@ -5,6 +5,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,6 +65,8 @@ import com.door43.translationstudio.ui.translate.review.QuestionsCard
 import com.door43.translationstudio.ui.translate.review.ReviewAction
 import com.door43.translationstudio.ui.translate.review.ReviewCard
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
+import com.door43.translationstudio.ui.translate.review.SearchBar
+import com.door43.translationstudio.ui.translate.review.SearchSubject
 import com.door43.translationstudio.ui.translate.review.WordsCard
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetEvent
@@ -84,7 +87,6 @@ fun TargetTranslationScreen(
     onUploadExport: () -> Unit,
     onPrint: () -> Unit,
     onFeedback: () -> Unit,
-    onSearch: () -> Unit,
     onChunksDone: () -> Unit,
     onSettings: () -> Unit,
     onRestartAutoCommitTimer: () -> Unit
@@ -114,6 +116,7 @@ fun TargetTranslationScreen(
     val menuActionSettings = stringResource(R.string.action_settings)
 
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
+    var searchRequested by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
     var lastViewedChunk by remember { mutableStateOf<Chunk?>(null) }
@@ -269,7 +272,7 @@ fun TargetTranslationScreen(
                     TranslateSideBarAction(
                         title = menuActionSearch,
                         icon = Icons.Default.Search,
-                        onClick = onSearch
+                        onClick = { searchRequested = true }
                     ),
                     TranslateSideBarAction(
                         title = menuActionChunksDone,
@@ -479,7 +482,46 @@ fun TargetTranslationScreen(
                             }
                             val reviewState by reviewVm.state.collectAsStateWithLifecycle()
 
+                            // Open search when requested from sidebar
+                            LaunchedEffect(searchRequested) {
+                                if (searchRequested) {
+                                    reviewVm.onAction(ReviewAction.OpenSearch)
+                                    searchRequested = false
+                                }
+                            }
+
+                            // Scroll to matching item when search navigates
+                            LaunchedEffect(reviewState.search.currentItemId) {
+                                val targetId = reviewState.search.currentItemId ?: return@LaunchedEffect
+                                val items = reviewVm.items.value
+                                val index = items.indexOfFirst { it.id == targetId }
+                                if (index >= 0) {
+                                    listState.scrollToItem(index)
+                                }
+                            }
+
                             Box {
+                                Column {
+                                    if (reviewState.search.active) {
+                                        SearchBar(
+                                            searchState = reviewState.search,
+                                            onQueryChange = {
+                                                reviewVm.onAction(ReviewAction.UpdateSearchQuery(it))
+                                            },
+                                            onSubjectChange = {
+                                                reviewVm.onAction(ReviewAction.SetSearchSubject(it))
+                                            },
+                                            onNext = {
+                                                reviewVm.onAction(ReviewAction.NextMatch)
+                                            },
+                                            onPrev = {
+                                                reviewVm.onAction(ReviewAction.PrevMatch)
+                                            },
+                                            onClose = {
+                                                reviewVm.onAction(ReviewAction.CloseSearch)
+                                            }
+                                        )
+                                    }
                                 ModeScreenTemplate(
                                     state = reviewState,
                                     viewModel = reviewVm,
@@ -534,8 +576,14 @@ fun TargetTranslationScreen(
                                                 item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
                                             ))
                                         },
+                                        searchQuery = reviewState.search.let { search ->
+                                            if (search.active && search.query.length >= 2
+                                                && search.subject == SearchSubject.TARGET
+                                            ) search.query else null
+                                        },
                                         modifier = Modifier.padding(start = 16.dp)
                                     )
+                                }
                                 }
 
                                 val helpVisible = reviewState.help != null

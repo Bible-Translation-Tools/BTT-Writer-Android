@@ -42,7 +42,8 @@ fun ReviewCard(
     onRedoClick: () -> Unit,
     onAddNoteClick: (caretPosition: Int) -> Unit,
     onDragDropVerse: (machineReadable: String, verseRawStart: Int, verseRawEnd: Int, targetRawPosition: Int) -> Unit = { _, _, _, _ -> },
-    onExpandedChange: (Boolean) -> Unit
+    onExpandedChange: (Boolean) -> Unit,
+    searchQuery: String? = null
 ) {
     val mainWeight by animateFloatAsState(
         targetValue = if (resourcesOpen) 0.333f else 0.49f,
@@ -101,6 +102,7 @@ fun ReviewCard(
             onRedoClick = onRedoClick,
             onAddNoteClick = onAddNoteClick,
             onDragDropVerse = onDragDropVerse,
+            searchQuery = searchQuery,
             modifier = Modifier.weight(mainWeight)
                 .fillMaxHeight()
         )
