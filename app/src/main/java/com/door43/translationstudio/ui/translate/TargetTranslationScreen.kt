@@ -48,6 +48,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.ui.components.ConfirmDialog
 import com.door43.translationstudio.ui.components.ProgressDialog
 import com.door43.translationstudio.ui.translate.chunk.ChunkAction
 import com.door43.translationstudio.ui.translate.chunk.ChunkCard
@@ -89,7 +90,8 @@ fun TargetTranslationScreen(
     onFeedback: () -> Unit,
     onChunksDone: () -> Unit,
     onSettings: () -> Unit,
-    onRestartAutoCommitTimer: () -> Unit
+    onRestartAutoCommitTimer: () -> Unit,
+    onUpdateSources: () -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -115,6 +117,7 @@ fun TargetTranslationScreen(
     val menuActionChunksDone = stringResource(R.string.mark_chunks_done)
     val menuActionSettings = stringResource(R.string.action_settings)
 
+    var showUpdateSourcesDialog by rememberSaveable { mutableStateOf(false) }
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
     var searchRequested by remember { mutableStateOf(false) }
 
@@ -673,7 +676,23 @@ fun TargetTranslationScreen(
                 showSourceDialog = false
                 viewModel.onAction(TargetAction.ConfirmSelectedSources(it))
             },
-            onUpdateSources = {}
+            onUpdateSources = {
+                showUpdateSourcesDialog = true
+            }
+        )
+    }
+
+    if (showUpdateSourcesDialog) {
+        ConfirmDialog(
+            title = stringResource(R.string.warning_title),
+            message = stringResource(R.string.update_warning),
+            onConfirm = {
+                showUpdateSourcesDialog = false
+                onUpdateSources()
+            },
+            onDismiss = {
+                showUpdateSourcesDialog = false
+            }
         )
     }
 

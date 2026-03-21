@@ -8,7 +8,6 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.MotionEvent
 import android.view.View
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.activity.compose.setContent
 import androidx.fragment.app.Fragment
@@ -35,9 +34,7 @@ import org.unfoldingword.tools.logger.Logger
 import java.util.Timer
 import java.util.TimerTask
 
-class TargetTranslationActivity : BaseActivity(),
-    FirstTabFragment.OnEventListener,
-    AdapterView.OnItemSelectedListener {
+class TargetTranslationActivity : BaseActivity() {
 
     private val prefRepository: IPreferenceRepository by inject()
     private val viewModel: TargetTranslationViewModel by viewModel()
@@ -240,7 +237,8 @@ class TargetTranslationActivity : BaseActivity(),
                             SettingsActivity::class.java
                         ))
                     },
-                    onRestartAutoCommitTimer = ::restartAutoCommitTimer
+                    onRestartAutoCommitTimer = ::restartAutoCommitTimer,
+                    onUpdateSources = ::onUpdateSources
                 )
             }
         }
@@ -423,7 +421,7 @@ class TargetTranslationActivity : BaseActivity(),
             e.printStackTrace()
         }
         binding.searchPane.searchType.setSelection(lastSearchSource.ordinal)
-        binding.searchPane.searchType.onItemSelectedListener = this
+       // binding.searchPane.searchType.onItemSelectedListener = this
     }
 
     /**
@@ -467,19 +465,19 @@ class TargetTranslationActivity : BaseActivity(),
         binding.searchPane.found.text = msg
     }
 
-    /**
-     * called if search type is changed
-     */
-    override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-        filter(getFilterText())  // do search with search string in edit control
-    }
-
-    /**
-     * called if no search type is selected
-     */
-    override fun onNothingSelected(parent: AdapterView<*>?) {
-        // do nothing
-    }
+//    /**
+//     * called if search type is changed
+//     */
+//    override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+//        filter(getFilterText())  // do search with search string in edit control
+//    }
+//
+//    /**
+//     * called if no search type is selected
+//     */
+//    override fun onNothingSelected(parent: AdapterView<*>?) {
+//        // do nothing
+//    }
 
     /**
      * get the type of search
@@ -741,7 +739,7 @@ class TargetTranslationActivity : BaseActivity(),
     /**
      * user has selected to update sources
      */
-    override fun onUpdateSources() {
+    private fun onUpdateSources() {
         setResult(RESULT_DO_UPDATE)
         finish()
     }
@@ -857,18 +855,18 @@ class TargetTranslationActivity : BaseActivity(),
         setSearchSpinner(doingSearch, numberOfChunkMatches, atEnd, atStart)
     }
 
-    override fun onHasSourceTranslations() {
-        val newFragment = when (viewModel.state.value.viewMode) {
-            TranslationViewMode.READ -> ReadModeFragment()
-            TranslationViewMode.CHUNK -> ChunkModeFragment()
-            TranslationViewMode.REVIEW -> ReviewModeFragment()
-        }
-        newFragment.arguments = intent.extras
-        fragment = newFragment
-        supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
-        // TODO: animate
-        // TODO: update menu
-    }
+//    override fun onHasSourceTranslations() {
+//        val newFragment = when (viewModel.state.value.viewMode) {
+//            TranslationViewMode.READ -> ReadModeFragment()
+//            TranslationViewMode.CHUNK -> ChunkModeFragment()
+//            TranslationViewMode.REVIEW -> ReviewModeFragment()
+//        }
+//        newFragment.arguments = intent.extras
+//        fragment = newFragment
+//        supportFragmentManager.beginTransaction().replace(R.id.fragment_container, newFragment).commit()
+//        // TODO: animate
+//        // TODO: update menu
+//    }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         val currentFragment = fragment
