@@ -9,8 +9,7 @@ import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import java.util.regex.Pattern
 
 /**
- * USX rendering engine. Produces a hierarchical List<RenderNode> via renderToNodes().
- * No Android framework code lives in this file.
+ * USX rendering engine. Produces a hierarchical List<RenderNode> via render().
  */
 class USXRenderer(
     private val verseDisplay: VerseDisplay = VerseDisplay.NUMBER

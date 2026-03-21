@@ -6,7 +6,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 /**
- * Unit tests for USFMRenderer.renderToNodes().
+ * Unit tests for USFMRenderer.render().
  *
  * These run on the JVM (not on device) because USFMRenderer itself has no Android imports
  * beyond android.content.Context (used only by legacy constructors).

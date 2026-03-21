@@ -6,7 +6,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 /**
- * Unit tests for USXRenderer.renderToNodes().
+ * Unit tests for USXRenderer.render().
  *
  * These run on the JVM (not on device) because USXRenderer itself has no Android imports.
  * Note parsing (USXNoteSpan.parseNote) uses android.util.Xml internally and is therefore

@@ -51,10 +51,10 @@ class ComposeTextAdapterTest {
     }
 
     @Test
-    fun blank_line_produces_double_newline() {
+    fun blank_line_produces_single_newline() {
         val nodes = listOf(RenderNode.Text("a"), RenderNode.BlankLine, RenderNode.Text("b"))
         val result = ComposeTextAdapter.convert(nodes)
-        assertEquals("a\n\nb", result.text)
+        assertEquals("a\nb", result.text)
     }
 
     @Test

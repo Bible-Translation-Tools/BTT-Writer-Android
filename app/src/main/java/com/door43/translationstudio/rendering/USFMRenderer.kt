@@ -8,9 +8,7 @@ import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import java.util.regex.Pattern
 
 /**
- * USFM rendering engine. Produces a hierarchical List<RenderNode> via renderToNodes().
- * Handles pure USFM backslash markers (\p, \v, \q, \s, etc.) — no XML/USX tags.
- * No Android framework code lives in this file.
+ * USFM rendering engine. Produces a hierarchical List<RenderNode> via render().
  */
 class USFMRenderer(
     private val verseDisplay: VerseDisplay = VerseDisplay.NUMBER

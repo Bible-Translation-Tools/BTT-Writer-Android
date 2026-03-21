@@ -1,13 +1,13 @@
 package com.door43.translationstudio.core
 
+import android.graphics.Color
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.translationstudio.IntegrationTest
-import android.graphics.Color
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.rendering.model.RenderNode
+import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.util.FileUtilities
 import org.junit.Assert
 import org.junit.Before
@@ -18,9 +18,9 @@ import org.koin.test.inject
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
 
-/**
- * Created by blm on 7/25/16.
- */
+// End-to-end integration tests that verify the full rendering pipeline:
+// USX input -> USXRenderer.render() -> ComposeTextAdapter.convert() -> AnnotatedString.text
+// Expected output is stored in androidTest/assets/usx/ _processed.data files.
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
 class UsxBrokenRenderTest : KoinTest {
@@ -38,145 +38,75 @@ class UsxBrokenRenderTest : KoinTest {
     @Test
     @Throws(Exception::class)
     fun test01ProcessMk_1_1() {
-        //given
-        val search: String? = null
-        val testId = "usx/mk_1_1"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = null, testId = "usx/mk_1_1")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test02ProcessMk_7_6() {
-        //given
-        val search: String? = null
-        val testId = "usx/mk_7_6"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = null, testId = "usx/mk_7_6")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test03ProcessMk_7_14() {
-        //given
-        val search: String? = null
-        val testId = "usx/mk_7_14"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = null, testId = "usx/mk_7_14")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test04ProcessMk_11_24() {
-        //given
-        val search: String? = null
-        val testId = "usx/mk_11_24"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = null, testId = "usx/mk_11_24")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test05ProcessMk_16_19() {
-        //given
-        val search: String? = null
-        val testId = "usx/mk_16_19"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = null, testId = "usx/mk_16_19")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test06ProcessMk_1_1Search() {
-        //given
-        val search = "</" // make sure matching part of token does not break rendering
-        val testId = "usx/mk_1_1"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = "</", testId = "usx/mk_1_1")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test07ProcessMk_7_6Search() {
-        //given
-        val search = "</" // make sure matching part of token does not break rendering
-        val testId = "usx/mk_7_6"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = "</", testId = "usx/mk_7_6")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test08ProcessMk_7_14Search() {
-        //given
-        val search = "</" // make sure matching part of token does not break rendering
-        val testId = "usx/mk_7_14"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = "</", testId = "usx/mk_7_14")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test09ProcessMk_11_24Search() {
-        //given
-        val search = "</" // make sure matching part of token does not break rendering
-        val testId = "usx/mk_11_24"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = "</", testId = "usx/mk_11_24")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Test
     @Throws(Exception::class)
     fun test10ProcessMk_16_19Search() {
-        //given
-        val search = "</" // make sure matching part of token does not break rendering
-        val testId = "usx/mk_16_19"
-
-        //when
-        val out = doRender(search, testId)
-
-        //then
+        val out = doRender(search = "</", testId = "usx/mk_16_19")
         verifyProcessedText(expectedText!!, out)
     }
 
     @Throws(IOException::class)
-    private fun doRender(search: String?, testId: String?): String {
+    private fun doRender(search: String?, testId: String): String {
         val testTextFile = testId + "_raw.data"
         val expectTextFile = testId + "_processed.data"
         val testTextStream = assetsProvider.open(testTextFile)
@@ -187,56 +117,20 @@ class UsxBrokenRenderTest : KoinTest {
         expectedText = FileUtilities.readStreamToString(testExpectedStream)
         Assert.assertNotNull(expectedText)
         Assert.assertFalse(expectedText!!.isEmpty())
+
         val renderingGroup = RenderingGroup()
         val format = TranslationFormat.USX
 
-        renderingProvider.setupRenderingGroup(
-            format,
-            renderingGroup
-        )
+        renderingProvider.setupRenderingGroup(format, renderingGroup)
 
         if (search != null) {
             renderingGroup.setSearchString(search, Color.YELLOW)
         }
         renderingGroup.init(testText)
         val nodes = renderingGroup.start()
-        return nodesToString(nodes)
-    }
 
-    private fun nodesToString(nodes: List<RenderNode>): String {
-        val sb = StringBuilder()
-        for (node in nodes) {
-            when (node) {
-                is RenderNode.Text -> sb.append(node.content)
-                is RenderNode.StyledText -> sb.append(node.content)
-                is RenderNode.Verse -> {
-                    val label = if (node.endVerse > 0) {
-                        "${node.startVerse}-${node.endVerse}"
-                    } else "${node.startVerse}"
-                    sb.append(label)
-                }
-                is RenderNode.Note -> sb.append(node.caller)
-                is RenderNode.Section -> {
-                    sb.append(if (node.isMajor) node.text.uppercase() else node.text)
-                    sb.append("\n")
-                }
-                is RenderNode.ChapterLabel -> sb.append(node.text)
-                is RenderNode.PoeticLine -> {
-                    if (sb.isNotEmpty()) sb.append("\n")
-                    sb.append("  ".repeat(node.indentLevel))
-                    sb.append(nodesToString(node.children))
-                }
-                is RenderNode.Paragraph -> {
-                    if (sb.isNotEmpty()) sb.append("\n")
-                    if (node.indented) sb.append("    ")
-                    sb.append(nodesToString(node.children))
-                }
-                RenderNode.LineBreak -> sb.append("\n")
-                RenderNode.BlankLine -> sb.append("\n")
-                is RenderNode.Link -> {}
-            }
-        }
-        return sb.toString()
+        val annotatedString = ComposeTextAdapter.convert(nodes)
+        return annotatedString.text
     }
 
     private fun verifyProcessedText(expectedText: String, out: String?) {
@@ -255,9 +149,7 @@ class UsxBrokenRenderTest : KoinTest {
                 if (ptr >= out.length) {
                     Log.e(
                         TAG,
-                        "expected extra text at position $ptr: '" + expectedText.substring(
-                            ptr
-                        ) + "'"
+                        "expected extra text at position $ptr: '" + expectedText.substring(ptr) + "'"
                     )
                     if (ptr < expectedText.length) {
                         Log.e(
@@ -283,7 +175,7 @@ class UsxBrokenRenderTest : KoinTest {
                 }
 
                 val cOut = out[ptr]
-                val cExpect = expectedText.get(ptr)
+                val cExpect = expectedText[ptr]
                 if (cOut != cExpect) {
                     Log.e(TAG, "expected different at position $ptr")
                     Log.e(TAG, "expected: '" + expectedText.substring(ptr) + "'")
@@ -297,10 +189,7 @@ class UsxBrokenRenderTest : KoinTest {
                     )
                     Log.e(
                         TAG,
-                        "but got character: '" + out[ptr] + "', " + Character.codePointAt(
-                            out,
-                            ptr
-                        )
+                        "but got character: '" + out[ptr] + "', " + Character.codePointAt(out, ptr)
                     )
                     break
                 }
@@ -309,7 +198,6 @@ class UsxBrokenRenderTest : KoinTest {
         }
         Assert.assertEquals(out, expectedText)
     }
-
 
     companion object {
         val TAG: String = UsxBrokenRenderTest::class.java.simpleName

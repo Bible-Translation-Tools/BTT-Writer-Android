@@ -3,7 +3,6 @@ package com.door43.translationstudio.rendering.model
 /**
  * Platform-agnostic hierarchical representation of styled/annotated text.
  * Preserves document structure (parent-child relationships) for context-aware rendering.
- * No android.* imports allowed in this file.
  */
 sealed class RenderNode {
     abstract val attributes: NodeAttributes

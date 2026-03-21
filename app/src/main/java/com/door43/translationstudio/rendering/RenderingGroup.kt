@@ -2,9 +2,6 @@ package com.door43.translationstudio.rendering
 
 import com.door43.translationstudio.rendering.model.RenderNode
 
-/**
- * Created by joel on 1/26/2015.
- */
 class RenderingGroup {
     @Volatile private var mStopped = false
     @Volatile private var mRunning = false
