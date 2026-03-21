@@ -17,8 +17,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.ReviewItem
@@ -46,9 +44,6 @@ fun ReviewCard(
     onDragDropVerse: (machineReadable: String, verseRawStart: Int, verseRawEnd: Int, targetRawPosition: Int) -> Unit = { _, _, _, _ -> },
     onExpandedChange: (Boolean) -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-
     val mainWeight by animateFloatAsState(
         targetValue = if (resourcesOpen) 0.333f else 0.49f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),

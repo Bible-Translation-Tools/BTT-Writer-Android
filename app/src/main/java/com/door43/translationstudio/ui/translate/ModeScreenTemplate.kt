@@ -12,12 +12,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.ConfirmDialog
@@ -40,6 +45,12 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
     val stateItems by viewModel.items.collectAsStateWithLifecycle()
 
     val urlHandler = LocalUriHandler.current
+    var settingsVersion by remember { mutableIntStateOf(0) }
+
+    LifecycleResumeEffect(Unit) {
+        settingsVersion++
+        onPauseOrDispose {}
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Crossfade(
@@ -56,7 +67,9 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(items = stateItems, key = { it.id }) { item ->
-                        itemContent(item)
+                        key(settingsVersion) {
+                            itemContent(item)
+                        }
                     }
                 }
             }
