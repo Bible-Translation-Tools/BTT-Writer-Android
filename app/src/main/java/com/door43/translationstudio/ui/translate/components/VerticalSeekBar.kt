@@ -59,7 +59,7 @@ fun VerticalSeekBar(
 
     var containerHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
-    val bubbleSizeDp = 56.dp
+    val bubbleSizeDp = 72.dp
 
     Box(
         modifier = Modifier
@@ -132,18 +132,23 @@ fun VerticalSeekBar(
             Popup(
                 alignment = Alignment.TopStart,
                 offset = IntOffset(
-                    x = bubbleSizePx - 40,
-                    y = thumbY - bubbleSizePx / 2
+                    x = bubbleSizePx - 60,
+                    y = thumbY - bubbleSizePx + 10
                 ),
                 properties = PopupProperties(clippingEnabled = false)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(width = bubbleSizeDp * 2, height = bubbleSizeDp)
+                        .size(width = bubbleSizeDp, height = bubbleSizeDp - 16.dp)
                         .background(
                             color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(32.dp)
+                            shape = RoundedCornerShape(
+                                topStart = 32.dp,
+                                topEnd = 32.dp,
+                                bottomEnd = 32.dp,
+                                bottomStart = 0.dp
+                            )
                         )
                 ) {
                     Text(
