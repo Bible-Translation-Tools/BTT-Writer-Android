@@ -232,7 +232,7 @@ class UsxBrokenRenderTest : KoinTest {
                     sb.append(nodesToString(node.children))
                 }
                 RenderNode.LineBreak -> sb.append("\n")
-                RenderNode.BlankLine -> sb.append("\n\n")
+                RenderNode.BlankLine -> sb.append("\n")
                 is RenderNode.Link -> {}
             }
         }
