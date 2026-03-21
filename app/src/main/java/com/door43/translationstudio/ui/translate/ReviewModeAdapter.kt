@@ -533,7 +533,7 @@ open class ReviewModeAdapter(
             applyNewCompiledText(selectedText.toString(), item)
             item.targetText = selectedText.toString()
             reOpenItem(item)
-            item.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(selectedText)
+            item.hasMergeConflicts = MergeConflictsHandler.isMergeConflicted(selectedText.toString())
             item.mergeItemSelected = -1
             item.isEditing = false
 

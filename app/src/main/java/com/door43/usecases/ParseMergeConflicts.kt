@@ -17,7 +17,6 @@ object ParseMergeConflicts {
 
     fun execute(searchText: String): List<CharSequence> {
         mergeConflictItems.clear()
-        val fullMergeConflict = false
         var found: Boolean = parseMergeConflicts(searchText)
         if (found) {
             // look for nested changes
@@ -72,7 +71,6 @@ object ParseMergeConflicts {
     private fun parseMergeConflicts(searchText: CharSequence): Boolean {
         var startPos = 0
         var haveFirstPartOnly = false
-        val fullMergeConflict = false
 
         var matcher = mergeConflictPatternInner.matcher(searchText)
         var found = matcher.find()

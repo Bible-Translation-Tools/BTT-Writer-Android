@@ -20,8 +20,8 @@ import androidx.core.view.WindowCompat
 // --- Brand Colors ---
 val PrimaryBlueLight = Color(0xFF0250D3)
 val PrimaryBlueDark = Color(0xFF6A91D3)
-val PrimaryDarkBlue = Color(0xFF003389) // primary_dark light
-val PrimaryDarkBlueMuted = Color(0xFF445E89) // primary_dark dark
+val PrimaryDarkBlue = Color(0xFF003389)
+val PrimaryDarkBlueMuted = Color(0xFF445E89)
 val PrimaryLightBlue = Color(0xFFE2F0FF)
 
 // --- Accent (Secondary) Colors ---
@@ -30,6 +30,13 @@ val AccentLightGreenLight = Color(0xFFC0E9D6)
 val AccentGreenDark = Color(0xFF52A588)
 val AccentLightGreenDark = Color(0xFF8EA89E)
 
+// --- Tertiary Colors ---
+val TertiaryBlueLight = Color(0xFFA5E4FF)
+val TertiaryLightBlueLight = Color(0xFFE2F0FF)
+val TertiaryBlueDark = Color(0xFF51AFC7)
+val TertiaryLightBlueDark = Color(0xFF92B4CE)
+val TertiaryTextLight = Color(0xFF272727)
+
 // --- Backgrounds & Surfaces ---
 val BackgroundLight = Color(0xFFEFEFEF)
 val BackgroundDark = Color(0xFF1C1C1C)
@@ -37,8 +44,8 @@ val SurfaceLight = Color(0xFFF2F2F2)
 val SurfaceDark = Color(0xFF272727)
 
 // --- Text Colors ---
-val TextPrimaryDark = Color(0xFF1C1C1C) // Used on light backgrounds
-val TextPrimaryLight = Color(0xFFD2D2D2) // Used on dark backgrounds
+val TextPrimaryDark = Color(0xFF1C1C1C)
+val TextPrimaryLight = Color(0xFFD2D2D2)
 val TextSecondaryDark = Color(0xFF888888)
 val TextSecondaryLight = Color(0xFFA4A4A4)
 val TextReverseLight = Color(0xFFFFFFFF)
@@ -49,6 +56,8 @@ val BorderLight = Color(0xFFDDDDDD)
 val BorderDark = Color(0xFF333333)
 val ErrorLight = Color(0xFFFF0000)
 val ErrorDark = Color(0xFFFF8080)
+val WarningLight = Color(0xFFFF9800)
+val WarningDark = Color(0xFFFFCB80)
 
 private val LightColors = lightColorScheme(
     primary = PrimaryBlueLight,
@@ -60,16 +69,22 @@ private val LightColors = lightColorScheme(
     onSecondaryContainer = AccentLightGreenLight,
     onSecondary = TextReverseLight,
 
+    tertiary = TertiaryBlueLight,
+    tertiaryContainer = TertiaryLightBlueLight,
+    onTertiary = TertiaryTextLight,
+
     background = BackgroundLight,
     onBackground = TextPrimaryDark,
 
-    surface = SurfaceLight, // Formerly card_background_color
-    onSurface = TextPrimaryDark, // Formerly dark_primary_text
+    surface = SurfaceLight,
+    onSurface = TextPrimaryDark,
     surfaceVariant = BorderLight,
     onSurfaceVariant = TextSecondaryDark,
 
     error = ErrorLight,
-    onError = TextReverseLight
+    errorContainer = WarningLight,
+    onError = TextReverseLight,
+    onErrorContainer = SurfaceLight
 )
 
 private val DarkColors = darkColorScheme(
@@ -82,16 +97,22 @@ private val DarkColors = darkColorScheme(
     onSecondaryContainer = AccentLightGreenDark,
     onSecondary = TextPrimaryLight,
 
+    tertiary = TertiaryBlueDark,
+    tertiaryContainer = TertiaryLightBlueDark,
+    onTertiary = TertiaryTextLight,
+
     background = BackgroundDark,
     onBackground = TextPrimaryLight,
 
-    surface = SurfaceDark, // Formerly card_background_color
+    surface = SurfaceDark,
     onSurface = TextPrimaryLight,
     surfaceVariant = BorderDark,
     onSurfaceVariant = TextSecondaryLight,
 
     error = ErrorDark,
-    onError = TextReverseDark
+    errorContainer = WarningDark,
+    onError = TextReverseDark,
+    onErrorContainer = SurfaceDark
 )
 
 val AppTypography = Typography(

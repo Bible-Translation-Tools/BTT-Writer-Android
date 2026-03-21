@@ -162,9 +162,7 @@ fun ReviewTargetCard(
         )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(0.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
             Column(
                 modifier = Modifier

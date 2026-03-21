@@ -41,8 +41,14 @@ fun ReviewCard(
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
     onAddNoteClick: (caretPosition: Int) -> Unit,
-    onDragDropVerse: (machineReadable: String, verseRawStart: Int, verseRawEnd: Int, targetRawPosition: Int) -> Unit = { _, _, _, _ -> },
+    onDragDropVerse: (
+        machineReadable: String,
+        verseRawStart: Int,
+        verseRawEnd: Int,
+        targetRawPosition: Int
+    ) -> Unit = { _, _, _, _ -> },
     onExpandedChange: (Boolean) -> Unit,
+    onConflictSelected: (Int) -> Unit,
     searchQuery: String? = null
 ) {
     val mainWeight by animateFloatAsState(
@@ -92,20 +98,32 @@ fun ReviewCard(
                 .fillMaxHeight()
         )
 
-        ReviewTargetCard(
-            item = item,
-            typography = typography,
-            onEditToggle = onEditToggle,
-            onDoneToggle = onDoneToggle,
-            onTextChange = onTextChange,
-            onUndoClick = onUndoClick,
-            onRedoClick = onRedoClick,
-            onAddNoteClick = onAddNoteClick,
-            onDragDropVerse = onDragDropVerse,
-            searchQuery = searchQuery,
-            modifier = Modifier.weight(mainWeight)
-                .fillMaxHeight()
-        )
+        if (!item.hasMergeConflicts) {
+            ReviewTargetCard(
+                item = item,
+                typography = typography,
+                onEditToggle = onEditToggle,
+                onDoneToggle = onDoneToggle,
+                onTextChange = onTextChange,
+                onUndoClick = onUndoClick,
+                onRedoClick = onRedoClick,
+                onAddNoteClick = onAddNoteClick,
+                onDragDropVerse = onDragDropVerse,
+                searchQuery = searchQuery,
+                modifier = Modifier.weight(mainWeight)
+                    .fillMaxHeight()
+            )
+        } else {
+            MergeConflictCard(
+                item = item,
+                typography = typography,
+                onUndoClick = onUndoClick,
+                onRedoClick = onRedoClick,
+                onConfirmClick = onConflictSelected,
+                modifier = Modifier.weight(mainWeight)
+                    .fillMaxHeight()
+            )
+        }
 
         ResourcesCard(
             helps = item.helps,

@@ -579,6 +579,11 @@ fun TargetTranslationScreen(
                                                 item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
                                             ))
                                         },
+                                        onConflictSelected = {
+                                            reviewVm.onAction(
+                                                ReviewAction.SelectConflict(item, it)
+                                            )
+                                        },
                                         searchQuery = reviewState.search.let { search ->
                                             if (search.active && search.query.length >= 2
                                                 && search.subject == SearchSubject.TARGET

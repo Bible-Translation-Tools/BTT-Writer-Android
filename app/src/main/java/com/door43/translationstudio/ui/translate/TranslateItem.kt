@@ -9,6 +9,7 @@ import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.ui.translate.review.TargetMode
+import com.door43.usecases.ParseMergeConflicts
 
 typealias ChunkConfig = Map<String, List<String>>
 
@@ -127,6 +128,11 @@ abstract class TranslateItem {
 
     val hasMergeConflicts: Boolean
         get() = MergeConflictsHandler.isMergeConflicted(targetText)
+
+    val mergeItems: List<CharSequence>
+        get() = if (hasMergeConflicts) {
+            ParseMergeConflicts.execute(targetText)
+        } else emptyList()
 
     fun saveTranslation(text: String) {
         if (isProjectTitle) {

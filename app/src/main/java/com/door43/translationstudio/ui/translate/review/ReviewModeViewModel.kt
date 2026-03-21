@@ -155,6 +155,7 @@ sealed interface ReviewAction : ModeAction {
         val verseRawEnd: Int,
         val targetRawPosition: Int
     ) : ReviewAction
+    data class SelectConflict(val item: ReviewItem, val index: Int) : ReviewAction
 }
 
 class ReviewModeViewModel(
@@ -228,6 +229,7 @@ class ReviewModeViewModel(
             is ReviewAction.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
             ReviewAction.NextMatch -> navigateMatch(forward = true)
             ReviewAction.PrevMatch -> navigateMatch(forward = false)
+            is ReviewAction.SelectConflict -> selectConflict(action.item, action.index)
         }
     }
 
@@ -591,6 +593,17 @@ class ReviewModeViewModel(
             SEARCH_SOURCE,
             subject.name.uppercase(Locale.getDefault())
         )
+    }
+
+    private fun selectConflict(item: ReviewItem, index: Int) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                item.mergeItems.getOrNull(index)?.let { mergeItem ->
+                    item.saveTranslation(mergeItem.toString())
+                    updateItem(prepareItem(item.chunk, item.targetMode))
+                }
+            }
+        }
     }
 
     private fun openResources(value: Boolean) {
@@ -1057,7 +1070,6 @@ class ReviewModeViewModel(
                     targetText = text,
                     renderedTargetText = rendered
                 ))
-                //updateMergeConflict() TODO Don't remove
             }
         }
     }

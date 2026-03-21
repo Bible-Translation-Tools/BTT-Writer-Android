@@ -5,14 +5,13 @@ import android.os.Looper
 import com.door43.usecases.ParseMergeConflicts
 import org.unfoldingword.tools.taskmanager.ManagedTask
 import org.unfoldingword.tools.taskmanager.TaskManager
-import java.util.regex.Pattern
 
 /**
  * Created by blm on 11/22/16.
  */
 object MergeConflictsHandler {
     private const val MERGE_CONFLICT_HEAD = "<<<<<<< HEAD.*\\n"
-    private val mergeConflictPatternHead: Pattern = Pattern.compile(MERGE_CONFLICT_HEAD)
+    private val mergeConflictPatternHead: Regex = MERGE_CONFLICT_HEAD.toRegex()
 
     /**
      * Split the merge conflict into a list of the options
@@ -44,14 +43,13 @@ object MergeConflictsHandler {
      */
     fun isMergeConflicted(text: CharSequence): Boolean {
         if (text.isNotEmpty()) {
-            val matcher = mergeConflictPatternHead.matcher(text)
-            return matcher.find()
+            return mergeConflictPatternHead.containsMatchIn(text)
         }
         return false
     }
 
     /**
-     * search for first merge conflict - We need this to double check that there is a conflict in any chunks
+     * search for first merge conflict - We need this to double-check that there is a conflict in any chunks
      *
      * @param targetTranslationId
      * @return
@@ -81,7 +79,10 @@ object MergeConflictsHandler {
                 return true
             }
 
-            val frames = targetTranslation.getFrameTranslations(ct.id, TranslationFormat.DEFAULT)
+            val frames = targetTranslation.getFrameTranslations(
+                ct.id,
+                TranslationFormat.DEFAULT
+            )
             for (frame in frames) {
                 if (isMergeConflicted(frame.body)) {
                     return true
