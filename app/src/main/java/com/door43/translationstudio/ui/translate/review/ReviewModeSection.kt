@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.ConfirmDialog
+import com.door43.translationstudio.ui.components.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.viewmodels.TargetAction
 import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
@@ -41,12 +45,15 @@ fun ReviewModeSection(
     searchRequested: Boolean,
     onSearchConsumed: () -> Unit,
     onSourceDialogOpen: () -> Unit,
-    mergeConflictFilterOn: Boolean = false
+    mergeConflictFilterOn: Boolean = false,
+    chunksDoneRequested: Boolean,
+    onChunksDoneConsumed: () -> Unit
 ) {
     val reviewVm: ReviewModeViewModel = koinViewModel {
         parametersOf(viewModel.sharedStateFlow, viewModel.eventSender)
     }
     val reviewState by reviewVm.state.collectAsStateWithLifecycle()
+    val progress by reviewVm.progress.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
 
     // Apply merge conflict filter from parent
@@ -59,6 +66,13 @@ fun ReviewModeSection(
         if (searchRequested) {
             reviewVm.onAction(ReviewAction.OpenSearch)
             onSearchConsumed()
+        }
+    }
+
+    LaunchedEffect(chunksDoneRequested) {
+        if (chunksDoneRequested) {
+            reviewVm.onAction(ReviewAction.MarkAllDoneClicked)
+            onChunksDoneConsumed()
         }
     }
 
@@ -120,6 +134,59 @@ fun ReviewModeSection(
                                 reviewVm.onAction(ReviewAction.ToggleDoneConfirmed(true))
                             }
                         )
+                    }
+
+                    // Mark all chunks done confirmation
+                    when (val dialogState = reviewState.markAllDoneState) {
+                        is MarkAllDialogState.Confirm -> {
+                            ConfirmDialog(
+                                title = stringResource(R.string.project_checklist_title),
+                                message = AnnotatedString.fromHtml(
+                                    stringResource(R.string.project_checklist_body)
+                                ),
+                                onDismiss = {
+                                    reviewVm.onAction(
+                                        ReviewAction.MarkAllDoneConfirmed(false)
+                                    )
+                                },
+                                onConfirm = {
+                                    reviewVm.onAction(
+                                        ReviewAction.MarkAllDoneConfirmed(true)
+                                    )
+                                }
+                            )
+                        }
+                        is MarkAllDialogState.Result -> {
+                            AlertDialog(
+                                onDismissRequest = {
+                                    reviewVm.onAction(
+                                        ReviewAction.MarkAllDoneConfirmed(false)
+                                    )
+                                },
+                                title = { Text(stringResource(R.string.result)) },
+                                text = {
+                                    Text(AnnotatedString.fromHtml(
+                                        stringResource(
+                                            id = R.string.mark_chunks_done_result,
+                                            dialogState.marked,
+                                            dialogState.total
+                                        )
+                                    ))
+                                },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            reviewVm.onAction(
+                                                ReviewAction.MarkAllDoneConfirmed(false)
+                                            )
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.dismiss))
+                                    }
+                                }
+                            )
+                        }
+                        null -> { /* No dialog */ }
                     }
                 }
             ) { item ->
@@ -183,7 +250,6 @@ fun ReviewModeSection(
             }
         }
 
-        // Help panel
         HelpPanel(
             help = reviewState.help,
             typography = typography,
@@ -195,6 +261,13 @@ fun ReviewModeSection(
                 .fillMaxHeight()
                 .fillMaxWidth(1f / 3f)
                 .align(Alignment.CenterEnd)
+        )
+    }
+
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
         )
     }
 }

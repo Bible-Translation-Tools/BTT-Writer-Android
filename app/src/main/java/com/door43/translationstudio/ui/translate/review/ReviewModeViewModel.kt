@@ -11,7 +11,10 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.FileHistory
 import com.door43.translationstudio.core.Frame
+import com.door43.translationstudio.core.ProgressManager
+import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.RenderingGroup
@@ -26,6 +29,7 @@ import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.ModeAction
@@ -119,13 +123,19 @@ data class SearchState(
         get() = matchingItemIds.getOrNull(currentMatchIndex)
 }
 
+sealed class MarkAllDialogState {
+    object Confirm : MarkAllDialogState()
+    data class Result(val marked: Int, val total: Int) : MarkAllDialogState()
+}
+
 data class ReviewState(
     val resourcesOpen: Boolean = false,
     val help: Help? = null,
     val url: String? = null,
     val chunkToDone: ReviewItem? = null,
     val search: SearchState = SearchState(),
-    val mergeConflictFilterOn: Boolean = false
+    val mergeConflictFilterOn: Boolean = false,
+    val markAllDoneState: MarkAllDialogState? = null
 ) : ModeState
 
 sealed interface ReviewAction : ModeAction {
@@ -138,6 +148,8 @@ sealed interface ReviewAction : ModeAction {
     data class ToggleEdit(val item: ReviewItem) : ReviewAction
     data class ToggleDoneClicked(val item: ReviewItem) : ReviewAction
     data class ToggleDoneConfirmed(val confirm: Boolean) : ReviewAction
+    object MarkAllDoneClicked : ReviewAction
+    data class MarkAllDoneConfirmed(val confirm: Boolean) : ReviewAction
     data class Undo(val item: ReviewItem) : ReviewAction
     data class Redo(val item: ReviewItem) : ReviewAction
     data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : ReviewAction
@@ -171,12 +183,15 @@ class ReviewModeViewModel(
     sharedState,
     TranslationViewMode.REVIEW,
     event
-), KoinComponent {
+), KoinComponent, ProgressOwner {
 
     private val application: Application by inject()
 
     private val _state = MutableStateFlow(ReviewState())
     val state: StateFlow<ReviewState> = _state
+
+    private val progressManager = ProgressManager(viewModelScope)
+    override val progress get() = progressManager.progress
 
     private var fullItems: List<ReviewItem> = emptyList()
 
@@ -194,6 +209,10 @@ class ReviewModeViewModel(
                     }
                 }
         }
+    }
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
     }
 
     override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ReviewItem>) -> Unit) {
@@ -234,6 +253,8 @@ class ReviewModeViewModel(
             is ReviewAction.ToggleEdit -> toggleEdit(action.item)
             is ReviewAction.ToggleDoneClicked -> toggleDoneClicked(action.item)
             is ReviewAction.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
+            ReviewAction.MarkAllDoneClicked -> markAllDoneClicked()
+            is ReviewAction.MarkAllDoneConfirmed -> markAllDoneConfirmed(action.confirm)
             is ReviewAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
             is ReviewAction.Undo -> onUndo(action.item)
             is ReviewAction.Redo -> onRedo(action.item)
@@ -896,6 +917,57 @@ class ReviewModeViewModel(
             }
             _state.value = _state.value.copy(
                 chunkToDone = null
+            )
+        }
+    }
+
+    private fun markAllDoneClicked() {
+        _state.value = _state.value.copy(
+            markAllDoneState = MarkAllDialogState.Confirm
+        )
+    }
+
+    private fun markAllDoneConfirmed(confirm: Boolean) {
+        _state.update { it.copy(markAllDoneState = null) }
+
+        if (!confirm) {
+            return
+        }
+
+        launchWithProgress(application.getString(R.string.loading)) {
+            val marked = withContext(Dispatchers.IO) {
+                var marked = 0
+                for (item in _items.value) {
+                    try {
+                        markChunkCompleted(item)
+                        marked++
+                    } catch (e: Exception) {
+                        Logger.e(
+                            this::class.simpleName,
+                            "Error marking chunk done: ${item.id}",
+                            e
+                        )
+                    }
+                }
+
+                // Commit if any chunks were marked
+                if (marked > 0) {
+                    try {
+                        _items.value.firstOrNull()?.chunk?.target?.commit()
+                    } catch (e: Exception) {
+                        Logger.e(
+                            this::class.simpleName,
+                            "Failed to commit translation",
+                            e
+                        )
+                    }
+                }
+
+                marked
+            }
+
+            _state.value = _state.value.copy(
+                markAllDoneState = MarkAllDialogState.Result(marked, _items.value.size)
             )
         }
     }

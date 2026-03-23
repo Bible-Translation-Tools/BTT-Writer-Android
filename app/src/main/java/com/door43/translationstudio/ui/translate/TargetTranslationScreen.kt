@@ -49,7 +49,6 @@ fun TargetTranslationScreen(
     onUploadExport: () -> Unit,
     onPrint: () -> Unit,
     onFeedback: () -> Unit,
-    onChunksDone: () -> Unit,
     onSettings: () -> Unit,
     onRestartAutoCommitTimer: () -> Unit,
     onUpdateSources: () -> Unit
@@ -65,6 +64,7 @@ fun TargetTranslationScreen(
     var showSelectSourceDialog by rememberSaveable { mutableStateOf(false) }
     var searchRequested by remember { mutableStateOf(false) }
     var mergeConflictFilterOn by rememberSaveable { mutableStateOf(false) }
+    var chunksDoneRequested by rememberSaveable { mutableStateOf(false) }
 
     val scrollCoordinator = rememberScrollCoordinator(
         items = state.items,
@@ -82,7 +82,7 @@ fun TargetTranslationScreen(
         onUploadExport = onUploadExport,
         onPrint = onPrint,
         onFeedback = onFeedback,
-        onChunksDone = onChunksDone,
+        onChunksDone = { chunksDoneRequested = true },
         onSettings = onSettings,
         onSearchRequested = { searchRequested = true }
     )
@@ -212,7 +212,9 @@ fun TargetTranslationScreen(
                             searchRequested = searchRequested,
                             onSearchConsumed = { searchRequested = false },
                             onSourceDialogOpen = { showSelectSourceDialog = true },
-                            mergeConflictFilterOn = mergeConflictFilterOn
+                            mergeConflictFilterOn = mergeConflictFilterOn,
+                            chunksDoneRequested = chunksDoneRequested,
+                            onChunksDoneConsumed = { chunksDoneRequested = false }
                         )
                     }
                 }
