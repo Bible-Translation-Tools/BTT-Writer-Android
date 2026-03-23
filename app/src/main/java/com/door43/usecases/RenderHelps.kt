@@ -3,7 +3,6 @@ package com.door43.usecases
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Util
-import com.door43.translationstudio.ui.translate.ChunkConfig
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Link
@@ -13,7 +12,7 @@ import java.util.regex.Pattern
 class RenderHelps(
     private val library: Door43Client
 ) {
-    fun execute(chunk: Chunk, config: ChunkConfig?): Map<String, Any> {
+    fun execute(chunk: Chunk): Map<String, Any> {
 
         // init default values
         val result: MutableMap<String, Any> = HashMap()
@@ -21,8 +20,8 @@ class RenderHelps(
         result["questions"] = ArrayList<Any>()
         result["notes"] = ArrayList<Any>()
 
-        if (config != null && config.containsKey("words")) {
-            val links = getWordsLinks(config["words"]!!, chunk)
+        if (chunk.config.containsKey("words")) {
+            val links = getWordsLinks(chunk.config["words"]!!, chunk)
             if (links.isNotEmpty()) {
                 result["words"] = links
             }

@@ -2,6 +2,8 @@ package com.door43.translationstudio.core
 
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
+typealias ChunkConfig = Map<String, List<String>>
+
 data class Chunk(
     val chapterSlug: String,
     val chunkSlug: String,
@@ -14,34 +16,48 @@ data class Chunk(
     val targetTranslationFormat: TranslationFormat
         get() = target.format
 
-    val isProjectTitle: Boolean
-        get() = chapterSlug == "front" && chunkSlug == "title"
-
-    val isChapterReference: Boolean
-        get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "reference"
-
-    val isChapterTitle: Boolean
-        get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "title"
+    val isChunk: Boolean
+        get() = !isChapter && !isProjectTitle
 
     val isChapter: Boolean
         get() = isChapterReference || isChapterTitle
 
-    val isChunk: Boolean
-        get() = !isChapter && !isProjectTitle
+    val isProjectTitle: Boolean
+        get() = chapterSlug == "front" && chunkSlug == "title"
 
-    /**
-     * Removes merge conflicts in text (uses first option)
-     * @param text
-     * @return
-     */
-    private fun removeConflicts(text: String): String {
-        if (MergeConflictsHandler.isMergeConflicted(text)) {
-            var unConflictedText = MergeConflictsHandler.getMergeConflictItemsHead(text)
-            if (unConflictedText == null) {
-                unConflictedText = ""
-            }
-            return unConflictedText.toString()
+    val isChapterTitle: Boolean
+        get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "title"
+
+    val isChapterReference: Boolean
+        get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "reference"
+
+    val config: ChunkConfig
+        get() = ((source.config?.get("content") as? Map<*, *>)
+            ?.get(chapterSlug) as? Map<*, *>)
+            ?.get(chunkSlug) as? ChunkConfig
+            ?: emptyMap()
+
+    fun reopen(): Boolean {
+        return if (isProjectTitle) {
+            target.openProjectTitle()
+        } else if (isChapterTitle) {
+            target.reopenChapterTitle(chapterSlug)
+        } else if (isChapterReference) {
+            target.reopenChapterReference(chapterSlug)
+        } else {
+            target.reopenFrame(chapterSlug, chunkSlug)
         }
-        return text
+    }
+
+    fun close(): Boolean {
+        return if (isProjectTitle) {
+            target.closeProjectTitle()
+        } else if (isChapterTitle) {
+            target.finishChapterTitle(chapterSlug)
+        } else if (isChapterReference) {
+            target.finishChapterReference(chapterSlug)
+        } else {
+            target.finishFrame(chapterSlug, chunkSlug)
+        }
     }
 }

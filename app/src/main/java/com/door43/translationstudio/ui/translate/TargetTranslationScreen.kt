@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.translate
 
+import android.content.Context
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInHorizontally
@@ -41,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -94,6 +96,7 @@ fun TargetTranslationScreen(
     onUpdateSources: () -> Unit
 ) {
     val typography: Typography = koinInject()
+    val context = LocalContext.current
 
     val state: TargetTranslationState by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -104,18 +107,8 @@ fun TargetTranslationScreen(
     val menuItems = remember { mutableStateListOf<TranslateSideBarAction>() }
 
     // Strings
-
     val draftExistsStr = stringResource(R.string.draft_translation_exists)
     val draftPreview = stringResource(R.string.preview)
-    val menuActionHome = stringResource(R.string.action_translations)
-    val menuActionDrafts = stringResource(R.string.view_available_drafts)
-    val menuActionPreview = stringResource(R.string.title_review)
-    val menuActionUpload = stringResource(R.string.menu_upload_export)
-    val menuActionPrint = stringResource(R.string.print)
-    val menuActionFeedback = stringResource(R.string.feedback)
-    val menuActionSearch = stringResource(R.string.action_search)
-    val menuActionChunksDone = stringResource(R.string.mark_chunks_done)
-    val menuActionSettings = stringResource(R.string.action_settings)
 
     var showUpdateSourcesDialog by rememberSaveable { mutableStateOf(false) }
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
@@ -229,67 +222,20 @@ fun TargetTranslationScreen(
 
     LaunchedEffect(state.draftAvailable, state.viewMode) {
         menuItems.clear()
-        menuItems.add(
-            TranslateSideBarAction(
-                title = menuActionHome,
-                icon = Icons.AutoMirrored.Filled.LibraryBooks,
-                onClick = onHomeClick
-            )
-        )
-        if (state.draftAvailable) {
-            menuItems.add(
-                TranslateSideBarAction(
-                    title = menuActionDrafts,
-                    icon = Icons.Default.Translate,
-                    onClick = onNavigateToDraft
-                )
-            )
-        }
         menuItems.addAll(
-            listOf(
-                TranslateSideBarAction(
-                    title = menuActionPreview,
-                    icon = Icons.Default.DoneAll,
-                    onClick = onProjectPreview
-                ),
-                TranslateSideBarAction(
-                    title = menuActionUpload,
-                    icon = Icons.Default.Upload,
-                    onClick = onUploadExport
-                ),
-                TranslateSideBarAction(
-                    title = menuActionPrint,
-                    icon = Icons.Default.Print,
-                    onClick = onPrint
-                ),
-                TranslateSideBarAction(
-                    title = menuActionFeedback,
-                    icon = Icons.Default.Feedback,
-                    onClick = onFeedback
-                )
-            )
-        )
-        if (state.viewMode == TranslationViewMode.REVIEW) {
-            menuItems.addAll(
-                listOf(
-                    TranslateSideBarAction(
-                        title = menuActionSearch,
-                        icon = Icons.Default.Search,
-                        onClick = { searchRequested = true }
-                    ),
-                    TranslateSideBarAction(
-                        title = menuActionChunksDone,
-                        icon = Icons.Default.Check,
-                        onClick = onChunksDone
-                    )
-                )
-            )
-        }
-        menuItems.add(
-            TranslateSideBarAction(
-                title = menuActionSettings,
-                icon = Icons.Default.Settings,
-                onClick = onSettings
+            buildMenu(
+                context = context,
+                viewMode = state.viewMode,
+                draftAvailable = state.draftAvailable,
+                onHomeClick = onHomeClick,
+                onNavigateToDraft = onNavigateToDraft,
+                onProjectPreview = onProjectPreview,
+                onUploadExport = onUploadExport,
+                onPrint = onPrint,
+                onFeedback = onFeedback,
+                onChunksDone = onChunksDone,
+                onSettings = onSettings,
+                onSearchRequested = { searchRequested = true }
             )
         )
     }
@@ -525,73 +471,73 @@ fun TargetTranslationScreen(
                                             }
                                         )
                                     }
-                                ModeScreenTemplate(
-                                    state = reviewState,
-                                    viewModel = reviewVm,
-                                    listState = listState
-                                ) { item ->
-                                    ReviewCard(
-                                        item = item,
-                                        sourceTabs = state.sourceTabs,
-                                        typography = typography,
-                                        resourcesOpen = reviewState.resourcesOpen,
-                                        onSourceTabClick = {
-                                            viewModel.onAction(TargetAction.SelectSource(it))
-                                        },
-                                        onAddNewSourceClick = { showSourceDialog = true },
-                                        onRemoveSourceClick = {
-                                            viewModel.onAction(TargetAction.RemoveSource(it))
-                                        },
-                                        onTextChange = {
-                                            reviewVm.onAction(
-                                                ReviewAction.ItemTextChanged(item, it)
-                                            )
-                                        },
-                                        onExpandedChange = { expanded ->
-                                            reviewVm.onAction(
-                                                ReviewAction.OpenResources(expanded)
-                                            )
-                                            if (!expanded) reviewVm.onAction(ReviewAction.ClearHelp)
-                                        },
-                                        onRenderHelps = {
-                                            reviewVm.onAction(ReviewAction.RenderHelps(item))
-                                        },
-                                        onHelpClick = {
-                                            reviewVm.onAction(ReviewAction.OpenHelp(it))
-                                        },
-                                        onEditToggle = {
-                                            reviewVm.onAction(ReviewAction.ToggleEdit(item))
-                                        },
-                                        onDoneToggle = {
-                                            reviewVm.onAction(ReviewAction.ToggleDoneClicked(item))
-                                        },
-                                        onUndoClick = {
-                                            reviewVm.onAction(ReviewAction.Undo(item))
-                                        },
-                                        onRedoClick = {
-                                            reviewVm.onAction(ReviewAction.Redo(item))
-                                        },
-                                        onAddNoteClick = { caretPos ->
-                                            reviewVm.onAction(ReviewAction.AddNoteClicked(item, caretPos))
-                                        },
-                                        onDragDropVerse = { machineReadable, verseRawStart, verseRawEnd, targetRawPosition ->
-                                            reviewVm.onAction(ReviewAction.DragDropVerse(
-                                                item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
-                                            ))
-                                        },
-                                        onConflictSelected = {
-                                            reviewVm.onAction(
-                                                ReviewAction.SelectConflict(item, it)
-                                            )
-                                        },
-                                        searchQuery = reviewState.search.let { search ->
-                                            if (search.active && search.query.length >= 2
-                                                && search.subject == SearchSubject.TARGET
-                                            ) search.query else null
-                                        },
-                                        modifier = Modifier.padding(start = 16.dp)
-                                    )
-                                }
+                                    ModeScreenTemplate(
+                                        state = reviewState,
+                                        viewModel = reviewVm,
+                                        listState = listState
+                                    ) { item ->
+                                        ReviewCard(
+                                            item = item,
+                                            sourceTabs = state.sourceTabs,
+                                            typography = typography,
+                                            resourcesOpen = reviewState.resourcesOpen,
+                                            onSourceTabClick = {
+                                                viewModel.onAction(TargetAction.SelectSource(it))
+                                            },
+                                            onAddNewSourceClick = { showSourceDialog = true },
+                                            onRemoveSourceClick = {
+                                                viewModel.onAction(TargetAction.RemoveSource(it))
+                                            },
+                                            onTextChange = {
+                                                reviewVm.onAction(
+                                                    ReviewAction.ItemTextChanged(item, it)
+                                                )
+                                            },
+                                            onExpandedChange = { expanded ->
+                                                reviewVm.onAction(
+                                                    ReviewAction.OpenResources(expanded)
+                                                )
+                                                if (!expanded) reviewVm.onAction(ReviewAction.ClearHelp)
+                                            },
+                                            onRenderHelps = {
+                                                reviewVm.onAction(ReviewAction.RenderHelps(item))
+                                            },
+                                            onHelpClick = {
+                                                reviewVm.onAction(ReviewAction.OpenHelp(it))
+                                            },
+                                            onEditToggle = {
+                                                reviewVm.onAction(ReviewAction.ToggleEdit(item))
+                                            },
+                                            onDoneToggle = {
+                                                reviewVm.onAction(ReviewAction.ToggleDoneClicked(item))
+                                            },
+                                            onUndoClick = {
+                                                reviewVm.onAction(ReviewAction.Undo(item))
+                                            },
+                                            onRedoClick = {
+                                                reviewVm.onAction(ReviewAction.Redo(item))
+                                            },
+                                            onAddNoteClick = { caretPos ->
+                                                reviewVm.onAction(ReviewAction.AddNoteClicked(item, caretPos))
+                                            },
+                                            onDragDropVerse = { machineReadable, verseRawStart, verseRawEnd, targetRawPosition ->
+                                                reviewVm.onAction(ReviewAction.DragDropVerse(
+                                                    item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
+                                                ))
+                                            },
+                                            onConflictSelected = {
+                                                reviewVm.onAction(
+                                                    ReviewAction.SelectConflict(item, it)
+                                                )
+                                            },
+                                            searchQuery = reviewState.search.let { search ->
+                                                if (search.active && search.query.length >= 2
+                                                    && search.subject == SearchSubject.TARGET
+                                                ) search.query else null
+                                            },
+                                            modifier = Modifier.padding(start = 16.dp)
+                                        )
+                                    }
                                 }
 
                                 val helpVisible = reviewState.help != null
@@ -707,4 +653,87 @@ fun TargetTranslationScreen(
             progress = it.value
         )
     }
+}
+
+private fun buildMenu(
+    context: Context,
+    viewMode: TranslationViewMode,
+    draftAvailable: Boolean,
+    onHomeClick: () -> Unit,
+    onNavigateToDraft: () -> Unit,
+    onProjectPreview: () -> Unit,
+    onUploadExport: () -> Unit,
+    onPrint: () -> Unit,
+    onFeedback: () -> Unit,
+    onChunksDone: () -> Unit,
+    onSettings: () -> Unit,
+    onSearchRequested: () -> Unit
+): List<TranslateSideBarAction> {
+    val menuItems = mutableListOf<TranslateSideBarAction>()
+
+    menuItems.add(
+        TranslateSideBarAction(
+            title = context.getString(R.string.action_translations),
+            icon = Icons.AutoMirrored.Filled.LibraryBooks,
+            onClick = onHomeClick
+        )
+    )
+    if (draftAvailable) {
+        menuItems.add(
+            TranslateSideBarAction(
+                title = context.getString(R.string.view_available_drafts),
+                icon = Icons.Default.Translate,
+                onClick = onNavigateToDraft
+            )
+        )
+    }
+    menuItems.addAll(
+        listOf(
+            TranslateSideBarAction(
+                title = context.getString(R.string.title_review),
+                icon = Icons.Default.DoneAll,
+                onClick = onProjectPreview
+            ),
+            TranslateSideBarAction(
+                title = context.getString(R.string.menu_upload_export),
+                icon = Icons.Default.Upload,
+                onClick = onUploadExport
+            ),
+            TranslateSideBarAction(
+                title = context.getString(R.string.print),
+                icon = Icons.Default.Print,
+                onClick = onPrint
+            ),
+            TranslateSideBarAction(
+                title = context.getString(R.string.feedback),
+                icon = Icons.Default.Feedback,
+                onClick = onFeedback
+            )
+        )
+    )
+    if (viewMode == TranslationViewMode.REVIEW) {
+        menuItems.addAll(
+            listOf(
+                TranslateSideBarAction(
+                    title = context.getString(R.string.action_search),
+                    icon = Icons.Default.Search,
+                    onClick = onSearchRequested
+                ),
+                TranslateSideBarAction(
+                    title = context.getString(R.string.mark_chunks_done),
+                    icon = Icons.Default.Check,
+                    onClick = onChunksDone
+                )
+            )
+        )
+    }
+    menuItems.add(
+        TranslateSideBarAction(
+            title = context.getString(R.string.action_settings),
+            icon = Icons.Default.Settings,
+            onClick = onSettings
+        )
+    )
+
+    return menuItems
 }

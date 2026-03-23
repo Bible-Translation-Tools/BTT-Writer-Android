@@ -144,7 +144,7 @@ class ChunkModeViewModel(
             if (confirm) {
                 _state.value.chunkToReopen?.let {
                     withContext(Dispatchers.IO) {
-                        it.reopenChunk()
+                        it.chunk.reopen()
                     }
                     val updated = prepareItem(it.chunk, false)
                     updateItem(updated)

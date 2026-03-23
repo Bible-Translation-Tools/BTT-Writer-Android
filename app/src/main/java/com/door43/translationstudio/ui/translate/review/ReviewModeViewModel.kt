@@ -615,7 +615,7 @@ class ReviewModeViewModel(
 
         viewModelScope.launch {
             val helps = withContext(Dispatchers.IO) {
-                renderHelps.execute(item.chunk, item.chunkConfig)
+                renderHelps.execute(item.chunk)
             }
             updateItem(item.copy(helps = helps))
         }
@@ -887,7 +887,7 @@ class ReviewModeViewModel(
                 if (shouldComplete) {
                     markChunkCompleted(item)
                 } else {
-                    item.reopenChunk()
+                    item.chunk.reopen()
                 }
                 item.chunk.target.commit()
                 prepareItem(item.chunk)
@@ -998,7 +998,7 @@ class ReviewModeViewModel(
         }
 
         // Everything looks good so far.
-        val success = item.closeChunk()
+        val success = item.chunk.close()
 
         if (!success) {
             throw IllegalStateException(application.getString(R.string.failed_to_commit_chunk))
@@ -1088,10 +1088,14 @@ class ReviewModeViewModel(
 
     private fun createFileHistory(item: ReviewItem): FileHistory? {
         return when {
-            item.isChapterReference -> item.chunk.target.getChapterReferenceHistory(item.ct)
-            item.isChapterTitle -> item.chunk.target.getChapterTitleHistory(item.ct)
-            item.isProjectTitle -> item.chunk.target.projectTitleHistory
-            item.isChunk -> item.chunk.target.getFrameHistory(item.ft)
+            item.chunk.isChapterReference -> item.chunk.target.getChapterReferenceHistory(
+                item.ct
+            )
+            item.chunk.isChapterTitle -> item.chunk.target.getChapterTitleHistory(
+                item.ct
+            )
+            item.chunk.isProjectTitle -> item.chunk.target.projectTitleHistory
+            item.chunk.isChunk -> item.chunk.target.getFrameHistory(item.ft)
             else -> null
         }
     }

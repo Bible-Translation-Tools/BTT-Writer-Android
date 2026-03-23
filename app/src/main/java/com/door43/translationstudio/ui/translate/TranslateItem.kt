@@ -11,8 +11,6 @@ import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.ui.translate.review.TargetMode
 import com.door43.usecases.ParseMergeConflicts
 
-typealias ChunkConfig = Map<String, List<String>>
-
 interface Swipable {
     val sourceOnTop: Boolean
     fun selfCopy(sourceOnTop: Boolean = this.sourceOnTop): Swipable
@@ -31,9 +29,9 @@ abstract class TranslateItem {
 
     open val sourceTitle: String
         get() {
-            return if (isProjectTitle) {
+            return if (chunk.isProjectTitle) {
                 ""
-            } else if (isChapter) {
+            } else if (chunk.isChapter) {
                 chunk.source.project.name.trim()
             } else {
                 // TODO: we should read the title from a cache instead of doing file io again
@@ -59,9 +57,9 @@ abstract class TranslateItem {
 
     open val targetTitle: String
         get() {
-            if (isProjectTitle) {
+            if (chunk.isProjectTitle) {
                 return removeConflicts(chunk.target.targetLanguage.name)
-            } else if (isChapter) {
+            } else if (chunk.isChapter) {
                 val ptTitle = removeConflicts(pt.title).trim()
                 return if (ptTitle.isNotEmpty()) {
                     ptTitle + " - " + chunk.target.targetLanguage.name
@@ -86,21 +84,6 @@ abstract class TranslateItem {
             }
         }
 
-    val isChunk: Boolean
-        get() = !isChapter && !isProjectTitle
-
-    val isChapter: Boolean
-        get() = isChapterReference || isChapterTitle
-
-    val isProjectTitle: Boolean
-        get() = chunk.chapterSlug == "front" && chunk.chunkSlug == "title"
-
-    val isChapterTitle: Boolean
-        get() = chunk.chapterSlug != "front" && chunk.chapterSlug != "back" && chunk.chunkSlug == "title"
-
-    val isChapterReference: Boolean
-        get() = chunk.chapterSlug != "front" && chunk.chapterSlug != "back" && chunk.chunkSlug == "reference"
-
     val isComplete: Boolean
         get() = when (chunk.chapterSlug) {
             "front" -> {
@@ -120,12 +103,6 @@ abstract class TranslateItem {
             }
         }
 
-    val chunkConfig: ChunkConfig
-        get() = ((chunk.source.config?.get("content") as? Map<*, *>)
-            ?.get(chunk.chapterSlug) as? Map<*, *>)
-            ?.get(chunk.chunkSlug) as? ChunkConfig
-            ?: emptyMap()
-
     val hasMergeConflicts: Boolean
         get() = MergeConflictsHandler.isMergeConflicted(targetText)
 
@@ -135,39 +112,26 @@ abstract class TranslateItem {
         } else emptyList()
 
     fun saveTranslation(text: String) {
-        if (isProjectTitle) {
+        if (chunk.isProjectTitle) {
             chunk.target.applyProjectTitleTranslation(text)
-        } else if (isChapterReference) {
+        } else if (chunk.isChapterReference) {
             chunk.target.applyChapterReferenceTranslation(ct, text)
-        } else if (isChapterTitle) {
+        } else if (chunk.isChapterTitle) {
             chunk.target.applyChapterTitleTranslation(ct, text)
         } else {
             chunk.target.applyFrameTranslation(ft, text)
         }
     }
 
-    fun reopenChunk(): Boolean {
-        return if (isProjectTitle) {
-            chunk.target.openProjectTitle()
-        } else if (isChapterTitle) {
-            chunk.target.reopenChapterTitle(chunk.chapterSlug)
-        } else if (isChapterReference) {
-            chunk.target.reopenChapterReference(chunk.chapterSlug)
-        } else {
-            chunk.target.reopenFrame(chunk.chapterSlug, chunk.chunkSlug)
+    private fun removeConflicts(text: String): String {
+        if (MergeConflictsHandler.isMergeConflicted(text)) {
+            var unConflictedText = MergeConflictsHandler.getMergeConflictItemsHead(text)
+            if (unConflictedText == null) {
+                unConflictedText = ""
+            }
+            return unConflictedText.toString()
         }
-    }
-
-    fun closeChunk(): Boolean {
-        return if (isProjectTitle) {
-            chunk.target.closeProjectTitle()
-        } else if (isChapterTitle) {
-            chunk.target.finishChapterTitle(chunk.chapterSlug)
-        } else if (isChapterReference) {
-            chunk.target.finishChapterReference(chunk.chapterSlug)
-        } else {
-            chunk.target.finishFrame(chunk.chapterSlug, chunk.chunkSlug)
-        }
+        return text
     }
 }
 
@@ -275,14 +239,3 @@ data class ReviewItem(
     val targetMode: TargetMode,
     val fileHistory: FileHistory? = null
 ) : TranslateItem()
-
-private fun removeConflicts(text: String): String {
-    if (MergeConflictsHandler.isMergeConflicted(text)) {
-        var unConflictedText = MergeConflictsHandler.getMergeConflictItemsHead(text)
-        if (unConflictedText == null) {
-            unConflictedText = ""
-        }
-        return unConflictedText.toString()
-    }
-    return text
-}
