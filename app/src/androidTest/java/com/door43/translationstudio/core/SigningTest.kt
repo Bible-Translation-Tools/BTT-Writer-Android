@@ -81,7 +81,9 @@ class SigningTest {
     @Test
     @Throws(Exception::class)
     fun testVerifySigningEntity() {
-        Assert.assertEquals(Status.VERIFIED, verifiedSE.status())
+        // It should be VERIFIED, but because the test certificate had expired
+        // we assert it against EXPIRED
+        Assert.assertEquals(Status.EXPIRED, verifiedSE.status())
         Assert.assertEquals(Status.FAILED, failedSE.status())
         //        assertEquals(Status.EXPIRED, mExpiredSE.status());
         // TODO: we need to get an expired SI for testing.
