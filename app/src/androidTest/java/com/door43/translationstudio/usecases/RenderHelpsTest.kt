@@ -11,7 +11,6 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.translate.ChunkConfig
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.RenderHelps
@@ -57,12 +56,8 @@ class RenderHelpsTest : KoinAndroidTest() {
             rc,
             targetTranslation!!,
         )
-        val chunkConfig = ((chunk.source.config?.get("content") as? Map<*, *>)
-            ?.get(chunk.chapterSlug) as? Map<*, *>)
-            ?.get(chunk.chunkSlug) as? ChunkConfig
-            ?: emptyMap()
 
-        val result = renderHelps.execute(chunk, chunkConfig)
+        val result = renderHelps.execute(chunk)
 
         assertTrue("Helps should not be empty", result.isNotEmpty())
         assertEquals("There should be 3 helps", 3, result.size)

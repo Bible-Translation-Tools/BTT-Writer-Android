@@ -3,8 +3,6 @@ package com.door43.usecases
 import com.door43.TestUtils
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
-import com.door43.translationstudio.ui.translate.ChunkConfig
-import com.door43.translationstudio.ui.translate.ListItemOld
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -67,8 +65,9 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps has all resources`() {
-        val listItem: Chunk = mockk()
-        val config: ChunkConfig = mockTw()
+        val listItem: Chunk = mockk {
+            every { config }.returns(mockTw())
+        }
 
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
@@ -81,7 +80,7 @@ class RenderHelpsTest {
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
-        val result = RenderHelps(library).execute(listItem, config)
+        val result = RenderHelps(library).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)
@@ -95,7 +94,9 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tW resource`() {
-        val listItem: Chunk = mockk()
+        val listItem: Chunk = mockk {
+            every { config }.returns(mapOf())
+        }
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -106,7 +107,7 @@ class RenderHelpsTest {
         TestUtils.setPropertyReflection(source, "language", language)
         TestUtils.setPropertyReflection(source, "project", project)
 
-        val result = RenderHelps(library).execute(listItem, null)
+        val result = RenderHelps(library).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)
@@ -120,8 +121,9 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tQ resource`() {
-        val listItem: Chunk = mockk()
-        val config: ChunkConfig = mockTw()
+        val listItem: Chunk = mockk {
+            every { config }.returns(mockTw())
+        }
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -135,7 +137,7 @@ class RenderHelpsTest {
         every { index.findTranslations(any(), any(), "tq", any(), any(), any(), any()) }
             .returns(listOf())
 
-        val result = RenderHelps(library).execute(listItem, config)
+        val result = RenderHelps(library).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(0, (result["questions"]!! as List<*>).size)
@@ -149,8 +151,9 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tQ resource, no rc`() {
-        val listItem: Chunk = mockk()
-        val config: ChunkConfig = mockTw()
+        val listItem: Chunk = mockk {
+            every { config }.returns(mockTw())
+        }
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -164,7 +167,7 @@ class RenderHelpsTest {
         every { ContainerCache.cache(library, "en_mrk_tq") }
             .returns(null)
 
-        val result = RenderHelps(library).execute(listItem, config)
+        val result = RenderHelps(library).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(0, (result["questions"]!! as List<*>).size)
@@ -178,8 +181,9 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tN resource`() {
-        val listItem: Chunk = mockk()
-        val config: ChunkConfig = mockTw()
+        val listItem: Chunk = mockk {
+            every { config }.returns(mockTw())
+        }
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -193,7 +197,7 @@ class RenderHelpsTest {
         every { index.findTranslations(any(), any(), "tn", any(), any(), any(), any()) }
             .returns(listOf())
 
-        val result = RenderHelps(library).execute(listItem, config)
+        val result = RenderHelps(library).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)
@@ -207,8 +211,9 @@ class RenderHelpsTest {
 
     @Test
     fun `test render helps with no tN resource, no rc`() {
-        val listItem: Chunk = mockk()
-        val config: ChunkConfig = mockTw()
+        val listItem: Chunk = mockk {
+            every { config }.returns(mockTw())
+        }
         every { listItem.chapterSlug } returns "01"
         every { listItem.chunkSlug } returns "01"
 
@@ -222,7 +227,7 @@ class RenderHelpsTest {
         every { ContainerCache.cache(library, "en_mrk_tn") }
             .returns(null)
 
-        val result = RenderHelps(library).execute(listItem, config)
+        val result = RenderHelps(library).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)
