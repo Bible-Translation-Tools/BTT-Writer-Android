@@ -10,41 +10,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.components.ConfirmDialog
-import com.door43.translationstudio.ui.translate.chunk.ChunkAction
-import com.door43.translationstudio.ui.translate.chunk.ChunkState
-import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialog
 import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialogType
-import com.door43.translationstudio.ui.translate.review.ReviewAction
-import com.door43.translationstudio.ui.translate.review.ReviewState
+import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
 
 @Composable
-fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
-    state: S,
+fun <ITEM : TranslateItem> ModeScreenTemplate(
     viewModel: ModeViewModel<ITEM>,
     listState: LazyListState,
+    dialogs: @Composable () -> Unit = {},
     itemContent: @Composable (ITEM) -> Unit
 ) {
     val modeState by viewModel.modeState.collectAsStateWithLifecycle()
     val stateItems by viewModel.items.collectAsStateWithLifecycle()
 
-    val urlHandler = LocalUriHandler.current
     var settingsVersion by remember { mutableIntStateOf(0) }
 
     LifecycleResumeEffect(Unit) {
@@ -108,48 +98,5 @@ fun <S : ModeState, ITEM : TranslateItem> ModeScreenTemplate(
         )
     }
 
-    when (state) {
-        is ChunkState -> {
-            if (state.chunkToReopen != null) {
-                ConfirmDialog(
-                    title = stringResource(R.string.chunk_done_title),
-                    message = stringResource(R.string.chunk_done_prompt),
-                    onDismiss = {
-                        viewModel.onAction(ChunkAction.ReopenChunkConfirmed(false))
-                    },
-                    onConfirm = {
-                        viewModel.onAction(
-                            ChunkAction.ReopenChunkConfirmed(true)
-                        )
-                    },
-                    confirmText = stringResource(R.string.edit)
-                )
-            }
-        }
-        is ReviewState -> {
-            LaunchedEffect(state.url) {
-                if (state.url != null) {
-                    urlHandler.openUri(state.url)
-                    viewModel.onAction(ReviewAction.CleanUrl)
-                }
-            }
-
-            if (state.chunkToDone != null) {
-                ConfirmDialog(
-                    title = stringResource(R.string.chunk_checklist_title),
-                    message = AnnotatedString.fromHtml(
-                        stringResource(R.string.chunk_checklist_body)
-                    ),
-                    onDismiss = {
-                        viewModel.onAction(ReviewAction.ToggleDoneConfirmed(false))
-                    },
-                    onConfirm = {
-                        viewModel.onAction(
-                            ReviewAction.ToggleDoneConfirmed(true)
-                        )
-                    }
-                )
-            }
-        }
-    }
+    dialogs()
 }
