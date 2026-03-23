@@ -23,7 +23,7 @@ android {
         minSdk = 26
         compileSdk = 35
         targetSdk = 36
-        versionCode = 44
+        versionCode = 45
         versionName = "1.6.0"
 
         testBuildType = "verify"
