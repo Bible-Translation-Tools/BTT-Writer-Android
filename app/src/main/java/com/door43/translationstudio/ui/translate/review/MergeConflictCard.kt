@@ -46,6 +46,7 @@ fun MergeConflictCard(
     item: ReviewItem,
     typography: Typography,
     modifier: Modifier = Modifier,
+    searchQuery: String? = null,
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
     onConfirmClick: (Int) -> Unit

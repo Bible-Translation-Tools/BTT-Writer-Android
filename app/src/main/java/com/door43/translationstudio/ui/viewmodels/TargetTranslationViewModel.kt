@@ -11,6 +11,7 @@ import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
+import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.SlugSorter
@@ -61,7 +62,8 @@ data class TargetTranslationState(
     val resourceContainer: ResourceContainer? = null,
     val lastFocusChapterId: String? = null,
     val lastFocusFrameId: String? = null,
-    val projectTitle: String? = null
+    val projectTitle: String? = null,
+    val hasConflicts: Boolean = false
 )
 
 sealed interface TargetAction {
@@ -225,7 +227,11 @@ class TargetTranslationViewModel(
                 }
             }
         }
-        _state.update { it.copy(items = items) }
+        val hasConflicts = MergeConflictsHandler.isTranslationMergeConflicted(
+            targetTranslation.id,
+            translator
+        )
+        _state.update { it.copy(items = items, hasConflicts = hasConflicts) }
     }
 
     private fun setLastViewMode(mode: TranslationViewMode) {

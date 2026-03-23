@@ -124,7 +124,8 @@ data class ReviewState(
     val help: Help? = null,
     val url: String? = null,
     val chunkToDone: ReviewItem? = null,
-    val search: SearchState = SearchState()
+    val search: SearchState = SearchState(),
+    val mergeConflictFilterOn: Boolean = false
 ) : ModeState
 
 sealed interface ReviewAction : ModeAction {
@@ -156,6 +157,7 @@ sealed interface ReviewAction : ModeAction {
         val targetRawPosition: Int
     ) : ReviewAction
     data class SelectConflict(val item: ReviewItem, val index: Int) : ReviewAction
+    data class SetMergeConflictFilter(val on: Boolean) : ReviewAction
 }
 
 class ReviewModeViewModel(
@@ -175,6 +177,8 @@ class ReviewModeViewModel(
 
     private val _state = MutableStateFlow(ReviewState())
     val state: StateFlow<ReviewState> = _state
+
+    private var fullItems: List<ReviewItem> = emptyList()
 
     private val sourceContainer: ResourceContainer?
         get() = sharedState.value.sourceContainer
@@ -201,8 +205,22 @@ class ReviewModeViewModel(
                         batch.map { async { prepareItem(it) } }
                     }.awaitAll()
             }
-            onReady(items)
+            fullItems = items
+            onReady(applyConflictFilter(items))
         }
+    }
+
+    private fun applyConflictFilter(items: List<ReviewItem>): List<ReviewItem> {
+        return if (_state.value.mergeConflictFilterOn) {
+            items.filter { it.hasMergeConflicts }
+        } else {
+            items
+        }
+    }
+
+    private fun setMergeConflictFilter(on: Boolean) {
+        _state.update { it.copy(mergeConflictFilterOn = on) }
+        _items.value = applyConflictFilter(fullItems)
     }
 
     override fun onAction(action: ModeAction) {
@@ -230,6 +248,7 @@ class ReviewModeViewModel(
             ReviewAction.NextMatch -> navigateMatch(forward = true)
             ReviewAction.PrevMatch -> navigateMatch(forward = false)
             is ReviewAction.SelectConflict -> selectConflict(action.item, action.index)
+            is ReviewAction.SetMergeConflictFilter -> setMergeConflictFilter(action.on)
         }
     }
 

@@ -64,6 +64,7 @@ fun TargetTranslationScreen(
     var showUpdateSourcesDialog by rememberSaveable { mutableStateOf(false) }
     var showSelectSourceDialog by rememberSaveable { mutableStateOf(false) }
     var searchRequested by remember { mutableStateOf(false) }
+    var mergeConflictFilterOn by rememberSaveable { mutableStateOf(false) }
 
     val scrollCoordinator = rememberScrollCoordinator(
         items = state.items,
@@ -129,24 +130,35 @@ fun TargetTranslationScreen(
         Row(modifier = Modifier.padding(paddingValues)) {
             TranslateSideBar(
                 currentViewMode = state.viewMode,
-                showMergeConflict = false,
+                showMergeConflict = state.hasConflicts,
+                mergeConflictFilterOn = mergeConflictFilterOn,
                 onReadClick = {
                     if (state.viewMode != TranslationViewMode.READ) {
+                        mergeConflictFilterOn = false
                         viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.READ))
                     }
                 },
                 onChunkClick = {
                     if (state.viewMode != TranslationViewMode.CHUNK) {
+                        mergeConflictFilterOn = false
                         viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK))
                     }
                 },
                 onReviewClick = {
+                    mergeConflictFilterOn = false
                     if (state.viewMode != TranslationViewMode.REVIEW) {
                         viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
                     }
                 },
                 onMergeConflictClick = {
-                    viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+                    if (state.viewMode == TranslationViewMode.REVIEW && mergeConflictFilterOn) {
+                        mergeConflictFilterOn = false
+                    } else {
+                        mergeConflictFilterOn = true
+                        if (state.viewMode != TranslationViewMode.REVIEW) {
+                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+                        }
+                    }
                 },
                 onSliderValueChange = {
                     scrollCoordinator.onSliderChange(it, state.items)
@@ -171,7 +183,8 @@ fun TargetTranslationScreen(
                             listState = scrollCoordinator.listState,
                             onSourceDialogOpen = { showSelectSourceDialog = true },
                             onBeginTranslation = {
-                                scrollCoordinator.pendingScrollChapter = it
+                                scrollCoordinator.pendingScrollChapter =
+                                    PendingScrollItem(it)
                                 viewModel.onAction(
                                     TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK)
                                 )
@@ -182,7 +195,14 @@ fun TargetTranslationScreen(
                             state = state,
                             typography = typography,
                             listState = scrollCoordinator.listState,
-                            onSourceDialogOpen = { showSelectSourceDialog = true }
+                            onSourceDialogOpen = { showSelectSourceDialog = true },
+                            onConflictClick = { chapterId, chunkId ->
+                                scrollCoordinator.pendingScrollChapter =
+                                    PendingScrollItem(chapterId = chapterId, chunkId = chunkId)
+                                viewModel.onAction(
+                                    TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW)
+                                )
+                            }
                         )
                         TranslationViewMode.REVIEW -> ReviewModeSection(
                             viewModel = viewModel,
@@ -191,7 +211,8 @@ fun TargetTranslationScreen(
                             listState = scrollCoordinator.listState,
                             searchRequested = searchRequested,
                             onSearchConsumed = { searchRequested = false },
-                            onSourceDialogOpen = { showSelectSourceDialog = true }
+                            onSourceDialogOpen = { showSelectSourceDialog = true },
+                            mergeConflictFilterOn = mergeConflictFilterOn
                         )
                     }
                 }

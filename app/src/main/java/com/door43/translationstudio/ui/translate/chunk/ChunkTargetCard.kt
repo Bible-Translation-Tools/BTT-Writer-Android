@@ -7,10 +7,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
@@ -36,6 +41,7 @@ fun ChunkTargetCard(
     typography: Typography,
     onTextChange: (String) -> Unit,
     onCompleteItemClick: () -> Unit,
+    onConflictClick: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val titleStyle = typography.getComposeTextStyle(
@@ -81,16 +87,34 @@ fun ChunkTargetCard(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                UsfmEditText(
-                    text = item.targetText,
-                    onTextChange = {
-                        onTextChange(it)
-                    },
-                    textStyle = bodyStyle,
-                    shouldFocus = waitingForFocus && !item.isComplete,
-                    onFocusConsumed = { waitingForFocus = false },
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (!item.hasMergeConflicts) {
+                    UsfmEditText(
+                        text = item.targetText,
+                        onTextChange = {
+                            onTextChange(it)
+                        },
+                        textStyle = bodyStyle,
+                        shouldFocus = waitingForFocus && !item.isComplete,
+                        onFocusConsumed = { waitingForFocus = false },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    TextButton(
+                        onClick = {
+                            onConflictClick(item.chunk.chapterSlug, item.chunk.chunkSlug)
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ),
+                        shape = RoundedCornerShape(0),
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.conflict_exists)
+                        )
+                    }
+                }
 
                 if (item.isComplete) {
                     Box(

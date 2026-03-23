@@ -22,7 +22,8 @@ fun ChunkModeSection(
     state: TargetTranslationState,
     typography: Typography,
     listState: LazyListState,
-    onSourceDialogOpen: () -> Unit
+    onSourceDialogOpen: () -> Unit,
+    onConflictClick: (String, String) -> Unit
 ) {
     val chunkVm: ChunkModeViewModel = koinViewModel {
         parametersOf(viewModel.sharedStateFlow, viewModel.eventSender)
@@ -69,7 +70,8 @@ fun ChunkModeSection(
             },
             onOpenChunkClick = {
                 chunkVm.onAction(ChunkAction.ReopenChunkClicked(item))
-            }
+            },
+            onConflictClick = onConflictClick
         )
     }
 }

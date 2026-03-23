@@ -40,13 +40,19 @@ fun ReviewModeSection(
     listState: LazyListState,
     searchRequested: Boolean,
     onSearchConsumed: () -> Unit,
-    onSourceDialogOpen: () -> Unit
+    onSourceDialogOpen: () -> Unit,
+    mergeConflictFilterOn: Boolean = false
 ) {
     val reviewVm: ReviewModeViewModel = koinViewModel {
         parametersOf(viewModel.sharedStateFlow, viewModel.eventSender)
     }
     val reviewState by reviewVm.state.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
+
+    // Apply merge conflict filter from parent
+    LaunchedEffect(mergeConflictFilterOn) {
+        reviewVm.onAction(ReviewAction.SetMergeConflictFilter(mergeConflictFilterOn))
+    }
 
     // Open search when requested from sidebar
     LaunchedEffect(searchRequested) {

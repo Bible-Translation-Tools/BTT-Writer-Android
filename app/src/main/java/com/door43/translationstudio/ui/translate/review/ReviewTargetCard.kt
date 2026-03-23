@@ -48,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -69,14 +70,19 @@ fun ReviewTargetCard(
     item: ReviewItem,
     typography: Typography,
     modifier: Modifier = Modifier,
+    searchQuery: String? = null,
     onEditToggle: () -> Unit,
     onDoneToggle: (Boolean) -> Unit,
     onTextChange: (String) -> Unit,
     onUndoClick: () -> Unit,
     onRedoClick: () -> Unit,
     onAddNoteClick: (caretPosition: Int) -> Unit,
-    onDragDropVerse: (machineReadable: String, verseRawStart: Int, verseRawEnd: Int, targetRawPosition: Int) -> Unit = { _, _, _, _ -> },
-    searchQuery: String? = null
+    onDragDropVerse: (
+        machineReadable: String,
+        verseRawStart: Int,
+        verseRawEnd: Int,
+        targetRawPosition: Int
+    ) -> Unit,
 ) {
     val currentItem by rememberUpdatedState(item)
     var cursorPosition by remember { mutableIntStateOf(0) }
@@ -279,7 +285,7 @@ fun ReviewTargetCard(
                                 buildAnnotatedString {
                                     append(base)
                                     addStyle(
-                                        androidx.compose.ui.text.SpanStyle(
+                                        SpanStyle(
                                             color = onSecondaryColor,
                                             background = secondaryColor
                                         ),

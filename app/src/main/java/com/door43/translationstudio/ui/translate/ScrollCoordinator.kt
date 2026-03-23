@@ -19,6 +19,8 @@ import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+data class PendingScrollItem(val chapterId: String, val chunkId: String? = null)
+
 @Stable
 class ScrollCoordinator(
     val listState: LazyListState,
@@ -28,7 +30,7 @@ class ScrollCoordinator(
         internal set
     var hasDoneInitialLoad by mutableStateOf(false)
         internal set
-    var pendingScrollChapter by mutableStateOf<String?>(null)
+    var pendingScrollChapter by mutableStateOf<PendingScrollItem?>(null)
     var sliderChapterLabel by mutableStateOf<String?>(null)
 
     val dominantIndex = derivedStateOf {
@@ -113,9 +115,17 @@ fun rememberScrollCoordinator(
         val scrollTarget = coordinator.pendingScrollChapter ?: return@LaunchedEffect
 
         snapshotFlow { items }
-            .first { list -> list.any { it.chapterSlug == scrollTarget } }
+            .first { list ->
+                list.any {
+                    it.chapterSlug == scrollTarget.chapterId
+                            && scrollTarget.chunkId?.let { c -> c == it.chunkSlug } ?: true
+                }
+            }
 
-        val targetIndex = items.indexOfFirst { it.chapterSlug == scrollTarget }
+        val targetIndex = items.indexOfFirst {
+            it.chapterSlug == scrollTarget.chapterId
+                    && scrollTarget.chunkId?.let { c -> c == it.chunkSlug } ?: true
+        }
         if (targetIndex != -1) {
             snapshotFlow { listState.layoutInfo.totalItemsCount }
                 .first { it > targetIndex }

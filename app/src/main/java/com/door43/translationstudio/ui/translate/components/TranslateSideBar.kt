@@ -43,15 +43,16 @@ data class TranslateSideBarAction(
 @Composable
 fun TranslateSideBar(
     currentViewMode: TranslationViewMode,
-    showMergeConflict: Boolean,
     onReadClick: () -> Unit,
     onChunkClick: () -> Unit,
     onReviewClick: () -> Unit,
     onMergeConflictClick: () -> Unit,
     onSliderValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    showMergeConflict: Boolean,
     sliderValue: Float = 0f,
     chapterLabel: String? = null,
+    mergeConflictFilterOn: Boolean = false,
     actions: List<TranslateSideBarAction>
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -80,14 +81,15 @@ fun TranslateSideBar(
                 onClick = onChunkClick
             )
             SidebarIconButton(
-                isSelected = currentViewMode == TranslationViewMode.REVIEW,
+                isSelected = currentViewMode == TranslationViewMode.REVIEW
+                        && !mergeConflictFilterOn,
                 icon = Icons.Default.ViewWeek,
                 contentDescription = "Review Mode",
                 onClick = onReviewClick
             )
             if (showMergeConflict) {
                 SidebarIconButton(
-                    isSelected = false,
+                    isSelected = mergeConflictFilterOn,
                     icon = Icons.Default.Warning,
                     contentDescription = "Merge Conflict Warning",
                     onClick = onMergeConflictClick

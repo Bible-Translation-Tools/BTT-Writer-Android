@@ -26,6 +26,7 @@ fun ChunkCard(
     onTextChange: (String) -> Unit,
     onCardsSwiped: (Boolean) -> Unit,
     onOpenChunkClick: () -> Unit,
+    onConflictClick: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -61,7 +62,8 @@ fun ChunkCard(
                 targetTranslation = targetTranslation,
                 typography = typography,
                 onTextChange = onTextChange,
-                onCompleteItemClick = onOpenChunkClick
+                onCompleteItemClick = onOpenChunkClick,
+                onConflictClick = onConflictClick
             )
         },
         onAnimationEnd = onCardsSwiped
