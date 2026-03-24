@@ -823,22 +823,26 @@ class ReviewModeViewModel(
 
     private fun toggleEdit(item: ReviewItem) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val targetMode = if (item.targetMode == TargetMode.EDIT) {
-                    TargetMode.MARKER
-                } else TargetMode.EDIT
+            doToggleEdit(item)
+        }
+    }
 
-                val loadHistory: Boolean
-                if (targetMode == TargetMode.MARKER) {
-                    addMissingVerses(item)
-                    item.chunk.target.commit()
-                    loadHistory = false
-                } else {
-                    loadHistory = true
-                }
-                val updated = prepareItem(item.chunk, targetMode, loadHistory)
-                updateItem(updated)
+    private suspend fun doToggleEdit(item: ReviewItem) {
+        withContext(Dispatchers.IO) {
+            val targetMode = if (item.targetMode == TargetMode.EDIT) {
+                TargetMode.MARKER
+            } else TargetMode.EDIT
+
+            val loadHistory: Boolean
+            if (targetMode == TargetMode.MARKER) {
+                addMissingVerses(item)
+                item.chunk.target.commit()
+                loadHistory = false
+            } else {
+                loadHistory = true
             }
+            val updated = prepareItem(item.chunk, targetMode, loadHistory)
+            updateItem(updated)
         }
     }
 
@@ -939,6 +943,9 @@ class ReviewModeViewModel(
                 var marked = 0
                 for (item in _items.value) {
                     try {
+                        if (item.targetMode == TargetMode.EDIT) {
+                            doToggleEdit(item)
+                        }
                         markChunkCompleted(item)
                         marked++
                     } catch (e: Exception) {
@@ -962,6 +969,8 @@ class ReviewModeViewModel(
                         )
                     }
                 }
+
+                initializeChunks()
 
                 marked
             }

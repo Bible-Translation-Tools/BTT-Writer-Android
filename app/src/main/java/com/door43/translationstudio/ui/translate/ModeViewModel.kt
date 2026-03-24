@@ -79,6 +79,10 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     val items: StateFlow<List<ITEM>> = _items
 
     init {
+        initializeChunks()
+    }
+
+    fun initializeChunks() {
         viewModelScope.launch {
             sharedState
                 .map { it.items to it.viewMode }
