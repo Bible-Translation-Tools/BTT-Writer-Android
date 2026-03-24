@@ -496,7 +496,7 @@ open class ReviewModeAdapter(
 
         if (enableSearch) {
             searchText?.let { query ->
-                renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
+                //renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
             }
         }
 
@@ -1271,7 +1271,7 @@ open class ReviewModeAdapter(
 
         if (enableSearch) {
             searchText?.let { query ->
-                renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
+                //renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
             }
         }
 
@@ -1475,7 +1475,7 @@ open class ReviewModeAdapter(
 
         if (enableSearch) {
             searchText?.let { query ->
-                renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
+                //renderingGroup.setSearchString(query, HIGHLIGHT_COLOR)
             }
         }
 

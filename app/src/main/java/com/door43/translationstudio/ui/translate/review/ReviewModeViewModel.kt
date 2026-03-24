@@ -17,7 +17,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
-import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.LinkData
@@ -318,13 +317,16 @@ class ReviewModeViewModel(
 
         val query = search.query
         val searchSource = search.subject == SearchSubject.SOURCE
-        val renderedSource = renderSourceTextWithSearch(
-            item.id, item.chunk.sourceTranslationFormat, item.sourceText,
-            if (searchSource) query else null
+        val (_, renderedSource) = prepareSource(
+            chunkId = item.id,
+            chunk = item.chunk,
+            searchQuery = if (searchSource) query else null
         )
-        val renderedTarget = renderTargetTextWithSearch(
-            item.id, item.chunk, item.targetText, item.targetMode,
-            if (!searchSource) query else null
+        val (_, renderedTarget) = prepareTarget(
+            chunkId = item.id,
+            chunk = item.chunk,
+            targetMode = item.targetMode,
+            searchQuery = if (!searchSource) query else null
         )
         return item.copy(
             renderedSourceText = renderedSource,
@@ -332,15 +334,25 @@ class ReviewModeViewModel(
         )
     }
 
-    private fun prepareSource(chunkId: String, chunk: Chunk): Pair<String, AnnotatedString> {
+    private fun prepareSource(
+        chunkId: String,
+        chunk: Chunk,
+        searchQuery: String? = null
+    ): Pair<String, AnnotatedString> {
         val text = chunk.source.readChunk(chunk.chapterSlug, chunk.chunkSlug)
-        return text to renderSourceText(chunkId, chunk.sourceTranslationFormat, text)
+        return text to renderSourceText(
+            chunkId = chunkId,
+            translationFormat = chunk.sourceTranslationFormat,
+            sourceText = text,
+            searchQuery = searchQuery
+        )
     }
 
     private fun prepareTarget(
         chunkId: String,
         chunk: Chunk,
-        targetMode: TargetMode
+        targetMode: TargetMode,
+        searchQuery: String? = null
     ): Pair<String, AnnotatedString> {
         val text = fetchTargetText(chunk.target, chunk.chapterSlug, chunk.chunkSlug)
         val verseDisplay = when (targetMode) {
@@ -354,6 +366,7 @@ class ReviewModeViewModel(
             targetText = text,
             verseDisplay = verseDisplay,
             footnoteEditable = targetMode != TargetMode.COMPLETE,
+            searchQuery = searchQuery,
             onVerseClick = {
                 showSnackBar(application.getString(R.string.long_click_to_drag))
             }
@@ -481,13 +494,16 @@ class ReviewModeViewModel(
             val updatedItems = items.map { item ->
                 val chunkId = item.id
                 val searchSource = subject == SearchSubject.SOURCE
-                val renderedSource = renderSourceTextWithSearch(
-                    chunkId, item.chunk.sourceTranslationFormat, item.sourceText,
-                    if (searchSource) query else null
+                val (_, renderedSource) = prepareSource(
+                    chunkId = item.id,
+                    chunk = item.chunk,
+                    searchQuery = if (searchSource) query else null
                 )
-                val renderedTarget = renderTargetTextWithSearch(
-                    chunkId, item.chunk, item.targetText, item.targetMode,
-                    if (!searchSource) query else null
+                val (_, renderedTarget) = prepareTarget(
+                    chunkId = chunkId,
+                    chunk = item.chunk,
+                    targetMode = item.targetMode,
+                    searchQuery = if (!searchSource) query else null
                 )
 
                 // Check matches against rendered text, plus raw text for EDIT mode
@@ -520,11 +536,16 @@ class ReviewModeViewModel(
             val items = _items.value
             val updatedItems = items.map { item ->
                 val chunkId = item.id
-                val renderedSource = renderSourceTextWithSearch(
-                    chunkId, item.chunk.sourceTranslationFormat, item.sourceText, searchQuery
+                val (_, renderedSource) = prepareSource(
+                    chunkId = item.id,
+                    chunk = item.chunk,
+                    searchQuery = searchQuery
                 )
-                val renderedTarget = renderTargetTextWithSearch(
-                    chunkId, item.chunk, item.targetText, item.targetMode, searchQuery
+                val (_, renderedTarget) = prepareTarget(
+                    chunkId = chunkId,
+                    chunk = item.chunk,
+                    targetMode = item.targetMode,
+                    searchQuery = searchQuery
                 )
                 item.copy(
                     renderedSourceText = renderedSource,
@@ -532,89 +553,6 @@ class ReviewModeViewModel(
                 )
             }
             _items.value = updatedItems
-        }
-    }
-
-    private fun renderSourceTextWithSearch(
-        chunkId: String,
-        translationFormat: TranslationFormat,
-        sourceText: String,
-        searchQuery: String?
-    ): AnnotatedString {
-        return try {
-            val renderingGroup = RenderingGroup()
-            renderingGroup.init(sourceText)
-            RenderingProvider().setupRenderingGroup(
-                format = translationFormat,
-                renderingGroup = renderingGroup,
-                verseDisplay = VerseDisplay.NUMBER,
-                target = false
-            )
-            if (!searchQuery.isNullOrEmpty()) {
-                renderingGroup.setSearchString(searchQuery, android.graphics.Color.YELLOW)
-            }
-            val renderNodes = renderingGroup.start()
-            ComposeTextAdapter.convert(
-                renderNodes,
-                onNoteClick = { note, _, _ ->
-                    showFootnoteViewer(Footnote(
-                        text = note.notes,
-                        machineReadable = note.machineReadable,
-                        chunkId = chunkId,
-                        editable = false,
-                        start = note.startPos,
-                        end = note.endPos
-                    ))
-                }
-            )
-        } catch (_: Exception) {
-            AnnotatedString(sourceText)
-        }
-    }
-
-    private fun renderTargetTextWithSearch(
-        chunkId: String,
-        chunk: Chunk,
-        targetText: String,
-        targetMode: TargetMode,
-        searchQuery: String?
-    ): AnnotatedString {
-        val verseDisplay = when (targetMode) {
-            TargetMode.MARKER -> VerseDisplay.PIN
-            TargetMode.EDIT -> VerseDisplay.RAW
-            TargetMode.COMPLETE -> VerseDisplay.NUMBER
-        }
-        return try {
-            val renderingGroup = RenderingGroup()
-            renderingGroup.init(targetText)
-            RenderingProvider().setupRenderingGroup(
-                chunk.targetTranslationFormat,
-                renderingGroup,
-                verseDisplay,
-                target = true
-            )
-            if (!searchQuery.isNullOrEmpty()) {
-                renderingGroup.setSearchString(searchQuery, android.graphics.Color.YELLOW)
-            }
-            val renderNodes = renderingGroup.start()
-            ComposeTextAdapter.convert(
-                nodes = renderNodes,
-                onNoteClick = { note, _, _ ->
-                    showFootnoteViewer(Footnote(
-                        text = note.notes,
-                        machineReadable = note.machineReadable,
-                        chunkId = chunkId,
-                        editable = targetMode != TargetMode.COMPLETE,
-                        start = note.startPos,
-                        end = note.endPos
-                    ))
-                },
-                onVerseClick = if (targetMode == TargetMode.MARKER) { _ ->
-                    showSnackBar(application.getString(R.string.long_click_to_drag))
-                } else null
-            )
-        } catch (_: Exception) {
-            AnnotatedString(targetText)
         }
     }
 

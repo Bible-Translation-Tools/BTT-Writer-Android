@@ -19,7 +19,6 @@ class USXRenderer(
     private var renderParagraphs = true
     private var renderVerses = verseDisplay != VerseDisplay.RAW
     private var search: String? = null
-    private var highlightColor = 0
     private var expectedVerseRange = IntArray(0)
     private var suppressLeadingMajorSectionHeadings = false
     private var addedMissingVerse = false
@@ -32,9 +31,8 @@ class USXRenderer(
         renderParagraphs = enable
     }
 
-    override fun setSearchString(searchString: CharSequence, highlightColor: Int) {
-        this.highlightColor = highlightColor
-        search = if (searchString.isNotEmpty()) searchString.toString().lowercase() else null
+    override fun setSearchString(searchString: String) {
+        search = if (searchString.isNotEmpty()) searchString.lowercase() else null
     }
 
     override fun setPopulateVerseMarkers(verseRange: IntArray) {
@@ -111,8 +109,8 @@ class USXRenderer(
         return buildTree(nodes).filter { !(it is RenderNode.Paragraph && it.children.isEmpty()) }
     }
 
-    override fun getLeadingMajorSectionHeading(input: CharSequence): String {
-        val matcher = paraPattern("ms").matcher(input.toString())
+    override fun getLeadingMajorSectionHeading(input: String): String {
+        val matcher = paraPattern("ms").matcher(input)
         return if (matcher.find() && matcher.start() == 0) matcher.group(1) ?: "" else ""
     }
 
@@ -307,8 +305,8 @@ class USXRenderer(
                         listOf(
                             RenderNode.Note(
                                 caller = note.caller,
-                                passage = note.passage.toString(),
-                                notes = note.notes.toString(),
+                                passage = note.passage,
+                                notes = note.notes,
                                 noteStyle = style,
                                 machineReadable = noteText,
                                 startPos = matcher.start(),

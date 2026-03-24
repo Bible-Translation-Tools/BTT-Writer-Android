@@ -120,10 +120,6 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
         }
     }
 
-    fun showFootnoteViewer(note: Footnote) {
-        _modeState.update { it.copy(footnote = note) }
-    }
-
     fun showFootnoteEditor(note: Footnote) {
         _modeState.update { it.copy(footnoteToEdit = note) }
     }
@@ -144,7 +140,8 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     protected fun renderSourceText(
         chunkId: String,
         translationFormat: TranslationFormat,
-        sourceText: String
+        sourceText: String,
+        searchQuery: String? = null
     ): AnnotatedString {
         return try {
             val renderingGroup = RenderingGroup()
@@ -155,6 +152,9 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 verseDisplay = VerseDisplay.NUMBER,
                 target = false
             )
+            if (!searchQuery.isNullOrEmpty()) {
+                renderingGroup.setSearchString(searchQuery)
+            }
             val renderNodes = renderingGroup.start()
             ComposeTextAdapter.convert(
                 renderNodes,
@@ -182,6 +182,7 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
         targetText: String,
         verseDisplay: VerseDisplay = VerseDisplay.RAW,
         footnoteEditable: Boolean,
+        searchQuery: String? = null,
         onVerseClick: ((RenderNode.Verse) -> Unit)? = null
     ): AnnotatedString {
         return try {
@@ -193,6 +194,9 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
                 verseDisplay,
                 target = true
             )
+            if (!searchQuery.isNullOrEmpty()) {
+                renderingGroup.setSearchString(searchQuery)
+            }
             val renderNodes = renderingGroup.start()
             ComposeTextAdapter.convert(
                 nodes = renderNodes,

@@ -8,12 +8,11 @@ import com.door43.translationstudio.rendering.model.RenderNode
 class DefaultRenderer : RenderingEngine() {
 
     private var search: String = ""
-    private var highlightColor = 0
     private var renderer: USXRenderer? = null
 
     override fun render(input: String): List<RenderNode> {
         val usxRenderer = USXRenderer()
-        usxRenderer.setSearchString(search, highlightColor)
+        usxRenderer.setSearchString(search)
         this.renderer = usxRenderer
         if (isStopped()) return listOf(RenderNode.Text(input))
         return usxRenderer.render(input)
@@ -23,10 +22,9 @@ class DefaultRenderer : RenderingEngine() {
         renderer?.stop()
     }
 
-    override fun setSearchString(searchString: CharSequence, highlightColor: Int) {
-        this@DefaultRenderer.highlightColor = highlightColor
+    override fun setSearchString(searchString: String) {
         search = if (searchString.isNotEmpty()) {
-            searchString.toString().lowercase()
+            searchString.lowercase()
         } else {
             ""
         }

@@ -41,11 +41,10 @@ class RenderingGroup {
      * If set to not empty matched strings will be highlighted.
      *
      * @param searchString - empty string disables highlighting
-     * @param highlightColor
      */
-    fun setSearchString(searchString: CharSequence, highlightColor: Int) {
+    fun setSearchString(searchString: String) {
         for (engine in mEngines) {
-            engine.setSearchString(searchString, highlightColor)
+            engine.setSearchString(searchString)
         }
     }
 

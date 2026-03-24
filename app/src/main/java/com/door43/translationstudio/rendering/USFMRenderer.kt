@@ -17,7 +17,6 @@ class USFMRenderer(
     private var renderParagraphs = true
     private var renderVerses = verseDisplay != VerseDisplay.RAW
     private var search: String? = null
-    private var highlightColor = 0
     private var expectedVerseRange = IntArray(0)
     private var suppressLeadingMajorSectionHeadings = false
     private var addedMissingVerse = false
@@ -30,9 +29,8 @@ class USFMRenderer(
         renderParagraphs = enable
     }
 
-    override fun setSearchString(searchString: CharSequence, highlightColor: Int) {
-        this.highlightColor = highlightColor
-        search = if (searchString.isNotEmpty()) searchString.toString().lowercase() else null
+    override fun setSearchString(searchString: String) {
+        search = if (searchString.isNotEmpty()) searchString.lowercase() else null
     }
 
     override fun setPopulateVerseMarkers(verseRange: IntArray) {
@@ -107,8 +105,8 @@ class USFMRenderer(
         return buildTree(nodes)
     }
 
-    override fun getLeadingMajorSectionHeading(input: CharSequence): String {
-        val matcher = MAJOR_SECTION_PATTERN.matcher(input.toString())
+    override fun getLeadingMajorSectionHeading(input: String): String {
+        val matcher = MAJOR_SECTION_PATTERN.matcher(input)
         return if (matcher.find() && matcher.start() == 0) matcher.group(1)?.trim() ?: "" else ""
     }
 
@@ -273,8 +271,8 @@ class USFMRenderer(
                         listOf(
                             RenderNode.Note(
                                 caller = note.caller,
-                                passage = note.passage.toString(),
-                                notes = note.notes.toString(),
+                                passage = note.passage,
+                                notes = note.notes,
                                 noteStyle = style,
                                 machineReadable = matcher.group(),
                                 startPos = matcher.start(),

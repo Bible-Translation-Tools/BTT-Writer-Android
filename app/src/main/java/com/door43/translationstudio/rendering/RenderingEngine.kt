@@ -13,17 +13,17 @@ abstract class RenderingEngine {
      * @param input the raw input string
      * @param callback the callback that will receive events regarding the rendering
      */
-    fun start(input: CharSequence, callback: OnRenderCallback) {
+    fun start(input: String, callback: OnRenderCallback) {
         if (running) return
         running = true
         stopped = false
 
         thread {
             try {
-                val output = render(input.toString())
+                val output = render(input)
                 callback.onComplete(output)
-            } catch (e: Exception) {
-                callback.onError(input.toString())
+            } catch (_: Exception) {
+                callback.onError(input)
             } finally {
                 running = false
             }
@@ -63,9 +63,8 @@ abstract class RenderingEngine {
      * If set to not empty, matched strings will be highlighted.
      *
      * @param searchString - empty string disables highlighting
-     * @param highlightColor
      */
-    open fun setSearchString(searchString: CharSequence, highlightColor: Int) {
+    open fun setSearchString(searchString: String) {
         // by default does nothing
     }
 

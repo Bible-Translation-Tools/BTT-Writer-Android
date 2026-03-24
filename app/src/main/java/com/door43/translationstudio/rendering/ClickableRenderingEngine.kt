@@ -1,7 +1,7 @@
 package com.door43.translationstudio.rendering
 
 /**
- * This is an abstract base class for clickable rendering engine. This handles all of the rendering
+ * This is an abstract base class for clickable rendering engine. This handles all the rendering
  * for USX formatted source and translation.
  */
 abstract class ClickableRenderingEngine : RenderingEngine() {
@@ -26,9 +26,8 @@ abstract class ClickableRenderingEngine : RenderingEngine() {
      * If set to not empty, matched strings will be highlighted.
      *
      * @param searchString - empty string disables highlighting
-     * @param highlightColor
      */
-    abstract override fun setSearchString(searchString: CharSequence, highlightColor: Int)
+    abstract override fun setSearchString(searchString: String)
 
     /**
      * Specifies an inclusive range of verses expected in the input.
@@ -47,5 +46,5 @@ abstract class ClickableRenderingEngine : RenderingEngine() {
      */
     abstract fun setSuppressLeadingMajorSectionHeadings(suppressLeadingMajorSectionHeadings: Boolean)
 
-    abstract fun getLeadingMajorSectionHeading(input: CharSequence): String
+    abstract fun getLeadingMajorSectionHeading(input: String): String
 }
