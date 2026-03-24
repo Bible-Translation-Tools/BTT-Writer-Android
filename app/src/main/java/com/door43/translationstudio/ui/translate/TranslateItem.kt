@@ -11,6 +11,11 @@ import com.door43.translationstudio.core.ProjectTranslation
 import com.door43.translationstudio.ui.translate.review.TargetMode
 import com.door43.usecases.ParseMergeConflicts
 
+data class MergeItem(
+    val raw: CharSequence,
+    val rendered: AnnotatedString
+)
+
 interface Swipable {
     val sourceOnTop: Boolean
     fun selfCopy(sourceOnTop: Boolean = this.sourceOnTop): Swipable
@@ -106,9 +111,11 @@ abstract class TranslateItem {
     val hasMergeConflicts: Boolean
         get() = MergeConflictsHandler.isMergeConflicted(targetText)
 
-    val mergeItems: List<CharSequence>
+    val mergeItems: List<MergeItem>
         get() = if (hasMergeConflicts) {
-            ParseMergeConflicts.execute(targetText)
+            ParseMergeConflicts.execute(targetText).map {
+                MergeItem(raw = it, rendered = AnnotatedString(it.toString()))
+            }
         } else emptyList()
 
     fun saveTranslation(text: String) {

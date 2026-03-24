@@ -577,7 +577,7 @@ class ReviewModeViewModel(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 item.mergeItems.getOrNull(index)?.let { mergeItem ->
-                    item.saveTranslation(mergeItem.toString())
+                    item.saveTranslation(mergeItem.raw.toString())
                     updateItem(prepareItem(item.chunk, item.targetMode))
                 }
             }

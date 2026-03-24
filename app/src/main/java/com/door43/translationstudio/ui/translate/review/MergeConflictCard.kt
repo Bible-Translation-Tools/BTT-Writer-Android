@@ -136,7 +136,7 @@ fun MergeConflictCard(
                     } else bodyStyle.fontSize / 1.2
 
                     Text(
-                        conflict.toString(),
+                        conflict.rendered,
                         style = bodyStyle.copy(
                             color = MaterialTheme.colorScheme.onTertiary,
                             fontWeight = fontWeight,
