@@ -27,14 +27,14 @@ object ComposeTextAdapter {
      * Convert a list of RenderNodes to an AnnotatedString.
      *
      * @param nodes                The platform-agnostic node list from a renderer.
-     * @param searchHighlightColor Color for search highlight nodes.
+     * @param highlightColor       Color for search highlight nodes.
      * @param verseColor           Color for regular verse markers.
      * @param onVerseClick         Optional click handler for verse markers.
      * @param onNoteClick          Optional click handler for note markers.
      */
     fun convert(
         nodes: List<RenderNode>,
-        searchHighlightColor: Color = Color.Yellow,
+        highlightColor: Color = Color.Yellow,
         verseColor: Color = Color.Gray,
         onVerseClick: ((RenderNode.Verse) -> Unit)? = null,
         onNoteClick: (RenderNode.Note, Int, Int) -> Unit = { _, _, _ -> },
@@ -43,7 +43,7 @@ object ComposeTextAdapter {
         for (node in nodes) {
             appendNode(
                 node = node,
-                searchHighlightColor = searchHighlightColor,
+                highlightColor = highlightColor,
                 verseColor = verseColor,
                 onVerseClick = onVerseClick,
                 onNoteClick = onNoteClick,
@@ -135,7 +135,7 @@ object ComposeTextAdapter {
 
     private fun AnnotatedString.Builder.appendNode(
         node: RenderNode,
-        searchHighlightColor: Color,
+        highlightColor: Color,
         verseColor: Color,
         onVerseClick: ((RenderNode.Verse) -> Unit)?,
         onNoteClick: (RenderNode.Note, Int, Int) -> Unit,
@@ -155,10 +155,10 @@ object ComposeTextAdapter {
                     )
                 }
                 if (node.attributes.searchHighlighted
-                    && searchHighlightColor != Color.Unspecified) {
+                    && highlightColor != Color.Unspecified) {
                     addStyle(
                         SpanStyle(
-                            background = searchHighlightColor,
+                            background = highlightColor,
                             color = Color.Black
                         ),
                         start,
@@ -184,7 +184,7 @@ object ComposeTextAdapter {
                 for (child in node.children) {
                     appendNode(
                         node = child,
-                        searchHighlightColor = searchHighlightColor,
+                        highlightColor = highlightColor,
                         verseColor = verseColor,
                         onVerseClick = onVerseClick,
                         onNoteClick = onNoteClick,
@@ -219,7 +219,7 @@ object ComposeTextAdapter {
                 for (child in node.children) {
                     appendNode(
                         node = child,
-                        searchHighlightColor = searchHighlightColor,
+                        highlightColor = highlightColor,
                         verseColor = verseColor,
                         onVerseClick = onVerseClick,
                         onNoteClick = onNoteClick,
@@ -284,15 +284,15 @@ object ComposeTextAdapter {
                 val start = length
                 pushStyle(SpanStyle())
                 if (node.attributes.searchHighlighted
-                    && searchHighlightColor != Color.Unspecified) {
-                    pushStyle(SpanStyle(background = searchHighlightColor))
+                    && highlightColor != Color.Unspecified) {
+                    pushStyle(SpanStyle(background = highlightColor))
                 }
 
                 // Placeholder for the note icon using inline content
                 appendInlineContent("note_icon", NOTE_CHAR.toString())
 
                 if (node.attributes.searchHighlighted
-                    && searchHighlightColor != Color.Unspecified) {
+                    && highlightColor != Color.Unspecified) {
                     pop()
                 }
                 pop()

@@ -576,8 +576,8 @@ class ReviewModeViewModel(
     private fun selectConflict(item: ReviewItem, index: Int) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                item.mergeItems.getOrNull(index)?.let { mergeItem ->
-                    item.saveTranslation(mergeItem.raw.toString())
+                item.mergeItems.getOrNull(index)?.let { conflict ->
+                    item.saveTranslation(conflict.toString())
                     updateItem(prepareItem(item.chunk, item.targetMode))
                 }
             }

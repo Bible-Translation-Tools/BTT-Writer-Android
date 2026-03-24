@@ -117,6 +117,7 @@ fun ReviewCard(
             MergeConflictCard(
                 item = item,
                 typography = typography,
+                searchQuery = searchQuery,
                 onUndoClick = onUndoClick,
                 onRedoClick = onRedoClick,
                 onConfirmClick = onConflictSelected,
