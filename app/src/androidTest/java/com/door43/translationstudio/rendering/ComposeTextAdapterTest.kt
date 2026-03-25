@@ -10,7 +10,9 @@ import com.door43.translationstudio.rendering.model.NodeStyle
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -251,7 +253,7 @@ class ComposeTextAdapterTest {
         val nodes = listOf(
             RenderNode.Text("hello", attributes = NodeAttributes(searchHighlighted = true))
         )
-        val result = ComposeTextAdapter.convert(nodes, searchHighlightColor = highlightColor)
+        val result = ComposeTextAdapter.convert(nodes)
         assertTrue(
             "Expected background color span for search highlight",
             result.spanStyles.any { it.item.background == highlightColor }

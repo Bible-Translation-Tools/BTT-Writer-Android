@@ -282,7 +282,7 @@ class USFMRendererTest {
     fun `search string produces SearchHighlight nodes`() {
         val input = """\v 1 In the beginning God created"""
         val r = renderer()
-        r.setSearchString("beginning", 0xFF0000)
+        r.setSearchString("beginning")
         val nodes = r.render(input)
         val highlights = flatten(nodes).filterIsInstance<RenderNode.Text>()
             .filter { it.attributes.searchHighlighted }
@@ -294,7 +294,7 @@ class USFMRendererTest {
     fun `search highlight preserves surrounding text`() {
         val input = "In the beginning God"
         val r = renderer()
-        r.setSearchString("beginning", 0xFF0000)
+        r.setSearchString("beginning")
         val nodes = r.render(input)
         val allText = flatten(nodes).filterIsInstance<RenderNode.Text>()
             .joinToString("") { it.content }
@@ -305,7 +305,7 @@ class USFMRendererTest {
     fun `search is case-insensitive`() {
         val input = "In the Beginning God"
         val r = renderer()
-        r.setSearchString("beginning", 0xFF0000)
+        r.setSearchString("beginning")
         val nodes = r.render(input)
         assertTrue(flatten(nodes).filterIsInstance<RenderNode.Text>()
             .any { it.attributes.searchHighlighted })
@@ -315,7 +315,7 @@ class USFMRendererTest {
     fun `search highlight content matches original case`() {
         val input = "In the Beginning God"
         val r = renderer()
-        r.setSearchString("beginning", 0xFF0000)
+        r.setSearchString("beginning")
         val nodes = r.render(input)
         val highlight = flatten(nodes).filterIsInstance<RenderNode.Text>()
             .firstOrNull { it.attributes.searchHighlighted }
@@ -327,7 +327,7 @@ class USFMRendererTest {
     fun `empty search string disables highlighting`() {
         val input = "In the beginning"
         val r = renderer()
-        r.setSearchString("", 0xFF0000)
+        r.setSearchString("")
         val nodes = r.render(input)
         assertFalse(flatten(nodes).filterIsInstance<RenderNode.Text>()
             .any { it.attributes.searchHighlighted })
@@ -347,7 +347,7 @@ class USFMRendererTest {
     fun `note marker highlighted when search matches note content`() {
         val input = """\f + \ft special footnote text \f*"""
         val r = renderer()
-        r.setSearchString("special", 0xFF0000)
+        r.setSearchString("special")
         val nodes = r.render(input)
         val note = flatten(nodes).filterIsInstance<RenderNode.Note>().firstOrNull()
         assertNotNull(note)
@@ -358,7 +358,7 @@ class USFMRendererTest {
     fun `note marker not highlighted when search does not match`() {
         val input = """\f + \ft footnote text \f*"""
         val r = renderer()
-        r.setSearchString("xyz", 0xFF0000)
+        r.setSearchString("xyz")
         val nodes = r.render(input)
         val note = flatten(nodes).filterIsInstance<RenderNode.Note>().firstOrNull()
         assertNotNull(note)

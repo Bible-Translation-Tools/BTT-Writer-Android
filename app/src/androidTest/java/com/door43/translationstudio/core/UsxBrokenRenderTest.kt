@@ -1,6 +1,5 @@
 package com.door43.translationstudio.core
 
-import android.graphics.Color
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
@@ -124,7 +123,7 @@ class UsxBrokenRenderTest : KoinTest {
         renderingProvider.setupRenderingGroup(format, renderingGroup)
 
         if (search != null) {
-            renderingGroup.setSearchString(search, Color.YELLOW)
+            renderingGroup.setSearchString(search)
         }
         renderingGroup.init(testText)
         val nodes = renderingGroup.start()
