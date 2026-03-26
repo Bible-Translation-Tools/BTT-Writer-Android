@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
-import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
@@ -23,9 +22,7 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.translate.ListItemOld
 import com.door43.translationstudio.ui.translate.SharedState
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
 import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
@@ -484,44 +481,6 @@ class TargetTranslationViewModel(
 
             return resourceContainer?.slug
         }
-    }
-
-    // TODO Make private after removing Fragments
-    fun getClosestResourceContainer(
-        languageSlug: String,
-        projectSlug: String,
-        resourceSlug: String
-    ): ResourceContainer? {
-        return ContainerCache.cacheClosest(library, languageSlug, projectSlug, resourceSlug)
-    }
-
-    // TODO Make private after removing Fragments
-    fun getResourceContainer(slug: String): ResourceContainer? {
-        return ContainerCache.get(slug)
-    }
-
-    // TODO Make private after removing Fragments
-    fun saveSearchSource(source: String) {
-        prefRepository.setDefaultPref<String>(
-            SEARCH_SOURCE,
-            source
-        )
-    }
-
-    // TODO Make private after removing Fragments
-    fun renderHelps(item: ListItemOld) {
-        viewModelScope.launch {
-//            val result = renderHelps.execute(item)
-//            _state.update {
-//                it.copy(renderHelpsResult = result)
-//            }
-        }/*.also(renderHelpJobs::add)*/
-    }
-
-    // TODO Make private after removing Fragments
-    fun cancelRenderJobs() {
-//        renderHelpJobs.forEach { it.cancel() }
-//        renderHelpJobs.clear()
     }
 
     // TODO Removing after refactoring PublishActivity
