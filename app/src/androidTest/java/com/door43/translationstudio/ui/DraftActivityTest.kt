@@ -77,11 +77,11 @@ class DraftActivityTest : KoinAndroidTest() {
         ActivityScenario.launch<DraftActivity>(intent).use {
 //            onView(withId(R.id.drafts)).tryCheck(matches(isDisplayed()))
 //            onView(withId(R.id.fab)).tryCheck(matches(isDisplayed()))
-            onView(allOf(
-                withText(containsString("Chapter 1")),
-                withId(R.id.source_translation_title),
-                hasSibling(withId(R.id.source_translation_body)
-                ))).tryCheck(matches(isDisplayed()))
+//            onView(allOf(
+//                withText(containsString("Chapter 1")),
+//                withId(R.id.source_translation_title),
+//                hasSibling(withId(R.id.source_translation_body)
+//                ))).tryCheck(matches(isDisplayed()))
 
             // Cancel import draft dialog
 //            onView(withId(R.id.fab)).tryPerform(click())

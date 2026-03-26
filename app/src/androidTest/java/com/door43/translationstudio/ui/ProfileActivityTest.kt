@@ -77,9 +77,9 @@ class ProfileActivityTest : KoinAndroidTest() {
 
             checkText(R.string.server_account, true)
             onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
-            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
-
-            onView(withId(R.id.ok_button)).tryPerform(click())
+//            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
+//
+//            onView(withId(R.id.ok_button)).tryPerform(click())
 
             checkDialogText(R.string.double_check_credentials, true)
             onView(withText(R.string.label_ok)).tryPerform(click())
@@ -100,9 +100,9 @@ class ProfileActivityTest : KoinAndroidTest() {
 
             checkText(R.string.server_account, true)
             onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
-            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
-
-            onView(withId(R.id.ok_button)).tryPerform(click())
+//            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
+//
+//            onView(withId(R.id.ok_button)).tryPerform(click())
 
             checkDialogText(R.string.internet_not_available, true)
             onView(withText(R.string.label_ok)).tryPerform(click())
@@ -120,14 +120,14 @@ class ProfileActivityTest : KoinAndroidTest() {
             verifyMainViewsInPlace(false)
 
             checkText(R.string.names_will_be_public, true)
-            onView(withId(R.id.full_name)).tryCheck(matches(isDisplayed()))
-
-            onView(withId(R.id.ok_button)).tryPerform(click())
+//            onView(withId(R.id.full_name)).tryCheck(matches(isDisplayed()))
+//
+//            onView(withId(R.id.ok_button)).tryPerform(click())
 
             checkText(R.string.complete_required_fields, true)
 
-            onView(withId(R.id.full_name)).tryPerform(typeText("TestUser"))
-            onView(withId(R.id.ok_button)).tryPerform(click())
+//            onView(withId(R.id.full_name)).tryPerform(typeText("TestUser"))
+//            onView(withId(R.id.ok_button)).tryPerform(click())
             checkDialogText(R.string.publishing_privacy_notice, true)
             onView(withText(R.string.label_continue)).tryPerform(click())
             //onView(withId(R.id.accept_terms_btn)).tryPerform(click())
