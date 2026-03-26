@@ -336,23 +336,33 @@ class USFMRenderer(
             if (isStopped()) return
             if (node is RenderNode.Text && !node.attributes.searchHighlighted) {
                 val lower = node.content.lowercase()
+                val rawBase = node.start
+                val hasRawPos = rawBase >= 0
                 var last = 0
                 while (true) {
                     val pos = lower.indexOf(term, last)
                     if (pos < 0) break
                     if (pos > last) {
-                        result.add(RenderNode.Text(node.content.substring(last, pos)))
+                        result.add(RenderNode.Text(
+                            node.content.substring(last, pos),
+                            start = if (hasRawPos) rawBase + last else -1,
+                            end = if (hasRawPos) rawBase + pos else -1
+                        ))
                     }
-                    result.add(
-                        RenderNode.Text(
-                            node.content.substring(pos, pos + term.length),
-                            attributes = NodeAttributes(searchHighlighted = true)
-                        )
-                    )
+                    result.add(RenderNode.Text(
+                        node.content.substring(pos, pos + term.length),
+                        start = if (hasRawPos) rawBase + pos else -1,
+                        end = if (hasRawPos) rawBase + pos + term.length else -1,
+                        attributes = NodeAttributes(searchHighlighted = true)
+                    ))
                     last = pos + term.length
                 }
                 if (last < node.content.length) {
-                    result.add(RenderNode.Text(node.content.substring(last)))
+                    result.add(RenderNode.Text(
+                        node.content.substring(last),
+                        start = if (hasRawPos) rawBase + last else -1,
+                        end = if (hasRawPos) rawBase + node.content.length else -1
+                    ))
                 }
             } else {
                 result.add(node)
