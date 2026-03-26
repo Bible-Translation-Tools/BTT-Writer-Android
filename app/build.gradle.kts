@@ -106,7 +106,6 @@ configurations {
 }
 
 dependencies {
-    implementation(fileTree("libs") { include("*.jar") })
     implementation(libs.androidx.legacy.support.v13)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.legacy.support.v4)
@@ -129,8 +128,6 @@ dependencies {
     implementation(libs.http.tools)
     implementation(libs.event.buffer)
     implementation(libs.foreground)
-    implementation(project(":html-textview"))
-    implementation(project(":seekbarhint"))
     implementation(libs.firebase.appindexing)
     implementation(libs.okhttp)
     implementation(libs.markdownj)

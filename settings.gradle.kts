@@ -16,4 +16,4 @@ dependencyResolutionManagement {
     }
 }
 
-include(":app", ":html-textview", ":seekbarhint")
+include(":app")

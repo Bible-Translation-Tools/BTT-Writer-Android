@@ -73,4 +73,6 @@
     <color name="light_yellow">#e5feffcc</color>
     <color name="head_background">#bffff5</color>
     <color name="tail_background">#baedff</color>
+
+    <color name="elv_popup_text_color">#000000</color>
 </resources>

@@ -1,16 +1,9 @@
 package com.door43.widget
 
 import android.content.res.ColorStateList
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.view.View
-import android.view.animation.Animation
-import android.view.animation.AnimationSet
-import android.view.animation.LinearInterpolator
-import android.view.animation.TranslateAnimation
 import android.widget.PopupMenu
 import android.widget.TextView
-import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.DrawableCompat
 import com.google.android.material.R
 import com.google.android.material.snackbar.Snackbar
@@ -19,19 +12,6 @@ import com.google.android.material.snackbar.Snackbar
  * This class provides utilities for views
  */
 object ViewUtil {
-    /**
-     * Makes links in a textview clickable
-     * includes support for long clicks
-     * @param view
-     */
-    fun makeLinksClickable(view: TextView) {
-        val m = view.movementMethod
-        if (m == null || m !is LongClickLinkMovementMethod) {
-            if (view.linksClickable) {
-                view.movementMethod = LongClickLinkMovementMethod.instance
-            }
-        }
-    }
 
     /**
      * Sets the color of the snack bar text
@@ -53,166 +33,6 @@ object ViewUtil {
         val wrappedDrawable = DrawableCompat.wrap(originalDrawable)
         DrawableCompat.setTintList(wrappedDrawable, ColorStateList.valueOf(color))
         view.background = wrappedDrawable
-    }
-
-    /**
-     * Performs a stacked card animation that brings a bottom card to the front
-     * In preparation two views should be stacked on top of each other with appropriate margin
-     * so that the bottom card sticks out on the bottom and the right.
-     *
-     * @param topCard
-     * @param bottomCard
-     * @param topCardElevation
-     * @param bottomCardElevation
-     * @param leftToRight indicates which direction the animation of the top card should go.
-     * @param listener
-     */
-    fun animateSwapCards(
-        topCard: View,
-        bottomCard: View,
-        topCardElevation: Float,
-        bottomCardElevation: Float,
-        leftToRight: Boolean,
-        listener: Animation.AnimationListener?
-    ) {
-        val duration: Long = 400
-        val xMargin = topCard.x - bottomCard.x
-        val yMargin = topCard.y - bottomCard.y
-
-        topCard.clearAnimation()
-        bottomCard.clearAnimation()
-
-        val topLayout = topCard.layoutParams
-        val bottomLayout = bottomCard.layoutParams
-
-        // bottom animation
-        val upLeft: Animation = TranslateAnimation(0f, xMargin, 0f, yMargin)
-        upLeft.duration = duration
-        val bottomCardRight: Animation = TranslateAnimation(
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            .5f,
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            0f
-        )
-        bottomCardRight.duration = duration
-        val bottomCardLeft: Animation = TranslateAnimation(
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            -.5f,
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            0f
-        )
-        bottomCardLeft.duration = duration
-
-        val bottomOutSet = AnimationSet(false)
-        if (leftToRight) {
-            bottomOutSet.addAnimation(bottomCardLeft)
-        } else {
-            bottomOutSet.addAnimation(bottomCardRight)
-        }
-        val bottomInSet = AnimationSet(false)
-        bottomInSet.startOffset = duration
-        if (leftToRight) {
-            bottomInSet.addAnimation(bottomCardRight)
-            bottomInSet.addAnimation(upLeft)
-        } else {
-            bottomInSet.addAnimation(bottomCardLeft)
-            bottomInSet.addAnimation(upLeft)
-        }
-        val bottomSet = AnimationSet(false)
-        bottomSet.interpolator = LinearInterpolator()
-        bottomSet.addAnimation(bottomOutSet)
-        bottomSet.addAnimation(bottomInSet)
-        bottomSet.setAnimationListener(listener)
-
-        bottomOutSet.setAnimationListener(object : Animation.AnimationListener {
-            override fun onAnimationStart(animation: Animation) {
-            }
-
-            override fun onAnimationEnd(animation: Animation) {
-                // elevation takes precedence for API 21+
-                topCard.elevation = bottomCardElevation.toFloat()
-                bottomCard.elevation = topCardElevation.toFloat()
-                bottomCard.bringToFront()
-                (bottomCard.parent as View).requestLayout()
-                (bottomCard.parent as View).invalidate()
-            }
-
-            override fun onAnimationRepeat(animation: Animation) {
-            }
-        })
-        bottomInSet.setAnimationListener(object : Animation.AnimationListener {
-            override fun onAnimationStart(animation: Animation) {
-            }
-
-            override fun onAnimationEnd(animation: Animation) {
-                bottomCard.clearAnimation()
-                bottomCard.layoutParams = topLayout
-                topCard.clearAnimation()
-                topCard.layoutParams = bottomLayout
-            }
-
-            override fun onAnimationRepeat(animation: Animation) {
-            }
-        })
-
-        // top animation
-        val downRight: Animation = TranslateAnimation(0f, -xMargin, 0f, -yMargin)
-        downRight.duration = duration
-        val topCardRight: Animation = TranslateAnimation(
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            .5f,
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            0f
-        )
-        topCardRight.duration = duration
-        val topCardLeft: Animation = TranslateAnimation(
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            -.5f,
-            Animation.RELATIVE_TO_SELF,
-            0f,
-            Animation.RELATIVE_TO_SELF,
-            0f
-        )
-        topCardLeft.duration = duration
-
-        val topOutSet = AnimationSet(false)
-        if (leftToRight) {
-            topOutSet.addAnimation(topCardRight)
-        } else {
-            topOutSet.addAnimation(topCardLeft)
-        }
-        val topInSet = AnimationSet(false)
-        topInSet.startOffset = duration
-        if (leftToRight) {
-            topInSet.addAnimation(topCardLeft)
-            topInSet.addAnimation(downRight)
-        } else {
-            topInSet.addAnimation(topCardRight)
-            topInSet.addAnimation(downRight)
-        }
-
-        val topSet = AnimationSet(false)
-        topSet.interpolator = LinearInterpolator()
-        topSet.addAnimation(topOutSet)
-        topSet.addAnimation(topInSet)
-
-        // start animations
-        bottomCard.startAnimation(bottomSet)
-        topCard.startAnimation(topSet)
     }
 
     /**
@@ -240,34 +60,5 @@ object ViewUtil {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-    }
-
-    /**
-     * Converts a view to a bitmap
-     * @param view
-     * @return
-     */
-    fun convertToBitmap(view: View): Bitmap {
-        view.measure(
-            View.MeasureSpec.makeMeasureSpec(
-                0,
-                View.MeasureSpec.UNSPECIFIED
-            ),
-            View.MeasureSpec.makeMeasureSpec(
-                0,
-                View.MeasureSpec.UNSPECIFIED
-            )
-        )
-        // Layout the view with the measured dimensions
-        view.layout(0, 0, view.measuredWidth, view.measuredHeight)
-
-        // Create a bitmap backed by the exact dimensions of the view
-        val bitmap = createBitmap(view.measuredWidth, view.measuredHeight)
-
-        // Draw the view onto the canvas/bitmap
-        val canvas = Canvas(bitmap)
-        view.draw(canvas)
-
-        return bitmap
     }
 }
