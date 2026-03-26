@@ -5,9 +5,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.KoinAndroidTest
@@ -15,6 +12,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.UiTestUtils.checkText
+import com.door43.translationstudio.ui.profile.TermsOfUseActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

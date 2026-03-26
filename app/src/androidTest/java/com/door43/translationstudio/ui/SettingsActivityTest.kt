@@ -18,6 +18,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
@@ -22,6 +21,7 @@ import com.door43.translationstudio.UITest
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
+import com.door43.translationstudio.ui.profile.ProfileActivity
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll

@@ -10,6 +10,7 @@ import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
+import com.door43.translationstudio.ui.splash.SplashScreenActivity
 import com.door43.util.RuntimeWrapper
 import io.mockk.MockKAnnotations
 import io.mockk.every

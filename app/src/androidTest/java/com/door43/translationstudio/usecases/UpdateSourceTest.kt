@@ -9,7 +9,7 @@ import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.UpdateSource
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
@@ -77,8 +77,9 @@ class UpdateSourceTest : KoinAndroidTest() {
     companion object {
         private var _directoryProvider: IDirectoryProvider? = null
 
+        @JvmStatic
         @AfterClass
-        fun cleanUp() {
+        fun cleanUp(): Unit {
             _directoryProvider?.deleteLibrary()
             _directoryProvider = null
         }

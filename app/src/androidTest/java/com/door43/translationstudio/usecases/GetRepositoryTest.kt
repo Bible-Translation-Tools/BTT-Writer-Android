@@ -12,7 +12,7 @@ import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.GetRepository
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.ImportProjects

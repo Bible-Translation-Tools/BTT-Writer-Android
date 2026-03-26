@@ -25,6 +25,7 @@ import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After

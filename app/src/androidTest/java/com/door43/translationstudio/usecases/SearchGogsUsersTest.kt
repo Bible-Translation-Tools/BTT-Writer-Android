@@ -6,7 +6,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.SearchGogsUsers
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer

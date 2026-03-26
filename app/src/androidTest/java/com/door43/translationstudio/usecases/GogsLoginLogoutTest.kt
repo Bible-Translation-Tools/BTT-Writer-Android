@@ -10,7 +10,7 @@ import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.TestUtils.getTokenStub
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.GogsLogout
 import junit.framework.TestCase.assertEquals
