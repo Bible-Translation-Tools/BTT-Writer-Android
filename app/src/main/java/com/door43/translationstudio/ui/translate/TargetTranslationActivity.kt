@@ -8,14 +8,12 @@ import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.dialogs.BackupDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
-import com.door43.translationstudio.ui.viewmodels.TargetAction
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 import java.util.Timer

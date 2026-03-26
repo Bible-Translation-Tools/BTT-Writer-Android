@@ -10,7 +10,6 @@ import com.door43.data.AssetsProvider
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentPublishValidationListBinding
-import com.door43.translationstudio.ui.viewmodels.ValidationViewModel
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.security.InvalidParameterException
@@ -29,7 +28,7 @@ class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListe
     private var _binding: FragmentPublishValidationListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ValidationViewModel by viewModel()
+    //private val viewModel: ValidationViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,19 +61,19 @@ class ValidationFragment : PublishStepFragment(), ValidationAdapter.OnClickListe
 
         setupObservers()
 
-        viewModel.validateProject(targetTranslationId, sourceTranslationId)
+        //viewModel.validateProject(targetTranslationId, sourceTranslationId)
 
         return binding.root
     }
 
     private fun setupObservers() {
-        viewModel.validations.observe(viewLifecycleOwner) {
-            it?.let { validations ->
-                adapter.setValidations(validations)
-                binding.validationItems.visibility = View.VISIBLE
-                binding.loadingLayout.visibility = View.GONE
-            }
-        }
+//        viewModel.validations.observe(viewLifecycleOwner) {
+//            it?.let { validations ->
+//                adapter.setValidations(validations)
+//                binding.validationItems.visibility = View.VISIBLE
+//                binding.loadingLayout.visibility = View.GONE
+//            }
+//        }
     }
 
     override fun onClickReview(targetTranslationId: String, chapterId: String, frameId: String) {

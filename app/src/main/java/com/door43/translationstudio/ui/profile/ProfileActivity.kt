@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui
+package com.door43.translationstudio.ui.profile
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,7 +9,12 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.profile.ProfileScreen
+import com.door43.translationstudio.ui.AppTheme
+import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.profile.LoginDoor43Activity
+import com.door43.translationstudio.ui.profile.RegisterOfflineActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
+import com.door43.translationstudio.ui.profile.TermsOfUseActivity
 import org.koin.android.ext.android.inject
 
 class ProfileActivity : BaseActivity() {
@@ -26,7 +31,7 @@ class ProfileActivity : BaseActivity() {
         }
 
         val registerUrl = preRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
+            SettingsActivity.Companion.KEY_PREF_CREATE_ACCOUNT_URL,
             getString(R.string.pref_default_create_account_url)
         )
 
@@ -36,13 +41,28 @@ class ProfileActivity : BaseActivity() {
                     ProfileScreen(
                         registerUrl = registerUrl,
                         onLogin = {
-                            startActivity(Intent(this@ProfileActivity, LoginDoor43Activity::class.java))
+                            startActivity(
+                                Intent(
+                                    this@ProfileActivity,
+                                    LoginDoor43Activity::class.java
+                                )
+                            )
                         },
                         onRegisterOffline = {
-                            startActivity(Intent(this@ProfileActivity, RegisterOfflineActivity::class.java))
+                            startActivity(
+                                Intent(
+                                    this@ProfileActivity,
+                                    RegisterOfflineActivity::class.java
+                                )
+                            )
                         },
                         onSettingsClick = {
-                            startActivity(Intent(this@ProfileActivity, SettingsActivity::class.java))
+                            startActivity(
+                                Intent(
+                                    this@ProfileActivity,
+                                    SettingsActivity::class.java
+                                )
+                            )
                         },
                         onCancel = { finish() }
                     )

@@ -6,7 +6,7 @@ import com.door43.translationstudio.core.Frame
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.publish.ValidationItem
+import com.door43.translationstudio.core.Validation
 import com.door43.util.StringUtilities
 import com.door43.util.sortNumerically
 import org.json.JSONException
@@ -19,12 +19,12 @@ class ValidateProject(
     private val library: Door43Client,
     private val translator: Translator
 ) {
-    fun execute(targetTranslationId: String, sourceTranslationId: String): List<ValidationItem> {
+    fun execute(targetTranslationId: String, sourceTranslationId: String): List<Validation> {
         val hasWarnings = context.getString(R.string.has_warnings)
         val titleStr = context.getString(R.string.title)
         val referenceStr = context.getString(R.string.reference)
 
-        val validations = arrayListOf<ValidationItem>()
+        val validations = arrayListOf<Validation>()
 
         translator.getTargetTranslation(targetTranslationId)?.let { targetTranslation ->
             val targetLanguage = library.index.getTargetLanguage(
@@ -42,7 +42,7 @@ class ValidateProject(
                 return listOf()
             }
 
-            val format = try {
+            val sourceFormat = try {
                 TranslationFormat.parse(container.info.getString("content_mime_type"))
             } catch (e: JSONException) {
                 Logger.e(
@@ -61,7 +61,7 @@ class ValidateProject(
 
             // validate chapters
             var lastValidChapterIndex = -1
-            val chapterValidations = arrayListOf<ValidationItem>()
+            val chapterValidations = arrayListOf<Validation>()
 
             chapters.sortNumerically()
             for (i in chapters.indices) {
@@ -72,7 +72,7 @@ class ValidateProject(
                 // validate frames
                 var lastValidFrameIndex = -1
                 var chapterIsValid = true
-                val frameValidations = arrayListOf<ValidationItem>()
+                val frameValidations = arrayListOf<Validation>()
 
                 val chapterTranslation = targetTranslation.getChapterTranslation(chapterSlug)
                 if (MergeConflictsHandler.isMergeConflicted(chapterTranslation.title) ||
@@ -81,20 +81,20 @@ class ValidateProject(
                 ) {
                     chapterIsValid = false
                     frameValidations.add(
-                        ValidationItem.InvalidFrame(
-                            getChunkTitle(
+                        Validation.InvalidFrame(
+                            title = getChunkTitle(
                                 container,
                                 chapterSlug,
                                 "title",
                                 titleStr
                             ),
-                            sourceLanguage,
-                            chapterTranslation.title,
-                            targetLanguage,
-                            TranslationFormat.DEFAULT,
-                            targetTranslationId,
-                            chapterSlug,
-                            "00"
+                            titleLanguage = sourceLanguage,
+                            body = chapterTranslation.title,
+                            bodyLanguage = targetLanguage,
+                            bodyFormat = TranslationFormat.DEFAULT,
+                            targetTranslationId = targetTranslationId,
+                            chapterId = chapterSlug,
+                            frameId = "00"
                         )
                     )
                 }
@@ -105,20 +105,20 @@ class ValidateProject(
                 ) {
                     chapterIsValid = false
                     frameValidations.add(
-                        ValidationItem.InvalidFrame(
-                            getChunkTitle(
+                        Validation.InvalidFrame(
+                            title = getChunkTitle(
                                 container,
                                 chapterSlug,
                                 "reference",
                                 referenceStr
                             ),
-                            sourceLanguage,
-                            chapterTranslation.reference,
-                            targetLanguage,
-                            TranslationFormat.DEFAULT,
-                            targetTranslationId,
-                            chapterSlug,
-                            "00"
+                            titleLanguage = sourceLanguage,
+                            body = chapterTranslation.reference,
+                            bodyLanguage = targetLanguage,
+                            bodyFormat = TranslationFormat.DEFAULT,
+                            targetTranslationId = targetTranslationId,
+                            chapterId = chapterSlug,
+                            frameId = "00"
                         )
                     )
                 }
@@ -133,12 +133,14 @@ class ValidateProject(
                     val frameTranslation = targetTranslation.getFrameTranslation(
                         chapterSlug,
                         chunkSlug,
-                        format
+                        TranslationFormat.DEFAULT
                     )
                     val chunkText = container.readChunk(chapterSlug, chunkSlug)
                     // TODO: also validate the checking questions
                     val finishedOrEmpty = frameTranslation.finished || chunkText.isEmpty()
-                    val mergeConflicted = MergeConflictsHandler.isMergeConflicted(frameTranslation.body)
+                    val mergeConflicted = MergeConflictsHandler.isMergeConflicted(
+                        frameTranslation.body
+                    )
                     val isLastChunk = j == chunks.size - 1
 
                     if (lastValidFrameIndex == -1 && finishedOrEmpty) {
@@ -161,14 +163,22 @@ class ValidateProject(
                                     chapterSlug,
                                     chunks[lastValidFrameIndex]
                                 )
-                                val formattedChapter = StringUtilities.formatNumber(chapterSlug)
+                                val formattedChapter = StringUtilities.formatNumber(
+                                    chapterSlug
+                                )
                                 var frameTitle = "$projectTitle $formattedChapter"
-                                val frameStartVerse = Frame.getStartVerse(lastValidText, format)
-                                val frameEndVerse = Frame.getEndVerse(previousFrame, format)
+                                val frameStartVerse = Frame.getStartVerse(
+                                    lastValidText,
+                                    sourceFormat
+                                )
+                                val frameEndVerse = Frame.getEndVerse(
+                                    previousFrame,
+                                    sourceFormat
+                                )
                                 frameTitle += ":$frameStartVerse-$frameEndVerse"
 
                                 frameValidations.add(
-                                    ValidationItem.ValidFrame(
+                                    Validation.ValidFrame(
                                         frameTitle,
                                         sourceLanguage,
                                         true
@@ -179,17 +189,25 @@ class ValidateProject(
                                     chapterSlug,
                                     chunks[lastValidFrameIndex]
                                 )
-                                val formattedChapter = StringUtilities.formatNumber(chapterSlug)
+                                val formattedChapter = StringUtilities.formatNumber(
+                                    chapterSlug
+                                )
                                 var frameTitle = "$projectTitle $formattedChapter"
-                                val frameStartVerse = Frame.getStartVerse(lastValidText, format)
-                                val frameEndVerse = Frame.getEndVerse(lastValidText, format)
+                                val frameStartVerse = Frame.getStartVerse(
+                                    lastValidText,
+                                    sourceFormat
+                                )
+                                val frameEndVerse = Frame.getEndVerse(
+                                    lastValidText,
+                                    sourceFormat
+                                )
                                 frameTitle += ":$frameStartVerse"
 
                                 if (frameStartVerse != frameEndVerse) {
                                     frameTitle += "-$frameEndVerse"
                                 }
                                 frameValidations.add(
-                                    ValidationItem.ValidFrame(
+                                    Validation.ValidFrame(
                                         frameTitle,
                                         sourceLanguage,
                                         false
@@ -204,8 +222,14 @@ class ValidateProject(
                             chapterIsValid = false
                             val formattedChapter = StringUtilities.formatNumber(chapterSlug)
                             var frameTitle = "$projectTitle $formattedChapter"
-                            val frameStartVerse = Frame.getStartVerse(chunkText, format)
-                            val frameEndVerse = Frame.getEndVerse(chunkText, format)
+                            val frameStartVerse = Frame.getStartVerse(
+                                chunkText,
+                                sourceFormat
+                            )
+                            val frameEndVerse = Frame.getEndVerse(
+                                chunkText,
+                                sourceFormat
+                            )
                             frameTitle += ":$frameStartVerse"
 
                             if (frameStartVerse != frameEndVerse) {
@@ -213,15 +237,15 @@ class ValidateProject(
                             }
 
                             frameValidations.add(
-                                ValidationItem.InvalidFrame(
-                                    frameTitle,
-                                    sourceLanguage,
-                                    frameTranslation.body,
-                                    targetLanguage,
-                                    frameTranslation.format,
-                                    targetTranslationId,
-                                    chapterSlug,
-                                    chunkSlug
+                                Validation.InvalidFrame(
+                                    title = frameTitle,
+                                    titleLanguage = sourceLanguage,
+                                    body = frameTranslation.body,
+                                    bodyLanguage = targetLanguage,
+                                    bodyFormat = frameTranslation.format,
+                                    targetTranslationId = targetTranslationId,
+                                    chapterId = chapterSlug,
+                                    frameId = chunkSlug
                                 )
                             )
                         }
@@ -241,12 +265,16 @@ class ValidateProject(
                             // range
                             val previousChapterSlug = chapters[previousChapterIndex]
                             val lastValidChapterSlug = chapters[lastValidChapterIndex]
-                            val lastChapter = StringUtilities.formatNumber(lastValidChapterSlug)
-                            val prevChapter = StringUtilities.formatNumber(previousChapterSlug)
+                            val lastChapter = StringUtilities.formatNumber(
+                                lastValidChapterSlug
+                            )
+                            val prevChapter = StringUtilities.formatNumber(
+                                previousChapterSlug
+                            )
                             val chapterTitle = "$projectTitle $lastChapter-$prevChapter"
 
                             chapterValidations.add(
-                                ValidationItem.ValidFrame(
+                                Validation.ValidFrame(
                                     chapterTitle,
                                     sourceLanguage,
                                     true
@@ -258,7 +286,7 @@ class ValidateProject(
                             val chapterTitle = "$projectTitle $lastChapter"
 
                             chapterValidations.add(
-                                ValidationItem.ValidGroup(
+                                Validation.ValidGroup(
                                     chapterTitle,
                                     sourceLanguage,
                                     false
@@ -279,7 +307,7 @@ class ValidateProject(
                         chapterTitle = String.format(hasWarnings, chapterTitle.trim())
 
                         chapterValidations.add(
-                            ValidationItem.InvalidGroup(
+                            Validation.InvalidGroup(
                                 chapterTitle,
                                 sourceLanguage
                             )
@@ -296,7 +324,11 @@ class ValidateProject(
                 validations.addAll(chapterValidations)
             } else {
                 validations.add(
-                    ValidationItem.ValidGroup(projectTitle, sourceLanguage, true)
+                    Validation.ValidGroup(
+                        title = projectTitle,
+                        titleLanguage = sourceLanguage,
+                        isRange = true
+                    )
                 )
             }
         }

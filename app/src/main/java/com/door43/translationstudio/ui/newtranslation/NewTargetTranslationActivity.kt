@@ -18,7 +18,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityNewTargetTranslationBinding
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.Searchable
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
 import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
 import com.door43.usecases.MergeTargetTranslation

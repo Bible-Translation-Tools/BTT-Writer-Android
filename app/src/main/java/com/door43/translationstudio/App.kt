@@ -20,7 +20,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.di.appModule
 import com.door43.di.prodDataModule
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
 import com.door43.util.RuntimeWrapper

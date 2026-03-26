@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui
+package com.door43.translationstudio.ui.settings
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,9 +8,10 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.AppTheme
+import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.devtools.DeveloperToolsActivity
-import com.door43.translationstudio.ui.settings.SettingsScreen
-import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
+import com.door43.translationstudio.ui.profile.ProfileActivity
 import org.koin.androidx.compose.koinViewModel
 
 /**

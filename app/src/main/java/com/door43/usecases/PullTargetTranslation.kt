@@ -10,7 +10,7 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.Manifest
 import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.Git

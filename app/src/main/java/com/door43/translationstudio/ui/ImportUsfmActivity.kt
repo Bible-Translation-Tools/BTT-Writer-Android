@@ -21,6 +21,7 @@ import com.door43.translationstudio.databinding.ActivityImportUsfmBinding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.newtranslation.ProjectListFragment
 import com.door43.translationstudio.ui.newtranslation.TargetLanguageListFragment
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel

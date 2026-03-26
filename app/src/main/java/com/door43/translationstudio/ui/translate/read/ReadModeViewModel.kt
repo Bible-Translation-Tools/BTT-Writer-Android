@@ -13,7 +13,7 @@ import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
 import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.Swipable
-import com.door43.translationstudio.ui.viewmodels.TargetEvent
+import com.door43.translationstudio.ui.translate.TargetEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

@@ -1,9 +1,12 @@
-package com.door43.translationstudio.ui
+package com.door43.translationstudio.ui.splash
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import com.door43.translationstudio.ui.splash.SplashScreen
+import com.door43.translationstudio.ui.AppTheme
+import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.crash.CrashReporterActivity
+import com.door43.translationstudio.ui.profile.ProfileActivity
 
 /**
  * This activity initializes the app

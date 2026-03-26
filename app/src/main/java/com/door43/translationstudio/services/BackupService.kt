@@ -15,7 +15,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.RepoUtils

@@ -27,7 +27,7 @@ import com.door43.translationstudio.ui.dialogs.BackupDialog
 import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
-import com.door43.translationstudio.ui.viewmodels.HomeViewModel
+import com.door43.translationstudio.ui.home.HomeViewModel
 import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.logger.Logger
 import kotlin.math.min

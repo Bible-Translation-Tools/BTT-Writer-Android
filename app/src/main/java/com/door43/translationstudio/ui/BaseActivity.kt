@@ -10,6 +10,8 @@ import androidx.compose.runtime.setValue
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.settings.SettingsActivity
+import com.door43.translationstudio.ui.splash.SplashScreenActivity
 import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.foreground.Foreground

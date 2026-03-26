@@ -1,9 +1,10 @@
-package com.door43.translationstudio.ui
+package com.door43.translationstudio.ui.profile
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.profile.RegisterOfflineScreen
+import com.door43.translationstudio.ui.AppTheme
+import com.door43.translationstudio.ui.BaseActivity
 import org.koin.android.ext.android.inject
 
 class RegisterOfflineActivity : BaseActivity() {

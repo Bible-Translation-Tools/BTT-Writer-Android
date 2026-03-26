@@ -14,8 +14,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import com.door43.translationstudio.core.Chunk
-import com.door43.translationstudio.ui.viewmodels.TargetAction
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 

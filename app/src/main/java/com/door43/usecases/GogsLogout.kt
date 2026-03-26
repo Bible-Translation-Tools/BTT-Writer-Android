@@ -7,7 +7,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.tasks.io.OkHttpRequest
 import com.door43.translationstudio.tasks.io.RequestAPI
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.json.JSONArray
 import org.json.JSONException
 import org.unfoldingword.gogsclient.User

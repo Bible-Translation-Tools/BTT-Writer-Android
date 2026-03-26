@@ -7,7 +7,7 @@ import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.tools.logger.Logger

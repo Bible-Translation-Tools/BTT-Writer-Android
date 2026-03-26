@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.translate
 
 import android.app.Application
 import android.graphics.Typeface
@@ -22,7 +22,6 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
 import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
@@ -463,29 +462,4 @@ class TargetTranslationViewModel(
 
         return null to null
     }
-
-    // Methods to deprecate later
-
-    // TODO Make private after removing PublishActivity
-    fun getDefaultSourceTranslation(): String? {
-        return getProject()?.let { project ->
-            val resources = library.index.getResources(project.languageSlug, project.slug)
-                .filter { it.type == "book" && it.slug != "udb" }
-
-            val resourceContainer = try {
-                library.open(project.languageSlug, project.slug, resources[0].slug)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-
-            return resourceContainer?.slug
-        }
-    }
-
-    // TODO Removing after refactoring PublishActivity
-    fun getSelectedSourceTranslationId2(): String? {
-        return translator.getSelectedSourceTranslationId(targetTranslation.id)
-    }
-
 }

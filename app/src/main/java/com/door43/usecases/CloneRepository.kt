@@ -7,7 +7,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.git.TransportCallback
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.FileUtilities.deleteQuietly
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.TransportException

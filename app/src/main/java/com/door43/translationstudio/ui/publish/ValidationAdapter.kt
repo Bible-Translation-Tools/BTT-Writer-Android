@@ -10,6 +10,7 @@ import com.door43.data.AssetsProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.core.Validation
 import com.door43.translationstudio.databinding.FragmentPublishValidationListItemBinding
 import com.door43.translationstudio.format
 import com.door43.translationstudio.formatSub
@@ -29,7 +30,7 @@ class ValidationAdapter(
     private val assetsProvider: AssetsProvider
 ) : RecyclerView.Adapter<ValidationAdapter.ViewHolder>() {
 
-    private val validations = arrayListOf<ValidationItem>()
+    private val validations = arrayListOf<Validation>()
     private var renderedText = arrayOfNulls<CharSequence>(validations.size)
     private var listener: OnClickListener? = null
 
@@ -58,7 +59,7 @@ class ValidationAdapter(
 
             holder.binding.stackedCard.visibility = if (item.isRange) View.VISIBLE else View.GONE
 
-            val isFrame = item is ValidationItem.ValidFrame || item is ValidationItem.InvalidFrame
+            val isFrame = item is Validation.ValidFrame || item is Validation.InvalidFrame
             val p = holder.binding.cardContainer.layoutParams as MarginLayoutParams
             val stackedCardMargin = context.resources.getDimensionPixelSize(R.dimen.stacked_card_margin)
 
@@ -80,8 +81,8 @@ class ValidationAdapter(
             )
 
             when (item) {
-                is ValidationItem.ValidFrame,
-                is ValidationItem.ValidGroup -> {
+                is Validation.ValidFrame,
+                is Validation.ValidGroup -> {
                     // isValid = true
                     val iconRes = if (item.isRange) R.drawable.ic_done_all_black_24dp else R.drawable.ic_done_black_24dp
                     holder.binding.icon.setBackgroundResource(iconRes)
@@ -91,7 +92,7 @@ class ValidationAdapter(
                     holder.binding.reviewButton.visibility = View.GONE
                     holder.binding.icon.visibility = View.VISIBLE
                 }
-                is ValidationItem.InvalidGroup -> {
+                is Validation.InvalidGroup -> {
                     // isValid = false, isFrame = false
                     holder.binding.icon.setBackgroundResource(R.drawable.ic_report_black_24dp)
                     ViewUtil.tintViewDrawable(holder.binding.icon, ContextCompat.getColor(context, R.color.warning))
@@ -101,7 +102,7 @@ class ValidationAdapter(
                     holder.binding.icon.visibility = View.VISIBLE
                 }
 
-                is ValidationItem.InvalidFrame -> {
+                is Validation.InvalidFrame -> {
                     // isValid = false, isFrame = true
                     holder.binding.icon.visibility = View.GONE
                     holder.binding.reviewButton.visibility = View.VISIBLE
@@ -153,7 +154,7 @@ class ValidationAdapter(
         }
     }
 
-    fun setValidations(validations: List<ValidationItem>) {
+    fun setValidations(validations: List<Validation>) {
         this.validations.clear()
         this.validations.addAll(validations)
         renderedText = arrayOfNulls(validations.size)

@@ -12,8 +12,8 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.DialogDoor43LoginBinding
-import com.door43.translationstudio.ui.LoginDoor43Activity
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.profile.LoginDoor43Activity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.koin.android.ext.android.inject
 import kotlin.getValue
 

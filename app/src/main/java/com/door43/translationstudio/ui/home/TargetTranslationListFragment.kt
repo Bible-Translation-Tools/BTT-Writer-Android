@@ -21,7 +21,7 @@ import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortByColumnType
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortProjectColumnType
-import com.door43.translationstudio.ui.viewmodels.HomeViewModel
+import com.door43.translationstudio.ui.home.HomeViewModel
 import org.koin.android.ext.android.inject
 import kotlin.getValue
 

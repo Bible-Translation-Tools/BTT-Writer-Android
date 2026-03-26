@@ -2,7 +2,7 @@ package com.door43.translationstudio.core
 
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 
 /**
  * Created by mxaln on 2/25/2026.

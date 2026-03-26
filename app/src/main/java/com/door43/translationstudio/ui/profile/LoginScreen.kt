@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.ProgressDialog
-import com.door43.translationstudio.ui.viewmodels.LoginViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.unfoldingword.gogsclient.User
 

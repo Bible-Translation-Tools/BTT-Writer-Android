@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.splash
 
 import android.app.Application
 import android.net.Uri
@@ -12,8 +12,8 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
-import com.door43.translationstudio.ui.SettingsActivity
-import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
+import com.door43.translationstudio.ui.settings.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.MigrateTranslations
 import com.door43.usecases.UpdateApp

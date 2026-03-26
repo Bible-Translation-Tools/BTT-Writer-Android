@@ -33,9 +33,6 @@ import com.door43.translationstudio.ui.translate.components.rememberMenuItems
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadModeSection
 import com.door43.translationstudio.ui.translate.review.ReviewModeSection
-import com.door43.translationstudio.ui.viewmodels.TargetAction
-import com.door43.translationstudio.ui.viewmodels.TargetEvent
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject

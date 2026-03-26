@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.home
 
 import android.app.Application
 import android.net.Uri
@@ -12,7 +12,6 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.home.TranslationItem
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease

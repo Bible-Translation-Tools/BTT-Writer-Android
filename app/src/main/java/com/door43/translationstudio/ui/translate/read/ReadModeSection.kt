@@ -2,19 +2,14 @@ package com.door43.translationstudio.ui.translate.read
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
-import com.door43.translationstudio.ui.viewmodels.TargetAction
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
+import com.door43.translationstudio.ui.translate.TargetAction
+import com.door43.translationstudio.ui.translate.TargetTranslationState
+import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
 fun ReadModeSection(

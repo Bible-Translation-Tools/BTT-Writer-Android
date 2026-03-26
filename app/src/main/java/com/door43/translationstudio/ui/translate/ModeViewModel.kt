@@ -14,7 +14,6 @@ import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
-import com.door43.translationstudio.ui.viewmodels.TargetEvent
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

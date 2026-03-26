@@ -6,7 +6,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.unfoldingword.door43client.Door43Client
 
 class UpdateSource(

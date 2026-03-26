@@ -8,7 +8,7 @@ import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.FileUtilities
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.PublicKey

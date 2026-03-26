@@ -1,10 +1,12 @@
-package com.door43.translationstudio.ui
+package com.door43.translationstudio.ui.profile
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.AppTheme
+import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.home.HomeActivity
 import com.door43.translationstudio.ui.legal.TermsOfUseScreen
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
@@ -49,6 +51,7 @@ class TermsOfUseActivity : BaseActivity() {
                             )
                             finish()
                         }
+
                         is TermsOfUseViewModel.NavigationEvent.NavigateToLogin -> {
                             startActivity(
                                 Intent(

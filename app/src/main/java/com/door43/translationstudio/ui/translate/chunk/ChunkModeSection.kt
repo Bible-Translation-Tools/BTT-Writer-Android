@@ -10,9 +10,9 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.ConfirmDialog
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
-import com.door43.translationstudio.ui.viewmodels.TargetAction
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationState
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
+import com.door43.translationstudio.ui.translate.TargetAction
+import com.door43.translationstudio.ui.translate.TargetTranslationState
+import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 

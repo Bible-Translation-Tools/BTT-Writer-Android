@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.ProgressDialog
-import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

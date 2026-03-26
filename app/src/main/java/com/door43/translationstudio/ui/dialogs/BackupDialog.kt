@@ -32,8 +32,8 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
 import com.door43.translationstudio.databinding.DialogBackupBinding
-import com.door43.translationstudio.ui.ProfileActivity
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.profile.ProfileActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.usecases.ExportProjects

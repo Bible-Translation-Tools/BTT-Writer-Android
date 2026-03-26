@@ -19,7 +19,7 @@ abstract class PublishStepFragment : BaseFragment() {
         super.onAttach(context)
         try {
             this.listener = context as OnEventListener
-        } catch (e: ClassCastException) {
+        } catch (_: ClassCastException) {
             throw ClassCastException("$context must implement OnEventListener")
         }
     }
@@ -45,7 +45,6 @@ abstract class PublishStepFragment : BaseFragment() {
 
     interface OnEventListener {
         fun nextStep()
-        fun finishPublishing()
     }
 
     companion object {

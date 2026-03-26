@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.devtools
 
 import android.app.Application
 import androidx.compose.material.icons.Icons
@@ -13,7 +13,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
-import com.door43.translationstudio.ui.devtools.ToolItem
 import com.door43.translationstudio.ui.launchWithProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel

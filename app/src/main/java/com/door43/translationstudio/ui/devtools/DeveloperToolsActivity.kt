@@ -16,7 +16,6 @@ import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel
 import com.door43.util.RuntimeWrapper
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger

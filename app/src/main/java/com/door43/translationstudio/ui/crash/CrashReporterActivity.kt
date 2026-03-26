@@ -1,13 +1,14 @@
-package com.door43.translationstudio.ui
+package com.door43.translationstudio.ui.crash
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import com.door43.translationstudio.App.Companion.isNetworkAvailable
-import com.door43.translationstudio.ui.crash.CrashReporterScreen
-import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel
+import com.door43.translationstudio.App
+import com.door43.translationstudio.ui.AppTheme
+import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.splash.SplashScreenActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 
@@ -25,7 +26,7 @@ class CrashReporterActivity : BaseActivity() {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     CrashReporterScreen(
                         viewModel = viewModel,
-                        isNetworkAvailable = isNetworkAvailable,
+                        isNetworkAvailable = App.Companion.isNetworkAvailable,
                         onFlushAndSplash = {
                             Logger.flush()
                             openSplash()

@@ -32,11 +32,11 @@
             android:label="Backup Manager" />
 
         <activity
-            android:name=".ui.TermsOfUseActivity"
+            android:name=".ui.profile.TermsOfUseActivity"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".ui.SplashScreenActivity"
+            android:name=".ui.splash.SplashScreenActivity"
             android:launchMode="singleTop"
             android:alwaysRetainTaskState="true"
             android:theme="@style/AppTheme.NoActionBar"
@@ -48,7 +48,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.SettingsActivity"
+            android:name=".ui.settings.SettingsActivity"
             android:launchMode="singleTop"
             android:label="@string/title_activity_settings"
             android:parentActivityName=".ui.home.HomeActivity">
@@ -57,7 +57,7 @@
                 android:value="com.door43.translationstudio.ui.home.HomeActivity" />
         </activity>
         <activity
-            android:name=".ui.CrashReporterActivity"
+            android:name=".ui.crash.CrashReporterActivity"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
             android:label="@string/title_activity_crash_reporter" />
@@ -74,7 +74,7 @@
 
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.door43.translationstudio.ui.SettingsActivity" />
+                android:value="com.door43.translationstudio.ui.settings.SettingsActivity" />
         </activity>
         <activity
             android:name=".ui.home.HomeActivity"
@@ -146,25 +146,23 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.ProfileActivity"
+            android:name=".ui.profile.ProfileActivity"
             android:label="@string/title_activity_profile"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ui.draft.DraftActivity"
             android:label="@string/preview">
-
-            <!-- android:theme="@style/AppTheme.NoActionBar" -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.translate.TargetTranslationActivity" />
         </activity>
         <activity
-            android:name=".ui.LoginDoor43Activity"
+            android:name=".ui.profile.LoginDoor43Activity"
             android:windowSoftInputMode="adjustResize"
         />
         <activity
-            android:name=".ui.RegisterOfflineActivity"
+            android:name=".ui.profile.RegisterOfflineActivity"
             android:windowSoftInputMode="adjustResize"
         />
         <activity

@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.draft
 
 import android.app.Application
 import androidx.lifecycle.ViewModel

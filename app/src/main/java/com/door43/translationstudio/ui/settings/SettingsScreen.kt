@@ -23,7 +23,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.ProgressDialog
 import com.door43.translationstudio.ui.legal.LegalDocumentDialog
-import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

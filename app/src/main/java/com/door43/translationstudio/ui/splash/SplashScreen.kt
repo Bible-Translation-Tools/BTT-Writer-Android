@@ -12,8 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.viewmodels.SplashEvent
-import com.door43.translationstudio.ui.viewmodels.SplashScreenViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

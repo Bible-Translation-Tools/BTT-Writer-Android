@@ -16,7 +16,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.FileUtilities
 import kotlinx.io.IOException
 import org.unfoldingword.door43client.Door43Client

@@ -23,27 +23,27 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
+import com.door43.translationstudio.ui.publish.PublishViewModel
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
-import com.door43.translationstudio.ui.viewmodels.CrashReporterViewModel
-import com.door43.translationstudio.ui.viewmodels.DeveloperViewModel
+import com.door43.translationstudio.ui.crash.CrashReporterViewModel
+import com.door43.translationstudio.ui.devtools.DeveloperViewModel
 import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
-import com.door43.translationstudio.ui.viewmodels.DraftViewModel
+import com.door43.translationstudio.ui.draft.DraftViewModel
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.translationstudio.ui.viewmodels.FeedbackViewModel
-import com.door43.translationstudio.ui.viewmodels.HomeViewModel
+import com.door43.translationstudio.ui.home.HomeViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportIndexViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
-import com.door43.translationstudio.ui.viewmodels.LoginViewModel
+import com.door43.translationstudio.ui.profile.LoginViewModel
 import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel
-import com.door43.translationstudio.ui.viewmodels.SettingsViewModel
-import com.door43.translationstudio.ui.viewmodels.SplashScreenViewModel
-import com.door43.translationstudio.ui.viewmodels.TargetTranslationViewModel
-import com.door43.translationstudio.ui.viewmodels.ValidationViewModel
+import com.door43.translationstudio.ui.settings.SettingsViewModel
+import com.door43.translationstudio.ui.splash.SplashScreenViewModel
+import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
@@ -150,7 +150,6 @@ val appModule = module {
     singleOf(::UpdateApp)
 
     viewModelOf(::ImportViewModel)
-    viewModelOf(::ValidationViewModel)
     viewModelOf(::TargetTranslationViewModel)
     viewModelOf(::CrashReporterViewModel)
     viewModelOf(::ImportUsfmViewModel)
@@ -171,6 +170,7 @@ val appModule = module {
     viewModelOf(::ChunkModeViewModel)
     viewModelOf(::ReviewModeViewModel)
     viewModelOf(::SourceSelectionViewModel)
+    viewModelOf(::PublishViewModel)
 }
 
 val prodDataModule = module {

@@ -26,8 +26,8 @@ import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
 import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
-import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
-import com.door43.translationstudio.ui.SettingsActivity.Companion.KEY_PREF_TM_URL
+import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
+import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
@@ -38,7 +38,7 @@ import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.SharedState
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.TranslationHelp
-import com.door43.translationstudio.ui.viewmodels.TargetEvent
+import com.door43.translationstudio.ui.translate.TargetEvent
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

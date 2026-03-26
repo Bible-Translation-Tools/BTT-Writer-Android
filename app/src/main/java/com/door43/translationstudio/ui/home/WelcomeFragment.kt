@@ -10,7 +10,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.FragmentTargetTranslationWelcomeBinding
 import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.viewmodels.HomeViewModel
 
 /**
  * Displays a welcome message with instructions about creating target translations
