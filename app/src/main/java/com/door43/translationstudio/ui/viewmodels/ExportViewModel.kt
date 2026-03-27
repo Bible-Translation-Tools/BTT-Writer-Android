@@ -56,6 +56,7 @@ data class ExportState(
 sealed interface ExportEvent {
     data class SnackBarMessage(val message: String) : ExportEvent
     data class AppExport(val file: File) : ExportEvent
+    object OnLogout : ExportEvent
 }
 
 sealed interface ExportAction {
@@ -68,6 +69,7 @@ sealed interface ExportAction {
     data class ExportUsfm(val uri: Uri) : ExportAction
     data class ExportProject(val uri: Uri) : ExportAction
     object ExportToApp : ExportAction
+    object Logout : ExportAction
 }
 
 class ExportViewModel(
@@ -149,6 +151,7 @@ class ExportViewModel(
             is ExportAction.ExportProject -> exportProject(action.uri)
             ExportAction.ExportToApp -> exportToApp()
             ExportAction.ClearExport -> clearExport()
+            ExportAction.Logout -> logout()
         }
     }
 
@@ -330,13 +333,16 @@ class ExportViewModel(
     /**
      * Log out the current gogs user
      */
-    fun logout() {
+    private fun logout() {
         launchWithProgress(
             application.getString(R.string.log_out)
         ) {
             withContext(Dispatchers.IO) {
                 gogsLogout.execute()
+                profile.logout()
             }
+
+            _event.trySend(ExportEvent.OnLogout)
         }
     }
 

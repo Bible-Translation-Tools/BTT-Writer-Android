@@ -55,7 +55,8 @@ private enum class PublishSection {
 fun PublishScreen(
     viewModel: PublishViewModel = koinViewModel(),
     onOpenReview: (String) -> Unit,
-    onExportToApp: (File) -> Unit
+    onExportToApp: (File) -> Unit,
+    onLogout: () -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -184,6 +185,7 @@ fun PublishScreen(
         ExportDialog(
             targetTranslation = viewModel.targetTranslation,
             onExportToApp = onExportToApp,
+            onLogout = onLogout,
             onDismiss = { showUploadDialog = false }
         )
     }

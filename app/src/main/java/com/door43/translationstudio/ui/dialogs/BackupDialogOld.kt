@@ -156,7 +156,7 @@ class BackupDialogOld : DialogFragment() {
         with(binding) {
             logoutButton.setOnClickListener {
                 // log out
-                viewModel.logout()
+                //viewModel.logout()
                 profile.logout()
                 val logoutIntent = Intent(requireContext(), ProfileActivity::class.java)
                 startActivity(logoutIntent)

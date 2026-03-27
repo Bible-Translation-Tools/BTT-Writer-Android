@@ -11,10 +11,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.profile.LoginDoor43Activity
-import com.door43.translationstudio.ui.profile.RegisterOfflineActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
-import com.door43.translationstudio.ui.profile.TermsOfUseActivity
 import org.koin.android.ext.android.inject
 
 class ProfileActivity : BaseActivity() {
@@ -64,7 +61,9 @@ class ProfileActivity : BaseActivity() {
                                 )
                             )
                         },
-                        onCancel = { finish() }
+                        onCancel = {
+                            finishAffinity()
+                        }
                     )
                 }
             }

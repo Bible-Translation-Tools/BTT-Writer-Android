@@ -14,6 +14,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
@@ -97,7 +98,8 @@ class PublishActivity : BaseActivity() {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     PublishScreen(
                         onOpenReview = ::openReview,
-                        onExportToApp = ::exportToApp
+                        onExportToApp = ::exportToApp,
+                        onLogout = ::logout
                     )
                 }
             }
@@ -157,6 +159,12 @@ class PublishActivity : BaseActivity() {
         i.putExtra(Intent.EXTRA_STREAM, uri)
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(Intent.createChooser(i, "Send to:"))
+    }
+
+    private fun logout() {
+        val logoutIntent = Intent(this, ProfileActivity::class.java)
+        startActivity(logoutIntent)
+        finish()
     }
 
     companion object {

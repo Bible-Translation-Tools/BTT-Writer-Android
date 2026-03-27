@@ -70,7 +70,8 @@ private const val EXPORT_PDF_MIME_TYPE: String = "application/pdf"
 fun ExportDialog(
     targetTranslation: TargetTranslation,
     onDismiss: () -> Unit,
-    onExportToApp: (File) -> Unit
+    onExportToApp: (File) -> Unit,
+    onLogout: () -> Unit
 ) {
     val viewModel: ExportViewModel = koinViewModel {
         parametersOf(targetTranslation)
@@ -78,6 +79,7 @@ fun ExportDialog(
     val profile: Profile = koinInject()
 
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -138,6 +140,9 @@ fun ExportDialog(
                     is ExportEvent.AppExport -> {
                         onExportToApp(event.file)
                     }
+                    ExportEvent.OnLogout -> {
+                        onLogout()
+                    }
                 }
             }
         }
@@ -185,7 +190,9 @@ fun ExportDialog(
                                 textAlign = TextAlign.End
                             )
                             TextButton(
-                                onClick = { /*onLogout*/ },
+                                onClick = {
+                                    viewModel.onAction(ExportAction.Logout)
+                                },
                                 colors = ButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.secondary,
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -335,6 +342,13 @@ fun ExportDialog(
                         "${targetTranslation.id}.${Translator.PDF_EXTENSION}"
                     )
                 }
+            )
+        }
+
+        progress?.let {
+            ProgressDialog(
+                message = it.message,
+                progress = it.value
             )
         }
     }
