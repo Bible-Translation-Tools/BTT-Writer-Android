@@ -23,7 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialog
 import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialogType
-import com.door43.translationstudio.ui.translate.components.TranslateSkeletonList
+import com.door43.translationstudio.ui.components.CardsSkeletonList
 
 @Composable
 fun <ITEM : TranslateItem> ModeScreenTemplate(
@@ -49,7 +49,7 @@ fun <ITEM : TranslateItem> ModeScreenTemplate(
             label = "list_fade"
         ) { isLoading ->
             if (isLoading) {
-                TranslateSkeletonList()
+                CardsSkeletonList()
             } else {
                 LazyColumn(
                     state = listState,

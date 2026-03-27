@@ -2,13 +2,14 @@ package com.door43.translationstudio.ui.publish
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.MenuItem
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
@@ -43,7 +44,8 @@ class PublishActivity : BaseActivity() {
         if (!viewModel.targetInitialized) {
             Logger.e(
                 PublishActivity::class.java.simpleName,
-                "A valid target translation id is required. Received $targetTranslationId but the translation could not be found"
+                "A valid target translation id is required. " +
+                        "Received $targetTranslationId but the translation could not be found"
             )
             finish()
             return
@@ -55,12 +57,22 @@ class PublishActivity : BaseActivity() {
                 R.string.choose_source_translations,
                 Snackbar.LENGTH_LONG
             )
+            snack.setAction(R.string.label_ok) {
+                finish()
+            }
             ViewUtil.setSnackBarTextColor(
                 snack,
                 resources.getColor(R.color.light_primary_text)
             )
             snack.show()
-            finish()
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (!isFinishing && !isDestroyed) {
+                    finish()
+                }
+            }, 3000)
+
+            return
         }
 
         // identify calling activity
@@ -82,12 +94,8 @@ class PublishActivity : BaseActivity() {
             AppTheme(darkTheme = isDarkTheme) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     PublishScreen(
-                        onOpenReview = { item ->
-                            openReview(
-                                item.targetTranslationId,
-                                item.chapterId,
-                                item.frameId
-                            )
+                        onOpenReview = { translationId ->
+                            openReview(translationId)
                         }
                     )
                 }
@@ -127,13 +135,10 @@ class PublishActivity : BaseActivity() {
         finish()
     }
 
-    private fun openReview(targetTranslationId: String, chapterId: String, frameId: String) {
+    private fun openReview(targetTranslationId: String) {
         val intent = Intent(this, TargetTranslationActivity::class.java)
         val args = Bundle()
         args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslationId)
-        args.putString(Translator.EXTRA_CHAPTER_ID, chapterId)
-        args.putString(Translator.EXTRA_FRAME_ID, frameId)
-        args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtras(args)
 
         startActivity(intent)

@@ -81,22 +81,13 @@ fun ValidationCard(
             .fillMaxWidth()
             .padding(start = horizontalPadding)
     ) {
-        if (item.validation.isRange) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 4.dp, top = 4.dp, end = 12.dp, bottom = 12.dp),
-                elevation = CardDefaults.cardElevation(1.dp)
-            ) { /* Shadow layer */ }
-        }
-
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 12.dp, top = 8.dp, end = 4.dp, bottom = 4.dp),
             elevation = CardDefaults.cardElevation(3.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {

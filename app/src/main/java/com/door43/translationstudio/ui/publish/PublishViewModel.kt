@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Validation
 import com.door43.translationstudio.rendering.RenderingGroup
@@ -15,9 +16,11 @@ import com.door43.usecases.ValidateProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,6 +28,7 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 
 data class PublishState(
+    val isLoading: Boolean = false,
     val validations: List<ValidationItem> = emptyList()
 )
 
@@ -32,6 +36,14 @@ data class ValidationItem(
     val validation: Validation,
     val rendered: AnnotatedString = AnnotatedString("")
 )
+
+sealed interface PublishAction {
+    data class OpenReview(val item: Validation.InvalidFrame) : PublishAction
+}
+
+sealed interface PublishEvent {
+    data class OpenReview(val translationId: String) : PublishEvent
+}
 
 class PublishViewModel(
     private val translator: Translator,
@@ -54,9 +66,13 @@ class PublishViewModel(
     private val _state = MutableStateFlow(PublishState())
     val state: StateFlow<PublishState> = _state.asStateFlow()
 
+    private val _event = Channel<PublishEvent>(Channel.BUFFERED)
+    val event = _event.receiveAsFlow()
+
     fun initialize(targetTranslationId: String) {
         val translation = translator.getTargetTranslation(targetTranslationId) ?: return
         targetTranslation = translation
+        return
 
         val sourceId = getSelectedSourceTranslationId()
             ?: getDefaultSourceTranslation()
@@ -66,8 +82,16 @@ class PublishViewModel(
         validateProject(sourceId)
     }
 
-    fun validateProject(sourceTranslationId: String) {
+    fun onEvent(event: PublishAction) {
+        when (event) {
+            is PublishAction.OpenReview -> onOpenReview(event.item)
+        }
+    }
+
+    private fun validateProject(sourceTranslationId: String) {
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+
             val items = withContext(Dispatchers.IO) {
                 val validations = validateProject.execute(
                     targetTranslation.id,
@@ -79,7 +103,7 @@ class PublishViewModel(
                     }.awaitAll()
             }
 
-            _state.update { it.copy(validations = items) }
+            _state.update { it.copy(isLoading = false, validations = items) }
         }
     }
 
@@ -138,6 +162,23 @@ class PublishViewModel(
             )
         } catch (_: Exception) {
             AnnotatedString(text)
+        }
+    }
+
+    private fun onOpenReview(item: Validation.InvalidFrame) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                translator.setLastViewMode(
+                    targetTranslationId = item.targetTranslationId,
+                    viewMode = TranslationViewMode.REVIEW
+                )
+                translator.setLastFocus(
+                    targetTranslationId = item.targetTranslationId,
+                    chapterId = item.chapterId,
+                    frameId = item.frameId
+                )
+            }
+            _event.trySend(PublishEvent.OpenReview(item.targetTranslationId))
         }
     }
 }

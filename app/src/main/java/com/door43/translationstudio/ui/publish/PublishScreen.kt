@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,8 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.core.Validation
+import com.door43.translationstudio.ui.PrimaryDarkBlue
 import com.door43.translationstudio.ui.components.BackupDialog
+import com.door43.translationstudio.ui.components.CardsSkeletonList
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -45,7 +47,7 @@ private enum class PublishSection {
 @Composable
 fun PublishScreen(
     viewModel: PublishViewModel = koinViewModel(),
-    onOpenReview: (Validation.InvalidFrame) -> Unit
+    onOpenReview: (String) -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -58,12 +60,20 @@ fun PublishScreen(
         mutableStateOf(false)
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.event.collect { event ->
+            when (event) {
+                is PublishEvent.OpenReview -> onOpenReview(event.translationId)
+            }
+        }
+    }
+
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(
                 modifier = Modifier
@@ -111,14 +121,20 @@ fun PublishScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                when (publishSection) {
-                    PublishSection.VALIDATION -> ValidationSection(
-                        items = state.validations,
-                        typography = typography,
-                        onNextClick = { publishSection = PublishSection.TRANSLATORS },
-                        onReviewClick = onOpenReview
-                    )
-                    PublishSection.TRANSLATORS -> TranslatorsSection()
+                if (state.isLoading) {
+                    CardsSkeletonList()
+                } else {
+                    when (publishSection) {
+                        PublishSection.VALIDATION -> ValidationSection(
+                            items = state.validations,
+                            typography = typography,
+                            onNextClick = { publishSection = PublishSection.TRANSLATORS },
+                            onReviewClick = {
+                                viewModel.onEvent(PublishAction.OpenReview(it))
+                            }
+                        )
+                        PublishSection.TRANSLATORS -> TranslatorsSection()
+                    }
                 }
             }
         }
@@ -141,9 +157,9 @@ fun PublishButton(
         modifier = modifier,
         shape = RoundedCornerShape(4.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else MaterialTheme.colorScheme.secondary
+            containerColor = if (selected) PrimaryDarkBlue else {
+                MaterialTheme.colorScheme.secondary
+            }
         )
     ) {
         Text(

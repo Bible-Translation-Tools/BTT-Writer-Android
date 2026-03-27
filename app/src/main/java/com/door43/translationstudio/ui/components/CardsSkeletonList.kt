@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.translate.components
+package com.door43.translationstudio.ui.components
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -27,7 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun TranslateSkeletonList() {
+fun CardsSkeletonList() {
     val shimmerBrush = rememberShimmerBrush()
 
     Column(

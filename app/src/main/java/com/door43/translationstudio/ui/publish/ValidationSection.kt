@@ -31,11 +31,11 @@ fun ValidationSection(
     onReviewClick: (Validation.InvalidFrame) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.padding(end = 24.dp)) {
+    Box(
+        modifier = modifier.padding(end = 24.dp)
+    ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+            modifier = Modifier.fillMaxSize()
         ) {
             items(items) { item ->
                 ValidationCard(

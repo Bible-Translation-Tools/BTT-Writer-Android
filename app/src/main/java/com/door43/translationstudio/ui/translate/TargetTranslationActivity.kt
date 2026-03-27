@@ -38,7 +38,10 @@ class TargetTranslationActivity : BaseActivity() {
         val args = intent.extras
         requireNotNull(args)
 
-        val targetTranslationId = args.getString(Translator.EXTRA_TARGET_TRANSLATION_ID, null)
+        val targetTranslationId = args.getString(
+            Translator.EXTRA_TARGET_TRANSLATION_ID,
+            null
+        )
 
         if (!viewModel.initialized) {
             viewModel.initialize(targetTranslationId)
@@ -78,11 +81,21 @@ class TargetTranslationActivity : BaseActivity() {
                         startActivity(intent)
                     },
                     onProjectPreview = {
-                        val publishIntent = Intent(this@TargetTranslationActivity, PublishActivity::class.java)
-                        publishIntent.putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
-                        publishIntent.putExtra(PublishActivity.EXTRA_CALLING_ACTIVITY, PublishActivity.ACTIVITY_TRANSLATION)
+                        val publishIntent = Intent(
+                            this@TargetTranslationActivity,
+                            PublishActivity::class.java
+                        )
+                        publishIntent.putExtra(
+                            PublishActivity.EXTRA_TARGET_TRANSLATION_ID,
+                            viewModel.targetTranslation.id
+                        )
+                        publishIntent.putExtra(
+                            PublishActivity.EXTRA_CALLING_ACTIVITY,
+                            PublishActivity.ACTIVITY_TRANSLATION
+                        )
                         startActivity(publishIntent)
-                        // TRICKY: we may move back and forth between the publisher and translation activities
+                        // TRICKY: we may move back and forth between the publisher
+                        // and translation activities
                         // so we finish to avoid filling the stack.
                         finish()
                     },
@@ -96,7 +109,10 @@ class TargetTranslationActivity : BaseActivity() {
 
                         val backupDialog = BackupDialog()
                         val args = Bundle()
-                        args.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
+                        args.putString(
+                            BackupDialog.ARG_TARGET_TRANSLATION_ID,
+                            viewModel.targetTranslation.id
+                        )
                         backupDialog.arguments = args
                         backupDialog.show(backupFt, BackupDialog.TAG)
                     },
@@ -110,7 +126,10 @@ class TargetTranslationActivity : BaseActivity() {
 
                         val printDialog = PrintDialog()
                         val printArgs = Bundle()
-                        printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
+                        printArgs.putString(
+                            PrintDialog.ARG_TARGET_TRANSLATION_ID,
+                            viewModel.targetTranslation.id
+                        )
                         printDialog.arguments = printArgs
                         printDialog.show(printFt, "printDialog")
                     },
