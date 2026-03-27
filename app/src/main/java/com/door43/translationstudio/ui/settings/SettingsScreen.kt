@@ -21,7 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.components.ProgressDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.legal.LegalDocumentDialog
 import org.koin.androidx.compose.koinViewModel
 

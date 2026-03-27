@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.components
+package com.door43.translationstudio.ui.dialogs
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme

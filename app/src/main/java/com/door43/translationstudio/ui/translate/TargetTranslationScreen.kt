@@ -24,8 +24,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.ui.components.ConfirmDialog
-import com.door43.translationstudio.ui.components.ProgressDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeSection
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSideBar

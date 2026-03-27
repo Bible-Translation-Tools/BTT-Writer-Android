@@ -33,7 +33,8 @@ fun LegalDocumentDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize()
+                .padding(16.dp),
             color = MaterialTheme.colorScheme.background
         ) {
             Column(

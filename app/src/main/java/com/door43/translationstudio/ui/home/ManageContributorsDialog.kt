@@ -15,7 +15,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.FragmentContributorsBinding
 import com.door43.translationstudio.ui.ContributorsAdapter
-import com.door43.translationstudio.ui.dialogs.ContributorDialog
+import com.door43.translationstudio.ui.dialogs.ContributorDialogOld
 import org.koin.android.ext.android.inject
 import kotlin.getValue
 
@@ -77,11 +77,11 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
         // re-attach to dialogs
         val prevEditDialog = parentFragmentManager.findFragmentByTag("edit-native-speaker")
         if (prevEditDialog != null) {
-            (prevEditDialog as ContributorDialog).setOnClickListener(onNativeSpeakerDialogClick)
+            (prevEditDialog as ContributorDialogOld).setOnClickListener(onNativeSpeakerDialogClick)
         }
         val prevAddDialog = parentFragmentManager.findFragmentByTag("add-native-speaker")
         if (prevAddDialog != null) {
-            (prevAddDialog as ContributorDialog).setOnClickListener(onNativeSpeakerDialogClick)
+            (prevAddDialog as ContributorDialogOld).setOnClickListener(onNativeSpeakerDialogClick)
         }
 
         return binding.root
@@ -95,10 +95,10 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
         }
         ft.addToBackStack(null)
 
-        val dialog = ContributorDialog()
+        val dialog = ContributorDialogOld()
         val args = Bundle()
-        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.id)
-        args.putString(ContributorDialog.ARG_NATIVE_SPEAKER, speaker.name)
+        args.putString(ContributorDialogOld.ARG_TARGET_TRANSLATION, targetTranslation.id)
+        args.putString(ContributorDialogOld.ARG_NATIVE_SPEAKER, speaker.name)
         dialog.arguments = args
         dialog.setOnClickListener(onNativeSpeakerDialogClick)
         dialog.show(ft, "edit-native-speaker")
@@ -135,9 +135,9 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
         }
         ft.addToBackStack(null)
 
-        val dialog = ContributorDialog()
+        val dialog = ContributorDialogOld()
         val args = Bundle()
-        args.putString(ContributorDialog.ARG_TARGET_TRANSLATION, targetTranslation.id)
+        args.putString(ContributorDialogOld.ARG_TARGET_TRANSLATION, targetTranslation.id)
         dialog.arguments = args
         dialog.setOnClickListener(onNativeSpeakerDialogClick)
         dialog.show(ft, "add-native-speaker")

@@ -9,7 +9,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
-import com.door43.translationstudio.ui.dialogs.BackupDialog
+import com.door43.translationstudio.ui.dialogs.BackupDialogOld
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.draft.DraftActivity
@@ -101,20 +101,20 @@ class TargetTranslationActivity : BaseActivity() {
                     },
                     onUploadExport = {
                         val backupFt = supportFragmentManager.beginTransaction()
-                        val backupPrev = supportFragmentManager.findFragmentByTag(BackupDialog.TAG)
+                        val backupPrev = supportFragmentManager.findFragmentByTag(BackupDialogOld.TAG)
                         if (backupPrev != null) {
                             backupFt.remove(backupPrev)
                         }
                         backupFt.addToBackStack(null)
 
-                        val backupDialog = BackupDialog()
+                        val backupDialog = BackupDialogOld()
                         val args = Bundle()
                         args.putString(
-                            BackupDialog.ARG_TARGET_TRANSLATION_ID,
+                            BackupDialogOld.ARG_TARGET_TRANSLATION_ID,
                             viewModel.targetTranslation.id
                         )
                         backupDialog.arguments = args
-                        backupDialog.show(backupFt, BackupDialog.TAG)
+                        backupDialog.show(backupFt, BackupDialogOld.TAG)
                     },
                     onPrint = {
                         val printFt = supportFragmentManager.beginTransaction()

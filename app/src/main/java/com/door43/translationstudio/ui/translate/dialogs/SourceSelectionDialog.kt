@@ -36,7 +36,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -46,8 +45,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.ui.components.ConfirmDialog
-import com.door43.translationstudio.ui.components.ProgressDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.components.SourceHeaderRow
 import com.door43.translationstudio.ui.translate.components.SourceItemRow
 import kotlinx.coroutines.delay
@@ -98,7 +97,6 @@ fun SourceSelectionDialog(
         val snackBarHostState = remember { SnackbarHostState() }
         val coroutineScope = rememberCoroutineScope()
 
-        val focusRequester = remember { FocusRequester() }
         val focusManager = LocalFocusManager.current
 
         val dismissWithKeyboard: (() -> Unit) -> Unit = { action ->

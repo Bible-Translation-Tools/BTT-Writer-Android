@@ -15,11 +15,16 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,8 +38,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.PrimaryDarkBlue
-import com.door43.translationstudio.ui.components.BackupDialog
 import com.door43.translationstudio.ui.components.CardsSkeletonList
+import com.door43.translationstudio.ui.dialogs.BackupDialog
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -60,6 +66,11 @@ fun PublishScreen(
         mutableStateOf(false)
     }
 
+    val snackBarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val noTranslatorsMessage = stringResource(R.string.need_translator_notice)
+
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
             when (event) {
@@ -68,12 +79,22 @@ fun PublishScreen(
         }
     }
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(snackBarHostState) { data ->
+                Snackbar(
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    snackbarData = data
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(
                 modifier = Modifier
@@ -130,10 +151,27 @@ fun PublishScreen(
                             typography = typography,
                             onNextClick = { publishSection = PublishSection.TRANSLATORS },
                             onReviewClick = {
-                                viewModel.onEvent(PublishAction.OpenReview(it))
+                                viewModel.onAction(PublishAction.OpenReview(it))
                             }
                         )
-                        PublishSection.TRANSLATORS -> TranslatorsSection()
+                        PublishSection.TRANSLATORS -> TranslatorsSection(
+                            translators = state.translators,
+                            targetTranslation = viewModel.targetTranslation,
+                            onNextClick = {
+                                if (state.translators.isNotEmpty()) {
+                                    showUploadDialog = true
+                                } else {
+                                    coroutineScope.launch {
+                                        snackBarHostState.showSnackbar(
+                                            noTranslatorsMessage
+                                        )
+                                    }
+                                }
+                            },
+                            onContributorsChanged = {
+                                viewModel.onAction(PublishAction.RefreshContributors)
+                            }
+                        )
                     }
                 }
             }

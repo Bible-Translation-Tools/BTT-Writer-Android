@@ -4,6 +4,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.core.NativeSpeaker
+import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.TranslationViewMode
@@ -29,7 +31,8 @@ import org.unfoldingword.resourcecontainer.Project
 
 data class PublishState(
     val isLoading: Boolean = false,
-    val validations: List<ValidationItem> = emptyList()
+    val validations: List<ValidationItem> = emptyList(),
+    val translators: List<NativeSpeaker> = emptyList()
 )
 
 data class ValidationItem(
@@ -39,6 +42,7 @@ data class ValidationItem(
 
 sealed interface PublishAction {
     data class OpenReview(val item: Validation.InvalidFrame) : PublishAction
+    object RefreshContributors : PublishAction
 }
 
 sealed interface PublishEvent {
@@ -48,7 +52,8 @@ sealed interface PublishEvent {
 class PublishViewModel(
     private val translator: Translator,
     private val library: Door43Client,
-    private val validateProject: ValidateProject
+    private val validateProject: ValidateProject,
+    private val profile: Profile
 ) : ViewModel() {
 
     lateinit var sourceTranslationId: String
@@ -72,38 +77,52 @@ class PublishViewModel(
     fun initialize(targetTranslationId: String) {
         val translation = translator.getTargetTranslation(targetTranslationId) ?: return
         targetTranslation = translation
-        return
 
         val sourceId = getSelectedSourceTranslationId()
             ?: getDefaultSourceTranslation()
             ?: return
         sourceTranslationId = sourceId
 
-        validateProject(sourceId)
-    }
-
-    fun onEvent(event: PublishAction) {
-        when (event) {
-            is PublishAction.OpenReview -> onOpenReview(event.item)
+        viewModelScope.launch {
+            validateProject(sourceId)
+            loadTranslators()
         }
     }
 
-    private fun validateProject(sourceTranslationId: String) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-
-            val items = withContext(Dispatchers.IO) {
-                val validations = validateProject.execute(
-                    targetTranslation.id,
-                    sourceTranslationId
-                )
-                validations.chunked(5)
-                    .flatMap { batch ->
-                        batch.map { async { prepareItem(it) } }
-                    }.awaitAll()
+    fun onAction(event: PublishAction) {
+        when (event) {
+            is PublishAction.OpenReview -> onOpenReview(event.item)
+            PublishAction.RefreshContributors -> viewModelScope.launch {
+                loadTranslators()
             }
+        }
+    }
 
-            _state.update { it.copy(isLoading = false, validations = items) }
+    private suspend fun validateProject(sourceTranslationId: String) {
+        _state.update { it.copy(isLoading = true) }
+
+        val items = withContext(Dispatchers.IO) {
+            val validations = validateProject.execute(
+                targetTranslation.id,
+                sourceTranslationId
+            )
+            validations.chunked(5)
+                .flatMap { batch ->
+                    batch.map { async { prepareItem(it) } }
+                }.awaitAll()
+        }
+
+        _state.update { it.copy(isLoading = false, validations = items) }
+    }
+
+    private suspend fun loadTranslators() {
+        withContext(Dispatchers.IO) {
+            targetTranslation.addContributor(profile.nativeSpeaker)
+            _state.update { state ->
+                state.copy(
+                    translators = targetTranslation.contributors.sortedBy { it.name }
+                )
+            }
         }
     }
 

@@ -96,8 +96,8 @@ class PrintDialog : DialogFragment() {
         )
 
         val args = arguments
-        if (args != null && args.containsKey(BackupDialog.ARG_TARGET_TRANSLATION_ID)) {
-            val targetTranslationId = args.getString(BackupDialog.ARG_TARGET_TRANSLATION_ID, null)
+        if (args != null && args.containsKey(BackupDialogOld.ARG_TARGET_TRANSLATION_ID)) {
+            val targetTranslationId = args.getString(BackupDialogOld.ARG_TARGET_TRANSLATION_ID, null)
             viewModel.loadTargetTranslation(targetTranslationId)
         } else {
             throw InvalidParameterException("The target translation id was not specified")

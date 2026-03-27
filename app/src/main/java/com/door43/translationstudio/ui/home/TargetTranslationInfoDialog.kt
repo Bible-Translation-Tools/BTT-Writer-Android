@@ -23,11 +23,10 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
 import com.door43.translationstudio.getBestFontForLanguage
-import com.door43.translationstudio.ui.dialogs.BackupDialog
+import com.door43.translationstudio.ui.dialogs.BackupDialogOld
 import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
-import com.door43.translationstudio.ui.home.HomeViewModel
 import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.logger.Logger
 import kotlin.math.min
@@ -150,17 +149,17 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
 
                 backupButton.setOnClickListener {
                     val backupFt = parentFragmentManager.beginTransaction()
-                    val backupPrev = parentFragmentManager.findFragmentByTag(BackupDialog.TAG)
+                    val backupPrev = parentFragmentManager.findFragmentByTag(BackupDialogOld.TAG)
                     if (backupPrev != null) {
                         backupFt.remove(backupPrev)
                     }
                     backupFt.addToBackStack(null)
 
-                    val backupDialog = BackupDialog()
+                    val backupDialog = BackupDialogOld()
                     val arguments = Bundle()
-                    arguments.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, item.translation.id)
+                    arguments.putString(BackupDialogOld.ARG_TARGET_TRANSLATION_ID, item.translation.id)
                     backupDialog.arguments = arguments
-                    backupDialog.show(backupFt, BackupDialog.TAG)
+                    backupDialog.show(backupFt, BackupDialogOld.TAG)
                 }
 
                 publishButton.setOnClickListener {

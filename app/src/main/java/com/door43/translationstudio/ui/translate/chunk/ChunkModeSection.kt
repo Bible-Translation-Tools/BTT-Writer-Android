@@ -7,7 +7,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.ui.components.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.TargetAction

@@ -1,170 +1,261 @@
 package com.door43.translationstudio.ui.dialogs
 
-import android.content.Intent
-import android.os.Bundle
-import android.text.Html
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.Window
-import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.DialogFragment
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NativeSpeaker
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.databinding.DialogNativeSpeakerBinding
-import com.door43.translationstudio.ui.legal.LegalDocumentActivity
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
-import org.koin.android.ext.android.inject
-import java.security.InvalidParameterException
+import com.door43.translationstudio.ui.legal.LegalDocumentDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-/**
- * Created by joel on 2/19/2016.
- */
-class ContributorDialog : DialogFragment() {
-    val translator: Translator by inject()
+@Composable
+fun ContributorDialog(
+    contributor: NativeSpeaker,
+    targetTranslation: TargetTranslation,
+    onDismiss: () -> Unit,
+    onContributorsChanged: () -> Unit
+) {
+    val isNew by rememberUpdatedState(contributor.name.isEmpty())
+    var openLegalDocumentId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var showDeleteContributorDialog by rememberSaveable { mutableStateOf(false) }
 
-    private var targetTranslation: TargetTranslation? = null
-    private var nativeSpeaker: NativeSpeaker? = null
-    private var listener: View.OnClickListener? = null
+    val coroutineScope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
 
-    private var _binding: DialogNativeSpeakerBinding? = null
-    private val binding get() = _binding!!
+    val duplicateSpeakerMessage = stringResource(R.string.duplicate_native_speaker)
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        _binding = DialogNativeSpeakerBinding.inflate(inflater, container, false)
+    Dialog(
+        onDismissRequest = onDismiss
+    ) {
+        var name by remember { mutableStateOf(contributor.name) }
+        var hasAgreed by remember { mutableStateOf(!isNew) }
 
-        // load target
-        val args = arguments
-        if (args != null) {
-            val nativeSpeakerName = args.getString(ARG_NATIVE_SPEAKER, null)
-            val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION, null)
-            targetTranslation = translator.getTargetTranslation(targetTranslationId)
-            if (nativeSpeakerName != null && targetTranslation != null) {
-                nativeSpeaker = targetTranslation!!.getContributor(nativeSpeakerName)
-            }
-        }
-        if (targetTranslation == null) {
-            throw InvalidParameterException("Missing the target translation parameter")
-        }
+        Surface(
+            color = MaterialTheme.colorScheme.background,
+            modifier = Modifier.padding(vertical = 16.dp)
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimensionResource(id = R.dimen.dialog_content_margin))
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.add_contributor),
+                        fontSize = dimensionResource(id = R.dimen.headline).value.sp,
+                        color = colorResource(id = R.color.dark_primary_text),
+                        modifier = Modifier.padding(bottom = dimensionResource(id = R.dimen.dialog_content_margin))
+                    )
 
-        with(binding) {
-            if (nativeSpeaker != null) {
-                name.setText(nativeSpeaker!!.name)
-                title.setText(R.string.edit_contributor)
-                deleteButton.visibility = View.VISIBLE
-                agreementCheck.isEnabled = false
-                agreementCheck.isChecked = true
-                licenseGroup.visibility = View.GONE
-            } else {
-                title.setText(R.string.add_contributor)
-                deleteButton.visibility = View.GONE
-                agreementCheck.isEnabled = true
-                agreementCheck.isChecked = false
-                licenseGroup.visibility = View.VISIBLE
-            }
+                    Column(modifier = Modifier.fillMaxWidth()) {
 
-            licenseAgreementBtn.setOnClickListener {
-                val intent = Intent(activity, LegalDocumentActivity::class.java)
-                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.license_pdf)
-                startActivity(intent)
-            }
-
-            statementOfFaithBtn.setOnClickListener {
-                val intent = Intent(activity, LegalDocumentActivity::class.java)
-                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.statement_of_faith)
-                startActivity(intent)
-            }
-
-            translationGuidelinesBtn.setOnClickListener {
-                val intent = Intent(activity, LegalDocumentActivity::class.java)
-                intent.putExtra(LegalDocumentActivity.ARG_RESOURCE, R.string.translation_guidlines)
-                startActivity(intent)
-            }
-
-            cancelButton.setOnClickListener {
-                dismiss()
-            }
-
-            deleteButton.setOnClickListener {
-                AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                    .setTitle(R.string.delete_translator_title)
-                    .setMessage(Html.fromHtml(getString(R.string.confirm_delete_translator)))
-                    .setPositiveButton(
-                        R.string.confirm
-                    ) { _, _ ->
-                        nativeSpeaker?.let { speaker ->
-                            targetTranslation?.removeContributor(speaker)
-                        }
-                        listener?.onClick(deleteButton)
-                        dismiss()
-                    }
-                    .setNegativeButton(R.string.title_cancel, null)
-                    .show()
-            }
-
-            saveButton.setOnClickListener {
-                val name = name.text.toString()
-                if (agreementCheck.isChecked && name.isNotEmpty()) {
-                    val duplicate = targetTranslation!!.getContributor(name)
-                    if (duplicate != null) {
-                        if (nativeSpeaker != null && nativeSpeaker == duplicate) {
-                            // no change
-                            dismiss()
-                        } else {
-                            val snack = Snackbar.make(
-                                saveButton,
-                                R.string.duplicate_native_speaker,
-                                Snackbar.LENGTH_SHORT
+                        TextField(
+                            value = name,
+                            onValueChange = { name = it },
+                            label = { Text(stringResource(id = R.string.name)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
                             )
-                            ViewUtil.setSnackBarTextColor(
-                                snack,
-                                resources.getColor(R.color.light_primary_text)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (isNew) hasAgreed = !hasAgreed
+                                }
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Checkbox(
+                                enabled = isNew,
+                                checked = hasAgreed,
+                                onCheckedChange = { hasAgreed = it }
                             )
-                            snack.show()
+                            Text(
+                                text = stringResource(id = R.string.person_agrees_with_licenses),
+                                fontSize = dimensionResource(id = R.dimen.body).value.sp,
+                                color = colorResource(id = R.color.dark_primary_text),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
                         }
-                    } else {
-                        nativeSpeaker?.let { speaker ->
-                            targetTranslation?.removeContributor(speaker) // remove old name
+
+                        if (isNew) {
+                            FlowRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = dimensionResource(id = R.dimen.card_margin)),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                TagButton(
+                                    text = stringResource(R.string.pref_title_license_agreement),
+                                    onClick = { openLegalDocumentId = R.string.license_pdf }
+                                )
+                                TagButton(
+                                    text = stringResource(R.string.pref_title_statement_of_faith),
+                                    onClick = { openLegalDocumentId = R.string.statement_of_faith }
+                                )
+                                TagButton(
+                                    text = stringResource(R.string.pref_title_translation_guidelines),
+                                    onClick = { openLegalDocumentId = R.string.translation_guidlines }
+                                )
+                            }
                         }
-                        targetTranslation?.addContributor(NativeSpeaker(name))
-                        listener?.onClick(saveButton)
-                        dismiss()
                     }
-                } else {
-                    val snack = Snackbar.make(saveButton, R.string.complete_required_fields, Snackbar.LENGTH_SHORT)
-                    ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-                    snack.show()
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = dimensionResource(id = R.dimen.dialog_controls_margin)),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (!isNew) {
+                            TextButton(onClick = { showDeleteContributorDialog = true }) {
+                                Text(
+                                    text = stringResource(R.string.label_delete).uppercase(),
+                                    color = Color.Red
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Row {
+                            TextButton(onClick = onDismiss) {
+                                Text(stringResource(R.string.title_cancel).uppercase())
+                            }
+
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            val duplicate = targetTranslation.getContributor(name)
+                                            when (duplicate) {
+                                                null -> {
+                                                    targetTranslation.removeContributor(contributor)
+                                                    targetTranslation.addContributor(NativeSpeaker(name))
+                                                    onContributorsChanged()
+                                                }
+                                                contributor -> {
+                                                    onDismiss()
+                                                }
+                                                else -> {
+                                                    snackBarHostState.showSnackbar(duplicateSpeakerMessage)
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                enabled = name.isNotBlank() && hasAgreed,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(stringResource(R.string.menu_save).uppercase())
+                            }
+                        }
+                    }
+                }
+
+                SnackbarHost(
+                    hostState = snackBarHostState,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 40.dp)
+                ) { data ->
+                    Snackbar(
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        snackbarData = data
+                    )
                 }
             }
         }
-
-        return binding.root
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-        listener = null
+    openLegalDocumentId?.let { resourceId ->
+        LegalDocumentDialog(
+            htmlResourceId = resourceId,
+            onDismissRequest = { openLegalDocumentId = null }
+        )
     }
 
-    /**
-     * Sets the listener to be called when the dialog is submitted
-     * @param listener
-     */
-    fun setOnClickListener(listener: View.OnClickListener?) {
-        this.listener = listener
+    if (showDeleteContributorDialog) {
+        ConfirmDialog(
+            title = stringResource(R.string.delete_translator_title),
+            message = stringResource(R.string.confirm_delete_translator),
+            onDismiss = { showDeleteContributorDialog = false },
+            onConfirm = {
+                coroutineScope.launch {
+                    withContext(Dispatchers.IO) {
+                        targetTranslation.removeContributor(contributor)
+                    }
+                    onContributorsChanged()
+                }
+            }
+        )
     }
+}
 
-    companion object {
-        const val ARG_NATIVE_SPEAKER: String = "native_speaker_name"
-        const val ARG_TARGET_TRANSLATION: String = "target_translation_id"
+@Composable
+fun TagButton(text: String, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = MaterialTheme.colorScheme.secondary,
+            containerColor = Color.Transparent
+        )
+    ) {
+        Text(text = text, fontSize = 12.sp)
     }
 }

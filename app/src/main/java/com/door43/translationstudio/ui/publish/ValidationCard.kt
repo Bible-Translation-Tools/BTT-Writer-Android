@@ -82,9 +82,7 @@ fun ValidationCard(
             .padding(start = horizontalPadding)
     ) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, top = 8.dp, end = 4.dp, bottom = 4.dp),
+            modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(3.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface

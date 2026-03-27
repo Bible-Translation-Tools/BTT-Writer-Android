@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.publish
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -32,9 +31,11 @@ fun ValidationSection(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.padding(end = 24.dp)
+        modifier = modifier.fillMaxSize()
+            .padding(16.dp)
     ) {
         LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             items(items) { item ->
@@ -47,14 +48,11 @@ fun ValidationSection(
 
             item {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
                     Button(
                         onClick = onNextClick,
-                        modifier = Modifier.padding(top = 12.dp, end = 4.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.secondary,
                             contentColor = MaterialTheme.colorScheme.onSecondary

@@ -29,7 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.components.ProgressDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.util.sortNumerically
 import org.koin.androidx.compose.koinViewModel
 
