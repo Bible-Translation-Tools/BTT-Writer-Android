@@ -23,8 +23,6 @@ class DownloadImages(
     private val context: Context,
     private val directoryProvider: IDirectoryProvider
 ) {
-    data class Result(val success: Boolean, val imagesDir: File?)
-
     /**
      *
      * @param listener

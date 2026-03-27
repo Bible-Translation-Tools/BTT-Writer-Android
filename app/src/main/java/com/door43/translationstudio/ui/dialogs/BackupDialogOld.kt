@@ -87,7 +87,7 @@ class BackupDialogOld : DialogFragment() {
             val uri = result.data?.data
             if (result.resultCode == Activity.RESULT_OK && uri != null) {
                 if (validateUriExtension(uri, TSTUDIO_EXTENSION)) {
-                    viewModel.exportProject(uri)
+                    //viewModel.exportProject(uri)
                 } else {
                     notifyBackupFailed(targetTranslation)
                 }
@@ -100,7 +100,7 @@ class BackupDialogOld : DialogFragment() {
             val uri = result.data?.data
             if (result.resultCode == Activity.RESULT_OK && uri != null) {
                 if (validateUriExtension(uri, USFM_EXTENSION)) {
-                    viewModel.exportUSFM(uri)
+                    //viewModel.exportUSFM(uri)
                 } else {
                     notifyBackupFailed(targetTranslation)
                 }
@@ -132,12 +132,12 @@ class BackupDialogOld : DialogFragment() {
 
         // get target translation to backup
         val args = arguments
-        if (args != null && args.containsKey(ARG_TARGET_TRANSLATION_ID)) {
-            val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION_ID, null)
-            viewModel.loadTargetTranslation(targetTranslationId)
-        } else {
-            throw InvalidParameterException("The target translation id was not specified")
-        }
+//        if (args != null && args.containsKey(ARG_TARGET_TRANSLATION_ID)) {
+//            val targetTranslationId = args.getString(ARG_TARGET_TRANSLATION_ID, null)
+//            viewModel.loadTargetTranslation(targetTranslationId)
+//        } else {
+//            throw InvalidParameterException("The target translation id was not specified")
+//        }
 
         setupObservers()
 
@@ -177,21 +177,21 @@ class BackupDialogOld : DialogFragment() {
             }
 
             exportToPdf.setOnClickListener {
-                val printDialog = PrintDialog()
+                val printDialog = PrintDialogOld()
                 val printArgs = Bundle()
-                printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, targetTranslation.id)
+                printArgs.putString(PrintDialogOld.ARG_TARGET_TRANSLATION_ID, targetTranslation.id)
                 printDialog.arguments = printArgs
-                showDialogFragment(printDialog, PrintDialog.TAG)
+                showDialogFragment(printDialog, PrintDialogOld.TAG)
             }
 
             exportToProject.setOnClickListener { showExportProjectPrompt() }
 
             exportToUsfm.setOnClickListener { showExportToUsfmPrompt() }
 
-            if (viewModel.translation.value?.isObsProject == true) {
+            /*if (viewModel.translation.value?.isObsProject == true) {
                 exportToUsfmSeparator.visibility = View.GONE
                 exportToUsfm.visibility = View.GONE
-            }
+            }*/
 
 //            backupToDevice.setOnClickListener {
 //                // TODO: 11/18/2015 eventually we need to support bluetooth as well as an adhoc network
@@ -199,7 +199,7 @@ class BackupDialogOld : DialogFragment() {
 //            }
 
             backupToApp.setOnClickListener {
-                viewModel.exportToApp()
+                //viewModel.exportToApp()
             }
 
             dismissButton.setOnClickListener { dismiss() }
@@ -224,48 +224,48 @@ class BackupDialogOld : DialogFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.translation.observe(this) {
-            targetTranslation = it
-                ?: throw NullPointerException("Target translation not found.")
-        }
-        viewModel.progress.observe(this) {
-            if (it != null) {
-                progressDialog?.show()
-                progressDialog?.setProgress(it.progress)
-                progressDialog?.setMessage(it.message)
-                progressDialog?.setMax(it.max)
-            } else {
-                progressDialog?.dismiss()
-            }
-        }
-        viewModel.exportResult.observe(this) {
-            it?.let { result ->
-                when (result.exportType) {
-                    ExportProjects.ExportType.USFM -> {
-                        val message = if (result.success) {
-                            val format = resources.getString(R.string.export_success)
-                            String.format(
-                                format,
-                                FileUtilities.getUriDisplayName(requireContext(), result.uri)
-                            )
-                        } else {
-                            resources.getString(R.string.export_failed)
-                        }
-                        Logger.i(TAG, "USFM export success = " + result.success)
-                        showUsfmExportResults(message)
-                    }
-                    ExportProjects.ExportType.PROJECT -> {
-                        if (result.success) {
-                            showBackupResults(R.string.backup_success, result.uri)
-                        } else {
-                            showBackupResults(R.string.backup_failed, result.uri)
-                        }
-                        Logger.i(TAG, "Project export success = " + result.success)
-                    }
-                    else -> {}
-                }
-            }
-        }
+//        viewModel.translation.observe(this) {
+//            targetTranslation = it
+//                ?: throw NullPointerException("Target translation not found.")
+//        }
+//        viewModel.progress.observe(this) {
+//            if (it != null) {
+//                progressDialog?.show()
+//                progressDialog?.setProgress(it.progress)
+//                progressDialog?.setMessage(it.message)
+//                progressDialog?.setMax(it.max)
+//            } else {
+//                progressDialog?.dismiss()
+//            }
+//        }
+//        viewModel.exportResult.observe(this) {
+//            it?.let { result ->
+//                when (result.exportType) {
+//                    ExportProjects.ExportType.USFM -> {
+//                        val message = if (result.success) {
+//                            val format = resources.getString(R.string.export_success)
+//                            String.format(
+//                                format,
+//                                FileUtilities.getUriDisplayName(requireContext(), result.uri)
+//                            )
+//                        } else {
+//                            resources.getString(R.string.export_failed)
+//                        }
+//                        Logger.i(TAG, "USFM export success = " + result.success)
+//                        showUsfmExportResults(message)
+//                    }
+//                    ExportProjects.ExportType.PROJECT -> {
+//                        if (result.success) {
+//                            showBackupResults(R.string.backup_success, result.uri)
+//                        } else {
+//                            showBackupResults(R.string.backup_failed, result.uri)
+//                        }
+//                        Logger.i(TAG, "Project export success = " + result.success)
+//                    }
+//                    else -> {}
+//                }
+//            }
+//        }
         viewModel.pullTranslationResult.observe(this) {
             it?.let { result ->
                 val status = result.status
@@ -376,7 +376,7 @@ class BackupDialogOld : DialogFragment() {
                 }
             }
         }
-        viewModel.exportedToApp.observe(this) {
+        /*viewModel.exportedToApp.observe(this) {
             it?.let { exportFile ->
                 if (exportFile.exists()) {
                     val uri = FileProvider.getUriForFile(
@@ -402,7 +402,7 @@ class BackupDialogOld : DialogFragment() {
                     snack.show()
                 }
             }
-        }
+        }*/
     }
 
     /**
@@ -641,7 +641,7 @@ class BackupDialogOld : DialogFragment() {
         dialogShown = DialogShown.BACKUP_FAILED
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.backup)
-            .setMessage(R.string.upload_failed)
+            .setMessage(R.string.export_failed)
             .setPositiveButton(R.string.dismiss, null)
             .setNeutralButton(R.string.menu_bug) { _, _ ->
                 showFeedbackDialog(targetTranslation)

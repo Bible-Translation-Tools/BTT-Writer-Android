@@ -9,6 +9,7 @@ import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.core.content.FileProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
@@ -18,6 +19,7 @@ import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
 
 class PublishActivity : BaseActivity() {
     private var callingActivity = 0
@@ -94,9 +96,8 @@ class PublishActivity : BaseActivity() {
             AppTheme(darkTheme = isDarkTheme) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     PublishScreen(
-                        onOpenReview = { translationId ->
-                            openReview(translationId)
-                        }
+                        onOpenReview = ::openReview,
+                        onExportToApp = ::exportToApp
                     )
                 }
             }
@@ -143,6 +144,19 @@ class PublishActivity : BaseActivity() {
 
         startActivity(intent)
         finish()
+    }
+
+    private fun exportToApp(file: File) {
+        val uri = FileProvider.getUriForFile(
+            this,
+            "${application.packageName}.fileprovider",
+            file
+        )
+        val i = Intent(Intent.ACTION_SEND)
+        i.type = "application/zip"
+        i.putExtra(Intent.EXTRA_STREAM, uri)
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(Intent.createChooser(i, "Send to:"))
     }
 
     companion object {

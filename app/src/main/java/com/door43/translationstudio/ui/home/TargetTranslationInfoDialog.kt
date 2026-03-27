@@ -24,7 +24,7 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.BackupDialogOld
-import com.door43.translationstudio.ui.dialogs.PrintDialog
+import com.door43.translationstudio.ui.dialogs.PrintDialogOld
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import org.koin.android.ext.android.inject
@@ -184,9 +184,9 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                     }
                     printFt.addToBackStack(null)
 
-                    val printDialog = PrintDialog()
+                    val printDialog = PrintDialogOld()
                     val printArgs = Bundle()
-                    printArgs.putString(PrintDialog.ARG_TARGET_TRANSLATION_ID, item.translation.id)
+                    printArgs.putString(PrintDialogOld.ARG_TARGET_TRANSLATION_ID, item.translation.id)
                     printDialog.arguments = printArgs
                     printDialog.show(printFt, "printDialog")
                 }

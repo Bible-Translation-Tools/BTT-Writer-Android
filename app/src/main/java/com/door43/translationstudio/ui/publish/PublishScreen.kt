@@ -39,10 +39,11 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.PrimaryDarkBlue
 import com.door43.translationstudio.ui.components.CardsSkeletonList
-import com.door43.translationstudio.ui.dialogs.BackupDialog
+import com.door43.translationstudio.ui.dialogs.ExportDialog
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import java.io.File
 
 private enum class PublishSection {
     VALIDATION,
@@ -53,7 +54,8 @@ private enum class PublishSection {
 @Composable
 fun PublishScreen(
     viewModel: PublishViewModel = koinViewModel(),
-    onOpenReview: (String) -> Unit
+    onOpenReview: (String) -> Unit,
+    onExportToApp: (File) -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -179,7 +181,11 @@ fun PublishScreen(
     }
 
     if (showUploadDialog) {
-        BackupDialog(onDismiss = { showUploadDialog = false })
+        ExportDialog(
+            targetTranslation = viewModel.targetTranslation,
+            onExportToApp = onExportToApp,
+            onDismiss = { showUploadDialog = false }
+        )
     }
 }
 

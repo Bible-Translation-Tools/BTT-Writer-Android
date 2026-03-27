@@ -11,7 +11,7 @@ import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.dialogs.BackupDialogOld
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
-import com.door43.translationstudio.ui.dialogs.PrintDialog
+import com.door43.translationstudio.ui.dialogs.PrintDialogOld
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -124,10 +124,10 @@ class TargetTranslationActivity : BaseActivity() {
                         }
                         printFt.addToBackStack(null)
 
-                        val printDialog = PrintDialog()
+                        val printDialog = PrintDialogOld()
                         val printArgs = Bundle()
                         printArgs.putString(
-                            PrintDialog.ARG_TARGET_TRANSLATION_ID,
+                            PrintDialogOld.ARG_TARGET_TRANSLATION_ID,
                             viewModel.targetTranslation.id
                         )
                         printDialog.arguments = printArgs
