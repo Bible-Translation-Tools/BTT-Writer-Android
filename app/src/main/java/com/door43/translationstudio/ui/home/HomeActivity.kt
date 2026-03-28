@@ -22,22 +22,20 @@ import androidx.lifecycle.lifecycleScope
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
-import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictListener
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityHomeBinding
 import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.profile.ProfileActivity
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.dialogs.Door43LoginDialog
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.home.WelcomeFragment.OnCreateNewTargetTranslation
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
+import com.door43.translationstudio.ui.profile.ProfileActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
-import com.door43.translationstudio.ui.home.HomeViewModel
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.PullTargetTranslation
 import com.door43.widget.ViewUtil
@@ -269,21 +267,19 @@ class HomeActivity : BaseActivity(),
                     val success = result.isSuccess
                     if (success && result.mergeConflict) {
                         result.importedSlug?.let { slug ->
-                            MergeConflictsHandler.backgroundTestForConflictedChunks(
+                            val conflicted = MergeConflictsHandler.backgroundTestForConflictedChunks(
                                 slug,
-                                translator,
-                                object : OnMergeConflictListener {
-                                    override fun onNoMergeConflict(targetTranslationId: String) {
-                                        showImportResults(
-                                            examineImportsResult?.contentUri.toString(),
-                                            examineImportsResult?.projectsFound,
-                                            success
-                                        )
-                                    }
-                                    override fun onMergeConflict(targetTranslationId: String) {
-                                        showMergeConflict(targetTranslationId)
-                                    }
-                                })
+                                translator
+                            )
+                            if (!conflicted) {
+                                showImportResults(
+                                    examineImportsResult?.contentUri.toString(),
+                                    examineImportsResult?.projectsFound,
+                                    success
+                                )
+                            } else {
+                                showMergeConflict(slug)
+                            }
                         }
                     } else {
                         showImportResults(

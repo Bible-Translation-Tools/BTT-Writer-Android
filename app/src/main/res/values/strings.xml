@@ -36,7 +36,7 @@
     <string name="title_activity_language_selector">Language</string>
     <string name="loading_project_chapters" translatable="false">@string/loading</string>
     <string name="success">Success</string>
-    <string name="label_details">details</string>
+    <string name="label_details">Details</string>
     <string name="title_activity_sharing">Share</string>
     <string name="missing_external_storage">External storage not available</string>
     <!-- Notifies the user that the project was successfully saved to a location on the phone -->
@@ -655,6 +655,7 @@ Do you want to enable SD card access?  If so then:
     <string name="registration_failure">Registration Failed. Please check your internet connection</string>
     <string name="auth_failure_retry">Authentication Failed. Retry?</string>
     <string name="registering_keys">Registering with server</string>
+    <string name="pulling_repo">Pulling repository from the server</string>
     <string name="invalidate_keys" translatable="false">Invalidate SSH Keys</string>
     <string name="invalidate_keys_description" translatable="false">Sets keys invalid for auth testing</string>
     <string name="person_agrees_with_licenses">This person has agreed with the Statement of Faith and Translation Guidelines and agrees to release his/her work on this project under the terms of the Creative Commons Attribution-ShareAlike 4.0 International License.</string>

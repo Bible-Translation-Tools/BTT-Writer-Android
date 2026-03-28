@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -58,6 +59,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.viewmodels.ExportAction
 import com.door43.translationstudio.ui.viewmodels.ExportEvent
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
+import com.door43.translationstudio.ui.viewmodels.UploadSuccess
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -86,6 +88,7 @@ fun ExportDialog(
 
     var showPrintDialog by rememberSaveable { mutableStateOf(false) }
     var showInternetUsageDialog by rememberSaveable { mutableStateOf(false) }
+    var showAuthDialog by rememberSaveable { mutableStateOf(false) }
 
     var imagesToInclude by rememberSaveable { mutableStateOf(false) }
     var incompleteToInclude by rememberSaveable { mutableStateOf(false) }
@@ -137,12 +140,9 @@ fun ExportDialog(
                     is ExportEvent.SnackBarMessage -> {
                         snackBarHostState.showSnackbar(event.message)
                     }
-                    is ExportEvent.AppExport -> {
-                        onExportToApp(event.file)
-                    }
-                    ExportEvent.OnLogout -> {
-                        onLogout()
-                    }
+                    is ExportEvent.AppExport -> onExportToApp(event.file)
+                    ExportEvent.OnLogout -> onLogout()
+                    ExportEvent.AuthRequested -> showAuthDialog = true
                 }
             }
         }
@@ -173,7 +173,9 @@ fun ExportDialog(
                             title = stringResource(id = R.string.backup_to_door43),
                             tip = stringResource(id = R.string.tip_backup_to_door43),
                             icon = Icons.Default.CloudUpload,
-                            onClick = { /*onCloudBackup*/ }
+                            onClick = {
+                                viewModel.onAction(ExportAction.ExportToCloud)
+                            }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Wifi,
@@ -289,21 +291,21 @@ fun ExportDialog(
             }
         }
 
-        state.exportMessage?.let { export ->
+        state.infoMessage?.let {
             AlertDialog(
                 onDismissRequest = {
-                    viewModel.onAction(ExportAction.ClearExport)
+                    viewModel.onAction(ExportAction.ClearInfoMessage)
                 },
                 title = {
-                    Text(export.title)
+                    Text(it.title)
                 },
                 text = {
-                    Text(export.message)
+                    Text(it.message)
                 },
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            viewModel.onAction(ExportAction.ClearExport)
+                            viewModel.onAction(ExportAction.ClearInfoMessage)
                         }
                     ) {
                         Text(stringResource(R.string.dismiss))
@@ -312,9 +314,18 @@ fun ExportDialog(
             )
         }
 
+        state.uploadSuccess?.let { info ->
+            UploadSuccessDialog(
+                info = info,
+                onDismiss = {
+                    viewModel.onAction(ExportAction.ClearUploadSuccess)
+                }
+            )
+        }
+
         if (showPrintDialog) {
             PrintDialog(
-                projectTitle = state.projectTitle,
+                projectTitle = viewModel.projectTitle,
                 isObs = viewModel.targetTranslation.isObsProject,
                 onDismiss = { showPrintDialog = false },
                 onPrint = { includeImages, includeIncomplete ->
@@ -341,6 +352,18 @@ fun ExportDialog(
                     pdfPickerLauncher.launch(
                         "${targetTranslation.id}.${Translator.PDF_EXTENSION}"
                     )
+                }
+            )
+        }
+
+        if (showAuthDialog) {
+            ConfirmDialog(
+                title = stringResource(R.string.upload_failed),
+                message = stringResource(R.string.auth_failure_retry),
+                onDismiss = { showAuthDialog = false },
+                onConfirm = {
+                    showAuthDialog = false
+                    viewModel.onAction(ExportAction.RegisterKeys)
                 }
             )
         }
@@ -396,5 +419,94 @@ private fun ExportOptionRow(
                 modifier = Modifier.padding(start = 34.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun UploadSuccessDialog(
+    info: UploadSuccess,
+    onDismiss: () -> Unit
+) {
+    val uriHandler = LocalUriHandler.current
+    var showUploadDetailsDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (!showUploadDetailsDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(stringResource(R.string.upload_complete))
+            },
+            text = {
+                Text(stringResource(R.string.project_uploaded_to, info.url))
+            },
+            icon = {},
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(
+                        onClick = {
+                            showUploadDetailsDialog = true
+                        }
+                    ) {
+                        Text(stringResource(R.string.label_details))
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.dismiss))
+                    }
+                    TextButton(
+                        onClick = {
+                            uriHandler.openUri(info.url)
+                            onDismiss()
+                        }
+                    ) {
+                        Text(stringResource(R.string.view_online))
+                    }
+                }
+            }
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = {
+                showUploadDetailsDialog = false
+                onDismiss()
+            },
+            title = {
+                Text(stringResource(R.string.project_uploaded))
+            },
+            text = {
+                Text(info.details ?: "")
+            },
+            icon = {},
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(
+                        onClick = {
+                            showUploadDetailsDialog = false
+                            onDismiss()
+                        }
+                    ) {
+                        Text(stringResource(R.string.dismiss))
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(
+                        onClick = {
+                            uriHandler.openUri(info.url)
+                            showUploadDetailsDialog = false
+                            onDismiss()
+                        }
+                    ) {
+                        Text(stringResource(R.string.view_online))
+                    }
+                }
+            }
+        )
     }
 }

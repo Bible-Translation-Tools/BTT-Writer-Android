@@ -21,8 +21,6 @@ class RegisterSSHKeys(
     private val directoryProvider: IDirectoryProvider,
     private val prefRepository: IPreferenceRepository
 ) {
-    private val max = 100
-
     fun execute(force: Boolean, progressListener: OnProgressListener? = null): Boolean {
         progressListener?.onProgress(-1f, "Authenticating")
 

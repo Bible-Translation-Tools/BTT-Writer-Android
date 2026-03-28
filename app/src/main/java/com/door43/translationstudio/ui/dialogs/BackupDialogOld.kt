@@ -15,7 +15,6 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.door43.data.IDirectoryProvider
@@ -23,8 +22,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.MergeConflictsHandler
-import com.door43.translationstudio.core.MergeConflictsHandler.OnMergeConflictListener
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
@@ -40,8 +37,6 @@ import com.door43.usecases.ExportProjects
 import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.PushTargetTranslation
 import com.door43.util.FileUtilities
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.eclipse.jgit.api.ResetCommand
@@ -50,7 +45,6 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
-import java.security.InvalidParameterException
 
 /**
  * Created by joel on 10/5/2015.
@@ -266,116 +260,116 @@ class BackupDialogOld : DialogFragment() {
 //                }
 //            }
 //        }
-        viewModel.pullTranslationResult.observe(this) {
-            it?.let { result ->
-                val status = result.status
-                // TRICKY: we continue to push for unknown status in case
-                // the repo was just created (the missing branch is an error)
-                // the pull task will catch any errors
-                when (status) {
-                    PullTargetTranslation.Status.UP_TO_DATE,
-                    PullTargetTranslation.Status.UNKNOWN -> {
-                        Logger.i(
-                            this.javaClass.name,
-                            "Changes on the server were synced with " + targetTranslation.id
-                        )
-                        lifecycleScope.launch(Dispatchers.Main) {
-                            clearResults()
-                            viewModel.pushTargetTranslation()
-                        }
-                    }
-                    PullTargetTranslation.Status.AUTH_FAILURE -> {
-                        Logger.i(this.javaClass.name, "Authentication failed")
-                        // if we have already tried ask the user if they would like to try again
-                        if (directoryProvider.hasSSHKeys()) {
-                            showAuthFailure()
-                        } else {
-                            viewModel.registerSSHKeys(false)
-                        }
-                    }
-                    PullTargetTranslation.Status.NO_REMOTE_REPO -> {
-                        Logger.i(
-                            this.javaClass.name,
-                            "The repository " + targetTranslation.id + " could not be found"
-                        )
-                        // create missing repo
-                        viewModel.createRepository()
-                    }
-                    PullTargetTranslation.Status.MERGE_CONFLICTS -> {
-                        Logger.i(
-                            this.javaClass.name,
-                            "The server contains conflicting changes for " + targetTranslation.id
-                        )
-                        MergeConflictsHandler.backgroundTestForConflictedChunks(
-                            targetTranslation.id,
-                            translator,
-                            object : OnMergeConflictListener {
-                                override fun onNoMergeConflict(targetTranslationId: String) {
-                                    // probably the manifest or license gave a false positive
-                                    Logger.i(
-                                        this.javaClass.name,
-                                        "Changes on the server were synced with " + targetTranslation.id
-                                    )
-                                    lifecycleScope.launch(Dispatchers.Main) {
-                                        clearResults()
-                                        viewModel.pushTargetTranslation()
-                                    }
-                                }
-                                override fun onMergeConflict(targetTranslationId: String) {
-                                    showMergeConflict(targetTranslation)
-                                }
-                            })
-                    }
-                    else -> notifyBackupFailed(targetTranslation)
-                }
-            }
-        }
-        viewModel.pushTranslationResult.observe(this) {
-            it?.let { result ->
-                when {
-                    result.status == PushTargetTranslation.Status.OK -> {
-                        Logger.i(
-                            this.javaClass.name,
-                            "The target translation " + targetTranslation.id + " was pushed to the server"
-                        )
-                        showPushSuccess(result.message)
-                    }
-                    result.status == PushTargetTranslation.Status.AUTH_FAILURE -> {
-                        Logger.i(this.javaClass.name, "Authentication failed")
-                        showAuthFailure()
-                    }
-                    result.status.isRejected -> {
-                        Logger.i(this.javaClass.name, "Push Rejected")
-                        showPushRejection(targetTranslation)
-                    }
-                    else -> notifyBackupFailed(targetTranslation)
-                }
-            }
-        }
-        viewModel.registeredSSHKeys.observe(this) {
-            it?.let { registered ->
-                if (registered) {
-                    Logger.i(this.javaClass.name, "SSH keys were registered with the server")
-                    // try to push again
-                    pullTargetTranslation(MergeStrategy.RECURSIVE)
-                } else {
-                    notifyBackupFailed(targetTranslation)
-                }
-            }
-        }
-        viewModel.repoCreated.observe(this) {
-            it?.let { created ->
-                if (created) {
-                    Logger.i(
-                        this.javaClass.name,
-                        "A new repository " + targetTranslation.id + " was created on the server"
-                    )
-                    pullTargetTranslation(MergeStrategy.RECURSIVE)
-                } else {
-                    notifyBackupFailed(targetTranslation)
-                }
-            }
-        }
+//        viewModel.pullTranslationResult.observe(this) {
+//            it?.let { result ->
+//                val status = result.status
+//                // TRICKY: we continue to push for unknown status in case
+//                // the repo was just created (the missing branch is an error)
+//                // the pull task will catch any errors
+//                when (status) {
+//                    PullTargetTranslation.Status.UP_TO_DATE,
+//                    PullTargetTranslation.Status.UNKNOWN -> {
+//                        Logger.i(
+//                            this.javaClass.name,
+//                            "Changes on the server were synced with " + targetTranslation.id
+//                        )
+//                        lifecycleScope.launch(Dispatchers.Main) {
+//                            clearResults()
+//                            //viewModel.pushTargetTranslation()
+//                        }
+//                    }
+//                    PullTargetTranslation.Status.AUTH_FAILURE -> {
+//                        Logger.i(this.javaClass.name, "Authentication failed")
+//                        // if we have already tried ask the user if they would like to try again
+//                        if (directoryProvider.hasSSHKeys()) {
+//                            showAuthFailure()
+//                        } else {
+//                            //viewModel.registerSSHKeys(false)
+//                        }
+//                    }
+//                    PullTargetTranslation.Status.NO_REMOTE_REPO -> {
+//                        Logger.i(
+//                            this.javaClass.name,
+//                            "The repository " + targetTranslation.id + " could not be found"
+//                        )
+//                        // create missing repo
+//                        //viewModel.createRepository()
+//                    }
+//                    PullTargetTranslation.Status.MERGE_CONFLICTS -> {
+//                        Logger.i(
+//                            this.javaClass.name,
+//                            "The server contains conflicting changes for " + targetTranslation.id
+//                        )
+//                        MergeConflictsHandler.backgroundTestForConflictedChunks(
+//                            targetTranslation.id,
+//                            translator,
+//                            object : OnMergeConflictListener {
+//                                override fun onNoMergeConflict(targetTranslationId: String) {
+//                                    // probably the manifest or license gave a false positive
+//                                    Logger.i(
+//                                        this.javaClass.name,
+//                                        "Changes on the server were synced with " + targetTranslation.id
+//                                    )
+//                                    lifecycleScope.launch(Dispatchers.Main) {
+//                                        clearResults()
+//                                        viewModel.pushTargetTranslation()
+//                                    }
+//                                }
+//                                override fun onMergeConflict(targetTranslationId: String) {
+//                                    showMergeConflict(targetTranslation)
+//                                }
+//                            })
+//                    }
+//                    else -> notifyBackupFailed(targetTranslation)
+//                }
+//            }
+//        }
+//        viewModel.pushTranslationResult.observe(this) {
+//            it?.let { result ->
+//                when {
+//                    result.status == PushTargetTranslation.Status.OK -> {
+//                        Logger.i(
+//                            this.javaClass.name,
+//                            "The target translation " + targetTranslation.id + " was pushed to the server"
+//                        )
+//                        showPushSuccess(result.message)
+//                    }
+//                    result.status == PushTargetTranslation.Status.AUTH_FAILURE -> {
+//                        Logger.i(this.javaClass.name, "Authentication failed")
+//                        showAuthFailure()
+//                    }
+//                    result.status.isRejected -> {
+//                        Logger.i(this.javaClass.name, "Push Rejected")
+//                        showPushRejection(targetTranslation)
+//                    }
+//                    else -> notifyBackupFailed(targetTranslation)
+//                }
+//            }
+//        }
+//        viewModel.registeredSSHKeys.observe(this) {
+//            it?.let { registered ->
+//                if (registered) {
+//                    Logger.i(this.javaClass.name, "SSH keys were registered with the server")
+//                    // try to push again
+//                    pullTargetTranslation(MergeStrategy.RECURSIVE)
+//                } else {
+//                    notifyBackupFailed(targetTranslation)
+//                }
+//            }
+//        }
+//        viewModel.repoCreated.observe(this) {
+//            it?.let { created ->
+//                if (created) {
+//                    Logger.i(
+//                        this.javaClass.name,
+//                        "A new repository " + targetTranslation.id + " was created on the server"
+//                    )
+//                    pullTargetTranslation(MergeStrategy.RECURSIVE)
+//                } else {
+//                    notifyBackupFailed(targetTranslation)
+//                }
+//            }
+//        }
         /*viewModel.exportedToApp.observe(this) {
             it?.let { exportFile ->
                 if (exportFile.exists()) {
@@ -604,7 +598,7 @@ class BackupDialogOld : DialogFragment() {
     }
 
     private fun pullTargetTranslation(strategy: MergeStrategy) {
-        viewModel.pullTargetTranslation(strategy)
+        //viewModel.pullTargetTranslation(strategy)
     }
 
     /**
@@ -698,7 +692,7 @@ class BackupDialogOld : DialogFragment() {
             .setTitle(R.string.upload_failed)
             .setMessage(R.string.auth_failure_retry)
             .setPositiveButton(R.string.yes) { _, _ ->
-                viewModel.registerSSHKeys(true)
+                //viewModel.registerSSHKeys(true)
             }
             .setNegativeButton(R.string.no) { _, _ ->
                 notifyBackupFailed(targetTranslation)
@@ -731,7 +725,7 @@ class BackupDialogOld : DialogFragment() {
     private fun clearResults() {
         dialogShown = DialogShown.NONE
         dialogMessage = null
-        viewModel.clearResults()
+        //viewModel.clearResults()
     }
 
     /**

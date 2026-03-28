@@ -1,10 +1,6 @@
 package com.door43.translationstudio.core
 
-import android.os.Handler
-import android.os.Looper
 import com.door43.usecases.ParseMergeConflicts
-import org.unfoldingword.tools.taskmanager.ManagedTask
-import org.unfoldingword.tools.taskmanager.TaskManager
 
 /**
  * Created by blm on 11/22/16.
@@ -96,45 +92,12 @@ object MergeConflictsHandler {
     /**
      * check the whole project to see if there is actually a chunk conflict
      * @param targetTranslationId
-     * @param listener
+     * @param translator
      */
     fun backgroundTestForConflictedChunks(
         targetTranslationId: String,
-        translator: Translator,
-        listener: OnMergeConflictListener
-    ) {
-        val task = object : ManagedTask() {
-            override fun start() {
-                try {
-                    if (interrupted()) return
-                    val conflicted = isTranslationMergeConflicted(targetTranslationId, translator)
-                    result = conflicted
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-
-        task.addOnFinishedListener { task1 ->
-            TaskManager.clearTask(task1)
-            val conflicted = (task1.result as? Boolean) ?: false
-
-            if (!task1.isCanceled) {
-                val hand = Handler(Looper.getMainLooper())
-                hand.post {
-                    if (conflicted) {
-                        listener.onMergeConflict(targetTranslationId)
-                    } else {
-                        listener.onNoMergeConflict(targetTranslationId)
-                    }
-                }
-            }
-        }
-        TaskManager.addTask(task)
-    }
-
-    interface OnMergeConflictListener {
-        fun onNoMergeConflict(targetTranslationId: String)
-        fun onMergeConflict(targetTranslationId: String)
+        translator: Translator
+    ): Boolean {
+        return isTranslationMergeConflicted(targetTranslationId, translator)
     }
 }

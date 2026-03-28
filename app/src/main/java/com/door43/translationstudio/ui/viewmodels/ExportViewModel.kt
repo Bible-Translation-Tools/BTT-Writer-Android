@@ -2,15 +2,16 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
+import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.DownloadImages
+import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
@@ -18,6 +19,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.CreateRepository
 import com.door43.usecases.ExportProjects
 import com.door43.usecases.GogsLogout
@@ -42,21 +44,26 @@ import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.util.Locale
 
-data class ExportMessage(
+data class InfoMessage(
     val title: String,
     val message: String
 )
 
+data class UploadSuccess(
+    val url: String,
+    val details: String? = null
+)
+
 data class ExportState(
-    val test: Boolean = false,
-    val exportMessage: ExportMessage? = null,
-    val projectTitle: String = ""
+    val infoMessage: InfoMessage? = null,
+    val uploadSuccess: UploadSuccess? = null
 )
 
 sealed interface ExportEvent {
     data class SnackBarMessage(val message: String) : ExportEvent
     data class AppExport(val file: File) : ExportEvent
     object OnLogout : ExportEvent
+    object AuthRequested : ExportEvent
 }
 
 sealed interface ExportAction {
@@ -69,7 +76,11 @@ sealed interface ExportAction {
     data class ExportUsfm(val uri: Uri) : ExportAction
     data class ExportProject(val uri: Uri) : ExportAction
     object ExportToApp : ExportAction
+    object ExportToCloud : ExportAction
     object Logout : ExportAction
+    object RegisterKeys : ExportAction
+    object ClearInfoMessage : ExportAction
+    object ClearUploadSuccess : ExportAction
 }
 
 class ExportViewModel(
@@ -78,13 +89,13 @@ class ExportViewModel(
     private val translator: Translator,
     private val profile: Profile,
     private val directoryProvider: IDirectoryProvider,
-    private val prefRepository: IPreferenceRepository,
     private val library: Door43Client,
     private val gogsLogout: GogsLogout,
     private val createRepository: CreateRepository,
     private val pullTargetTranslation: PullTargetTranslation,
     private val pushTargetTranslation: PushTargetTranslation,
     private val registerSSHKeys: RegisterSSHKeys,
+    private val prefRepository: IPreferenceRepository,
     val targetTranslation: TargetTranslation
 ) : ViewModel(), KoinComponent, ProgressOwner {
 
@@ -98,6 +109,8 @@ class ExportViewModel(
 
     private val _event = Channel<ExportEvent>(Channel.BUFFERED)
     val event = _event.receiveAsFlow()
+
+    val projectTitle: String
 
     init {
         var title = targetTranslation.projectTranslation.title
@@ -119,22 +132,8 @@ class ExportViewModel(
         if (title.isEmpty()) {
             title = targetTranslation.projectId
         }
-        title = "$title - ${targetTranslation.targetLanguageName}"
-
-        _state.update { it.copy(projectTitle = title) }
+        projectTitle = "$title - ${targetTranslation.targetLanguageName}"
     }
-
-    private val _pullTranslationResult = MutableLiveData<PullTargetTranslation.Result?>(null)
-    val pullTranslationResult: LiveData<PullTargetTranslation.Result?> = _pullTranslationResult
-
-    private val _pushTranslationResult = MutableLiveData<PushTargetTranslation.Result?>(null)
-    val pushTranslationResult: LiveData<PushTargetTranslation.Result?> = _pushTranslationResult
-
-    private val _registeredSSHKeys = MutableLiveData<Boolean?>()
-    val registeredSSHKeys: LiveData<Boolean?> = _registeredSSHKeys
-
-    private val _repoCreated = MutableLiveData<Boolean>()
-    val repoCreated: LiveData<Boolean> = _repoCreated
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
@@ -150,8 +149,12 @@ class ExportViewModel(
             is ExportAction.ExportUsfm -> exportUSFM(action.uri)
             is ExportAction.ExportProject -> exportProject(action.uri)
             ExportAction.ExportToApp -> exportToApp()
-            ExportAction.ClearExport -> clearExport()
+            ExportAction.ExportToCloud -> exportToCloud()
+            ExportAction.ClearExport -> clearInfo()
             ExportAction.Logout -> logout()
+            ExportAction.RegisterKeys -> registerSSHKeys()
+            ExportAction.ClearInfoMessage -> clearInfo()
+            ExportAction.ClearUploadSuccess -> clearUploadSuccess()
         }
     }
 
@@ -180,7 +183,7 @@ class ExportViewModel(
             }
 
             _state.update {
-                it.copy(exportMessage = ExportMessage(title, message))
+                it.copy(infoMessage = InfoMessage(title, message))
             }
         }
     }
@@ -210,7 +213,7 @@ class ExportViewModel(
             }
 
             _state.update {
-                it.copy(exportMessage = ExportMessage(title, message))
+                it.copy(infoMessage = InfoMessage(title, message))
             }
         }
     }
@@ -244,7 +247,7 @@ class ExportViewModel(
                 val title = application.getString(R.string.download_failed)
                 val message = application.getString(R.string.downloading_images_for_print_failed)
                 _state.update {
-                    it.copy(exportMessage = ExportMessage(title, message))
+                    it.copy(infoMessage = InfoMessage(title, message))
                 }
                 return@launchWithProgress
             }
@@ -273,66 +276,158 @@ class ExportViewModel(
             }
 
             _state.update {
-                it.copy(exportMessage = ExportMessage(title, message))
+                it.copy(infoMessage = InfoMessage(title, message))
             }
         }
     }
 
-    fun pullTargetTranslation(strategy: MergeStrategy) {
-        launchWithProgress(
-            application.getString(R.string.uploading)
-        ) { handle ->
-            _pullTranslationResult.value = withContext(Dispatchers.IO) {
-                pullTargetTranslation.execute(
-                    targetTranslation,
-                    strategy,
-                    null
-                ) { progress, message ->
-                    handle.update(progress, message)
+    private fun exportToCloud() {
+        launchWithProgress { handle ->
+            pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
+        }
+    }
+
+    private suspend fun pullTargetTranslation(strategy: MergeStrategy, handle: TaskHandle) {
+        handle.update(
+            value = -1f,
+            message = application.getString(R.string.pulling_repo)
+        )
+        val result = withContext(Dispatchers.IO) {
+            pullTargetTranslation.execute(
+                targetTranslation,
+                strategy,
+                null
+            ) { progress, message ->
+                handle.update(progress, message)
+            }
+        }
+
+        when (result.status) {
+            PullTargetTranslation.Status.UP_TO_DATE,
+            PullTargetTranslation.Status.UNKNOWN -> {
+                Logger.i(
+                    this.javaClass.name,
+                    "Changes on the server were synced with " + targetTranslation.id
+                )
+                pushTargetTranslation(handle)
+            }
+            PullTargetTranslation.Status.AUTH_FAILURE -> {
+                Logger.i(this.javaClass.name, "Authentication failed")
+                if (!directoryProvider.hasSSHKeys()) {
+                    registerSSHKeys(false, handle)
+                } else {
+                    _event.trySend(ExportEvent.AuthRequested)
                 }
+            }
+            PullTargetTranslation.Status.NO_REMOTE_REPO -> {
+                Logger.i(
+                    this.javaClass.name,
+                    "The repository " + targetTranslation.id + " could not be found"
+                )
+                createRepository(handle)
+            }
+            PullTargetTranslation.Status.MERGE_CONFLICTS -> {
+                Logger.i(
+                    this.javaClass.name,
+                    "The server contains conflicting changes for " + targetTranslation.id
+                )
+                val conflicted = MergeConflictsHandler.backgroundTestForConflictedChunks(
+                    targetTranslation.id,
+                    translator
+                )
+                if (!conflicted) {
+                    // probably the manifest or license gave a false positive
+                    Logger.i(
+                        this.javaClass.name,
+                        "Changes on the server were synced with " + targetTranslation.id
+                    )
+                    pushTargetTranslation(handle)
+                } else {
+                    println("show conflict. pipeline should restart")
+                    // TODO Show merge conflict dialog
+                }
+            }
+            else -> {
+                reportExportFailed()
             }
         }
     }
 
-    fun pushTargetTranslation() {
-        launchWithProgress(
-            application.getString(R.string.uploading)
-        ) { handle ->
-            _pullTranslationResult.value = null
-            _pushTranslationResult.value = withContext(Dispatchers.IO) {
-                pushTargetTranslation.execute(targetTranslation) { progress, message ->
-                    handle.update(progress, message)
-                }
+    private suspend fun pushTargetTranslation(handle: TaskHandle) {
+        handle.update(
+            value = -1f,
+            message = application.getString(R.string.uploading)
+        )
+        val result = withContext(Dispatchers.IO) {
+            pushTargetTranslation.execute(targetTranslation) { progress, message ->
+                handle.update(progress, message)
+            }
+        }
+        when {
+            result.status == PushTargetTranslation.Status.OK -> {
+                Logger.i(
+                    this.javaClass.name,
+                    "The target translation " + targetTranslation.id + " was pushed to the server"
+                )
+                reportUploadSuccess(result.message)
+            }
+            result.status == PushTargetTranslation.Status.AUTH_FAILURE -> {
+                Logger.i(this.javaClass.name, "Authentication failed")
+                _event.trySend(ExportEvent.AuthRequested)
+            }
+            result.status.isRejected -> {
+                Logger.i(this.javaClass.name, "Push Rejected")
+                println("push rejected")
+            }
+            else -> {
+                reportExportFailed()
             }
         }
     }
 
-    fun registerSSHKeys(force: Boolean) {
-        launchWithProgress(
-            application.getString(R.string.registering_keys)
-        ) { handle ->
-            _registeredSSHKeys.value = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force) { progress, message ->
-                    handle.update(progress, message)
-                }
+    private fun registerSSHKeys() {
+        launchWithProgress { handle ->
+            registerSSHKeys(true, handle)
+        }
+    }
+
+    private suspend fun registerSSHKeys(force: Boolean, handle: TaskHandle) {
+        handle.update(
+            value = -1f,
+            message = application.getString(R.string.registering_keys)
+        )
+        val registered = withContext(Dispatchers.IO) {
+            registerSSHKeys.execute(force) { progress, message ->
+                handle.update(progress, message)
             }
         }
-    }
-
-    fun createRepository() {
-        launchWithProgress(
-            application.getString(R.string.creating_repository)
-        ) { handle ->
-            _repoCreated.value =
-                createRepository.execute(targetTranslation) { progress, message ->
-                    handle.update(progress, message)
-                }
+        if (registered) {
+            Logger.i(this.javaClass.name, "SSH keys were registered with the server")
+            pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
+        } else {
+            println("backup failed")
         }
     }
 
-    /**
-     * Log out the current gogs user
-     */
+    private suspend fun createRepository(handle: TaskHandle) {
+        handle.update(
+            value = -1f,
+            message = application.getString(R.string.creating_repository)
+        )
+        val created = createRepository.execute(targetTranslation) { progress, message ->
+            handle.update(progress, message)
+        }
+        if (created) {
+            Logger.i(
+                this.javaClass.name,
+                "A new repository " + targetTranslation.id + " was created on the server"
+            )
+            pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
+        } else {
+            println("backup failed")
+        }
+    }
+
     private fun logout() {
         launchWithProgress(
             application.getString(R.string.log_out)
@@ -391,13 +486,12 @@ class ExportViewModel(
         )
     }
 
-    fun clearResults() {
-        _pushTranslationResult.value = null
-        _pullTranslationResult.value = null
+    private fun clearInfo() {
+        _state.update { it.copy(infoMessage = null) }
     }
 
-    private fun clearExport() {
-        _state.update { it.copy(exportMessage = null) }
+    private fun clearUploadSuccess() {
+        _state.update { it.copy(uploadSuccess = null) }
     }
 
     private fun validateUriExtension(uri: Uri, extension: String): Boolean {
@@ -407,10 +501,29 @@ class ExportViewModel(
     }
 
     private fun reportExportFailed() {
-        val title = application.getString(R.string.error)
-        val message = application.getString(R.string.export_failed)
-        _state.update {
-            it.copy(exportMessage = ExportMessage(title, message))
+        val title = application.getString(R.string.export_failed)
+        val message = if (!App.isNetworkAvailable) {
+            application.getString(R.string.internet_not_available)
+        } else {
+            application.getString(R.string.export_failed)
         }
+        _state.update {
+            it.copy(infoMessage = InfoMessage(title, message))
+        }
+    }
+
+    private fun reportUploadSuccess(details: String?) {
+        val apiURL = prefRepository.getDefaultPref(
+            SettingsActivity.KEY_PREF_READER_SERVER,
+            application.getString(R.string.pref_default_reader_server)
+        )
+        val url = Uri.parse(
+            apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id
+        )
+        val success = UploadSuccess(
+            url = url.toString(),
+            details = details
+        )
+        _state.update { it.copy(uploadSuccess = success) }
     }
 }
