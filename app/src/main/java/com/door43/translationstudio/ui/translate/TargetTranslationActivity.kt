@@ -8,12 +8,12 @@ import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.dialogs.BackupDialogOld
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.PrintDialogOld
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
+import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 import java.util.Timer
@@ -41,6 +41,10 @@ class TargetTranslationActivity : BaseActivity() {
         val targetTranslationId = args.getString(
             Translator.EXTRA_TARGET_TRANSLATION_ID,
             null
+        )
+        val startWithMergeFilter = args.getBoolean(
+            Translator.EXTRA_START_WITH_MERGE_FILTER,
+            false
         )
 
         if (!viewModel.initialized) {
@@ -71,6 +75,7 @@ class TargetTranslationActivity : BaseActivity() {
         setContent {
             AppTheme(darkTheme = isDarkTheme) {
                 TargetTranslationScreen(
+                    startWithMergeFilter = startWithMergeFilter,
                     onHomeClick = { finish() },
                     onNavigateToDraft = {
                         val intent = Intent(this, DraftActivity::class.java)

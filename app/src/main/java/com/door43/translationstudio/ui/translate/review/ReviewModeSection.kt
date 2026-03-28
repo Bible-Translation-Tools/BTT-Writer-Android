@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.InfoDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.TargetAction
@@ -77,8 +77,8 @@ fun ReviewModeSection(
     }
 
     // Scroll to matching item when search navigates
-    LaunchedEffect(reviewState.search.currentItemId) {
-        val targetId = reviewState.search.currentItemId ?: return@LaunchedEffect
+    LaunchedEffect(reviewState.search?.currentItemId) {
+        val targetId = reviewState.search?.currentItemId ?: return@LaunchedEffect
         val items = reviewVm.items.value
         val index = items.indexOfFirst { it.id == targetId }
         if (index >= 0) {
@@ -88,9 +88,9 @@ fun ReviewModeSection(
 
     Box {
         Column {
-            if (reviewState.search.active) {
+            reviewState.search?.let { search ->
                 SearchBar(
-                    searchState = reviewState.search,
+                    searchState = search,
                     onQueryChange = {
                         reviewVm.onAction(ReviewAction.UpdateSearchQuery(it))
                     },
@@ -157,23 +157,21 @@ fun ReviewModeSection(
                             )
                         }
                         is MarkAllDialogState.Result -> {
-                            AlertDialog(
-                                onDismissRequest = {
+                            InfoDialog(
+                                onDismiss = {
                                     reviewVm.onAction(
                                         ReviewAction.MarkAllDoneConfirmed(false)
                                     )
                                 },
-                                title = { Text(stringResource(R.string.result)) },
-                                text = {
-                                    Text(AnnotatedString.fromHtml(
-                                        stringResource(
-                                            id = R.string.mark_chunks_done_result,
-                                            dialogState.marked,
-                                            dialogState.total
-                                        )
-                                    ))
-                                },
-                                confirmButton = {
+                                title = stringResource(R.string.result),
+                                message = AnnotatedString.fromHtml(
+                                    stringResource(
+                                        id = R.string.mark_chunks_done_result,
+                                        dialogState.marked,
+                                        dialogState.total
+                                    )
+                                ).text,
+                                buttons = {
                                     TextButton(
                                         onClick = {
                                             reviewVm.onAction(
@@ -240,10 +238,10 @@ fun ReviewModeSection(
                     onConflictSelected = {
                         reviewVm.onAction(ReviewAction.SelectConflict(item, it))
                     },
-                    searchQuery = reviewState.search.let { search ->
-                        if (search.active && search.query.length >= 2
-                            && search.subject == SearchSubject.TARGET
-                        ) search.query else null
+                    searchQuery = reviewState.search?.let { search ->
+                        if (search.query.length >= 2 && search.subject == SearchSubject.TARGET) {
+                            search.query
+                        } else null
                     },
                     modifier = Modifier.padding(start = 16.dp)
                 )

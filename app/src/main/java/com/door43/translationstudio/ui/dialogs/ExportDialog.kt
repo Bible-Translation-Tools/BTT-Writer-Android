@@ -37,7 +37,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -72,7 +71,8 @@ fun ExportDialog(
     targetTranslation: TargetTranslation,
     onDismiss: () -> Unit,
     onExportToApp: (File) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onMergeConflict: () -> Unit
 ) {
     val viewModel: ExportViewModel = koinViewModel {
         parametersOf(targetTranslation)
@@ -83,7 +83,6 @@ fun ExportDialog(
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val snackBarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
 
     var showPrintDialog by rememberSaveable { mutableStateOf(false) }
     var showInternetUsageDialog by rememberSaveable { mutableStateOf(false) }
@@ -359,6 +358,37 @@ fun ExportDialog(
                 onConfirm = {
                     showAuthDialog = false
                     viewModel.onAction(ExportAction.RegisterKeys)
+                }
+            )
+        }
+
+        state.mergeConflict?.let { conflict ->
+            InfoDialog(
+                title = conflict.title,
+                message = conflict.message,
+                onDismiss = { viewModel.onAction(ExportAction.ClearMergeConflict) },
+                buttons = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                viewModel.onAction(ExportAction.ClearMergeConflict)
+                                onMergeConflict()
+                            }
+                        ) {
+                            Text(stringResource(R.string.yes))
+                        }
+                        TextButton(
+                            onClick = {
+                                viewModel.onAction(ExportAction.ClearMergeConflict)
+                                viewModel.onAction(ExportAction.ResetToMaster)
+                            }
+                        ) {
+                            Text(stringResource(R.string.no))
+                        }
+                    }
                 }
             )
         }

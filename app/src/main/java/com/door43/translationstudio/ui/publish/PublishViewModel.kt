@@ -46,7 +46,7 @@ sealed interface PublishAction {
 }
 
 sealed interface PublishEvent {
-    data class OpenReview(val translationId: String) : PublishEvent
+    object OpenReview : PublishEvent
 }
 
 class PublishViewModel(
@@ -197,7 +197,7 @@ class PublishViewModel(
                     frameId = item.frameId
                 )
             }
-            _event.trySend(PublishEvent.OpenReview(item.targetTranslationId))
+            _event.trySend(PublishEvent.OpenReview)
         }
     }
 }

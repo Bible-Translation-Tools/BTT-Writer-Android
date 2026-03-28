@@ -26,9 +26,9 @@ import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
 import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TM_URL
-import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.ModeAction
@@ -36,9 +36,9 @@ import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.SharedState
+import com.door43.translationstudio.ui.translate.TargetEvent
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.TranslationHelp
-import com.door43.translationstudio.ui.translate.TargetEvent
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -110,7 +110,6 @@ enum class TargetMode {
 }
 
 data class SearchState(
-    val active: Boolean = false,
     val query: String = "",
     val subject: SearchSubject = SearchSubject.SOURCE,
     val matchingItemIds: List<String> = emptyList(),
@@ -132,7 +131,7 @@ data class ReviewState(
     val help: Help? = null,
     val url: String? = null,
     val chunkToDone: ReviewItem? = null,
-    val search: SearchState = SearchState(),
+    val search: SearchState? = null,
     val mergeConflictFilterOn: Boolean = false,
     val markAllDoneState: MarkAllDialogState? = null
 ) : ModeState
@@ -228,19 +227,6 @@ class ReviewModeViewModel(
         }
     }
 
-    private fun applyConflictFilter(items: List<ReviewItem>): List<ReviewItem> {
-        return if (_state.value.mergeConflictFilterOn) {
-            items.filter { it.hasMergeConflicts }
-        } else {
-            items
-        }
-    }
-
-    private fun setMergeConflictFilter(on: Boolean) {
-        _state.update { it.copy(mergeConflictFilterOn = on) }
-        _items.value = applyConflictFilter(fullItems)
-    }
-
     override fun onAction(action: ModeAction) {
         super.onAction(action)
         when (action) {
@@ -277,9 +263,16 @@ class ReviewModeViewModel(
         targetMode: TargetMode = TargetMode.MARKER,
         loadHistory: Boolean = false
     ): ReviewItem {
+        val searchQuery = _state.value.search?.query
+        val searchSource = _state.value.search?.subject == SearchSubject.SOURCE
+
         val chunkId = "${chunk.chapterSlug}-${chunk.chunkSlug}"
         val (pt, ct, ft) = prepareTranslations(chunk)
-        val (sourceText, renderedSourceText) = prepareSource(chunkId, chunk)
+        val (sourceText, renderedSourceText) = prepareSource(
+            chunkId = chunkId,
+            chunk = chunk,
+            searchQuery = if (searchSource) searchQuery else null
+        )
 
         val item = ReviewItem(
             id = chunkId,
@@ -296,7 +289,12 @@ class ReviewModeViewModel(
 
         // Chunk completion status overrides target mode
         val realTargetMode = if (item.isComplete) TargetMode.COMPLETE else targetMode
-        val (targetText, renderedTargetText) = prepareTarget(chunkId, chunk, realTargetMode)
+        val (targetText, renderedTargetText) = prepareTarget(
+            chunkId = chunkId,
+            chunk = chunk,
+            targetMode = realTargetMode,
+            searchQuery = if (!searchSource) searchQuery else null
+        )
 
         val history = if (loadHistory) {
             createFileHistory(item)?.also { it.loadCommits() }
@@ -308,30 +306,7 @@ class ReviewModeViewModel(
             targetMode = realTargetMode,
             fileHistory = history
         )
-        return applySearchHighlightIfActive(prepared)
-    }
-
-    private fun applySearchHighlightIfActive(item: ReviewItem): ReviewItem {
-        val search = _state.value.search
-        if (!search.active || search.query.length < 2) return item
-
-        val query = search.query
-        val searchSource = search.subject == SearchSubject.SOURCE
-        val (_, renderedSource) = prepareSource(
-            chunkId = item.id,
-            chunk = item.chunk,
-            searchQuery = if (searchSource) query else null
-        )
-        val (_, renderedTarget) = prepareTarget(
-            chunkId = item.id,
-            chunk = item.chunk,
-            targetMode = item.targetMode,
-            searchQuery = if (!searchSource) query else null
-        )
-        return item.copy(
-            renderedSourceText = renderedSource,
-            renderedTargetText = renderedTarget
-        )
+        return prepared
     }
 
     private fun prepareSource(
@@ -420,12 +395,12 @@ class ReviewModeViewModel(
             SearchSubject.SOURCE
         }
         _state.update {
-            it.copy(search = SearchState(active = true, subject = lastSubject))
+            it.copy(search = SearchState(subject = lastSubject))
         }
     }
 
     private fun closeSearch() {
-        _state.update { it.copy(search = SearchState()) }
+        _state.update { it.copy(search = null) }
         // Re-render items without search highlighting
         viewModelScope.launch {
             reRenderAllItems(searchQuery = null)
@@ -433,16 +408,17 @@ class ReviewModeViewModel(
     }
 
     private fun updateSearchQuery(query: String) {
+        val search = _state.value.search ?: return
         _state.update {
-            it.copy(search = it.search.copy(query = query))
+            it.copy(search = it.search?.copy(query = query))
         }
         if (query.length >= 2) {
             viewModelScope.launch {
-                performSearch(query, _state.value.search.subject)
+                performSearch(query, search.subject)
             }
         } else if (query.isEmpty()) {
             _state.update {
-                it.copy(search = it.search.copy(
+                it.copy(search = it.search?.copy(
                     matchingItemIds = emptyList(),
                     currentMatchIndex = -1
                 ))
@@ -454,11 +430,12 @@ class ReviewModeViewModel(
     }
 
     private fun setSearchSubjectAndSearch(subject: SearchSubject) {
+        val search = _state.value.search ?: return
         setLastSearchSource(subject)
         _state.update {
-            it.copy(search = it.search.copy(subject = subject))
+            it.copy(search = it.search?.copy(subject = subject))
         }
-        val query = _state.value.search.query
+        val query = search.query
         if (query.length >= 2) {
             viewModelScope.launch {
                 performSearch(query, subject)
@@ -468,7 +445,7 @@ class ReviewModeViewModel(
 
     private fun navigateMatch(forward: Boolean) {
         _state.update { state ->
-            val search = state.search
+            val search = state.search ?: return@update state
             if (search.matchingItemIds.isEmpty()) return@update state
             val newIndex = if (forward) {
                 if (search.currentMatchIndex < search.matchCount - 1) {
@@ -523,7 +500,7 @@ class ReviewModeViewModel(
 
             _items.value = updatedItems
             _state.update { state ->
-                state.copy(search = state.search.copy(
+                state.copy(search = state.search?.copy(
                     matchingItemIds = matchingIds,
                     currentMatchIndex = if (matchingIds.isNotEmpty()) 0 else -1
                 ))
@@ -1222,5 +1199,18 @@ class ReviewModeViewModel(
 
     private fun getResourceContainer(slug: String): ResourceContainer? {
         return ContainerCache.get(slug)
+    }
+
+    private fun applyConflictFilter(items: List<ReviewItem>): List<ReviewItem> {
+        return if (_state.value.mergeConflictFilterOn) {
+            items.filter { it.hasMergeConflicts }
+        } else {
+            items
+        }
+    }
+
+    private fun setMergeConflictFilter(on: Boolean) {
+        _state.update { it.copy(mergeConflictFilterOn = on) }
+        _items.value = applyConflictFilter(fullItems)
     }
 }

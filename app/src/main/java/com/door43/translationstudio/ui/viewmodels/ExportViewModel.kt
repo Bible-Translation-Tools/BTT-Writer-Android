@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.merge.MergeStrategy
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -42,7 +43,6 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import java.util.Locale
 
 data class InfoMessage(
     val title: String,
@@ -54,9 +54,15 @@ data class UploadSuccess(
     val details: String? = null
 )
 
+data class MergeConflict(
+    val title: String,
+    val message: String
+)
+
 data class ExportState(
     val infoMessage: InfoMessage? = null,
-    val uploadSuccess: UploadSuccess? = null
+    val uploadSuccess: UploadSuccess? = null,
+    val mergeConflict: MergeConflict? = null
 )
 
 sealed interface ExportEvent {
@@ -67,7 +73,6 @@ sealed interface ExportEvent {
 }
 
 sealed interface ExportAction {
-    object ClearExport : ExportAction
     data class PrintPdf(
         val includeImages: Boolean,
         val includeIncomplete: Boolean,
@@ -75,12 +80,15 @@ sealed interface ExportAction {
     ) : ExportAction
     data class ExportUsfm(val uri: Uri) : ExportAction
     data class ExportProject(val uri: Uri) : ExportAction
+    object ClearExport : ExportAction
     object ExportToApp : ExportAction
     object ExportToCloud : ExportAction
     object Logout : ExportAction
     object RegisterKeys : ExportAction
     object ClearInfoMessage : ExportAction
     object ClearUploadSuccess : ExportAction
+    object ResetToMaster : ExportAction
+    object ClearMergeConflict : ExportAction
 }
 
 class ExportViewModel(
@@ -155,6 +163,8 @@ class ExportViewModel(
             ExportAction.RegisterKeys -> registerSSHKeys()
             ExportAction.ClearInfoMessage -> clearInfo()
             ExportAction.ClearUploadSuccess -> clearUploadSuccess()
+            ExportAction.ResetToMaster -> resetToMaster()
+            ExportAction.ClearMergeConflict -> clearMergeConflict()
         }
     }
 
@@ -341,8 +351,15 @@ class ExportViewModel(
                     )
                     pushTargetTranslation(handle)
                 } else {
-                    println("show conflict. pipeline should restart")
-                    // TODO Show merge conflict dialog
+                    val title = application.getString(R.string.change_detected)
+                    val message = application.getString(
+                        R.string.merge_request,
+                        targetTranslation.projectId,
+                        targetTranslation.targetLanguageName
+                    )
+                    _state.update {
+                        it.copy(mergeConflict = MergeConflict(title, message))
+                    }
                 }
             }
             else -> {
@@ -375,7 +392,11 @@ class ExportViewModel(
             }
             result.status.isRejected -> {
                 Logger.i(this.javaClass.name, "Push Rejected")
-                println("push rejected")
+                val title = application.getString(R.string.upload_failed)
+                val message = application.getString(R.string.push_rejected)
+                _state.update {
+                    it.copy(mergeConflict = MergeConflict(title, message))
+                }
             }
             else -> {
                 reportExportFailed()
@@ -403,7 +424,7 @@ class ExportViewModel(
             Logger.i(this.javaClass.name, "SSH keys were registered with the server")
             pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
         } else {
-            println("backup failed")
+            reportExportFailed()
         }
     }
 
@@ -422,7 +443,7 @@ class ExportViewModel(
             )
             pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
         } else {
-            println("backup failed")
+            reportExportFailed()
         }
     }
 
@@ -469,27 +490,12 @@ class ExportViewModel(
         }
     }
 
-    private fun getProject(targetTranslationId: String): Project? {
-        return library.index.getProject(
-            Locale.getDefault().language,
-            targetTranslationId
-        )
-    }
-
     fun getProject(targetTranslation: TargetTranslation): Project? {
         return library.index.getProject(
             "en",
             targetTranslation.projectId,
             true
         )
-    }
-
-    private fun clearInfo() {
-        _state.update { it.copy(infoMessage = null) }
-    }
-
-    private fun clearUploadSuccess() {
-        _state.update { it.copy(uploadSuccess = null) }
     }
 
     private fun validateUriExtension(uri: Uri, extension: String): Boolean {
@@ -523,5 +529,37 @@ class ExportViewModel(
             details = details
         )
         _state.update { it.copy(uploadSuccess = success) }
+    }
+
+    private fun resetToMaster() {
+        launchWithProgress {
+            withContext(Dispatchers.IO) {
+                try { // restore state before the pull
+                    val git = targetTranslation.repo.git
+                    val resetCommand = git.reset()
+                    resetCommand.setMode(ResetCommand.ResetType.HARD)
+                        .setRef("backup-master")
+                        .call()
+                } catch (e: Exception) {
+                    Logger.e(
+                        this.javaClass.name,
+                        "Failed to reset to master for target translation " + targetTranslation.id,
+                        e
+                    )
+                }
+            }
+        }
+    }
+
+    private fun clearInfo() {
+        _state.update { it.copy(infoMessage = null) }
+    }
+
+    private fun clearUploadSuccess() {
+        _state.update { it.copy(uploadSuccess = null) }
+    }
+
+    private fun clearMergeConflict() {
+        _state.update { it.copy(mergeConflict = null) }
     }
 }

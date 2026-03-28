@@ -574,6 +574,21 @@ class BackupDialogOld : DialogFragment() {
             .show()
     }
 
+    private fun showPushRejection(targetTranslation: TargetTranslation) {
+        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
+            .setTitle(R.string.upload_failed)
+            .setMessage(R.string.push_rejected)
+            .setPositiveButton(R.string.yes) { _, _ ->
+                doManualMerge()
+            }
+            .setNegativeButton(R.string.no) { _, _ ->
+                resetToMasterBackup(targetTranslation)
+                this@BackupDialogOld.dismiss()
+            }
+            .setOnDismissListener { clearResults() }
+            .show()
+    }
+
     /**
      * open review mode to let user resolve conflict
      */
@@ -656,21 +671,6 @@ class BackupDialogOld : DialogFragment() {
         args.putString(FeedbackDialog.ARG_MESSAGE, message)
         feedbackDialog.arguments = args
         showDialogFragment(feedbackDialog, "feedback-dialog")
-    }
-
-    private fun showPushRejection(targetTranslation: TargetTranslation) {
-        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-            .setTitle(R.string.upload_failed)
-            .setMessage(R.string.push_rejected)
-            .setPositiveButton(R.string.yes) { _, _ ->
-                doManualMerge()
-            }
-            .setNegativeButton(R.string.no) { _, _ ->
-                resetToMasterBackup(targetTranslation)
-                this@BackupDialogOld.dismiss()
-            }
-            .setOnDismissListener { clearResults() }
-            .show()
     }
 
     private fun resetToMasterBackup(targetTranslation: TargetTranslation): Boolean {

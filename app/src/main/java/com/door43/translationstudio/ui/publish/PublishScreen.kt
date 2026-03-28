@@ -54,9 +54,10 @@ private enum class PublishSection {
 @Composable
 fun PublishScreen(
     viewModel: PublishViewModel = koinViewModel(),
-    onOpenReview: (String) -> Unit,
+    onOpenReview: () -> Unit,
     onExportToApp: (File) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onMergeConflict: () -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -77,7 +78,7 @@ fun PublishScreen(
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
             when (event) {
-                is PublishEvent.OpenReview -> onOpenReview(event.translationId)
+                is PublishEvent.OpenReview -> onOpenReview()
             }
         }
     }
@@ -186,6 +187,7 @@ fun PublishScreen(
             targetTranslation = viewModel.targetTranslation,
             onExportToApp = onExportToApp,
             onLogout = onLogout,
+            onMergeConflict = onMergeConflict,
             onDismiss = { showUploadDialog = false }
         )
     }

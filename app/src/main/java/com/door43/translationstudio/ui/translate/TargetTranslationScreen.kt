@@ -40,6 +40,7 @@ import org.koin.compose.koinInject
 @Composable
 fun TargetTranslationScreen(
     viewModel: TargetTranslationViewModel = koinViewModel(),
+    startWithMergeFilter: Boolean,
     onHomeClick: () -> Unit,
     onNavigateToDraft: () -> Unit,
     onProjectPreview: () -> Unit,
@@ -60,7 +61,7 @@ fun TargetTranslationScreen(
     var showUpdateSourcesDialog by rememberSaveable { mutableStateOf(false) }
     var showSelectSourceDialog by rememberSaveable { mutableStateOf(false) }
     var searchRequested by remember { mutableStateOf(false) }
-    var mergeConflictFilterOn by rememberSaveable { mutableStateOf(false) }
+    var mergeConflictFilterOn by rememberSaveable { mutableStateOf(startWithMergeFilter) }
     var chunksDoneRequested by rememberSaveable { mutableStateOf(false) }
 
     val scrollCoordinator = rememberScrollCoordinator(
@@ -180,8 +181,9 @@ fun TargetTranslationScreen(
                             listState = scrollCoordinator.listState,
                             onSourceDialogOpen = { showSelectSourceDialog = true },
                             onBeginTranslation = {
-                                scrollCoordinator.pendingScrollChapter =
-                                    PendingScrollItem(it)
+                                scrollCoordinator.pendingScrollChapter = PendingScrollItem(
+                                    chapterId = it
+                                )
                                 viewModel.onAction(
                                     TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK)
                                 )
@@ -194,8 +196,10 @@ fun TargetTranslationScreen(
                             listState = scrollCoordinator.listState,
                             onSourceDialogOpen = { showSelectSourceDialog = true },
                             onConflictClick = { chapterId, chunkId ->
-                                scrollCoordinator.pendingScrollChapter =
-                                    PendingScrollItem(chapterId = chapterId, chunkId = chunkId)
+                                scrollCoordinator.pendingScrollChapter = PendingScrollItem(
+                                    chapterId = chapterId,
+                                    chunkId = chunkId
+                                )
                                 viewModel.onAction(
                                     TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW)
                                 )

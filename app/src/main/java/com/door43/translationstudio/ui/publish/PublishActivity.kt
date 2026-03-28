@@ -99,7 +99,8 @@ class PublishActivity : BaseActivity() {
                     PublishScreen(
                         onOpenReview = ::openReview,
                         onExportToApp = ::exportToApp,
-                        onLogout = ::logout
+                        onLogout = ::logout,
+                        onMergeConflict = ::openMergeConflict
                     )
                 }
             }
@@ -138,14 +139,22 @@ class PublishActivity : BaseActivity() {
         finish()
     }
 
-    private fun openReview(targetTranslationId: String) {
+    private fun openReview(mergeConflict: Boolean = false) {
         val intent = Intent(this, TargetTranslationActivity::class.java)
         val args = Bundle()
-        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslationId)
+        args.putString(
+            Translator.EXTRA_TARGET_TRANSLATION_ID,
+            viewModel.targetTranslation.id
+        )
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, mergeConflict)
         intent.putExtras(args)
 
         startActivity(intent)
         finish()
+    }
+
+    private fun openMergeConflict() {
+        openReview(true)
     }
 
     private fun exportToApp(file: File) {
