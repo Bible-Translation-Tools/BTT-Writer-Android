@@ -320,8 +320,8 @@ class PdfPrinter(
         if (c.title.isEmpty()) {
             val chapterNumber = Util.strToInt(c.id, 0)
             title = if (chapterNumber > 0) {
-                String.format(
-                    context.resources.getString(R.string.label_chapter_title_detailed),
+                context.resources.getString(
+                    R.string.label_chapter_title_detailed,
                     "" + chapterNumber
                 )
             } else {

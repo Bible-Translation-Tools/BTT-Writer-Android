@@ -174,71 +174,72 @@ class PushTargetTranslation(
         var msg: String?
         when (update.status) {
             RemoteRefUpdate.Status.AWAITING_REPORT -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_awaiting_report), update.remoteName
+                msg = context.resources.getString(
+                    R.string.git_awaiting_report,
+                    update.remoteName
                 )
             }
             RemoteRefUpdate.Status.NON_EXISTING -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_non_existing),
+                msg = context.resources.getString(
+                    R.string.git_non_existing,
                     update.remoteName
                 )
             }
             RemoteRefUpdate.Status.NOT_ATTEMPTED -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_not_attempted),
+                msg = context.resources.getString(
+                    R.string.git_not_attempted,
                     update.remoteName
                 )
             }
             RemoteRefUpdate.Status.OK -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_ok),
+                msg = context.resources.getString(
+                    R.string.git_ok,
                     update.remoteName
                 )
             }
             RemoteRefUpdate.Status.REJECTED_NODELETE -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_rejected_nondelete),
+                msg = context.resources.getString(
+                    R.string.git_rejected_nondelete,
                     update.remoteName
                 )
             }
             RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_rejected_nonfastforward),
+                msg = context.resources.getString(
+                    R.string.git_rejected_nonfastforward,
                     update.remoteName
                 )
             }
             RemoteRefUpdate.Status.REJECTED_OTHER_REASON -> {
                 val reason = update.message
                 msg = if (reason.isNullOrEmpty()) {
-                    String.format(
-                        context.resources.getString(R.string.git_rejected_other_reason),
+                    context.resources.getString(
+                        R.string.git_rejected_other_reason,
                         update.remoteName
                     )
                 } else {
-                    String.format(
-                        context.resources.getString(R.string.git_rejected_other_reason_detailed),
+                    context.resources.getString(
+                        R.string.git_rejected_other_reason_detailed,
                         update.remoteName,
                         reason
                     )
                 }
             }
             RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_rejected_remote_changed),
+                msg = context.resources.getString(
+                    R.string.git_rejected_remote_changed,
                     update.remoteName
                 )
             }
             RemoteRefUpdate.Status.UP_TO_DATE -> {
-                msg = String.format(
-                    context.resources.getString(R.string.git_uptodate),
+                msg = context.resources.getString(
+                    R.string.git_uptodate,
                     update.remoteName
                 )
             }
             else -> msg = "Unknown status"
         }
-        msg += "\n" + String.format(
-            context.resources.getString(R.string.git_server_details),
+        msg += "\n" + context.resources.getString(
+            R.string.git_server_details,
             remote
         )
         return msg

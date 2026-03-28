@@ -345,8 +345,8 @@ class HomeActivity : BaseActivity(),
             it?.let { result ->
                 if (result.success) {
                     // immediately go to select downloads
-                    val message = String.format(
-                        resources.getString(R.string.update_sources_success),
+                    val message = resources.getString(
+                        R.string.update_sources_success,
                         result.addedCount,
                         result.updatedCount
                     )
@@ -365,8 +365,8 @@ class HomeActivity : BaseActivity(),
         viewModel.uploadCatalogResult.observe(this) {
             it?.let { result ->
                 if (result.success) {
-                    val message = String.format(
-                        resources.getString(R.string.update_languages_success),
+                    val message = resources.getString(
+                        R.string.update_languages_success,
                         result.addedCount
                     )
                     showUpdateResultDialog(
@@ -537,8 +537,11 @@ class HomeActivity : BaseActivity(),
         alertShown = DialogShown.IMPORT_RESULTS
         val message: String
         if (success) {
-            val format = resources.getString(R.string.import_project_success)
-            message = String.format(format, projectNames, projectPath)
+            message = resources.getString(
+                R.string.import_project_success,
+                projectNames,
+                projectPath
+            )
         } else {
             val format = resources.getString(R.string.import_failed)
             message = format + "\n" + projectPath
@@ -574,8 +577,8 @@ class HomeActivity : BaseActivity(),
             val dlg = AlertDialog.Builder(this, R.style.AppTheme_Dialog)
             dlg.setTitle(R.string.label_import)
                 .setMessage(
-                    String.format(
-                        resources.getString(R.string.confirm_import_target_translation),
+                    resources.getString(
+                        R.string.confirm_import_target_translation,
                         result.projectsFound
                     )
                 )
@@ -639,9 +642,10 @@ class HomeActivity : BaseActivity(),
         val item = viewModel.findTranslationItem(translationId)
 
         item?.let { translationItem ->
-            val message = String.format(
-                resources.getString(R.string.merge_request),
-                translationItem.formattedProjectName, translationItem.translation.targetLanguageName
+            val message = resources.getString(
+                R.string.merge_request,
+                translationItem.formattedProjectName,
+                translationItem.translation.targetLanguageName
             )
 
             AlertDialog.Builder(this, R.style.AppTheme_Dialog)
@@ -826,11 +830,13 @@ class HomeActivity : BaseActivity(),
                 val project = viewModel.getProject(existingTranslation)
 
                 val snack = Snackbar.make(
-                    findViewById(android.R.id.content), String.format(
-                        resources.getString(R.string.duplicate_target_translation),
+                    findViewById(android.R.id.content),
+                    resources.getString(
+                        R.string.duplicate_target_translation,
                         project.name,
                         existingTranslation.targetLanguageName
-                    ), Snackbar.LENGTH_LONG
+                    ),
+                    Snackbar.LENGTH_LONG
                 )
                 ViewUtil.setSnackBarTextColor(
                     snack,

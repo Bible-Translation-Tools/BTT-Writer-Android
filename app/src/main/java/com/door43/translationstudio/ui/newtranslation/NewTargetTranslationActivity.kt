@@ -174,8 +174,8 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         dialogShown = DialogShown.RENAME_CONFLICT
         viewModel.newTargetTranslationId = existingTranslation.id
         val project = viewModel.getProject(existingTranslation)
-        val message = String.format(
-            resources.getString(R.string.warn_existing_target_translation),
+        val message = resources.getString(
+            R.string.warn_existing_target_translation,
             project?.name,
             existingTranslation.targetLanguageName
         )
@@ -213,8 +213,8 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
      */
     private fun confirmTempLanguage() {
         viewModel.selectedTargetLanguage?.let { language ->
-            val msg = String.format(
-                resources.getString(R.string.new_language_confirmation),
+            val msg = resources.getString(
+                R.string.new_language_confirmation,
                 language.slug,
                 language.name
             )

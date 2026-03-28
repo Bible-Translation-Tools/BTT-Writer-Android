@@ -161,11 +161,16 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
             val message: String?
             val description = usfm.getShortFilePath(item.description ?: "")
             if (item.invalidName != null) {
-                val format = resources.getString(R.string.invalid_book_name_prompt)
-                message = String.format(format, description, item.invalidName)
+                message = resources.getString(
+                    R.string.invalid_book_name_prompt,
+                    description,
+                    item.invalidName
+                )
             } else {
-                val format = resources.getString(R.string.missing_book_name_prompt)
-                message = String.format(format, description)
+                message = resources.getString(
+                    R.string.missing_book_name_prompt,
+                    description
+                )
             }
 
             statusDialog?.dismiss()

@@ -185,8 +185,8 @@ class ImportProjects(
 
         return try {
             library.open(externalContainer.slug)
-            val conflictMessage = String.format(
-                context.getString(R.string.overwrite_content),
+            val conflictMessage = context.getString(
+                R.string.overwrite_content,
                 "${externalContainer.language.name} - ${externalContainer.project.name} - ${externalContainer.resource.name}"
             )
             ImportSourceResult(

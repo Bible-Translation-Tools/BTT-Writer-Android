@@ -408,8 +408,8 @@ class ProcessUSFM {
      * @param data
      */
     private fun updateStatus(resource: Int, data: String) {
-        val format = context.resources.getString(resource)
-        updateStatus(String.format(format, data))
+        val text = context.resources.getString(resource, data)
+        updateStatus(text)
     }
 
     /**
@@ -420,10 +420,12 @@ class ProcessUSFM {
             normalizeBookQueue()
             normalizeMessageQueue()
             var results = ""
-            val format = context.resources.getString(R.string.found_book)
             for (i in 0..currentBook) {
                 val bookName = foundBooks[i]
-                val bookNameFormatted = String.format(format, bookName)
+                val bookNameFormatted = context.resources.getString(
+                    R.string.found_book,
+                    bookName
+                )
                 var errors = errors[i]
                 if (errors.isEmpty()) {
                     errors = context.resources.getString(R.string.no_error)
@@ -455,8 +457,7 @@ class ProcessUSFM {
      * @param error
      */
     private fun addError(resource: Int, error: String?) {
-        val format = context.resources.getString(resource)
-        val newError = String.format(format, error)
+        val newError = context.resources.getString(resource, error)
         addError(newError)
     }
 
@@ -468,8 +469,7 @@ class ProcessUSFM {
      * @param second
      */
     private fun addError(resource: Int, first: String?, second: String) {
-        val format = context.resources.getString(resource)
-        val newError = String.format(format, first, second)
+        val newError = context.resources.getString(resource, first, second)
         addError(newError)
     }
 
@@ -503,9 +503,10 @@ class ProcessUSFM {
         if (errors.isNotEmpty()) {
             errors += "\n"
         }
-        val format =
-            context.resources.getString(if (error) R.string.error_prefix else R.string.warning_prefix)
-        val newError = String.format(format, message)
+        val newError = context.resources.getString(
+            if (error) R.string.error_prefix else R.string.warning_prefix,
+            message
+        )
         this.errors[currentBook] = errors + newError
         if (error) {
             Logger.e(TAG, newError)
@@ -542,8 +543,7 @@ class ProcessUSFM {
      * @param error
      */
     private fun addWarning(resource: Int, error: String) {
-        val format = context.resources.getString(resource)
-        val newWarning = String.format(format, error)
+        val newWarning = context.resources.getString(resource, error)
         addWarning(newWarning)
     }
 
@@ -555,8 +555,7 @@ class ProcessUSFM {
      * @param val2
      */
     private fun addWarning(resource: Int, val1: String, val2: String?) {
-        val format = context.resources.getString(resource)
-        val newWarning = String.format(format, val1, val2)
+        val newWarning = context.resources.getString(resource, val1, val2)
         addWarning(newWarning)
     }
 
@@ -1299,18 +1298,27 @@ class ProcessUSFM {
             if (start != 0) { // text before first verse is not a concern
                 var delta = foundVerseCount - (end - start)
                 if (section.isEmpty()) {
-                    val format = context.resources.getString(R.string.could_not_find_verses_in_chapter)
-                    val msg = String.format(format, start, end - 1, chapter)
+                    val msg = context.resources.getString(
+                        R.string.could_not_find_verses_in_chapter,
+                        start,
+                        end - 1,
+                        chapter
+                    )
                     addWarning(msg)
                 } else if (end != END_MARKER && delta != 0) {
-                    val format: String
-                    if (delta < 0) {
+                    val msg = if (delta < 0) {
                         delta = -delta
-                        format = context.resources.getString(R.string.missing_verses_in_chapter)
+                        context.resources.getString(
+                            R.string.missing_verses_in_chapter,
+                            delta, start, end - 1, chapter
+                        )
                     } else {
-                        format = context.resources.getString(R.string.extra_verses_in_chapter)
+                        context.resources.getString(
+                            R.string.extra_verses_in_chapter,
+                            delta, start, end - 1, chapter
+                        )
                     }
-                    val msg = String.format(format, delta, start, end - 1, chapter)
+
                     addWarning(msg)
                 }
             }

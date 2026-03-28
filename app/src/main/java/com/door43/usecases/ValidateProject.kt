@@ -20,10 +20,6 @@ class ValidateProject(
     private val translator: Translator
 ) {
     fun execute(targetTranslationId: String, sourceTranslationId: String): List<Validation> {
-        val hasWarnings = context.getString(R.string.has_warnings)
-        val titleStr = context.getString(R.string.title)
-        val referenceStr = context.getString(R.string.reference)
-
         val validations = arrayListOf<Validation>()
 
         translator.getTargetTranslation(targetTranslationId)?.let { targetTranslation ->
@@ -86,7 +82,7 @@ class ValidateProject(
                                 container,
                                 chapterSlug,
                                 "title",
-                                titleStr
+                                context.getString(R.string.title)
                             ),
                             titleLanguage = sourceLanguage,
                             body = chapterTranslation.title,
@@ -110,7 +106,7 @@ class ValidateProject(
                                 container,
                                 chapterSlug,
                                 "reference",
-                                referenceStr
+                                context.getString(R.string.reference)
                             ),
                             titleLanguage = sourceLanguage,
                             body = chapterTranslation.reference,
@@ -304,7 +300,10 @@ class ValidateProject(
                             val formattedChapter = StringUtilities.formatNumber(chapterSlug)
                             chapterTitle = "$projectTitle $formattedChapter"
                         }
-                        chapterTitle = String.format(hasWarnings, chapterTitle.trim())
+                        chapterTitle = context.getString(
+                            R.string.has_warnings,
+                            chapterTitle.trim()
+                        )
 
                         chapterValidations.add(
                             Validation.InvalidGroup(

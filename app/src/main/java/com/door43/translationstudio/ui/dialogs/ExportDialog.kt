@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.SdCard
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -292,17 +291,13 @@ fun ExportDialog(
         }
 
         state.infoMessage?.let {
-            AlertDialog(
-                onDismissRequest = {
+            InfoDialog(
+                title = it.title,
+                message = it.message,
+                onDismiss = {
                     viewModel.onAction(ExportAction.ClearInfoMessage)
                 },
-                title = {
-                    Text(it.title)
-                },
-                text = {
-                    Text(it.message)
-                },
-                confirmButton = {
+                buttons = {
                     TextButton(
                         onClick = {
                             viewModel.onAction(ExportAction.ClearInfoMessage)
@@ -431,82 +426,70 @@ private fun UploadSuccessDialog(
     var showUploadDetailsDialog by rememberSaveable { mutableStateOf(false) }
 
     if (!showUploadDetailsDialog) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Text(stringResource(R.string.upload_complete))
-            },
-            text = {
-                Text(stringResource(R.string.project_uploaded_to, info.url))
-            },
-            icon = {},
-            confirmButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+        InfoDialog(
+            onDismiss = onDismiss,
+            title = stringResource(R.string.upload_complete),
+            message = stringResource(R.string.project_uploaded_to, info.url)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(
+                    onClick = {
+                        showUploadDetailsDialog = true
+                    }
                 ) {
-                    TextButton(
-                        onClick = {
-                            showUploadDetailsDialog = true
-                        }
-                    ) {
-                        Text(stringResource(R.string.label_details))
+                    Text(stringResource(R.string.label_details))
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.dismiss))
+                }
+                TextButton(
+                    onClick = {
+                        uriHandler.openUri(info.url)
+                        onDismiss()
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.dismiss))
-                    }
-                    TextButton(
-                        onClick = {
-                            uriHandler.openUri(info.url)
-                            onDismiss()
-                        }
-                    ) {
-                        Text(stringResource(R.string.view_online))
-                    }
+                ) {
+                    Text(stringResource(R.string.view_online))
                 }
             }
-        )
+        }
     } else {
-        AlertDialog(
-            onDismissRequest = {
+        InfoDialog(
+            onDismiss = {
                 showUploadDetailsDialog = false
                 onDismiss()
             },
-            title = {
-                Text(stringResource(R.string.project_uploaded))
-            },
-            text = {
-                Text(info.details ?: "")
-            },
-            icon = {},
-            confirmButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+            title = stringResource(R.string.project_uploaded),
+            message = info.details ?: ""
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(
+                    onClick = {
+                        showUploadDetailsDialog = false
+                        onDismiss()
+                    }
                 ) {
-                    TextButton(
-                        onClick = {
-                            showUploadDetailsDialog = false
-                            onDismiss()
-                        }
-                    ) {
-                        Text(stringResource(R.string.dismiss))
+                    Text(stringResource(R.string.dismiss))
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(
+                    onClick = {
+                        uriHandler.openUri(info.url)
+                        showUploadDetailsDialog = false
+                        onDismiss()
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    TextButton(
-                        onClick = {
-                            uriHandler.openUri(info.url)
-                            showUploadDetailsDialog = false
-                            onDismiss()
-                        }
-                    ) {
-                        Text(stringResource(R.string.view_online))
-                    }
+                ) {
+                    Text(stringResource(R.string.view_online))
                 }
             }
-        )
+        }
     }
 }

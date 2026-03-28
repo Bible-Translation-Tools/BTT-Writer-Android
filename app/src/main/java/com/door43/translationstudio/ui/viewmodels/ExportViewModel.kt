@@ -173,9 +173,8 @@ class ExportViewModel(
 
             val title = application.getString(R.string.backup_to_sd)
             val message = if (result.success) {
-                val format = application.getString(R.string.export_success)
-                String.format(
-                    format,
+                application.getString(
+                    R.string.export_success,
                     FileUtilities.getUriDisplayName(application, result.uri)
                 )
             } else {
@@ -203,9 +202,8 @@ class ExportViewModel(
 
             val title = application.getString(R.string.title_export_usfm)
             val message = if (result.success) {
-                val format = application.getString(R.string.export_success)
-                String.format(
-                    format,
+                application.getString(
+                    R.string.export_success,
                     FileUtilities.getUriDisplayName(application, result.uri)
                 )
             } else {
