@@ -32,8 +32,6 @@ class PushTargetTranslation(
         val message: String?
     )
 
-    private val max = 100
-
     fun execute(
         targetTranslation: TargetTranslation,
         progressListener: OnProgressListener? = null
@@ -111,9 +109,9 @@ class PushTargetTranslation(
                     }
                 }
 
-                if (status.isRejected) {
-                    // pushRejectedResults = r // save rejection data
-                }
+//                if (status.isRejected) {
+//                     pushRejectedResults = r // save rejection data
+//                }
             }
             // give back the response message
             return Result(status, response.toString())

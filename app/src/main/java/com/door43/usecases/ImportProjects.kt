@@ -46,7 +46,6 @@ class ImportProjects(
         overwrite: Boolean = false,
         progressListener: OnProgressListener? = null
     ): ImportUriResult {
-        val max = 100
         progressListener?.onProgress(-1f, "Importing...")
 
         var alreadyExists = false

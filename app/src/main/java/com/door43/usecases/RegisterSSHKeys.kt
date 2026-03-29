@@ -24,7 +24,7 @@ class RegisterSSHKeys(
     fun execute(force: Boolean, progressListener: OnProgressListener? = null): Boolean {
         progressListener?.onProgress(-1f, "Authenticating")
 
-        val keyName = context.resources.getString(R.string.gogs_public_key_name) + " " + App.udid();
+        val keyName = context.resources.getString(R.string.gogs_public_key_name) + " " + App.udid()
 
         val api = GogsAPI(
             prefRepository.getDefaultPref(
