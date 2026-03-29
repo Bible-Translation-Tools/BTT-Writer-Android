@@ -395,19 +395,23 @@ class PdfPrinter(
             // TODO send progress via listener or callback
             // task?.updateProgress(increments.let { progress += it; progress })
 
+            // if chapter 00, then skip title since that was already printed as first page.
             val chapter0 = (Util.strToInt(c.id, 0) == 0)
-            if (!chapter0) { // if chapter 00, then skip title since that was already printed as first page.
-                if (includeIncomplete || c.titleFinished || sourceContainer!!.readChunk(
+            if (!chapter0) {
+                if (includeIncomplete || c.titleFinished || sourceContainer?.readChunk(
                         c.id,
                         "title"
-                    ).isEmpty()
+                    ).isNullOrEmpty()
                 ) {
                     addChapterPage(document, c)
                 }
             }
 
             // get chapter body
-            val frames = translation.getFrameTranslations(c.id, this.format)
+            val frames = translation.getFrameTranslations(
+                c.id,
+                this.format
+            )
             val frameList = sortFrameTranslations(frames)
             for (i in frameList.indices) {
                 val f = frameList[i]

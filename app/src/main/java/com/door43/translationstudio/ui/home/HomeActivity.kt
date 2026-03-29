@@ -267,7 +267,7 @@ class HomeActivity : BaseActivity(),
                     val success = result.isSuccess
                     if (success && result.mergeConflict) {
                         result.importedSlug?.let { slug ->
-                            val conflicted = MergeConflictsHandler.backgroundTestForConflictedChunks(
+                            val conflicted = MergeConflictsHandler.isTranslationMergeConflicted(
                                 slug,
                                 translator
                             )

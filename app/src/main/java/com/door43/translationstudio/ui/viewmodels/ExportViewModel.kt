@@ -339,7 +339,7 @@ class ExportViewModel(
                     this.javaClass.name,
                     "The server contains conflicting changes for " + targetTranslation.id
                 )
-                val conflicted = MergeConflictsHandler.backgroundTestForConflictedChunks(
+                val conflicted = MergeConflictsHandler.isTranslationMergeConflicted(
                     targetTranslation.id,
                     translator
                 )

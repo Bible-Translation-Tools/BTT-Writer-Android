@@ -88,16 +88,4 @@ object MergeConflictsHandler {
 
         return false
     }
-
-    /**
-     * check the whole project to see if there is actually a chunk conflict
-     * @param targetTranslationId
-     * @param translator
-     */
-    fun backgroundTestForConflictedChunks(
-        targetTranslationId: String,
-        translator: Translator
-    ): Boolean {
-        return isTranslationMergeConflicted(targetTranslationId, translator)
-    }
 }
