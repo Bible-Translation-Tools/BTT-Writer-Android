@@ -11,22 +11,22 @@ import com.door43.OnProgressListener
 import com.door43.TestUtils
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.R
+import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertNotNull
-import junit.framework.TestCase.assertTrue
-import com.door43.translationstudio.R
-import com.door43.util.FileUtilities
-import io.mockk.runs
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.runs
 import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertTrue
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertFalse
@@ -37,7 +37,6 @@ import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.ChunkMarker
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Versification
-
 import java.io.File
 import java.io.InputStream
 
@@ -276,8 +275,8 @@ class ProcessUSFMTest {
         assertFalse(processUSFM.resultsString.contains("No Errors"))
         assertTrue(processUSFM.resultsString.contains("Warning No verses in range 1 to 4 in chapter: 02"))
         assertTrue(processUSFM.resultsString.contains("Warning No verses in range 5 to 8 in chapter: 02"))
-        verify { resources.getString(R.string.warning_prefix) }
-        verify { resources.getString(R.string.could_not_find_verses_in_chapter) }
+        verify { resources.getString(R.string.warning_prefix, any()) }
+        verify { resources.getString(R.string.could_not_find_verses_in_chapter, any(), any(), any()) }
 
         verify { mockFile.name }
         verify { FileUtilities.readFileToString(mockFile) }
@@ -309,8 +308,8 @@ class ProcessUSFMTest {
 
         assertFalse(processUSFM.resultsString.contains("No Errors"))
         assertTrue(processUSFM.resultsString.contains("Warning Missing 1 verse(s) in range 4 to 6 in chapter: 01"))
-        verify { resources.getString(R.string.warning_prefix) }
-        verify { resources.getString(R.string.missing_verses_in_chapter) }
+        verify { resources.getString(R.string.warning_prefix, any()) }
+        verify { resources.getString(R.string.missing_verses_in_chapter, any(), any(), any(), any()) }
 
         verify { mockFile.name }
         verify { FileUtilities.readFileToString(mockFile) }
@@ -342,8 +341,8 @@ class ProcessUSFMTest {
 
         assertFalse(processUSFM.resultsString.contains("No Errors"))
         assertTrue(processUSFM.resultsString.contains("Warning No verses in range 4 to 6 in chapter: 01"))
-        verify { resources.getString(R.string.warning_prefix) }
-        verify { resources.getString(R.string.could_not_find_verses_in_chapter) }
+        verify { resources.getString(R.string.warning_prefix, any()) }
+        verify { resources.getString(R.string.could_not_find_verses_in_chapter, any(), any(), any()) }
 
         verify { mockFile.name }
         verify { FileUtilities.readFileToString(mockFile) }
@@ -375,8 +374,8 @@ class ProcessUSFMTest {
 
         assertFalse(processUSFM.resultsString.contains("No Errors"))
         assertTrue(processUSFM.resultsString.contains("Extra 1 verse(s) in range 5 to 8 in chapter: 02"))
-        verify { resources.getString(R.string.warning_prefix) }
-        verify { resources.getString(R.string.extra_verses_in_chapter) }
+        verify { resources.getString(R.string.warning_prefix, any()) }
+        verify { resources.getString(R.string.extra_verses_in_chapter, any(), any(), any(), any()) }
 
         verify { mockFile.name }
         verify { FileUtilities.readFileToString(mockFile) }
@@ -410,7 +409,7 @@ class ProcessUSFMTest {
         assertEquals("mrk.usfm", processUSFM.booksMissingNames.first().description)
         assertEquals("This is not a usfm file", processUSFM.booksMissingNames.first().contents)
         assertTrue(processUSFM.importProjects.isEmpty())
-        verify { resources.getString(R.string.error_prefix) }
+        verify { resources.getString(R.string.error_prefix, any()) }
         verify { resources.getString(R.string.missing_book_short_name) }
 
         verify { mockFile.name }
@@ -457,7 +456,7 @@ class ProcessUSFMTest {
         assertEquals(1, processUSFM.booksMissingNames.size)
         assertEquals("mrk.usfm", processUSFM.booksMissingNames.first().description)
         assertTrue(processUSFM.importProjects.isEmpty())
-        verify { resources.getString(R.string.error_prefix) }
+        verify { resources.getString(R.string.error_prefix, any()) }
         verify { resources.getString(R.string.missing_book_short_name) }
 
         verify { mockFile.name }
@@ -593,26 +592,59 @@ class ProcessUSFMTest {
     }
 
     private fun mockStringResources() {
-        every {resources.getString(R.string.found_book) } returns "Found book: %s"
+        every {resources.getString(R.string.found_book, any()) } answers {
+            "Found book: %s".format((args[1] as Array<*>)[0])
+        }
         every {resources.getString(R.string.no_error) } returns "No Errors"
         every {resources.getString(R.string.no_verse) } returns "No verse markers found"
         every {resources.getString(R.string.initializing_import) } returns "Initializing Import"
         every {resources.getString(R.string.finished_loading) } returns "Finished Loading"
-        every {resources.getString(R.string.file_write_for_verse) } returns "Error writing verse %s"
-        every {resources.getString(R.string.error_prefix) } returns "Error: %s"
-        every {resources.getString(R.string.warning_prefix) } returns "Warning %s"
+        every {resources.getString(R.string.file_write_for_verse, any()) } answers {
+            "Error writing verse %s".format((args[1] as Array<*>)[0])
+        }
+        every {resources.getString(R.string.error_prefix, any()) } answers {
+            "Error: %s".format((args[1] as Array<*>)[0])
+        }
+        every {resources.getString(R.string.warning_prefix, any()) } answers {
+            "Warning %s".format((args[1] as Array<*>)[0])
+        }
         every {resources.getString(R.string.building_manifest) } returns "Building Manifest"
         every {resources.getString(R.string.missing_book_name) } returns "Missing book name"
         every {resources.getString(R.string.missing_book_short_name) } returns "Missing book short name"
-        every {resources.getString(R.string.processing_chapter) } returns "Processing chapter: %s"
-        every {resources.getString(R.string.could_not_find_chapter) } returns "Could not find chapter: %s"
+        every {resources.getString(R.string.processing_chapter, any()) } answers {
+            "Processing chapter: %s".format((args[1] as Array<*>)[0])
+        }
+        every {resources.getString(R.string.could_not_find_chapter, any()) } answers {
+            "Could not find chapter: %s".format((args[1] as Array<*>)[0])
+        }
         every {resources.getString(R.string.file_write_error) } returns "Error writing File"
-        every {resources.getString(R.string.file_read_error_detail) } returns "Error reading File '%s'"
-        every {resources.getString(R.string.could_not_parse_chapter) } returns "Could not parse chapter: %s"
-        every {resources.getString(R.string.could_not_find_verses_in_chapter) } returns "No verses in range %d to %d in chapter: %s"
-        every {resources.getString(R.string.missing_verses_in_chapter) } returns "Missing %d verse(s) in range %d to %d in chapter: %s"
-        every {resources.getString(R.string.extra_verses_in_chapter) } returns "Extra %d verse(s) in range %d to %d in chapter: %s"
-        every {resources.getString(R.string.could_not_parse) } returns "Could not parse '%s'"
+        every {resources.getString(R.string.file_read_error_detail, any()) } answers {
+            "Error reading File '%s'".format((args[1] as Array<*>)[0])
+        }
+        every {resources.getString(R.string.could_not_parse_chapter, any()) } answers {
+            "Could not parse chapter: %s".format((args[1] as Array<*>)[0])
+        }
+        every {resources.getString(R.string.could_not_find_verses_in_chapter, any(), any(), any()) } answers {
+            val varargs = (args[1] as Array<*>)
+            "No verses in range %d to %d in chapter: %s".format(varargs[0], varargs[1], varargs[2])
+        }
+        every {resources.getString(R.string.missing_verses_in_chapter, any(), any(), any(), any()) } answers {
+            val varargs = (args[1] as Array<*>)
+            "Missing %d verse(s) in range %d to %d in chapter: %s".format(varargs[0], varargs[1], varargs[2], varargs[3])
+        }
+        every {resources.getString(R.string.extra_verses_in_chapter, any(), any(), any(), any()) } answers {
+            val varargs = (args[1] as Array<*>)
+            "Extra %d verse(s) in range %d to %d in chapter: %s".format(varargs[0], varargs[1], varargs[2], varargs[3])
+        }
+        every {resources.getString(R.string.could_not_parse, any()) } answers {
+            "Could not parse '%s'".format((args[1] as Array<*>)[0])
+        }
+        every {resources.getString(R.string.error_reading_file, any())} answers {
+            "Error reading file: %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.no_chunk_list, any()) } answers {
+            "No chunk list found for '%s'".format((args[1] as Array<*>)[0])
+        }
     }
 
     private fun verifyBookResult(result: ProcessUSFM?) {

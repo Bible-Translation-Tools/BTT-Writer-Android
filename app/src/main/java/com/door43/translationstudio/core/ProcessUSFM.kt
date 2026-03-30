@@ -624,7 +624,7 @@ class ProcessUSFM {
                     success = readZipStream(stream)
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             addError(R.string.file_read_error_detail, file.toString())
             success = false
         }
