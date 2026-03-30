@@ -34,6 +34,7 @@ import com.door43.translationstudio.ui.translate.TargetAction
 import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import org.unfoldingword.resourcecontainer.Language
 
 @Composable
 fun ReviewModeSection(
@@ -268,10 +269,12 @@ fun ReviewModeSection(
             sourceLanguage = sharedState.resourceContainer?.language,
             onClearHelp = { viewModel.onAction(ReviewAction.ClearHelp) },
             onOpenIndex = { viewModel.onAction(ReviewAction.OpenIndex(it)) },
-            onOpenWord = { rcSlug, slug -> viewModel.onAction(ReviewAction.OpenWord(rcSlug, slug)) },
+            onOpenWord = { rcSlug, slug ->
+                viewModel.onAction(ReviewAction.OpenWord(rcSlug, slug))
+            },
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(1f / 3f)
+                .fillMaxWidth(1f / 3.08f)
                 .align(Alignment.CenterEnd)
         )
     }
@@ -288,7 +291,7 @@ fun ReviewModeSection(
 private fun HelpPanel(
     help: Help?,
     typography: Typography,
-    sourceLanguage: org.unfoldingword.resourcecontainer.Language?,
+    sourceLanguage: Language?,
     onClearHelp: () -> Unit,
     onOpenIndex: (rcSlug: String) -> Unit,
     onOpenWord: (rcSlug: String, slug: String) -> Unit,
@@ -321,7 +324,9 @@ private fun HelpPanel(
                     typography = typography,
                     sourceLanguage = sourceLanguage,
                     onCloseClick = onClearHelp,
-                    onIndexClick = { onOpenIndex(currentHelp.rcSlug) }
+                    onIndexClick = {
+                        onOpenIndex(currentHelp.rcSlug)
+                    }
                 )
                 is Help.Questions -> QuestionsCard(
                     title = currentHelp.title,
@@ -335,7 +340,9 @@ private fun HelpPanel(
                     typography = typography,
                     sourceLanguage = sourceLanguage,
                     onCloseClick = onClearHelp,
-                    onItemClick = { onOpenWord(currentHelp.rcSlug, it.slug) }
+                    onItemClick = {
+                        onOpenWord(currentHelp.rcSlug, it.slug)
+                    }
                 )
             }
         }

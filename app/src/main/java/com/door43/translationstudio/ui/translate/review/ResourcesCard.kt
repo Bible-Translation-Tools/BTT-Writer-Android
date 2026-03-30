@@ -96,6 +96,7 @@ fun ResourcesCard(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     LaunchedEffect(helps) {
         notes = helps["notes"] as? List<TranslationHelp> ?: emptyList()
         words = helps["words"] as? List<Link> ?: emptyList()
