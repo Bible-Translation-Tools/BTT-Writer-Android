@@ -64,7 +64,7 @@ fun ReviewModeSection(
     // Auto-disable conflict filter when no conflicts remain
     LaunchedEffect(hasConflicts) {
         onHasMergeConflicts(hasConflicts)
-        if (!hasConflicts && mergeConflictFilterOn) {
+        if (filteredItems.isNotEmpty() && !hasConflicts && mergeConflictFilterOn) {
             onMergeConflictFilterReset()
         }
     }

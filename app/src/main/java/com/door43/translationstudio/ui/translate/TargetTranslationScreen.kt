@@ -57,7 +57,7 @@ fun TargetTranslationScreen(
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val snackBarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
 
     var showUpdateSourcesDialog by rememberSaveable { mutableStateOf(false) }
     var showSelectSourceDialog by rememberSaveable { mutableStateOf(false) }
@@ -103,7 +103,7 @@ fun TargetTranslationScreen(
     val draftPreview = stringResource(R.string.preview)
     LaunchedEffect(state.showDraftAvailable) {
         if (state.showDraftAvailable) {
-            scope.launch {
+            coroutineScope.launch {
                 val result = snackBarHostState.showSnackbar(
                     message = draftExistsStr,
                     actionLabel = draftPreview,
@@ -152,21 +152,10 @@ fun TargetTranslationScreen(
                     }
                 },
                 onMergeConflictClick = {
-                    println(mergeConflictFilterOn)
+                    mergeConflictFilterOn = !mergeConflictFilterOn
                     if (state.viewMode != TranslationViewMode.REVIEW) {
                         viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
                     }
-                    mergeConflictFilterOn = !mergeConflictFilterOn
-
-
-//                    if (state.viewMode == TranslationViewMode.REVIEW && mergeConflictFilterOn) {
-//                        mergeConflictFilterOn = false
-//                    } else {
-//                        mergeConflictFilterOn = true
-//                        if (state.viewMode != TranslationViewMode.REVIEW) {
-//                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
-//                        }
-//                    }
                 },
                 onSliderValueChange = {
                     scrollCoordinator.onSliderChange(it, sharedState.chunks)
