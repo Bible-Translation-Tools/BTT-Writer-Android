@@ -11,7 +11,7 @@ import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReadItem
-import com.door43.translationstudio.ui.translate.SharedState
+import com.door43.translationstudio.ui.translate.SharedTranslationState
 import com.door43.translationstudio.ui.translate.Swipable
 import com.door43.translationstudio.ui.translate.TargetEvent
 import kotlinx.coroutines.Dispatchers
@@ -29,14 +29,18 @@ object ReadState : ModeState
 sealed interface ReadAction : ModeAction
 
 class ReadModeViewModel(
-    sharedState: StateFlow<SharedState>,
-    event: SendChannel<TargetEvent>
-) : ModeViewModel<ReadItem>(sharedState, TranslationViewMode.READ, event) {
+    sharedState: StateFlow<SharedTranslationState>,
+    eventSender: SendChannel<TargetEvent>
+) : ModeViewModel<ReadItem>(
+    sharedState,
+    eventSender,
+    TranslationViewMode.READ
+) {
 
     private val _state = MutableStateFlow(ReadState)
     val state: StateFlow<ReadState> = _state
 
-    override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ReadItem>) -> Unit) {
+    override fun mapToChildType(chunks: List<Chunk>) {
         viewModelScope.launch {
             val items = withContext(Dispatchers.Default) {
                 chunks
@@ -46,7 +50,7 @@ class ReadModeViewModel(
                         batch.map { async { prepareItem(it) } }
                     }.awaitAll()
             }
-            onReady(items)
+            updateItems(items)
         }
     }
 

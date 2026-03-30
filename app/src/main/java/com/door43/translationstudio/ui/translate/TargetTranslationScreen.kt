@@ -53,6 +53,7 @@ fun TargetTranslationScreen(
 ) {
     val typography: Typography = koinInject()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val sharedState by viewModel.sharedState.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -64,8 +65,10 @@ fun TargetTranslationScreen(
     var mergeConflictFilterOn by rememberSaveable { mutableStateOf(startWithMergeFilter) }
     var chunksDoneRequested by rememberSaveable { mutableStateOf(false) }
 
+    var hasMergeConflicts by remember { mutableStateOf(false) }
+
     val scrollCoordinator = rememberScrollCoordinator(
-        items = state.items,
+        chunks = sharedState.chunks,
         lastFocusChapterId = state.lastFocusChapterId,
         lastFocusFrameId = state.lastFocusFrameId,
         viewModel = viewModel
@@ -128,17 +131,17 @@ fun TargetTranslationScreen(
         Row(modifier = Modifier.padding(paddingValues)) {
             TranslateSideBar(
                 currentViewMode = state.viewMode,
-                showMergeConflict = state.hasConflicts,
+                showMergeConflict = hasMergeConflicts,
                 mergeConflictFilterOn = mergeConflictFilterOn,
                 onReadClick = {
+                    mergeConflictFilterOn = false
                     if (state.viewMode != TranslationViewMode.READ) {
-                        mergeConflictFilterOn = false
                         viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.READ))
                     }
                 },
                 onChunkClick = {
+                    mergeConflictFilterOn = false
                     if (state.viewMode != TranslationViewMode.CHUNK) {
-                        mergeConflictFilterOn = false
                         viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK))
                     }
                 },
@@ -149,17 +152,24 @@ fun TargetTranslationScreen(
                     }
                 },
                 onMergeConflictClick = {
-                    if (state.viewMode == TranslationViewMode.REVIEW && mergeConflictFilterOn) {
-                        mergeConflictFilterOn = false
-                    } else {
-                        mergeConflictFilterOn = true
-                        if (state.viewMode != TranslationViewMode.REVIEW) {
-                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
-                        }
+                    println(mergeConflictFilterOn)
+                    if (state.viewMode != TranslationViewMode.REVIEW) {
+                        viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
                     }
+                    mergeConflictFilterOn = !mergeConflictFilterOn
+
+
+//                    if (state.viewMode == TranslationViewMode.REVIEW && mergeConflictFilterOn) {
+//                        mergeConflictFilterOn = false
+//                    } else {
+//                        mergeConflictFilterOn = true
+//                        if (state.viewMode != TranslationViewMode.REVIEW) {
+//                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+//                        }
+//                    }
                 },
                 onSliderValueChange = {
-                    scrollCoordinator.onSliderChange(it, state.items)
+                    scrollCoordinator.onSliderChange(it, sharedState.chunks)
                 },
                 sliderValue = scrollCoordinator.sliderValue.value,
                 chapterLabel = scrollCoordinator.sliderChapterLabel,
@@ -167,7 +177,7 @@ fun TargetTranslationScreen(
             )
 
             Box(modifier = Modifier.weight(1f)) {
-                if (state.items.isEmpty()) {
+                if (sharedState.resourceContainer == null) {
                     NoSourceScreen(
                         projectTitle = state.projectTitle ?: "",
                         onAddSourceClick = { showSelectSourceDialog = true }
@@ -176,10 +186,10 @@ fun TargetTranslationScreen(
                     when (state.viewMode) {
                         TranslationViewMode.READ -> ReadModeSection(
                             viewModel = viewModel,
-                            state = state,
                             typography = typography,
                             listState = scrollCoordinator.listState,
                             onSourceDialogOpen = { showSelectSourceDialog = true },
+                            onHasMergeConflicts = { hasMergeConflicts = it },
                             onBeginTranslation = {
                                 scrollCoordinator.pendingScrollChapter = PendingScrollItem(
                                     chapterId = it
@@ -191,10 +201,10 @@ fun TargetTranslationScreen(
                         )
                         TranslationViewMode.CHUNK -> ChunkModeSection(
                             viewModel = viewModel,
-                            state = state,
                             typography = typography,
                             listState = scrollCoordinator.listState,
                             onSourceDialogOpen = { showSelectSourceDialog = true },
+                            onHasMergeConflicts = { hasMergeConflicts = it },
                             onConflictClick = { chapterId, chunkId ->
                                 scrollCoordinator.pendingScrollChapter = PendingScrollItem(
                                     chapterId = chapterId,
@@ -206,14 +216,15 @@ fun TargetTranslationScreen(
                             }
                         )
                         TranslationViewMode.REVIEW -> ReviewModeSection(
-                            viewModel = viewModel,
-                            state = state,
+                            translationViewModel = viewModel,
                             typography = typography,
                             listState = scrollCoordinator.listState,
                             searchRequested = searchRequested,
                             onSearchConsumed = { searchRequested = false },
                             onSourceDialogOpen = { showSelectSourceDialog = true },
+                            onHasMergeConflicts = { hasMergeConflicts = it },
                             mergeConflictFilterOn = mergeConflictFilterOn,
+                            onMergeConflictFilterReset = { mergeConflictFilterOn = false },
                             chunksDoneRequested = chunksDoneRequested,
                             onChunksDoneConsumed = { chunksDoneRequested = false }
                         )

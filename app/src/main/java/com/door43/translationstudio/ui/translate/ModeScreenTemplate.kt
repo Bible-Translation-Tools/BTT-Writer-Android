@@ -21,19 +21,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.components.CardsSkeletonList
 import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialog
 import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialogType
-import com.door43.translationstudio.ui.components.CardsSkeletonList
 
 @Composable
 fun <ITEM : TranslateItem> ModeScreenTemplate(
     viewModel: ModeViewModel<ITEM>,
+    items: List<ITEM>,
     listState: LazyListState,
     dialogs: @Composable () -> Unit = {},
     itemContent: @Composable (ITEM) -> Unit
 ) {
     val modeState by viewModel.modeState.collectAsStateWithLifecycle()
-    val stateItems by viewModel.items.collectAsStateWithLifecycle()
 
     var settingsVersion by remember { mutableIntStateOf(0) }
 
@@ -44,7 +44,7 @@ fun <ITEM : TranslateItem> ModeScreenTemplate(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Crossfade(
-            targetState = stateItems.isEmpty(),
+            targetState = items.isEmpty(),
             animationSpec = tween(durationMillis = 500),
             label = "list_fade"
         ) { isLoading ->
@@ -56,7 +56,7 @@ fun <ITEM : TranslateItem> ModeScreenTemplate(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(items = stateItems, key = { it.id }) { item ->
+                    items(items = items, key = { it.id }) { item ->
                         key(settingsVersion) {
                             itemContent(item)
                         }

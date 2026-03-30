@@ -35,7 +35,7 @@ import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
 import com.door43.translationstudio.ui.translate.ReviewItem
-import com.door43.translationstudio.ui.translate.SharedState
+import com.door43.translationstudio.ui.translate.SharedTranslationState
 import com.door43.translationstudio.ui.translate.TargetEvent
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.TranslationHelp
@@ -44,10 +44,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -132,8 +138,8 @@ data class ReviewState(
     val url: String? = null,
     val chunkToDone: ReviewItem? = null,
     val search: SearchState? = null,
-    val mergeConflictFilterOn: Boolean = false,
-    val markAllDoneState: MarkAllDialogState? = null
+    val markAllDoneState: MarkAllDialogState? = null,
+    val mergeConflictFilterOn: Boolean = false
 ) : ModeState
 
 sealed interface ReviewAction : ModeAction {
@@ -167,20 +173,20 @@ sealed interface ReviewAction : ModeAction {
         val targetRawPosition: Int
     ) : ReviewAction
     data class SelectConflict(val item: ReviewItem, val index: Int) : ReviewAction
-    data class SetMergeConflictFilter(val on: Boolean) : ReviewAction
+    data class SetMergeConflictFilterOn(val value: Boolean) : ReviewAction
 }
 
 class ReviewModeViewModel(
-    sharedState: StateFlow<SharedState>,
-    event: SendChannel<TargetEvent>,
+    sharedState: StateFlow<SharedTranslationState>,
+    eventSender: SendChannel<TargetEvent>,
     private val prefRepository: IPreferenceRepository,
     private val renderHelps: RenderHelps,
     private val renderingProvider: RenderingProvider,
     private val library: Door43Client,
 ) : ModeViewModel<ReviewItem>(
     sharedState,
-    TranslationViewMode.REVIEW,
-    event
+    eventSender,
+    TranslationViewMode.REVIEW
 ), KoinComponent, ProgressOwner {
 
     private val application: Application by inject()
@@ -191,29 +197,42 @@ class ReviewModeViewModel(
     private val progressManager = ProgressManager(viewModelScope)
     override val progress get() = progressManager.progress
 
-    private var fullItems: List<ReviewItem> = emptyList()
-
     private val sourceContainer: ResourceContainer?
-        get() = sharedState.value.sourceContainer
+        get() = sharedState.value.resourceContainer
+
+    val mergeConflictOn: Flow<Boolean> = _state
+        .map { it.mergeConflictFilterOn }
+        .distinctUntilChanged()
+
+    val filteredItems = combine(items, mergeConflictOn) { items, mergeConflictOn ->
+        if (mergeConflictOn) {
+            items.filter { it.hasMergeConflicts }
+        } else {
+            items
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     init {
-        viewModelScope.launch {
-            sharedState
-                .map { it.sourceContainer }
-                .distinctUntilChanged()
-                .collect {
-                    if (_state.value.resourcesOpen) {
-                        _state.update { it.copy(help = null) }
-                    }
+        sharedState
+            .map { it.resourceContainer }
+            .distinctUntilChanged()
+            .onEach {
+                if (_state.value.resourcesOpen) {
+                    _state.update { it.copy(help = null) }
                 }
-        }
+            }
+            .launchIn(viewModelScope)
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ReviewItem>) -> Unit) {
+    override fun mapToChildType(chunks: List<Chunk>) {
         viewModelScope.launch {
             val items = withContext(Dispatchers.Default) {
                 chunks
@@ -222,8 +241,7 @@ class ReviewModeViewModel(
                         batch.map { async { prepareItem(it) } }
                     }.awaitAll()
             }
-            fullItems = items
-            onReady(applyConflictFilter(items))
+            updateItems(items)
         }
     }
 
@@ -238,23 +256,23 @@ class ReviewModeViewModel(
             is ReviewAction.ToggleEdit -> toggleEdit(action.item)
             is ReviewAction.ToggleDoneClicked -> toggleDoneClicked(action.item)
             is ReviewAction.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
-            ReviewAction.MarkAllDoneClicked -> markAllDoneClicked()
             is ReviewAction.MarkAllDoneConfirmed -> markAllDoneConfirmed(action.confirm)
             is ReviewAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
             is ReviewAction.Undo -> onUndo(action.item)
             is ReviewAction.Redo -> onRedo(action.item)
             is ReviewAction.AddNoteClicked -> onAddNoteClicked(action.item, action.caretPosition)
             is ReviewAction.DragDropVerse -> onDragDropVerse(action)
+            is ReviewAction.UpdateSearchQuery -> updateSearchQuery(action.query)
+            is ReviewAction.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
+            is ReviewAction.SelectConflict -> selectConflict(action.item, action.index)
+            is ReviewAction.SetMergeConflictFilterOn -> setMergeConflictFilterOn(action.value)
+            ReviewAction.MarkAllDoneClicked -> markAllDoneClicked()
             ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
             ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
             ReviewAction.OpenSearch -> openSearch()
             ReviewAction.CloseSearch -> closeSearch()
-            is ReviewAction.UpdateSearchQuery -> updateSearchQuery(action.query)
-            is ReviewAction.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
             ReviewAction.NextMatch -> navigateMatch(forward = true)
             ReviewAction.PrevMatch -> navigateMatch(forward = false)
-            is ReviewAction.SelectConflict -> selectConflict(action.item, action.index)
-            is ReviewAction.SetMergeConflictFilter -> setMergeConflictFilter(action.on)
         }
     }
 
@@ -462,13 +480,12 @@ class ReviewModeViewModel(
 
     private suspend fun performSearch(query: String, subject: SearchSubject) {
         withContext(Dispatchers.Default) {
-            val items = _items.value
-            if (items.isEmpty()) return@withContext
+            if (filteredItems.value.isEmpty()) return@withContext
 
             val lowerQuery = query.lowercase()
             val matchingIds = mutableListOf<String>()
 
-            val updatedItems = items.map { item ->
+            val updatedItems = filteredItems.value.map { item ->
                 val chunkId = item.id
                 val searchSource = subject == SearchSubject.SOURCE
                 val (_, renderedSource) = prepareSource(
@@ -498,7 +515,7 @@ class ReviewModeViewModel(
                 )
             }
 
-            _items.value = updatedItems
+            updateItems(updatedItems)
             _state.update { state ->
                 state.copy(search = state.search?.copy(
                     matchingItemIds = matchingIds,
@@ -510,8 +527,7 @@ class ReviewModeViewModel(
 
     private suspend fun reRenderAllItems(searchQuery: String?) {
         withContext(Dispatchers.Default) {
-            val items = _items.value
-            val updatedItems = items.map { item ->
+            val updatedItems = filteredItems.value.map { item ->
                 val chunkId = item.id
                 val (_, renderedSource) = prepareSource(
                     chunkId = item.id,
@@ -529,7 +545,7 @@ class ReviewModeViewModel(
                     renderedTargetText = renderedTarget
                 )
             }
-            _items.value = updatedItems
+            updateItems(updatedItems)
         }
     }
 
@@ -555,9 +571,15 @@ class ReviewModeViewModel(
             withContext(Dispatchers.IO) {
                 item.mergeItems.getOrNull(index)?.let { conflict ->
                     item.saveTranslation(conflict.toString())
-                    updateItem(prepareItem(item.chunk, item.targetMode))
+                    updateItem(prepareItem(item.chunk))
                 }
             }
+        }
+    }
+
+    private fun setMergeConflictFilterOn(value: Boolean) {
+        _state.update { state ->
+            state.copy(mergeConflictFilterOn = value)
         }
     }
 
@@ -856,7 +878,7 @@ class ReviewModeViewModel(
         launchWithProgress(application.getString(R.string.loading)) {
             val marked = withContext(Dispatchers.IO) {
                 var marked = 0
-                for (item in _items.value) {
+                for (item in items.value) {
                     try {
                         if (item.targetMode == TargetMode.EDIT) {
                             doToggleEdit(item)
@@ -875,7 +897,7 @@ class ReviewModeViewModel(
                 // Commit if any chunks were marked
                 if (marked > 0) {
                     try {
-                        _items.value.firstOrNull()?.chunk?.target?.commit()
+                        items.value.firstOrNull()?.chunk?.target?.commit()
                     } catch (e: Exception) {
                         Logger.e(
                             this::class.simpleName,
@@ -885,13 +907,14 @@ class ReviewModeViewModel(
                     }
                 }
 
-                initializeChunks()
+                val chunks = items.value.map { it.chunk }
+                mapToChildType(chunks)
 
                 marked
             }
 
             _state.value = _state.value.copy(
-                markAllDoneState = MarkAllDialogState.Result(marked, _items.value.size)
+                markAllDoneState = MarkAllDialogState.Result(marked, items.value.size)
             )
         }
     }
@@ -1139,7 +1162,7 @@ class ReviewModeViewModel(
     }
 
     private fun replaceFootnoteInTarget(note: Footnote, replacement: String) {
-        val item = _items.value.find { it.id == note.chunkId } ?: return
+        val item = items.value.find { it.id == note.chunkId } ?: return
         val currentText = fetchTargetText(
             item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
         )
@@ -1166,7 +1189,7 @@ class ReviewModeViewModel(
     }
 
     private fun insertFootnoteInTarget(note: Footnote, footnoteCode: String) {
-        val item = _items.value.find { it.id == note.chunkId } ?: return
+        val item = items.value.find { it.id == note.chunkId } ?: return
         val currentText = fetchTargetText(
             item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
         )
@@ -1199,18 +1222,5 @@ class ReviewModeViewModel(
 
     private fun getResourceContainer(slug: String): ResourceContainer? {
         return ContainerCache.get(slug)
-    }
-
-    private fun applyConflictFilter(items: List<ReviewItem>): List<ReviewItem> {
-        return if (_state.value.mergeConflictFilterOn) {
-            items.filter { it.hasMergeConflicts }
-        } else {
-            items
-        }
-    }
-
-    private fun setMergeConflictFilter(on: Boolean) {
-        _state.update { it.copy(mergeConflictFilterOn = on) }
-        _items.value = applyConflictFilter(fullItems)
     }
 }

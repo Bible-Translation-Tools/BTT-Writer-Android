@@ -10,7 +10,7 @@ import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.ModeAction
 import com.door43.translationstudio.ui.translate.ModeState
 import com.door43.translationstudio.ui.translate.ModeViewModel
-import com.door43.translationstudio.ui.translate.SharedState
+import com.door43.translationstudio.ui.translate.SharedTranslationState
 import com.door43.translationstudio.ui.translate.Swipable
 import com.door43.translationstudio.ui.translate.TargetEvent
 import kotlinx.coroutines.Dispatchers
@@ -33,14 +33,18 @@ sealed interface ChunkAction : ModeAction {
 }
 
 class ChunkModeViewModel(
-    sharedState: StateFlow<SharedState>,
-    event: SendChannel<TargetEvent>
-) : ModeViewModel<ChunkItem>(sharedState, TranslationViewMode.CHUNK, event) {
+    sharedState: StateFlow<SharedTranslationState>,
+    eventSender: SendChannel<TargetEvent>
+) : ModeViewModel<ChunkItem>(
+    sharedState,
+    eventSender,
+    TranslationViewMode.CHUNK
+) {
 
     private val _state = MutableStateFlow(ChunkState())
     val state: StateFlow<ChunkState> = _state
 
-    override fun mapToChildType(chunks: List<Chunk>, onReady: (List<ChunkItem>) -> Unit) {
+    override fun mapToChildType(chunks: List<Chunk>) {
         viewModelScope.launch {
             val items = withContext(Dispatchers.Default) {
                 chunks
@@ -49,7 +53,7 @@ class ChunkModeViewModel(
                         batch.map { async { prepareItem(it) } }
                     }.awaitAll()
             }
-            onReady(items)
+            updateItems(items)
         }
     }
 

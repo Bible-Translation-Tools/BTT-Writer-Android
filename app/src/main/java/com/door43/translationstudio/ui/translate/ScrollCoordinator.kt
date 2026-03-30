@@ -74,7 +74,7 @@ class ScrollCoordinator(
 
 @Composable
 fun rememberScrollCoordinator(
-    items: List<Chunk>,
+    chunks: List<Chunk>,
     lastFocusChapterId: String?,
     lastFocusFrameId: String?,
     viewModel: TargetTranslationViewModel
@@ -91,17 +91,17 @@ fun rememberScrollCoordinator(
     }
 
     // Initial scroll to last focus position
-    LaunchedEffect(items, lastFocusChapterId) {
-        if (!coordinator.hasDoneInitialLoad && items.isNotEmpty() && lastFocusChapterId != null) {
-            var targetIndex = items.indexOfFirst {
+    LaunchedEffect(chunks, lastFocusChapterId) {
+        if (!coordinator.hasDoneInitialLoad && chunks.isNotEmpty() && lastFocusChapterId != null) {
+            var targetIndex = chunks.indexOfFirst {
                 it.chapterSlug == lastFocusChapterId && it.chunkSlug == lastFocusFrameId
             }
             if (targetIndex == -1) {
-                targetIndex = items.indexOfFirst { it.chapterSlug == lastFocusChapterId }
+                targetIndex = chunks.indexOfFirst { it.chapterSlug == lastFocusChapterId }
             }
             if (targetIndex != -1) {
                 listState.scrollToItem(targetIndex)
-                coordinator.lastViewedChunk = items[targetIndex]
+                coordinator.lastViewedChunk = chunks[targetIndex]
                 coordinator.hasDoneInitialLoad = true
                 savedInitialLoad = true
             }
@@ -112,7 +112,7 @@ fun rememberScrollCoordinator(
     LaunchedEffect(coordinator.pendingScrollChapter) {
         val scrollTarget = coordinator.pendingScrollChapter ?: return@LaunchedEffect
 
-        snapshotFlow { items }
+        snapshotFlow { chunks }
             .first { list ->
                 list.any {
                     it.chapterSlug == scrollTarget.chapterId
@@ -120,7 +120,7 @@ fun rememberScrollCoordinator(
                 }
             }
 
-        val targetIndex = items.indexOfFirst {
+        val targetIndex = chunks.indexOfFirst {
             it.chapterSlug == scrollTarget.chapterId
                     && scrollTarget.chunkId?.let { c -> c == it.chunkSlug } ?: true
         }
@@ -129,22 +129,22 @@ fun rememberScrollCoordinator(
                 .first { it > targetIndex }
 
             listState.scrollToItem(targetIndex)
-            coordinator.lastViewedChunk = items[targetIndex]
+            coordinator.lastViewedChunk = chunks[targetIndex]
         }
         coordinator.pendingScrollChapter = null
     }
 
     // Restore position after mode switch (items change)
-    LaunchedEffect(items) {
+    LaunchedEffect(chunks) {
         val chunkToFind = coordinator.lastViewedChunk
-        if (coordinator.hasDoneInitialLoad && chunkToFind != null && items.isNotEmpty()
+        if (coordinator.hasDoneInitialLoad && chunkToFind != null && chunks.isNotEmpty()
             && coordinator.pendingScrollChapter == null
         ) {
-            var newIndex = items.indexOfFirst {
+            var newIndex = chunks.indexOfFirst {
                 it.chapterSlug == chunkToFind.chapterSlug && it.chunkSlug == chunkToFind.chunkSlug
             }
             if (newIndex == -1) {
-                newIndex = items.indexOfFirst { it.chapterSlug == chunkToFind.chapterSlug }
+                newIndex = chunks.indexOfFirst { it.chapterSlug == chunkToFind.chapterSlug }
             }
             if (newIndex != -1) {
                 listState.scrollToItem(newIndex)
@@ -154,13 +154,13 @@ fun rememberScrollCoordinator(
 
     // Track dominant item and save focus
     val dominantIndex by coordinator.dominantIndex
-    LaunchedEffect(dominantIndex, items) {
-        if (items.isNotEmpty() && coordinator.pendingScrollChapter == null) {
-            val safeIndex = dominantIndex.coerceIn(0, maxOf(0, items.size - 1))
-            val chunk = items[safeIndex]
-            coordinator.lastViewedChunk = chunk
+    LaunchedEffect(dominantIndex, chunks) {
+        if (chunks.isNotEmpty() && coordinator.pendingScrollChapter == null) {
+            val safeIndex = dominantIndex.coerceIn(0, maxOf(0, chunks.size - 1))
+            val item = chunks[safeIndex]
+            coordinator.lastViewedChunk = item
             viewModel.onAction(
-                TargetAction.SaveLastFocus(chunk.chapterSlug, chunk.chunkSlug)
+                TargetAction.SaveLastFocus(item.chapterSlug, item.chunkSlug)
             )
         }
     }

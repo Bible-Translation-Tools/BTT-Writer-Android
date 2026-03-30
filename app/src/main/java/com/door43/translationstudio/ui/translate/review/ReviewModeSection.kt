@@ -31,113 +31,127 @@ import com.door43.translationstudio.ui.dialogs.InfoDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.TargetAction
-import com.door43.translationstudio.ui.translate.TargetTranslationState
 import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ReviewModeSection(
-    viewModel: TargetTranslationViewModel,
-    state: TargetTranslationState,
+    translationViewModel: TargetTranslationViewModel,
     typography: Typography,
     listState: LazyListState,
     searchRequested: Boolean,
     onSearchConsumed: () -> Unit,
     onSourceDialogOpen: () -> Unit,
+    onHasMergeConflicts: (Boolean) -> Unit,
     mergeConflictFilterOn: Boolean = false,
+    onMergeConflictFilterReset: () -> Unit,
     chunksDoneRequested: Boolean,
     onChunksDoneConsumed: () -> Unit
 ) {
-    val reviewVm: ReviewModeViewModel = koinViewModel {
-        parametersOf(viewModel.sharedStateFlow, viewModel.eventSender)
+    val viewModel: ReviewModeViewModel = koinViewModel {
+        parametersOf(translationViewModel.sharedState, translationViewModel.eventSender)
     }
-    val reviewState by reviewVm.state.collectAsStateWithLifecycle()
-    val progress by reviewVm.progress.collectAsStateWithLifecycle()
+
+    val sharedState by translationViewModel.sharedState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val filteredItems by viewModel.filteredItems.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
 
-    // Apply merge conflict filter from parent
+    val hasConflicts = filteredItems.any { it.hasMergeConflicts }
+
+    // Auto-disable conflict filter when no conflicts remain
+    LaunchedEffect(hasConflicts) {
+        onHasMergeConflicts(hasConflicts)
+        if (!hasConflicts && mergeConflictFilterOn) {
+            onMergeConflictFilterReset()
+        }
+    }
+
     LaunchedEffect(mergeConflictFilterOn) {
-        reviewVm.onAction(ReviewAction.SetMergeConflictFilter(mergeConflictFilterOn))
+        viewModel.onAction(ReviewAction.SetMergeConflictFilterOn(
+            mergeConflictFilterOn
+        ))
     }
 
     // Open search when requested from sidebar
     LaunchedEffect(searchRequested) {
         if (searchRequested) {
-            reviewVm.onAction(ReviewAction.OpenSearch)
+            viewModel.onAction(ReviewAction.OpenSearch)
             onSearchConsumed()
         }
     }
 
-    LaunchedEffect(chunksDoneRequested) {
-        if (chunksDoneRequested) {
-            reviewVm.onAction(ReviewAction.MarkAllDoneClicked)
-            onChunksDoneConsumed()
-        }
-    }
-
     // Scroll to matching item when search navigates
-    LaunchedEffect(reviewState.search?.currentItemId) {
-        val targetId = reviewState.search?.currentItemId ?: return@LaunchedEffect
-        val items = reviewVm.items.value
-        val index = items.indexOfFirst { it.id == targetId }
+    LaunchedEffect(state.search?.currentItemId) {
+        val targetId = state.search?.currentItemId ?: return@LaunchedEffect
+        val index = filteredItems.indexOfFirst { it.id == targetId }
         if (index >= 0) {
             listState.scrollToItem(index)
         }
     }
 
+    LaunchedEffect(chunksDoneRequested) {
+        if (chunksDoneRequested) {
+            viewModel.onAction(ReviewAction.MarkAllDoneClicked)
+            onChunksDoneConsumed()
+        }
+    }
+
     Box {
         Column {
-            reviewState.search?.let { search ->
+            state.search?.let { search ->
                 SearchBar(
                     searchState = search,
                     onQueryChange = {
-                        reviewVm.onAction(ReviewAction.UpdateSearchQuery(it))
+                        viewModel.onAction(ReviewAction.UpdateSearchQuery(it))
                     },
                     onSubjectChange = {
-                        reviewVm.onAction(ReviewAction.SetSearchSubject(it))
+                        viewModel.onAction(ReviewAction.SetSearchSubject(it))
                     },
                     onNext = {
-                        reviewVm.onAction(ReviewAction.NextMatch)
+                        viewModel.onAction(ReviewAction.NextMatch)
                     },
                     onPrev = {
-                        reviewVm.onAction(ReviewAction.PrevMatch)
+                        viewModel.onAction(ReviewAction.PrevMatch)
                     },
                     onClose = {
-                        reviewVm.onAction(ReviewAction.CloseSearch)
+                        viewModel.onAction(ReviewAction.CloseSearch)
                     }
                 )
             }
             ModeScreenTemplate(
-                viewModel = reviewVm,
+                viewModel = viewModel,
+                items = filteredItems,
                 listState = listState,
                 dialogs = {
                     // URL handler
-                    LaunchedEffect(reviewState.url) {
-                        if (reviewState.url != null) {
-                            urlHandler.openUri(reviewState.url!!)
-                            reviewVm.onAction(ReviewAction.CleanUrl)
+                    LaunchedEffect(state.url) {
+                        if (state.url != null) {
+                            urlHandler.openUri(state.url!!)
+                            viewModel.onAction(ReviewAction.CleanUrl)
                         }
                     }
 
                     // Mark done confirmation
-                    if (reviewState.chunkToDone != null) {
+                    if (state.chunkToDone != null) {
                         ConfirmDialog(
                             title = stringResource(R.string.chunk_checklist_title),
                             message = AnnotatedString.fromHtml(
                                 stringResource(R.string.chunk_checklist_body)
                             ),
                             onDismiss = {
-                                reviewVm.onAction(ReviewAction.ToggleDoneConfirmed(false))
+                                viewModel.onAction(ReviewAction.ToggleDoneConfirmed(false))
                             },
                             onConfirm = {
-                                reviewVm.onAction(ReviewAction.ToggleDoneConfirmed(true))
+                                viewModel.onAction(ReviewAction.ToggleDoneConfirmed(true))
                             }
                         )
                     }
 
                     // Mark all chunks done confirmation
-                    when (val dialogState = reviewState.markAllDoneState) {
+                    when (val dialogState = state.markAllDoneState) {
                         is MarkAllDialogState.Confirm -> {
                             ConfirmDialog(
                                 title = stringResource(R.string.project_checklist_title),
@@ -145,12 +159,12 @@ fun ReviewModeSection(
                                     stringResource(R.string.project_checklist_body)
                                 ),
                                 onDismiss = {
-                                    reviewVm.onAction(
+                                    viewModel.onAction(
                                         ReviewAction.MarkAllDoneConfirmed(false)
                                     )
                                 },
                                 onConfirm = {
-                                    reviewVm.onAction(
+                                    viewModel.onAction(
                                         ReviewAction.MarkAllDoneConfirmed(true)
                                     )
                                 }
@@ -159,7 +173,7 @@ fun ReviewModeSection(
                         is MarkAllDialogState.Result -> {
                             InfoDialog(
                                 onDismiss = {
-                                    reviewVm.onAction(
+                                    viewModel.onAction(
                                         ReviewAction.MarkAllDoneConfirmed(false)
                                     )
                                 },
@@ -174,7 +188,7 @@ fun ReviewModeSection(
                                 buttons = {
                                     TextButton(
                                         onClick = {
-                                            reviewVm.onAction(
+                                            viewModel.onAction(
                                                 ReviewAction.MarkAllDoneConfirmed(false)
                                             )
                                         }
@@ -190,55 +204,55 @@ fun ReviewModeSection(
             ) { item ->
                 ReviewCard(
                     item = item,
-                    sourceTabs = state.sourceTabs,
+                    sourceTabs = sharedState.sourceTabs,
                     typography = typography,
-                    resourcesOpen = reviewState.resourcesOpen,
+                    resourcesOpen = state.resourcesOpen,
                     onSourceTabClick = {
-                        viewModel.onAction(TargetAction.SelectSource(it))
+                        translationViewModel.onAction(TargetAction.SelectSource(it))
                     },
                     onAddNewSourceClick = onSourceDialogOpen,
                     onRemoveSourceClick = {
-                        viewModel.onAction(TargetAction.RemoveSource(it))
+                        translationViewModel.onAction(TargetAction.RemoveSource(it))
                     },
                     onTextChange = {
-                        reviewVm.onAction(ReviewAction.ItemTextChanged(item, it))
+                        viewModel.onAction(ReviewAction.ItemTextChanged(item, it))
                     },
                     onExpandedChange = { expanded ->
-                        reviewVm.onAction(ReviewAction.OpenResources(expanded))
-                        if (!expanded) reviewVm.onAction(ReviewAction.ClearHelp)
+                        viewModel.onAction(ReviewAction.OpenResources(expanded))
+                        if (!expanded) viewModel.onAction(ReviewAction.ClearHelp)
                     },
                     onRenderHelps = {
-                        reviewVm.onAction(ReviewAction.RenderHelps(item))
+                        viewModel.onAction(ReviewAction.RenderHelps(item))
                     },
                     onHelpClick = {
-                        reviewVm.onAction(ReviewAction.OpenHelp(it))
+                        viewModel.onAction(ReviewAction.OpenHelp(it))
                     },
                     onEditToggle = {
-                        reviewVm.onAction(ReviewAction.ToggleEdit(item))
+                        viewModel.onAction(ReviewAction.ToggleEdit(item))
                     },
                     onDoneToggle = {
-                        reviewVm.onAction(ReviewAction.ToggleDoneClicked(item))
+                        viewModel.onAction(ReviewAction.ToggleDoneClicked(item))
                     },
                     onUndoClick = {
-                        reviewVm.onAction(ReviewAction.Undo(item))
+                        viewModel.onAction(ReviewAction.Undo(item))
                     },
                     onRedoClick = {
-                        reviewVm.onAction(ReviewAction.Redo(item))
+                        viewModel.onAction(ReviewAction.Redo(item))
                     },
                     onAddNoteClick = { caretPos ->
-                        reviewVm.onAction(ReviewAction.AddNoteClicked(item, caretPos))
+                        viewModel.onAction(ReviewAction.AddNoteClicked(item, caretPos))
                     },
                     onDragDropVerse = { machineReadable, verseRawStart, verseRawEnd, targetRawPosition ->
-                        reviewVm.onAction(
+                        viewModel.onAction(
                             ReviewAction.DragDropVerse(
                                 item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
                             )
                         )
                     },
                     onConflictSelected = {
-                        reviewVm.onAction(ReviewAction.SelectConflict(item, it))
+                        viewModel.onAction(ReviewAction.SelectConflict(item, it))
                     },
-                    searchQuery = reviewState.search?.let { search ->
+                    searchQuery = state.search?.let { search ->
                         if (search.query.length >= 2 && search.subject == SearchSubject.TARGET) {
                             search.query
                         } else null
@@ -249,12 +263,12 @@ fun ReviewModeSection(
         }
 
         HelpPanel(
-            help = reviewState.help,
+            help = state.help,
             typography = typography,
-            sourceLanguage = state.resourceContainer?.language,
-            onClearHelp = { reviewVm.onAction(ReviewAction.ClearHelp) },
-            onOpenIndex = { reviewVm.onAction(ReviewAction.OpenIndex(it)) },
-            onOpenWord = { rcSlug, slug -> reviewVm.onAction(ReviewAction.OpenWord(rcSlug, slug)) },
+            sourceLanguage = sharedState.resourceContainer?.language,
+            onClearHelp = { viewModel.onAction(ReviewAction.ClearHelp) },
+            onOpenIndex = { viewModel.onAction(ReviewAction.OpenIndex(it)) },
+            onOpenWord = { rcSlug, slug -> viewModel.onAction(ReviewAction.OpenWord(rcSlug, slug)) },
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(1f / 3f)

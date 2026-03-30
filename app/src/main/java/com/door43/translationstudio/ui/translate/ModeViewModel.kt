@@ -19,11 +19,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 data class Footnote(
     val text: String,
@@ -51,54 +51,35 @@ interface ModeAction {
     object ClearFootnoteToEdit : ModeAction
 }
 
-data class SharedState(
-    val items: List<Chunk> = emptyList(),
-    val sourceContainer: ResourceContainer? = null,
-    val viewMode: TranslationViewMode = TranslationViewMode.READ
-)
-
 abstract class ModeViewModel<ITEM: TranslateItem>(
-    protected val sharedState: StateFlow<SharedState>,
-    private val viewMode: TranslationViewMode,
-    private val event: SendChannel<TargetEvent>
+    protected val sharedState: StateFlow<SharedTranslationState>,
+    protected val eventSender: SendChannel<TargetEvent>,
+    protected val mode: TranslationViewMode,
 ) : ViewModel(), KoinComponent {
-
-    private val _modeState = MutableStateFlow(LocalModeState())
-    val modeState: StateFlow<LocalModeState> = _modeState.asStateFlow()
-
-    protected fun showSnackBar(message: String) {
-        event.trySend(TargetEvent.ShowMessage(message))
-    }
-
-    protected fun restartAutoCommitTimer() {
-        event.trySend(TargetEvent.RestartAutoCommitTimer)
-    }
 
     protected val _items = MutableStateFlow<List<ITEM>>(emptyList())
     val items: StateFlow<List<ITEM>> = _items
 
+    private val _modeState = MutableStateFlow(LocalModeState())
+    val modeState: StateFlow<LocalModeState> = _modeState.asStateFlow()
+
     init {
-        initializeChunks()
+        sharedState
+            .map { it.chunks }
+            .distinctUntilChanged()
+            .onEach(::mapToChildType)
+            .launchIn(viewModelScope)
     }
 
-    fun initializeChunks() {
-        viewModelScope.launch {
-            sharedState
-                .map { it.items to it.viewMode }
-                .distinctUntilChanged()
-                .collect { (list, mode) ->
-                    if (mode == viewMode) {
-                        mapToChildType(list) { items ->
-                            _items.value = items
-                        }
-                    } else {
-                        _items.value = emptyList()
-                    }
-                }
-        }
+    protected fun showSnackBar(message: String) {
+        eventSender.trySend(TargetEvent.ShowMessage(message))
     }
 
-    abstract fun mapToChildType(chunks: List<Chunk>, onReady: (List<ITEM>) -> Unit)
+    protected fun restartAutoCommitTimer() {
+        eventSender.trySend(TargetEvent.RestartAutoCommitTimer)
+    }
+
+    abstract fun mapToChildType(chunks: List<Chunk>)
 
     open fun onAction(action: ModeAction) {
         when (action) {
@@ -114,9 +95,13 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     }
 
     fun updateItem(item: ITEM) {
-        _items.value = _items.value.map {
+        _items.value =  _items.value.map {
             if (it.id == item.id) item else it
         }
+    }
+
+    fun updateItems(items: List<ITEM>) {
+        _items.value = items
     }
 
     fun showFootnoteEditor(note: Footnote) {

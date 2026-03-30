@@ -1,16 +1,13 @@
 package com.door43.translationstudio.ui.translate
 
-import android.app.Application
 import android.graphics.Typeface
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
-import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
-import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.SlugSorter
@@ -29,19 +26,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
@@ -50,20 +42,21 @@ import org.unfoldingword.tools.logger.Logger
 import java.util.Locale
 
 data class TargetTranslationState(
-    val items: List<Chunk> = emptyList(),
     val viewMode: TranslationViewMode = TranslationViewMode.READ,
     val draftAvailable: Boolean = false,
     val showDraftAvailable: Boolean = false,
-    val sourceTabs: List<SourceTabItem> = emptyList(),
-    val resourceContainer: ResourceContainer? = null,
     val lastFocusChapterId: String? = null,
     val lastFocusFrameId: String? = null,
     val projectTitle: String? = null,
-    val hasConflicts: Boolean = false
+)
+
+data class SharedTranslationState(
+    val chunks: List<Chunk> = emptyList(),
+    val sourceTabs: List<SourceTabItem> = emptyList(),
+    val resourceContainer: ResourceContainer? = null
 )
 
 sealed interface TargetAction {
-    object RefreshSelectedSource : TargetAction
     data class RemoveSource(val sourceId: String) : TargetAction
     data class SelectSource(val sourceId: String) : TargetAction
     data class SaveLastViewMode(val viewMode: TranslationViewMode) : TargetAction
@@ -85,8 +78,6 @@ class TargetTranslationViewModel(
     private val assetsProvider: AssetsProvider
 ) : ViewModel(), KoinComponent, ProgressOwner {
 
-    private val application: Application by inject()
-
     private val progressManager = ProgressManager(viewModelScope)
     override val progress get() = progressManager.progress
 
@@ -96,45 +87,18 @@ class TargetTranslationViewModel(
     private val _state = MutableStateFlow(TargetTranslationState())
     val state: StateFlow<TargetTranslationState> = _state.asStateFlow()
 
+    private val _sharedState = MutableStateFlow(SharedTranslationState())
+    val sharedState: StateFlow<SharedTranslationState> = _sharedState.asStateFlow()
+
     private val _event = Channel<TargetEvent>(Channel.BUFFERED)
     val event = _event.receiveAsFlow()
     val eventSender: SendChannel<TargetEvent> = _event
 
-    val sharedStateFlow: StateFlow<SharedState> = state
-        .map { SharedState(it.items, it.resourceContainer, it.viewMode) }
-        .distinctUntilChanged()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = SharedState()
-        )
+    private val sourceContainer: ResourceContainer?
+        get() = _sharedState.value.resourceContainer
 
     val initialized: Boolean
         get() = this::targetTranslation.isInitialized
-
-    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
-        progressManager.runTask(message, block)
-    }
-
-    fun onAction(action: TargetAction) {
-        when (action) {
-            TargetAction.RefreshSelectedSource -> launchWithProgress(
-                application.getString(R.string.loading)
-            ) {
-                refreshSelectedResourceContainer()
-            }
-            is TargetAction.RemoveSource -> launchWithProgress {
-                removeOpenSourceTranslation(action.sourceId)
-            }
-            is TargetAction.SelectSource -> launchWithProgress {
-                setSelectedResourceContainer(action.sourceId)
-            }
-            is TargetAction.SaveLastViewMode -> setLastViewMode(action.viewMode)
-            is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
-            is TargetAction.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
-            TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
-        }
-    }
 
     fun initialize(targetTranslationId: String) {
         val translation = translator.getTargetTranslation(targetTranslationId) ?: return
@@ -162,6 +126,25 @@ class TargetTranslationViewModel(
         }
     }
 
+    fun onAction(action: TargetAction) {
+        when (action) {
+            is TargetAction.RemoveSource -> launchWithProgress {
+                removeOpenSourceTranslation(action.sourceId)
+            }
+            is TargetAction.SelectSource -> launchWithProgress {
+                setSelectedResourceContainer(action.sourceId)
+            }
+            is TargetAction.SaveLastViewMode -> setLastViewMode(action.viewMode)
+            is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
+            is TargetAction.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
+            TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
+        }
+    }
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
+    }
+
     private fun openUsedSourceTranslations() {
         launchWithProgress {
             val opened = prefRepository.getOpenSourceTranslations(
@@ -187,7 +170,9 @@ class TargetTranslationViewModel(
         getSelectedSourceTranslationId()?.let { sourceTranslationSlug ->
             setSelectedResourceContainer(sourceTranslationSlug)
         } ?: run {
-            _state.update { it.copy(items = emptyList()) }
+            _sharedState.update {
+                it.copy(resourceContainer = null, chunks = emptyList())
+            }
         }
         refreshSourceTranslationTabs()
     }
@@ -208,33 +193,37 @@ class TargetTranslationViewModel(
         ).any { it.resource.slug != "udb" }
     }
 
-    private fun loadListItems() {
-        val isReadMode = _state.value.viewMode == TranslationViewMode.READ
-        val items = mutableListOf<Chunk>()
-        _state.value.resourceContainer?.let { source ->
-            val sorter = SlugSorter()
-            val chapterSlugs = sorter.sort(source.chapters())
-            for (chapterSlug: String in chapterSlugs) {
-                val chunkSlugs = sorter.sort(source.chunks(chapterSlug))
-                for (chunkSlug in chunkSlugs) {
-                    if (!isReadMode || !items.any { it.chapterSlug == chapterSlug }) {
-                        items.add(Chunk(chapterSlug, chunkSlug, source, targetTranslation))
+    private suspend fun loadChunks() {
+        val viewMode = _state.value.viewMode
+        val isReadMode = viewMode == TranslationViewMode.READ
+        val chunks = withContext(Dispatchers.IO) {
+            val chunks = mutableListOf<Chunk>()
+            sourceContainer?.let { source ->
+                val sorter = SlugSorter()
+                val chapterSlugs = sorter.sort(source.chapters())
+                for (chapterSlug: String in chapterSlugs) {
+                    val chunkSlugs = sorter.sort(source.chunks(chapterSlug))
+                    for (chunkSlug in chunkSlugs) {
+                        if (!isReadMode || !chunks.any { it.chapterSlug == chapterSlug }) {
+                            chunks.add(Chunk(chapterSlug, chunkSlug, source, targetTranslation))
+                        }
                     }
                 }
             }
+            chunks
         }
-        val hasConflicts = MergeConflictsHandler.isTranslationMergeConflicted(
-            targetTranslation.id,
-            translator
-        )
-        _state.update { it.copy(items = items, hasConflicts = hasConflicts) }
+        _sharedState.update { it.copy(chunks = chunks) }
     }
 
     private fun setLastViewMode(mode: TranslationViewMode) {
         launchWithProgress {
             _state.update { it.copy(viewMode = mode) }
-            translator.setLastViewMode(targetTranslation.id, mode)
-            loadListItems()
+            _sharedState.update { it.copy(chunks = emptyList()) }
+            translator.setLastViewMode(
+                targetTranslationId = targetTranslation.id,
+                viewMode = mode
+            )
+            loadChunks()
         }
     }
 
@@ -322,10 +311,10 @@ class TargetTranslationViewModel(
                     targetTranslation.id,
                     rc.slug
                 )
-                _state.update { it.copy(resourceContainer = rc) }
+                _sharedState.update { it.copy(resourceContainer = rc) }
             }
 
-            loadListItems()
+            loadChunks()
         }
     }
 
@@ -441,7 +430,7 @@ class TargetTranslationViewModel(
             }
         }
 
-        _state.update { it.copy(sourceTabs = tabs) }
+        _sharedState.update { it.copy(sourceTabs = tabs) }
     }
 
     /**
