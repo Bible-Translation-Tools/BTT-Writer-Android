@@ -70,7 +70,9 @@ class ValidateProjectTest {
         mockkObject(MergeConflictsHandler)
         every { MergeConflictsHandler.isMergeConflicted(any()) }.returns(false)
 
-        every { context.getString(R.string.has_warnings) }.returns("Has warnings")
+        every { context.getString(R.string.has_warnings, any()) } answers {
+            "'%s' has warnings:".format((args[1] as Array<*>)[0])
+        }
         every { context.getString(R.string.title) }.returns("Title")
         every { context.getString(R.string.reference) }.returns("Reference")
     }
@@ -165,7 +167,7 @@ class ValidateProjectTest {
         )
 
         assertEquals(3, items.size)
-        assertEquals("Has warnings", items.first().title)
+        assertEquals("'Book of Mark' has warnings:", items.first().title)
         assertEquals("front", (items[1] as Validation.InvalidFrame).chapterId)
         assertTrue(items[1] is Validation.InvalidFrame)
         assertFalse(items[1].isRange)
@@ -217,7 +219,7 @@ class ValidateProjectTest {
         assertEquals(4, items.size)
         assertTrue(items.first() is Validation.ValidGroup)
         assertEquals("Book of Mark front", items.first().title)
-        assertEquals("Has warnings", items[1].title)
+        assertEquals("'Chapter 1' has warnings:", items[1].title)
         assertEquals("01", (items[2] as Validation.InvalidFrame).chapterId)
         assertEquals("Chapter 1 - Title", items[2].title)
         assertTrue(items[2] is Validation.InvalidFrame)
@@ -270,7 +272,7 @@ class ValidateProjectTest {
         assertEquals(3, items.size)
         assertTrue(items.first() is Validation.ValidGroup)
         assertEquals("Book of Mark front", items.first().title)
-        assertEquals("Has warnings", items[1].title)
+        assertEquals("'Chapter 1' has warnings:", items[1].title)
         assertEquals("01", (items[2] as Validation.InvalidFrame).chapterId)
         assertEquals("01", (items[2] as Validation.InvalidFrame).frameId)
         assertEquals("Book of Mark 1:", items[2].title)
@@ -322,7 +324,7 @@ class ValidateProjectTest {
         assertEquals(4, items.size)
         assertTrue(items.first() is Validation.ValidFrame)
         assertEquals("Book of Mark front-1", items.first().title)
-        assertEquals("Has warnings", items[1].title)
+        assertEquals("'Chapter 1' has warnings:", items[1].title)
         assertEquals("Book of Mark 2:", items[2].title)
         assertTrue(items[2] is Validation.ValidFrame)
         assertFalse(items[2].isRange)

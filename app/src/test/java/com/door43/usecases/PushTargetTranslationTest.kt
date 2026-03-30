@@ -551,29 +551,38 @@ class PushTargetTranslationTest {
     private fun mockResources() {
         every { resources.getString(R.string.pref_default_git_server_port) }
             .returns("22")
-        every { resources.getString(R.string.git_awaiting_report) }
-            .returns("Awaiting report %s")
-        every { resources.getString(R.string.git_non_existing) }
-            .returns("Non existing %s")
-        every { resources.getString(R.string.git_not_attempted) }
-            .returns("Not attempted %s")
-        every { resources.getString(R.string.git_ok) }
-            .returns("OK %s")
-        every { resources.getString(R.string.git_rejected_nondelete) }
-            .returns("Rejected non-delete %s")
-        every { resources.getString(R.string.git_rejected_nonfastforward) }
-            .returns("Rejected non-fast-forward %s")
-        every { resources.getString(R.string.git_rejected_other_reason) }
-            .returns("Rejected other reason %s")
-        every { resources.getString(R.string.git_rejected_other_reason_detailed) }
-            .returns("Rejected other reason detailed %s")
-        every { resources.getString(R.string.git_rejected_remote_changed) }
-            .returns("Rejected remote changed %s")
-        every { resources.getString(R.string.git_uptodate) }
-            .returns("Up to date %s")
-        every { resources.getString(R.string.git_server_details) }
-            .returns("Server details %s")
-        every { resources.getString(R.string.git_rejected_other_reason_detailed) }
-            .returns("Rejected other reason detailed %s")
+        every { resources.getString(R.string.git_awaiting_report, any()) } answers {
+            "Awaiting report %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_non_existing, any()) } answers {
+            "Non existing %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_not_attempted, any()) } answers {
+            "Not attempted %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_ok, any()) } answers {
+            "OK %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_rejected_nondelete, any()) } answers {
+            "Rejected non-delete %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_rejected_nonfastforward, any()) } answers {
+            "Rejected non-fast-forward %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_rejected_other_reason, any()) } answers {
+            "Rejected other reason %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_rejected_other_reason_detailed, any(), any()) } answers {
+            "Rejected other reason detailed %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_rejected_remote_changed, any()) } answers {
+            "Rejected remote changed %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_uptodate, any()) } answers {
+            "Up to date %s".format((args[1] as Array<*>)[0])
+        }
+        every { resources.getString(R.string.git_server_details, any()) } answers {
+            "Server details %s".format((args[1] as Array<*>)[0])
+        }
     }
 }

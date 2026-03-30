@@ -736,7 +736,9 @@ class ImportProjectsTest {
         TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
-        every { context.getString(R.string.overwrite_content) }.returns("Overwrite %s?")
+        every { context.getString(R.string.overwrite_content, any()) } answers {
+            "Overwrite %s?".format((args[1] as Array<*>)[0])
+        }
 
         val expectedErrorMessage = "Overwrite Farsi - Mark - New Millennium Version?"
 
