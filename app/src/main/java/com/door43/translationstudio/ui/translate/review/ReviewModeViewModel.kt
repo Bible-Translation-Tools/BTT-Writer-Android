@@ -41,15 +41,20 @@ import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Compa
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -200,21 +205,24 @@ class ReviewModeViewModel(
     private val sourceContainer: ResourceContainer?
         get() = sharedState.value.resourceContainer
 
-    val mergeConflictOn: Flow<Boolean> = _state
-        .map { it.mergeConflictFilterOn }
-        .distinctUntilChanged()
+    private val searchConfig = _state.map {
+        Triple(it.mergeConflictFilterOn, it.search?.query, it.search?.subject)
+    }.distinctUntilChanged()
 
-    val filteredItems = combine(items, mergeConflictOn) { items, mergeConflictOn ->
-        if (mergeConflictOn) {
-            items.filter { it.hasMergeConflicts }
-        } else {
-            items
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val filteredItems: StateFlow<List<ReviewItem>> =
+        combine(_items, searchConfig) { items, config -> items to config }
+            .debounce(500)
+            .flatMapLatest { (items, config) ->
+                processSearchAndFilter(items, config)
+            }
+            .onEach { updateSearchMetadata(it) }
+            .flowOn(Dispatchers.Default)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     init {
         sharedState
@@ -419,45 +427,18 @@ class ReviewModeViewModel(
 
     private fun closeSearch() {
         _state.update { it.copy(search = null) }
-        // Re-render items without search highlighting
-        viewModelScope.launch {
-            reRenderAllItems(searchQuery = null)
-        }
     }
 
     private fun updateSearchQuery(query: String) {
-        val search = _state.value.search ?: return
         _state.update {
             it.copy(search = it.search?.copy(query = query))
-        }
-        if (query.length >= 2) {
-            viewModelScope.launch {
-                performSearch(query, search.subject)
-            }
-        } else if (query.isEmpty()) {
-            _state.update {
-                it.copy(search = it.search?.copy(
-                    matchingItemIds = emptyList(),
-                    currentMatchIndex = -1
-                ))
-            }
-            viewModelScope.launch {
-                reRenderAllItems(searchQuery = null)
-            }
         }
     }
 
     private fun setSearchSubjectAndSearch(subject: SearchSubject) {
-        val search = _state.value.search ?: return
         setLastSearchSource(subject)
         _state.update {
             it.copy(search = it.search?.copy(subject = subject))
-        }
-        val query = search.query
-        if (query.length >= 2) {
-            viewModelScope.launch {
-                performSearch(query, subject)
-            }
         }
     }
 
@@ -478,77 +459,6 @@ class ReviewModeViewModel(
         }
     }
 
-    private suspend fun performSearch(query: String, subject: SearchSubject) {
-        withContext(Dispatchers.Default) {
-            if (filteredItems.value.isEmpty()) return@withContext
-
-            val lowerQuery = query.lowercase()
-            val matchingIds = mutableListOf<String>()
-
-            val updatedItems = filteredItems.value.map { item ->
-                val chunkId = item.id
-                val searchSource = subject == SearchSubject.SOURCE
-                val (_, renderedSource) = prepareSource(
-                    chunkId = item.id,
-                    chunk = item.chunk,
-                    searchQuery = if (searchSource) query else null
-                )
-                val (_, renderedTarget) = prepareTarget(
-                    chunkId = chunkId,
-                    chunk = item.chunk,
-                    targetMode = item.targetMode,
-                    searchQuery = if (!searchSource) query else null
-                )
-
-                // Check matches against rendered text, plus raw text for EDIT mode
-                val hasMatch = if (searchSource) {
-                    renderedSource.text.lowercase().contains(lowerQuery)
-                } else {
-                    renderedTarget.text.lowercase().contains(lowerQuery)
-                            || item.targetText.lowercase().contains(lowerQuery)
-                }
-                if (hasMatch) matchingIds.add(item.id)
-
-                item.copy(
-                    renderedSourceText = renderedSource,
-                    renderedTargetText = renderedTarget
-                )
-            }
-
-            updateItems(updatedItems)
-            _state.update { state ->
-                state.copy(search = state.search?.copy(
-                    matchingItemIds = matchingIds,
-                    currentMatchIndex = if (matchingIds.isNotEmpty()) 0 else -1
-                ))
-            }
-        }
-    }
-
-    private suspend fun reRenderAllItems(searchQuery: String?) {
-        withContext(Dispatchers.Default) {
-            val updatedItems = filteredItems.value.map { item ->
-                val chunkId = item.id
-                val (_, renderedSource) = prepareSource(
-                    chunkId = item.id,
-                    chunk = item.chunk,
-                    searchQuery = searchQuery
-                )
-                val (_, renderedTarget) = prepareTarget(
-                    chunkId = chunkId,
-                    chunk = item.chunk,
-                    targetMode = item.targetMode,
-                    searchQuery = searchQuery
-                )
-                item.copy(
-                    renderedSourceText = renderedSource,
-                    renderedTargetText = renderedTarget
-                )
-            }
-            updateItems(updatedItems)
-        }
-    }
-
     fun getLastSearchSource(): String {
         val defaultSource = SearchSubject.SOURCE.name.uppercase(
             Locale.getDefault()
@@ -564,6 +474,88 @@ class ReviewModeViewModel(
             SEARCH_SOURCE,
             subject.name.uppercase(Locale.getDefault())
         )
+    }
+
+    private fun processSearchAndFilter(
+        items: List<ReviewItem>,
+        config: Triple<Boolean, String?, SearchSubject?>
+    ) = flow {
+        val (filterOn, query, subject) = config
+
+        val processed = withContext(Dispatchers.Default) {
+            val baseItems = if (filterOn) items.filter { it.hasMergeConflict } else items
+
+            if (query.isNullOrBlank()) {
+                baseItems
+            } else {
+                baseItems.map { item ->
+                    decorateItemWithSearch(item, query, subject)
+                }
+            }
+        }
+        emit(processed)
+    }
+
+    private fun decorateItemWithSearch(
+        item: ReviewItem,
+        query: String,
+        subject: SearchSubject?
+    ): ReviewItem {
+        val searchSource = subject == SearchSubject.SOURCE
+
+        val renderedSource = renderSourceText(
+            chunkId = item.id,
+            translationFormat = item.chunk.sourceTranslationFormat,
+            sourceText = item.sourceText,
+            searchQuery = if (searchSource) query else null
+        )
+
+        val verseDisplay = when (item.targetMode) {
+            TargetMode.MARKER -> VerseDisplay.PIN
+            TargetMode.EDIT -> VerseDisplay.RAW
+            TargetMode.COMPLETE -> VerseDisplay.NUMBER
+        }
+
+        val renderedTarget = renderTargetText(
+            chunkId = item.id,
+            translationFormat = item.chunk.targetTranslationFormat,
+            targetText = item.targetText,
+            verseDisplay = verseDisplay,
+            footnoteEditable = item.targetMode != TargetMode.COMPLETE,
+            searchQuery = if (!searchSource) query else null,
+            onVerseClick = {
+                showSnackBar(application.getString(R.string.long_click_to_drag))
+            }
+        )
+
+        return item.copy(
+            renderedSourceText = renderedSource,
+            renderedTargetText = renderedTarget
+        )
+    }
+
+    private fun updateSearchMetadata(items: List<ReviewItem>) {
+        val search = _state.value.search ?: return
+        val query = search.query.lowercase()
+
+        if (query.isNotBlank()) {
+            val searchSource = search.subject == SearchSubject.SOURCE
+            val matchingIds = items.filter { item ->
+                val textToSearch = if (searchSource) {
+                    item.renderedSourceText
+                } else item.renderedTargetText
+                textToSearch.text.lowercase().contains(query)
+            }.map { it.id }
+
+            _state.update { state ->
+                state.copy(
+                    search = state.search?.copy(
+                        matchingItemIds = matchingIds,
+                        currentMatchIndex = if (matchingIds.isNotEmpty()) 0 else -1
+                    )
+                )
+            }
+        }
     }
 
     private fun selectConflict(item: ReviewItem, index: Int) {

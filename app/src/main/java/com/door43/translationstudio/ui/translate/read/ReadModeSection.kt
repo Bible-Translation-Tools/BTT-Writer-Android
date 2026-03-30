@@ -28,7 +28,7 @@ fun ReadModeSection(
 
     val sharedState by viewModel.sharedState.collectAsStateWithLifecycle()
     val items by readVm.items.collectAsStateWithLifecycle()
-    val hasConflicts = items.any { it.hasMergeConflicts }
+    val hasConflicts = items.any { it.hasMergeConflict }
 
     LaunchedEffect(hasConflicts) {
         onHasMergeConflicts(hasConflicts)

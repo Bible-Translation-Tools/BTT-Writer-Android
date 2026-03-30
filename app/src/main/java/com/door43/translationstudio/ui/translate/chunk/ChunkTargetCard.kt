@@ -87,7 +87,7 @@ fun ChunkTargetCard(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                if (!item.hasMergeConflicts) {
+                if (!item.hasMergeConflict) {
                     UsfmEditText(
                         text = item.targetText,
                         onTextChange = {

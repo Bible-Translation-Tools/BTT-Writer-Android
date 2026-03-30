@@ -104,11 +104,11 @@ abstract class TranslateItem {
             }
         }
 
-    val hasMergeConflicts: Boolean
+    val hasMergeConflict: Boolean
         get() = MergeConflictsHandler.isMergeConflicted(targetText)
 
     val mergeItems: List<CharSequence>
-        get() = if (hasMergeConflicts) {
+        get() = if (hasMergeConflict) {
             ParseMergeConflicts.execute(targetText)
         } else emptyList()
 

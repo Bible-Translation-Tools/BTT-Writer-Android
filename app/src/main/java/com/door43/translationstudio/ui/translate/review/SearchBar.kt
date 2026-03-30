@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -119,17 +119,15 @@ fun SearchBar(
             )
 
             // Match count
-            if (searchState.query.length >= 2) {
-                Text(
-                    text = if (searchState.matchCount > 0) {
-                        "${searchState.currentMatchIndex + 1}/${searchState.matchCount}"
-                    } else {
-                        "0"
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.widthIn(min = 32.dp)
-                )
-            }
+            Text(
+                text = if (searchState.matchCount > 0) {
+                    "${searchState.currentMatchIndex + 1}/${searchState.matchCount}"
+                } else {
+                    "0"
+                },
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.widthIn(min = 32.dp)
+            )
 
             // Navigation
             IconButton(

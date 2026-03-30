@@ -33,7 +33,7 @@ fun ChunkModeSection(
     val chunkState by chunkVm.state.collectAsStateWithLifecycle()
     val items by chunkVm.items.collectAsStateWithLifecycle()
 
-    val hasConflicts = items.any { it.hasMergeConflicts }
+    val hasConflicts = items.any { it.hasMergeConflict }
 
     LaunchedEffect(hasConflicts) {
         onHasMergeConflicts(hasConflicts)

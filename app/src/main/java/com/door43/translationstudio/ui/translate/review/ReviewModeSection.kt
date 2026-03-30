@@ -59,7 +59,7 @@ fun ReviewModeSection(
     val progress by viewModel.progress.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
 
-    val hasConflicts = filteredItems.any { it.hasMergeConflicts }
+    val hasConflicts = filteredItems.any { it.hasMergeConflict }
 
     // Auto-disable conflict filter when no conflicts remain
     LaunchedEffect(hasConflicts) {

@@ -98,7 +98,7 @@ fun ReviewCard(
                 .fillMaxHeight()
         )
 
-        if (!item.hasMergeConflicts) {
+        if (!item.hasMergeConflict) {
             ReviewTargetCard(
                 item = item,
                 typography = typography,
