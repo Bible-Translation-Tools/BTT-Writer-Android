@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
@@ -71,6 +72,7 @@ fun ExportDialog(
     targetTranslation: TargetTranslation,
     onDismiss: () -> Unit,
     onExportToApp: (File) -> Unit,
+    onLoginClick: () -> Unit,
     onLogout: () -> Unit,
     onMergeConflict: () -> Unit
 ) {
@@ -87,9 +89,12 @@ fun ExportDialog(
     var showPrintDialog by rememberSaveable { mutableStateOf(false) }
     var showInternetUsageDialog by rememberSaveable { mutableStateOf(false) }
     var showAuthDialog by rememberSaveable { mutableStateOf(false) }
+    var showLoginDialog by rememberSaveable { mutableStateOf(false) }
 
     var imagesToInclude by rememberSaveable { mutableStateOf(false) }
     var incompleteToInclude by rememberSaveable { mutableStateOf(false) }
+
+    var profileUser by remember { mutableStateOf(profile.currentUser) }
 
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(EXPORT_PDF_MIME_TYPE),
@@ -145,6 +150,11 @@ fun ExportDialog(
             }
         }
 
+        LifecycleResumeEffect(Unit) {
+            profileUser = profile.currentUser
+            onPauseOrDispose {}
+        }
+
         Surface(
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surface,
@@ -172,7 +182,11 @@ fun ExportDialog(
                             tip = stringResource(id = R.string.tip_backup_to_door43),
                             icon = Icons.Default.CloudUpload,
                             onClick = {
-                                viewModel.onAction(ExportAction.ExportToCloud)
+                                if (profile.gogsUser != null) {
+                                    viewModel.onAction(ExportAction.ExportToCloud)
+                                } else {
+                                    showLoginDialog = true
+                                }
                             }
                         ) {
                             Icon(
@@ -181,10 +195,7 @@ fun ExportDialog(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = stringResource(
-                                    R.string.current_user,
-                                    profile.currentUser
-                                ),
+                                text = stringResource(R.string.current_user, profileUser),
                                 modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                                 fontSize = 14.sp,
                                 textAlign = TextAlign.End
@@ -359,6 +370,13 @@ fun ExportDialog(
                     showAuthDialog = false
                     viewModel.onAction(ExportAction.RegisterKeys)
                 }
+            )
+        }
+
+        if (showLoginDialog) {
+            Door43LoginDialog(
+                onLoginClick = onLoginClick,
+                onDismiss = { showLoginDialog = false }
             )
         }
 

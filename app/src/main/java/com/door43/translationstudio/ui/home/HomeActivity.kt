@@ -28,7 +28,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityHomeBinding
 import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.dialogs.Door43LoginDialog
+import com.door43.translationstudio.ui.dialogs.Door43LoginDialogOld
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.home.WelcomeFragment.OnCreateNewTargetTranslation
@@ -673,8 +673,8 @@ class HomeActivity : BaseActivity(),
     private fun downloadTargetTranslationUpdates() {
         if (isNetworkAvailable) {
             if (!viewModel.loggedIn) {
-                val dialog = Door43LoginDialog()
-                showDialogFragment(dialog, Door43LoginDialog.TAG)
+                val dialog = Door43LoginDialogOld()
+                showDialogFragment(dialog, Door43LoginDialogOld.TAG)
                 return
             }
             viewModel.pullTargetTranslation(MergeStrategy.RECURSIVE)

@@ -16,7 +16,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import androidx.lifecycle.lifecycleScope
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -34,17 +33,12 @@ import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.usecases.ExportProjects
-import com.door43.usecases.PullTargetTranslation
-import com.door43.usecases.PushTargetTranslation
 import com.door43.util.FileUtilities
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.merge.MergeStrategy
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.tools.logger.Logger
 
 /**
  * Created by joel on 10/5/2015.
@@ -449,8 +443,8 @@ class BackupDialogOld : DialogFragment() {
     }
 
     private fun showDoor43LoginDialog() {
-        val dialog = Door43LoginDialog()
-        showDialogFragment(dialog, Door43LoginDialog.TAG)
+        val dialog = Door43LoginDialogOld()
+        showDialogFragment(dialog, Door43LoginDialogOld.TAG)
     }
 
     private fun showBackupResults(textResId: Int, fileUri: Uri?) {

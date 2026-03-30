@@ -56,6 +56,7 @@ fun PublishScreen(
     viewModel: PublishViewModel = koinViewModel(),
     onOpenReview: () -> Unit,
     onExportToApp: (File) -> Unit,
+    onLoginClick: () -> Unit,
     onLogout: () -> Unit,
     onMergeConflict: () -> Unit
 ) {
@@ -188,6 +189,7 @@ fun PublishScreen(
             onExportToApp = onExportToApp,
             onLogout = onLogout,
             onMergeConflict = onMergeConflict,
+            onLoginClick = onLoginClick,
             onDismiss = { showUploadDialog = false }
         )
     }

@@ -16,7 +16,7 @@ import org.koin.android.ext.android.inject
 
 class ProfileActivity : BaseActivity() {
     val profile: Profile by inject()
-    val preRepository: IPreferenceRepository by inject()
+    val prefRepository: IPreferenceRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,8 +27,8 @@ class ProfileActivity : BaseActivity() {
             return
         }
 
-        val registerUrl = preRepository.getDefaultPref(
-            SettingsActivity.Companion.KEY_PREF_CREATE_ACCOUNT_URL,
+        val registerUrl = prefRepository.getDefaultPref(
+            SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
             getString(R.string.pref_default_create_account_url)
         )
 

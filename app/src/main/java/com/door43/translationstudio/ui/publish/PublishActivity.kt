@@ -14,6 +14,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
+import com.door43.translationstudio.ui.profile.LoginDoor43Activity
 import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.widget.ViewUtil
@@ -99,6 +100,7 @@ class PublishActivity : BaseActivity() {
                     PublishScreen(
                         onOpenReview = ::openReview,
                         onExportToApp = ::exportToApp,
+                        onLoginClick = ::door43Login,
                         onLogout = ::logout,
                         onMergeConflict = ::openMergeConflict
                     )
@@ -168,6 +170,11 @@ class PublishActivity : BaseActivity() {
         i.putExtra(Intent.EXTRA_STREAM, uri)
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(Intent.createChooser(i, "Send to:"))
+    }
+
+    private fun door43Login() {
+        val intent = Intent(this, LoginDoor43Activity::class.java)
+        startActivity(intent)
     }
 
     private fun logout() {
