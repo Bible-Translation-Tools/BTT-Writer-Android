@@ -57,7 +57,7 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
     protected val mode: TranslationViewMode,
 ) : ViewModel(), KoinComponent {
 
-    protected val _items = MutableStateFlow<List<ITEM>>(emptyList())
+    private val _items = MutableStateFlow<List<ITEM>>(emptyList())
     val items: StateFlow<List<ITEM>> = _items
 
     private val _modeState = MutableStateFlow(LocalModeState())

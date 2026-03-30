@@ -42,7 +42,6 @@ import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.SendChannel
@@ -50,7 +49,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -128,6 +126,7 @@ data class SearchState(
 ) {
     val matchCount: Int
         get() = matchingItemIds.size
+
     val currentItemId: String?
         get() = matchingItemIds.getOrNull(currentMatchIndex)
 }
@@ -209,14 +208,15 @@ class ReviewModeViewModel(
         Triple(it.mergeConflictFilterOn, it.search?.query, it.search?.subject)
     }.distinctUntilChanged()
 
-    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     val filteredItems: StateFlow<List<ReviewItem>> =
-        combine(_items, searchConfig) { items, config -> items to config }
-            .debounce(500)
+        combine(items, searchConfig) { items, config ->
+            items to config
+        }
             .flatMapLatest { (items, config) ->
                 processSearchAndFilter(items, config)
             }
-            .onEach { updateSearchMetadata(it) }
+            .onEach(::updateSearchMetadata)
             .flowOn(Dispatchers.Default)
             .stateIn(
                 scope = viewModelScope,
@@ -484,13 +484,8 @@ class ReviewModeViewModel(
 
         val processed = withContext(Dispatchers.Default) {
             val baseItems = if (filterOn) items.filter { it.hasMergeConflict } else items
-
-            if (query.isNullOrBlank()) {
-                baseItems
-            } else {
-                baseItems.map { item ->
-                    decorateItemWithSearch(item, query, subject)
-                }
+            baseItems.map { item ->
+                decorateItemWithSearch(item, query, subject)
             }
         }
         emit(processed)
@@ -498,7 +493,7 @@ class ReviewModeViewModel(
 
     private fun decorateItemWithSearch(
         item: ReviewItem,
-        query: String,
+        query: String?,
         subject: SearchSubject?
     ): ReviewItem {
         val searchSource = subject == SearchSubject.SOURCE
@@ -547,11 +542,17 @@ class ReviewModeViewModel(
                 textToSearch.text.lowercase().contains(query)
             }.map { it.id }
 
+            val currentIndex = when {
+                matchingIds.isEmpty() -> -1
+                _state.value.search?.currentMatchIndex == -1 -> 0
+                else -> _state.value.search?.currentMatchIndex ?: 0
+            }
+
             _state.update { state ->
                 state.copy(
                     search = state.search?.copy(
                         matchingItemIds = matchingIds,
-                        currentMatchIndex = if (matchingIds.isNotEmpty()) 0 else -1
+                        currentMatchIndex = currentIndex
                     )
                 )
             }
