@@ -1,15 +1,16 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.dialogs
 
 import android.app.Application
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
+import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.DownloadImages
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
@@ -44,7 +45,7 @@ import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 
-data class InfoMessage(
+data class DialogMessage(
     val title: String,
     val message: String
 )
@@ -54,15 +55,11 @@ data class UploadSuccess(
     val details: String? = null
 )
 
-data class MergeConflict(
-    val title: String,
-    val message: String
-)
-
 data class ExportState(
-    val infoMessage: InfoMessage? = null,
-    val uploadSuccess: UploadSuccess? = null,
-    val mergeConflict: MergeConflict? = null
+    val info: DialogMessage? = null,
+    val uploadError: DialogMessage? = null,
+    val mergeConflict: DialogMessage? = null,
+    val uploadSuccess: UploadSuccess? = null
 )
 
 sealed interface ExportEvent {
@@ -86,6 +83,7 @@ sealed interface ExportAction {
     object Logout : ExportAction
     object RegisterKeys : ExportAction
     object ClearInfoMessage : ExportAction
+    object ClearErrorMessage : ExportAction
     object ClearUploadSuccess : ExportAction
     object ResetToMaster : ExportAction
     object ClearMergeConflict : ExportAction
@@ -118,29 +116,12 @@ class ExportViewModel(
     private val _event = Channel<ExportEvent>(Channel.BUFFERED)
     val event = _event.receiveAsFlow()
 
+    val projectName: String
     val projectTitle: String
 
     init {
-        var title = targetTranslation.projectTranslation.title
-            .replace("\n+$".toRegex(), "")
-        if (title.isEmpty()) {
-            targetTranslation.resourceSlug?.let { resourceSlug ->
-                val sourceContainer = ContainerCache.cacheClosest(
-                    library,
-                    null,
-                    targetTranslation.projectId,
-                    resourceSlug
-                )
-                if (sourceContainer != null) {
-                    title = sourceContainer.readChunk("front", "title")
-                        .replace("\n+$".toRegex(), "")
-                }
-            }
-        }
-        if (title.isEmpty()) {
-            title = targetTranslation.projectId
-        }
-        projectTitle = "$title - ${targetTranslation.targetLanguageName}"
+        projectName = getProject()?.name ?: targetTranslation.projectId
+        projectTitle = "$projectName - ${targetTranslation.targetLanguageName}"
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
@@ -165,6 +146,7 @@ class ExportViewModel(
             ExportAction.ClearUploadSuccess -> clearUploadSuccess()
             ExportAction.ResetToMaster -> resetToMaster()
             ExportAction.ClearMergeConflict -> clearMergeConflict()
+            ExportAction.ClearErrorMessage -> clearError()
         }
     }
 
@@ -192,7 +174,7 @@ class ExportViewModel(
             }
 
             _state.update {
-                it.copy(infoMessage = InfoMessage(title, message))
+                it.copy(info = DialogMessage(title, message))
             }
         }
     }
@@ -221,7 +203,7 @@ class ExportViewModel(
             }
 
             _state.update {
-                it.copy(infoMessage = InfoMessage(title, message))
+                it.copy(info = DialogMessage(title, message))
             }
         }
     }
@@ -255,7 +237,7 @@ class ExportViewModel(
                 val title = application.getString(R.string.download_failed)
                 val message = application.getString(R.string.downloading_images_for_print_failed)
                 _state.update {
-                    it.copy(infoMessage = InfoMessage(title, message))
+                    it.copy(info = DialogMessage(title, message))
                 }
                 return@launchWithProgress
             }
@@ -284,7 +266,7 @@ class ExportViewModel(
             }
 
             _state.update {
-                it.copy(infoMessage = InfoMessage(title, message))
+                it.copy(info = DialogMessage(title, message))
             }
         }
     }
@@ -358,12 +340,12 @@ class ExportViewModel(
                         targetTranslation.targetLanguageName
                     )
                     _state.update {
-                        it.copy(mergeConflict = MergeConflict(title, message))
+                        it.copy(mergeConflict = DialogMessage(title, message))
                     }
                 }
             }
             else -> {
-                reportExportFailed()
+                reportUploadFailed()
             }
         }
     }
@@ -395,11 +377,11 @@ class ExportViewModel(
                 val title = application.getString(R.string.upload_failed)
                 val message = application.getString(R.string.push_rejected)
                 _state.update {
-                    it.copy(mergeConflict = MergeConflict(title, message))
+                    it.copy(mergeConflict = DialogMessage(title, message))
                 }
             }
             else -> {
-                reportExportFailed()
+                reportUploadFailed()
             }
         }
     }
@@ -424,7 +406,7 @@ class ExportViewModel(
             Logger.i(this.javaClass.name, "SSH keys were registered with the server")
             pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
         } else {
-            reportExportFailed()
+            reportUploadFailed()
         }
     }
 
@@ -443,7 +425,7 @@ class ExportViewModel(
             )
             pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
         } else {
-            reportExportFailed()
+            reportUploadFailed()
         }
     }
 
@@ -506,13 +488,19 @@ class ExportViewModel(
 
     private fun reportExportFailed() {
         val title = application.getString(R.string.export_failed)
-        val message = if (!App.isNetworkAvailable) {
-            application.getString(R.string.internet_not_available)
+        val exportFailed = application.getString(R.string.export_failed)
+        _state.update { it.copy(info = DialogMessage(title, exportFailed)) }
+    }
+
+    private fun reportUploadFailed() {
+        val title = application.getString(R.string.export_failed)
+        val noInternet = application.getString(R.string.internet_not_available)
+        val exportFailed = application.getString(R.string.export_failed)
+
+        if (!App.isNetworkAvailable) {
+            _state.update { it.copy(info = DialogMessage(title, noInternet)) }
         } else {
-            application.getString(R.string.export_failed)
-        }
-        _state.update {
-            it.copy(infoMessage = InfoMessage(title, message))
+            _state.update { it.copy(uploadError = DialogMessage(title, exportFailed)) }
         }
     }
 
@@ -521,9 +509,7 @@ class ExportViewModel(
             SettingsActivity.KEY_PREF_READER_SERVER,
             application.getString(R.string.pref_default_reader_server)
         )
-        val url = Uri.parse(
-            apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id
-        )
+        val url = (apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id).toUri()
         val success = UploadSuccess(
             url = url.toString(),
             details = details
@@ -551,8 +537,20 @@ class ExportViewModel(
         }
     }
 
+    private fun getProject(): Project? {
+        return library.index.getProject(
+            deviceLanguageCode,
+            targetTranslation.projectId,
+            true
+        )
+    }
+
     private fun clearInfo() {
-        _state.update { it.copy(infoMessage = null) }
+        _state.update { it.copy(info = null) }
+    }
+
+    private fun clearError() {
+        _state.update { it.copy(uploadError = null) }
     }
 
     private fun clearUploadSuccess() {

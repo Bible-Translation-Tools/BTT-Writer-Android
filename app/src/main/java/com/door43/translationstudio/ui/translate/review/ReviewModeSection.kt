@@ -56,16 +56,17 @@ fun ReviewModeSection(
 
     val sharedState by translationViewModel.sharedState.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val items by viewModel.items.collectAsStateWithLifecycle()
     val filteredItems by viewModel.filteredItems.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
 
-    val hasConflicts = filteredItems.any { it.hasMergeConflict }
+    val hasConflicts = items.any { it.hasMergeConflict }
 
     // Auto-disable conflict filter when no conflicts remain
     LaunchedEffect(hasConflicts) {
         onHasMergeConflicts(hasConflicts)
-        if (filteredItems.isNotEmpty() && !hasConflicts && mergeConflictFilterOn) {
+        if (items.isNotEmpty() && !hasConflicts && mergeConflictFilterOn) {
             onMergeConflictFilterReset()
         }
     }
@@ -186,14 +187,8 @@ fun ReviewModeSection(
                                         dialogState.total
                                     )
                                 ).text,
-                                buttons = {
-                                    TextButton(
-                                        onClick = {
-                                            viewModel.onAction(
-                                                ReviewAction.MarkAllDoneConfirmed(false)
-                                            )
-                                        }
-                                    ) {
+                                buttons = { onDismiss ->
+                                    TextButton(onClick = onDismiss) {
                                         Text(stringResource(R.string.dismiss))
                                     }
                                 }

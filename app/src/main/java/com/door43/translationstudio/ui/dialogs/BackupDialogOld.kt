@@ -31,7 +31,6 @@ import com.door43.translationstudio.databinding.DialogBackupBinding
 import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
-import com.door43.translationstudio.ui.viewmodels.ExportViewModel
 import com.door43.usecases.ExportProjects
 import com.door43.util.FileUtilities
 import org.eclipse.jgit.api.ResetCommand
@@ -656,13 +655,13 @@ class BackupDialogOld : DialogFragment() {
     private fun showFeedbackDialog(targetTranslation: TargetTranslation) {
         val project = viewModel.getProject(targetTranslation)
         // open bug report dialog
-        val feedbackDialog = FeedbackDialog()
+        val feedbackDialog = FeedbackDialogOld()
         val args = Bundle()
         val message = "Failed to upload the translation of ${project?.name}" +
                 "into ${targetTranslation.targetLanguageName}.\n" +
                 "targetTranslation: ${targetTranslation.id}" +
                 "\n--------\n\n"
-        args.putString(FeedbackDialog.ARG_MESSAGE, message)
+        args.putString(FeedbackDialogOld.ARG_MESSAGE, message)
         feedbackDialog.arguments = args
         showDialogFragment(feedbackDialog, "feedback-dialog")
     }

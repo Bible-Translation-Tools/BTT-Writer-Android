@@ -855,6 +855,7 @@ Do you want to enable SD card access?  If so then:
     <string name="missing_source">Missing source translation</string>
     <string name="update_success">The update finished successfully</string>
     <string name="updating">Updating</string>
+    <string name="uploading_feedback">Uploading feedback.</string>
     <string name="upload_failed_label">Upload Failed!</string>
     <string name="upload_feedback_failed">Upload of feedback failed</string>
     <string name="upload_crash_report_failed">Upload of crash report failed</string>

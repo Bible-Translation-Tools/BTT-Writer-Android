@@ -30,7 +30,7 @@ import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.dialogs.Door43LoginDialogOld
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialog
-import com.door43.translationstudio.ui.dialogs.FeedbackDialog
+import com.door43.translationstudio.ui.dialogs.FeedbackDialogOld
 import com.door43.translationstudio.ui.home.WelcomeFragment.OnCreateNewTargetTranslation
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.profile.ProfileActivity
@@ -117,7 +117,7 @@ class HomeActivity : BaseActivity(),
                         true
                     }
                     R.id.action_feedback -> {
-                        val dialog = FeedbackDialog()
+                        val dialog = FeedbackDialogOld()
                         showDialogFragment(dialog, "feedback-dialog")
                         true
                     }

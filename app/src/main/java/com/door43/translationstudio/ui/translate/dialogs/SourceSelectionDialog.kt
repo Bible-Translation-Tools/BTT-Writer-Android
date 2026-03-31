@@ -1,9 +1,6 @@
 package com.door43.translationstudio.ui.translate.dialogs
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,10 +16,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,26 +25,22 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.ui.components.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.components.SourceHeaderRow
 import com.door43.translationstudio.ui.translate.components.SourceItemRow
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -62,217 +52,176 @@ fun SourceSelectionDialog(
     onConfirm: (List<RCItem>) -> Unit,
     onUpdateSources: () -> Unit
 ) {
-    var pendingDismiss by remember { mutableStateOf(false) }
+    val viewModel: SourceSelectionViewModel = koinViewModel {
+        parametersOf(targetTranslation)
+    }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
-    Dialog(
-        onDismissRequest = { pendingDismiss = true }
-    ) {
-        val viewModel: SourceSelectionViewModel = koinViewModel {
-            parametersOf(targetTranslation)
+    val snackbarHostState = remember { SnackbarHostState() }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+
+    val selectedString = stringResource(R.string.selected)
+    val availableString = stringResource(R.string.available)
+    val onlineString = stringResource(R.string.available_online)
+
+    var sourceToDownload by rememberSaveable { mutableStateOf<RCItem?>(null) }
+    var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
+
+    val uiState by remember(state.sources, searchQuery) {
+        derivedStateOf {
+            prepareSourceState(
+                sources = state.sources,
+                searchText = searchQuery,
+                selectedString = selectedString,
+                availableString = availableString,
+                availableOnlineString = onlineString
+            )
         }
-        val state by viewModel.state.collectAsStateWithLifecycle()
-        val progress by viewModel.progress.collectAsStateWithLifecycle()
+    }
 
-        var searchQuery by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        viewModel.onAction(SourceAction.LoadSources)
+    }
 
-        val selectedString = stringResource(R.string.selected)
-        val availableString = stringResource(R.string.available)
-        val onlineString = stringResource(R.string.available_online)
+    LaunchedEffect(viewModel) {
+        viewModel.event.collect {
+            when (it) {
+                is SourceEvent.SnackbarMessage -> snackbarHostState.showSnackbar(it.message)
+            }
+        }
+    }
 
-        var sourceToDownload by rememberSaveable { mutableStateOf<RCItem?>(null) }
-        var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
+    OverlayDialog(
+        snackbarHostState = snackbarHostState,
+        onDismiss = onDismissRequest
+    ) { dismissWithKeyboard ->
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            placeholder = { Text(stringResource(R.string.choose_source_translations)) },
+            leadingIcon = {
+                Icon(Icons.Default.Search, contentDescription = "Search")
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = "Clear search"
+                        )
+                    }
+                }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(50),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            )
+        )
 
-        val uiState by remember(state.sources, searchQuery) {
-            derivedStateOf {
-                prepareSourceState(
-                    sources = state.sources,
-                    searchText = searchQuery,
-                    selectedString = selectedString,
-                    availableString = availableString,
-                    availableOnlineString = onlineString
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth()
+                .weight(1f)
+        ) {
+            itemsIndexed(uiState.filteredList) { index, item ->
+                if (uiState.headerIndices.contains(index)) {
+                    SourceHeaderRow(
+                        title = item.title,
+                        showStatusIcons = item.hasUpdates
+                    )
+                } else {
+                    SourceItemRow(
+                        item = item,
+                        onTriggerSelected = {
+                            viewModel.onAction(SourceAction.ToggleSelection(it))
+                        },
+                        onTriggerDownload = { sourceToDownload = it },
+                        onTriggerDelete = {
+                            if (it.downloaded) {
+                                sourceToDelete = it
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        HorizontalDivider()
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(
+                onClick = { dismissWithKeyboard(onUpdateSources) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = stringResource(R.string.update_sources_label),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            TextButton(onClick = { dismissWithKeyboard(onDismissRequest) }) {
+                Text(
+                    stringResource(R.string.title_cancel),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            TextButton(
+                onClick = {
+                    dismissWithKeyboard {
+                        onConfirm(state.sources.filter { it.selected })
+                    }
+                }
+            ) {
+                Text(
+                    stringResource(R.string.confirm),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
+    }
 
-        val snackBarHostState = remember { SnackbarHostState() }
-        val coroutineScope = rememberCoroutineScope()
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
+        )
+    }
 
-        val focusManager = LocalFocusManager.current
+    sourceToDownload?.let { source ->
+        ConfirmDialog(
+            title = stringResource(R.string.title_download_source_language),
+            message = stringResource(R.string.download_source_language, source.title),
+            onConfirm = {
+                sourceToDownload = null
+                viewModel.onAction(SourceAction.DownloadSource(source))
+            },
+            onDismiss = { sourceToDownload = null }
+        )
+    }
 
-        val dismissWithKeyboard: (() -> Unit) -> Unit = { action ->
-            focusManager.clearFocus()
-            coroutineScope.launch {
-                delay(100)
-                action()
-            }
-        }
-
-        LaunchedEffect(Unit) {
-            viewModel.onAction(SourceAction.LoadSources)
-        }
-
-        LaunchedEffect(state.snackBarMessage) {
-            state.snackBarMessage?.let { message ->
-                coroutineScope.launch {
-                    snackBarHostState.showSnackbar(message)
-                    viewModel.onAction(SourceAction.ClearSnackBar)
-                }
-            }
-        }
-
-        LaunchedEffect(pendingDismiss) {
-            if (pendingDismiss) {
-                focusManager.clearFocus()
-                delay(100)
-                onDismissRequest()
-            }
-        }
-
-        Surface(
-            modifier = Modifier.fillMaxSize(0.95f),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        placeholder = { Text(stringResource(R.string.choose_source_translations)) },
-                        leadingIcon = {
-                            Icon(Icons.Default.Search, contentDescription = "Search")
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(
-                                        Icons.Default.Clear,
-                                        contentDescription = "Clear search"
-                                    )
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(50),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        )
-                    )
-
-                    LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        itemsIndexed(uiState.filteredList) { index, item ->
-                            if (uiState.headerIndices.contains(index)) {
-                                SourceHeaderRow(
-                                    title = item.title,
-                                    showStatusIcons = item.hasUpdates
-                                )
-                            } else {
-                                SourceItemRow(
-                                    item = item,
-                                    onTriggerSelected = {
-                                        viewModel.onAction(SourceAction.ToggleSelection(it))
-                                    },
-                                    onTriggerDownload = { sourceToDownload = it },
-                                    onTriggerDelete = {
-                                        if (it.downloaded) {
-                                            sourceToDelete = it
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    HorizontalDivider()
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(
-                            onClick = { dismissWithKeyboard(onUpdateSources) },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.update_sources_label),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.fillMaxWidth(),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        TextButton(onClick = { dismissWithKeyboard(onDismissRequest) }) {
-                            Text(
-                                stringResource(R.string.title_cancel),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        TextButton(
-                            onClick = {
-                                dismissWithKeyboard {
-                                    onConfirm(state.sources.filter { it.selected })
-                                }
-                            }
-                        ) {
-                            Text(
-                                stringResource(R.string.confirm),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-
-                SnackbarHost(
-                    hostState = snackBarHostState,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 40.dp)
-                ) { data ->
-                    Snackbar(
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        snackbarData = data
-                    )
-                }
-            }
-        }
-
-        progress?.let {
-            ProgressDialog(
-                message = it.message,
-                progress = it.value
-            )
-        }
-
-        sourceToDownload?.let { source ->
-            ConfirmDialog(
-                title = stringResource(R.string.title_download_source_language),
-                message = stringResource(R.string.download_source_language, source.title),
-                onConfirm = {
-                    sourceToDownload = null
-                    viewModel.onAction(SourceAction.DownloadSource(source))
-                },
-                onDismiss = { sourceToDownload = null }
-            )
-        }
-
-        sourceToDelete?.let { source ->
-            ConfirmDialog(
-                title = stringResource(R.string.label_delete),
-                message = stringResource(R.string.confirm_delete_project),
-                onConfirm = {
-                    sourceToDelete = null
-                    viewModel.onAction(SourceAction.DeleteSource(source))
-                },
-                onDismiss = { sourceToDelete = null }
-            )
-        }
+    sourceToDelete?.let { source ->
+        ConfirmDialog(
+            title = stringResource(R.string.label_delete),
+            message = stringResource(R.string.confirm_delete_project),
+            onConfirm = {
+                sourceToDelete = null
+                viewModel.onAction(SourceAction.DeleteSource(source))
+            },
+            onDismiss = { sourceToDelete = null }
+        )
     }
 }
 

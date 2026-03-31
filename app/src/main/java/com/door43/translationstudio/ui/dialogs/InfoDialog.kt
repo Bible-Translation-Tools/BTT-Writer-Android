@@ -14,14 +14,16 @@ fun InfoDialog(
     message: String,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    buttons: @Composable () -> Unit
+    buttons: @Composable (onDismiss: () -> Unit) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(message) },
         shape = RoundedCornerShape(8.dp),
-        confirmButton = { buttons() },
+        confirmButton = {
+            buttons(onDismiss)
+        },
         modifier = modifier.fillMaxWidth()
     )
 }

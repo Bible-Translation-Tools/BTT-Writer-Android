@@ -1,238 +1,204 @@
 package com.door43.translationstudio.ui.dialogs
 
-import android.app.Dialog
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.Window
-import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.DialogFragment
-import com.door43.translationstudio.App.Companion.isNetworkAvailable
-import com.door43.translationstudio.App.Companion.isStoreVersion
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.door43.translationstudio.App
 import com.door43.translationstudio.R
-import com.door43.translationstudio.databinding.DialogFeedbackBinding
-import com.door43.translationstudio.ui.viewmodels.FeedbackViewModel
-import com.door43.usecases.CheckForLatestRelease
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.door43.translationstudio.ui.components.OverlayDialog
+import org.koin.androidx.compose.koinViewModel
 
-/**
- * Created by joel on 9/17/2015.
- */
-class FeedbackDialog : DialogFragment() {
-    private var message = ""
+@Composable
+fun FeedbackDialog(
+    viewModel: FeedbackViewModel = koinViewModel(),
+    feedbackText: String = "",
+    onDismiss: () -> Unit
+) {
+    var text by remember { mutableStateOf(feedbackText) }
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
-    private var _binding: DialogFeedbackBinding? = null
-    private val binding get() = _binding!!
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    private val viewModel: FeedbackViewModel by viewModel()
+    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = super.onCreateDialog(savedInstanceState)
-        dialog.setCanceledOnTouchOutside(false)
-        return dialog
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        dialog?.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        _binding = DialogFeedbackBinding.inflate(inflater, container, false)
-
-        if (savedInstanceState == null) {
-            val args = arguments
-            if (args != null) {
-                message = args.getString(ARG_MESSAGE, "")
-            }
-        }
-
-        setupObservers()
-
-        with(binding) {
-            ViewUtil.tintViewDrawable(
-                wifiIcon,
-                requireActivity().resources.getColor(R.color.dark_secondary_text)
-            )
-            editText.setText(message)
-            editText.setSelection(editText.text.length)
-
-            cancelButton.setOnClickListener { dismiss() }
-            confirmButton.setOnClickListener {
-                if (editText.text.toString().isEmpty()) {
-                    // requires text
-                    notifyInputRequired()
-                } else {
-                    reportBug(editText.text.toString().trim())
-                }
-            }
-        }
-
-        if (savedInstanceState != null) {
-            message = savedInstanceState.getString(STATE_NOTES, "")
-        }
-
-        return binding.root
-    }
-
-    private fun setupObservers() {
-        viewModel.loading.observe(this) {
-            if (it) {
-                showLoadingUI()
-            } else {
-                hideLoadingUI()
-            }
-        }
-        viewModel.latestRelease.observe(this) {
-            it?.let { result ->
-                if (result.release != null) {
-                    val hand = Handler(Looper.getMainLooper())
-                    hand.post { notifyLatestRelease(result.release) }
-                } else {
-                    if (message.isNotEmpty()) {
-                        viewModel.uploadFeedback(message)
-                    } else {
-                        notifyInputRequired()
-                        dismiss()
-                    }
-                }
-            }
-        }
-        viewModel.success.observe(this) {
-            it?.let { success ->
-                if (success) {
-                    val snack = Snackbar.make(
-                        requireActivity().findViewById(android.R.id.content),
-                        R.string.success,
-                        Snackbar.LENGTH_LONG
-                    )
-                    ViewUtil.setSnackBarTextColor(
-                        snack,
-                        resources.getColor(R.color.light_primary_text)
-                    )
-                    snack.show()
-                    dismiss()
-                } else {
-                    val networkAvailable = isNetworkAvailable
-                    val hand = Handler(Looper.getMainLooper())
-                    hand.post {
-                        val messageId = if (networkAvailable) R.string.upload_feedback_failed else R.string.internet_not_available
-                        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-                            .setTitle(R.string.upload_failed)
-                            .setMessage(messageId)
-                            .setPositiveButton(R.string.retry_label) { _, _ -> viewModel.uploadFeedback(message) }
-                            .setNegativeButton(R.string.label_close, null)
-                            .show()
-                    }
+    LaunchedEffect(viewModel) {
+        viewModel.event.collect { event ->
+            when (event) {
+                is FeedbackEvent.SnackbarMessage -> {
+                    snackbarHostState.showSnackbar(event.message)
                 }
             }
         }
     }
 
-    private fun notifyInputRequired() {
-        val snack = Snackbar.make(
-            requireActivity().findViewById(android.R.id.content),
-            R.string.input_required,
-            Snackbar.LENGTH_SHORT
+    OverlayDialog(
+        snackbarHostState = snackbarHostState,
+        onDismiss = onDismiss
+    ) { dismissWithKeyboard ->
+        Text(
+            text = stringResource(R.string.feedback),
+            fontSize = 24.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-        ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-        snack.show()
-    }
 
-    private fun reportBug(message: String) {
-        this.message = message
-        viewModel.checkForLatestRelease()
-    }
+        Spacer(modifier = Modifier.height(8.dp))
 
-    private fun showLoadingUI() {
-        binding.formLayout.visibility = View.GONE
-        binding.controlsLayout.visibility = View.GONE
-        binding.loadingLayout.visibility = View.VISIBLE
-    }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Wifi,
+                contentDescription = "requires internet",
+                modifier = Modifier.padding(end = 5.dp)
+            )
+            Text(
+                text = stringResource(R.string.requires_internet),
+                fontSize = 12.sp
+            )
+        }
 
-    private fun hideLoadingUI() {
-        binding.formLayout.visibility = View.VISIBLE
-        binding.controlsLayout.visibility = View.VISIBLE
-        binding.loadingLayout.visibility = View.GONE
-    }
+        Spacer(modifier = Modifier.height(16.dp))
 
-    /**
-     * Displays a dialog to the user telling them there is an apk update.
-     * @param release
-     */
-    private fun notifyLatestRelease(release: CheckForLatestRelease.Release) {
-        val isStoreVersion = isStoreVersion
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            placeholder = {
+                Text(stringResource(R.string.bug_report))
+            },
+            modifier = Modifier.fillMaxWidth()
+                .height(150.dp)
+        )
 
-        AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
-            .setTitle(R.string.apk_update_available)
-            .setMessage(R.string.upload_report_or_download_latest_apk)
-            .setNegativeButton(R.string.title_cancel) { _, _ ->
-                viewModel.clearResults()
-                this@FeedbackDialog.dismiss()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = { dismissWithKeyboard(onDismiss) }) {
+                Text(
+                    text = stringResource(R.string.title_cancel),
+                    fontSize = 14.sp
+                )
             }
-            .setNeutralButton(R.string.download_update) { _, _ ->
-                if (isStoreVersion) {
-                    // open play store
-                    val appPackageName = requireActivity().packageName
-                    try {
-                        startActivity(
-                            Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("market://details?id=$appPackageName")
-                            )
-                        )
-                    } catch (e: ActivityNotFoundException) {
-                        startActivity(
-                            Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
-                            )
-                        )
+            TextButton(
+                onClick = {
+                    viewModel.onAction(FeedbackAction.ReportBug(text))
+                }
+            ) {
+                Text(
+                    text = stringResource(R.string.confirm),
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+
+    state.uploadError?.let { error ->
+        InfoDialog(
+            title = stringResource(R.string.upload_failed),
+            message = error,
+            onDismiss = { viewModel.onAction(FeedbackAction.ClearError) }
+        ) { onDismiss ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.label_close))
+                }
+                TextButton(
+                    onClick = {
+                        onDismiss()
+                        viewModel.onAction(FeedbackAction.ReportBug(text))
                     }
-                } else {
-                    // download from github
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl))
-                    startActivity(browserIntent)
-                }
-                this@FeedbackDialog.dismiss()
-            }
-            .setPositiveButton(R.string.label_continue) { _, _ ->
-                if (message.isNotEmpty()) {
-                    viewModel.uploadFeedback(message)
-                } else {
-                    notifyInputRequired()
-                    this@FeedbackDialog.dismiss()
+                ) {
+                    Text(stringResource(R.string.retry_label))
                 }
             }
-            .show()
+        }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString(STATE_NOTES, message)
-        super.onSaveInstanceState(outState)
+    state.release?.let { release ->
+        InfoDialog(
+            title = stringResource(R.string.apk_update_available),
+            message = stringResource(R.string.upload_report_or_download_latest_apk),
+            onDismiss = { viewModel.onAction(FeedbackAction.ClearRelease) }
+        ) { onDismiss ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.title_cancel))
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                TextButton(
+                    onClick = {
+                        onDismiss()
+                        if (App.isStoreVersion) {
+                            val appPackageName = context.packageName
+                            try {
+                                uriHandler.openUri("market://details?id=$appPackageName")
+                            } catch (_: Exception) {
+                                uriHandler.openUri("https://play.google.com/store/apps/details?id=$appPackageName")
+                            }
+                        } else {
+                            uriHandler.openUri(release.downloadUrl)
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.download_update))
+                }
+
+                TextButton(
+                    onClick = {
+                        onDismiss()
+                        viewModel.onAction(FeedbackAction.UploadFeedback(text))
+                    }
+                ) {
+                    Text(stringResource(R.string.label_continue))
+                }
+            }
+        }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    override fun dismiss() {
-        viewModel.cancelJobs()
-        viewModel.clearResults()
-        super.dismiss()
-    }
-
-    companion object {
-        private const val STATE_NOTES = "bug_notes"
-        const val ARG_MESSAGE: String = "arg_message"
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
+        )
     }
 }

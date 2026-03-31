@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -134,18 +133,13 @@ fun LoginScreen(
                 modifier = Modifier.padding(end = 8.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.title_cancel),
-                    color = MaterialTheme.colorScheme.secondary
+                    text = stringResource(R.string.title_cancel)
                 )
             }
 
             Button(
                 onClick = submitLogin,
-                enabled = username.isNotBlank() && password.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                )
+                enabled = username.isNotBlank() && password.isNotEmpty()
             ) {
                 Text(stringResource(R.string.label_continue))
             }

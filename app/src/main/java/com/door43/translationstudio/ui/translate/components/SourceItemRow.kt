@@ -38,8 +38,8 @@ fun SourceHeaderRow(title: String, showStatusIcons: Boolean) {
         ) {
             Icon(
                 Icons.Default.Refresh,
-                null,
-                tint = MaterialTheme.colorScheme.secondary
+                "refresh",
+                tint = MaterialTheme.colorScheme.primary
             )
         },
         "wifi" to InlineTextContent(
@@ -47,8 +47,8 @@ fun SourceHeaderRow(title: String, showStatusIcons: Boolean) {
         ) {
             Icon(
                 Icons.Default.Wifi,
-                null,
-                tint = MaterialTheme.colorScheme.secondary
+                "internet",
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     )

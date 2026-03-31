@@ -26,9 +26,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogPrintBinding
 import com.door43.translationstudio.getBestFontForLanguage
-import com.door43.translationstudio.ui.viewmodels.ExportViewModel
-import com.door43.usecases.ExportProjects
-import com.door43.util.FileUtilities
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client

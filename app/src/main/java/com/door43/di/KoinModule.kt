@@ -32,8 +32,8 @@ import com.door43.translationstudio.ui.crash.CrashReporterViewModel
 import com.door43.translationstudio.ui.devtools.DeveloperViewModel
 import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
 import com.door43.translationstudio.ui.draft.DraftViewModel
-import com.door43.translationstudio.ui.viewmodels.ExportViewModel
-import com.door43.translationstudio.ui.viewmodels.FeedbackViewModel
+import com.door43.translationstudio.ui.dialogs.ExportViewModel
+import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
 import com.door43.translationstudio.ui.home.HomeViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportIndexViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel

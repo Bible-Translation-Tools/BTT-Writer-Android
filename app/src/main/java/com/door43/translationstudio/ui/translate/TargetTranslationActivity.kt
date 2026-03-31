@@ -3,19 +3,20 @@ package com.door43.translationstudio.ui.translate
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.core.content.FileProvider
 import com.door43.translationstudio.App
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.dialogs.BackupDialogOld
-import com.door43.translationstudio.ui.dialogs.FeedbackDialog
-import com.door43.translationstudio.ui.dialogs.PrintDialogOld
 import com.door43.translationstudio.ui.draft.DraftActivity
+import com.door43.translationstudio.ui.profile.LoginDoor43Activity
+import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
 import java.util.Timer
 import java.util.TimerTask
 
@@ -104,51 +105,6 @@ class TargetTranslationActivity : BaseActivity() {
                         // so we finish to avoid filling the stack.
                         finish()
                     },
-                    onUploadExport = {
-                        val backupFt = supportFragmentManager.beginTransaction()
-                        val backupPrev = supportFragmentManager.findFragmentByTag(BackupDialogOld.TAG)
-                        if (backupPrev != null) {
-                            backupFt.remove(backupPrev)
-                        }
-                        backupFt.addToBackStack(null)
-
-                        val backupDialog = BackupDialogOld()
-                        val args = Bundle()
-                        args.putString(
-                            BackupDialogOld.ARG_TARGET_TRANSLATION_ID,
-                            viewModel.targetTranslation.id
-                        )
-                        backupDialog.arguments = args
-                        backupDialog.show(backupFt, BackupDialogOld.TAG)
-                    },
-                    onPrint = {
-                        val printFt = supportFragmentManager.beginTransaction()
-                        val printPrev = supportFragmentManager.findFragmentByTag("printDialog")
-                        if (printPrev != null) {
-                            printFt.remove(printPrev)
-                        }
-                        printFt.addToBackStack(null)
-
-                        val printDialog = PrintDialogOld()
-                        val printArgs = Bundle()
-                        printArgs.putString(
-                            PrintDialogOld.ARG_TARGET_TRANSLATION_ID,
-                            viewModel.targetTranslation.id
-                        )
-                        printDialog.arguments = printArgs
-                        printDialog.show(printFt, "printDialog")
-                    },
-                    onFeedback = {
-                        val ft = supportFragmentManager.beginTransaction()
-                        val prev = supportFragmentManager.findFragmentByTag("bugDialog")
-                        if (prev != null) {
-                            ft.remove(prev)
-                        }
-                        ft.addToBackStack(null)
-
-                        val dialog = FeedbackDialog()
-                        dialog.show(ft, "bugDialog")
-                    },
                     onSettings = {
                         startActivity(Intent(
                             this@TargetTranslationActivity,
@@ -156,7 +112,10 @@ class TargetTranslationActivity : BaseActivity() {
                         ))
                     },
                     onRestartAutoCommitTimer = ::restartAutoCommitTimer,
-                    onUpdateSources = ::onUpdateSources
+                    onUpdateSources = ::onUpdateSources,
+                    onExportToApp = ::exportToApp,
+                    onLoginClick = ::door43Login,
+                    onLogout = ::logout
                 )
             }
         }
@@ -189,6 +148,30 @@ class TargetTranslationActivity : BaseActivity() {
                 }
             }
         }, COMMIT_INTERVAL, COMMIT_INTERVAL)
+    }
+
+    private fun exportToApp(file: File) {
+        val uri = FileProvider.getUriForFile(
+            this,
+            "${application.packageName}.fileprovider",
+            file
+        )
+        val i = Intent(Intent.ACTION_SEND)
+        i.type = "application/zip"
+        i.putExtra(Intent.EXTRA_STREAM, uri)
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(Intent.createChooser(i, "Send to:"))
+    }
+
+    private fun door43Login() {
+        val intent = Intent(this, LoginDoor43Activity::class.java)
+        startActivity(intent)
+    }
+
+    private fun logout() {
+        val logoutIntent = Intent(this, ProfileActivity::class.java)
+        startActivity(logoutIntent)
+        finish()
     }
 
     override fun onDestroy() {

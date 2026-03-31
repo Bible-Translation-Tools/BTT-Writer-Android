@@ -47,16 +47,12 @@ fun SplashLayout(
 
         if (progress == null || progress.value < 0) {
             LinearProgressIndicator(
-                color = MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 gapSize = 0.dp,
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
             LinearProgressIndicator(
                 progress = { progress.value },
-                color = MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 gapSize = 0.dp,
                 modifier = Modifier.fillMaxWidth()
             )

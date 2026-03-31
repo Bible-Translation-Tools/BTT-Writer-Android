@@ -59,8 +59,7 @@ fun LegalDocumentDialog(
                         .padding(top = 16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.label_close).uppercase(),
-                        color = MaterialTheme.colorScheme.secondary
+                        text = stringResource(R.string.label_close).uppercase()
                     )
                 }
             }

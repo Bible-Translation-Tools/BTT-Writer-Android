@@ -15,9 +15,11 @@ import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.DownloadResourceContainers
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,13 +49,15 @@ data class RCItem(
 }
 
 data class SourceState(
-    val sources: List<RCItem> = emptyList(),
-    val snackBarMessage: String? = null
+    val sources: List<RCItem> = emptyList()
 )
+
+sealed interface SourceEvent {
+    data class SnackbarMessage(val message: String) : SourceEvent
+}
 
 sealed interface SourceAction {
     object LoadSources : SourceAction
-    object ClearSnackBar : SourceAction
     data class ToggleSelection(val source: RCItem) : SourceAction
     data class DownloadSource(val source: RCItem) : SourceAction
     data class DeleteSource(val source: RCItem) : SourceAction
@@ -74,6 +78,9 @@ class SourceSelectionViewModel(
     private val _state = MutableStateFlow(SourceState())
     val state: StateFlow<SourceState> = _state.asStateFlow()
 
+    private val _event = Channel<SourceEvent>(Channel.BUFFERED)
+    val event = _event.receiveAsFlow()
+
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
@@ -81,15 +88,10 @@ class SourceSelectionViewModel(
     fun onAction(action: SourceAction) {
         when (action) {
             is SourceAction.LoadSources -> loadAvailableSources()
-            is SourceAction.ClearSnackBar -> clearSnackBar()
             is SourceAction.ToggleSelection -> toggleSourceSelection(action.source)
             is SourceAction.DownloadSource -> downloadSource(action.source)
             is SourceAction.DeleteSource -> deleteSource(action.source)
         }
-    }
-
-    private fun clearSnackBar() {
-        _state.value = _state.value.copy(snackBarMessage = null)
     }
 
     private fun loadAvailableSources() {
@@ -166,13 +168,13 @@ class SourceSelectionViewModel(
                 ContainerCache.remove(rc.slug)
             }
 
-            val snackBarMessage = if (result.success) {
+            val message = if (result.success) {
                 application.getString(R.string.download_complete)
             } else {
                 application.getString(R.string.download_failed)
             }
 
-            _state.update { it.copy(snackBarMessage = snackBarMessage) }
+            _event.trySend(SourceEvent.SnackbarMessage(message))
 
             loadAvailableSources()
         }

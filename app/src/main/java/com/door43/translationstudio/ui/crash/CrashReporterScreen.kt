@@ -102,11 +102,7 @@ fun CrashReporterScreen(
                 onClick = { showConfirmDialog = true },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 4.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                )
+                    .padding(start = 4.dp)
             ) {
                 Text(stringResource(R.string.title_upload))
             }

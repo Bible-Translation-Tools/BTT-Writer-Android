@@ -144,7 +144,7 @@ fun ReviewTargetCard(
                 Image(
                     painter = painterResource(id = R.drawable.ic_verse_black_48dp),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
                     modifier = Modifier.fillMaxSize()
                 )
                 Text(
@@ -257,8 +257,8 @@ fun ReviewTargetCard(
                             .weight(1f)
                             .padding(horizontal = 8.dp)
                     ) {
-                        val secondaryColor = MaterialTheme.colorScheme.secondary
-                        val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
+                        val highlightColor = MaterialTheme.colorScheme.primary
+                        val onHighlightColor = MaterialTheme.colorScheme.onPrimary
 
                         // Strip the dragged verse pin and apply word highlight
                         val displayText = remember(
@@ -286,8 +286,8 @@ fun ReviewTargetCard(
                                     append(base)
                                     addStyle(
                                         SpanStyle(
-                                            color = onSecondaryColor,
-                                            background = secondaryColor
+                                            color = onHighlightColor,
+                                            background = highlightColor
                                         ),
                                         wordRange.first.coerceAtMost(base.length),
                                         wordRange.last.coerceAtMost(base.length)
@@ -461,7 +461,7 @@ fun ReviewTargetCard(
                                 Image(
                                     painter = painterResource(id = R.drawable.ic_verse_black_48dp),
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary),
+                                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 val pinFontSize = bodyStyle.fontSize / when {

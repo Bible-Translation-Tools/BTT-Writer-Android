@@ -8,9 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,30 +45,20 @@ fun PrivacyNoticeDialog(
                     onClick = {
                         onConfirm()
                         onDismissRequest()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary
-                    )
+                    }
                 ) {
                     Text(stringResource(R.string.label_continue))
                 }
             } else {
                 TextButton(onClick = onDismissRequest) {
-                    Text(
-                        text = stringResource(R.string.dismiss),
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                    Text(text = stringResource(R.string.dismiss))
                 }
             }
         },
         dismissButton = {
             if (onConfirm != null) {
                 TextButton(onClick = onDismissRequest) {
-                    Text(
-                        text = stringResource(R.string.title_cancel),
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                    Text(text = stringResource(R.string.title_cancel))
                 }
             }
         }

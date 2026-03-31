@@ -110,10 +110,6 @@ fun TranslatorsSection(
             }
             Button(
                 onClick = onNextClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                 shape = RoundedCornerShape(4.dp)
             ) {

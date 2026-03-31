@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -71,10 +70,6 @@ fun TermsOfUseScreen(
                 
                 Button(
                     onClick = onAccept,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary
-                    ),
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(stringResource(R.string.license_accept).uppercase())
@@ -100,10 +95,6 @@ fun TermsOfUseScreen(
 
             Button(
                 onClick = { openLegalDocumentId = R.string.license_pdf },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                ),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             ) {
                 Text(stringResource(R.string.view_license_agreement).uppercase())
@@ -111,10 +102,6 @@ fun TermsOfUseScreen(
 
             Button(
                 onClick = { openLegalDocumentId = R.string.translation_guidlines },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                ),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             ) {
                 Text(stringResource(R.string.view_translation_guidelines).uppercase())
@@ -122,10 +109,6 @@ fun TermsOfUseScreen(
 
             Button(
                 onClick = { openLegalDocumentId = R.string.statement_of_faith },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.view_statement_of_faith).uppercase())

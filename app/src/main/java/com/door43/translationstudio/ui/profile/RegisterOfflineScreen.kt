@@ -15,7 +15,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -128,17 +127,12 @@ fun RegisterOfflineScreen(
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.title_cancel),
-                        color = MaterialTheme.colorScheme.secondary
+                        text = stringResource(R.string.title_cancel)
                     )
                 }
 
                 Button(
-                    onClick = submitForm,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary
-                    )
+                    onClick = submitForm
                 ) {
                     Text(stringResource(R.string.label_continue))
                 }
