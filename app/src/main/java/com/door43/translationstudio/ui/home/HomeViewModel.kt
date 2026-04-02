@@ -31,7 +31,10 @@ import com.door43.usecases.cleanup
 import com.door43.util.FileUtilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.merge.MergeStrategy
@@ -40,6 +43,10 @@ import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 import java.io.File
+
+data class HomeState(
+    val translations: List<TranslationItem> = emptyList()
+)
 
 sealed interface HomeEvent {
     data class SnackbarMessage(val message: String) : HomeEvent
@@ -73,6 +80,9 @@ class HomeViewModel(
     private val progressManager = ProgressManager(viewModelScope)
     override val progress get() = progressManager.progress
 
+    private val _state = MutableStateFlow(HomeState())
+    val state = _state.asStateFlow()
+
     private val _event = Channel<HomeEvent>(Channel.BUFFERED)
     val event = _event.receiveAsFlow()
 
@@ -83,9 +93,6 @@ class HomeViewModel(
 
     private val _loggedOut = MutableLiveData<Boolean?>(null)
     val loggedOut: LiveData<Boolean?> = _loggedOut
-
-    private val _translations = MutableLiveData<List<TranslationItem>?>()
-    val translations: LiveData<List<TranslationItem>?> = _translations
 
     private val _exportedApp = MutableLiveData<File?>()
     val exportedApp: LiveData<File?> = _exportedApp
@@ -142,6 +149,10 @@ class HomeViewModel(
     val loggedIn: Boolean
         get() = profile.gogsUser != null
 
+    init {
+        loadTranslations()
+    }
+
     fun onAction(action: HomeAction) {
         when (action) {
             HomeAction.Logout -> logout()
@@ -152,11 +163,18 @@ class HomeViewModel(
         progressManager.runTask(message, block)
     }
 
-    fun loadTranslations() {
-        viewModelScope.launch {
-            _translations.value = translator.targetTranslations.map {
-                TranslationItem(it, calculateProgress.execute(it), ::getProject)
+    private fun loadTranslations() {
+        launchWithProgress(
+            application.getString(R.string.loading)
+        ) {
+            val items = translator.targetTranslations.map {
+                TranslationItem(
+                    translation = it,
+                    progress = calculateProgress.execute(it),
+                    onGetProject = ::getProject
+                )
             }
+            _state.update { it.copy(translations = items) }
         }
     }
 
@@ -174,7 +192,7 @@ class HomeViewModel(
     }
 
     fun findTranslationItem(translationId: String?): TranslationItem? {
-        return translations.value?.singleOrNull {
+        return _state.value.translations.singleOrNull {
             it.translation.id == translationId
         }
     }
@@ -188,8 +206,12 @@ class HomeViewModel(
         translator.deleteTargetTranslation(item.translation.id)
         translator.clearTargetTranslationSettings(item.translation.id)
 
-        _translations.value = _translations.value?.filter {
-            it.translation.id != item.translation.id
+        _state.update { state ->
+            state.copy(
+                translations = state.translations.filter {
+                    it.translation.id != item.translation.id
+                }
+            )
         }
     }
 

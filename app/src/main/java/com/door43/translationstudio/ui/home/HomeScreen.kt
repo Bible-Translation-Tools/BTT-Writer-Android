@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -17,7 +20,6 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,11 +49,12 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onLogout: () -> Unit,
     onAddTargetTranslation: () -> Unit,
-    onSettings: () -> Unit,
-    fragmentContent: @Composable () -> Unit
+    onSettings: () -> Unit
 ) {
     val profile: Profile = koinInject()
     var profileUser by remember { mutableStateOf(profile.currentUser) }
+
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -84,10 +87,11 @@ fun HomeScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddTargetTranslation,
+                shape = CircleShape,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.padding(16.dp)
@@ -140,15 +144,18 @@ fun HomeScreen(
                             textAlign = TextAlign.End
                         )
 
-                        TextButton(
+                        ElevatedButton(
                             onClick = {
                                 viewModel.onAction(HomeAction.Logout)
                             },
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ),
                             modifier = Modifier.padding(start = 8.dp)
                         ) {
                             Text(
                                 text = stringResource(R.string.log_out),
-                                color = MaterialTheme.colorScheme.primary,
                                 fontSize = 18.sp
                             )
                         }
@@ -157,8 +164,21 @@ fun HomeScreen(
                     HorizontalDivider()
                 }
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    fragmentContent()
+                Box(
+                    contentAlignment = Alignment.TopCenter,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (state.translations.isEmpty()) {
+                        WelcomeScreen(
+                            onStartNewTranslation = onAddTargetTranslation
+                        )
+                    } else {
+                        TranslationListScreen(
+                            projects = state.translations,
+                            onSortColumnChange = {},
+                            onSortProjectChange = {}
+                        )
+                    }
                 }
             }
         }

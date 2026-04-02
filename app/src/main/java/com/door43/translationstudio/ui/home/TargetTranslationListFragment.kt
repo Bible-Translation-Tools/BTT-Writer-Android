@@ -184,9 +184,9 @@ class TargetTranslationListFragment : BaseFragment() {
                 progressDialog?.dismiss()
             }
         }
-        viewModel.translations.observe(viewLifecycleOwner) {
-            it?.let { adapter.setTranslations(it) }
-        }
+//        viewModel.translations.observe(viewLifecycleOwner) {
+//            it?.let { adapter.setTranslations(it) }
+//        }
     }
 
     fun reloadList() {

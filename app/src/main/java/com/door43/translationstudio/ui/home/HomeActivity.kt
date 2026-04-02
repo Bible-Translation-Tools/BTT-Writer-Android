@@ -157,11 +157,14 @@ class HomeActivity : BaseActivity(),
             }
         }
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                onBackPressedHandler()
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    onBackPressedHandler()
+                }
             }
-        })
+        )
 
         // open last project when starting the first time
         if (savedInstanceState == null) {
@@ -191,7 +194,7 @@ class HomeActivity : BaseActivity(),
                             SettingsActivity::class.java
                         ))
                     }
-                ) {}
+                )
             }
         }
     }
@@ -216,20 +219,6 @@ class HomeActivity : BaseActivity(),
     }
 
     private fun setupObservers() {
-        viewModel.translations.observe(this) {
-            it?.let { translations ->
-                if (translations.isNotEmpty()) {
-                    fragment = TargetTranslationListFragment()
-                    fragment?.setArguments(intent.extras)
-                } else {
-                    fragment = WelcomeFragment()
-                    fragment?.setArguments(intent.extras)
-                }
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, fragment!!)
-                    .commit()
-            }
-        }
         viewModel.loggedOut.observe(this) {
             if (it == true) doLogout()
         }
@@ -422,38 +411,38 @@ class HomeActivity : BaseActivity(),
         val userText = resources.getString(R.string.current_user, profile.currentUser)
         binding.currentUser.text = userText
 
-        val numTranslations = viewModel.translations.value?.size ?: 0
-        when {
-            numTranslations > 0 && fragment is WelcomeFragment -> {
-                // display target translations list
-                fragment = TargetTranslationListFragment().apply {
-                    setArguments(intent.extras)
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, this)
-                        .commit()
-                }
-            }
-            numTranslations == 0 && fragment is TargetTranslationListFragment -> {
-                // display welcome screen
-                fragment = WelcomeFragment().apply {
-                    setArguments(intent.extras)
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, this)
-                        .commit()
-                }
-            }
-            numTranslations > 0 && fragment is TargetTranslationListFragment -> {
-                // reload list
-                (fragment as TargetTranslationListFragment).reloadList()
-            }
-        }
+//        val numTranslations = viewModel.translations.value?.size ?: 0
+//        when {
+//            numTranslations > 0 && fragment is WelcomeFragment -> {
+//                // display target translations list
+//                fragment = TargetTranslationListFragment().apply {
+//                    setArguments(intent.extras)
+//                    supportFragmentManager.beginTransaction()
+//                        .replace(R.id.fragment_container, this)
+//                        .commit()
+//                }
+//            }
+//            numTranslations == 0 && fragment is TargetTranslationListFragment -> {
+//                // display welcome screen
+//                fragment = WelcomeFragment().apply {
+//                    setArguments(intent.extras)
+//                    supportFragmentManager.beginTransaction()
+//                        .replace(R.id.fragment_container, this)
+//                        .commit()
+//                }
+//            }
+//            numTranslations > 0 && fragment is TargetTranslationListFragment -> {
+//                // reload list
+//                (fragment as TargetTranslationListFragment).reloadList()
+//            }
+//        }
 
         if (viewModel.notifyTargetTranslationWithUpdates != null) {
             showTranslationUpdatePrompt()
         }
 
-        loadTranslations()
-        restoreDialogs()
+        //loadTranslations()
+        //restoreDialogs()
     }
 
     /**
@@ -738,8 +727,9 @@ class HomeActivity : BaseActivity(),
         }
     }
 
+    @Deprecated("Remove after migration")
     fun loadTranslations() {
-        viewModel.loadTranslations()
+        //viewModel.loadTranslations()
     }
 
     public override fun onSaveInstanceState(outState: Bundle) {
