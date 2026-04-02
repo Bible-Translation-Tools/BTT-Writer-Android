@@ -32,16 +32,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.TranslationViewMode
-
-data class TranslateSideBarAction(
-    val title: String,
-    val icon: ImageVector,
-    val onClick: () -> Unit
-)
+import com.door43.translationstudio.ui.components.SidebarAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TranslateSideBar(
+fun TranslateSidebar(
     currentViewMode: TranslationViewMode,
     onReadClick: () -> Unit,
     onChunkClick: () -> Unit,
@@ -53,7 +48,7 @@ fun TranslateSideBar(
     sliderValue: Float = 0f,
     chapterLabel: String? = null,
     mergeConflictFilterOn: Boolean = false,
-    actions: List<TranslateSideBarAction>
+    actions: List<SidebarAction>
 ) {
     var showMenu by remember { mutableStateOf(false) }
 

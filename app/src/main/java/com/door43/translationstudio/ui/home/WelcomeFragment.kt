@@ -15,7 +15,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressHelper
  * Displays a welcome message with instructions about creating target translations
  */
 class WelcomeFragment : BaseFragment() {
-    private var listener: OnCreateNewTargetTranslation? = null
+    //private var listener: OnCreateNewTargetTranslation? = null
 
     private val viewModel: HomeViewModel by activityViewModels()
 
@@ -32,7 +32,7 @@ class WelcomeFragment : BaseFragment() {
         _binding = FragmentTargetTranslationWelcomeBinding.inflate(inflater, container, false)
 
         binding.extraAddTargetTranslationButton.setOnClickListener {
-            listener?.onCreateNewTargetTranslation()
+            //listener?.onCreateNewTargetTranslation()
         }
 
         setupObservers()
@@ -50,7 +50,7 @@ class WelcomeFragment : BaseFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.progress.observe(viewLifecycleOwner) {
+        viewModel.progressOld.observe(viewLifecycleOwner) {
             if (it != null) {
                 progressDialog?.show()
                 progressDialog?.setProgress(it.progress)
@@ -65,7 +65,7 @@ class WelcomeFragment : BaseFragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         try {
-            this.listener = context as OnCreateNewTargetTranslation
+            //this.listener = context as OnCreateNewTargetTranslation
         } catch (e: ClassCastException) {
             throw ClassCastException("$context must implement OnCreateNewTargetTranslation")
         }
@@ -74,9 +74,5 @@ class WelcomeFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    interface OnCreateNewTargetTranslation {
-        fun onCreateNewTargetTranslation()
     }
 }

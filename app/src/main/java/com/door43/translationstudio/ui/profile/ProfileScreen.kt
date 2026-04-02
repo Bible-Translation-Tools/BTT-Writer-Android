@@ -25,8 +25,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.components.HomeSideBar
-import com.door43.translationstudio.ui.components.SideBarAction
+import com.door43.translationstudio.ui.components.HomeSidebar
+import com.door43.translationstudio.ui.components.SidebarAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,18 +34,20 @@ fun ProfileScreen(
     registerUrl: String,
     onLogin: () -> Unit,
     onRegisterOffline: () -> Unit,
-    onSettingsClick: () -> Unit,
+    onSettings: () -> Unit,
     onCancel: () -> Unit
 ) {
     val uriHandler = LocalUriHandler.current
 
     Row(modifier = Modifier.fillMaxSize()) {
         
-        HomeSideBar(
-            SideBarAction(
-                title = stringResource(R.string.action_settings),
-                icon = Icons.Default.Settings,
-                onClick = onSettingsClick
+        HomeSidebar(
+            listOf(
+                SidebarAction(
+                    title = stringResource(R.string.action_settings),
+                    icon = Icons.Default.Settings,
+                    onClick = onSettings
+                )
             )
         )
 

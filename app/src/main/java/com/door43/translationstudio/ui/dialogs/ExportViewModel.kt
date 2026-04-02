@@ -63,7 +63,7 @@ data class ExportState(
 )
 
 sealed interface ExportEvent {
-    data class SnackBarMessage(val message: String) : ExportEvent
+    data class SnackbarMessage(val message: String) : ExportEvent
     data class AppExport(val file: File) : ExportEvent
     object OnLogout : ExportEvent
     object AuthRequested : ExportEvent
@@ -465,7 +465,7 @@ class ExportViewModel(
             if (exportFile?.exists() == true) {
                 _event.trySend(ExportEvent.AppExport(exportFile))
             } else {
-                _event.trySend(ExportEvent.SnackBarMessage(
+                _event.trySend(ExportEvent.SnackbarMessage(
                     application.getString(R.string.translation_export_failed)
                 ))
             }

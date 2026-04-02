@@ -2,16 +2,20 @@ package com.door43.translationstudio.ui.home
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.ProgressManager
+import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
@@ -26,15 +30,27 @@ import com.door43.usecases.UpdateSource
 import com.door43.usecases.cleanup
 import com.door43.util.FileUtilities
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.merge.MergeStrategy
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 import java.io.File
 
+sealed interface HomeEvent {
+    data class SnackbarMessage(val message: String) : HomeEvent
+    object OnLogout : HomeEvent
+}
+
+sealed interface HomeAction {
+    object Logout : HomeAction
+}
+
 class HomeViewModel(
-    private val application: Application,
     private val translator: Translator,
     private val profile: Profile,
     private val gogsLogout: GogsLogout,
@@ -50,10 +66,20 @@ class HomeViewModel(
     private val backupRC: BackupRC,
     private val library: Door43Client,
     private val calculateProgress: TranslationProgress
-) : AndroidViewModel(application) {
+) : ViewModel(), KoinComponent, ProgressOwner {
 
-    private val _progress = MutableLiveData<ProgressHelper.Progress?>()
-    val progress: LiveData<ProgressHelper.Progress?> = _progress
+    private val application: Application by inject()
+
+    private val progressManager = ProgressManager(viewModelScope)
+    override val progress get() = progressManager.progress
+
+    private val _event = Channel<HomeEvent>(Channel.BUFFERED)
+    val event = _event.receiveAsFlow()
+
+    // ============================== OLD CODE FOR REMOVAL ================================ //
+
+    private val _progressOld = MutableLiveData<ProgressHelper.Progress?>()
+    val progressOld: LiveData<ProgressHelper.Progress?> = _progressOld
 
     private val _loggedOut = MutableLiveData<Boolean?>(null)
     val loggedOut: LiveData<Boolean?> = _loggedOut
@@ -88,6 +114,8 @@ class HomeViewModel(
     private val _translationProgress = MutableLiveData<Double?>()
     val translationProgress: LiveData<Double?> = _translationProgress
 
+    // ============================== OLD CODE FOR REMOVAL ================================ //
+
     var lastFocusTargetTranslation: String?
         get() = translator.lastFocusTargetTranslation
         set(value) { translator.lastFocusTargetTranslation = value }
@@ -114,6 +142,16 @@ class HomeViewModel(
     val loggedIn: Boolean
         get() = profile.gogsUser != null
 
+    fun onAction(action: HomeAction) {
+        when (action) {
+            HomeAction.Logout -> logout()
+        }
+    }
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
+    }
+
     fun loadTranslations() {
         viewModelScope.launch {
             _translations.value = translator.targetTranslations.map {
@@ -122,20 +160,16 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Log out the current gogs user
-     */
-    fun logout() {
-        viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress(
-                application.getString(R.string.log_out)
-            )
-            _loggedOut.value = withContext(Dispatchers.IO) {
+    private fun logout() {
+        launchWithProgress(
+            application.getString(R.string.log_out)
+        ) {
+            withContext(Dispatchers.IO) {
                 gogsLogout.execute()
                 profile.logout()
-                true
             }
-            _progress.value = null
+
+            _event.trySend(HomeEvent.OnLogout)
         }
     }
 
@@ -179,13 +213,13 @@ class HomeViewModel(
 
     fun pullTargetTranslation(mergeStrategy: MergeStrategy) {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress()
+            _progressOld.value = ProgressHelper.Progress()
             _pullTranslationResult.value = withContext(Dispatchers.IO) {
                 findTranslationItem(notifyTargetTranslationWithUpdates)?.let { item ->
                     pullTargetTranslation.execute(item.translation, mergeStrategy)
                 }
             }
-            _progress.value = null
+            _progressOld.value = null
         }
     }
 
@@ -220,30 +254,30 @@ class HomeViewModel(
 
     fun importProjects(projectsFolder: File, overwrite: Boolean) {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress()
+            _progressOld.value = ProgressHelper.Progress()
             _importResult.value = withContext(Dispatchers.IO) {
                 importProjects.importProject(projectsFolder, overwrite)
             }
-            _progress.value = null
+            _progressOld.value = null
         }
     }
 
     fun checkForLatestRelease() {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress()
+            _progressOld.value = ProgressHelper.Progress()
             _latestRelease.value = withContext(Dispatchers.IO) {
                 checkForLatestRelease.execute()
             }
-            _progress.value = null
+            _progressOld.value = null
         }
     }
 
     fun updateSource(message: String) {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress()
+            _progressOld.value = ProgressHelper.Progress()
             _updateSourceResult.value = withContext(Dispatchers.IO) {
                 updateSource.execute(message) { progress, message ->
-                    _progress.postValue(
+                    _progressOld.postValue(
                         ProgressHelper.Progress(
                             message,
                             progress.toInt(),
@@ -252,16 +286,16 @@ class HomeViewModel(
                     )
                 }
             }
-            _progress.value = null
+            _progressOld.value = null
         }
     }
 
     fun updateCatalogs(message: String) {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress()
+            _progressOld.value = ProgressHelper.Progress()
             _uploadCatalogResult.value = withContext(Dispatchers.IO) {
                 updateCatalogs.execute(true, message) { progress, message ->
-                    _progress.postValue(
+                    _progressOld.postValue(
                         ProgressHelper.Progress(
                             message,
                             progress.toInt(),
@@ -270,18 +304,18 @@ class HomeViewModel(
                     )
                 }
             }
-            _progress.value = null
+            _progressOld.value = null
         }
     }
 
     fun registerSSHKeys(force: Boolean) {
         viewModelScope.launch {
-            _progress.value = ProgressHelper.Progress(
+            _progressOld.value = ProgressHelper.Progress(
                 application.getString(R.string.registering_keys)
             )
             _registeredSSHKeys.value = withContext(Dispatchers.IO) {
                 registerSSHKeys.execute(force) { progress, message ->
-                    _progress.postValue(
+                    _progressOld.postValue(
                         ProgressHelper.Progress(
                             message,
                             progress.toInt(),
@@ -290,7 +324,7 @@ class HomeViewModel(
                     )
                 }
             }
-            _progress.value = null
+            _progressOld.value = null
         }
     }
 

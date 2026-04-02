@@ -32,8 +32,8 @@ import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeSection
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
-import com.door43.translationstudio.ui.translate.components.TranslateSideBar
-import com.door43.translationstudio.ui.translate.components.rememberMenuItems
+import com.door43.translationstudio.ui.translate.components.TranslateSidebar
+import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadModeSection
 import com.door43.translationstudio.ui.translate.review.ReviewModeSection
@@ -82,7 +82,7 @@ fun TargetTranslationScreen(
         viewModel = viewModel
     )
 
-    val menuItems = rememberMenuItems(
+    val menuItems = rememberTranslateMenuItems(
         viewMode = state.viewMode,
         draftAvailable = state.draftAvailable,
         onHomeClick = onHomeClick,
@@ -141,7 +141,7 @@ fun TargetTranslationScreen(
             }
         ) { paddingValues ->
             Row(modifier = Modifier.padding(paddingValues)) {
-                TranslateSideBar(
+                TranslateSidebar(
                     currentViewMode = state.viewMode,
                     showMergeConflict = hasMergeConflicts,
                     mergeConflictFilterOn = mergeConflictFilterOn,

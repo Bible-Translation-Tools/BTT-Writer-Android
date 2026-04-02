@@ -7,10 +7,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.View
-import android.widget.ImageButton
-import android.widget.PopupMenu
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,11 +25,10 @@ import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityHomeBinding
 import com.door43.translationstudio.services.BackupService
+import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.dialogs.Door43LoginDialogOld
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialog
-import com.door43.translationstudio.ui.dialogs.FeedbackDialogOld
-import com.door43.translationstudio.ui.home.WelcomeFragment.OnCreateNewTargetTranslation
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
@@ -49,7 +46,7 @@ import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 import org.unfoldingword.tools.logger.Logger
 
 class HomeActivity : BaseActivity(),
-    OnCreateNewTargetTranslation, TargetTranslationListFragment.OnItemClickListener,
+    TargetTranslationListFragment.OnItemClickListener,
     EventBuffer.OnEventListener, DialogInterface.OnCancelListener {
 
     val profile: Profile by inject()
@@ -71,10 +68,10 @@ class HomeActivity : BaseActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        //setContentView(binding.root)
 
         startBackupService()
-        setupObservers()
+        //setupObservers()
 
         newTranslationLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -91,54 +88,54 @@ class HomeActivity : BaseActivity(),
         with(binding) {
             if (savedInstanceState != null) {
                 // use current fragment
-                fragment = supportFragmentManager.findFragmentById(fragmentContainer.id)
+                //fragment = supportFragmentManager.findFragmentById(fragmentContainer.id)
             }
 
-            addTargetTranslationButton.setOnClickListener { onCreateNewTargetTranslation() }
-            logoutButton.setOnClickListener { viewModel.logout() }
+            //addTargetTranslationButton.setOnClickListener { onCreateNewTargetTranslation() }
+            //logoutButton.setOnClickListener { viewModel.logout() }
         }
 
-        val moreButton = findViewById<View>(R.id.action_more) as ImageButton
-        moreButton.setOnClickListener { v ->
-            val moreMenu = PopupMenu(this@HomeActivity, v)
-            ViewUtil.forcePopupMenuIcons(moreMenu)
-            moreMenu.menuInflater.inflate(R.menu.menu_home, moreMenu.menu)
-            moreMenu.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.action_update -> {
-                        updateDialog = UpdateLibraryDialog().apply {
-                            showDialogFragment(this, UpdateLibraryDialog.TAG)
-                        }
-                        true
-                    }
-                    R.id.action_import -> {
-                        val importDialog = ImportDialog()
-                        showDialogFragment(importDialog, ImportDialog.TAG)
-                        true
-                    }
-                    R.id.action_feedback -> {
-                        val dialog = FeedbackDialogOld()
-                        showDialogFragment(dialog, "feedback-dialog")
-                        true
-                    }
-                    R.id.action_share_apk -> {
-                        viewModel.exportApp()
-                        true
-                    }
-                    R.id.action_log_out -> {
-                        viewModel.logout()
-                        true
-                    }
-                    R.id.action_settings -> {
-                        val intent = Intent(this@HomeActivity, SettingsActivity::class.java)
-                        startActivity(intent)
-                        true
-                    }
-                    else -> false
-                }
-            }
-            moreMenu.show()
-        }
+//        val moreButton = findViewById<View>(R.id.action_more) as ImageButton
+//        moreButton.setOnClickListener { v ->
+//            val moreMenu = PopupMenu(this@HomeActivity, v)
+//            ViewUtil.forcePopupMenuIcons(moreMenu)
+//            moreMenu.menuInflater.inflate(R.menu.menu_home, moreMenu.menu)
+//            moreMenu.setOnMenuItemClickListener { item ->
+//                when (item.itemId) {
+//                    R.id.action_update -> {
+//                        updateDialog = UpdateLibraryDialog().apply {
+//                            showDialogFragment(this, UpdateLibraryDialog.TAG)
+//                        }
+//                        true
+//                    }
+//                    R.id.action_import -> {
+//                        val importDialog = ImportDialog()
+//                        showDialogFragment(importDialog, ImportDialog.TAG)
+//                        true
+//                    }
+//                    R.id.action_feedback -> {
+//                        val dialog = FeedbackDialogOld()
+//                        showDialogFragment(dialog, "feedback-dialog")
+//                        true
+//                    }
+//                    R.id.action_share_apk -> {
+//                        viewModel.exportApp()
+//                        true
+//                    }
+//                    R.id.action_log_out -> {
+//                        viewModel.logout()
+//                        true
+//                    }
+//                    R.id.action_settings -> {
+//                        val intent = Intent(this@HomeActivity, SettingsActivity::class.java)
+//                        startActivity(intent)
+//                        true
+//                    }
+//                    else -> false
+//                }
+//            }
+//            moreMenu.show()
+//        }
 
         // check if user is trying to open a tstudio file
         if (intent != null) {
@@ -182,6 +179,21 @@ class HomeActivity : BaseActivity(),
                 null
             )
         }
+
+        setContent {
+            AppTheme(darkTheme = isDarkTheme) {
+                HomeScreen(
+                    onLogout = ::logout,
+                    onAddTargetTranslation = ::onCreateNewTargetTranslation,
+                    onSettings = {
+                        startActivity(Intent(
+                            this@HomeActivity,
+                            SettingsActivity::class.java
+                        ))
+                    }
+                ) {}
+            }
+        }
     }
 
     private fun startBackupService() {
@@ -190,6 +202,17 @@ class HomeActivity : BaseActivity(),
             val backupIntent = Intent(baseContext, BackupService::class.java)
             baseContext.startService(backupIntent)
         }
+    }
+
+    private fun logout() {
+        val logoutIntent = Intent(this, ProfileActivity::class.java)
+        startActivity(logoutIntent)
+        finish()
+    }
+
+    private fun onCreateNewTargetTranslation() {
+        val intent = Intent(this, NewTargetTranslationActivity::class.java)
+        newTranslationLauncher.launch(intent)
     }
 
     private fun setupObservers() {
@@ -687,11 +710,6 @@ class HomeActivity : BaseActivity(),
             ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
             snack.show()
         }
-    }
-
-    override fun onCreateNewTargetTranslation() {
-        val intent = Intent(this, NewTargetTranslationActivity::class.java)
-        newTranslationLauncher.launch(intent)
     }
 
     override fun onItemClick(item: TranslationItem) {

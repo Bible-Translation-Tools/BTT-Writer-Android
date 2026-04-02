@@ -23,18 +23,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
-data class SideBarAction(
-    val title: String,
-    val icon: ImageVector,
-    val onClick: () -> Unit
-)
-
 @Composable
-fun HomeSideBar(
-    vararg actions: SideBarAction
+fun HomeSidebar(
+    actions: List<SidebarAction>
 ) {
     var showMenu by remember { mutableStateOf(false) }
 

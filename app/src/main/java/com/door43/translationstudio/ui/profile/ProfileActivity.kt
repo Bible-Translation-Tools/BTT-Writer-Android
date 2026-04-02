@@ -53,7 +53,7 @@ class ProfileActivity : BaseActivity() {
                                 )
                             )
                         },
-                        onSettingsClick = {
+                        onSettings = {
                             startActivity(
                                 Intent(
                                     this@ProfileActivity,

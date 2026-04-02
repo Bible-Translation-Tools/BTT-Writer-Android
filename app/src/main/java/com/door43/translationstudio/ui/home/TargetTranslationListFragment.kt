@@ -21,7 +21,6 @@ import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortByColumnType
 import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortProjectColumnType
-import com.door43.translationstudio.ui.home.HomeViewModel
 import org.koin.android.ext.android.inject
 import kotlin.getValue
 
@@ -175,7 +174,7 @@ class TargetTranslationListFragment : BaseFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.progress.observe(viewLifecycleOwner) {
+        viewModel.progressOld.observe(viewLifecycleOwner) {
             if (it != null) {
                 progressDialog?.show()
                 progressDialog?.setProgress(it.progress)
