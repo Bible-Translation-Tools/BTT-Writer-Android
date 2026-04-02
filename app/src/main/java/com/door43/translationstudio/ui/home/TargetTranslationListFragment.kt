@@ -32,7 +32,7 @@ class TargetTranslationListFragment : BaseFragment() {
     val typography: Typography by inject()
     val assetsProvider: AssetsProvider by inject()
 
-    private var listener: OnItemClickListener? = null
+    //private var listener: OnItemClickListener? = null
     private var sortProjectColumn = SortProjectColumnType.BibleOrder
     private var sortByColumn = SortByColumnType.ProjectThenLanguage
 
@@ -81,7 +81,7 @@ class TargetTranslationListFragment : BaseFragment() {
 
         // open target translation
         binding.translationsList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-            listener?.onItemClick(adapter.getItem(position))
+            //listener?.onItemClick(adapter.getItem(position))
         }
 
         if (savedInstanceState != null) {
@@ -197,7 +197,7 @@ class TargetTranslationListFragment : BaseFragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         try {
-            this.listener = context as OnItemClickListener
+            //this.listener = context as OnItemClickListener
         } catch (e: ClassCastException) {
             throw ClassCastException("$context must implement OnItemClickListener")
         }
@@ -217,10 +217,6 @@ class TargetTranslationListFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    interface OnItemClickListener {
-        fun onItemClick(item: TranslationItem)
     }
 
     companion object {

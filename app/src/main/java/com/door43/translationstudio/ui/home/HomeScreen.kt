@@ -49,7 +49,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onLogout: () -> Unit,
     onAddTargetTranslation: () -> Unit,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    onOpenProject: (TranslationItem) -> Unit
 ) {
     val profile: Profile = koinInject()
     var profileUser by remember { mutableStateOf(profile.currentUser) }
@@ -176,7 +177,8 @@ fun HomeScreen(
                         TranslationListScreen(
                             projects = state.translations,
                             onSortColumnChange = {},
-                            onSortProjectChange = {}
+                            onSortProjectChange = {},
+                            onProjectSelected = onOpenProject
                         )
                     }
                 }

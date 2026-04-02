@@ -46,7 +46,6 @@ import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 import org.unfoldingword.tools.logger.Logger
 
 class HomeActivity : BaseActivity(),
-    TargetTranslationListFragment.OnItemClickListener,
     EventBuffer.OnEventListener, DialogInterface.OnCancelListener {
 
     val profile: Profile by inject()
@@ -170,7 +169,8 @@ class HomeActivity : BaseActivity(),
         if (savedInstanceState == null) {
             val targetTranslation = viewModel.lastOpened
             if (targetTranslation != null) {
-                onItemClick(targetTranslation)
+                // TODO Resume project in viewmodel
+                //onItemClick(targetTranslation)
             }
         } else {
             alertShown = DialogShown.fromInt(
@@ -193,7 +193,8 @@ class HomeActivity : BaseActivity(),
                             this@HomeActivity,
                             SettingsActivity::class.java
                         ))
-                    }
+                    },
+                    onOpenProject = ::openProject
                 )
             }
         }
@@ -205,6 +206,12 @@ class HomeActivity : BaseActivity(),
             val backupIntent = Intent(baseContext, BackupService::class.java)
             baseContext.startService(backupIntent)
         }
+    }
+
+    private fun openProject(item: TranslationItem) {
+        val intent = Intent(this, TargetTranslationActivity::class.java)
+        intent.putExtra(Translator.EXTRA_TARGET_TRANSLATION_ID, item.translation.id)
+        translationViewRequestLauncher.launch(intent)
     }
 
     private fun logout() {
@@ -698,32 +705,6 @@ class HomeActivity : BaseActivity(),
             )
             ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
             snack.show()
-        }
-    }
-
-    override fun onItemClick(item: TranslationItem) {
-        // validate project and target language
-
-        val language = item.translation.targetLanguage
-
-        if (language == null) {
-            val snack = Snackbar.make(
-                findViewById(android.R.id.content),
-                R.string.missing_source,
-                Snackbar.LENGTH_LONG
-            )
-            snack.setAction(R.string.check_for_updates) {
-                updateDialog = UpdateLibraryDialog().apply {
-                    showDialogFragment(this, UpdateLibraryDialog.TAG)
-                }
-            }
-            snack.setActionTextColor(resources.getColor(R.color.light_primary_text))
-            ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-            snack.show()
-        } else {
-            val intent = Intent(this, TargetTranslationActivity::class.java)
-            intent.putExtra(Translator.EXTRA_TARGET_TRANSLATION_ID, item.translation.id)
-            translationViewRequestLauncher.launch(intent)
         }
     }
 

@@ -37,7 +37,8 @@ import com.door43.translationstudio.R
 fun TranslationListScreen(
     projects: List<TranslationItem>,
     onSortColumnChange: (String) -> Unit,
-    onSortProjectChange: (String) -> Unit
+    onSortProjectChange: (String) -> Unit,
+    onProjectSelected: (TranslationItem) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -105,6 +106,7 @@ fun TranslationListScreen(
             items(projects) { project ->
                 ProjectCard(
                     item = project,
+                    onItemClick = { onProjectSelected(project) },
                     onInfoClick = { /* Handle info click */ },
                     modifier = Modifier.fillMaxWidth()
                 )

@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ProjectCard(
     item: TranslationItem,
+    onItemClick: () -> Unit,
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -44,7 +45,8 @@ fun ProjectCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        onClick = onItemClick
     ) {
         Row(
             modifier = modifier
@@ -109,7 +111,7 @@ fun ProjectCard(
 }
 
 @Composable
-fun PieProgressBar(
+private fun PieProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
     progressColor: Color = MaterialTheme.colorScheme.primary,
