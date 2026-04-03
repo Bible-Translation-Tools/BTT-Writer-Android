@@ -176,8 +176,16 @@ fun HomeScreen(
                     } else {
                         TranslationListScreen(
                             projects = state.translations,
-                            onSortColumnChange = {},
-                            onSortProjectChange = {},
+                            projectSort = state.projectSort,
+                            projectSortOptions = viewModel.projectSortOptions,
+                            bookSort = state.bookSort,
+                            bookSortOptions = viewModel.bookSortOptions,
+                            onSortProjectChange = {
+                                viewModel.onAction(HomeAction.ProjectSortChanged(it))
+                            },
+                            onSortBookChange = {
+                                viewModel.onAction(HomeAction.BookSortChanged(it))
+                            },
                             onProjectSelected = onOpenProject
                         )
                     }

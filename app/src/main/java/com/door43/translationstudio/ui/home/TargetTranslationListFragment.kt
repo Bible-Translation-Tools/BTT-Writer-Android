@@ -19,10 +19,7 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentTargetTranslationListBinding
 import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortByColumnType
-import com.door43.translationstudio.ui.home.TargetTranslationAdapter.SortProjectColumnType
 import org.koin.android.ext.android.inject
-import kotlin.getValue
 
 /**
  * Displays a list of target translations
@@ -33,8 +30,8 @@ class TargetTranslationListFragment : BaseFragment() {
     val assetsProvider: AssetsProvider by inject()
 
     //private var listener: OnItemClickListener? = null
-    private var sortProjectColumn = SortProjectColumnType.BibleOrder
-    private var sortByColumn = SortByColumnType.ProjectThenLanguage
+    private var sortProjectColumn = BookSort.BibleOrder
+    private var sortByColumn = ProjectSort.ProjectThenLanguage
 
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
@@ -85,26 +82,24 @@ class TargetTranslationListFragment : BaseFragment() {
         }
 
         if (savedInstanceState != null) {
-            sortByColumn = SortByColumnType.fromInt(
+            sortByColumn = ProjectSort.of(
                 savedInstanceState.getInt(
                     STATE_SORT_BY_COLUMN,
-                    sortByColumn.value
+                    sortByColumn.ordinal
                 )
             )
-            sortProjectColumn = SortProjectColumnType.fromInt(
+            sortProjectColumn = BookSort.of(
                 savedInstanceState.getInt(
                     STATE_SORT_PROJECT_COLUMN, sortProjectColumn.value
                 )
             )
         } else { // if not restoring states, get last values
-            sortByColumn = SortByColumnType.fromString(
-                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, "0"),
-                SortByColumnType.ProjectThenLanguage
-            )
-            sortProjectColumn = SortProjectColumnType.fromString(
-                prefRepository.getDefaultPref(SORT_PROJECT_ITEM, "0"),
-                SortProjectColumnType.BibleOrder
-            )
+//            sortByColumn = ProjectSort.of(
+//                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, 0)
+//            )
+//            sortProjectColumn = BookSort.of(
+//                prefRepository.getDefaultPref(SORT_PROJECT_ITEM, 0)
+//            )
         }
         adapter.sort(sortByColumn, sortProjectColumn)
 
@@ -116,7 +111,7 @@ class TargetTranslationListFragment : BaseFragment() {
             ArrayAdapter(requireActivity(), android.R.layout.simple_spinner_item, projectTypes)
         projectTypesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.sortColumn.adapter = projectTypesAdapter
-        binding.sortColumn.setSelection(sortByColumn.value)
+        binding.sortColumn.setSelection(sortByColumn.ordinal)
         binding.sortColumn.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
@@ -125,8 +120,8 @@ class TargetTranslationListFragment : BaseFragment() {
                 id: Long
             ) {
 //                    Logger.i(TAG, "Sort column item selected: " + position);
-                sortByColumn = SortByColumnType.fromInt(position)
-                prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, sortByColumn.value.toString())
+                sortByColumn = ProjectSort.of(position)
+                //prefRepository.getDefaultPref(SORT_BY_COLUMN_ITEM, sortByColumn.ordinal)
                 adapter.sort(sortByColumn, sortProjectColumn)
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -149,11 +144,11 @@ class TargetTranslationListFragment : BaseFragment() {
                 id: Long
             ) {
 //                    Logger.i(TAG, "Sort project column item selected: " + position);
-                sortProjectColumn = SortProjectColumnType.fromInt(position)
-                prefRepository.setDefaultPref(
-                    SORT_PROJECT_ITEM,
-                    sortProjectColumn.value.toString()
-                )
+                sortProjectColumn = BookSort.of(position)
+//                prefRepository.setDefaultPref(
+//                    SORT_PROJECT_ITEM,
+//                    sortProjectColumn.value.toString()
+//                )
                 adapter.sort(sortByColumn, sortProjectColumn)
             }
 
@@ -209,7 +204,7 @@ class TargetTranslationListFragment : BaseFragment() {
     }
 
     override fun onSaveInstanceState(out: Bundle) {
-        out.putInt(STATE_SORT_BY_COLUMN, sortByColumn.value)
+        out.putInt(STATE_SORT_BY_COLUMN, sortByColumn.ordinal)
         out.putInt(STATE_SORT_PROJECT_COLUMN, sortProjectColumn.value)
         super.onSaveInstanceState(out)
     }
@@ -223,7 +218,5 @@ class TargetTranslationListFragment : BaseFragment() {
         val TAG: String = TargetTranslationListFragment::class.java.simpleName
         const val STATE_SORT_BY_COLUMN: String = "state_sort_by_column"
         const val STATE_SORT_PROJECT_COLUMN: String = "state_sort_project_column"
-        const val SORT_PROJECT_ITEM: String = "sort_project_item"
-        const val SORT_BY_COLUMN_ITEM: String = "sort_by_column_item"
     }
 }

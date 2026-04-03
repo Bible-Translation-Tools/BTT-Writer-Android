@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import com.door43.data.AssetsProvider
 import com.door43.translationstudio.core.BibleCodes
-import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.FragmentTargetTranslationListItemBinding
 import com.door43.translationstudio.getBestFontForLanguage
@@ -25,8 +24,8 @@ class TargetTranslationAdapter(
 
     private val translations = arrayListOf<TranslationItem>()
     private var infoClickListener: OnInfoClickListener? = null
-    private var sortProjectColumn = SortProjectColumnType.BibleOrder
-    private var sortByColumn = SortByColumnType.ProjectThenLanguage
+    private var sortProjectColumn = BookSort.BibleOrder
+    private var sortByColumn = ProjectSort.ProjectThenLanguage
 
     /**
      * Adds a listener to be called when the info button is called
@@ -41,8 +40,8 @@ class TargetTranslationAdapter(
     }
 
     fun sort(
-        sortByColumn: SortByColumnType = this.sortByColumn,
-        sortProjectColumn: SortProjectColumnType = this.sortProjectColumn
+        sortByColumn: ProjectSort = this.sortByColumn,
+        sortProjectColumn: BookSort = this.sortProjectColumn
     ) {
         this.sortByColumn = sortByColumn
         this.sortProjectColumn = sortProjectColumn
@@ -50,7 +49,7 @@ class TargetTranslationAdapter(
         translations.sortWith { lhs: TranslationItem, rhs: TranslationItem ->
             var compare: Int
             when (sortByColumn) {
-                SortByColumnType.ProjectThenLanguage -> {
+                ProjectSort.ProjectThenLanguage -> {
                     compare = compareProject(lhs, rhs, sortProjectColumn)
                     if (compare == 0) {
                         compare = lhs.translation.targetLanguageName
@@ -59,7 +58,7 @@ class TargetTranslationAdapter(
                     return@sortWith compare
                 }
 
-                SortByColumnType.LanguageThenProject -> {
+                ProjectSort.LanguageThenProject -> {
                     compare = lhs.translation.targetLanguageName
                         .compareTo(rhs.translation.targetLanguageName, ignoreCase = true)
                     if (compare == 0) {
@@ -68,7 +67,7 @@ class TargetTranslationAdapter(
                     return@sortWith compare
                 }
 
-                SortByColumnType.ProgressThenProject -> {
+                ProjectSort.ProgressThenProject -> {
                     compare = ((rhs.progress - lhs.progress) * 100).toInt()
 
                     if (compare == 0) {
@@ -92,9 +91,9 @@ class TargetTranslationAdapter(
     private fun compareProject(
         lhs: TranslationItem,
         rhs: TranslationItem,
-        sortProjectColumn: SortProjectColumnType
+        sortProjectColumn: BookSort
     ): Int {
-        if (sortProjectColumn == SortProjectColumnType.BibleOrder) {
+        if (sortProjectColumn == BookSort.BibleOrder) {
             val lhsIndex = bookList.indexOf(lhs.translation.projectId)
             val rhsIndex = bookList.indexOf(rhs.translation.projectId)
             if ((lhsIndex == rhsIndex) && (lhsIndex < 0)) { // if not bible books, then compare by name
@@ -179,66 +178,6 @@ class TargetTranslationAdapter(
         fun setProgress(progress: Double) {
             binding.translationProgress.progress = (progress * 100).coerceIn(0.0, 100.0).toInt()
             binding.translationProgress.visibility = View.VISIBLE
-        }
-    }
-
-    /**
-     * enum that keeps track of current state of USFM import
-     */
-    enum class SortByColumnType(val value: Int) {
-        ProjectThenLanguage(0),
-        LanguageThenProject(1),
-        ProgressThenProject(2);
-
-        companion object {
-            fun fromString(value: String, defaultValue: SortByColumnType): SortByColumnType {
-                return try {
-                    fromInt(value.toInt())
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    defaultValue
-                }
-            }
-
-            fun fromInt(i: Int): SortByColumnType {
-                for (b in entries) {
-                    if (b.value == i) {
-                        return b
-                    }
-                }
-                return ProjectThenLanguage
-            }
-        }
-    }
-
-    /**
-     * enum that keeps track of current state of USFM import
-     */
-    enum class SortProjectColumnType(val value: Int) {
-        BibleOrder(0),
-        Alphabetical(1);
-
-        companion object {
-            fun fromString(
-                value: String,
-                defaultValue: SortProjectColumnType
-            ): SortProjectColumnType {
-                return try {
-                    fromInt(value.toInt())
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    defaultValue
-                }
-            }
-
-            fun fromInt(i: Int): SortProjectColumnType {
-                for (b in entries) {
-                    if (b.value == i) {
-                        return b
-                    }
-                }
-                return BibleOrder
-            }
         }
     }
 

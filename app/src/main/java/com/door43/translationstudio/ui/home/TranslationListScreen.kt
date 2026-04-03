@@ -36,8 +36,12 @@ import com.door43.translationstudio.R
 @Composable
 fun TranslationListScreen(
     projects: List<TranslationItem>,
-    onSortColumnChange: (String) -> Unit,
-    onSortProjectChange: (String) -> Unit,
+    projectSort: ProjectSort,
+    projectSortOptions: List<ProjectSort>,
+    bookSort: BookSort,
+    bookSortOptions: List<BookSort>,
+    onSortProjectChange: (ProjectSort) -> Unit,
+    onSortBookChange: (BookSort) -> Unit,
     onProjectSelected: (TranslationItem) -> Unit
 ) {
     Column(
@@ -49,24 +53,26 @@ fun TranslationListScreen(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth(0.5f)
+                .fillMaxWidth(0.6f)
                 .padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SortDropdown(
                 label = stringResource(R.string.sort_column),
-                options = listOf("Option 1", "Option 2", "Option 3"),
-                selectedOption = "Option 1",
-                onOptionSelected = onSortColumnChange,
+                options = projectSortOptions,
+                selectedOption = projectSort,
+                onOptionSelected = onSortProjectChange,
+                labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
             )
 
             SortDropdown(
                 label = stringResource(R.string.sort_projects),
-                options = listOf("Option 1", "Option 2", "Option 3"),
-                selectedOption = "Option 3",
-                onOptionSelected = onSortProjectChange,
+                options = bookSortOptions,
+                selectedOption = bookSort,
+                onOptionSelected = onSortBookChange,
+                labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -103,7 +109,7 @@ fun TranslationListScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            items(projects) { project ->
+            items(projects, key = { it.translation.id }) { project ->
                 ProjectCard(
                     item = project,
                     onItemClick = { onProjectSelected(project) },
@@ -121,11 +127,12 @@ fun TranslationListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SortDropdown(
+private fun <T : Enum<T>> SortDropdown(
     label: String,
-    options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit,
+    options: List<T>,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit,
+    labelTransformer: @Composable (T) -> String,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -151,18 +158,18 @@ fun SortDropdown(
                 )
             ) {
                 Row(
-                    modifier = Modifier
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                         .menuAnchor(
                             type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
                             enabled = true
                         )
                         .clickable { expanded = true }
-                        .padding(vertical = 8.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                        .padding(vertical = 8.dp, horizontal = 4.dp)
                 ) {
                     Text(
-                        text = selectedOption
+                        text = labelTransformer(selectedOption)
                     )
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
@@ -175,13 +182,13 @@ fun SortDropdown(
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface)
             ) {
-                options.forEach { selectionOption ->
+                options.forEach { option ->
                     DropdownMenuItem(
                         text = {
-                            Text(text = selectionOption)
+                            Text(text = labelTransformer(option))
                         },
                         onClick = {
-                            onOptionSelected(selectionOption)
+                            onOptionSelected(option)
                             expanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
@@ -189,5 +196,22 @@ fun SortDropdown(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ProjectSort.localize(): String {
+    return when (this) {
+        ProjectSort.ProjectThenLanguage -> stringResource(R.string.sort_project_then_language)
+        ProjectSort.LanguageThenProject -> stringResource(R.string.sort_language_then_project)
+        ProjectSort.ProgressThenProject -> stringResource(R.string.sort_progress_then_project)
+    }
+}
+
+@Composable
+private fun BookSort.localize(): String {
+    return when (this) {
+        BookSort.BibleOrder -> stringResource(R.string.sort_bible_order)
+        BookSort.Alphabetical -> stringResource(R.string.sort_alphabetical_order)
     }
 }

@@ -7,7 +7,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getDefaultPref
+import com.door43.data.setDefaultPref
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.BibleCodes
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
@@ -33,6 +37,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,8 +50,36 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 import java.io.File
 
+private const val SORT_BY_PROJECT: String = "sort_by_project"
+private const val SORT_BY_BOOK: String = "sort_by_book"
+
+enum class ProjectSort {
+    ProjectThenLanguage,
+    LanguageThenProject,
+    ProgressThenProject;
+
+    companion object {
+        fun of(i: Int): ProjectSort {
+            return entries.getOrNull(i) ?: ProjectThenLanguage
+        }
+    }
+}
+
+enum class BookSort(val value: Int) {
+    BibleOrder(0),
+    Alphabetical(1);
+
+    companion object {
+        fun of(i: Int): BookSort {
+            return entries.getOrNull(i) ?: BibleOrder
+        }
+    }
+}
+
 data class HomeState(
-    val translations: List<TranslationItem> = emptyList()
+    val translations: List<TranslationItem> = emptyList(),
+    val projectSort: ProjectSort = ProjectSort.ProjectThenLanguage,
+    val bookSort: BookSort = BookSort.BibleOrder
 )
 
 sealed interface HomeEvent {
@@ -55,6 +89,9 @@ sealed interface HomeEvent {
 
 sealed interface HomeAction {
     object Logout : HomeAction
+    data class ProjectSortChanged(val sort: ProjectSort) : HomeAction
+    data class BookSortChanged(val sort: BookSort) : HomeAction
+
 }
 
 class HomeViewModel(
@@ -72,7 +109,8 @@ class HomeViewModel(
     private val downloadLatestRelease: DownloadLatestRelease,
     private val backupRC: BackupRC,
     private val library: Door43Client,
-    private val calculateProgress: TranslationProgress
+    private val calculateProgress: TranslationProgress,
+    private val prefRepository: IPreferenceRepository
 ) : ViewModel(), KoinComponent, ProgressOwner {
 
     private val application: Application by inject()
@@ -85,6 +123,19 @@ class HomeViewModel(
 
     private val _event = Channel<HomeEvent>(Channel.BUFFERED)
     val event = _event.receiveAsFlow()
+
+    val projectSortOptions: List<ProjectSort> = buildList {
+        add(ProjectSort.ProjectThenLanguage)
+        add(ProjectSort.LanguageThenProject)
+        add(ProjectSort.ProgressThenProject)
+    }
+
+    val bookSortOptions: List<BookSort> = buildList {
+        add(BookSort.BibleOrder)
+        add(BookSort.Alphabetical)
+    }
+
+    private val bookList = BibleCodes.getBibleBooks()
 
     // ============================== OLD CODE FOR REMOVAL ================================ //
 
@@ -150,12 +201,33 @@ class HomeViewModel(
         get() = profile.gogsUser != null
 
     init {
+        viewModelScope.launch {
+            state
+                .map {
+                    Triple(it.projectSort, it.bookSort, it.translations)
+                }
+                .distinctUntilChanged()
+                .collect { (projectSort, bookSort, _) ->
+                    sortTranslations(projectSort, bookSort)
+                }
+        }
+
+        val projectSort = ProjectSort.of(
+            prefRepository.getDefaultPref(SORT_BY_PROJECT, 0)
+        )
+        val bookSort = BookSort.of(
+            prefRepository.getDefaultPref(SORT_BY_BOOK, 0)
+        )
+        _state.update { it.copy(projectSort = projectSort, bookSort = bookSort) }
+
         loadTranslations()
     }
 
     fun onAction(action: HomeAction) {
         when (action) {
             HomeAction.Logout -> logout()
+            is HomeAction.ProjectSortChanged -> onProjectSortChanged(action.sort)
+            is HomeAction.BookSortChanged -> onBookSortChanged(action.sort)
         }
     }
 
@@ -189,6 +261,78 @@ class HomeViewModel(
 
             _event.trySend(HomeEvent.OnLogout)
         }
+    }
+
+    private fun onProjectSortChanged(sort: ProjectSort) {
+        viewModelScope.launch {
+            prefRepository.setDefaultPref(SORT_BY_PROJECT, sort.ordinal)
+        }
+        _state.update { it.copy(projectSort = sort) }
+    }
+
+    private fun onBookSortChanged(sort: BookSort) {
+        viewModelScope.launch {
+            prefRepository.setDefaultPref(SORT_BY_BOOK, sort.ordinal)
+        }
+        _state.update { it.copy(bookSort = sort) }
+    }
+
+    private fun sortTranslations(projectSort: ProjectSort, bookSort: BookSort) {
+        val sortedTranslations =
+            _state.value.translations.sortedWith { lhs: TranslationItem, rhs: TranslationItem ->
+                var compare: Int
+                when (projectSort) {
+                    ProjectSort.ProjectThenLanguage -> {
+                        compare = compareProject(lhs, rhs, bookSort)
+                        if (compare == 0) {
+                            compare = lhs.translation.targetLanguageName
+                                .compareTo(rhs.translation.targetLanguageName, ignoreCase = true)
+                        }
+                        return@sortedWith compare
+                    }
+
+                    ProjectSort.LanguageThenProject -> {
+                        compare = lhs.translation.targetLanguageName
+                            .compareTo(rhs.translation.targetLanguageName, ignoreCase = true)
+                        if (compare == 0) {
+                            compare = compareProject(lhs, rhs, bookSort)
+                        }
+                        return@sortedWith compare
+                    }
+
+                    ProjectSort.ProgressThenProject -> {
+                        compare = ((rhs.progress - lhs.progress) * 100).toInt()
+
+                        if (compare == 0) {
+                            compare = compareProject(lhs, rhs, bookSort)
+                        }
+                        return@sortedWith compare
+                    }
+                }
+        }
+        _state.update { it.copy(translations = sortedTranslations) }
+    }
+
+    private fun compareProject(
+        lhs: TranslationItem,
+        rhs: TranslationItem,
+        sortProjectColumn: BookSort
+    ): Int {
+        if (sortProjectColumn == BookSort.BibleOrder) {
+            val lhsIndex = bookList.indexOf(lhs.translation.projectId)
+            val rhsIndex = bookList.indexOf(rhs.translation.projectId)
+            // if not bible books, then compare by name
+            if ((lhsIndex == rhsIndex) && (lhsIndex < 0)) {
+                return lhs.formattedProjectName.compareTo(
+                    rhs.formattedProjectName,
+                    ignoreCase = true
+                )
+            }
+            return lhsIndex - rhsIndex
+        }
+
+        // compare project names
+        return lhs.formattedProjectName.compareTo(rhs.formattedProjectName, ignoreCase = true)
     }
 
     fun findTranslationItem(translationId: String?): TranslationItem? {
