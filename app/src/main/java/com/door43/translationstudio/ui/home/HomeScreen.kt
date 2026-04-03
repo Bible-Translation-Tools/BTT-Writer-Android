@@ -43,6 +43,7 @@ import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import java.io.File
 
 @Composable
 fun HomeScreen(
@@ -50,7 +51,8 @@ fun HomeScreen(
     onLogout: () -> Unit,
     onAddTargetTranslation: () -> Unit,
     onSettings: () -> Unit,
-    onOpenProject: (TranslationItem) -> Unit
+    onOpenProject: (TranslationItem) -> Unit,
+    onShareApp: (File) -> Unit
 ) {
     val profile: Profile = koinInject()
     var profileUser by remember { mutableStateOf(profile.currentUser) }
@@ -66,7 +68,9 @@ fun HomeScreen(
         onUpdateClick = {},
         onImport = {},
         onFeedback = { showFeedbackDialog = true },
-        onShareApp = {},
+        onShareApp = {
+            viewModel.onAction(HomeAction.ShareApp)
+        },
         onLogout = {
             viewModel.onAction(HomeAction.Logout)
         },
@@ -77,6 +81,7 @@ fun HomeScreen(
         viewModel.event.collect { event ->
             when (event) {
                 is HomeEvent.SnackbarMessage -> snackbarHostState.showSnackbar(event.message)
+                is HomeEvent.ShareApp -> onShareApp(event.file)
                 HomeEvent.OnLogout -> onLogout()
             }
         }

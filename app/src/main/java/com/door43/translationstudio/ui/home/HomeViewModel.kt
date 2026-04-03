@@ -84,13 +84,15 @@ data class HomeState(
 
 sealed interface HomeEvent {
     data class SnackbarMessage(val message: String) : HomeEvent
+    data class ShareApp(val file: File) : HomeEvent
     object OnLogout : HomeEvent
 }
 
 sealed interface HomeAction {
-    object Logout : HomeAction
     data class ProjectSortChanged(val sort: ProjectSort) : HomeAction
     data class BookSortChanged(val sort: BookSort) : HomeAction
+    object Logout : HomeAction
+    object ShareApp: HomeAction
 
 }
 
@@ -225,9 +227,10 @@ class HomeViewModel(
 
     fun onAction(action: HomeAction) {
         when (action) {
-            HomeAction.Logout -> logout()
             is HomeAction.ProjectSortChanged -> onProjectSortChanged(action.sort)
             is HomeAction.BookSortChanged -> onBookSortChanged(action.sort)
+            HomeAction.Logout -> logout()
+            HomeAction.ShareApp -> shareApp()
         }
     }
 
@@ -335,6 +338,25 @@ class HomeViewModel(
         return lhs.formattedProjectName.compareTo(rhs.formattedProjectName, ignoreCase = true)
     }
 
+    private fun shareApp() {
+        launchWithProgress {
+            val file = withContext(Dispatchers.IO) {
+                val pInfo = application.packageManager.getPackageInfo(application.packageName, 0)
+                pInfo.applicationInfo?.let { info ->
+                    val apkFile = File(info.publicSourceDir)
+                    val exportFile = File(
+                        directoryProvider.sharingDir, info.loadLabel(
+                            application.packageManager
+                        ).toString() + "_" + pInfo.versionName + ".apk"
+                    )
+                    FileUtilities.copyFile(apkFile, exportFile)
+                    exportFile
+                }
+            }
+            file?.let { _event.trySend(HomeEvent.ShareApp(it)) }
+        }
+    }
+
     fun findTranslationItem(translationId: String?): TranslationItem? {
         return _state.value.translations.singleOrNull {
             it.translation.id == translationId
@@ -356,24 +378,6 @@ class HomeViewModel(
                     it.translation.id != item.translation.id
                 }
             )
-        }
-    }
-
-    fun exportApp() {
-        viewModelScope.launch {
-            _exportedApp.value = withContext(Dispatchers.IO) {
-                val pInfo = application.packageManager.getPackageInfo(application.packageName, 0)
-                pInfo.applicationInfo?.let { info ->
-                    val apkFile = File(info.publicSourceDir)
-                    val exportFile = File(
-                        directoryProvider.sharingDir, info.loadLabel(
-                            application.packageManager
-                        ).toString() + "_" + pInfo.versionName + ".apk"
-                    )
-                    FileUtilities.copyFile(apkFile, exportFile)
-                    exportFile
-                }
-            }
         }
     }
 

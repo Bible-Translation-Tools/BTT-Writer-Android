@@ -44,6 +44,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.eventbuffer.EventBuffer
 import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
 
 class HomeActivity : BaseActivity(),
     EventBuffer.OnEventListener, DialogInterface.OnCancelListener {
@@ -194,7 +195,8 @@ class HomeActivity : BaseActivity(),
                             SettingsActivity::class.java
                         ))
                     },
-                    onOpenProject = ::openProject
+                    onOpenProject = ::openProject,
+                    onShareApp = ::shareApp
                 )
             }
         }
@@ -223,6 +225,24 @@ class HomeActivity : BaseActivity(),
     private fun onCreateNewTargetTranslation() {
         val intent = Intent(this, NewTargetTranslationActivity::class.java)
         newTranslationLauncher.launch(intent)
+    }
+
+    private fun shareApp(file: File) {
+        if (file.exists()) {
+            val u = FileProvider.getUriForFile(
+                this,
+                "${application.packageName}.fileprovider",
+                file
+            )
+            val i = Intent(Intent.ACTION_SEND)
+            i.type = "application/zip"
+            i.putExtra(Intent.EXTRA_STREAM, u)
+            startActivity(
+                Intent.createChooser(i, resources.getString(R.string.send_to))
+            )
+        } else {
+            // TODO Notify user the app could not be exported
+        }
     }
 
     private fun setupObservers() {
