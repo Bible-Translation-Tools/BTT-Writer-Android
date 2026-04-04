@@ -79,7 +79,8 @@ enum class BookSort(val value: Int) {
 data class HomeState(
     val translations: List<TranslationItem> = emptyList(),
     val projectSort: ProjectSort = ProjectSort.ProjectThenLanguage,
-    val bookSort: BookSort = BookSort.BibleOrder
+    val bookSort: BookSort = BookSort.BibleOrder,
+    val projectInfo: TranslationItem? = null
 )
 
 sealed interface HomeEvent {
@@ -89,10 +90,15 @@ sealed interface HomeEvent {
 }
 
 sealed interface HomeAction {
+    data class ShowProjectExists(val translationId: String) : HomeAction
+    data class DeleteProject(val project: TranslationItem): HomeAction
     data class ProjectSortChanged(val sort: ProjectSort) : HomeAction
     data class BookSortChanged(val sort: BookSort) : HomeAction
+    data class ShowProjectInfo(val item: TranslationItem) : HomeAction
+    object HideProjectInfo : HomeAction
     object Logout : HomeAction
     object ShareApp: HomeAction
+    object LoadProjects : HomeAction
 
 }
 
@@ -190,12 +196,12 @@ class HomeViewModel(
      */
     val lastOpened: TranslationItem?
         get() {
-            translator.lastFocusTargetTranslation?.let { lastTarget ->
-                return translator.getTargetTranslation(lastTarget)?.let {
-                    val progress = calculateProgress.execute(it)
-                    TranslationItem(it, progress, ::getProject)
-                }
-            }
+//            translator.lastFocusTargetTranslation?.let { lastTarget ->
+//                return translator.getTargetTranslation(lastTarget)?.let {
+//                    val progress = calculateProgress.execute(it)
+//                    TranslationItem(it, progress, ::getProject)
+//                }
+//            }
             return null
         }
 
@@ -222,15 +228,20 @@ class HomeViewModel(
         )
         _state.update { it.copy(projectSort = projectSort, bookSort = bookSort) }
 
-        loadTranslations()
+        loadProjects()
     }
 
     fun onAction(action: HomeAction) {
         when (action) {
+            is HomeAction.ShowProjectExists -> showProjectExists(action.translationId)
+            is HomeAction.DeleteProject -> deleteProject(action.project)
             is HomeAction.ProjectSortChanged -> onProjectSortChanged(action.sort)
             is HomeAction.BookSortChanged -> onBookSortChanged(action.sort)
+            is HomeAction.ShowProjectInfo -> _state.update { it.copy(projectInfo = action.item) }
+            HomeAction.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
             HomeAction.Logout -> logout()
             HomeAction.ShareApp -> shareApp()
+            HomeAction.LoadProjects -> loadProjects()
         }
     }
 
@@ -238,7 +249,7 @@ class HomeViewModel(
         progressManager.runTask(message, block)
     }
 
-    private fun loadTranslations() {
+    private fun loadProjects() {
         launchWithProgress(
             application.getString(R.string.loading)
         ) {
@@ -246,7 +257,7 @@ class HomeViewModel(
                 TranslationItem(
                     translation = it,
                     progress = calculateProgress.execute(it),
-                    onGetProject = ::getProject
+                    onGetProject = { getProject(it)!! }
                 )
             }
             _state.update { it.copy(translations = items) }
@@ -357,43 +368,27 @@ class HomeViewModel(
         }
     }
 
-    fun findTranslationItem(translationId: String?): TranslationItem? {
-        return _state.value.translations.singleOrNull {
-            it.translation.id == translationId
-        }
-    }
-
-    fun getTargetTranslation(translationId: String): TargetTranslation? {
-        return translator.getTargetTranslation(translationId)
-    }
-
-    fun deleteTargetTranslation(item: TranslationItem, orphaned: Boolean) {
-        backupRC.backupTargetTranslation(item.translation, orphaned)
-        translator.deleteTargetTranslation(item.translation.id)
-        translator.clearTargetTranslationSettings(item.translation.id)
-
-        _state.update { state ->
-            state.copy(
-                translations = state.translations.filter {
-                    it.translation.id != item.translation.id
-                }
-            )
-        }
-    }
-
-    fun pullTargetTranslation(mergeStrategy: MergeStrategy) {
-        viewModelScope.launch {
-            _progressOld.value = ProgressHelper.Progress()
-            _pullTranslationResult.value = withContext(Dispatchers.IO) {
-                findTranslationItem(notifyTargetTranslationWithUpdates)?.let { item ->
-                    pullTargetTranslation.execute(item.translation, mergeStrategy)
+    private fun showProjectExists(translationId: String) {
+        launchWithProgress {
+            val data: Pair<Project, TargetTranslation>? = withContext(Dispatchers.IO) {
+                getTargetTranslation(translationId)?.let { targetTranslation ->
+                    getProject(targetTranslation)?. let { project ->
+                        project to targetTranslation
+                    }
                 }
             }
-            _progressOld.value = null
+            val (project, translation) = data ?: return@launchWithProgress
+
+            val message = application.getString(
+                R.string.duplicate_target_translation,
+                project.name,
+                translation.targetLanguageName
+            )
+            _event.trySend(HomeEvent.SnackbarMessage(message))
         }
     }
 
-    fun getProject(targetTranslation: TargetTranslation): Project {
+    private fun getProject(targetTranslation: TargetTranslation): Project? {
         val existingSources = targetTranslation.sourceTranslations
         // Gets an existing source project or default if none selected
 
@@ -411,7 +406,55 @@ class HomeViewModel(
                 targetTranslation.projectId,
                 true
             )
-        }!!
+        }
+    }
+
+    private fun deleteProject(project: TranslationItem) {
+        launchWithProgress {
+            deleteProject(project, false)
+
+            _state.update { state ->
+                state.copy(
+                    translations = state.translations.filter {
+                        it.translation.id != project.translation.id
+                    }
+                )
+            }
+        }
+    }
+
+    private suspend fun deleteProject(project: TranslationItem, orphaned: Boolean) {
+        withContext(Dispatchers.IO) {
+            try {
+                backupRC.backupTargetTranslation(project.translation, orphaned)
+                translator.deleteTargetTranslation(project.translation.id)
+                translator.clearTargetTranslationSettings(project.translation.id)
+            } catch (_: Exception) {
+                deleteProject(project, true)
+            }
+        }
+    }
+
+    fun findTranslationItem(translationId: String?): TranslationItem? {
+        return _state.value.translations.singleOrNull {
+            it.translation.id == translationId
+        }
+    }
+
+    fun getTargetTranslation(translationId: String): TargetTranslation? {
+        return translator.getTargetTranslation(translationId)
+    }
+
+    fun pullTargetTranslation(mergeStrategy: MergeStrategy) {
+        viewModelScope.launch {
+            _progressOld.value = ProgressHelper.Progress()
+            _pullTranslationResult.value = withContext(Dispatchers.IO) {
+                findTranslationItem(notifyTargetTranslationWithUpdates)?.let { item ->
+                    pullTargetTranslation.execute(item.translation, mergeStrategy)
+                }
+            }
+            _progressOld.value = null
+        }
     }
 
     fun examineImportsForCollisions(contentUri: Uri) {

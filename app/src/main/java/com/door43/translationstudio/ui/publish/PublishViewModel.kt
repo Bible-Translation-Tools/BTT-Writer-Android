@@ -120,7 +120,9 @@ class PublishViewModel(
             targetTranslation.addContributor(profile.nativeSpeaker)
             _state.update { state ->
                 state.copy(
-                    translators = targetTranslation.contributors.sortedBy { it.name }
+                    translators = targetTranslation.contributors.sortedBy {
+                        it.name.lowercase()
+                    }
                 )
             }
         }

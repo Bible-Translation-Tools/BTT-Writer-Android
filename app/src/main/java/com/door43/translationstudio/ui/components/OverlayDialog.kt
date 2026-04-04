@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -75,14 +74,7 @@ fun OverlayDialog(
                 },
             snackbarHost = {
                 snackbarHostState?.let {
-                    SnackbarHost(hostState = it) { data ->
-                        Snackbar(
-                            snackbarData = data,
-                            actionColor = MaterialTheme.colorScheme.primary,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    SnackbarHost(hostState = it)
                 }
             },
             contentWindowInsets = WindowInsets.ime

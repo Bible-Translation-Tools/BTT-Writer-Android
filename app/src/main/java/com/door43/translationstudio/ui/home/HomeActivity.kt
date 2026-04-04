@@ -21,7 +21,6 @@ import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.databinding.ActivityHomeBinding
 import com.door43.translationstudio.services.BackupService
@@ -30,7 +29,9 @@ import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.dialogs.Door43LoginDialogOld
 import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
+import com.door43.translationstudio.ui.profile.LoginDoor43Activity
 import com.door43.translationstudio.ui.profile.ProfileActivity
+import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.usecases.CheckForLatestRelease
@@ -61,7 +62,6 @@ class HomeActivity : BaseActivity(),
     private lateinit var binding: ActivityHomeBinding
 
     private lateinit var newTranslationLauncher: ActivityResultLauncher<Intent>
-    private lateinit var translationViewRequestLauncher: ActivityResultLauncher<Intent>
 
     private val viewModel: HomeViewModel by viewModel()
 
@@ -79,11 +79,11 @@ class HomeActivity : BaseActivity(),
             onNewTranslationRequest(result)
         }
 
-        translationViewRequestLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result: ActivityResult ->
-            onTranslationViewRequest(result)
-        }
+//        translationViewRequestLauncher = registerForActivityResult(
+//            ActivityResultContracts.StartActivityForResult()
+//        ) { result: ActivityResult ->
+//            onTranslationViewRequest(result)
+//        }
 
         with(binding) {
             if (savedInstanceState != null) {
@@ -188,7 +188,6 @@ class HomeActivity : BaseActivity(),
             AppTheme(darkTheme = isDarkTheme) {
                 HomeScreen(
                     onLogout = ::logout,
-                    onAddTargetTranslation = ::onCreateNewTargetTranslation,
                     onSettings = {
                         startActivity(Intent(
                             this@HomeActivity,
@@ -196,7 +195,10 @@ class HomeActivity : BaseActivity(),
                         ))
                     },
                     onOpenProject = ::openProject,
-                    onShareApp = ::shareApp
+                    onShareApp = ::shareApp,
+                    onLogin = ::door43Login,
+                    onProjectPublish = ::publishProject,
+                    onMergeConflict = ::reviewMergeConflict
                 )
             }
         }
@@ -213,7 +215,7 @@ class HomeActivity : BaseActivity(),
     private fun openProject(item: TranslationItem) {
         val intent = Intent(this, TargetTranslationActivity::class.java)
         intent.putExtra(Translator.EXTRA_TARGET_TRANSLATION_ID, item.translation.id)
-        translationViewRequestLauncher.launch(intent)
+        startActivity(intent)
     }
 
     private fun logout() {
@@ -245,29 +247,40 @@ class HomeActivity : BaseActivity(),
         }
     }
 
+    private fun door43Login() {
+        val intent = Intent(this, LoginDoor43Activity::class.java)
+        startActivity(intent)
+    }
+
+    private fun publishProject(translationId: String) {
+        val publishIntent = Intent(
+            this@HomeActivity,
+            PublishActivity::class.java
+        )
+        publishIntent.putExtra(
+            PublishActivity.EXTRA_TARGET_TRANSLATION_ID,
+            translationId
+        )
+        publishIntent.putExtra(
+            PublishActivity.EXTRA_CALLING_ACTIVITY,
+            PublishActivity.ACTIVITY_HOME
+        )
+        startActivity(publishIntent)
+    }
+
+    fun reviewMergeConflict(targetTranslationId: String) {
+        val intent = Intent(this, TargetTranslationActivity::class.java)
+        val args = Bundle()
+        args.putString(
+            Translator.EXTRA_TARGET_TRANSLATION_ID,
+            targetTranslationId
+        )
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
+        intent.putExtras(args)
+        startActivity(intent)
+    }
+
     private fun setupObservers() {
-        viewModel.loggedOut.observe(this) {
-            if (it == true) doLogout()
-        }
-        viewModel.exportedApp.observe(this) {
-            if (it != null) {
-                if (it.exists()) {
-                    val u = FileProvider.getUriForFile(
-                        this,
-                        "${application.packageName}.fileprovider",
-                        it
-                    )
-                    val i = Intent(Intent.ACTION_SEND)
-                    i.setType("application/zip")
-                    i.putExtra(Intent.EXTRA_STREAM, u)
-                    startActivity(
-                        Intent.createChooser(i, resources.getString(R.string.send_to))
-                    )
-                } else {
-                    // TODO Notify user the app could not be exported
-                }
-            }
-        }
         viewModel.examineImportsResult.observe(this) {
             it?.let { result ->
                 if (result.success) {
@@ -279,22 +292,6 @@ class HomeActivity : BaseActivity(),
                     )
                     showImportResults(result.contentUri.toString(), null, false)
                     viewModel.cleanupExamineImportResult()
-                }
-            }
-        }
-        viewModel.latestRelease.observe(this) {
-            it?.let { result ->
-                if (result.release == null) {
-                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.check_for_updates)
-                        .setMessage(R.string.have_latest_app_update)
-                        .setPositiveButton(R.string.label_ok, null)
-                        .setOnDismissListener { viewModel.clearResults() }
-                        .show()
-                } else { // have newer
-                    promptUserToDownloadLatestVersion(
-                        result.release
-                    )
                 }
             }
         }
@@ -359,7 +356,7 @@ class HomeActivity : BaseActivity(),
                                 Translator.EXTRA_TARGET_TRANSLATION_ID,
                                 viewModel.notifyTargetTranslationWithUpdates
                             )
-                            translationViewRequestLauncher.launch(intent)
+                            startActivity(intent)
                         }
                         .setOnDismissListener { viewModel.clearResults() }
                         .show()
@@ -421,22 +418,10 @@ class HomeActivity : BaseActivity(),
         }
     }
 
-    /**
-     * do logout activity
-     */
-    private fun doLogout() {
-        val logoutIntent = Intent(this@HomeActivity, ProfileActivity::class.java)
-        startActivity(logoutIntent)
-        finish()
-    }
-
     override fun onResume() {
         super.onResume()
 
         viewModel.lastFocusTargetTranslation = null
-
-        val userText = resources.getString(R.string.current_user, profile.currentUser)
-        binding.currentUser.text = userText
 
 //        val numTranslations = viewModel.translations.value?.size ?: 0
 //        when {
@@ -526,22 +511,8 @@ class HomeActivity : BaseActivity(),
                 R.string.label_ok
             ) { _, _ ->
                 alertShown = DialogShown.NONE
-                doManualMerge(this.targetTranslationID)
+                //reviewMergeConflict(this.targetTranslationID)
             }.show()
-    }
-
-    /**
-     * open review mode to let user resolve conflict
-     */
-    fun doManualMerge(mTargetTranslationID: String?) {
-        // ask parent activity to navigate to a new activity
-        val intent = Intent(this, TargetTranslationActivity::class.java)
-        val args = Bundle()
-        args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, mTargetTranslationID)
-        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
-        args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
-        intent.putExtras(args)
-        translationViewRequestLauncher.launch(intent)
     }
 
     private fun showAuthFailure() {
@@ -826,7 +797,7 @@ class HomeActivity : BaseActivity(),
                 Translator.EXTRA_TARGET_TRANSLATION_ID,
                 result.data!!.getStringExtra(NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID)
             )
-            translationViewRequestLauncher.launch(intent)
+            startActivity(intent)
         } else if (NewTargetTranslationActivity.RESULT_DUPLICATE == result.resultCode) {
             // display duplicate notice to user
             val targetTranslationId = result.data?.getStringExtra(
@@ -836,22 +807,22 @@ class HomeActivity : BaseActivity(),
                 viewModel.getTargetTranslation(it)
             }
             if (existingTranslation != null) {
-                val project = viewModel.getProject(existingTranslation)
-
-                val snack = Snackbar.make(
-                    findViewById(android.R.id.content),
-                    resources.getString(
-                        R.string.duplicate_target_translation,
-                        project.name,
-                        existingTranslation.targetLanguageName
-                    ),
-                    Snackbar.LENGTH_LONG
-                )
-                ViewUtil.setSnackBarTextColor(
-                    snack,
-                    resources.getColor(R.color.light_primary_text)
-                )
-                snack.show()
+//                val project = viewModel.getProject(existingTranslation)
+//
+//                val snack = Snackbar.make(
+//                    findViewById(android.R.id.content),
+//                    resources.getString(
+//                        R.string.duplicate_target_translation,
+//                        project.name,
+//                        existingTranslation.targetLanguageName
+//                    ),
+//                    Snackbar.LENGTH_LONG
+//                )
+//                ViewUtil.setSnackBarTextColor(
+//                    snack,
+//                    resources.getColor(R.color.light_primary_text)
+//                )
+//                snack.show()
             }
         } else if (NewTargetTranslationActivity.RESULT_ERROR == result.resultCode) {
             val snack = Snackbar.make(

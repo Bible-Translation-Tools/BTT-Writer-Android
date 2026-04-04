@@ -86,25 +86,7 @@ class TargetTranslationActivity : BaseActivity() {
                         )
                         startActivity(intent)
                     },
-                    onProjectPreview = {
-                        val publishIntent = Intent(
-                            this@TargetTranslationActivity,
-                            PublishActivity::class.java
-                        )
-                        publishIntent.putExtra(
-                            PublishActivity.EXTRA_TARGET_TRANSLATION_ID,
-                            viewModel.targetTranslation.id
-                        )
-                        publishIntent.putExtra(
-                            PublishActivity.EXTRA_CALLING_ACTIVITY,
-                            PublishActivity.ACTIVITY_TRANSLATION
-                        )
-                        startActivity(publishIntent)
-                        // TRICKY: we may move back and forth between the publisher
-                        // and translation activities
-                        // so we finish to avoid filling the stack.
-                        finish()
-                    },
+                    onProjectPreview = ::goProjectReview,
                     onSettings = {
                         startActivity(Intent(
                             this@TargetTranslationActivity,
@@ -171,6 +153,26 @@ class TargetTranslationActivity : BaseActivity() {
     private fun logout() {
         val logoutIntent = Intent(this, ProfileActivity::class.java)
         startActivity(logoutIntent)
+        finish()
+    }
+
+    private fun goProjectReview() {
+        val publishIntent = Intent(
+            this@TargetTranslationActivity,
+            PublishActivity::class.java
+        )
+        publishIntent.putExtra(
+            PublishActivity.EXTRA_TARGET_TRANSLATION_ID,
+            viewModel.targetTranslation.id
+        )
+        publishIntent.putExtra(
+            PublishActivity.EXTRA_CALLING_ACTIVITY,
+            PublishActivity.ACTIVITY_TRANSLATION
+        )
+        startActivity(publishIntent)
+        // TRICKY: we may move back and forth between the publisher
+        // and translation activities
+        // so we finish to avoid filling the stack.
         finish()
     }
 

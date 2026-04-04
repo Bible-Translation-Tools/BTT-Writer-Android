@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.publish
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,8 +42,8 @@ fun TranslatorsSection(
     translators: List<NativeSpeaker>,
     targetTranslation: TargetTranslation,
     modifier: Modifier = Modifier,
-    onNextClick: () -> Unit,
-    onContributorsChanged: () -> Unit
+    onContributorsChanged: () -> Unit,
+    onNextClick: (() -> Unit)? = null
 ) {
     var showPrivacyNoticeDialog by rememberSaveable { mutableStateOf(false) }
     var selectedContributorName by rememberSaveable { mutableStateOf<String?>(null) }
@@ -53,7 +52,6 @@ fun TranslatorsSection(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier.fillMaxSize()
             .padding(16.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier
@@ -108,15 +106,17 @@ fun TranslatorsSection(
                     text = stringResource(R.string.add_contributor).uppercase()
                 )
             }
-            Button(
-                onClick = onNextClick,
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(4.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.next).uppercase(),
-                    fontSize = 14.sp
-                )
+            onNextClick?.let { onNext ->
+                Button(
+                    onClick = onNext,
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.next).uppercase(),
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
     }

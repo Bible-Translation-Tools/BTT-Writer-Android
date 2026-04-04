@@ -271,7 +271,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
             if (targetTranslationID != null) {
                 val activity: Activity? = activity
                 if (activity is HomeActivity) {
-                    activity.doManualMerge(targetTranslationID)
+                    activity.reviewMergeConflict(targetTranslationID)
                 }
             }
         }
@@ -296,7 +296,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
 
     @Throws(Exception::class)
     private fun deleteTargetTranslation(orphaned: Boolean) {
-        viewModel.deleteTargetTranslation(targetTranslation!!, orphaned)
+        //viewModel.deleteProject(targetTranslation!!)
     }
 
     companion object {

@@ -31,14 +31,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.door43.translationstudio.core.TextStyleType
+import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.getComposeTextStyle
 
 @Composable
 fun ProjectCard(
     item: TranslationItem,
+    typography: Typography,
     onItemClick: () -> Unit,
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val languageStyle = typography.getComposeTextStyle(
+        translationType = TranslationType.TARGET,
+        style = TextStyleType.SUB,
+        languageCode = item.translation.targetLanguage.slug,
+        direction = item.translation.targetLanguage.direction
+    )
+
     Card(
         modifier = modifier.padding(horizontal = 8.dp),
         elevation = CardDefaults.cardElevation(2.dp),
@@ -84,6 +96,7 @@ fun ProjectCard(
                     text = item.translation.targetLanguageName,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    style = languageStyle,
                     modifier = Modifier.weight(1f)
                 )
 

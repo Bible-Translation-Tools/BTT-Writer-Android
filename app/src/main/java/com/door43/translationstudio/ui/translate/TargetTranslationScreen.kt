@@ -3,9 +3,7 @@ package com.door43.translationstudio.ui.translate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -26,6 +24,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
+import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ExportDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
@@ -33,7 +32,6 @@ import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeSection
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSidebar
-import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadModeSection
 import com.door43.translationstudio.ui.translate.review.ReviewModeSection
@@ -130,14 +128,7 @@ fun TargetTranslationScreen(
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         Scaffold(
             snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState) {
-                    Snackbar(
-                        snackbarData = it,
-                        actionColor = MaterialTheme.colorScheme.primary,
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             Row(modifier = Modifier.padding(paddingValues)) {

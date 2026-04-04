@@ -32,17 +32,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Typography
 
 @Composable
 fun TranslationListScreen(
     projects: List<TranslationItem>,
+    typography: Typography,
     projectSort: ProjectSort,
     projectSortOptions: List<ProjectSort>,
     bookSort: BookSort,
     bookSortOptions: List<BookSort>,
     onSortProjectChange: (ProjectSort) -> Unit,
     onSortBookChange: (BookSort) -> Unit,
-    onProjectSelected: (TranslationItem) -> Unit
+    onProjectSelected: (TranslationItem) -> Unit,
+    onProjectInfo: (TranslationItem) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -112,8 +115,9 @@ fun TranslationListScreen(
             items(projects, key = { it.translation.id }) { project ->
                 ProjectCard(
                     item = project,
+                    typography = typography,
                     onItemClick = { onProjectSelected(project) },
-                    onInfoClick = { /* Handle info click */ },
+                    onInfoClick = { onProjectInfo(project) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.dialogs
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
 
 @Composable
@@ -44,6 +46,7 @@ fun ConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
         title = {
             Text(
                 text = title,
