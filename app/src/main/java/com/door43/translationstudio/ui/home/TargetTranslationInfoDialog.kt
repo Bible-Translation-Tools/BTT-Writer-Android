@@ -95,7 +95,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                 title.setTypeface(typeface, Typeface.NORMAL)
                 languageTitle.setTypeface(typeface, Typeface.NORMAL)
 
-                title.text = item.project.name + " - " + item.translation.targetLanguageName
+                title.text = item.name + " - " + item.translation.targetLanguageName
                 projectTitle.text = item.formattedProjectName
                 languageTitle.text =
                     item.translation.targetLanguageName + " (" + item.translation.targetLanguageId + ")"

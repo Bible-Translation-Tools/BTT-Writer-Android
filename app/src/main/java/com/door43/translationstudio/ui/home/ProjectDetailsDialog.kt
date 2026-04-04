@@ -99,7 +99,7 @@ fun ProjectDetailsDialog(
                         .padding(24.dp)
                 ) {
                     Text(
-                        text = project.project.name + " - " + project.translation.targetLanguageName,
+                        text = project.name + " - " + project.translation.targetLanguageName,
                         style = titleStyle,
                         modifier = Modifier.padding(bottom = dimensionResource(R.dimen.dialog_content_margin))
                     )

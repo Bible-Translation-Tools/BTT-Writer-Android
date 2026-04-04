@@ -253,12 +253,14 @@ class HomeViewModel(
         launchWithProgress(
             application.getString(R.string.loading)
         ) {
-            val items = translator.targetTranslations.map {
-                TranslationItem(
-                    translation = it,
-                    progress = calculateProgress.execute(it),
-                    onGetProject = { getProject(it)!! }
-                )
+            val items = withContext(Dispatchers.IO) {
+                translator.targetTranslations.map {
+                    TranslationItem(
+                        name = getProject(it)?.name ?: "Unknown",
+                        translation = it,
+                        progress = calculateProgress.execute(it)
+                    )
+                }
             }
             _state.update { it.copy(translations = items) }
         }
@@ -388,24 +390,26 @@ class HomeViewModel(
         }
     }
 
-    private fun getProject(targetTranslation: TargetTranslation): Project? {
-        val existingSources = targetTranslation.sourceTranslations
-        // Gets an existing source project or default if none selected
+    private suspend fun getProject(targetTranslation: TargetTranslation): Project? {
+        return withContext(Dispatchers.IO) {
+            val existingSources = targetTranslation.sourceTranslations
 
-        return if (existingSources.isNotEmpty()) {
-            val lastSource = existingSources[existingSources.size - 1]
-            library.index.getTranslation(lastSource)?.project
-                ?: library.index.getProject(
+            // Gets an existing source project or default if none selected
+            if (existingSources.isNotEmpty()) {
+                val lastSource = existingSources[existingSources.size - 1]
+                library.index.getTranslation(lastSource)?.project
+                    ?: library.index.getProject(
+                        targetTranslation.targetLanguageName,
+                        targetTranslation.projectId,
+                        true
+                    )
+            } else {
+                library.index.getProject(
                     targetTranslation.targetLanguageName,
                     targetTranslation.projectId,
                     true
                 )
-        } else {
-            library.index.getProject(
-                targetTranslation.targetLanguageName,
-                targetTranslation.projectId,
-                true
-            )
+            }
         }
     }
 
