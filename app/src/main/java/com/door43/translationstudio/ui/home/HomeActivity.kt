@@ -198,6 +198,7 @@ class HomeActivity : BaseActivity(),
                     onShareApp = ::shareApp,
                     onLogin = ::door43Login,
                     onProjectPublish = ::publishProject,
+                    onReviewTranslation = ::reviewTranslation,
                     onMergeConflict = ::reviewMergeConflict
                 )
             }
@@ -268,16 +269,20 @@ class HomeActivity : BaseActivity(),
         startActivity(publishIntent)
     }
 
-    fun reviewMergeConflict(targetTranslationId: String) {
+    private fun reviewTranslation(targetTranslationId: String, mergeConflict: Boolean = false) {
         val intent = Intent(this, TargetTranslationActivity::class.java)
         val args = Bundle()
         args.putString(
             Translator.EXTRA_TARGET_TRANSLATION_ID,
             targetTranslationId
         )
-        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
+        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, mergeConflict)
         intent.putExtras(args)
         startActivity(intent)
+    }
+
+    private fun reviewMergeConflict(targetTranslationId: String) {
+        reviewTranslation(targetTranslationId, true)
     }
 
     private fun setupObservers() {

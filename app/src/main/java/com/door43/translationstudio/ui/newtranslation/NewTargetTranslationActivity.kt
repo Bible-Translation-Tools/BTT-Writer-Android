@@ -515,7 +515,7 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         private const val STATE_TARGET_TRANSLATION_ID = "state_target_translation_id"
         private const val STATE_TARGET_LANGUAGE = "state_target_language_id"
         const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
-        const val RESULT_ERROR: Int = 3
+        const val RESULT_ERROR: Int = 4
         val TAG: String = NewTargetTranslationActivity::class.java.simpleName
         const val NEW_LANGUAGE_REQUEST: Int = 1001
         const val NEW_LANGUAGE_CONFIRMATION: String = "new-language-confirmation"

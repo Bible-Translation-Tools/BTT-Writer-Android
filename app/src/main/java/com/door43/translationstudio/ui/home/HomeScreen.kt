@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,7 +43,6 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
@@ -50,7 +50,7 @@ import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import java.io.File
@@ -64,6 +64,7 @@ fun HomeScreen(
     onShareApp: (File) -> Unit,
     onLogin: () -> Unit,
     onProjectPublish: (String) -> Unit,
+    onReviewTranslation: (String) -> Unit,
     onMergeConflict: (String) -> Unit
 ) {
     val typography: Typography = koinInject()
@@ -72,11 +73,14 @@ fun HomeScreen(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
+
+    val errorString = stringResource(R.string.error)
 
     val menuItems = rememberHomeMenuItems(
         onUpdateClick = {},
@@ -94,27 +98,65 @@ fun HomeScreen(
     val newTranslationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        viewModel.onAction(HomeAction.LoadProjects)
+
         when(result.resultCode) {
             Activity.RESULT_OK -> {
-                viewModel.onAction(HomeAction.LoadProjects)
-                val intent = Intent(context, TargetTranslationActivity::class.java)
-                intent.putExtra(
-                    Translator.EXTRA_TARGET_TRANSLATION_ID,
-                    result.data!!.getStringExtra(
-                        NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
-                    )
-                )
-                context.startActivity(intent)
+                result.data?.getStringExtra(
+                    NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
+                )?.let {
+                    onReviewTranslation(it)
+                }
             }
             NewTargetTranslationActivity.RESULT_DUPLICATE -> {
-                val translationId = result.data?.getStringExtra(
+                result.data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
-                )
-                translationId?.let {
-                    viewModel.onAction(HomeAction.ShowProjectExists(translationId))
+                )?.let {
+                    viewModel.onAction(HomeAction.ShowProjectExists(it))
+                }
+            }
+            NewTargetTranslationActivity.RESULT_MERGE_CONFLICT -> {
+                result.data?.getStringExtra(
+                    NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
+                )?.let {
+                    onMergeConflict(it)
+                }
+            }
+            NewTargetTranslationActivity.RESULT_ERROR -> {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(errorString)
                 }
             }
         }
+    }
+
+    val launchNewTranslation: () -> Unit = {
+        val intent = Intent(
+            context,
+            NewTargetTranslationActivity::class.java
+        )
+        newTranslationLauncher.launch(intent)
+    }
+
+    val launchChangeLanguage: (TranslationItem) -> Unit = {
+        val intent = Intent(
+            context,
+            NewTargetTranslationActivity::class.java
+        )
+        intent.putExtra(
+            NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID,
+            it.translation.id
+        )
+        intent.putExtra(
+            NewTargetTranslationActivity.EXTRA_DISABLED_LANGUAGES, arrayOf(
+                it.translation.targetLanguage.slug
+            )
+        )
+        intent.putExtra(
+            NewTargetTranslationActivity.EXTRA_CHANGE_TARGET_LANGUAGE_ONLY,
+            true
+        )
+        newTranslationLauncher.launch(intent)
     }
 
     LaunchedEffect(viewModel) {
@@ -137,13 +179,7 @@ fun HomeScreen(
             containerColor = MaterialTheme.colorScheme.background,
             floatingActionButton = {
                 FloatingActionButton(
-                    onClick = {
-                        val intent = Intent(
-                            context,
-                            NewTargetTranslationActivity::class.java
-                        )
-                        newTranslationLauncher.launch(intent)
-                    },
+                    onClick = launchNewTranslation,
                     shape = CircleShape,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -216,10 +252,7 @@ fun HomeScreen(
                     ) {
                         if (state.translations.isEmpty()) {
                             WelcomeScreen(
-                                onStartNewTranslation = {
-                                    val intent = Intent(context, NewTargetTranslationActivity::class.java)
-                                    newTranslationLauncher.launch(intent)
-                                }
+                                onStartNewTranslation = launchNewTranslation
                             )
                         } else {
                             TranslationListScreen(
@@ -259,7 +292,10 @@ fun HomeScreen(
             onDismiss = {
                 viewModel.onAction(HomeAction.HideProjectInfo)
             },
-            onChangeLanguage = {},
+            onChangeLanguage = {
+                viewModel.onAction(HomeAction.HideProjectInfo)
+                launchChangeLanguage(project)
+            },
             onDelete = {
                 viewModel.onAction(HomeAction.DeleteProject(project))
             },
