@@ -271,7 +271,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
             if (targetTranslationID != null) {
                 val activity: Activity? = activity
                 if (activity is HomeActivity) {
-                    activity.reviewMergeConflict(targetTranslationID)
+                    //activity.reviewMergeConflict(targetTranslationID)
                 }
             }
         }
