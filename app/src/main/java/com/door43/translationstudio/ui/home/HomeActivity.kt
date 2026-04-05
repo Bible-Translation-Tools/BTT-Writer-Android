@@ -10,8 +10,6 @@ import android.os.Looper
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
@@ -61,29 +59,13 @@ class HomeActivity : BaseActivity(),
 
     private lateinit var binding: ActivityHomeBinding
 
-    private lateinit var newTranslationLauncher: ActivityResultLauncher<Intent>
-
     private val viewModel: HomeViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
-        //setContentView(binding.root)
 
         startBackupService()
-        //setupObservers()
-
-        newTranslationLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result: ActivityResult ->
-            onNewTranslationRequest(result)
-        }
-
-//        translationViewRequestLauncher = registerForActivityResult(
-//            ActivityResultContracts.StartActivityForResult()
-//        ) { result: ActivityResult ->
-//            onTranslationViewRequest(result)
-//        }
 
         with(binding) {
             if (savedInstanceState != null) {
@@ -168,20 +150,9 @@ class HomeActivity : BaseActivity(),
 
         // open last project when starting the first time
         if (savedInstanceState == null) {
-            val targetTranslation = viewModel.lastOpened
-            if (targetTranslation != null) {
-                // TODO Resume project in viewmodel
-                //onItemClick(targetTranslation)
+            viewModel.lastOpened?.let {
+                reviewTranslation(it.id)
             }
-        } else {
-            alertShown = DialogShown.fromInt(
-                savedInstanceState.getInt(STATE_DIALOG_SHOWN, INVALID),
-                DialogShown.NONE
-            )
-            targetTranslationID = savedInstanceState.getString(
-                STATE_DIALOG_TRANSLATION_ID,
-                null
-            )
         }
 
         setContent {
@@ -223,11 +194,6 @@ class HomeActivity : BaseActivity(),
         val logoutIntent = Intent(this, ProfileActivity::class.java)
         startActivity(logoutIntent)
         finish()
-    }
-
-    private fun onCreateNewTargetTranslation() {
-        val intent = Intent(this, NewTargetTranslationActivity::class.java)
-        newTranslationLauncher.launch(intent)
     }
 
     private fun shareApp(file: File) {

@@ -169,16 +169,7 @@ class TargetTranslationListFragment : BaseFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.progressOld.observe(viewLifecycleOwner) {
-            if (it != null) {
-                progressDialog?.show()
-                progressDialog?.setProgress(it.progress)
-                progressDialog?.setMessage(it.message)
-                progressDialog?.setMax(it.max)
-            } else {
-                progressDialog?.dismiss()
-            }
-        }
+
 //        viewModel.translations.observe(viewLifecycleOwner) {
 //            it?.let { adapter.setTranslations(it) }
 //        }

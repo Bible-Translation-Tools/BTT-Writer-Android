@@ -194,15 +194,9 @@ class HomeViewModel(
      * get last project opened and make sure it is still present
      * @return
      */
-    val lastOpened: TranslationItem?
-        get() {
-//            translator.lastFocusTargetTranslation?.let { lastTarget ->
-//                return translator.getTargetTranslation(lastTarget)?.let {
-//                    val progress = calculateProgress.execute(it)
-//                    TranslationItem(it, progress, ::getProject)
-//                }
-//            }
-            return null
+    val lastOpened: TargetTranslation?
+        get() = translator.lastFocusTargetTranslation?.let { lastTarget ->
+            translator.getTargetTranslation(lastTarget)
         }
 
     val loggedIn: Boolean

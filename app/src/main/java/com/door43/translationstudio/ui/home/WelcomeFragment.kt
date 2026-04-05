@@ -50,16 +50,7 @@ class WelcomeFragment : BaseFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.progressOld.observe(viewLifecycleOwner) {
-            if (it != null) {
-                progressDialog?.show()
-                progressDialog?.setProgress(it.progress)
-                progressDialog?.setMessage(it.message)
-                progressDialog?.setMax(it.max)
-            } else {
-                progressDialog?.dismiss()
-            }
-        }
+
     }
 
     override fun onAttach(context: Context) {
