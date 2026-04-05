@@ -31,22 +31,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun TranslationListScreen(
-    projects: List<TranslationItem>,
-    typography: Typography,
-    projectSort: ProjectSort,
-    projectSortOptions: List<ProjectSort>,
-    bookSort: BookSort,
-    bookSortOptions: List<BookSort>,
-    onSortProjectChange: (ProjectSort) -> Unit,
-    onSortBookChange: (BookSort) -> Unit,
+    viewModel: HomeViewModel = koinViewModel(),
     onProjectSelected: (TranslationItem) -> Unit,
-    onProjectInfo: (TranslationItem) -> Unit
+    onChangeLanguage: (TranslationItem) -> Unit,
+    onMergeConflict: (String) -> Unit,
+    onProjectPublish: (String) -> Unit,
+    onLogin: () -> Unit,
+    onLogout: () -> Unit,
 ) {
+    val typography: Typography = koinInject()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .widthIn(max = 900.dp)
@@ -63,18 +66,22 @@ fun TranslationListScreen(
         ) {
             SortDropdown(
                 label = stringResource(R.string.sort_column),
-                options = projectSortOptions,
-                selectedOption = projectSort,
-                onOptionSelected = onSortProjectChange,
+                options = viewModel.projectSortOptions,
+                selectedOption = state.projectSort,
+                onOptionSelected = {
+                    viewModel.onAction(HomeAction.ProjectSortChanged(it))
+                },
                 labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
             )
 
             SortDropdown(
                 label = stringResource(R.string.sort_projects),
-                options = bookSortOptions,
-                selectedOption = bookSort,
-                onOptionSelected = onSortBookChange,
+                options = viewModel.bookSortOptions,
+                selectedOption = state.bookSort,
+                onOptionSelected = {
+                    viewModel.onAction(HomeAction.BookSortChanged(it))
+                },
                 labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
             )
@@ -112,12 +119,14 @@ fun TranslationListScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            items(projects, key = { it.translation.id }) { project ->
+            items(state.translations, key = { it.translation.id }) { project ->
                 ProjectCard(
                     item = project,
                     typography = typography,
                     onItemClick = { onProjectSelected(project) },
-                    onInfoClick = { onProjectInfo(project) },
+                    onInfoClick = {
+                        viewModel.onAction(HomeAction.ShowProjectInfo(project))
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -126,6 +135,32 @@ fun TranslationListScreen(
                 Spacer(modifier = Modifier.height(50.dp))
             }
         }
+    }
+
+    state.projectInfo?.let { project ->
+        ProjectDetailsDialog(
+            project = project,
+            onDismiss = {
+                viewModel.onAction(HomeAction.HideProjectInfo)
+            },
+            onChangeLanguage = {
+                viewModel.onAction(HomeAction.HideProjectInfo)
+                onChangeLanguage(project)
+            },
+            onDelete = {
+                viewModel.onAction(HomeAction.DeleteProject(project))
+            },
+            onPublish = {
+                viewModel.onAction(HomeAction.HideProjectInfo)
+                onProjectPublish(project.translation.id)
+            },
+            onLogin = onLogin,
+            onLogout = onLogout,
+            onMergeConflict = {
+                viewModel.onAction(HomeAction.HideProjectInfo)
+                onMergeConflict(project.translation.id)
+            }
+        )
     }
 }
 

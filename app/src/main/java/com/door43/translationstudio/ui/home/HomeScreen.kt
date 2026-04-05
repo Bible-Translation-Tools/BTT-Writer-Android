@@ -43,7 +43,6 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
@@ -58,16 +57,15 @@ import java.io.File
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
-    onLogout: () -> Unit,
     onSettings: () -> Unit,
     onOpenProject: (TranslationItem) -> Unit,
     onShareApp: (File) -> Unit,
     onLogin: () -> Unit,
+    onLogout: () -> Unit,
     onProjectPublish: (String) -> Unit,
     onReviewTranslation: (String) -> Unit,
     onMergeConflict: (String) -> Unit
 ) {
-    val typography: Typography = koinInject()
     val profile: Profile = koinInject()
     var profileUser by remember { mutableStateOf(profile.currentUser) }
 
@@ -256,22 +254,12 @@ fun HomeScreen(
                             )
                         } else {
                             TranslationListScreen(
-                                projects = state.translations,
-                                typography = typography,
-                                projectSort = state.projectSort,
-                                projectSortOptions = viewModel.projectSortOptions,
-                                bookSort = state.bookSort,
-                                bookSortOptions = viewModel.bookSortOptions,
-                                onSortProjectChange = {
-                                    viewModel.onAction(HomeAction.ProjectSortChanged(it))
-                                },
-                                onSortBookChange = {
-                                    viewModel.onAction(HomeAction.BookSortChanged(it))
-                                },
                                 onProjectSelected = onOpenProject,
-                                onProjectInfo = {
-                                    viewModel.onAction(HomeAction.ShowProjectInfo(it))
-                                }
+                                onChangeLanguage = launchChangeLanguage,
+                                onMergeConflict = onMergeConflict,
+                                onProjectPublish = onProjectPublish,
+                                onLogin = onLogin,
+                                onLogout = onLogout
                             )
                         }
                     }
@@ -283,32 +271,6 @@ fun HomeScreen(
     if (showFeedbackDialog) {
         FeedbackDialog(
             onDismiss = { showFeedbackDialog = false }
-        )
-    }
-
-    state.projectInfo?.let { project ->
-        ProjectDetailsDialog(
-            project = project,
-            onDismiss = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
-            },
-            onChangeLanguage = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
-                launchChangeLanguage(project)
-            },
-            onDelete = {
-                viewModel.onAction(HomeAction.DeleteProject(project))
-            },
-            onPublish = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
-                onProjectPublish(project.translation.id)
-            },
-            onLogin = onLogin,
-            onLogout = onLogout,
-            onMergeConflict = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
-                onMergeConflict(project.translation.id)
-            }
         )
     }
 
