@@ -8,8 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -28,6 +26,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.InfoDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.util.sortNumerically
 import org.koin.androidx.compose.koinViewModel
@@ -123,50 +123,40 @@ fun DraftScreen(
     }
 
     if (showConfirmDialog && draftData != null) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            title = { Text(stringResource(R.string.import_draft)) },
-            text = { Text(stringResource(R.string.import_draft_confirmation)) },
-            confirmButton = {
-                Button(onClick = {
-                    showConfirmDialog = false
-                    viewModel.importDraft(draftData.first)
-                }) {
-                    Text(stringResource(R.string.label_import))
-                }
+        ConfirmDialog(
+            title = stringResource(R.string.import_draft),
+            message = stringResource(R.string.import_draft_confirmation),
+            onConfirm = {
+                showConfirmDialog = false
+                viewModel.importDraft(draftData.first)
             },
-            dismissButton = {
-                TextButton(onClick = { showConfirmDialog = false }) {
-                    Text(stringResource(R.string.menu_cancel))
-                }
-            }
+            onDismiss = { showConfirmDialog = false },
+            confirmText = stringResource(R.string.label_import)
         )
     }
 
     if (showErrorDialog) {
-        AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
-            title = { Text(stringResource(R.string.error)) },
-            text = { Text(stringResource(R.string.translation_import_failed)) },
-            confirmButton = {
-                TextButton(onClick = { showErrorDialog = false }) {
-                    Text(stringResource(R.string.dismiss))
-                }
+        InfoDialog(
+            onDismiss = { showErrorDialog = false },
+            title = stringResource(R.string.error),
+            message = stringResource(R.string.translation_import_failed)
+        ) {
+            TextButton(onClick = { showErrorDialog = false }) {
+                Text(stringResource(R.string.dismiss))
             }
-        )
+        }
     }
 
     showNoteDialog?.let { notes ->
-        AlertDialog(
-            onDismissRequest = { showNoteDialog = null },
-            title = { Text(stringResource(R.string.title_footnote)) },
-            text = { Text(notes) },
-            confirmButton = {
-                TextButton(onClick = { showNoteDialog = null }) {
-                    Text(stringResource(R.string.dismiss))
-                }
+        InfoDialog(
+            onDismiss = { showNoteDialog = null },
+            title = stringResource(R.string.title_footnote),
+            message = notes
+        ) {
+            TextButton(onClick = { showNoteDialog = null }) {
+                Text(stringResource(R.string.dismiss))
             }
-        )
+        }
     }
 
     progress?.let { progress ->

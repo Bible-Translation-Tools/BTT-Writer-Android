@@ -3,11 +3,11 @@ package com.door43.translationstudio.ui.crash
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -21,11 +21,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.InfoDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
 
@@ -110,59 +113,55 @@ fun CrashReporterScreen(
     }
 
     if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            title = { Text(stringResource(R.string.title_upload)) },
-            text = { Text(stringResource(R.string.use_internet_confirmation)) },
-            confirmButton = {
-                Button(onClick = {
-                    showConfirmDialog = false
-                    viewModel.checkForLatestRelease()
-                }) {
-                    Text(stringResource(R.string.label_continue))
-                }
+        ConfirmDialog(
+            title = stringResource(R.string.title_upload),
+            message = stringResource(R.string.use_internet_confirmation),
+            onConfirm = {
+                showConfirmDialog = false
+                viewModel.checkForLatestRelease()
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    showConfirmDialog = false
-                    onFlushAndSplash()
-                }) {
-                    Text(stringResource(R.string.label_close))
-                }
-            }
+            onDismiss = {
+                showConfirmDialog = false
+                onFlushAndSplash()
+            },
+            confirmText = stringResource(R.string.label_continue),
+            dismissText = stringResource(R.string.label_close)
         )
     }
 
     if (showUpdateAvailableDialog) {
-        AlertDialog(
-            onDismissRequest = { showUpdateAvailableDialog = false },
-            title = { Text(stringResource(R.string.apk_update_available)) },
-            text = { Text(stringResource(R.string.upload_report_or_download_latest_apk)) },
-            confirmButton = {
+        InfoDialog(
+            title = stringResource(R.string.apk_update_available),
+            message = stringResource(R.string.upload_report_or_download_latest_apk),
+            onDismiss = { showUpdateAvailableDialog = false }
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(onClick = {
+                    showUpdateAvailableDialog = false
+                    onFlushAndSplash()
+                }) {
+                    Text(stringResource(R.string.title_cancel))
+                }
+                TextButton(onClick = {
+                    showUpdateAvailableDialog = false
+                    onDownloadUpdate()
+                }) {
+                    Text(stringResource(R.string.download_update))
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
                 Button(onClick = {
                     showUpdateAvailableDialog = false
                     viewModel.uploadCrashReport(notes.trim())
                 }) {
                     Text(stringResource(R.string.label_continue))
                 }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = {
-                        showUpdateAvailableDialog = false
-                        onFlushAndSplash()
-                    }) {
-                        Text(stringResource(R.string.title_cancel))
-                    }
-                    TextButton(onClick = {
-                        showUpdateAvailableDialog = false
-                        onDownloadUpdate()
-                    }) {
-                        Text(stringResource(R.string.download_update))
-                    }
-                }
             }
-        )
+        }
     }
 
     if (showUploadErrorDialog) {
@@ -172,16 +171,15 @@ fun CrashReporterScreen(
             R.string.internet_not_available
         }
         
-        AlertDialog(
-            onDismissRequest = { showUploadErrorDialog = false },
-            title = { Text(stringResource(R.string.upload_failed)) },
-            text = { Text(stringResource(messageId)) },
-            confirmButton = {
-                Button(onClick = { showUploadErrorDialog = false }) {
-                    Text(stringResource(R.string.label_ok))
-                }
+        InfoDialog(
+            onDismiss = { showUploadErrorDialog = false },
+            title = stringResource(R.string.upload_failed),
+            message = stringResource(messageId)
+        ) {
+            Button(onClick = { showUploadErrorDialog = false }) {
+                Text(stringResource(R.string.label_ok))
             }
-        )
+        }
     }
 
     progress?.let { progress ->
