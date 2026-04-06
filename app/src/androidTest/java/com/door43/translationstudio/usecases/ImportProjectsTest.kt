@@ -139,7 +139,7 @@ class ImportProjectsTest : KoinAndroidTest() {
         assertTrue("Import should be successful", result.success)
         assertNotNull("Progress message should not be null", progressMessage)
         assertEquals("Imported slug should match", "aa_mrk_text_reg", result.importedSlug)
-        assertFalse("There should be no merge conflict", result.mergeConflict)
+        assertFalse("There should be no merge conflict", result.hasMergeConflict)
         assertFalse("Project should not already exist", result.alreadyExists)
         assertTrue(
             "Path should have with tstudio extension",
@@ -165,7 +165,7 @@ class ImportProjectsTest : KoinAndroidTest() {
         assertFalse("Import should not be successful", result.success)
         assertNotNull("Progress message should not be null", progressMessage)
         assertNull("Imported slug should be null", result.importedSlug)
-        assertFalse("There should be no merge conflict", result.mergeConflict)
+        assertFalse("There should be no merge conflict", result.hasMergeConflict)
         assertFalse("Project should not already exist", result.alreadyExists)
         assertTrue(
             "Path should have with usfm extension",
