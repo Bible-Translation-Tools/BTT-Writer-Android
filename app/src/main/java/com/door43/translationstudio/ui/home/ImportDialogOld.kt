@@ -29,13 +29,12 @@ import com.door43.util.FileUtilities
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.tools.logger.Logger
 import java.io.File
 
 /**
  * Created by joel on 10/5/2015.
  */
-class ImportDialog : DialogFragment() {
+class ImportDialogOld : DialogFragment() {
     val profile: Profile by inject()
     val translator: Translator by inject()
     val directoryProvider: IDirectoryProvider by inject()
@@ -77,7 +76,7 @@ class ImportDialog : DialogFragment() {
                 val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
                 val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
                 if (isTstudio || isZip) {
-                    importLocal(uri, IMPORT_TRANSLATION_MIME)
+                    //importLocal(uri, IMPORT_TRANSLATION_MIME)
                 } else {
                     showImportResults(R.string.invalid_file, filename)
                 }
@@ -93,7 +92,7 @@ class ImportDialog : DialogFragment() {
                 val isTxt = filename.contains(Translator.TXT_EXTENSION, ignoreCase = true)
                 val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
                 if (isUsfm || isTxt || isZip) {
-                    importLocal(uri, IMPORT_USFM_MIME)
+                    //importLocal(uri, IMPORT_USFM_MIME)
                 } else {
                     showImportResults(R.string.invalid_file, filename)
                 }
@@ -196,20 +195,10 @@ class ImportDialog : DialogFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.progress.observe(this) {
-            if (it != null) {
-                progressDialog?.show()
-                progressDialog?.setProgress(it.progress)
-                progressDialog?.setMessage(it.message)
-                progressDialog?.setMax(it.max)
-            } else {
-                progressDialog?.dismiss()
-            }
-        }
         viewModel.importFromUriResult.observe(this) {
             it?.let { result ->
                 importUri = result.filePath
-                mergeConflicted = result.mergeConflict
+                mergeConflicted = result.hasMergeConflict
                 if (result.success && result.alreadyExists && mergeSelection == MergeOptions.NONE) {
                     showMergeOverwritePrompt(result.importedSlug)
                 } else if (result.success) {
@@ -292,17 +281,17 @@ class ImportDialog : DialogFragment() {
     }
 
     private fun importLocal(fileUri: Uri, mimeType: String) {
-        when (mimeType) {
-            IMPORT_TRANSLATION_MIME -> {
-                importUri = fileUri
-                doProjectImport(fileUri)
-            }
-            IMPORT_USFM_MIME -> {
-                importUri = fileUri
-                doUSFMImportUri(fileUri)
-            }
-            else -> Logger.e(TAG, "Unsupported import mime type: $mimeType")
-        }
+//        when (mimeType) {
+//            IMPORT_TRANSLATION_MIME -> {
+//                importUri = fileUri
+//                doProjectImport(fileUri)
+//            }
+//            IMPORT_USFM_MIME -> {
+//                importUri = fileUri
+//                doUSFMImportUri(fileUri)
+//            }
+//            else -> Logger.e(TAG, "Unsupported import mime type: $mimeType")
+//        }
     }
 
     private fun onImportSourceText() {
@@ -337,10 +326,10 @@ class ImportDialog : DialogFragment() {
      */
     private fun doProjectImport(importUri: Uri) {
         this.importUri = importUri
-        viewModel.importProjectFromUri(
-            importUri,
-            mergeSelection == MergeOptions.OVERWRITE
-        )
+//        viewModel.importProjectFromUri(
+//            importUri,
+//            mergeSelection == MergeOptions.OVERWRITE
+//        )
     }
 
     /**
@@ -522,8 +511,6 @@ class ImportDialog : DialogFragment() {
     companion object {
         const val TAG: String = "importDialog"
 
-        private const val IMPORT_TRANSLATION_MIME = "application/tstudio"
-        private const val IMPORT_USFM_MIME = "text/usfm"
         private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
         private const val STATE_DIALOG_MESSAGE: String = "state_dialog_message"
         private const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"

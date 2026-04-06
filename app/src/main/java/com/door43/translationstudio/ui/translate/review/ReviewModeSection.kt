@@ -68,6 +68,7 @@ fun ReviewModeSection(
         onHasMergeConflicts(hasConflicts)
         if (items.isNotEmpty() && !hasConflicts && mergeConflictFilterOn) {
             onMergeConflictFilterReset()
+            viewModel.onAction(ReviewAction.SetMergeConflictFilterOn(false))
         }
     }
 

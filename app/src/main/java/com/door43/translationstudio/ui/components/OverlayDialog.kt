@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -40,6 +41,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun OverlayDialog(
     onDismiss: () -> Unit,
+    contentPadding: Dp = 16.dp,
     snackbarHostState: SnackbarHostState? = null,
     content: @Composable ColumnScope.(dismissWithKeyboard: (() -> Unit) -> Unit) -> Unit
 ) {
@@ -100,9 +102,7 @@ fun OverlayDialog(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.surface
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(contentPadding)) {
                         content(dismissWithKeyboard)
                     }
                 }

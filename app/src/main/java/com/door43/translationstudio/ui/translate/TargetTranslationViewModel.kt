@@ -100,13 +100,16 @@ class TargetTranslationViewModel(
     val initialized: Boolean
         get() = this::targetTranslation.isInitialized
 
-    fun initialize(targetTranslationId: String) {
+    fun initialize(targetTranslationId: String, viewMode: TranslationViewMode? = null) {
         val translation = translator.getTargetTranslation(targetTranslationId) ?: return
 
         targetTranslation = translation
 
         val draftAvailable = draftIsAvailable()
-        val lastViewMode = translator.getLastViewMode(targetTranslation.id)
+        val lastViewMode = viewMode?.let {
+            translator.setLastViewMode(targetTranslation.id, it)
+            it
+        } ?: translator.getLastViewMode(targetTranslation.id)
 
         val projectTitle = "${getProject()?.name} - ${targetTranslation.targetLanguageName}"
 

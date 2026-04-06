@@ -25,8 +25,8 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogImportFromDoor43Binding
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions
-import com.door43.translationstudio.ui.home.ImportDialog.MergeOptions.Companion.fromInt
+import com.door43.translationstudio.ui.home.ImportDialogOld.MergeOptions
+import com.door43.translationstudio.ui.home.ImportDialogOld.MergeOptions.Companion.fromInt
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.usecases.CloneRepository
@@ -162,16 +162,6 @@ class ImportFromDoor43Dialog : DialogFragment() {
     private fun setupObservers() {
         viewModel.translation.observe(this) {
             it?.let { targetTranslation = it }
-        }
-        viewModel.progress.observe(this) {
-            if (it != null) {
-                progressDialog?.show()
-                progressDialog?.setProgress(it.progress)
-                progressDialog?.setMessage(it.message)
-                progressDialog?.setMax(it.max)
-            } else {
-                progressDialog?.dismiss()
-            }
         }
         viewModel.repositories.observe(this) {
             it?.let {

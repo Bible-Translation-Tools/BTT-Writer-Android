@@ -31,7 +31,7 @@ class ArchiveImporter(
             if (manifestJson.has("package_version")) {
                 val packageVersion = manifestJson.getInt("package_version")
                 targetTranslationDirs = when (packageVersion) {
-                    1 -> v1(manifestJson, expandedArchiveDir) // just to keep the switch pretty
+                    1 -> v1(manifestJson, expandedArchiveDir)
                     2 -> v2(manifestJson, expandedArchiveDir)
                     else -> listOf(expandedArchiveDir)
                 }

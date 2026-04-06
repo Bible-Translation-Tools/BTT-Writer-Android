@@ -520,7 +520,7 @@ class ImportProjectsTest {
         assertEquals("aa_mrk_text_ulb.tstudio", result.readablePath)
         assertEquals("aa_mrk_text_ulb", result.importedSlug)
         assertFalse(result.alreadyExists)
-        assertFalse(result.mergeConflict)
+        assertFalse(result.hasMergeConflict)
         assertFalse(result.invalidFileName)
 
         verifyUriImport(targetTranslation)
@@ -582,7 +582,7 @@ class ImportProjectsTest {
         assertEquals("aa_mrk_text_ulb.tstudio", result.readablePath)
         assertEquals("aa_mrk_text_ulb", result.importedSlug)
         assertTrue(result.alreadyExists)
-        assertTrue(result.mergeConflict)
+        assertTrue(result.hasMergeConflict)
         assertFalse(result.invalidFileName)
 
         verifyUriImport(targetTranslation)
@@ -644,7 +644,7 @@ class ImportProjectsTest {
         assertEquals("aa_mrk_text_ulb.tstudio", result.readablePath)
         assertEquals("aa_mrk_text_ulb", result.importedSlug)
         assertTrue(result.alreadyExists)
-        assertFalse(result.mergeConflict)
+        assertFalse(result.hasMergeConflict)
         assertFalse(result.invalidFileName)
 
         verifyUriImport(targetTranslation)
@@ -671,7 +671,7 @@ class ImportProjectsTest {
         assertEquals("aa_mrk_text_ulb.pdf", result.readablePath)
         assertNull(result.importedSlug)
         assertFalse(result.alreadyExists)
-        assertFalse(result.mergeConflict)
+        assertFalse(result.hasMergeConflict)
         assertTrue(result.invalidFileName)
 
         verify { FileUtilities.getUriDisplayName(any(), any()) }

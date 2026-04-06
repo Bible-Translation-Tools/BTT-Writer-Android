@@ -50,7 +50,7 @@ class ImportProjects(
 
         var alreadyExists = false
         var success = false
-        var mergeConflict = false
+        var hasMergeConflict = false
 
         val filename = FileUtilities.getUriDisplayName(context, projectUri)
         var importedSlug: String? = null
@@ -73,11 +73,10 @@ class ImportProjects(
                         success = importResults.isSuccess
                         if (success && importResults.mergeConflict) {
                             // make sure we have actual merge conflicts
-                            mergeConflict =
-                                MergeConflictsHandler.isTranslationMergeConflicted(
-                                    importResults.importedSlug,
-                                    translator
-                                )
+                            hasMergeConflict = MergeConflictsHandler.isTranslationMergeConflicted(
+                                importResults.importedSlug,
+                                translator
+                            )
                         }
                     }
                 }
@@ -91,7 +90,7 @@ class ImportProjects(
             filename,
             importedSlug,
             success,
-            mergeConflict,
+            hasMergeConflict,
             !validExtension,
             alreadyExists
         )
@@ -366,7 +365,7 @@ class ImportProjects(
 
     /**
      * returns the import result which includes:
-     * the human readable filePath
+     * the human-readable filePath
      * the success flag
      */
     data class ImportUriResult(
@@ -374,7 +373,7 @@ class ImportProjects(
         val readablePath: String,
         val importedSlug: String?,
         val success: Boolean,
-        val mergeConflict: Boolean,
+        val hasMergeConflict: Boolean,
         val invalidFileName: Boolean,
         val alreadyExists: Boolean
     )

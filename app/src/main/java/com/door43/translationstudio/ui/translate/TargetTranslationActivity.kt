@@ -48,8 +48,14 @@ class TargetTranslationActivity : BaseActivity() {
             false
         )
 
+        // manual location settings
+        val modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1)
+        val viewMode = if (modeIndex > 0 && modeIndex < TranslationViewMode.entries.size) {
+            TranslationViewMode.entries[modeIndex]
+        } else null
+
         if (!viewModel.initialized) {
-            viewModel.initialize(targetTranslationId)
+            viewModel.initialize(targetTranslationId, viewMode)
         }
 
         if (!viewModel.initialized) {
@@ -64,12 +70,6 @@ class TargetTranslationActivity : BaseActivity() {
 
         // open used source translations by default
         viewModel.onAction(TargetAction.OpenSourceTranslations)
-
-        // manual location settings
-        val modeIndex = args.getInt(Translator.EXTRA_VIEW_MODE, -1)
-        if (modeIndex > 0 && modeIndex < TranslationViewMode.entries.size) {
-            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.entries[modeIndex]))
-        }
 
         restartAutoCommitTimer()
 

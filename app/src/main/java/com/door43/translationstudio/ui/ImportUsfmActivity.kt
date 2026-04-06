@@ -338,7 +338,8 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
         val intent = Intent(this, TargetTranslationActivity::class.java)
         val args = Bundle()
         args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, targetTranslationID)
-        args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
+        // TODO Need to check if there is a conflict
+        //args.putBoolean(Translator.EXTRA_START_WITH_MERGE_FILTER, true)
         args.putInt(Translator.EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtras(args)
         startActivity(intent)

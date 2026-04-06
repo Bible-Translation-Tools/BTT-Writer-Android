@@ -47,6 +47,7 @@ import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
+import com.door43.translationstudio.ui.dialogs.ImportDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import kotlinx.coroutines.launch
@@ -77,12 +78,13 @@ fun HomeScreen(
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
+    var showImportDialog by rememberSaveable { mutableStateOf(false) }
 
     val errorString = stringResource(R.string.error)
 
     val menuItems = rememberHomeMenuItems(
         onUpdateClick = {},
-        onImport = {},
+        onImport = { showImportDialog = true },
         onFeedback = { showFeedbackDialog = true },
         onShareApp = {
             viewModel.onAction(HomeAction.ShareApp)
@@ -271,6 +273,20 @@ fun HomeScreen(
     if (showFeedbackDialog) {
         FeedbackDialog(
             onDismiss = { showFeedbackDialog = false }
+        )
+    }
+
+    if (showImportDialog) {
+        ImportDialog(
+            onDismiss = { showImportDialog = false },
+            onMergeConflict = {
+                showImportDialog = false
+                onMergeConflict(it)
+            },
+            onProjectImported = {
+                showImportDialog = false
+                viewModel.onAction(HomeAction.LoadProjects)
+            }
         )
     }
 
