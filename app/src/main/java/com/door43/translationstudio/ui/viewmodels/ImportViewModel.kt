@@ -48,13 +48,15 @@ data class ResultMessage(
 data class ImportState(
     val mergeConflict: ImportProjects.ImportUriResult? = null,
     val sourceConflict: ImportProjects.ImportSourceResult? = null,
-    val resultMessage: ResultMessage? = null
+    val resultMessage: ResultMessage? = null,
+    val backups: List<File> = emptyList()
 )
 
 sealed interface ImportAction {
     data class ImportUsfm(val uri: Uri) : ImportAction
     data class ImportProject(val uri: Uri, val overwrite: Boolean) : ImportAction
     data class ImportSourceUri(val uri: Uri, val overwrite: Boolean) : ImportAction
+    data class ImportBackup(val backup: File) : ImportAction
     data class ResetToMaster(val translationId: String) : ImportAction
     object ClearResult : ImportAction
     object ClearMergeConflict : ImportAction
@@ -65,6 +67,7 @@ sealed interface ImportAction {
 sealed class ImportEvent {
     data class ImportUsfm(val uri: Uri) : ImportEvent()
     data class ResolveMergeConflict(val translationId: String) : ImportEvent()
+    object ProjectImported : ImportEvent()
 }
 
 class ImportViewModel(
@@ -115,6 +118,13 @@ class ImportViewModel(
 
     // ----------------------- OLD CODE ----------------------- //
 
+    init {
+        viewModelScope.launch {
+            val backups = getBackupTranslations()
+            _state.update { it.copy(backups = backups) }
+        }
+    }
+
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
@@ -127,6 +137,7 @@ class ImportViewModel(
             is ImportAction.ResetToMaster -> viewModelScope.launch {
                 resetToMaster(action.translationId)
             }
+            is ImportAction.ImportBackup -> importBackup(action.backup)
             ImportAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
             ImportAction.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
             ImportAction.ApplyMergeConflict -> applyMergeConflict()
@@ -149,10 +160,12 @@ class ImportViewModel(
         }
     }
 
-    private fun importProject(uri: Uri, overwrite: Boolean) {
-        launchWithProgress(
-            application.getString(R.string.import_source_text)
-        ) { handle ->
+    private fun importProject(
+        uri: Uri,
+        overwrite: Boolean,
+        message: String = application.getString(R.string.import_source_text)
+    ) {
+        launchWithProgress(message) { handle ->
             val filename = FileUtilities.getFileName(application, uri)
             val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
             val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
@@ -172,6 +185,7 @@ class ImportViewModel(
                         _state.update { it.copy(mergeConflict = result) }
                     }
                     result.success -> {
+                        _event.trySend(ImportEvent.ProjectImported)
                         updateResult(
                             application.getString(R.string.import_from_storage),
                             application.getString(R.string.import_success) +
@@ -259,6 +273,26 @@ class ImportViewModel(
 
     private fun updateResult(title: String, message: String) {
         _state.update { it.copy(resultMessage = ResultMessage(title, message)) }
+    }
+
+    private suspend fun getBackupTranslations(): List<File> {
+        return withContext(Dispatchers.IO) {
+            directoryProvider
+                .backupsDir
+                .listFiles()
+                ?.asList()
+                ?.filter { it.length() > 0 }
+                ?: listOf()
+        }
+    }
+
+    private fun importBackup(backup: File) {
+        val uri = Uri.fromFile(backup)
+        val message = application.resources.getString(
+            R.string.importing_file,
+            backup.name
+        )
+        importProject(uri, false, message)
     }
 
 
@@ -383,34 +417,6 @@ class ImportViewModel(
             repository.isPrivate,
             notSupportedID
         ) { repository.toJSON() }
-    }
-
-    fun getBackupTranslations(): List<File> {
-        return directoryProvider
-            .backupsDir
-            .listFiles()
-            ?.asList()
-            ?.filter { it.length() > 0 }
-            ?: listOf()
-    }
-
-    fun restoreFromBackup(backup: File) {
-        val uri = Uri.fromFile(backup)
-        launchWithProgress(
-            application.resources.getString(
-                R.string.importing_file,
-                backup.name
-            )
-        ) { handle ->
-            _importFromUriResult.value = withContext(Dispatchers.IO) {
-                importProjects.importProject(
-                    uri,
-                    false
-                ) { progress, message ->
-                    handle.update(progress, message)
-                }
-            }
-        }
     }
 
     fun clearResults() {

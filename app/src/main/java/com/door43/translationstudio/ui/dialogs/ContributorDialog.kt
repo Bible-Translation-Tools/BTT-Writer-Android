@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NativeSpeaker
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.ui.components.OverlayDialog
 import com.door43.translationstudio.ui.legal.LegalDocumentDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

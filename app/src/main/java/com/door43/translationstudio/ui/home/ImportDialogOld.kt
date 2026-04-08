@@ -252,7 +252,7 @@ class ImportDialogOld : DialogFragment() {
     }
 
     private fun onBackupFileSelected(backup: File) {
-        viewModel.restoreFromBackup(backup)
+        //viewModel.restoreFromBackup(backup)
     }
 
     /**

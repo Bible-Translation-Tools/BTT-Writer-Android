@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.components.OverlayDialog
+import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import kotlinx.coroutines.delay
 
 enum class FootnoteDialogType {

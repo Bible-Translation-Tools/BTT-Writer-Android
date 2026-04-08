@@ -284,7 +284,6 @@ fun HomeScreen(
                 onMergeConflict(it)
             },
             onProjectImported = {
-                showImportDialog = false
                 viewModel.onAction(HomeAction.LoadProjects)
             }
         )

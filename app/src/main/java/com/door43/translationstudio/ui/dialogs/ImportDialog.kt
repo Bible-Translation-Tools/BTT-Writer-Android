@@ -28,7 +28,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -43,7 +46,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.ImportUsfmActivity.Companion.EXTRA_USFM_IMPORT_URI
-import com.door43.translationstudio.ui.components.OverlayDialog
 import com.door43.translationstudio.ui.viewmodels.ImportAction
 import com.door43.translationstudio.ui.viewmodels.ImportEvent
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
@@ -99,6 +101,8 @@ fun ImportDialog(
         }
     }
 
+    var showImportBackupDialog by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
             when (event) {
@@ -110,6 +114,7 @@ fun ImportDialog(
                 is ImportEvent.ResolveMergeConflict -> {
                     onMergeConflict(event.translationId)
                 }
+                ImportEvent.ProjectImported -> onProjectImported()
             }
         }
     }
@@ -177,7 +182,7 @@ fun ImportDialog(
                 ImportButton(
                     text = stringResource(R.string.import_from_backup),
                     onClick = {
-                        // onImportBackup
+                        showImportBackupDialog = true
                     }
                 )
             }
@@ -212,14 +217,14 @@ fun ImportDialog(
             title = stringResource(R.string.merge_conflict_title),
             message = message,
             onDismiss = { viewModel.onAction(ImportAction.ClearResult) },
-        ) { onDismiss ->
+        ) { onInfoDismiss ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TextButton(
                     onClick = {
-                        onDismiss()
+                        onInfoDismiss()
                         viewModel.onAction(ImportAction.ApplyMergeConflict)
                     }
                 ) {
@@ -227,7 +232,7 @@ fun ImportDialog(
                 }
                 TextButton(
                     onClick = {
-                        onDismiss()
+                        onInfoDismiss()
                         viewModel.onAction(
                             ImportAction.ImportProject(result.filePath, true)
                         )
@@ -237,7 +242,7 @@ fun ImportDialog(
                 }
                 TextButton(
                     onClick = {
-                        onDismiss()
+                        onInfoDismiss()
                         result.importedSlug?.let {
                             viewModel.onAction(ImportAction.ResetToMaster(it))
                         }
@@ -256,8 +261,8 @@ fun ImportDialog(
             onDismiss = {
                 viewModel.onAction(ImportAction.ClearResult)
             }
-        ) { onDismiss ->
-            TextButton(onClick = onDismiss) {
+        ) { onInfoDismiss ->
+            TextButton(onClick = onInfoDismiss) {
                 Text(stringResource(R.string.dismiss))
             }
         }
@@ -276,6 +281,17 @@ fun ImportDialog(
             onDismiss = {
                 viewModel.onAction(ImportAction.ClearSourceConflict)
             }
+        )
+    }
+
+    if (showImportBackupDialog) {
+        ImportBackupDialog(
+            backups = state.backups,
+            onBackupSelected = {
+                showImportBackupDialog = false
+                viewModel.onAction(ImportAction.ImportBackup(it))
+            },
+            onDismiss = { showImportBackupDialog = false }
         )
     }
 

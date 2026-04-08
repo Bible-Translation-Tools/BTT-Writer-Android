@@ -45,7 +45,7 @@ class ImportFromBackupDialog: DialogFragment() {
                 doImportBackup(position)
             }
 
-            adapter.setBackupItems(viewModel.getBackupTranslations())
+            //adapter.setBackupItems(viewModel.getBackupTranslations())
         }
 
         return binding.root
