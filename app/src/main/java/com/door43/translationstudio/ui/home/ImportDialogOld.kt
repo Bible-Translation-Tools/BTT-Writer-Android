@@ -72,7 +72,7 @@ class ImportDialogOld : DialogFragment() {
             ActivityResultContracts.GetContent()
         ) { uri ->
             if (uri != null) {
-                val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
+                val filename = FileUtilities.getFileName(requireContext(), uri)
                 val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
                 val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
                 if (isTstudio || isZip) {
@@ -87,7 +87,7 @@ class ImportDialogOld : DialogFragment() {
             ActivityResultContracts.GetContent()
         ) { uri ->
             if (uri != null) {
-                val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
+                val filename = FileUtilities.getFileName(requireContext(), uri)
                 val isUsfm = filename.contains(Translator.USFM_EXTENSION, ignoreCase = true)
                 val isTxt = filename.contains(Translator.TXT_EXTENSION, ignoreCase = true)
                 val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
@@ -231,7 +231,7 @@ class ImportDialogOld : DialogFragment() {
                             .setMessage(result.error)
                             .setNegativeButton(R.string.menu_cancel, null)
                             .setPositiveButton(R.string.confirm) { _, _ ->
-                                result.targetDir?.let(viewModel::importSource)
+                                //result.targetDir?.let(viewModel::importSource)
                             }
                             .setOnDismissListener { clearResults() }
                             .show()
@@ -343,7 +343,7 @@ class ImportDialogOld : DialogFragment() {
     }
 
     private fun doImportSourceText(uri: Uri) {
-        viewModel.importSource(uri)
+        //viewModel.importSource(uri)
     }
 
     /**

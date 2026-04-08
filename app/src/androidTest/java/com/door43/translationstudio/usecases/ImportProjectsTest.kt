@@ -176,38 +176,6 @@ class ImportProjectsTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testImportSourceTextFromDir() {
-        val sourceDir = getSourceDir()
-
-        assertTrue("Source dir should exist", sourceDir.exists())
-        assertTrue("Source dir should be a directory", sourceDir.isDirectory)
-        assertTrue(
-            "Source dir should have files",
-            sourceDir.listFiles()?.isNotEmpty() ?: false
-        )
-
-        val result = runBlocking {
-            importProjects.importSource(sourceDir)
-        }
-
-        assertTrue("Import should be successful", result.success)
-        assertFalse("There should be no merge conflict", result.hasConflict)
-        assertNull("Message should be null", result.error)
-        assertNull("Target dir should be null", result.targetDir)
-
-        // Import again
-        val sourceDir2 = getSourceDir()
-        val result2 = runBlocking {
-            importProjects.importSource(sourceDir2)
-        }
-
-        assertTrue("Import should be successful", result2.success)
-        assertFalse("There should not be merge conflict", result2.hasConflict)
-        assertNull("Error should be null", result2.error)
-        assertNull("Target dir should be null", result2.targetDir)
-    }
-
-    @Test
     fun testImportSourceTextFromUriDir() {
         val sourceDir = getSourceDir()
         val sourceDirUri = Uri.fromFile(sourceDir)
@@ -220,55 +188,37 @@ class ImportProjectsTest : KoinAndroidTest() {
         )
 
         val result = runBlocking {
-            importProjects.importSource(sourceDirUri)
+            importProjects.importSource(sourceDirUri, false)
         }
 
         assertTrue("Import should be successful", result.success)
         assertFalse("There should be no merge conflict", result.hasConflict)
         assertNull("Message should be null", result.error)
-        assertNull("Target dir should be null", result.targetDir)
+        assertNull("Uri should be null", result.uri)
 
         // Import again
         val sourceDir2 = getSourceDir()
         val sourceDir2Uri = Uri.fromFile(sourceDir2)
         val result2 = runBlocking {
-            importProjects.importSource(sourceDir2Uri)
+            importProjects.importSource(sourceDir2Uri, false)
         }
 
         assertFalse("Import should not be successful", result2.success)
         assertTrue("There should be merge conflict", result2.hasConflict)
         assertNotNull("Error should not be null", result2.error)
-        assertNotNull("Target dir should not be null", result2.targetDir)
+        assertNotNull("Uri should not be null", result2.uri)
 
         val sourceFiles = sourceDir2.listFiles()?.map { it.name }?.sorted() ?: emptyList()
-        val targetFiles = result2.targetDir?.listFiles()?.map { it.name }?.sorted() ?: emptyList()
-
         assertTrue("Source files should exist", sourceFiles.isNotEmpty())
-        assertTrue("Target files should exist", targetFiles.isNotEmpty())
-        assertEquals("Source files should match target files", sourceFiles, targetFiles)
 
         // Overwrite source from result target dir
         val result3 = runBlocking {
-            importProjects.importSource(result2.targetDir!!)
+            importProjects.importSource(result2.uri!!, true)
         }
         assertTrue("Import should be successful", result3.success)
         assertFalse("There should be no merge conflict", result3.hasConflict)
         assertNull("Message should be null", result3.error)
-        assertNull("Target dir should be null", result3.targetDir)
-    }
-
-    @Test
-    fun testImportSourceTextFromZipShouldFail() {
-        val sourceFile = getSourceFile()
-
-        val result = runBlocking {
-            importProjects.importSource(sourceFile)
-        }
-
-        assertFalse("Import should not be successful", result.success)
-        assertFalse("There should be no merge conflict", result.hasConflict)
-        assertNotNull("Message should not be null", result.error)
-        assertNull("Target dir should be null", result.targetDir)
+        assertNull("Uri should be null", result3.uri)
     }
 
     @Test
@@ -277,13 +227,13 @@ class ImportProjectsTest : KoinAndroidTest() {
         val sourceFileUri = Uri.fromFile(sourceFile)
 
         val result = runBlocking {
-            importProjects.importSource(sourceFileUri)
+            importProjects.importSource(sourceFileUri, false)
         }
 
         assertFalse("Import should not be successful", result.success)
         assertFalse("There should be no merge conflict", result.hasConflict)
         assertNotNull("Message should not be null", result.error)
-        assertNull("Target dir should be null", result.targetDir)
+        assertNull("Uri should be null", result.uri)
     }
 
     private fun getProjectFile(): File {

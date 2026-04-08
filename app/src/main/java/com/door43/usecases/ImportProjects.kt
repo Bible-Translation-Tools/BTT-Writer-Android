@@ -52,7 +52,7 @@ class ImportProjects(
         var success = false
         var hasMergeConflict = false
 
-        val filename = FileUtilities.getUriDisplayName(context, projectUri)
+        val filename = FileUtilities.getFileName(context, projectUri)
         var importedSlug: String? = null
 
         val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
@@ -165,7 +165,7 @@ class ImportProjects(
         return ImportUsfmResult(success, conflictingTargetTranslation)
     }
 
-    suspend fun importSource(uri: Uri): ImportSourceResult {
+    suspend fun importSource(uri: Uri, overwrite: Boolean): ImportSourceResult {
         val uuid = UUID.randomUUID().toString()
         val tempDir = directoryProvider.createTempDir(uuid)
         FileUtilities.copyDirectory(context, uri, tempDir)
@@ -177,30 +177,36 @@ class ImportProjects(
             return ImportSourceResult(
                 success = false,
                 hasConflict = false,
-                e.message
+                error = e.message
             )
         }
 
         return try {
             library.open(externalContainer.slug)
-            val conflictMessage = context.getString(
-                R.string.overwrite_content,
-                "${externalContainer.language.name} - ${externalContainer.project.name} - ${externalContainer.resource.name}"
-            )
-            ImportSourceResult(
-                success = false,
-                hasConflict = true,
-                error = conflictMessage,
-                targetDir = tempDir
-            )
+            if (overwrite) {
+                importSource(tempDir)
+            } else {
+                val conflictMessage = context.getString(
+                    R.string.overwrite_content,
+                    "${externalContainer.language.name} - ${externalContainer.project.name} - ${externalContainer.resource.name}"
+                )
+                ImportSourceResult(
+                    success = false,
+                    hasConflict = true,
+                    error = conflictMessage,
+                    uri = uri
+                )
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             // no conflicts. import
             importSource(tempDir)
+        } finally {
+            FileUtilities.deleteQuietly(tempDir)
         }
     }
 
-    suspend fun importSource(dir: File): ImportSourceResult {
+    private suspend fun importSource(dir: File): ImportSourceResult {
         return try {
             library.importResourceContainer(dir)
             ImportSourceResult(
@@ -212,7 +218,7 @@ class ImportProjects(
             ImportSourceResult(
                 success = false,
                 hasConflict = false,
-                e.message
+                error = e.message
             )
         } finally {
             FileUtilities.deleteQuietly(dir)
@@ -359,8 +365,8 @@ class ImportProjects(
     data class ImportSourceResult(
         val success: Boolean,
         val hasConflict: Boolean,
-        val error: String? = null,
-        val targetDir: File? = null
+        val uri: Uri? = null,
+        val error: String? = null
     )
 
     /**

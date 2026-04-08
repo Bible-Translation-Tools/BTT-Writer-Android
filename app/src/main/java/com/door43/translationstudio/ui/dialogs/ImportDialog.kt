@@ -91,6 +91,14 @@ fun ImportDialog(
         }
     }
 
+    val openDirectory = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.onAction(ImportAction.ImportSourceUri(it, false))
+        }
+    }
+
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
             when (event) {
@@ -162,7 +170,7 @@ fun ImportDialog(
                 ImportButton(
                     text = stringResource(R.string.import_source_text),
                     onClick = {
-                        // onImportSource
+                        openDirectory.launch(null)
                     }
                 )
 
@@ -241,16 +249,34 @@ fun ImportDialog(
         }
     }
 
-    state.resultMessage?.let { message ->
+    state.resultMessage?.let { result ->
         InfoDialog(
-            title = stringResource(R.string.import_from_storage),
-            message = message,
-            onDismiss = { viewModel.onAction(ImportAction.ClearResult) }
+            title = result.title,
+            message = result.message,
+            onDismiss = {
+                viewModel.onAction(ImportAction.ClearResult)
+            }
         ) { onDismiss ->
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.dismiss))
             }
         }
+    }
+
+    state.sourceConflict?.let { result ->
+        ConfirmDialog(
+            title = stringResource(R.string.confirm),
+            message = result.error ?: "Unknown error",
+            onConfirm = {
+                result.uri?.let { uri ->
+                    viewModel.onAction(ImportAction.ImportSourceUri(uri, true))
+                }
+                viewModel.onAction(ImportAction.ClearSourceConflict)
+            },
+            onDismiss = {
+                viewModel.onAction(ImportAction.ClearSourceConflict)
+            }
+        )
     }
 
     progress?.let {

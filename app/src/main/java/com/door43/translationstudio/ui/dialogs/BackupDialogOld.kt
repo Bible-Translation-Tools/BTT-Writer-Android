@@ -98,7 +98,7 @@ class BackupDialogOld : DialogFragment() {
     }
 
     private fun validateUriExtension(uri: Uri, extension: String): Boolean {
-        val filename = FileUtilities.getUriDisplayName(requireContext(), uri)
+        val filename = FileUtilities.getFileName(requireContext(), uri)
         val filenameRegex = Regex(".*\\.$extension(\\s\\(\\d+\\))?$")
         return filename.matches(filenameRegex)
     }
@@ -449,7 +449,7 @@ class BackupDialogOld : DialogFragment() {
     private fun showBackupResults(textResId: Int, fileUri: Uri?) {
         var message = resources.getString(textResId)
         if (fileUri != null) {
-            message += "\n${FileUtilities.getUriDisplayName(requireContext(), fileUri)}"
+            message += "\n${FileUtilities.getFileName(requireContext(), fileUri)}"
         }
         showBackupResults(message)
     }

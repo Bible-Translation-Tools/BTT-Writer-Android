@@ -642,7 +642,7 @@ class ProcessUSFM {
         var success = false
         updateStatus(R.string.initializing_import)
 
-        val path = FileUtilities.getUriDisplayName(context, uri)
+        val path = FileUtilities.getFileName(context, uri)
 
         try {
             val ext = FileUtilities.getExtension(path)

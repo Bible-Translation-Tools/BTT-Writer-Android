@@ -40,22 +40,26 @@ import org.unfoldingword.gogsclient.Repository
 import java.io.File
 import java.security.InvalidParameterException
 
-private const val IMPORT_TRANSLATION_MIME = "application/tstudio"
-private const val IMPORT_USFM_MIME = "text/usfm"
+data class ResultMessage(
+    val title: String,
+    val message: String
+)
 
 data class ImportState(
     val mergeConflict: ImportProjects.ImportUriResult? = null,
-    val resultMessage: String? = null
+    val sourceConflict: ImportProjects.ImportSourceResult? = null,
+    val resultMessage: ResultMessage? = null
 )
 
 sealed interface ImportAction {
     data class ImportUsfm(val uri: Uri) : ImportAction
     data class ImportProject(val uri: Uri, val overwrite: Boolean) : ImportAction
-    data class ImportSource(val uri: Uri) : ImportAction
+    data class ImportSourceUri(val uri: Uri, val overwrite: Boolean) : ImportAction
     data class ResetToMaster(val translationId: String) : ImportAction
     object ClearResult : ImportAction
     object ClearMergeConflict : ImportAction
     object ApplyMergeConflict : ImportAction
+    object ClearSourceConflict : ImportAction
 }
 
 sealed class ImportEvent {
@@ -119,26 +123,29 @@ class ImportViewModel(
         when (action) {
             is ImportAction.ImportUsfm -> importUsfm(action.uri)
             is ImportAction.ImportProject -> importProject(action.uri, action.overwrite)
-            is ImportAction.ImportSource -> importSource(action.uri)
+            is ImportAction.ImportSourceUri -> importSource(action.uri, action.overwrite)
             is ImportAction.ResetToMaster -> viewModelScope.launch {
                 resetToMaster(action.translationId)
             }
             ImportAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
             ImportAction.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
             ImportAction.ApplyMergeConflict -> applyMergeConflict()
+            ImportAction.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
         }
     }
 
     private fun importUsfm(uri: Uri) {
-        val filename = FileUtilities.getUriDisplayName(application, uri)
+        val filename = FileUtilities.getFileName(application, uri)
         val isUsfm = filename.contains(Translator.USFM_EXTENSION, ignoreCase = true)
         val isTxt = filename.contains(Translator.TXT_EXTENSION, ignoreCase = true)
         val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
         if (isUsfm || isTxt || isZip) {
             _event.trySend(ImportEvent.ImportUsfm(uri))
         } else {
-            val error = "${application.getString(R.string.invalid_file)}\n$filename"
-            _state.update { it.copy(resultMessage = error) }
+            updateResult(
+                application.getString(R.string.import_from_storage),
+                "${application.getString(R.string.invalid_file)}\n$filename"
+            )
         }
     }
 
@@ -146,7 +153,7 @@ class ImportViewModel(
         launchWithProgress(
             application.getString(R.string.import_source_text)
         ) { handle ->
-            val filename = FileUtilities.getUriDisplayName(application, uri)
+            val filename = FileUtilities.getFileName(application, uri)
             val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
             val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
             if (isTstudio || isZip) {
@@ -155,7 +162,6 @@ class ImportViewModel(
                         resetToMaster(it)
                     }
                 }
-
                 val result = withContext(Dispatchers.IO) {
                     importProjects.importProject(uri, overwrite) { progress, message ->
                         handle.update(progress, message)
@@ -166,24 +172,32 @@ class ImportViewModel(
                         _state.update { it.copy(mergeConflict = result) }
                     }
                     result.success -> {
-                        val message = application.getString(R.string.import_success) +
-                                "\n${result.readablePath}"
-                        _state.update { it.copy(resultMessage = message) }
+                        updateResult(
+                            application.getString(R.string.import_from_storage),
+                            application.getString(R.string.import_success) +
+                                    "\n${result.readablePath}"
+                        )
                     }
                     result.invalidFileName -> {
-                        val message = application.getString(R.string.invalid_file) +
-                                "\n${result.readablePath}"
-                        _state.update { it.copy(resultMessage = message) }
+                        updateResult(
+                            application.getString(R.string.import_from_storage),
+                            application.getString(R.string.invalid_file) +
+                                    "\n${result.readablePath}"
+                        )
                     }
                     else -> {
-                        val message = application.getString(R.string.import_failed) +
-                                "\n${result.readablePath}"
-                        _state.update { it.copy(resultMessage = message) }
+                        updateResult(
+                            application.getString(R.string.import_from_storage),
+                            application.getString(R.string.import_failed) +
+                                    "\n${result.readablePath}"
+                        )
                     }
                 }
             } else {
-                val error = "${application.getString(R.string.invalid_file)}\n$filename"
-                _state.update { it.copy(resultMessage = error) }
+                updateResult(
+                    application.getString(R.string.import_from_storage),
+                    "${application.getString(R.string.invalid_file)}\n$filename"
+                )
             }
         }
     }
@@ -205,11 +219,46 @@ class ImportViewModel(
                 )
             }
         } else {
-            val message = application.getString(R.string.import_success) +
-                    "\n${result.importedSlug}"
-            _state.update { it.copy(resultMessage = message) }
+            updateResult(
+                application.getString(R.string.import_from_storage),
+                application.getString(R.string.import_success) +
+                        "\n${result.importedSlug}"
+            )
         }
         _state.update { it.copy(mergeConflict = null) }
+    }
+
+    private fun importSource(uri: Uri, overwrite: Boolean) {
+        launchWithProgress(
+            application.getString(R.string.import_source_text)
+        ) {
+            val result = withContext(Dispatchers.IO) {
+                importProjects.importSource(uri, overwrite)
+            }
+
+            when {
+                result.success -> {
+                    val dirName = FileUtilities.getDirectoryName(application, uri)
+                    updateResult(
+                        application.getString(R.string.success),
+                        application.getString(R.string.import_success) + " $dirName"
+                    )
+                }
+                result.hasConflict -> {
+                    _state.update { it.copy(sourceConflict = result) }
+                }
+                else -> {
+                    updateResult(
+                        application.getString(R.string.could_not_import),
+                        result.error ?: "Unknown error"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateResult(title: String, message: String) {
+        _state.update { it.copy(resultMessage = ResultMessage(title, message)) }
     }
 
 
@@ -250,26 +299,6 @@ class ImportViewModel(
                 cloneRepository.execute(cloneUrl) { progress, message ->
                     handle.update(progress, message)
                 }
-            }
-        }
-    }
-
-    fun importSource(uri: Uri) {
-        launchWithProgress(
-            application.getString(R.string.import_source_text)
-        ) {
-            _importSourceResult.value = withContext(Dispatchers.IO) {
-                importProjects.importSource(uri)
-            }
-        }
-    }
-
-    fun importSource(dir: File) {
-        launchWithProgress(
-            application.getString(R.string.import_source_text)
-        ) {
-            _importSourceResult.value = withContext(Dispatchers.IO) {
-                importProjects.importSource(dir)
             }
         }
     }

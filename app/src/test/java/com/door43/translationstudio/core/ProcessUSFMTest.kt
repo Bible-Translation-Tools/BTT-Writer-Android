@@ -186,7 +186,7 @@ class ProcessUSFMTest {
 
     @Test fun `test Builder creation from URI`() {
         val inputStream: InputStream = mockk()
-        every { FileUtilities.getUriDisplayName(context, mockUri) }.returns("mrk.usfm")
+        every { FileUtilities.getFileName(context, mockUri) }.returns("mrk.usfm")
         every { contentResolver.openInputStream(mockUri) }.returns(inputStream)
         every { inputStream.close() } just runs
         every { FileUtilities.readStreamToString(any()) }
@@ -210,7 +210,7 @@ class ProcessUSFMTest {
         verifyBookResult(processUSFM)
 
         assertTrue(processUSFM.resultsString.contains("No Errors"))
-        verify { FileUtilities.getUriDisplayName(context, mockUri) }
+        verify { FileUtilities.getFileName(context, mockUri) }
         verify { contentResolver.openInputStream(mockUri) }
         verify { inputStream.close() }
         verify { FileUtilities.readStreamToString(any()) }

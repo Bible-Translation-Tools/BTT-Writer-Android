@@ -167,7 +167,7 @@ class ExportViewModel(
             val message = if (result.success) {
                 application.getString(
                     R.string.export_success,
-                    FileUtilities.getUriDisplayName(application, result.uri)
+                    FileUtilities.getFileName(application, result.uri)
                 )
             } else {
                 application.getString(R.string.export_failed)
@@ -196,7 +196,7 @@ class ExportViewModel(
             val message = if (result.success) {
                 application.getString(
                     R.string.export_success,
-                    FileUtilities.getUriDisplayName(application, result.uri)
+                    FileUtilities.getFileName(application, result.uri)
                 )
             } else {
                 application.getString(R.string.export_failed)
@@ -256,7 +256,7 @@ class ExportViewModel(
                 val title = application.getString(R.string.success)
                 val message = application.getString(
                     R.string.print_success,
-                    FileUtilities.getUriDisplayName(application, result.uri)
+                    FileUtilities.getFileName(application, result.uri)
                 )
                 title to message
             } else {
@@ -481,7 +481,7 @@ class ExportViewModel(
     }
 
     private fun validateUriExtension(uri: Uri, extension: String): Boolean {
-        val filename = FileUtilities.getUriDisplayName(application, uri)
+        val filename = FileUtilities.getFileName(application, uri)
         val filenameRegex = Regex(".*\\.$extension(\\s\\(\\d+\\))?$")
         return filename.matches(filenameRegex)
     }

@@ -3,6 +3,7 @@ package com.door43.util
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.core.net.toFile
 import androidx.documentfile.provider.DocumentFile
@@ -426,7 +427,7 @@ object FileUtilities {
         }
     }
 
-    fun getUriDisplayName(context: Context, uri: Uri): String {
+    fun getFileName(context: Context, uri: Uri): String {
         val defaultName = "unnamed.file"
 
         return when (uri.scheme) {
@@ -446,6 +447,23 @@ object FileUtilities {
             }
             "file" -> uri.lastPathSegment ?: defaultName
             else -> defaultName
+        }
+    }
+
+    fun getDirectoryName(context: Context, uri: Uri): String? {
+        // For tree URIs, we need to convert it to a document URI to query it
+        val documentUri = DocumentsContract.buildDocumentUriUsingTree(
+            uri,
+            DocumentsContract.getTreeDocumentId(uri)
+        )
+
+        return context.contentResolver.query(documentUri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+            if (cursor.moveToFirst()) {
+                cursor.getString(nameIndex)
+            } else {
+                null
+            }
         }
     }
 }

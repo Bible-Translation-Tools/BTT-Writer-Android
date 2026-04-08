@@ -485,7 +485,7 @@ class ImportProjectsTest {
     fun `test import project from uri`() {
         val uri: Uri = mockk()
 
-        every { FileUtilities.getUriDisplayName(any(), any()) }
+        every { FileUtilities.getFileName(any(), any()) }
             .returns("aa_mrk_text_ulb.tstudio")
 
         every { contentResolver.openInputStream(any()) }
@@ -530,7 +530,7 @@ class ImportProjectsTest {
     fun `test import project from uri with merge conflict`() {
         val uri: Uri = mockk()
 
-        every { FileUtilities.getUriDisplayName(any(), any()) }
+        every { FileUtilities.getFileName(any(), any()) }
             .returns("aa_mrk_text_ulb.tstudio")
 
         every { contentResolver.openInputStream(any()) }
@@ -592,7 +592,7 @@ class ImportProjectsTest {
     fun `test import project from uri with merge conflict overwrite`() {
         val uri: Uri = mockk()
 
-        every { FileUtilities.getUriDisplayName(any(), any()) }
+        every { FileUtilities.getFileName(any(), any()) }
             .returns("aa_mrk_text_ulb.tstudio")
 
         every { contentResolver.openInputStream(any()) }
@@ -654,7 +654,7 @@ class ImportProjectsTest {
     fun `test import project from invalid file uri`() {
         val uri: Uri = mockk()
 
-        every { FileUtilities.getUriDisplayName(any(), any()) }
+        every { FileUtilities.getFileName(any(), any()) }
             .returns("aa_mrk_text_ulb.pdf")
 
         val result = ImportProjects(
@@ -674,7 +674,7 @@ class ImportProjectsTest {
         assertFalse(result.hasMergeConflict)
         assertTrue(result.invalidFileName)
 
-        verify { FileUtilities.getUriDisplayName(any(), any()) }
+        verify { FileUtilities.getFileName(any(), any()) }
         verify(exactly = 0) { contentResolver.openInputStream(any()) }
         verify(exactly = 0) { TargetTranslation.open(any(), any()) }
         verify(exactly = 0) { archiveImporter.importArchive(any()) }
@@ -704,13 +704,13 @@ class ImportProjectsTest {
                 directoryProvider,
                 archiveImporter,
                 library
-            ).importSource(uri)
+            ).importSource(uri, false)
         }
 
         assertTrue(result.success)
         assertFalse(result.hasConflict)
         assertNull(result.error)
-        assertNull(result.targetDir)
+        assertNull(result.uri)
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
@@ -721,7 +721,7 @@ class ImportProjectsTest {
     }
 
     @Test
-    fun `test import existing source text from uri`() {
+    fun `test import existing source text from uri fails`() {
         val uri: Uri = mockk()
 
         val srcDir = tempDir.newFolder("fa_mrk_nmv")
@@ -750,20 +750,60 @@ class ImportProjectsTest {
                 directoryProvider,
                 archiveImporter,
                 library
-            ).importSource(uri)
+            ).importSource(uri, false)
         }
 
         assertFalse(result.success)
         assertTrue(result.hasConflict)
         assertEquals(expectedErrorMessage, result.error)
-        assertEquals(srcDir, result.targetDir)
+        assertEquals(uri, result.uri)
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
         verify { library.open(any()) }
         coVerify(exactly = 0) { library.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
-        verify(exactly = 0) { FileUtilities.deleteQuietly(any()) }
+        verify { FileUtilities.deleteQuietly(any()) }
+    }
+
+    @Test
+    fun `test import existing source text from uri overwrite`() {
+        val uri: Uri = mockk()
+
+        val srcDir = tempDir.newFolder("fa_mrk_nmv")
+        every { directoryProvider.createTempDir(any()) }.returns(srcDir)
+        every { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
+            .just(runs)
+
+        every { library.open(any()) }.returns(mockk())
+        coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
+
+        val tempRc = mockResourceContainer()
+        TestUtils.setPropertyReflection(tempRc, "slug", "en")
+        every { ResourceContainer.load(srcDir) }.returns(tempRc)
+
+        val result = runBlocking {
+            ImportProjects(
+                context,
+                translator,
+                backupRC,
+                directoryProvider,
+                archiveImporter,
+                library
+            ).importSource(uri, true)
+        }
+
+        assertTrue(result.success)
+        assertFalse(result.hasConflict)
+        assertNull(result.error)
+        assertNull(result.uri)
+
+        verify { directoryProvider.createTempDir(any()) }
+        verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
+        verify { library.open(any()) }
+        coVerify { library.importResourceContainer(srcDir) }
+        verify { ResourceContainer.load(srcDir) }
+        verify { FileUtilities.deleteQuietly(any()) }
     }
 
     @Test
@@ -787,13 +827,13 @@ class ImportProjectsTest {
                 directoryProvider,
                 archiveImporter,
                 library
-            ).importSource(uri)
+            ).importSource(uri, false)
         }
 
         assertFalse(result.success)
         assertFalse(result.hasConflict)
         assertEquals(expectedErrorMessage, result.error)
-        assertNull(result.targetDir)
+        assertNull(result.uri)
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
@@ -829,45 +869,19 @@ class ImportProjectsTest {
                 directoryProvider,
                 archiveImporter,
                 library
-            ).importSource(uri)
+            ).importSource(uri, false)
         }
 
         assertFalse(result.success)
         assertFalse(result.hasConflict)
         assertEquals(expectedErrorMessage, result.error)
-        assertNull(result.targetDir)
+        assertNull(result.uri)
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
         verify { library.open(any()) }
         coVerify { library.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
-        verify { FileUtilities.deleteQuietly(any()) }
-    }
-
-    @Test
-    fun `test import source from directory`() {
-        val dir = tempDir.newFolder("fa_mrk_nmv")
-
-        coEvery { library.importResourceContainer(dir) }.returns(mockk())
-
-        val result = runBlocking {
-            ImportProjects(
-                context,
-                translator,
-                backupRC,
-                directoryProvider,
-                archiveImporter,
-                library
-            ).importSource(dir)
-        }
-
-        assertTrue(result.success)
-        assertFalse(result.hasConflict)
-        assertNull(result.error)
-        assertNull(result.targetDir)
-
-        coVerify { library.importResourceContainer(dir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
 
@@ -892,7 +906,7 @@ class ImportProjectsTest {
     }
 
     private fun verifyUriImport(targetTranslation: TargetTranslation) {
-        verify { FileUtilities.getUriDisplayName(any(), any()) }
+        verify { FileUtilities.getFileName(any(), any()) }
         verify { contentResolver.openInputStream(any()) }
         verify { targetTranslation.id }
         verify { TargetTranslation.open(any(), any()) }

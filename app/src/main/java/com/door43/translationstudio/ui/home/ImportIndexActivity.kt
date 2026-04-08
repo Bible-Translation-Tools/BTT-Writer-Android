@@ -26,7 +26,7 @@ class ImportIndexActivity : BaseActivity() {
             ActivityResultContracts.GetContent()
         ) { uri ->
             if (uri != null) {
-                val filename = FileUtilities.getUriDisplayName(this, uri)
+                val filename = FileUtilities.getFileName(this, uri)
                 val isSqlite = filename.contains(".sqlite", ignoreCase = true)
                 if (isSqlite) {
                     viewModel.importIndex(uri)
