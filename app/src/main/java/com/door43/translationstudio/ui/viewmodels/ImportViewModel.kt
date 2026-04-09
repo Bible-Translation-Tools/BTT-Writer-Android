@@ -2,24 +2,20 @@ package com.door43.translationstudio.ui.viewmodels
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.home.RepositoryItem
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.AdvancedGogsRepoSearch
-import com.door43.usecases.BackupRC
 import com.door43.usecases.CloneRepository
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.RegisterSSHKeys
@@ -37,7 +33,9 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.gogsclient.Repository
+import org.unfoldingword.tools.logger.Logger
 import java.io.File
+import java.io.IOException
 import java.security.InvalidParameterException
 
 data class ResultMessage(
@@ -45,11 +43,22 @@ data class ResultMessage(
     val message: String
 )
 
+data class MergeConflict(
+    val translation: TargetTranslation,
+    val hasMergeConflict: Boolean,
+    val isFromServer: Boolean,
+    val onResolve: () -> Unit,
+    val onOverwrite: () -> Unit,
+    val onCancel: () -> Unit
+)
+
 data class ImportState(
-    val mergeConflict: ImportProjects.ImportUriResult? = null,
+    val mergeConflict: MergeConflict? = null,
     val sourceConflict: ImportProjects.ImportSourceResult? = null,
     val resultMessage: ResultMessage? = null,
-    val backups: List<File> = emptyList()
+    val backups: List<File> = emptyList(),
+    val repositories: List<RepositoryItem> = emptyList(),
+    val repoToImport: RepositoryItem? = null
 )
 
 sealed interface ImportAction {
@@ -57,29 +66,35 @@ sealed interface ImportAction {
     data class ImportProject(val uri: Uri, val overwrite: Boolean) : ImportAction
     data class ImportSourceUri(val uri: Uri, val overwrite: Boolean) : ImportAction
     data class ImportBackup(val backup: File) : ImportAction
-    data class ResetToMaster(val translationId: String) : ImportAction
+    data class SearchRepositories(val user: String, val repo: String) : ImportAction
+    data class ImportRepo(
+        val repo: RepositoryItem,
+        val accepted: Boolean,
+        val overwrite: Boolean
+    ) : ImportAction
+    object RegisterKeys : ImportAction
     object ClearResult : ImportAction
     object ClearMergeConflict : ImportAction
-    object ApplyMergeConflict : ImportAction
     object ClearSourceConflict : ImportAction
+    object ClearImportRepo : ImportAction
 }
 
-sealed class ImportEvent {
-    data class ImportUsfm(val uri: Uri) : ImportEvent()
-    data class ResolveMergeConflict(val translationId: String) : ImportEvent()
-    object ProjectImported : ImportEvent()
+sealed interface ImportEvent {
+    data class ImportUsfm(val uri: Uri) : ImportEvent
+    data class ResolveMergeConflict(val translationId: String) : ImportEvent
+    object ProjectImported : ImportEvent
+    object AuthRequested : ImportEvent
 }
 
 class ImportViewModel(
-    private var profile: Profile,
     private val translator: Translator,
     private val advancedGogsRepoSearch: AdvancedGogsRepoSearch,
     private val cloneRepository: CloneRepository,
     private val registerSSHKeys: RegisterSSHKeys,
     private val importProjects: ImportProjects,
-    private val backupRC: BackupRC,
     private val library: Door43Client,
-    private val directoryProvider: IDirectoryProvider
+    private val directoryProvider: IDirectoryProvider,
+    private val targetTranslationMigrator: TargetTranslationMigrator
 ) : ViewModel(), KoinComponent, ProgressOwner {
 
     private val application: Application by inject()
@@ -92,31 +107,6 @@ class ImportViewModel(
 
     private val _event = Channel<ImportEvent>(Channel.BUFFERED)
     val event = _event.receiveAsFlow()
-
-    // ----------------------- OLD CODE ----------------------- //
-
-    private val _translation = MutableLiveData<TargetTranslation?>(null)
-    val translation: LiveData<TargetTranslation?> = _translation
-
-    private val _repositories = MutableLiveData<List<RepositoryItem>>(null)
-    val repositories: LiveData<List<RepositoryItem>> = _repositories
-
-    private val _cloneRepoResult = MutableLiveData<CloneRepository.Result?>(null)
-    val cloneRepoResult: LiveData<CloneRepository.Result?> = _cloneRepoResult
-
-    private val _importFromUriResult = MutableLiveData<ImportProjects.ImportUriResult?>(null)
-    val importFromUriResult: LiveData<ImportProjects.ImportUriResult?> = _importFromUriResult
-
-    private val _registeredSSHKeys = MutableLiveData<Boolean?>()
-    val registeredSSHKeys: LiveData<Boolean?> = _registeredSSHKeys
-
-    private val _importSourceResult = MutableLiveData<ImportProjects.ImportSourceResult?>(null)
-    val importSourceResult: LiveData<ImportProjects.ImportSourceResult?> = _importSourceResult
-
-    private val _backupRestoreResult = MutableLiveData<ImportProjects.ImportUriResult?>(null)
-    val backupRestoreResult: MutableLiveData<ImportProjects.ImportUriResult?> = _backupRestoreResult
-
-    // ----------------------- OLD CODE ----------------------- //
 
     init {
         viewModelScope.launch {
@@ -134,14 +124,23 @@ class ImportViewModel(
             is ImportAction.ImportUsfm -> importUsfm(action.uri)
             is ImportAction.ImportProject -> importProject(action.uri, action.overwrite)
             is ImportAction.ImportSourceUri -> importSource(action.uri, action.overwrite)
-            is ImportAction.ResetToMaster -> viewModelScope.launch {
-                resetToMaster(action.translationId)
-            }
             is ImportAction.ImportBackup -> importBackup(action.backup)
-            ImportAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
+            is ImportAction.SearchRepositories -> searchRepositories(
+                action.user,
+                action.repo
+            )
+            is ImportAction.ImportRepo -> importRepository(
+                action.repo,
+                action.accepted,
+                action.overwrite
+            )
+            ImportAction.RegisterKeys -> forceRegisterSSHKeys()
+            ImportAction.ClearResult -> _state.update {
+                it.copy(resultMessage = null, repositories = emptyList())
+            }
             ImportAction.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
-            ImportAction.ApplyMergeConflict -> applyMergeConflict()
             ImportAction.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
+            ImportAction.ClearImportRepo -> _state.update { it.copy(repoToImport = null) }
         }
     }
 
@@ -170,11 +169,10 @@ class ImportViewModel(
             val isTstudio = filename.contains(Translator.TSTUDIO_EXTENSION, ignoreCase = true)
             val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
             if (isTstudio || isZip) {
-                if (overwrite) {
-                    _state.value.mergeConflict?.importedSlug?.let {
-                        resetToMaster(it)
-                    }
-                }
+                if (overwrite) resetToMaster()
+
+                _state.update { it.copy(mergeConflict = null) }
+
                 val result = withContext(Dispatchers.IO) {
                     importProjects.importProject(uri, overwrite) { progress, message ->
                         handle.update(progress, message)
@@ -182,7 +180,24 @@ class ImportViewModel(
                 }
                 when {
                     result.success && result.alreadyExists && !overwrite -> {
-                        _state.update { it.copy(mergeConflict = result) }
+                        _state.update {
+                            it.copy(mergeConflict = MergeConflict(
+                                translation = getTargetTranslation(result.importedSlug!!),
+                                hasMergeConflict = result.hasMergeConflict,
+                                isFromServer = false,
+                                onResolve = { resolveMergeConflict() },
+                                onOverwrite = {
+                                    launchWithProgress {
+                                        importProject(result.filePath, true)
+                                    }
+                                },
+                                onCancel = {
+                                    viewModelScope.launch {
+                                        resetToMaster()
+                                    }
+                                }
+                            ))
+                        }
                     }
                     result.success -> {
                         _event.trySend(ImportEvent.ProjectImported)
@@ -216,32 +231,6 @@ class ImportViewModel(
         }
     }
 
-    private suspend fun resetToMaster(translationId: String) {
-        withContext(Dispatchers.IO) {
-            val targetTranslation = translator.getTargetTranslation(translationId)
-            targetTranslation?.resetToMasterBackup()
-        }
-        _state.update { it.copy(mergeConflict = null) }
-    }
-
-    private fun applyMergeConflict() {
-        val result = _state.value.mergeConflict ?: return
-        if (result.hasMergeConflict) {
-            result.importedSlug?.let {
-                _event.trySend(
-                    ImportEvent.ResolveMergeConflict(it)
-                )
-            }
-        } else {
-            updateResult(
-                application.getString(R.string.import_from_storage),
-                application.getString(R.string.import_success) +
-                        "\n${result.importedSlug}"
-            )
-        }
-        _state.update { it.copy(mergeConflict = null) }
-    }
-
     private fun importSource(uri: Uri, overwrite: Boolean) {
         launchWithProgress(
             application.getString(R.string.import_source_text)
@@ -271,21 +260,6 @@ class ImportViewModel(
         }
     }
 
-    private fun updateResult(title: String, message: String) {
-        _state.update { it.copy(resultMessage = ResultMessage(title, message)) }
-    }
-
-    private suspend fun getBackupTranslations(): List<File> {
-        return withContext(Dispatchers.IO) {
-            directoryProvider
-                .backupsDir
-                .listFiles()
-                ?.asList()
-                ?.filter { it.length() > 0 }
-                ?: listOf()
-        }
-    }
-
     private fun importBackup(backup: File) {
         val uri = Uri.fromFile(backup)
         val message = application.resources.getString(
@@ -295,75 +269,26 @@ class ImportViewModel(
         importProject(uri, false, message)
     }
 
-
-
-
-
-    fun loadTargetTranslation(translationID: String) {
-        translator.getTargetTranslation(translationID)?.let {
-            it.setDefaultContributor(profile.nativeSpeaker)
-            _translation.value = it
-        } ?: throw InvalidParameterException(
-            "The target translation '$translationID' is invalid"
-        )
-    }
-
-    fun searchRepositories(userQuery: String, repoQuery: String, limit: Int) {
+    private fun searchRepositories(user: String, repo: String) {
         launchWithProgress(
             application.getString(R.string.searching_repositories)
         ) { handle ->
             val result = withContext(Dispatchers.IO) {
-                advancedGogsRepoSearch.execute(
-                    userQuery,
-                    repoQuery,
-                    limit
-                ) { progress, message ->
+                advancedGogsRepoSearch.execute(user, repo, 50) { progress, message ->
                     handle.update(progress, message)
                 }
             }
-            _repositories.value = result.map(::mapRepository)
+            _state.update { it.copy(repositories = result.map(::mapRepository)) }
         }
     }
 
-    fun cloneRepository(cloneUrl: String) {
-        launchWithProgress(
-            application.getString(R.string.cloning_repository)
-        ) { handle ->
-            _cloneRepoResult.value = withContext(Dispatchers.IO) {
-                cloneRepository.execute(cloneUrl) { progress, message ->
-                    handle.update(progress, message)
-                }
-            }
-        }
-    }
-
-    fun registerSSHKeys(force: Boolean) {
-        launchWithProgress { handle ->
-            val result = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force) { progress, message ->
-                    handle.update(progress, message)
-                }
-            }
-            _registeredSSHKeys.value = result
-        }
-    }
-
-    fun backupAndDeleteTranslation(dir: File) {
-        try {
-            backupRC.backupTargetTranslation(dir)
-            translator.deleteTargetTranslation(dir)
-        } catch (e: Exception) {
-            Log.w(this::class.simpleName, e)
-        }
-    }
-
-    fun mapRepository(repository: Repository): RepositoryItem {
+    private fun mapRepository(repository: Repository): RepositoryItem {
         val repoName = repository.fullName.split("/".toRegex())
         var projectName = ""
         var languageName = ""
         var code = "en" // default font language if language is not found
-        var direction = "ltor" // default font language direction if language is not found
-        var notSupportedID = 0
+        var direction = "ltr" // default font language direction if language is not found
+        var unsupportedTag = ""
         var targetTranslationSlug = ""
 
         if (repoName.isNotEmpty()) {
@@ -377,15 +302,19 @@ class ImportViewModel(
                     targetTranslationSlug
                 )
                 if (resourceTypeSlug != "text") { // we only support text
-                    notSupportedID = when (resourceTypeSlug) {
-                        "tw" -> R.string.translation_words
-                        "tn" -> R.string.label_translation_notes
-                        "tq" -> R.string.translation_questions
-                        else -> R.string.unsupported
+                    unsupportedTag = when (resourceTypeSlug) {
+                        "tw" -> application.getString(R.string.translation_words)
+                        "tn" -> application.getString(R.string.label_translation_notes)
+                        "tq" -> application.getString(R.string.translation_questions)
+                        else -> application.getString(R.string.unsupported)
                     }
                 }
 
-                val project = library.index.getProject(deviceLanguageCode, projectSlug, true)
+                val project = library.index.getProject(
+                    sourceLanguageSlug = deviceLanguageCode,
+                    projectSlug = projectSlug,
+                    enableDefaultLanguage = true
+                )
                 projectName = if (project != null) {
                     project.name
                 } else {
@@ -402,7 +331,7 @@ class ImportViewModel(
             } catch (e: StringIndexOutOfBoundsException) {
                 e.printStackTrace()
                 projectName = targetTranslationSlug
-                notSupportedID = R.string.unsupported
+                unsupportedTag = application.getString(R.string.unsupported)
             }
         }
 
@@ -415,17 +344,213 @@ class ImportViewModel(
             repository.fullName,
             repository.htmlUrl,
             repository.isPrivate,
-            notSupportedID
-        ) { repository.toJSON() }
+            unsupportedTag
+        )
     }
 
-    fun clearResults() {
-        _registeredSSHKeys.value = null
-        _importFromUriResult.value = null
-        _importSourceResult.value = null
+    private fun importRepository(repo: RepositoryItem, accepted: Boolean, overwrite: Boolean) {
+        launchWithProgress(
+            application.getString(R.string.cloning_repository)
+        ) { handle ->
+            if (repo.isSupported || accepted) {
+                cloneRepository(repo, overwrite, handle)
+            } else {
+                _state.update { it.copy(repoToImport = repo) }
+            }
+        }
     }
 
-    fun clearCloneResult() {
-        _cloneRepoResult.value = null
+    private suspend fun cloneRepository(
+        repo: RepositoryItem,
+        overwrite: Boolean,
+        handle: TaskHandle
+    ) {
+        if (overwrite) resetToMaster()
+
+        _state.update { it.copy(mergeConflict = null, repoToImport = null) }
+
+        val result = withContext(Dispatchers.IO) {
+            cloneRepository.execute(repo.url) { progress, message ->
+                handle.update(progress, message)
+            }
+        }
+
+        when (result.status) {
+            CloneRepository.Status.SUCCESS -> {
+                result.cloneDir?.let {
+                    val clonedDir = targetTranslationMigrator.migrate(it)
+
+                    Logger.i(this.javaClass.name, "Repository cloned from $it")
+
+                    clonedDir?.let { tempRepoDir ->
+                        TargetTranslation.open(tempRepoDir)?.let { tempTargetTranslation ->
+                            val existingTargetTranslation = translator.getTargetTranslation(
+                                tempTargetTranslation.id
+                            )
+
+                            if (existingTargetTranslation != null && !overwrite) {
+                                try {
+                                    val mergedWithoutConflicts = existingTargetTranslation.merge(
+                                        tempRepoDir,
+                                        null
+                                    )
+                                    _state.update { state ->
+                                        state.copy(
+                                            mergeConflict = MergeConflict(
+                                                translation = existingTargetTranslation,
+                                                hasMergeConflict = !mergedWithoutConflicts,
+                                                isFromServer = true,
+                                                onResolve = { resolveMergeConflict() },
+                                                onOverwrite = {
+                                                    launchWithProgress { handle ->
+                                                        cloneRepository(
+                                                            repo = repo,
+                                                            overwrite = true,
+                                                            handle = handle
+                                                        )
+                                                    }
+                                                },
+                                                onCancel = {
+                                                    viewModelScope.launch {
+                                                        resetToMaster()
+                                                    }
+                                                }
+                                            )
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    Logger.e(
+                                        this.javaClass.name,
+                                        "Failed to merge the target translation",
+                                        e
+                                    )
+                                    reportImportFailed()
+                                }
+                            } else {
+                                // restore the new target translation
+                                try {
+                                    translator.restoreTargetTranslation(tempTargetTranslation)
+                                    updateResult(
+                                        title = application.getString(R.string.import_from_door43),
+                                        message = application.getString(R.string.title_import_success)
+                                    )
+                                } catch (e: IOException) {
+                                    Logger.e(
+                                        this.javaClass.name,
+                                        "Failed to import the target translation " + tempTargetTranslation.id,
+                                        e
+                                    )
+                                    reportImportFailed()
+                                }
+                            }
+                        } ?: run {
+                            Logger.e(this.javaClass.name, "Failed to open the online backup")
+                            reportImportFailed()
+                        }
+                    }
+                }
+            }
+            CloneRepository.Status.AUTH_FAILURE -> {
+                Logger.i(this.javaClass.name, "Authentication failed")
+                if (!directoryProvider.hasSSHKeys()) {
+                    registerSSHKeys(false, handle) {
+                        cloneRepository(repo, overwrite, handle)
+                    }
+                } else {
+                    _state.update { it.copy(repoToImport = repo) }
+                    _event.trySend(ImportEvent.AuthRequested)
+                }
+            }
+            else -> {
+                updateResult(
+                    title = application.getString(R.string.error),
+                    message = application.getString(R.string.restore_failed)
+                )
+            }
+        }
+    }
+
+    private suspend fun resetToMaster() {
+        val mergeConflict = _state.value.mergeConflict ?: return
+        withContext(Dispatchers.IO) {
+            mergeConflict.translation.resetToMasterBackup()
+        }
+    }
+
+    private fun resolveMergeConflict() {
+        val result = _state.value.mergeConflict ?: return
+        if (result.hasMergeConflict) {
+            _event.trySend(
+                ImportEvent.ResolveMergeConflict(result.translation.id)
+            )
+        } else {
+            val title = if (result.isFromServer) {
+                application.getString(R.string.import_from_door43)
+            } else application.getString(R.string.import_from_storage)
+            updateResult(
+                title,
+                application.getString(R.string.import_success) +
+                        "\n${result.translation.id}"
+            )
+        }
+    }
+
+    private fun updateResult(title: String, message: String) {
+        _state.update { it.copy(resultMessage = ResultMessage(title, message)) }
+    }
+
+    private suspend fun getBackupTranslations(): List<File> {
+        return withContext(Dispatchers.IO) {
+            directoryProvider
+                .backupsDir
+                .listFiles()
+                ?.asList()
+                ?.filter { it.length() > 0 }
+                ?: listOf()
+        }
+    }
+
+    private fun forceRegisterSSHKeys() {
+        launchWithProgress { handle ->
+            registerSSHKeys(true, handle) {
+                _state.value.repoToImport?.let {
+                    cloneRepository(it, false, handle)
+                }
+            }
+        }
+    }
+
+    private suspend fun registerSSHKeys(
+        force: Boolean,
+        handle: TaskHandle,
+        onSuccess: suspend () -> Unit
+    ) {
+        handle.update(
+            value = -1f,
+            message = application.getString(R.string.registering_keys)
+        )
+        val registered = withContext(Dispatchers.IO) {
+            registerSSHKeys.execute(force) { progress, message ->
+                handle.update(progress, message)
+            }
+        }
+        if (registered) {
+            Logger.i(this.javaClass.name, "SSH keys were registered with the server")
+            onSuccess()
+        } else {
+            _event.trySend(ImportEvent.AuthRequested)
+        }
+    }
+
+    private fun reportImportFailed() {
+        updateResult(
+            title = application.getString(R.string.error),
+            message = application.getString(R.string.restore_failed)
+        )
+    }
+
+    private fun getTargetTranslation(translationID: String): TargetTranslation {
+        return translator.getTargetTranslation(translationID)
+            ?: throw InvalidParameterException("The target translation '$translationID' is invalid")
     }
 }

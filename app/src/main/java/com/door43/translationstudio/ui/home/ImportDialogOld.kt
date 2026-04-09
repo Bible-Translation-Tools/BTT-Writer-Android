@@ -465,7 +465,7 @@ class ImportDialogOld : DialogFragment() {
     private fun clearResults() {
         dialogShown = DialogShown.NONE
         dialogMessage = null
-        viewModel.clearResults()
+        //viewModel.clearResults()
     }
 
     /**

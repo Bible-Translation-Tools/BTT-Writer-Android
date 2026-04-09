@@ -126,7 +126,7 @@ class TranslationRepositoryAdapter(
             } else {
                 binding.projectName.setTypeface(null, Typeface.NORMAL)
                 binding.projectName.setTextColor(context.resources.getColor(R.color.dark_secondary_text))
-                projectNameStr += " - " + context.getString(item.notSupportedId)
+                projectNameStr += " - " + item.unsupportedTag
             }
             binding.projectName.text = projectNameStr
             binding.repositoryUrl.text = item.url

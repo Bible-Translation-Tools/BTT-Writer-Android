@@ -42,6 +42,8 @@ import kotlinx.coroutines.launch
 fun OverlayDialog(
     onDismiss: () -> Unit,
     contentPadding: Dp = 16.dp,
+    maxWidth: Dp = 700.dp,
+    maxHeight: Dp = 700.dp,
     snackbarHostState: SnackbarHostState? = null,
     content: @Composable ColumnScope.(dismissWithKeyboard: (() -> Unit) -> Unit) -> Unit
 ) {
@@ -91,10 +93,10 @@ fun OverlayDialog(
                 Surface(
                     modifier = Modifier
                         .padding(horizontal = 32.dp)
-                        .widthIn(max = 700.dp)
+                        .widthIn(max = maxWidth)
                         .fillMaxWidth(0.9f)
-                        .heightIn(max = 700.dp)
-                        .fillMaxHeight(0.75f)
+                        .heightIn(max = maxHeight)
+                        .fillMaxHeight(0.9f)
                         .wrapContentHeight()
                         .pointerInput(Unit) {
                             detectTapGestures {}

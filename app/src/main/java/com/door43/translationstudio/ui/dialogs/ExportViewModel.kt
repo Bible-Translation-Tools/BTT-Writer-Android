@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.merge.MergeStrategy
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -141,7 +140,7 @@ class ExportViewModel(
             ExportAction.ExportToCloud -> exportToCloud()
             ExportAction.ClearExport -> clearInfo()
             ExportAction.Logout -> logout()
-            ExportAction.RegisterKeys -> registerSSHKeys()
+            ExportAction.RegisterKeys -> forceRegisterSSHKeys()
             ExportAction.ClearInfoMessage -> clearInfo()
             ExportAction.ClearUploadSuccess -> clearUploadSuccess()
             ExportAction.ResetToMaster -> resetToMaster()
@@ -386,7 +385,7 @@ class ExportViewModel(
         }
     }
 
-    private fun registerSSHKeys() {
+    private fun forceRegisterSSHKeys() {
         launchWithProgress { handle ->
             registerSSHKeys(true, handle)
         }
@@ -406,7 +405,7 @@ class ExportViewModel(
             Logger.i(this.javaClass.name, "SSH keys were registered with the server")
             pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
         } else {
-            reportUploadFailed()
+            _event.trySend(ExportEvent.AuthRequested)
         }
     }
 
@@ -520,19 +519,7 @@ class ExportViewModel(
     private fun resetToMaster() {
         launchWithProgress {
             withContext(Dispatchers.IO) {
-                try { // restore state before the pull
-                    val git = targetTranslation.repo.git
-                    val resetCommand = git.reset()
-                    resetCommand.setMode(ResetCommand.ResetType.HARD)
-                        .setRef("backup-master")
-                        .call()
-                } catch (e: Exception) {
-                    Logger.e(
-                        this.javaClass.name,
-                        "Failed to reset to master for target translation " + targetTranslation.id,
-                        e
-                    )
-                }
+                targetTranslation.resetToMasterBackup()
             }
         }
     }

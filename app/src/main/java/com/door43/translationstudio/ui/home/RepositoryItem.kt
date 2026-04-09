@@ -1,7 +1,5 @@
 package com.door43.translationstudio.ui.home
 
-import org.json.JSONObject
-
 /**
  * Represents the loaded data of a repository that will be displayed in the list
  */
@@ -14,9 +12,17 @@ data class RepositoryItem(
     val repoName: String,
     val url: String,
     val isPrivate: Boolean,
-    val notSupportedId: Int,
-    val toJson: () -> JSONObject
+    val unsupportedTag: String
 ) {
     val isSupported: Boolean
-        get() = notSupportedId == 0
+        get() = unsupportedTag.isEmpty()
+
+    val projectNameAlt: String
+        get() {
+            var name = projectName
+            if (!projectName.equals(targetTranslationSlug, ignoreCase = true)) {
+                name += " ($targetTranslationSlug)" // if not same as project name, add project id
+            }
+            return name
+        }
 }

@@ -22,7 +22,9 @@ fun InfoDialog(
         text = { Text(message) },
         shape = RoundedCornerShape(8.dp),
         confirmButton = {
-            buttons(onDismiss)
+            buttons {
+                onDismiss()
+            }
         },
         modifier = modifier.fillMaxWidth()
     )

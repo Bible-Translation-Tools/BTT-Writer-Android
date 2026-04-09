@@ -102,6 +102,9 @@ fun ImportDialog(
     }
 
     var showImportBackupDialog by rememberSaveable { mutableStateOf(false) }
+    var showImportServerDialog by rememberSaveable { mutableStateOf(false) }
+    var showAuthDialog by rememberSaveable { mutableStateOf(false) }
+    var unsupportedRepoAccepted by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
@@ -115,6 +118,7 @@ fun ImportDialog(
                     onMergeConflict(event.translationId)
                 }
                 ImportEvent.ProjectImported -> onProjectImported()
+                ImportEvent.AuthRequested -> showAuthDialog = true
             }
         }
     }
@@ -154,7 +158,7 @@ fun ImportDialog(
                     text = stringResource(R.string.import_from_door43),
                     icon = Icons.Default.Wifi,
                     onClick = {
-                        // onImportDoor43
+                        showImportServerDialog = true
                     }
                 )
 
@@ -201,22 +205,86 @@ fun ImportDialog(
         }
     }
 
-    state.mergeConflict?.let { result ->
-        val message = if (result.hasMergeConflict) {
-            stringResource(
-                R.string.import_merge_conflict_project_name,
-                result.importedSlug ?: ""
-            )
-        } else {
-            stringResource(
-                R.string.import_project_already_exists,
-                result.importedSlug ?: ""
+    if (showImportServerDialog) {
+        ImportFromServerDialog(
+            repositories = state.repositories,
+            onSearch = { user, repo ->
+                viewModel.onAction(ImportAction.SearchRepositories(user, repo))
+            },
+            onRepoSelected = { repo ->
+                viewModel.onAction(ImportAction.ImportRepo(
+                    repo = repo,
+                    accepted = false,
+                    overwrite = false
+                ))
+            },
+            onDismiss = {
+                showImportServerDialog = false
+                viewModel.onAction(ImportAction.ClearResult)
+            }
+        )
+    }
+
+    if (showImportBackupDialog) {
+        ImportBackupDialog(
+            backups = state.backups,
+            onBackupSelected = {
+                showImportBackupDialog = false
+                viewModel.onAction(ImportAction.ImportBackup(it))
+            },
+            onDismiss = { showImportBackupDialog = false }
+        )
+    }
+
+    if (showAuthDialog) {
+        ConfirmDialog(
+            title = stringResource(R.string.error),
+            message = stringResource(R.string.auth_failure_retry),
+            onDismiss = { showAuthDialog = false },
+            onConfirm = {
+                showAuthDialog = false
+                viewModel.onAction(ImportAction.RegisterKeys)
+            }
+        )
+    }
+
+    state.repoToImport?.let { repo ->
+        if (!repo.isSupported && !unsupportedRepoAccepted) {
+            ConfirmDialog(
+                title = stringResource(R.string.import_from_door43),
+                message = stringResource(R.string.import_warning, repo.projectNameAlt),
+                onConfirm = {
+                    unsupportedRepoAccepted = true
+                    viewModel.onAction(ImportAction.ImportRepo(
+                        repo = repo,
+                        accepted = true,
+                        overwrite = false
+                    ))
+                },
+                onDismiss = {
+                    viewModel.onAction(ImportAction.ClearImportRepo)
+                },
+                confirmText = stringResource(R.string.label_import)
             )
         }
+    }
+
+    state.mergeConflict?.let { result ->
+        val message = stringResource(
+            if (result.hasMergeConflict) {
+                R.string.import_merge_conflict_project_name
+            } else {
+                R.string.import_project_already_exists
+            },
+            result.translation.id
+        )
         InfoDialog(
             title = stringResource(R.string.merge_conflict_title),
             message = message,
-            onDismiss = { viewModel.onAction(ImportAction.ClearResult) },
+            onDismiss = {
+                unsupportedRepoAccepted = false
+                viewModel.onAction(ImportAction.ClearMergeConflict)
+            },
         ) { onInfoDismiss ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -224,46 +292,28 @@ fun ImportDialog(
             ) {
                 TextButton(
                     onClick = {
+                        result.onResolve()
                         onInfoDismiss()
-                        viewModel.onAction(ImportAction.ApplyMergeConflict)
                     }
                 ) {
                     Text(stringResource(R.string.merge_projects_label))
                 }
                 TextButton(
                     onClick = {
+                        result.onOverwrite()
                         onInfoDismiss()
-                        viewModel.onAction(
-                            ImportAction.ImportProject(result.filePath, true)
-                        )
                     }
                 ) {
                     Text(stringResource(R.string.overwrite_projects_label))
                 }
                 TextButton(
                     onClick = {
+                        result.onCancel()
                         onInfoDismiss()
-                        result.importedSlug?.let {
-                            viewModel.onAction(ImportAction.ResetToMaster(it))
-                        }
                     }
                 ) {
                     Text(stringResource(R.string.title_cancel))
                 }
-            }
-        }
-    }
-
-    state.resultMessage?.let { result ->
-        InfoDialog(
-            title = result.title,
-            message = result.message,
-            onDismiss = {
-                viewModel.onAction(ImportAction.ClearResult)
-            }
-        ) { onInfoDismiss ->
-            TextButton(onClick = onInfoDismiss) {
-                Text(stringResource(R.string.dismiss))
             }
         }
     }
@@ -284,15 +334,21 @@ fun ImportDialog(
         )
     }
 
-    if (showImportBackupDialog) {
-        ImportBackupDialog(
-            backups = state.backups,
-            onBackupSelected = {
-                showImportBackupDialog = false
-                viewModel.onAction(ImportAction.ImportBackup(it))
-            },
-            onDismiss = { showImportBackupDialog = false }
-        )
+    state.resultMessage?.let { result ->
+        InfoDialog(
+            title = result.title,
+            message = result.message,
+            onDismiss = {
+                viewModel.onAction(ImportAction.ClearResult)
+                showImportServerDialog = false
+            }
+        ) { onInfoDismiss ->
+            TextButton(
+                onClick = onInfoDismiss
+            ) {
+                Text(stringResource(R.string.dismiss))
+            }
+        }
     }
 
     progress?.let {

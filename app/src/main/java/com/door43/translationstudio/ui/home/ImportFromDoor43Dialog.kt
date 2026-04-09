@@ -30,12 +30,9 @@ import com.door43.translationstudio.ui.home.ImportDialogOld.MergeOptions.Compani
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import com.door43.usecases.CloneRepository
-import org.json.JSONException
-import org.json.JSONObject
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.gogsclient.Repository
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
 import kotlin.math.min
@@ -100,7 +97,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
                     closeKeyboard(activity)
                 }
 
-                viewModel.searchRepositories(userQuery, repoQuery, 50)
+                //viewModel.searchRepositories(userQuery, repoQuery, 50)
             }
 
             list.adapter = adapter
@@ -136,22 +133,22 @@ class ImportFromDoor43Dialog : DialogFragment() {
             mergeConflicted = savedInstanceState.getBoolean(STATE_MERGE_CONFLICT, false)
             mergeSelection = fromInt(savedInstanceState.getInt(STATE_MERGE_SELECTION, MergeOptions.NONE.value))
             val targetTranslationId = savedInstanceState.getString(STATE_TARGET_TRANSLATION, null)
-            targetTranslationId?.let { viewModel.loadTargetTranslation(it) }
+            //targetTranslationId?.let { viewModel.loadTargetTranslation(it) }
 
             val repoJsonArray = savedInstanceState.getStringArray(STATE_REPOSITORIES)
-            if (repoJsonArray != null) {
-                for (json in repoJsonArray) {
-                    try {
-                        val repo = Repository.fromJSON(JSONObject(json))
-                        if (json != null) {
-                            repositories.add(viewModel.mapRepository(repo))
-                        }
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
-                    }
-                }
-                adapter.setRepositories(repositories)
-            }
+//            if (repoJsonArray != null) {
+//                for (json in repoJsonArray) {
+//                    try {
+//                        val repo = Repository.fromJSON(JSONObject(json))
+//                        if (json != null) {
+//                            repositories.add(viewModel.mapRepository(repo))
+//                        }
+//                    } catch (e: JSONException) {
+//                        e.printStackTrace()
+//                    }
+//                }
+//                adapter.setRepositories(repositories)
+//            }
         }
 
         setupObservers()
@@ -251,7 +248,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
                     if (directoryProvider.hasSSHKeys()) {
                         showAuthFailure()
                     } else {
-                        viewModel.registerSSHKeys(false)
+                        //viewModel.registerSSHKeys(false)
                     }
                 } else {
                     notifyImportFailed()
@@ -285,7 +282,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
      */
     private fun cloneRepository(mergeSelection: MergeOptions) {
         this.mergeSelection = mergeSelection
-        cloneHtmlUrl?.let { viewModel.cloneRepository(it) }
+        //cloneHtmlUrl?.let { viewModel.cloneRepository(it) }
     }
 
     /**
@@ -335,7 +332,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
             }
             .setOnDismissListener {
                 dialogShown = DialogShown.NONE
-                viewModel.clearResults()
+                //viewModel.clearResults()
             }
             .show()
             .also(dialogs::add)
@@ -378,7 +375,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
             }
             .setOnDismissListener {
                 dialogShown = DialogShown.NONE
-                viewModel.clearResults()
+                //viewModel.clearResults()
             }
             .show()
             .also(dialogs::add)
@@ -411,14 +408,14 @@ class ImportFromDoor43Dialog : DialogFragment() {
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.error).setMessage(R.string.auth_failure_retry)
             .setPositiveButton(R.string.yes) { _, _ ->
-                viewModel.registerSSHKeys(true)
+                //viewModel.registerSSHKeys(true)
             }
             .setNegativeButton(R.string.no) { _, _ ->
                 notifyImportFailed()
             }
             .setOnDismissListener {
                 dialogShown = DialogShown.NONE
-                viewModel.clearResults()
+                //viewModel.clearResults()
             }
             .show()
             .also(dialogs::add)
@@ -432,7 +429,7 @@ class ImportFromDoor43Dialog : DialogFragment() {
             .setPositiveButton(R.string.dismiss, null)
             .setOnDismissListener {
                 dialogShown = DialogShown.NONE
-                viewModel.clearResults()
+                //viewModel.clearResults()
             }
             .show()
             .also(dialogs::add)
@@ -440,9 +437,9 @@ class ImportFromDoor43Dialog : DialogFragment() {
 
     override fun onSaveInstanceState(out: Bundle) {
         val repoJsonList = arrayListOf<String>()
-        for (r in repositories) {
-            repoJsonList.add(r.toJson().toString())
-        }
+//        for (r in repositories) {
+//            repoJsonList.add(r.toJson().toString())
+//        }
         out.putStringArray(STATE_REPOSITORIES, repoJsonList.toTypedArray<String>())
         out.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
         out.putInt(STATE_MERGE_SELECTION, mergeSelection.value)

@@ -628,11 +628,7 @@ class TargetTranslation private constructor(
         // merge manifests
         mergeManifests(manifest, importedManifest)
 
-        if (result.mergeStatus == MergeResult.MergeStatus.CONFLICTING) {
-            println(result.conflicts.toString())
-            return false
-        }
-        return true
+        return result.mergeStatus != MergeResult.MergeStatus.CONFLICTING
     }
 
     fun getNewLanguageRequest(context: Context): NewLanguageRequest? {
