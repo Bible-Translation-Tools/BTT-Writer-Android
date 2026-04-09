@@ -37,7 +37,7 @@ import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
 import com.door43.translationstudio.ui.home.HomeViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportIndexViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
-import com.door43.translationstudio.ui.viewmodels.ImportViewModel
+import com.door43.translationstudio.ui.dialogs.ImportViewModel
 import com.door43.translationstudio.ui.profile.LoginViewModel
 import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel

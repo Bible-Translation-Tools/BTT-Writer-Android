@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.dialogs
 
 import android.app.Application
 import android.net.Uri

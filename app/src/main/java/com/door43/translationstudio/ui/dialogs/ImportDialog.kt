@@ -46,9 +46,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.ImportUsfmActivity
 import com.door43.translationstudio.ui.ImportUsfmActivity.Companion.EXTRA_USFM_IMPORT_URI
-import com.door43.translationstudio.ui.viewmodels.ImportAction
-import com.door43.translationstudio.ui.viewmodels.ImportEvent
-import com.door43.translationstudio.ui.viewmodels.ImportViewModel
 import org.koin.androidx.compose.koinViewModel
 
 private const val IMPORT_INFO_URL =
