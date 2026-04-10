@@ -340,10 +340,10 @@ fun ImportDialog(
         )
     }
 
-    state.resultMessage?.let { result ->
+    state.resultMessage?.let { (title, message) ->
         InfoDialog(
-            title = result.title,
-            message = result.message,
+            title = title,
+            message = message,
             onDismiss = {
                 viewModel.onAction(ImportAction.ClearResult)
                 showImportServerDialog = false

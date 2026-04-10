@@ -32,7 +32,7 @@ class HomeActivity : BaseActivity(),
     val translator: Translator by inject()
 
     private var targetTranslationID: String? = null
-    private var updateDialog: UpdateLibraryDialog? = null
+    private var updateDialog: UpdateLibraryDialogOld? = null
     private var backupsRunning = false
 
     private val viewModel: HomeViewModel by viewModel()
@@ -250,7 +250,7 @@ class HomeActivity : BaseActivity(),
     }
 
     override fun onDestroy() {
-        val dialog = supportFragmentManager.findFragmentByTag(UpdateLibraryDialog.TAG)
+        val dialog = supportFragmentManager.findFragmentByTag(UpdateLibraryDialogOld.TAG)
         if (dialog is OnEventTalker) {
             (dialog as OnEventTalker).eventBuffer.removeOnEventListener(this)
         }
@@ -258,7 +258,7 @@ class HomeActivity : BaseActivity(),
     }
 
     override fun onEventBufferEvent(talker: OnEventTalker?, tag: Int, args: Bundle?) {
-        if (talker is UpdateLibraryDialog) {
+        if (talker is UpdateLibraryDialogOld) {
             updateDialog?.dismiss()
 
             if (!isNetworkAvailable) {
@@ -270,31 +270,19 @@ class HomeActivity : BaseActivity(),
                 return
             }
 
-            if (tag == UpdateLibraryDialog.EVENT_SELECT_DOWNLOAD_SOURCES) {
+            if (tag == UpdateLibraryDialogOld.EVENT_SELECT_DOWNLOAD_SOURCES) {
                 selectDownloadSources()
                 return
             }
 
             when (tag) {
-                UpdateLibraryDialog.EVENT_UPDATE_LANGUAGES -> {
+                UpdateLibraryDialogOld.EVENT_UPDATE_LANGUAGES -> {
                     viewModel.updateCatalogs(resources.getString(R.string.updating_languages))
                 }
-                UpdateLibraryDialog.EVENT_UPDATE_SOURCE -> {
+                UpdateLibraryDialogOld.EVENT_UPDATE_SOURCE -> {
                     viewModel.updateSource(resources.getString(R.string.updating_sources))
                 }
-                UpdateLibraryDialog.EVENT_DOWNLOAD_INDEX -> {
-                    val intent = Intent(this, ImportIndexActivity::class.java)
-                    intent.putExtra(ImportIndexActivity.IMPORT_ACTION, ImportIndexActivity.DOWNLOAD_INDEX)
-                    startActivity(intent)
-                    finishAffinity()
-                }
-                UpdateLibraryDialog.EVENT_IMPORT_INDEX -> {
-                    val intent = Intent(this, ImportIndexActivity::class.java)
-                    intent.putExtra(ImportIndexActivity.IMPORT_ACTION, ImportIndexActivity.IMPORT_INDEX)
-                    startActivity(intent)
-                    finishAffinity()
-                }
-                UpdateLibraryDialog.EVENT_UPDATE_APP -> {
+                UpdateLibraryDialogOld.EVENT_UPDATE_APP -> {
                     viewModel.checkForLatestRelease()
                 }
                 else -> viewModel.checkForLatestRelease()

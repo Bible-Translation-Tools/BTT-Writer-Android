@@ -29,6 +29,7 @@ import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
 import com.door43.translationstudio.ui.dialogs.ImportViewModel
 import com.door43.translationstudio.ui.draft.DraftViewModel
 import com.door43.translationstudio.ui.home.HomeViewModel
+import com.door43.translationstudio.ui.home.UpdateLibraryViewModel
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
 import com.door43.translationstudio.ui.profile.LoginViewModel
 import com.door43.translationstudio.ui.publish.PublishViewModel
@@ -40,7 +41,6 @@ import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewMode
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
 import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
-import com.door43.translationstudio.ui.viewmodels.ImportIndexViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
 import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel
@@ -156,7 +156,6 @@ val appModule = module {
     viewModelOf(::FeedbackViewModel)
     viewModelOf(::DraftViewModel)
     viewModelOf(::ExportViewModel)
-    viewModelOf(::ImportIndexViewModel)
     viewModelOf(::DownloadSourcesViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::NewTargetTranslationModel)
@@ -169,6 +168,7 @@ val appModule = module {
     viewModelOf(::ReviewModeViewModel)
     viewModelOf(::SourceSelectionViewModel)
     viewModelOf(::PublishViewModel)
+    viewModelOf(::UpdateLibraryViewModel)
 }
 
 val prodDataModule = module {

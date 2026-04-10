@@ -38,11 +38,6 @@ import java.io.File
 import java.io.IOException
 import java.security.InvalidParameterException
 
-data class ResultMessage(
-    val title: String,
-    val message: String
-)
-
 data class MergeConflict(
     val translation: TargetTranslation,
     val hasMergeConflict: Boolean,
@@ -55,7 +50,7 @@ data class MergeConflict(
 data class ImportState(
     val mergeConflict: MergeConflict? = null,
     val sourceConflict: ImportProjects.ImportSourceResult? = null,
-    val resultMessage: ResultMessage? = null,
+    val resultMessage: Pair<String, String>? = null,
     val backups: List<File> = emptyList(),
     val repositories: List<RepositoryItem> = emptyList(),
     val repoToImport: RepositoryItem? = null
@@ -496,7 +491,7 @@ class ImportViewModel(
     }
 
     private fun updateResult(title: String, message: String) {
-        _state.update { it.copy(resultMessage = ResultMessage(title, message)) }
+        _state.update { it.copy(resultMessage = title to message) }
     }
 
     private suspend fun getBackupTranslations(): List<File> {

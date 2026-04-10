@@ -83,6 +83,7 @@ fun HomeScreen(
 
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
     var showImportDialog by rememberSaveable { mutableStateOf(false) }
+    var showUpdateLibraryDialog by rememberSaveable { mutableStateOf(false) }
 
     var projectToImport by remember { mutableStateOf<Uri?>(null) }
     var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
@@ -90,7 +91,7 @@ fun HomeScreen(
     val errorString = stringResource(R.string.error)
 
     val menuItems = rememberHomeMenuItems(
-        onUpdateClick = {},
+        onUpdateClick = { showUpdateLibraryDialog = true },
         onImport = { showImportDialog = true },
         onFeedback = { showFeedbackDialog = true },
         onShareApp = {
@@ -303,6 +304,12 @@ fun HomeScreen(
             },
             projectImportUri = projectToImport,
             onProjectUriConsumed = { projectToImport = null }
+        )
+    }
+
+    if (showUpdateLibraryDialog) {
+        UpdateLibraryDialog(
+            onDismiss = { showUpdateLibraryDialog = false }
         )
     }
 
