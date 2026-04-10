@@ -1,21 +1,13 @@
 package com.door43.translationstudio.ui.home
 
-import android.content.ContentResolver
 import android.content.DialogInterface
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
-import androidx.fragment.app.DialogFragment
-import androidx.lifecycle.lifecycleScope
 import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.services.BackupService
@@ -27,16 +19,10 @@ import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
-import com.door43.usecases.PullTargetTranslation
-import com.door43.widget.ViewUtil
-import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.launch
-import org.eclipse.jgit.merge.MergeStrategy
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.eventbuffer.EventBuffer
 import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
-import org.unfoldingword.tools.logger.Logger
 import java.io.File
 
 class HomeActivity : BaseActivity(),
@@ -56,7 +42,7 @@ class HomeActivity : BaseActivity(),
 
         startBackupService()
 
-
+        handleIntent(intent)
 
 //        val moreButton = findViewById<View>(R.id.action_more) as ImageButton
 //        moreButton.setOnClickListener { v ->
@@ -100,35 +86,6 @@ class HomeActivity : BaseActivity(),
 //            moreMenu.show()
 //        }
 
-        // check if user is trying to open a tstudio file
-        if (intent != null) {
-            val action = intent.action
-            val scheme = intent.scheme
-            val contentUri = intent.data
-
-            if (action != null && scheme != null && contentUri != null) {
-                if (action.compareTo(Intent.ACTION_VIEW) == 0 || action.compareTo(Intent.ACTION_DEFAULT) == 0) {
-                    Logger.i(TAG, "Opening: $contentUri")
-                    if (scheme.compareTo(ContentResolver.SCHEME_CONTENT) == 0) {
-                        importFromUri(contentUri)
-                        return
-                    } else if (scheme.compareTo(ContentResolver.SCHEME_FILE) == 0) {
-                        importFromUri(contentUri)
-                        return
-                    }
-                }
-            }
-        }
-
-        onBackPressedDispatcher.addCallback(
-            this,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    onBackPressedHandler()
-                }
-            }
-        )
-
         // open last project when starting the first time
         viewModel.lastOpened?.let {
             reviewTranslation(it.id)
@@ -149,10 +106,13 @@ class HomeActivity : BaseActivity(),
                     onLogin = ::door43Login,
                     onProjectPublish = ::publishProject,
                     onReviewTranslation = ::reviewTranslation,
-                    onMergeConflict = ::reviewMergeConflict
+                    onMergeConflict = ::reviewMergeConflict,
+                    onAppExit = { finishAffinity() }
                 )
             }
         }
+
+        setupObservers()
     }
 
     private fun startBackupService() {
@@ -230,103 +190,19 @@ class HomeActivity : BaseActivity(),
         reviewTranslation(targetTranslationId, true)
     }
 
+    private fun handleIntent(intent: Intent?) {
+        val uri = intent?.data ?: return
+        // check if user is trying to open a tstudio file
+        viewModel.onAction(HomeAction.ImportProject(uri))
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+
     private fun setupObservers() {
-        viewModel.examineImportsResult.observe(this) {
-            it?.let { result ->
-                if (result.success) {
-                    displayImportVerification()
-                } else {
-                    Logger.e(
-                        TAG,
-                        "Could not process content URI: " + result.contentUri.toString()
-                    )
-                    showImportResults(result.contentUri.toString(), null, false)
-                    viewModel.cleanupExamineImportResult()
-                }
-            }
-        }
-        viewModel.importResult.observe(this) {
-            it?.let { result ->
-                val examineImportsResult = viewModel.examineImportsResult.value
-                val hand = Handler(Looper.getMainLooper())
-                hand.post {
-                    val success = result.isSuccess
-                    if (success && result.mergeConflict) {
-                        result.importedSlug?.let { slug ->
-                            val conflicted = MergeConflictsHandler.isTranslationMergeConflicted(
-                                slug,
-                                translator
-                            )
-                            if (!conflicted) {
-                                showImportResults(
-                                    examineImportsResult?.contentUri.toString(),
-                                    examineImportsResult?.projectsFound,
-                                    success
-                                )
-                            } else {
-                                showMergeConflict(slug)
-                            }
-                        }
-                    } else {
-                        showImportResults(
-                            examineImportsResult?.contentUri.toString(),
-                            examineImportsResult?.projectsFound,
-                            success
-                        )
-                    }
-                }
-                viewModel.cleanupExamineImportResult()
-            }
-        }
-        viewModel.pullTranslationResult.observe(this) {
-            it?.let { result ->
-                val status = result.status
-                if (status == PullTargetTranslation.Status.UP_TO_DATE || status == PullTargetTranslation.Status.UNKNOWN) {
-                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.success)
-                        .setMessage(R.string.success_translation_update)
-                        .setPositiveButton(R.string.dismiss, null)
-                        .setOnDismissListener { viewModel.clearResults() }
-                        .show()
-                } else if (status == PullTargetTranslation.Status.AUTH_FAILURE) {
-                    // regenerate ssh keys
-                    // if we have already tried ask the user if they would like to try again
-                    if (viewModel.hasSSHKeys()) {
-                        showAuthFailure()
-                    } else {
-                        viewModel.registerSSHKeys(false)
-                    }
-                } else if (status == PullTargetTranslation.Status.MERGE_CONFLICTS) {
-                    AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                        .setTitle(R.string.success)
-                        .setMessage(R.string.success_translation_update_with_conflicts)
-                        .setNeutralButton(R.string.review) { _, _ ->
-                            val intent = Intent(this, TargetTranslationActivity::class.java)
-                            intent.putExtra(
-                                Translator.EXTRA_TARGET_TRANSLATION_ID,
-                                viewModel.notifyTargetTranslationWithUpdates
-                            )
-                            startActivity(intent)
-                        }
-                        .setOnDismissListener { viewModel.clearResults() }
-                        .show()
-                } else {
-                    notifyTranslationUpdateFailed()
-                }
-                viewModel.notifyTargetTranslationWithUpdates = null
-            }
-        }
-        viewModel.registeredSSHKeys.observe(this) {
-            it?.let { registered ->
-                if (registered && viewModel.notifyTargetTranslationWithUpdates != null) {
-                    Logger.i(this.javaClass.name, "SSH keys were registered with the server")
-                    // try to pull again
-                    downloadTargetTranslationUpdates()
-                } else {
-                    notifyTranslationUpdateFailed()
-                }
-            }
-        }
         viewModel.updateSourceResult.observe(this) {
             it?.let { result ->
                 if (result.success) {
@@ -370,247 +246,7 @@ class HomeActivity : BaseActivity(),
 
     override fun onResume() {
         super.onResume()
-
         viewModel.lastFocusTargetTranslation = null
-
-//        val numTranslations = viewModel.translations.value?.size ?: 0
-//        when {
-//            numTranslations > 0 && fragment is WelcomeFragment -> {
-//                // display target translations list
-//                fragment = TargetTranslationListFragment().apply {
-//                    setArguments(intent.extras)
-//                    supportFragmentManager.beginTransaction()
-//                        .replace(R.id.fragment_container, this)
-//                        .commit()
-//                }
-//            }
-//            numTranslations == 0 && fragment is TargetTranslationListFragment -> {
-//                // display welcome screen
-//                fragment = WelcomeFragment().apply {
-//                    setArguments(intent.extras)
-//                    supportFragmentManager.beginTransaction()
-//                        .replace(R.id.fragment_container, this)
-//                        .commit()
-//                }
-//            }
-//            numTranslations > 0 && fragment is TargetTranslationListFragment -> {
-//                // reload list
-//                (fragment as TargetTranslationListFragment).reloadList()
-//            }
-//        }
-
-        if (viewModel.notifyTargetTranslationWithUpdates != null) {
-            showTranslationUpdatePrompt()
-        }
-
-        //loadTranslations()
-        //restoreDialogs()
-    }
-
-    /**
-     * let user know there was a merge conflict
-     * @param targetTranslationID
-     */
-    fun showMergeConflict(targetTranslationID: String?) {
-//        alertShown = DialogShown.MERGE_CONFLICT
-//        this.targetTranslationID = targetTranslationID
-//        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-//            .setTitle(R.string.merge_conflict_title).setMessage(R.string.import_merge_conflict)
-//            .setPositiveButton(
-//                R.string.label_ok
-//            ) { _, _ ->
-//                alertShown = DialogShown.NONE
-//                //reviewMergeConflict(this.targetTranslationID)
-//            }.show()
-    }
-
-    private fun showAuthFailure() {
-//        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-//            .setTitle(R.string.error).setMessage(R.string.auth_failure_retry)
-//            .setPositiveButton(
-//                R.string.yes
-//            ) { _, _ ->
-//                alertShown = DialogShown.NONE
-//                viewModel.registerSSHKeys(true)
-//            }
-//            .setNegativeButton(
-//                R.string.no
-//            ) { _, _ ->
-//                alertShown = DialogShown.NONE
-//                notifyTranslationUpdateFailed()
-//            }.show()
-    }
-
-    private fun notifyTranslationUpdateFailed() {
-        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-            .setTitle(R.string.error)
-            .setMessage(R.string.update_failed)
-            .setNeutralButton(R.string.dismiss, null)
-            .show()
-    }
-
-    /**
-     * display the final import Results.
-     */
-    private fun showImportResults(projectPath: String?, projectNames: String?, success: Boolean) {
-//        alertShown = DialogShown.IMPORT_RESULTS
-//        val message: String
-//        if (success) {
-//            message = resources.getString(
-//                R.string.import_project_success,
-//                projectNames,
-//                projectPath
-//            )
-//        } else {
-//            val format = resources.getString(R.string.import_failed)
-//            message = format + "\n" + projectPath
-//        }
-//
-//        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-//            .setTitle(if (success) R.string.title_import_success else R.string.title_import_failed)
-//            .setMessage(message)
-//            .setPositiveButton(
-//                R.string.label_ok
-//            ) { _, _ ->
-//                alertShown = DialogShown.NONE
-//                viewModel.cleanupExamineImportResult()
-//                this@HomeActivity.finish()
-//            }
-//            .show()
-    }
-
-    /**
-     * begin the uri import
-     * @param contentUri
-     */
-    private fun importFromUri(contentUri: Uri) {
-        viewModel.examineImportsForCollisions(contentUri)
-    }
-
-    /**
-     * show dialog to verify that we want to import, restore or cancel.
-     */
-    private fun displayImportVerification() {
-        viewModel.examineImportsResult.value?.let { result ->
-//            alertShown = DialogShown.IMPORT_VERIFICATION
-//            val dlg = AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-//            dlg.setTitle(R.string.label_import)
-//                .setMessage(
-//                    resources.getString(
-//                        R.string.confirm_import_target_translation,
-//                        result.projectsFound
-//                    )
-//                )
-//                .setNegativeButton(
-//                    R.string.title_cancel
-//                ) { _, _ ->
-//                    alertShown = DialogShown.NONE
-//                    viewModel.cleanupExamineImportResult()
-//                    this@HomeActivity.finish()
-//                }
-//                .setPositiveButton(
-//                    R.string.label_restore
-//                ) { _, _ ->
-//                    alertShown = DialogShown.NONE
-//                    doArchiveImport(true)
-//                }
-//
-//            if (result.alreadyPresent) { // add merge option
-//                dlg.setNeutralButton(
-//                    R.string.label_import
-//                ) { dialog, _ ->
-//                    alertShown = DialogShown.NONE
-//                    doArchiveImport(false)
-//                    dialog.dismiss()
-//                }
-//            }
-//            dlg.show()
-        }
-    }
-
-    /**
-     * import specified file
-     * @param overwrite
-     */
-    private fun doArchiveImport(overwrite: Boolean) {
-        viewModel.examineImportsResult.value?.let { result ->
-            result.projectFile?.let {
-                viewModel.importProjects(it, overwrite)
-            }
-        }
-    }
-
-    fun onBackPressedHandler() {
-        lifecycleScope.launch {
-            // display confirmation before closing the app
-            AlertDialog.Builder(this@HomeActivity, R.style.AppTheme_Dialog)
-                .setMessage(R.string.exit_confirmation)
-                .setPositiveButton(
-                    R.string.yes
-                ) { _, _ -> finishAffinity() }
-                .setNegativeButton(R.string.no, null)
-                .show()
-        }
-    }
-
-    /**
-     * prompt user that project has changed
-     */
-    private fun showTranslationUpdatePrompt() {
-        val translationId = viewModel.notifyTargetTranslationWithUpdates
-        val item = viewModel.findTranslationItem(translationId)
-
-        item?.let { translationItem ->
-            val message = resources.getString(
-                R.string.merge_request,
-                translationItem.formattedProjectName,
-                translationItem.translation.targetLanguageName
-            )
-
-//            AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-//                .setTitle(R.string.change_detected)
-//                .setMessage(message)
-//                .setPositiveButton(
-//                    R.string.yes
-//                ) { _, _ ->
-//                    alertShown = DialogShown.NONE
-//                    downloadTargetTranslationUpdates()
-//                }
-//                .setNegativeButton(
-//                    R.string.no
-//                ) { _, _ ->
-//                    viewModel.notifyTargetTranslationWithUpdates = null
-//                    alertShown = DialogShown.NONE
-//                }
-//                .show()
-        }
-    }
-
-    /**
-     * Updates a single target translation
-     */
-    private fun downloadTargetTranslationUpdates() {
-//        if (isNetworkAvailable) {
-//            if (!viewModel.loggedIn) {
-//                val dialog = Door43LoginDialogOld()
-//                showDialogFragment(dialog, Door43LoginDialogOld.TAG)
-//                return
-//            }
-//            viewModel.pullTargetTranslation(MergeStrategy.RECURSIVE)
-//        } else {
-//            val snack = Snackbar.make(
-//                findViewById(android.R.id.content),
-//                R.string.internet_not_available,
-//                Snackbar.LENGTH_LONG
-//            )
-//            ViewUtil.setSnackBarTextColor(snack, resources.getColor(R.color.light_primary_text))
-//            snack.show()
-//        }
-    }
-
-    @Deprecated("Remove after migration")
-    fun loadTranslations() {
-        //viewModel.loadTranslations()
     }
 
     override fun onDestroy() {
@@ -710,6 +346,5 @@ class HomeActivity : BaseActivity(),
 
     companion object {
         val TAG: String = HomeActivity::class.java.simpleName
-        const val STATE_DIALOG_TRANSLATION_ID: String = "state_dialog_translationID"
     }
 }

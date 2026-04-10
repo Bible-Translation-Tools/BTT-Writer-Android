@@ -2,6 +2,8 @@ package com.door43.translationstudio.ui.home
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -46,6 +48,7 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ImportDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
@@ -65,7 +68,8 @@ fun HomeScreen(
     onLogout: () -> Unit,
     onProjectPublish: (String) -> Unit,
     onReviewTranslation: (String) -> Unit,
-    onMergeConflict: (String) -> Unit
+    onMergeConflict: (String) -> Unit,
+    onAppExit: () -> Unit
 ) {
     val profile: Profile = koinInject()
     var profileUser by remember { mutableStateOf(profile.currentUser) }
@@ -79,6 +83,9 @@ fun HomeScreen(
 
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
     var showImportDialog by rememberSaveable { mutableStateOf(false) }
+
+    var projectToImport by remember { mutableStateOf<Uri?>(null) }
+    var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
 
     val errorString = stringResource(R.string.error)
 
@@ -164,6 +171,10 @@ fun HomeScreen(
             when (event) {
                 is HomeEvent.SnackbarMessage -> snackbarHostState.showSnackbar(event.message)
                 is HomeEvent.ShareApp -> onShareApp(event.file)
+                is HomeEvent.ImportProject -> {
+                    showImportDialog = true
+                    projectToImport = event.uri
+                }
                 HomeEvent.OnLogout -> onLogout()
             }
         }
@@ -172,6 +183,10 @@ fun HomeScreen(
     LifecycleResumeEffect(Unit) {
         profileUser = profile.currentUser
         onPauseOrDispose {}
+    }
+
+    BackHandler(enabled = true) {
+        showExitConfirmation = true
     }
 
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
@@ -285,6 +300,19 @@ fun HomeScreen(
             },
             onProjectImported = {
                 viewModel.onAction(HomeAction.LoadProjects)
+            },
+            projectImportUri = projectToImport,
+            onProjectUriConsumed = { projectToImport = null }
+        )
+    }
+
+    if (showExitConfirmation) {
+        ConfirmDialog(
+            title = stringResource(R.string.exit),
+            message = stringResource(R.string.exit_confirmation),
+            onConfirm = onAppExit,
+            onDismiss = {
+                showExitConfirmation = false
             }
         )
     }

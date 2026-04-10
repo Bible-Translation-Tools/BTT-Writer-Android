@@ -119,20 +119,6 @@ class Translator (
             prefRepository.setPrivatePref("last_translation", targetTranslationId)
         }
 
-    private val localCacheDir: File
-        /**
-         * Returns the local translations cache directory.
-         * This is where import and export operations can expand files.
-         * @return
-         */
-        get() = File(path, "cache")
-
-    /**
-     * for keeping track of project that has changed
-     * @param targetTranslationId
-     */
-    var notifyTargetTranslationWithUpdates: String? = null
-
     /**
      * Creates a new Target Translation. If one already exists it will return it without changing anything.
      * @param nativeSpeaker the human translator

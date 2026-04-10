@@ -23,15 +23,10 @@ import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
-import com.door43.usecases.ExamineImportsForCollisions
 import com.door43.usecases.GogsLogout
-import com.door43.usecases.ImportProjects
-import com.door43.usecases.PullTargetTranslation
-import com.door43.usecases.RegisterSSHKeys
 import com.door43.usecases.TranslationProgress
 import com.door43.usecases.UpdateCatalogs
 import com.door43.usecases.UpdateSource
-import com.door43.usecases.cleanup
 import com.door43.util.FileUtilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -43,7 +38,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.eclipse.jgit.merge.MergeStrategy
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
@@ -86,6 +80,7 @@ data class HomeState(
 sealed interface HomeEvent {
     data class SnackbarMessage(val message: String) : HomeEvent
     data class ShareApp(val file: File) : HomeEvent
+    data class ImportProject(val uri: Uri) : HomeEvent
     object OnLogout : HomeEvent
 }
 
@@ -95,6 +90,7 @@ sealed interface HomeAction {
     data class ProjectSortChanged(val sort: ProjectSort) : HomeAction
     data class BookSortChanged(val sort: BookSort) : HomeAction
     data class ShowProjectInfo(val item: TranslationItem) : HomeAction
+    data class ImportProject(val uri: Uri) : HomeAction
     object HideProjectInfo : HomeAction
     object Logout : HomeAction
     object ShareApp: HomeAction
@@ -107,13 +103,9 @@ class HomeViewModel(
     private val profile: Profile,
     private val gogsLogout: GogsLogout,
     private val directoryProvider: IDirectoryProvider,
-    private val pullTargetTranslation: PullTargetTranslation,
-    private val examineImportsForCollisions: ExamineImportsForCollisions,
-    private val importProjects: ImportProjects,
     private val checkForLatestRelease: CheckForLatestRelease,
     private val updateSource: UpdateSource,
     private val updateCatalogs: UpdateCatalogs,
-    private val registerSSHKeys: RegisterSSHKeys,
     private val downloadLatestRelease: DownloadLatestRelease,
     private val backupRC: BackupRC,
     private val library: Door43Client,
@@ -150,26 +142,8 @@ class HomeViewModel(
     private val _progressOld = MutableLiveData<ProgressHelper.Progress?>()
     val progressOld: LiveData<ProgressHelper.Progress?> = _progressOld
 
-    private val _loggedOut = MutableLiveData<Boolean?>(null)
-    val loggedOut: LiveData<Boolean?> = _loggedOut
-
-    private val _exportedApp = MutableLiveData<File?>()
-    val exportedApp: LiveData<File?> = _exportedApp
-
-    private val _pullTranslationResult = MutableLiveData<PullTargetTranslation.Result?>(null)
-    val pullTranslationResult: LiveData<PullTargetTranslation.Result?> = _pullTranslationResult
-
-    private val _examineImportsResult = MutableLiveData<ExamineImportsForCollisions.Result?>()
-    val examineImportsResult: LiveData<ExamineImportsForCollisions.Result?> = _examineImportsResult
-
-    private val _importResult = MutableLiveData<ImportProjects.ImportResults?>()
-    val importResult: LiveData<ImportProjects.ImportResults?> = _importResult
-
     private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result?>()
     val latestRelease: LiveData<CheckForLatestRelease.Result?> = _latestRelease
-
-    private val _registeredSSHKeys = MutableLiveData<Boolean?>()
-    val registeredSSHKeys: LiveData<Boolean?> = _registeredSSHKeys
 
     private val _updateSourceResult = MutableLiveData<UpdateSource.Result?>()
     val updateSourceResult: LiveData<UpdateSource.Result?> = _updateSourceResult
@@ -177,18 +151,11 @@ class HomeViewModel(
     private val _uploadCatalogResult = MutableLiveData<UpdateCatalogs.Result?>()
     val uploadCatalogResult: LiveData<UpdateCatalogs.Result?> = _uploadCatalogResult
 
-    private val _translationProgress = MutableLiveData<Double?>()
-    val translationProgress: LiveData<Double?> = _translationProgress
-
     // ============================== OLD CODE FOR REMOVAL ================================ //
 
     var lastFocusTargetTranslation: String?
         get() = translator.lastFocusTargetTranslation
         set(value) { translator.lastFocusTargetTranslation = value }
-
-    var notifyTargetTranslationWithUpdates: String?
-        get() = translator.notifyTargetTranslationWithUpdates
-        set(value) { translator.notifyTargetTranslationWithUpdates = value }
 
     /**
      * get last project opened and make sure it is still present
@@ -198,9 +165,6 @@ class HomeViewModel(
         get() = translator.lastFocusTargetTranslation?.let { lastTarget ->
             translator.getTargetTranslation(lastTarget)
         }
-
-    val loggedIn: Boolean
-        get() = profile.gogsUser != null
 
     init {
         viewModelScope.launch {
@@ -232,6 +196,9 @@ class HomeViewModel(
             is HomeAction.ProjectSortChanged -> onProjectSortChanged(action.sort)
             is HomeAction.BookSortChanged -> onBookSortChanged(action.sort)
             is HomeAction.ShowProjectInfo -> _state.update { it.copy(projectInfo = action.item) }
+            is HomeAction.ImportProject -> viewModelScope.launch {
+                _event.trySend(HomeEvent.ImportProject(action.uri))
+            }
             HomeAction.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
             HomeAction.Logout -> logout()
             HomeAction.ShareApp -> shareApp()
@@ -433,45 +400,16 @@ class HomeViewModel(
         }
     }
 
-    fun findTranslationItem(translationId: String?): TranslationItem? {
-        return _state.value.translations.singleOrNull {
-            it.translation.id == translationId
-        }
-    }
-
-    fun getTargetTranslation(translationId: String): TargetTranslation? {
+    private fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
     }
 
-    fun pullTargetTranslation(mergeStrategy: MergeStrategy) {
-        viewModelScope.launch {
-            _progressOld.value = ProgressHelper.Progress()
-            _pullTranslationResult.value = withContext(Dispatchers.IO) {
-                findTranslationItem(notifyTargetTranslationWithUpdates)?.let { item ->
-                    pullTargetTranslation.execute(item.translation, mergeStrategy)
-                }
-            }
-            _progressOld.value = null
-        }
-    }
 
-    fun examineImportsForCollisions(contentUri: Uri) {
-        viewModelScope.launch {
-            _examineImportsResult.value = withContext(Dispatchers.IO) {
-                examineImportsForCollisions.execute(contentUri)
-            }
-        }
-    }
 
-    fun importProjects(projectsFolder: File, overwrite: Boolean) {
-        viewModelScope.launch {
-            _progressOld.value = ProgressHelper.Progress()
-            _importResult.value = withContext(Dispatchers.IO) {
-                importProjects.importProject(projectsFolder, overwrite)
-            }
-            _progressOld.value = null
-        }
-    }
+
+
+
+
 
     fun checkForLatestRelease() {
         viewModelScope.launch {
@@ -519,51 +457,12 @@ class HomeViewModel(
         }
     }
 
-    fun registerSSHKeys(force: Boolean) {
-        viewModelScope.launch {
-            _progressOld.value = ProgressHelper.Progress(
-                application.getString(R.string.registering_keys)
-            )
-            _registeredSSHKeys.value = withContext(Dispatchers.IO) {
-                registerSSHKeys.execute(force) { progress, message ->
-                    _progressOld.postValue(
-                        ProgressHelper.Progress(
-                            message,
-                            progress.toInt(),
-                            1
-                        )
-                    )
-                }
-            }
-            _progressOld.value = null
-        }
-    }
-
-    fun hasSSHKeys(): Boolean {
-        return directoryProvider.hasSSHKeys()
-    }
-
-    fun cleanupExamineImportResult() {
-        _examineImportsResult.value?.cleanup()
-        _examineImportsResult.value = null
-    }
-
     fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
         downloadLatestRelease.execute(release)
     }
 
-    fun getTranslationProgress(targetTranslation: TargetTranslation) {
-        viewModelScope.launch {
-            _translationProgress.value = withContext(Dispatchers.IO) {
-                calculateProgress.execute(targetTranslation)
-            }
-        }
-    }
-
     fun clearResults() {
-        _loggedOut.value = null
         _uploadCatalogResult.value = null
         _latestRelease.value = null
-        _pullTranslationResult.value = null
     }
 }

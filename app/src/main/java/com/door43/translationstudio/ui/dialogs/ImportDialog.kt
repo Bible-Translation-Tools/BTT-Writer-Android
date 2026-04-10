@@ -56,7 +56,9 @@ fun ImportDialog(
     viewModel: ImportViewModel = koinViewModel(),
     onDismiss: () -> Unit,
     onMergeConflict: (String) -> Unit,
-    onProjectImported: () -> Unit
+    onProjectImported: () -> Unit,
+    projectImportUri: Uri? = null,
+    onProjectUriConsumed: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -117,6 +119,13 @@ fun ImportDialog(
                 ImportEvent.ProjectImported -> onProjectImported()
                 ImportEvent.AuthRequested -> showAuthDialog = true
             }
+        }
+    }
+
+    LaunchedEffect(projectImportUri) {
+        projectImportUri?.let { uri ->
+            onProjectUriConsumed()
+            viewModel.onAction(ImportAction.ImportProject(uri, false))
         }
     }
 
