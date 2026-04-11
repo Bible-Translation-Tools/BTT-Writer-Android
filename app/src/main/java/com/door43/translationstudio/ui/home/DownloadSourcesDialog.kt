@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -78,24 +79,20 @@ fun DownloadSourcesDialog(
             modifier = modifier.fillMaxSize()
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.clickable {
-                        viewModel.onAction(DownloadAction.FilterModeChanged(
-                            FilterMode.ByLanguage
-                        ))
+                        viewModel.onAction(DownloadAction.FilterModeChanged(FilterMode.ByLanguage))
                     }
                 ) {
                     RadioButton(
                         selected = state.filterMode == FilterMode.ByLanguage,
-                        onClick = {
-                            viewModel.onAction(DownloadAction.FilterModeChanged(
-                                FilterMode.ByLanguage
-                            ))
-                        }
+                        onClick = null
                     )
                     Text(stringResource(R.string.by_language_label))
                 }
@@ -104,19 +101,14 @@ fun DownloadSourcesDialog(
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.clickable {
-                        viewModel.onAction(DownloadAction.FilterModeChanged(
-                            FilterMode.ByBook
-                        ))
+                        viewModel.onAction(DownloadAction.FilterModeChanged(FilterMode.ByBook))
                     }
                 ) {
                     RadioButton(
                         selected = state.filterMode == FilterMode.ByBook,
-                        onClick = {
-                            viewModel.onAction(DownloadAction.FilterModeChanged(
-                                FilterMode.ByBook
-                            ))
-                        }
+                        onClick = null
                     )
                     Text(stringResource(R.string.by_book_label))
                 }
@@ -258,6 +250,7 @@ private fun NavigationBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(70.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

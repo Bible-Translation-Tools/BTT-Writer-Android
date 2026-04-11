@@ -74,8 +74,7 @@ data class DownloadSourcesState(
     val listItems: List<DownloadListItem> = emptyList(),
     val selectedSources: Set<String> = emptySet(),
     val downloadedSources: Set<String> = emptySet(),
-    val selectAllChecked: Boolean = false,
-    val isDownloadEnabled: Boolean = false
+    val selectAllChecked: Boolean = false
 )
 
 sealed interface DownloadAction {
@@ -153,38 +152,28 @@ class DownloadSourcesViewModel(
         updateList()
     }
 
-    private fun onNavigateForward(item: DownloadListItem) {
+    private fun onNavigateForward(item: DownloadListItem.FilterCategory) {
         val currentStack = _state.value.navigationStack.toMutableList()
         if (currentStack.isEmpty()) return
 
         val lastIndex = currentStack.lastIndex
-        val currentStep = currentStack[lastIndex]
+        val resolvedStep = currentStack[lastIndex].copy(
+            filter = item.id,
+            label = item.title,
+        )
 
-        when (item) {
-            is DownloadListItem.FilterCategory -> {
-                val resolvedStep = currentStep.copy(
-                    filter = item.id,
-                    label = item.title,
-                )
+        val nextSelectionType = getNextSelectionType(resolvedStep)
+        val nextPrompt = getPromptForSelectionType(nextSelectionType)
 
-                val nextSelectionType = getNextSelectionType(resolvedStep)
-                val nextPrompt = getPromptForSelectionType(nextSelectionType)
-                val nextStep = FilterStep(
-                    selection = nextSelectionType,
-                    label = nextPrompt,
-                    promptLabel = nextPrompt
-                )
+        currentStack[lastIndex] = resolvedStep
+        currentStack.add(FilterStep(
+            selection = nextSelectionType,
+            label = nextPrompt,
+            promptLabel = nextPrompt
+        ))
 
-                currentStack[lastIndex] = resolvedStep
-                currentStack.add(nextStep)
-
-                _state.update { it.copy(navigationStack = currentStack) }
-                updateList()
-            }
-            is DownloadListItem.SourceSelection -> {
-                toggleSelection(item.id)
-            }
-        }
+        _state.update { it.copy(navigationStack = currentStack) }
+        updateList()
     }
 
     private fun onNavigateStep(index: Int) {
@@ -247,11 +236,35 @@ class DownloadSourcesViewModel(
     }
 
     private fun getCategoryForFilter(filter: String?): SelectionType {
-        return when (filter?.toIntOrNull()) {
+        return getCategoryForFilter(filter?.toIntOrNull())
+    }
+
+    private fun getCategoryForFilter(resId: Int?): SelectionType {
+        return when (resId) {
             R.string.old_testament_label -> SelectionType.OLD_TESTAMENT
             R.string.new_testament_label -> SelectionType.NEW_TESTAMENT
             else -> SelectionType.OTHER_BOOK
         }
+    }
+
+    private fun getCategoryBooks(
+        category: SelectionType,
+        result: GetAvailableSources.Result
+    ): Map<String, List<Int>> {
+        return when (category) {
+            SelectionType.OLD_TESTAMENT -> result.otBooks
+            SelectionType.NEW_TESTAMENT -> result.ntBooks
+            else -> result.otherBooks
+        }
+    }
+
+    private fun getBiblicalOrderMap(category: SelectionType): Map<String, Int>? {
+        val books = when (category) {
+            SelectionType.OLD_TESTAMENT -> BibleCodes.getOtBooks()
+            SelectionType.NEW_TESTAMENT -> BibleCodes.getNtBooks()
+            else -> return null
+        }
+        return books.withIndex().associate { (i, slug) -> slug to i }
     }
 
     private fun onNavigateBack() {
@@ -369,20 +382,11 @@ class DownloadSourcesViewModel(
         currentStep: FilterStep,
         result: GetAvailableSources.Result
     ): List<DownloadListItem> {
-        val bookMap = when (currentStep.selection) {
-            SelectionType.OLD_TESTAMENT -> result.otBooks
-            SelectionType.NEW_TESTAMENT -> result.ntBooks
-            else -> result.otherBooks
-        }
-
-        val biblicalOrder = when (currentStep.selection) {
-            SelectionType.OLD_TESTAMENT -> BibleCodes.getOtBooks().toList()
-            SelectionType.NEW_TESTAMENT -> BibleCodes.getNtBooks().toList()
-            else -> null
-        }
+        val bookMap = getCategoryBooks(currentStep.selection, result)
 
         val items = bookMap.mapNotNull { (bookSlug, indices) ->
             if (indices.isEmpty()) return@mapNotNull null
+            // Prefer English name, fall back to first available
             val source = indices
                 .mapNotNull { result.sources.getOrNull(it) }
                 .firstOrNull { it.language.slug == "en" }
@@ -395,8 +399,8 @@ class DownloadSourcesViewModel(
             }
         }
 
-        return if (biblicalOrder != null) {
-            val orderMap = biblicalOrder.withIndex().associate { (i, slug) -> slug to i }
+        val orderMap = getBiblicalOrderMap(currentStep.selection)
+        return if (orderMap != null) {
             items.sortedBy { orderMap[it.id] ?: Int.MAX_VALUE }
         } else {
             items.sortedBy { it.title }
@@ -407,42 +411,36 @@ class DownloadSourcesViewModel(
         currentStep: FilterStep,
         result: GetAvailableSources.Result
     ): List<DownloadListItem> {
-        val filteredIndices = getFilteredIndices(result)
-        val items = filteredIndices.mapNotNull { index ->
+        val state = _state.value
+        val byLanguage = currentStep.selection == SelectionType.SOURCE_FILTERED_BY_LANGUAGE
+
+        val items = getFilteredIndices(result).mapNotNull { index ->
             result.sources.getOrNull(index)?.let { source ->
                 val slug = source.resourceContainerSlug
                 DownloadListItem.SourceSelection(
                     id = slug,
                     projectSlug = source.project.slug,
-                    projectName = if (currentStep.selection == SelectionType.SOURCE_FILTERED_BY_LANGUAGE)
+                    projectName = if (byLanguage)
                         "${source.project.name} (${source.project.slug})"
                     else
                         "${source.language.name} (${source.language.slug})",
                     resourceName = "${source.resource.name} (${source.resource.slug})",
-                    isSelected = _state.value.selectedSources.contains(slug),
-                    isDownloaded = _state.value.downloadedSources.contains(slug),
+                    isSelected = state.selectedSources.contains(slug),
+                    isDownloaded = state.downloadedSources.contains(slug),
                     errorMessage = downloadErrors[slug]
                 )
             }
         }
 
-        // Sort sources by biblical book order
-        if (currentStep.selection == SelectionType.SOURCE_FILTERED_BY_LANGUAGE) {
-            val categoryFilter = _state.value.navigationStack
+        if (byLanguage) {
+            val categoryFilter = state.navigationStack
                 .firstOrNull { it.selection == SelectionType.BOOK_TYPE }?.filter
-            val categoryType = getCategoryForFilter(categoryFilter)
-            val bookOrder = when (categoryType) {
-                SelectionType.OLD_TESTAMENT -> BibleCodes.getOtBooks().toList()
-                SelectionType.NEW_TESTAMENT -> BibleCodes.getNtBooks().toList()
-                else -> null
-            }
-            if (bookOrder != null) {
-                val orderMap = bookOrder.withIndex().associate { (i, slug) -> slug to i }
+            val orderMap = getBiblicalOrderMap(getCategoryForFilter(categoryFilter))
+            if (orderMap != null) {
                 return items.sortedBy { orderMap[it.projectSlug] ?: Int.MAX_VALUE }
             }
         }
 
-        // "By Book" path: sort by language code
         return items.sortedBy { it.id }
     }
 
@@ -452,7 +450,6 @@ class DownloadSourcesViewModel(
         var bookFilter: String? = null
         var categoryFilter: String? = null
 
-        // Extract filters from previous steps
         stack.forEach { step ->
             when (step.selection) {
                 SelectionType.LANGUAGE -> languageFilter = step.filter
@@ -464,7 +461,7 @@ class DownloadSourcesViewModel(
             }
         }
 
-        // "By Book" path: return all translations for that specific book
+        // "By Book" path: all translations for that specific book
         if (bookFilter != null && stack.any { it.selection == SelectionType.SOURCE_FILTERED_BY_BOOK }) {
             return (result.otBooks[bookFilter] ?: emptyList()) +
                     (result.ntBooks[bookFilter] ?: emptyList()) +
@@ -473,14 +470,7 @@ class DownloadSourcesViewModel(
 
         // "By Language" path: filter by language AND category
         val languageIndices = result.byLanguage[languageFilter] ?: return emptyList()
-
-        // Get the category book map to filter against
-        val categoryType = getCategoryForFilter(categoryFilter)
-        val categoryBooks = when (categoryType) {
-            SelectionType.OLD_TESTAMENT -> result.otBooks
-            SelectionType.NEW_TESTAMENT -> result.ntBooks
-            else -> result.otherBooks
-        }
+        val categoryBooks = getCategoryBooks(getCategoryForFilter(categoryFilter), result)
 
         return languageIndices.filter { index ->
             val source = result.sources.getOrNull(index)
@@ -499,8 +489,7 @@ class DownloadSourcesViewModel(
         _state.update {
             it.copy(
                 selectedSources = newSelection,
-                selectAllChecked = allVisibleSelected,
-                isDownloadEnabled = newSelection.isNotEmpty()
+                selectAllChecked = allVisibleSelected
             )
         }
         updateList()
@@ -510,23 +499,20 @@ class DownloadSourcesViewModel(
         val currentItems = _state.value.listItems
         val newSelection = _state.value.selectedSources.toMutableSet()
 
-        if (shouldSelectAll) {
-            currentItems.filterIsInstance<DownloadListItem.SourceSelection>()
-                .filter { !it.isDownloaded }
-                .forEach { newSelection.add(it.id) }
-        } else {
-            currentItems.filterIsInstance<DownloadListItem.SourceSelection>()
-                .forEach { newSelection.remove(it.id) }
+        currentItems.filterIsInstance<DownloadListItem.SourceSelection>().forEach {
+            if (shouldSelectAll && !it.isDownloaded) {
+                newSelection.add(it.id)
+            } else {
+                newSelection.remove(it.id)
+            }
         }
 
         _state.update {
             it.copy(
                 selectedSources = newSelection,
-                selectAllChecked = shouldSelectAll,
-                isDownloadEnabled = newSelection.isNotEmpty()
+                selectAllChecked = shouldSelectAll
             )
         }
-
         updateList()
     }
 
@@ -538,16 +524,12 @@ class DownloadSourcesViewModel(
             it.selection == SelectionType.LANGUAGE
         }?.filter ?: return true
 
-        val categoryMap = when (categoryResId) {
-            R.string.old_testament_label -> result.otBooks
-            R.string.new_testament_label -> result.ntBooks
-            else -> result.otherBooks
-        }
-
+        val categoryBooks = getCategoryBooks(getCategoryForFilter(categoryResId), result)
         val languageIndices = result.byLanguage[selectedLanguage] ?: return false
+
         return languageIndices.any { index ->
             val source = result.sources.getOrNull(index)
-            categoryMap.containsKey(source?.project?.slug)
+            categoryBooks.containsKey(source?.project?.slug)
         }
     }
 
