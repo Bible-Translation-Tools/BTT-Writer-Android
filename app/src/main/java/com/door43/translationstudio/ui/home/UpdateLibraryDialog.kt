@@ -250,7 +250,7 @@ fun UpdateLibraryDialog(
                 viewModel.onAction(UpdateAction.ClearUpdateSourceResult)
             },
             onConfirm = {
-                // Go to Download sources screen
+                showDownloadSourcesDialog = true
                 viewModel.onAction(UpdateAction.ClearUpdateSourceResult)
             }
         )

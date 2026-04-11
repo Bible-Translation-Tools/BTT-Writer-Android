@@ -23,15 +23,19 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,11 +61,8 @@ fun DownloadSourcesDialog(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
-    val snackbarHostState = remember { SnackbarHostState() }
-
     OverlayDialog(
         onDismiss = onDismiss,
-        snackbarHostState = snackbarHostState,
         maxWidth = 1000.dp,
         maxHeight = 1000.dp
     ) {
@@ -72,7 +73,14 @@ fun DownloadSourcesDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        viewModel.onAction(DownloadAction.FilterModeChanged(
+                            FilterMode.ByLanguage
+                        ))
+                    }
+                ) {
                     RadioButton(
                         selected = state.filterMode == FilterMode.ByLanguage,
                         onClick = {
@@ -86,7 +94,14 @@ fun DownloadSourcesDialog(
 
                 Spacer(modifier = Modifier.width(24.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        viewModel.onAction(DownloadAction.FilterModeChanged(
+                            FilterMode.ByBook
+                        ))
+                    }
+                ) {
                     RadioButton(
                         selected = state.filterMode == FilterMode.ByBook,
                         onClick = {
@@ -109,7 +124,11 @@ fun DownloadSourcesDialog(
                     viewModel.onAction(DownloadAction.Search(it))
                 },
                 onBackClicked = {
-                    viewModel.onAction(DownloadAction.NavigateBack)
+                    if (state.navigationStack.size == 1) {
+                        onDismiss()
+                    } else {
+                        viewModel.onAction(DownloadAction.NavigateBack)
+                    }
                 },
                 onBreadcrumbClicked = {
                     viewModel.onAction(DownloadAction.NavigateStep(it))
@@ -120,27 +139,42 @@ fun DownloadSourcesDialog(
                 HorizontalDivider()
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            viewModel.onAction(DownloadAction.SelectAll(true))
+                        }
+                    ) {
                         Checkbox(
                             checked = state.selectAllChecked,
-                            onCheckedChange = {
-                                viewModel.onAction(DownloadAction.SelectAll(it))
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    viewModel.onAction(DownloadAction.SelectAll(true))
+                                }
                             }
                         )
                         Text(stringResource(R.string.select_all_label))
                     }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            viewModel.onAction(DownloadAction.SelectAll(false))
+                        }
+                    ) {
                         Checkbox(
                             checked = !state.selectAllChecked && state.listItems.none {
                                 (it as? DownloadListItem.SourceSelection)?.isSelected == true
                             },
-                            onCheckedChange = {
-                                if (it) viewModel.onAction(DownloadAction.SelectAll(false))
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    viewModel.onAction(DownloadAction.SelectAll(false))
+                                }
                             }
                         )
                         Text(stringResource(R.string.unselect_all_label))
@@ -152,7 +186,8 @@ fun DownloadSourcesDialog(
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
-                        )
+                        ),
+                        enabled = state.selectedSources.isNotEmpty()
                     ) {
                         Text(stringResource(R.string.download))
                     }
@@ -223,35 +258,47 @@ private fun NavigationBar(
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             breadcrumbs.forEachIndexed { index, crumb ->
-                val arrow = if (index < breadcrumbs.size - 1) " > " else ""
-                Text(
-                    text = "$crumb $arrow",
-                    modifier = Modifier.clickable {
-                        if (index < breadcrumbs.size - 1) {
+                val isClickable = index < breadcrumbs.size - 1
+                if (isClickable) {
+                    Text(
+                        text = crumb,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
                             onBreadcrumbClicked(index)
                         }
-                    }
-                )
+                    )
+                    Text(text = " > ")
+                } else {
+                    Text(text = crumb)
+                }
             }
         }
 
         if (enableSearch) {
-            TextField(
+            var isFocused by remember { mutableStateOf(false) }
+            OutlinedTextField(
                 value = query,
                 onValueChange = onQueryChanged,
                 singleLine = true,
-                placeholder = {
-                    Text(stringResource(R.string.search_for_language))
-                },
+                placeholder = if (isFocused) {
+                    { Text(stringResource(R.string.search_for_language)) }
+                } else null,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search"
                     )
                 },
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                ),
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 8.dp)
+                    .onFocusChanged { isFocused = it.isFocused },
             )
         }
     }
@@ -267,7 +314,8 @@ private fun FilterCategoryItemView(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item.icon?.let {
             Icon(
@@ -298,7 +346,8 @@ private fun SourceSelectionItemView(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Checkbox(
             checked = item.isSelected || item.isDownloaded,
