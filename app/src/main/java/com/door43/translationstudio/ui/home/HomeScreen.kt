@@ -65,7 +65,6 @@ fun HomeScreen(
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onProjectPublish: (String) -> Unit,
-    onReviewTranslation: (String) -> Unit,
     onMergeConflict: (String) -> Unit,
     onAppExit: () -> Unit
 ) {

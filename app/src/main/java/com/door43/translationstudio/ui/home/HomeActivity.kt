@@ -54,7 +54,6 @@ class HomeActivity : BaseActivity() {
                     onShareApp = ::shareApp,
                     onLogin = ::door43Login,
                     onProjectPublish = ::publishProject,
-                    onReviewTranslation = ::reviewTranslation,
                     onMergeConflict = ::reviewMergeConflict,
                     onAppExit = { finishAffinity() }
                 )

@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -55,6 +54,7 @@ data class NewTranslationState(
     val categories: List<CategoryEntry> = emptyList(),
     val filteredCategories: List<CategoryEntry> = emptyList(),
     val categoryStack: List<Long> = listOf(0L),
+    val navigatingForward: Boolean = true,
     val mergeConflict: MergeConflict? = null
 )
 
@@ -122,7 +122,7 @@ class NewTargetTranslationModel(
         targetTranslationId = translationId
         changeTargetLanguageOnly = changeLanguageOnly
 
-        viewModelScope.launch {
+        launchWithProgress {
             val languages = withContext(Dispatchers.IO) {
                 library.index.getTargetLanguages().sorted()
             }
@@ -220,7 +220,8 @@ class NewTargetTranslationModel(
             searchQuery = "",
             categories = categories,
             filteredCategories = categories,
-            categoryStack = listOf(0L)
+            categoryStack = listOf(0L),
+            navigatingForward = true
         )
     }
 
@@ -232,20 +233,21 @@ class NewTargetTranslationModel(
             searchQuery = "",
             categories = categories,
             filteredCategories = categories,
-            categoryStack = _state.value.categoryStack + categoryId
+            categoryStack = _state.value.categoryStack + categoryId,
+            navigatingForward = true
         )
     }
 
     private fun navigateCategoryBack(): Boolean {
         val stack = _state.value.categoryStack
         if (stack.size <= 1) {
-            // Go back to language step
             _state.value = _state.value.copy(
                 screenStep = ScreenStep.LANGUAGE,
                 searchQuery = "",
                 categories = emptyList(),
                 filteredCategories = emptyList(),
-                categoryStack = listOf(0L)
+                categoryStack = listOf(0L),
+                navigatingForward = false
             )
             return true
         }
@@ -258,7 +260,8 @@ class NewTargetTranslationModel(
             searchQuery = "",
             categories = categories,
             filteredCategories = categories,
-            categoryStack = newStack
+            categoryStack = newStack,
+            navigatingForward = false
         )
         return false
     }

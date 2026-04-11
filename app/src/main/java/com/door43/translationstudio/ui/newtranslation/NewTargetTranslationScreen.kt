@@ -1,5 +1,9 @@
 package com.door43.translationstudio.ui.newtranslation
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.SearchBar
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +44,7 @@ fun NewTargetTranslationScreen(
 ) {
     val viewModel: NewTargetTranslationModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val searchPlaceholder = when (state.screenStep) {
         ScreenStep.LANGUAGE -> stringResource(R.string.choose_target_language)
@@ -74,7 +80,9 @@ fun NewTargetTranslationScreen(
                     IconButton(onClick = {
                         when (state.screenStep) {
                             ScreenStep.LANGUAGE -> onNavigateBack()
-                            ScreenStep.PROJECT -> viewModel.onAction(NewTranslationAction.CategoryBack)
+                            ScreenStep.PROJECT -> viewModel.onAction(
+                                NewTranslationAction.CategoryBack
+                            )
                         }
                     }) {
                         Icon(
@@ -107,28 +115,52 @@ fun NewTargetTranslationScreen(
                 .fillMaxWidth()
                 .padding(paddingValues)
         ) {
-            when (state.screenStep) {
-                ScreenStep.LANGUAGE -> {
-                    LanguagesList(
-                        languages = state.filteredLanguages,
-                        disabledLanguages = state.disabledLanguages,
-                        onLanguageSelected = {
-                            viewModel.onAction(NewTranslationAction.LanguageSelected(it))
-                        },
-                        modifier = Modifier.width(800.dp)
-                    )
-                }
-                ScreenStep.PROJECT -> {
-                    ProjectList(
-                        categories = state.filteredCategories,
-                        onProjectSelected = {
-                            viewModel.onAction(NewTranslationAction.ProjectSelected(it))
-                        },
-                        onCategorySelected = {
-                            viewModel.onAction(NewTranslationAction.CategorySelected(it))
-                        },
-                        modifier = Modifier.width(800.dp)
-                    )
+            val animationKey = when (state.screenStep) {
+                ScreenStep.LANGUAGE -> 0
+                ScreenStep.PROJECT -> state.categoryStack.size
+            }
+            val forward = state.navigatingForward
+
+            AnimatedContent(
+                targetState = animationKey,
+                transitionSpec = {
+                    if (forward) {
+                        slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+                    } else {
+                        slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+                    }
+                },
+                label = "screen_transition"
+            ) { _ ->
+                when (state.screenStep) {
+                    ScreenStep.LANGUAGE -> {
+                        LanguagesList(
+                            languages = state.filteredLanguages,
+                            disabledLanguages = state.disabledLanguages,
+                            onLanguageSelected = {
+                                viewModel.onAction(
+                                    NewTranslationAction.LanguageSelected(it)
+                                )
+                            },
+                            modifier = Modifier.width(800.dp)
+                        )
+                    }
+                    ScreenStep.PROJECT -> {
+                        ProjectList(
+                            categories = state.filteredCategories,
+                            onProjectSelected = {
+                                viewModel.onAction(
+                                    NewTranslationAction.ProjectSelected(it)
+                                )
+                            },
+                            onCategorySelected = {
+                                viewModel.onAction(
+                                    NewTranslationAction.CategorySelected(it)
+                                )
+                            },
+                            modifier = Modifier.width(800.dp)
+                        )
+                    }
                 }
             }
         }
@@ -146,6 +178,13 @@ fun NewTargetTranslationScreen(
             },
             confirmText = stringResource(R.string.yes),
             dismissText = stringResource(R.string.no)
+        )
+    }
+
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
         )
     }
 }
