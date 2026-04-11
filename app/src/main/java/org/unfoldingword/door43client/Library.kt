@@ -814,6 +814,7 @@ internal class Library @Throws(IOException::class) constructor(
                 val catId = cursor.getInt(cursor.getColumnIndexOrThrow("id"))
 
                 for (slug in preferredSlugs) {
+                    var found = false
                     db.rawQuery(
                         "select sl.slug as source_language_slug, cn.name as name from category_name as cn left join source_language as sl on sl.id=cn.source_language_id where sl.slug like(?) and cn.category_id=$catId",
                         arrayOf(slug)
@@ -821,9 +822,10 @@ internal class Library @Throws(IOException::class) constructor(
                         if (nameCursor.moveToFirst()) {
                             val reader = CursorReader(nameCursor)
                             projectCategories.add(CategoryEntry(CategoryEntry.Type.CATEGORY, catId.toLong(), catSlug, reader.getString("name"), reader.getString("source_language_slug"), parentCategoryId))
-                            return@use
+                            found = true
                         }
                     }
+                    if (found) break
                 }
             }
         }
@@ -846,6 +848,7 @@ internal class Library @Throws(IOException::class) constructor(
                 val projectId = cursor.getLong(cursor.getColumnIndexOrThrow("id"))
 
                 for (slug in preferredSlugs) {
+                    var found = false
                     db.rawQuery(
                         "select sl.slug as source_language_slug, p.name as name from project as p left join source_language as sl on sl.id=p.source_language_id where sl.slug like(?) and p.slug=? order by sl.slug asc",
                         arrayOf(slug, projectSlug)
@@ -853,9 +856,10 @@ internal class Library @Throws(IOException::class) constructor(
                         if (nameCursor.moveToFirst()) {
                             val reader = CursorReader(nameCursor)
                             projectCategories.add(CategoryEntry(CategoryEntry.Type.PROJECT, projectId, projectSlug, reader.getString("name"), reader.getString("source_language_slug"), parentCategoryId))
-                            return@use
+                            found = true
                         }
                     }
+                    if (found) break
                 }
             }
         }
