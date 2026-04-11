@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.dialogs
+package com.door43.translationstudio.ui.home
 
 import android.app.Activity
 import android.content.Intent
@@ -129,7 +129,7 @@ fun ImportDialog(
         }
     }
 
-    OverlayDialog(
+    _root_ide_package_.com.door43.translationstudio.ui.dialogs.OverlayDialog(
         snackbarHostState = snackbarHostState,
         onDismiss = onDismiss,
         contentPadding = 0.dp
@@ -215,14 +215,21 @@ fun ImportDialog(
         ImportFromServerDialog(
             repositories = state.repositories,
             onSearch = { user, repo ->
-                viewModel.onAction(ImportAction.SearchRepositories(user, repo))
+                viewModel.onAction(
+                    ImportAction.SearchRepositories(
+                        user,
+                        repo
+                    )
+                )
             },
             onRepoSelected = { repo ->
-                viewModel.onAction(ImportAction.ImportRepo(
-                    repo = repo,
-                    accepted = false,
-                    overwrite = false
-                ))
+                viewModel.onAction(
+                    ImportAction.ImportRepo(
+                        repo = repo,
+                        accepted = false,
+                        overwrite = false
+                    )
+                )
             },
             onDismiss = {
                 showImportServerDialog = false
@@ -236,14 +243,18 @@ fun ImportDialog(
             backups = state.backups,
             onBackupSelected = {
                 showImportBackupDialog = false
-                viewModel.onAction(ImportAction.ImportBackup(it))
+                viewModel.onAction(
+                    ImportAction.ImportBackup(
+                        it
+                    )
+                )
             },
             onDismiss = { showImportBackupDialog = false }
         )
     }
 
     if (showAuthDialog) {
-        ConfirmDialog(
+        _root_ide_package_.com.door43.translationstudio.ui.dialogs.ConfirmDialog(
             title = stringResource(R.string.error),
             message = stringResource(R.string.auth_failure_retry),
             onDismiss = { showAuthDialog = false },
@@ -256,16 +267,18 @@ fun ImportDialog(
 
     state.repoToImport?.let { repo ->
         if (!repo.isSupported && !unsupportedRepoAccepted) {
-            ConfirmDialog(
+            _root_ide_package_.com.door43.translationstudio.ui.dialogs.ConfirmDialog(
                 title = stringResource(R.string.import_from_door43),
                 message = stringResource(R.string.import_warning, repo.projectNameAlt),
                 onConfirm = {
                     unsupportedRepoAccepted = true
-                    viewModel.onAction(ImportAction.ImportRepo(
-                        repo = repo,
-                        accepted = true,
-                        overwrite = false
-                    ))
+                    viewModel.onAction(
+                        ImportAction.ImportRepo(
+                            repo = repo,
+                            accepted = true,
+                            overwrite = false
+                        )
+                    )
                 },
                 onDismiss = {
                     viewModel.onAction(ImportAction.ClearImportRepo)
@@ -284,7 +297,7 @@ fun ImportDialog(
             },
             result.translation.id
         )
-        InfoDialog(
+        _root_ide_package_.com.door43.translationstudio.ui.dialogs.InfoDialog(
             title = stringResource(R.string.merge_conflict_title),
             message = message,
             onDismiss = {
@@ -325,12 +338,17 @@ fun ImportDialog(
     }
 
     state.sourceConflict?.let { result ->
-        ConfirmDialog(
+        _root_ide_package_.com.door43.translationstudio.ui.dialogs.ConfirmDialog(
             title = stringResource(R.string.confirm),
             message = result.error ?: "Unknown error",
             onConfirm = {
                 result.uri?.let { uri ->
-                    viewModel.onAction(ImportAction.ImportSourceUri(uri, true))
+                    viewModel.onAction(
+                        ImportAction.ImportSourceUri(
+                            uri,
+                            true
+                        )
+                    )
                 }
                 viewModel.onAction(ImportAction.ClearSourceConflict)
             },
@@ -341,7 +359,7 @@ fun ImportDialog(
     }
 
     state.resultMessage?.let { (title, message) ->
-        InfoDialog(
+        _root_ide_package_.com.door43.translationstudio.ui.dialogs.InfoDialog(
             title = title,
             message = message,
             onDismiss = {
@@ -358,7 +376,7 @@ fun ImportDialog(
     }
 
     progress?.let {
-        ProgressDialog(
+        _root_ide_package_.com.door43.translationstudio.ui.dialogs.ProgressDialog(
             message = it.message,
             progress = it.value
         )

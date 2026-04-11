@@ -50,7 +50,7 @@ import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
-import com.door43.translationstudio.ui.dialogs.ImportDialog
+import com.door43.translationstudio.ui.home.ImportDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import kotlinx.coroutines.launch

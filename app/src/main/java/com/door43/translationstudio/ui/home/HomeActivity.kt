@@ -1,19 +1,15 @@
 package com.door43.translationstudio.ui.home
 
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
-import com.door43.translationstudio.App.Companion.isNetworkAvailable
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialogOld
 import com.door43.translationstudio.ui.profile.LoginDoor43Activity
 import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
@@ -21,18 +17,13 @@ import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.unfoldingword.tools.eventbuffer.EventBuffer
-import org.unfoldingword.tools.eventbuffer.EventBuffer.OnEventTalker
 import java.io.File
 
-class HomeActivity : BaseActivity(),
-    EventBuffer.OnEventListener, DialogInterface.OnCancelListener {
+class HomeActivity : BaseActivity() {
 
     val profile: Profile by inject()
     val translator: Translator by inject()
 
-    private var targetTranslationID: String? = null
-    private var updateDialog: UpdateLibraryDialogOld? = null
     private var backupsRunning = false
 
     private val viewModel: HomeViewModel by viewModel()
@@ -43,48 +34,6 @@ class HomeActivity : BaseActivity(),
         startBackupService()
 
         handleIntent(intent)
-
-//        val moreButton = findViewById<View>(R.id.action_more) as ImageButton
-//        moreButton.setOnClickListener { v ->
-//            val moreMenu = PopupMenu(this@HomeActivity, v)
-//            ViewUtil.forcePopupMenuIcons(moreMenu)
-//            moreMenu.menuInflater.inflate(R.menu.menu_home, moreMenu.menu)
-//            moreMenu.setOnMenuItemClickListener { item ->
-//                when (item.itemId) {
-//                    R.id.action_update -> {
-//                        updateDialog = UpdateLibraryDialog().apply {
-//                            showDialogFragment(this, UpdateLibraryDialog.TAG)
-//                        }
-//                        true
-//                    }
-//                    R.id.action_import -> {
-//                        val importDialog = ImportDialog()
-//                        showDialogFragment(importDialog, ImportDialog.TAG)
-//                        true
-//                    }
-//                    R.id.action_feedback -> {
-//                        val dialog = FeedbackDialogOld()
-//                        showDialogFragment(dialog, "feedback-dialog")
-//                        true
-//                    }
-//                    R.id.action_share_apk -> {
-//                        viewModel.exportApp()
-//                        true
-//                    }
-//                    R.id.action_log_out -> {
-//                        viewModel.logout()
-//                        true
-//                    }
-//                    R.id.action_settings -> {
-//                        val intent = Intent(this@HomeActivity, SettingsActivity::class.java)
-//                        startActivity(intent)
-//                        true
-//                    }
-//                    else -> false
-//                }
-//            }
-//            moreMenu.show()
-//        }
 
         // open last project when starting the first time
         viewModel.lastOpened?.let {
@@ -202,54 +151,6 @@ class HomeActivity : BaseActivity(),
     override fun onResume() {
         super.onResume()
         viewModel.lastFocusTargetTranslation = null
-    }
-
-    override fun onDestroy() {
-        val dialog = supportFragmentManager.findFragmentByTag(UpdateLibraryDialogOld.TAG)
-        if (dialog is OnEventTalker) {
-            (dialog as OnEventTalker).eventBuffer.removeOnEventListener(this)
-        }
-        super.onDestroy()
-    }
-
-    override fun onEventBufferEvent(talker: OnEventTalker?, tag: Int, args: Bundle?) {
-        if (talker is UpdateLibraryDialogOld) {
-            updateDialog?.dismiss()
-
-            if (!isNetworkAvailable) {
-                AlertDialog.Builder(this@HomeActivity, R.style.AppTheme_Dialog)
-                    .setTitle(R.string.internet_not_available)
-                    .setMessage(R.string.check_network_connection)
-                    .setPositiveButton(R.string.dismiss, null)
-                    .show()
-                return
-            }
-
-            if (tag == UpdateLibraryDialogOld.EVENT_SELECT_DOWNLOAD_SOURCES) {
-                selectDownloadSources()
-                return
-            }
-        }
-    }
-
-    /**
-     * bring up UI to select and download sources
-     */
-    private fun selectDownloadSources() {
-        val ft = supportFragmentManager.beginTransaction()
-        val prev = supportFragmentManager.findFragmentByTag(DownloadSourcesDialogOld.TAG)
-        if (prev != null) {
-            ft.remove(prev)
-        }
-        ft.addToBackStack(null)
-
-        val dialog = DownloadSourcesDialogOld()
-        dialog.show(ft, DownloadSourcesDialogOld.TAG)
-        return
-    }
-
-    override fun onCancel(dialog: DialogInterface) {
-        // TODO cancel running tasks
     }
 
     companion object {

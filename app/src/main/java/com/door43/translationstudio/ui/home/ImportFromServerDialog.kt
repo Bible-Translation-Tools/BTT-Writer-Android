@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.dialogs
+package com.door43.translationstudio.ui.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -66,7 +66,7 @@ fun ImportFromServerDialog(
     val translationIdFocus = remember { FocusRequester() }
     val searchButtonFocus = remember { FocusRequester() }
 
-    OverlayDialog(
+    _root_ide_package_.com.door43.translationstudio.ui.dialogs.OverlayDialog(
         onDismiss = onDismiss,
         maxWidth = 1000.dp,
         maxHeight = 1000.dp,
