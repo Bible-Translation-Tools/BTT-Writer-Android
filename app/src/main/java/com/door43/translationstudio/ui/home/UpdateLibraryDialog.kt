@@ -35,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -64,7 +63,6 @@ fun UpdateLibraryDialog(
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     val uriHandler = LocalUriHandler.current
-    val context = LocalContext.current
 
     val openIndexLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -75,6 +73,7 @@ fun UpdateLibraryDialog(
     }
 
     var showIndexUpdatedDialog by rememberSaveable { mutableStateOf(false) }
+    var showDownloadSourcesDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
@@ -164,7 +163,7 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.download_sources)
                         ) {
-                            viewModel.onAction(UpdateAction.DownloadSources)
+                            showDownloadSourcesDialog = true
                         }
                         UpdateOptionItem(
                             stringResource(R.string.update_languages)
@@ -203,6 +202,12 @@ fun UpdateLibraryDialog(
             message = stringResource(R.string.download_index_success),
             onDismiss = App::restart,
             onConfirm = App::restart
+        )
+    }
+
+    if (showDownloadSourcesDialog) {
+        DownloadSourcesDialog(
+            onDismiss = { showDownloadSourcesDialog = false }
         )
     }
 

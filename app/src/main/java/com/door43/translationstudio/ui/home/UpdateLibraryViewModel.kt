@@ -35,7 +35,6 @@ sealed interface UpdateAction {
     object UpdateSource : UpdateAction
     data class ImportIndex(val uri: Uri) : UpdateAction
     object DownloadIndex : UpdateAction
-    object DownloadSources : UpdateAction
     object UpdateLanguages : UpdateAction
     object CheckAppUpdate : UpdateAction
     data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : UpdateAction
@@ -77,7 +76,6 @@ class UpdateLibraryViewModel(
             is UpdateAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
             UpdateAction.UpdateSource -> updateSource()
             UpdateAction.DownloadIndex -> downloadIndex()
-            UpdateAction.DownloadSources -> downloadSources()
             UpdateAction.UpdateLanguages -> updateLanguages()
             UpdateAction.CheckAppUpdate -> checkAppUpdate()
             UpdateAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
@@ -155,10 +153,6 @@ class UpdateLibraryViewModel(
                 )
             }
         }
-    }
-
-    private fun downloadSources() {
-
     }
 
     private fun updateLanguages() {

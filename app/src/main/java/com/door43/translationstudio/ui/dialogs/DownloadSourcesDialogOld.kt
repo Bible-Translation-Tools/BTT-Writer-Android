@@ -43,7 +43,7 @@ import kotlin.math.min
 /**
  * Created by blm on 12/1/16.
  */
-class DownloadSourcesDialog : DialogFragment() {
+class DownloadSourcesDialogOld : DialogFragment() {
     val typography: Typography by inject()
     val assetsProvider: AssetsProvider by inject()
 
@@ -70,7 +70,7 @@ class DownloadSourcesDialog : DialogFragment() {
 
         setupObservers()
 
-        viewModel.getAvailableSources(resources.getString(R.string.loading_sources))
+        //viewModel.getAvailableSources(resources.getString(R.string.loading_sources))
 
         progressDialog = ProgressHelper.newInstance(
             childFragmentManager,
@@ -105,7 +105,7 @@ class DownloadSourcesDialog : DialogFragment() {
                 val selected = adapter.selected
                 if (selected.isNotEmpty()) {
                     if (isNetworkAvailable) {
-                        viewModel.downloadSources(selected)
+                        //viewModel.downloadSources(selected)
                     } else {
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                             .setTitle(R.string.internet_not_available)
@@ -248,36 +248,27 @@ class DownloadSourcesDialog : DialogFragment() {
     }
 
     private fun setupObservers() {
-        viewModel.progress.observe(this) {
-            if (it != null) {
-                progressDialog.show()
-                progressDialog.setProgress(it.progress)
-                progressDialog.setMessage(it.message)
-                progressDialog.setMax(it.max)
-            } else {
-                progressDialog.dismiss()
-            }
-        }
-        viewModel.availableSources.observe(this) {
-            it?.let { result ->
-                adapter.setData(result)
-                adapter.selected = selected
-                setFilter(RESTORE)
 
-                searchString?.let { search ->
-                    enableSearchText()
-                    binding.searchText.setText(search)
-                    val endPos = search.length
-                    binding.searchText.setSelection(endPos, endPos)
-                    adapter.setSearch(search)
-                }
-            }
-        }
-        viewModel.downloadedSources.observe(this) {
-            it?.let { result ->
-                getDownloadedSources(result)
-            }
-        }
+//        viewModel.availableSources.observe(this) {
+//            it?.let { result ->
+//                adapter.setData(result)
+//                adapter.selected = selected
+//                setFilter(RESTORE)
+//
+//                searchString?.let { search ->
+//                    enableSearchText()
+//                    binding.searchText.setText(search)
+//                    val endPos = search.length
+//                    binding.searchText.setSelection(endPos, endPos)
+//                    adapter.setSearch(search)
+//                }
+//            }
+//        }
+//        viewModel.downloadedSources.observe(this) {
+//            it?.let { result ->
+//                getDownloadedSources(result)
+//            }
+//        }
     }
 
     override fun onResume() {
@@ -635,7 +626,7 @@ class DownloadSourcesDialog : DialogFragment() {
     }
 
     companion object {
-        val TAG: String = DownloadSourcesDialog::class.java.simpleName
+        val TAG: String = DownloadSourcesDialogOld::class.java.simpleName
 
         const val STATE_SEARCH_STRING: String = "state_search_string"
         const val STATE_FILTER_STEPS: String = "state_filter_steps"

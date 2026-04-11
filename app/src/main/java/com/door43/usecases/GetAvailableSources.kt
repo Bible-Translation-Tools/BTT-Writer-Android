@@ -18,9 +18,7 @@ class GetAvailableSources(
         val otherBooks: Map<String, List<Int>>,
     )
 
-    fun execute(prefix: String, progressListener: OnProgressListener? = null): Result {
-        val max = 100
-
+    fun execute(progressListener: OnProgressListener? = null): Result {
         val ntBookList = BibleCodes.getNtBooks()
         val otBookList = BibleCodes.getOtBooks()
 
@@ -78,7 +76,7 @@ class GetAvailableSources(
 
             if (i % 16 == 0) {
                 val progress = i / maxProgress.toFloat()
-                progressListener?.onProgress(progress, prefix)
+                progressListener?.onProgress(progress, null)
             }
 
             val language = t.language.slug

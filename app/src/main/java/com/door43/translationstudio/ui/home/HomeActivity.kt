@@ -13,7 +13,7 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialog
+import com.door43.translationstudio.ui.dialogs.DownloadSourcesDialogOld
 import com.door43.translationstudio.ui.profile.LoginDoor43Activity
 import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
@@ -237,14 +237,14 @@ class HomeActivity : BaseActivity(),
      */
     private fun selectDownloadSources() {
         val ft = supportFragmentManager.beginTransaction()
-        val prev = supportFragmentManager.findFragmentByTag(DownloadSourcesDialog.TAG)
+        val prev = supportFragmentManager.findFragmentByTag(DownloadSourcesDialogOld.TAG)
         if (prev != null) {
             ft.remove(prev)
         }
         ft.addToBackStack(null)
 
-        val dialog = DownloadSourcesDialog()
-        dialog.show(ft, DownloadSourcesDialog.TAG)
+        val dialog = DownloadSourcesDialogOld()
+        dialog.show(ft, DownloadSourcesDialogOld.TAG)
         return
     }
 
