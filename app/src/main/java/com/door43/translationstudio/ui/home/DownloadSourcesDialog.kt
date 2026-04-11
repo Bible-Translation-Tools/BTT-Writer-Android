@@ -28,6 +28,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,11 +59,18 @@ fun DownloadSourcesDialog(
 ) {
     val viewModel: DownloadSourcesViewModel = koinViewModel()
 
+    LaunchedEffect(Unit) {
+        viewModel.onAction(DownloadAction.Initialize)
+    }
+
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     OverlayDialog(
-        onDismiss = onDismiss,
+        onDismiss = {
+            viewModel.onAction(DownloadAction.ClearState)
+            onDismiss()
+        },
         maxWidth = 1000.dp,
         maxHeight = 1000.dp
     ) {
@@ -125,6 +133,7 @@ fun DownloadSourcesDialog(
                 },
                 onBackClicked = {
                     if (state.navigationStack.size == 1) {
+                        viewModel.onAction(DownloadAction.ClearState)
                         onDismiss()
                     } else {
                         viewModel.onAction(DownloadAction.NavigateBack)
@@ -135,7 +144,10 @@ fun DownloadSourcesDialog(
                 }
             )
 
-            if (state.navigationStack.last().selection.isDownloadable) {
+            val canDownload = state.navigationStack.isNotEmpty()
+                    && state.navigationStack.last().selection.isDownloadable
+
+            if (canDownload) {
                 HorizontalDivider()
 
                 Row(

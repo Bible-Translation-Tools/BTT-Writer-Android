@@ -87,6 +87,8 @@ sealed interface DownloadAction {
     data class ToggleSelection(val id: String) : DownloadAction
     object DownloadSources : DownloadAction
     object NavigateBack : DownloadAction
+    object ClearState : DownloadAction
+    object Initialize : DownloadAction
 }
 
 class DownloadSourcesViewModel(
@@ -102,16 +104,13 @@ class DownloadSourcesViewModel(
     private val _state = MutableStateFlow(DownloadSourcesState())
     val state = _state.asStateFlow()
 
-    private var rawResult: GetAvailableSources.Result? = null
+    private var availableSources: GetAvailableSources.Result? = null
+    private var initialized = false
     private val downloadErrors = mutableMapOf<String, String?>()
-
-    init {
-        loadAvailableSources()
-        setFilterMode(FilterMode.ByLanguage)
-    }
 
     fun onAction(action: DownloadAction) {
         when (action) {
+            DownloadAction.Initialize -> initialize()
             is DownloadAction.FilterModeChanged -> setFilterMode(action.mode)
             is DownloadAction.Search -> {
                 _state.update { it.copy(searchQuery = action.query) }
@@ -123,6 +122,7 @@ class DownloadSourcesViewModel(
             is DownloadAction.SelectAll -> setSelectAll(action.shouldSelectAll)
             DownloadAction.NavigateBack -> onNavigateBack()
             DownloadAction.DownloadSources -> downloadSources()
+            DownloadAction.ClearState -> resetState()
         }
     }
 
@@ -279,7 +279,7 @@ class DownloadSourcesViewModel(
         launchWithProgress(
             application.getString(R.string.loading_sources)
         ) { handle ->
-            rawResult = withContext(Dispatchers.IO) {
+            availableSources = withContext(Dispatchers.IO) {
                 getAvailableSources.execute { progress, details ->
                     handle.update(progress, handle.initialMessage, details)
                 }
@@ -299,6 +299,11 @@ class DownloadSourcesViewModel(
                 }
             }
             val newlyDownloaded = result.downloadedTranslations
+
+            result.failedSourceDownloads.forEach { slug ->
+                downloadErrors[slug] = result.failureMessages[slug]
+            }
+
             _state.update { state ->
                 state.copy(
                     downloadedSources = state.downloadedSources + newlyDownloaded,
@@ -310,7 +315,7 @@ class DownloadSourcesViewModel(
     }
 
     private fun updateList() {
-        val result = rawResult ?: return
+        val result = availableSources ?: return
         val currentStep = _state.value.navigationStack.last()
 
         val items = when (currentStep.selection) {
@@ -544,5 +549,19 @@ class DownloadSourcesViewModel(
             val source = result.sources.getOrNull(index)
             categoryMap.containsKey(source?.project?.slug)
         }
+    }
+
+    private fun initialize() {
+        if (initialized) return
+        initialized = true
+        setFilterMode(FilterMode.ByLanguage)
+        loadAvailableSources()
+    }
+
+    private fun resetState() {
+        availableSources = null
+        initialized = false
+        downloadErrors.clear()
+        _state.value = DownloadSourcesState()
     }
 }
