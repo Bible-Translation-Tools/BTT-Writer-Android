@@ -76,8 +76,8 @@ class NewTempLanguageActivity : QuestionnaireActivity(), LanguageSuggestionsDial
             return
         }
 
-        val prev = supportFragmentManager.findFragmentByTag(LanguageSuggestionsDialog.TAG) as? LanguageSuggestionsDialog
-        prev?.setOnClickListener(this)
+//        val prev = supportFragmentManager.findFragmentByTag(LanguageSuggestionsDialog.TAG) as? LanguageSuggestionsDialog
+//        prev?.setOnClickListener(this)
     }
 
     override val questionnaire: QuestionnairePager?
@@ -95,12 +95,12 @@ class NewTempLanguageActivity : QuestionnaireActivity(), LanguageSuggestionsDial
                     val languages = viewModel.findTargetLanguages(answer.trim())
                     if (languages.isNotEmpty()) {
                         closeKeyboard(this)
-                        val ft = supportFragmentManager.beginTransaction()
-                        val prev = supportFragmentManager.findFragmentByTag(LanguageSuggestionsDialog.TAG)
-                        if (prev != null) {
-                            ft.remove(prev)
-                        }
-                        ft.addToBackStack(null)
+//                        val ft = supportFragmentManager.beginTransaction()
+//                        val prev = supportFragmentManager.findFragmentByTag(LanguageSuggestionsDialog.TAG)
+//                        if (prev != null) {
+//                            ft.remove(prev)
+//                        }
+//                        ft.addToBackStack(null)
 
                         languageSuggestionsDialog = LanguageSuggestionsDialog().apply {
                             val args = Bundle()
@@ -109,7 +109,7 @@ class NewTempLanguageActivity : QuestionnaireActivity(), LanguageSuggestionsDial
                                 answer.trim())
                             arguments = args
                             setOnClickListener(this@NewTempLanguageActivity)
-                            show(ft, LanguageSuggestionsDialog.TAG)
+                            //show(ft, LanguageSuggestionsDialog.TAG)
                         }
                         return false
                     }

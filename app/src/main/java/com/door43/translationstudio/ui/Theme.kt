@@ -89,7 +89,7 @@ private val LightColors = lightColorScheme(
 
 private val DarkColors = darkColorScheme(
     primary = PrimaryBlueDark,
-    onPrimary = TextReverseDark,
+    onPrimary = TextReverseLight,
     primaryContainer = PrimaryDarkBlueMuted,
     onPrimaryContainer = PrimaryLightBlue,
 

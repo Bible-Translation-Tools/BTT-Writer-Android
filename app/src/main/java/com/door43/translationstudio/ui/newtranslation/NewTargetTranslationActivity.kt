@@ -1,26 +1,19 @@
 package com.door43.translationstudio.ui.newtranslation
 
-import android.app.SearchManager
 import android.content.Intent
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.ResourceType
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.databinding.ActivityNewTargetTranslationBinding
+import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.Searchable
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
-import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
 import com.door43.usecases.MergeTargetTranslation
 import com.door43.util.StringUtilities
 import com.door43.widget.ViewUtil
@@ -36,11 +29,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
 
     val translator: Translator by inject()
 
-    private var fragment: Searchable? = null
-    private var dialogShown = DialogShown.NONE
-
-    private lateinit var binding: ActivityNewTargetTranslationBinding
-
     private val viewModel: NewTargetTranslationModel by viewModel()
 
     private val activityResultLauncher = registerForActivityResult(
@@ -51,8 +39,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityNewTargetTranslationBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
         val extras = intent.extras
         if (extras != null) {
@@ -64,10 +50,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
             viewModel.createdNewLanguage = savedInstanceState.getBoolean(
                 STATE_NEW_LANGUAGE,
                 false
-            )
-            dialogShown = DialogShown.fromInt(
-                savedInstanceState.getInt(STATE_DIALOG_SHOWN, INVALID),
-                DialogShown.NONE
             )
             if (savedInstanceState.containsKey(STATE_TARGET_TRANSLATION_ID)) {
                 viewModel.newTargetTranslationId = savedInstanceState.getString(
@@ -87,25 +69,22 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
             }
         }
 
-        if (findViewById<View?>(R.id.fragment_container) != null) {
-            if (savedInstanceState != null) {
-                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as Searchable
-            } else {
-                fragment = TargetLanguageListFragment()
-                (fragment as TargetLanguageListFragment).arguments = intent.extras
-                supportFragmentManager.beginTransaction()
-                    .add(R.id.fragment_container, fragment as TargetLanguageListFragment)
-                    .commit()
-                // TODO: animate
-            }
-        }
-
         if (viewModel.createdNewLanguage && viewModel.selectedTargetLanguage != null) {
             confirmTempLanguage()
         }
 
         setupObservers()
-        restoreDialogs()
+
+        setContent {
+            AppTheme(darkTheme = isDarkTheme) {
+                NewTargetTranslationScreen(
+                    onNavigateBack = {
+                        setResult(RESULT_CANCELED)
+                        finish()
+                    }
+                )
+            }
+        }
     }
 
     private fun setupObservers() {
@@ -141,27 +120,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
     }
 
     /**
-     * restore the dialogs that were displayed before rotation
-     */
-    private fun restoreDialogs() {
-        when (dialogShown) {
-            DialogShown.RENAME_CONFLICT -> {
-                val sourceTargetTranslation = viewModel.targetTranslationId?.let {
-                    viewModel.getTargetTranslation(it)
-                }
-                val destTargetTranslation = viewModel.newTargetTranslationId?.let {
-                    viewModel.getTargetTranslation(it)
-                }
-                if(sourceTargetTranslation != null && destTargetTranslation != null) {
-                    showTargetTranslationConflict(sourceTargetTranslation, destTargetTranslation)
-                }
-            }
-            DialogShown.NONE -> {}
-        }
-    }
-
-
-    /**
      * Warn user that there is already an existing project with that language.
      * Give them the option of merging.
      * @param sourceTargetTranslation
@@ -171,7 +129,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         sourceTargetTranslation: TargetTranslation,
         existingTranslation: TargetTranslation
     ) {
-        dialogShown = DialogShown.RENAME_CONFLICT
         viewModel.newTargetTranslationId = existingTranslation.id
         val project = viewModel.getProject(existingTranslation)
         val message = resources.getString(
@@ -186,7 +143,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
             .setPositiveButton(R.string.yes) { _, _ ->
                 // TODO: 11/1/16 the activity should return the language
                 //  and let the calling activity perform the merge
-                dialogShown = DialogShown.NONE
                 viewModel.mergeTargetTranslation(
                     existingTranslation,
                     sourceTargetTranslation,
@@ -194,7 +150,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
                 )
             }
             .setNegativeButton(R.string.no) { _, _ ->
-                dialogShown = DialogShown.NONE
                 val snack = Snackbar.make(
                     findViewById(android.R.id.content),
                     R.string.rename_canceled,
@@ -246,23 +201,23 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_new_target_translation, menu)
-        return true
-    }
+//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        menuInflater.inflate(R.menu.menu_new_target_translation, menu)
+//        return true
+//    }
 
     override fun onItemClick(targetLanguage: TargetLanguage) {
         viewModel.selectedTargetLanguage = targetLanguage
 
         if (!viewModel.changeTargetLanguageOnly) {
             // display project list
-            fragment = ProjectListFragment()
-            (fragment as ProjectListFragment).arguments = intent.extras
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, (fragment as ProjectListFragment?)!!).commit()
+//            fragment = ProjectListFragment()
+//            (fragment as ProjectListFragment).arguments = intent.extras
+//            supportFragmentManager.beginTransaction()
+//                .replace(R.id.fragment_container, (fragment as ProjectListFragment?)!!).commit()
             // TODO: animate
-            invalidateOptionsMenu()
+            //invalidateOptionsMenu()
         } else { // just change the target language
             viewModel.targetTranslationId?.let { targetTranslationId ->
                 viewModel.getTargetTranslation(targetTranslationId)?.let { sourceTargetTranslation ->
@@ -361,66 +316,65 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         finish()
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        super.onPrepareOptionsMenu(menu)
-        if (fragment is ProjectListFragment) {
-            menu.findItem(R.id.action_update).setVisible(true)
-        } else {
-            menu.findItem(R.id.action_update).setVisible(false)
-        }
-        val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
-        val searchMenuItem = menu.findItem(R.id.action_search)
-        val searchViewAction = searchMenuItem.actionView as SearchView
-        searchViewAction.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(s: String): Boolean {
-                return true
-            }
-            override fun onQueryTextChange(s: String): Boolean {
-                fragment!!.onSearchQuery(s)
-                return true
-            }
-        })
-        searchViewAction.setSearchableInfo(searchManager.getSearchableInfo(componentName))
-        return true
-    }
+//    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+//        super.onPrepareOptionsMenu(menu)
+//        if (fragment is ProjectListFragment) {
+//            menu.findItem(R.id.action_update).setVisible(true)
+//        } else {
+//            menu.findItem(R.id.action_update).setVisible(false)
+//        }
+//        val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
+//        val searchMenuItem = menu.findItem(R.id.action_search)
+//        val searchViewAction = searchMenuItem.actionView as SearchView
+//        searchViewAction.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+//            override fun onQueryTextSubmit(s: String): Boolean {
+//                return true
+//            }
+//            override fun onQueryTextChange(s: String): Boolean {
+////                fragment!!.onSearchQuery(s)
+//                return true
+//            }
+//        })
+//        searchViewAction.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+//        return true
+//    }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-
-        when (id) {
-            R.id.action_settings -> {
-                val intent = Intent(this, SettingsActivity::class.java)
-                startActivity(intent)
-                return true
-            }
-
-            R.id.action_search -> return true
-            R.id.action_add_language -> {
-                AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-                    .setTitle(R.string.title_new_language_code)
-                    .setMessage(R.string.confirm_start_new_language_code)
-                    .setPositiveButton(R.string.label_continue) { _, _ ->
-                        val requestNewLanguageIntent = Intent(
-                            this@NewTargetTranslationActivity,
-                            NewTempLanguageActivity::class.java
-                        )
-                        activityResultLauncher.launch(requestNewLanguageIntent)
-                    }
-                    .setNegativeButton(R.string.title_cancel, null)
-                    .show()
-                return true
-            }
-
-            // TODO: 10/18/16 display dialog for updating
-            R.id.action_update -> return true
-
-            else -> return super.onOptionsItemSelected(item)
-        }
-    }
+//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+//        val id = item.itemId
+//
+//        when (id) {
+//            R.id.action_settings -> {
+//                val intent = Intent(this, SettingsActivity::class.java)
+//                startActivity(intent)
+//                return true
+//            }
+//
+//            R.id.action_search -> return true
+//            R.id.action_add_language -> {
+//                AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+//                    .setTitle(R.string.title_new_language_code)
+//                    .setMessage(R.string.confirm_start_new_language_code)
+//                    .setPositiveButton(R.string.label_continue) { _, _ ->
+//                        val requestNewLanguageIntent = Intent(
+//                            this@NewTargetTranslationActivity,
+//                            NewTempLanguageActivity::class.java
+//                        )
+//                        activityResultLauncher.launch(requestNewLanguageIntent)
+//                    }
+//                    .setNegativeButton(R.string.title_cancel, null)
+//                    .show()
+//                return true
+//            }
+//
+//            // TODO: 10/18/16 display dialog for updating
+//            R.id.action_update -> return true
+//
+//            else -> return super.onOptionsItemSelected(item)
+//        }
+//    }
 
     public override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(STATE_TARGET_TRANSLATION_ID, viewModel.newTargetTranslationId)
-        outState.putInt(STATE_DIALOG_SHOWN, dialogShown.value)
         outState.putBoolean(STATE_NEW_LANGUAGE, viewModel.createdNewLanguage)
         if (viewModel.selectedTargetLanguage != null) {
             var targetLanguageJson: JSONObject? = null
@@ -487,26 +441,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         }
     }
 
-    /**
-     * for keeping track if dialog is being shown for orientation changes
-     */
-    enum class DialogShown {
-        NONE,
-        RENAME_CONFLICT;
-
-        val value: Int
-            get() = this.ordinal
-
-        companion object {
-            fun fromInt(ordinal: Int, defaultValue: DialogShown): DialogShown {
-                if (ordinal > 0 && ordinal < entries.size) {
-                    return entries[ordinal]
-                }
-                return defaultValue
-            }
-        }
-    }
-
     companion object {
         const val EXTRA_TARGET_TRANSLATION_ID: String = "extra_target_translation_id"
         const val EXTRA_CHANGE_TARGET_LANGUAGE_ONLY: String = "extra_change_target_language_only"
@@ -514,7 +448,6 @@ class NewTargetTranslationActivity : BaseActivity(), TargetLanguageListFragment.
         const val RESULT_MERGE_CONFLICT: Int = 3
         private const val STATE_TARGET_TRANSLATION_ID = "state_target_translation_id"
         private const val STATE_TARGET_LANGUAGE = "state_target_language_id"
-        const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
         const val RESULT_ERROR: Int = 4
         val TAG: String = NewTargetTranslationActivity::class.java.simpleName
         const val NEW_LANGUAGE_REQUEST: Int = 1001

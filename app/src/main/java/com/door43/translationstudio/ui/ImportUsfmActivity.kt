@@ -68,11 +68,11 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
         setContentView(binding.root)
 
         if (findViewById<View?>(R.id.fragment_container) != null) {
-            if (savedInstanceState != null) {
-                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as? Searchable
-            } else {
-                setActivityStateTo(ImportState.NeedLanguage)
-            }
+//            if (savedInstanceState != null) {
+//                fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as? Searchable
+//            } else {
+//                setActivityStateTo(ImportState.NeedLanguage)
+//            }
         }
 
         setupObservers()
@@ -82,11 +82,11 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
 
     override fun onStart() {
         super.onStart()
-        progressDialog = ProgressHelper.newInstance(
-            supportFragmentManager,
-            R.string.importing_usfm,
-            false
-        )
+//        progressDialog = ProgressHelper.newInstance(
+//            supportFragmentManager,
+//            R.string.importing_usfm,
+//            false
+//        )
     }
 
     private fun setupObservers() {
@@ -180,9 +180,9 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
                 .setPositiveButton(R.string.label_continue) { _, _ ->
                     fragment = ProjectListFragment()
                     (fragment as ProjectListFragment).arguments = intent.extras
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, (fragment as ProjectListFragment?)!!)
-                        .commit()
+//                    supportFragmentManager.beginTransaction()
+//                        .replace(R.id.fragment_container, (fragment as ProjectListFragment?)!!)
+//                        .commit()
                     var title = resources.getString(R.string.title_activity_import_usfm_book)
                     title += " $description"
                     setTitle(title)
@@ -409,11 +409,11 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
         val id = item.itemId
 
         when (id) {
-            R.id.action_settings -> {
-                val intent = Intent(this, SettingsActivity::class.java)
-                startActivity(intent)
-                return true
-            }
+//            R.id.action_settings -> {
+//                val intent = Intent(this, SettingsActivity::class.java)
+//                startActivity(intent)
+//                return true
+//            }
             R.id.action_search -> return true
             R.id.home -> {
                 onBackPressedHandler()
@@ -480,9 +480,9 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
             ImportState.NeedLanguage -> if (fragment == null) {
                 fragment = TargetLanguageListFragment()
                 (fragment as TargetLanguageListFragment).arguments = intent.extras
-                supportFragmentManager.beginTransaction()
-                    .add(R.id.fragment_container, fragment as TargetLanguageListFragment)
-                    .commit()
+//                supportFragmentManager.beginTransaction()
+//                    .add(R.id.fragment_container, fragment as TargetLanguageListFragment)
+//                    .commit()
                 // TODO: animate
             }
 
@@ -566,10 +566,10 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
 
     override fun onItemClick(targetLanguage: TargetLanguage) {
         this.targetLanguage = targetLanguage
-        supportFragmentManager
-            .beginTransaction()
-            .remove(fragment as TargetLanguageListFragment)
-            .commit()
+//        supportFragmentManager
+//            .beginTransaction()
+//            .remove(fragment as TargetLanguageListFragment)
+//            .commit()
         fragment = null
         processUSFMFile()
     }
@@ -585,10 +585,10 @@ class ImportUsfmActivity : BaseActivity(), TargetLanguageListFragment.OnItemClic
      */
     private fun setBook(projectId: String?) {
         if (projectId != null) {
-            supportFragmentManager
-                .beginTransaction()
-                .remove(fragment as ProjectListFragment)
-                .commit()
+//            supportFragmentManager
+//                .beginTransaction()
+//                .remove(fragment as ProjectListFragment)
+//                .commit()
             fragment = null
 
             val usfm = viewModel.usfm.value

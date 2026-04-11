@@ -1,13 +1,12 @@
-package com.door43.translationstudio.ui.viewmodels
+package com.door43.translationstudio.ui.newtranslation
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.ILanguageRequestRepository
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.App
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.ResourceType
 import com.door43.translationstudio.core.TargetTranslation
@@ -24,14 +23,13 @@ import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.tools.logger.Logger
 
 class NewTargetTranslationModel(
-    application: Application,
     private val mergeTargetTranslation: MergeTargetTranslation,
     private val languageRequestRepository: ILanguageRequestRepository,
     private val prefRepository: IPreferenceRepository,
     private val library: Door43Client,
     private val translator: Translator,
     private val profile: Profile
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     var selectedTargetLanguage: TargetLanguage? = null
     var newTargetTranslationId: String? = null
@@ -44,7 +42,7 @@ class NewTargetTranslationModel(
 
     fun getProject(targetTranslation: TargetTranslation): Project? {
         return library.index.getProject(
-            deviceLanguageCode,
+            App.Companion.deviceLanguageCode,
             targetTranslation.projectId
         )
     }
@@ -168,7 +166,7 @@ class NewTargetTranslationModel(
     fun deleteTargetTranslation(projectId: String, resourceSlug: String) {
         selectedTargetLanguage?.let { selected ->
             translator.deleteTargetTranslation(
-                TargetTranslation.generateTargetTranslationId(
+                TargetTranslation.Companion.generateTargetTranslationId(
                     selected.slug, projectId, ResourceType.TEXT, resourceSlug
                 )
             )
@@ -180,6 +178,6 @@ class NewTargetTranslationModel(
     }
 
     fun getCategories(categoryId: Long = 0): List<CategoryEntry> {
-        return library.index.getProjectCategories(categoryId, deviceLanguageCode, "all")
+        return library.index.getProjectCategories(categoryId, App.Companion.deviceLanguageCode, "all")
     }
 }

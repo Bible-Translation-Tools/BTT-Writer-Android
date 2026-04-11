@@ -2,7 +2,7 @@ package com.door43.translationstudio.ui
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,7 +22,7 @@ import org.unfoldingword.tools.logger.Logger
  * activities such as recovery from crashes.
  *
  */
-abstract class BaseActivity : AppCompatActivity(), Foreground.Listener {
+abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
 
     private val library: Door43Client by inject()
     private val preRepository: IPreferenceRepository by inject()

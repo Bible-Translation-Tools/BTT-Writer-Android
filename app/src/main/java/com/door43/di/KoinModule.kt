@@ -42,7 +42,7 @@ import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
 import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
-import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
+import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC

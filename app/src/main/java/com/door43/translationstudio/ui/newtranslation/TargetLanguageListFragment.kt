@@ -10,7 +10,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.FragmentLanguageListBinding
 import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.Searchable
-import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
+import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationModel
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.unfoldingword.door43client.models.TargetLanguage
 

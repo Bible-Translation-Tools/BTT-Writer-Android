@@ -11,7 +11,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.FragmentProjectListBinding
 import com.door43.translationstudio.ui.BaseFragment
 import com.door43.translationstudio.ui.Searchable
-import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
+import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationModel
 import org.unfoldingword.door43client.models.CategoryEntry
 
 /**

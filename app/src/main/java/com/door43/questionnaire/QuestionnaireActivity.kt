@@ -29,8 +29,8 @@ abstract class QuestionnaireActivity : BaseActivity(), QuestionnaireAdapter.OnEv
         binding = ActivityQuestionnaireBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        //setSupportActionBar(binding.toolbar)
+        //supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         pager = questionnaire ?: run {
             Logger.e(

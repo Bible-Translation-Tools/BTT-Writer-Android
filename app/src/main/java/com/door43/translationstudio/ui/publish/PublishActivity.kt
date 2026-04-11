@@ -31,9 +31,6 @@ class PublishActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //setSupportActionBar(binding.toolbar)
-        //supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
         // validate parameters
         val args = checkNotNull(intent.extras)
         val targetTranslationId = args.getString(
