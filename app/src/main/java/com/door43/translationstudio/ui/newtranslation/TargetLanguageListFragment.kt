@@ -34,7 +34,6 @@ class TargetLanguageListFragment : BaseFragment(), Searchable {
         _binding = FragmentLanguageListBinding.inflate(inflater, container, false)
 
         with(binding) {
-            adapter.setLanguages(viewModel.getTargetLanguages())
             val args = arguments
             if (args != null) {
                 val disabledLanguages = args.getStringArray(

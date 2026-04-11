@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.home
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -50,7 +49,6 @@ import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
-import com.door43.translationstudio.ui.home.ImportDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import kotlinx.coroutines.launch
@@ -109,13 +107,6 @@ fun HomeScreen(
         viewModel.onAction(HomeAction.LoadProjects)
 
         when(result.resultCode) {
-            Activity.RESULT_OK -> {
-                result.data?.getStringExtra(
-                    NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
-                )?.let {
-                    onReviewTranslation(it)
-                }
-            }
             NewTargetTranslationActivity.RESULT_DUPLICATE -> {
                 result.data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID

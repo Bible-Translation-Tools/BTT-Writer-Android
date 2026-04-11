@@ -10,7 +10,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.door43.translationstudio.databinding.DialogTargetLanguageSuggestionsBinding
 import com.door43.translationstudio.ui.newtranslation.TargetLanguageAdapter
-import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel
+import com.door43.translationstudio.ui.newlanguage.NewTempLanguageViewModel
 import org.unfoldingword.door43client.models.TargetLanguage
 
 /**

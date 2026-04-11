@@ -1,11 +1,16 @@
 package com.door43.translationstudio.ui.newtranslation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,10 +36,14 @@ fun LanguagesList(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
     ) {
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = stringResource(R.string.choose_target_language),
             fontStyle = FontStyle.Italic,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 8.dp)
         )
 
         LazyColumn(
@@ -43,11 +52,19 @@ fun LanguagesList(
             items(languages, key = { it.slug }) { language ->
                 TextButton(
                     onClick = { onLanguageSelected(language) },
-                    enabled = !disabledLanguages.contains(language.slug)
+                    enabled = !disabledLanguages.contains(language.slug),
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    shape = RoundedCornerShape(0.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(vertical = 8.dp)
                     ) {
                         Text(
                             text = language.name,
@@ -59,6 +76,10 @@ fun LanguagesList(
                         )
                     }
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }

@@ -41,7 +41,6 @@ class ProjectListFragment : BaseFragment(), Searchable {
             search.searchMagIcon.setBackgroundResource(R.drawable.ic_refresh_secondary_24dp)
 
             // TODO: set up update button
-            adapter.setCategories(viewModel.getCategories())
             list.adapter = adapter
             list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
                 val category = adapter.getItem(position)
@@ -49,7 +48,6 @@ class ProjectListFragment : BaseFragment(), Searchable {
                     listener?.onItemClick(category.slug)
                 } else {
                     // TODO: we need to display another back arrow to back up a level in the categories
-                    adapter.setCategories(viewModel.getCategories(category.id))
                     search.searchMagIcon.visibility = View.GONE
                 }
             }
