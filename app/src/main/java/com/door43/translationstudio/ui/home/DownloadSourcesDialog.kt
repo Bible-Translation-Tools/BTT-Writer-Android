@@ -46,11 +46,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.viewmodels.DownloadAction
-import com.door43.translationstudio.ui.viewmodels.DownloadListItem
-import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
-import com.door43.translationstudio.ui.viewmodels.FilterMode
-import com.door43.translationstudio.ui.viewmodels.SelectionType
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

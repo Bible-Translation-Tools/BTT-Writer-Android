@@ -40,7 +40,7 @@ import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
-import com.door43.translationstudio.ui.viewmodels.DownloadSourcesViewModel
+import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
 import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
 import com.door43.translationstudio.ui.viewmodels.NewTargetTranslationModel
 import com.door43.translationstudio.ui.viewmodels.NewTempLanguageViewModel
