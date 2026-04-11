@@ -8,7 +8,6 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import java.io.Serializable
 
 class CheckForLatestRelease(
     private val context: Context,
@@ -84,10 +83,10 @@ class CheckForLatestRelease(
         val TAG: String = CheckForLatestRelease::class.java.simpleName
     }
 
-    class Release(
+    data class Release(
         val name: String,
         val downloadUrl: String,
         val downloadSize: Int,
         val build: Int
-    ) : Serializable
+    )
 }

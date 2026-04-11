@@ -20,13 +20,11 @@ class UpdateSource(
         val addedCount: Int
     )
 
-    suspend fun execute(message: String, progressListener: OnProgressListener? = null): Result {
+    suspend fun execute(progressListener: OnProgressListener? = null): Result {
         var updatedCount = 0
         var addedCount = 0
         var success = false
         var count = 0
-
-        progressListener?.onProgress(-1f, message)
 
         var availableTranslationsAll = library.index.findTranslations(
             null,
@@ -43,7 +41,7 @@ class UpdateSource(
         for (t in availableTranslationsAll) {
             if (++count % 16 == 0) {
                 val progress = count / total.toFloat()
-                progressListener?.onProgress(progress, message)
+                progressListener?.onProgress(progress, null)
             }
 
             val id = t.resourceContainerSlug
@@ -55,7 +53,7 @@ class UpdateSource(
             previouslyUpdated[id] = lastModifiedOnServer
         }
 
-        progressListener?.onProgress(-1f, message)
+        progressListener?.onProgress(-1f, null)
 
         try {
             val server = prefRepository.getDefaultPref(
@@ -65,7 +63,7 @@ class UpdateSource(
             val rootApiUrl = server + prefRepository.getRootCatalogApi()
             library.updateSources(rootApiUrl) { tag, max, complete ->
                 val progress = complete / max.toFloat()
-                val details = "$message $tag"
+                val details = tag
                 progressListener?.onProgress(progress, details)
                 true
             }
@@ -75,7 +73,7 @@ class UpdateSource(
         }
 
         if(success) { // check for changes
-            progressListener?.onProgress(-1f, message)
+            progressListener?.onProgress(-1f, null)
 
             availableTranslationsAll = library.index.findTranslations(
                 null,
@@ -93,7 +91,7 @@ class UpdateSource(
             for (t in availableTranslationsAll) {
                 if (++count % 16 == 0) {
                     val progress = count / total.toFloat()
-                    progressListener?.onProgress(progress, message)
+                    progressListener?.onProgress(progress, null)
                 }
 
                 val id = t.resourceContainerSlug

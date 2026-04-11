@@ -9,12 +9,14 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun ProgressDialog(
-    message: String? = null,
     progress: Float = -1f,
+    message: String? = null,
+    details: String? = null,
     onDismissRequest: () -> Unit = {}
 ) {
     AlertDialog(
@@ -39,6 +41,14 @@ fun ProgressDialog(
                 } else {
                     LinearProgressIndicator(
                         progress = { progress },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                details?.let {
+                    Text(
+                        text = it,
+                        textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

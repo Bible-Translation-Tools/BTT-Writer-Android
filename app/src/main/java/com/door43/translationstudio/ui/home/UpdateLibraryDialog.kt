@@ -173,7 +173,7 @@ fun UpdateLibraryDialog(
                         }
                         UpdateOptionItem(
                             text = stringResource(R.string.check_app_update),
-                            textColor = MaterialTheme.colorScheme.secondary
+                            textColor = MaterialTheme.colorScheme.tertiary
                         ) {
                             viewModel.onAction(UpdateAction.CheckAppUpdate)
                         }
@@ -220,10 +220,42 @@ fun UpdateLibraryDialog(
         }
     }
 
+    state.latestRelease?.let { release ->
+        ConfirmDialog(
+            title = stringResource(R.string.apk_update_available),
+            message = stringResource(R.string.download_latest_apk),
+            onDismiss = {
+                viewModel.onAction(UpdateAction.ClearLatestRelease)
+            },
+            onConfirm = {
+                viewModel.onAction(UpdateAction.DownloadLatestRelease(release))
+            }
+        )
+    }
+
+    state.updateSourceResult?.let { result ->
+        ConfirmDialog(
+            title = stringResource(R.string.success),
+            message = stringResource(
+                R.string.update_sources_success,
+                result.addedCount,
+                result.updatedCount
+            ),
+            onDismiss = {
+                viewModel.onAction(UpdateAction.ClearUpdateSourceResult)
+            },
+            onConfirm = {
+                // Go to Download sources screen
+                viewModel.onAction(UpdateAction.ClearUpdateSourceResult)
+            }
+        )
+    }
+
     progress?.let {
         ProgressDialog(
             message = it.message,
-            progress = it.value
+            progress = it.value,
+            details = it.details
         )
     }
 }

@@ -3,7 +3,7 @@ package com.door43.usecases
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import com.door43.translationstudio.App.Companion.isStoreVersion
 import com.door43.usecases.CheckForLatestRelease.Release
 
@@ -17,22 +17,22 @@ class DownloadLatestRelease(
             try {
                 val intent = Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse("market://details?id=$appPackageName")
+                    "market://details?id=$appPackageName".toUri()
                 )
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
                 context.startActivity(intent)
-            } catch (e: ActivityNotFoundException) {
+            } catch (_: ActivityNotFoundException) {
                 val intent = Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
+                    "https://play.google.com/store/apps/details?id=$appPackageName".toUri()
                 )
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
             }
         } else {
-            // download from github
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl))
+            // download from GitHub
+            val browserIntent = Intent(Intent.ACTION_VIEW, release.downloadUrl.toUri())
             browserIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(browserIntent)
         }

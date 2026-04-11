@@ -2,8 +2,6 @@ package com.door43.translationstudio.ui.home
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
@@ -18,15 +16,10 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.dialogs.ProgressHelper
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.BackupRC
-import com.door43.usecases.CheckForLatestRelease
-import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.TranslationProgress
-import com.door43.usecases.UpdateCatalogs
-import com.door43.usecases.UpdateSource
 import com.door43.util.FileUtilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -103,10 +96,6 @@ class HomeViewModel(
     private val profile: Profile,
     private val gogsLogout: GogsLogout,
     private val directoryProvider: IDirectoryProvider,
-    private val checkForLatestRelease: CheckForLatestRelease,
-    private val updateSource: UpdateSource,
-    private val updateCatalogs: UpdateCatalogs,
-    private val downloadLatestRelease: DownloadLatestRelease,
     private val backupRC: BackupRC,
     private val library: Door43Client,
     private val calculateProgress: TranslationProgress,
@@ -136,22 +125,6 @@ class HomeViewModel(
     }
 
     private val bookList = BibleCodes.getBibleBooks()
-
-    // ============================== OLD CODE FOR REMOVAL ================================ //
-
-    private val _progressOld = MutableLiveData<ProgressHelper.Progress?>()
-    val progressOld: LiveData<ProgressHelper.Progress?> = _progressOld
-
-    private val _latestRelease = MutableLiveData<CheckForLatestRelease.Result?>()
-    val latestRelease: LiveData<CheckForLatestRelease.Result?> = _latestRelease
-
-    private val _updateSourceResult = MutableLiveData<UpdateSource.Result?>()
-    val updateSourceResult: LiveData<UpdateSource.Result?> = _updateSourceResult
-
-    private val _uploadCatalogResult = MutableLiveData<UpdateCatalogs.Result?>()
-    val uploadCatalogResult: LiveData<UpdateCatalogs.Result?> = _uploadCatalogResult
-
-    // ============================== OLD CODE FOR REMOVAL ================================ //
 
     var lastFocusTargetTranslation: String?
         get() = translator.lastFocusTargetTranslation
@@ -402,67 +375,5 @@ class HomeViewModel(
 
     private fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
-    }
-
-
-
-
-
-
-
-
-    fun checkForLatestRelease() {
-        viewModelScope.launch {
-            _progressOld.value = ProgressHelper.Progress()
-            _latestRelease.value = withContext(Dispatchers.IO) {
-                checkForLatestRelease.execute()
-            }
-            _progressOld.value = null
-        }
-    }
-
-    fun updateSource(message: String) {
-        viewModelScope.launch {
-            _progressOld.value = ProgressHelper.Progress()
-            _updateSourceResult.value = withContext(Dispatchers.IO) {
-                updateSource.execute(message) { progress, message ->
-                    _progressOld.postValue(
-                        ProgressHelper.Progress(
-                            message,
-                            progress.toInt(),
-                            1
-                        )
-                    )
-                }
-            }
-            _progressOld.value = null
-        }
-    }
-
-    fun updateCatalogs(message: String) {
-        viewModelScope.launch {
-            _progressOld.value = ProgressHelper.Progress()
-            _uploadCatalogResult.value = withContext(Dispatchers.IO) {
-                updateCatalogs.execute(true, message) { progress, message ->
-                    _progressOld.postValue(
-                        ProgressHelper.Progress(
-                            message,
-                            progress.toInt(),
-                            1
-                        )
-                    )
-                }
-            }
-            _progressOld.value = null
-        }
-    }
-
-    fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
-        downloadLatestRelease.execute(release)
-    }
-
-    fun clearResults() {
-        _uploadCatalogResult.value = null
-        _latestRelease.value = null
     }
 }

@@ -27,7 +27,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import org.koin.androidx.compose.koinViewModel
 
@@ -148,50 +147,16 @@ fun FeedbackDialog(
     }
 
     state.release?.let { release ->
-        InfoDialog(
+        ConfirmDialog(
             title = stringResource(R.string.apk_update_available),
-            message = stringResource(R.string.upload_report_or_download_latest_apk),
-            onDismiss = { viewModel.onAction(FeedbackAction.ClearRelease) }
-        ) { onDismiss ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.title_cancel))
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                TextButton(
-                    onClick = {
-                        onDismiss()
-                        if (App.isStoreVersion) {
-                            val appPackageName = context.packageName
-                            try {
-                                uriHandler.openUri("market://details?id=$appPackageName")
-                            } catch (_: Exception) {
-                                uriHandler.openUri("https://play.google.com/store/apps/details?id=$appPackageName")
-                            }
-                        } else {
-                            uriHandler.openUri(release.downloadUrl)
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.download_update))
-                }
-
-                TextButton(
-                    onClick = {
-                        onDismiss()
-                        viewModel.onAction(FeedbackAction.UploadFeedback(text))
-                    }
-                ) {
-                    Text(stringResource(R.string.label_continue))
-                }
+            message = stringResource(R.string.download_latest_apk),
+            onDismiss = {
+                viewModel.onAction(FeedbackAction.ClearRelease)
+            },
+            onConfirm = {
+                viewModel.onAction(FeedbackAction.DownloadLatestRelease(release))
             }
-        }
+        )
     }
 
     progress?.let {

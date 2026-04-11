@@ -9,7 +9,11 @@ import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadIndex
+import com.door43.usecases.DownloadLatestRelease
+import com.door43.usecases.UpdateCatalogs
+import com.door43.usecases.UpdateSource
 import com.door43.util.FileUtilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +26,9 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 data class UpdateState(
-    val resultMessage: Pair<String, String>? = null
+    val resultMessage: Pair<String, String>? = null,
+    val latestRelease: CheckForLatestRelease.Release? = null,
+    val updateSourceResult: UpdateSource.Result? = null
 )
 
 sealed interface UpdateAction {
@@ -32,7 +38,10 @@ sealed interface UpdateAction {
     object DownloadSources : UpdateAction
     object UpdateLanguages : UpdateAction
     object CheckAppUpdate : UpdateAction
+    data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : UpdateAction
     object ClearResult : UpdateAction
+    object ClearLatestRelease : UpdateAction
+    object ClearUpdateSourceResult : UpdateAction
 }
 
 sealed interface UpdateEvent {
@@ -40,7 +49,11 @@ sealed interface UpdateEvent {
 }
 
 class UpdateLibraryViewModel(
-    private val downloadIndex: DownloadIndex
+    private val downloadIndex: DownloadIndex,
+    private val updateCatalogs: UpdateCatalogs,
+    private val checkForLatestRelease: CheckForLatestRelease,
+    private val downloadLatestRelease: DownloadLatestRelease,
+    private val updateSource: UpdateSource
 ) : ViewModel(), KoinComponent, ProgressOwner {
 
     private val application: Application by inject()
@@ -60,18 +73,40 @@ class UpdateLibraryViewModel(
 
     fun onAction(action: UpdateAction) {
         when (action) {
-            UpdateAction.UpdateSource -> updateSource()
             is UpdateAction.ImportIndex -> importIndex(action.uri)
+            is UpdateAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
+            UpdateAction.UpdateSource -> updateSource()
             UpdateAction.DownloadIndex -> downloadIndex()
             UpdateAction.DownloadSources -> downloadSources()
             UpdateAction.UpdateLanguages -> updateLanguages()
             UpdateAction.CheckAppUpdate -> checkAppUpdate()
             UpdateAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
+            UpdateAction.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
+            UpdateAction.ClearUpdateSourceResult -> _state.update {
+                it.copy(updateSourceResult = null)
+            }
         }
     }
 
     private fun updateSource() {
+        launchWithProgress(
+            application.getString(R.string.updating_sources)
+        ) { handle ->
+            val result = withContext(Dispatchers.IO) {
+                updateSource.execute { progress, details ->
+                    handle.update(progress, handle.initialMessage, details)
+                }
+            }
 
+            if (result.success) {
+                _state.update { it.copy(updateSourceResult = result) }
+            } else {
+                updateResultMessage(
+                    title = application.getString(R.string.error),
+                    message = application.getString(R.string.options_update_failed)
+                )
+            }
+        }
     }
 
     private fun importIndex(uri: Uri) {
@@ -127,11 +162,55 @@ class UpdateLibraryViewModel(
     }
 
     private fun updateLanguages() {
-
+        launchWithProgress(
+            application.getString(R.string.updating_languages)
+        ) { handle ->
+            val result = withContext(Dispatchers.IO) {
+                updateCatalogs.execute(true) { progress, details ->
+                    handle.update(progress, handle.initialMessage, details)
+                }
+            }
+            if (result.success) {
+                updateResultMessage(
+                    title = application.getString(R.string.success),
+                    message = application.getString(
+                        R.string.update_languages_success,
+                        result.addedCount
+                    )
+                )
+            } else {
+                updateResultMessage(
+                    title = application.getString(R.string.error),
+                    message = application.getString(R.string.options_update_failed)
+                )
+            }
+        }
     }
 
     private fun checkAppUpdate() {
+        launchWithProgress {
+            val result = withContext(Dispatchers.IO) {
+                checkForLatestRelease.execute()
+            }
 
+            if (result.release != null) {
+                _state.update { it.copy(latestRelease = result.release) }
+            } else {
+                updateResultMessage(
+                    title = application.getString(R.string.check_for_updates),
+                    message = application.getString(R.string.have_latest_app_update)
+                )
+            }
+        }
+    }
+
+    private fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
+        launchWithProgress {
+            _state.update { it.copy(latestRelease = null) }
+            withContext(Dispatchers.IO) {
+                downloadLatestRelease.execute(release)
+            }
+        }
     }
 
     private fun updateResultMessage(title: String, message: String) {

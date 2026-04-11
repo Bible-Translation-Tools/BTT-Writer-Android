@@ -111,8 +111,6 @@ class HomeActivity : BaseActivity(),
                 )
             }
         }
-
-        setupObservers()
     }
 
     private fun startBackupService() {
@@ -201,49 +199,6 @@ class HomeActivity : BaseActivity(),
         handleIntent(intent)
     }
 
-
-    private fun setupObservers() {
-        viewModel.updateSourceResult.observe(this) {
-            it?.let { result ->
-                if (result.success) {
-                    // immediately go to select downloads
-                    val message = resources.getString(
-                        R.string.update_sources_success,
-                        result.addedCount,
-                        result.updatedCount
-                    )
-                    showUpdateResultDialog(
-                        message = message,
-                        onConfirm = ::selectDownloadSources
-                    )
-                } else {
-                    showUpdateResultDialog(
-                        R.string.error,
-                        resources.getString(R.string.options_update_failed)
-                    )
-                }
-            }
-        }
-        viewModel.uploadCatalogResult.observe(this) {
-            it?.let { result ->
-                if (result.success) {
-                    val message = resources.getString(
-                        R.string.update_languages_success,
-                        result.addedCount
-                    )
-                    showUpdateResultDialog(
-                        message = message
-                    )
-                } else {
-                    showUpdateResultDialog(
-                        R.string.error,
-                        resources.getString(R.string.options_update_failed)
-                    )
-                }
-            }
-        }
-    }
-
     override fun onResume() {
         super.onResume()
         viewModel.lastFocusTargetTranslation = null
@@ -274,19 +229,6 @@ class HomeActivity : BaseActivity(),
                 selectDownloadSources()
                 return
             }
-
-            when (tag) {
-                UpdateLibraryDialogOld.EVENT_UPDATE_LANGUAGES -> {
-                    viewModel.updateCatalogs(resources.getString(R.string.updating_languages))
-                }
-                UpdateLibraryDialogOld.EVENT_UPDATE_SOURCE -> {
-                    viewModel.updateSource(resources.getString(R.string.updating_sources))
-                }
-                UpdateLibraryDialogOld.EVENT_UPDATE_APP -> {
-                    viewModel.checkForLatestRelease()
-                }
-                else -> viewModel.checkForLatestRelease()
-            }
         }
     }
 
@@ -308,28 +250,6 @@ class HomeActivity : BaseActivity(),
 
     override fun onCancel(dialog: DialogInterface) {
         // TODO cancel running tasks
-    }
-
-    private fun showUpdateResultDialog(
-        titleId: Int = R.string.update_success,
-        message: String = resources.getString(R.string.update_success),
-        onConfirm: () -> Unit = {},
-        onDismiss: () -> Unit = {}
-    ) {
-        val dialog = AlertDialog.Builder(this, R.style.AppTheme_Dialog)
-            .setTitle(titleId)
-            .setMessage(message)
-            .setPositiveButton(
-                R.string.dismiss
-            ) { _, _ ->
-                onConfirm()
-            }
-            .setOnDismissListener {
-                viewModel.clearResults()
-                onDismiss()
-            }
-
-        dialog.show()
     }
 
     companion object {

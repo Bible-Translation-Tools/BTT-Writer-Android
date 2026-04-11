@@ -16,7 +16,8 @@ import kotlin.uuid.Uuid
 
 data class Progress(
     val value: Float = -1f,
-    val message: String? = null
+    val message: String? = null,
+    val details: String? = null
 ) {
     val isIndeterminate: Boolean get() = value < 0f
 }
@@ -26,9 +27,9 @@ class TaskHandle(
     val initialMessage: String?,
     private val onUpdate: (Progress) -> Unit
 ) {
-    fun update(value: Float, message: String? = null) {
+    fun update(value: Float, message: String? = null, details: String? = null) {
         val safeValue = if (value < 0f) -1f else value.coerceIn(0f, 1f)
-        onUpdate(Progress(safeValue, message ?: initialMessage))
+        onUpdate(Progress(safeValue, message ?: initialMessage, details))
     }
 }
 
@@ -101,9 +102,10 @@ class ProgressManager(scope: CoroutineScope) : ProgressOwner {
         if (tasks.isEmpty()) return null
 
         val message = tasks.lastOrNull { it.message != null }?.message
+        val details = tasks.lastOrNull { it.details != null }?.details
         val isAnyIndeterminate = tasks.any { it.isIndeterminate }
         val value = if (isAnyIndeterminate) -1f else tasks.map { it.value }.average().toFloat()
 
-        return Progress(value, message)
+        return Progress(value, message, details)
     }
 }

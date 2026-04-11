@@ -10,6 +10,7 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.CheckForLatestRelease
+import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.UploadFeedback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -31,6 +32,7 @@ data class FeedbackState(
 sealed interface FeedbackAction {
     data class ReportBug(val message: String) : FeedbackAction
     data class UploadFeedback(val message: String) : FeedbackAction
+    data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : FeedbackAction
     object ClearError : FeedbackAction
     object ClearRelease : FeedbackAction
 }
@@ -41,6 +43,7 @@ sealed interface FeedbackEvent {
 
 class FeedbackViewModel(
     private val checkForLatestRelease: CheckForLatestRelease,
+    private val downloadLatestRelease: DownloadLatestRelease,
     private val uploadFeedback: UploadFeedback
 ) : ViewModel(), KoinComponent, ProgressOwner {
 
@@ -59,6 +62,7 @@ class FeedbackViewModel(
         when (action) {
             is FeedbackAction.ReportBug -> reportBug(action.message)
             is FeedbackAction.UploadFeedback -> uploadFeedback(action.message)
+            is FeedbackAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
             FeedbackAction.ClearError -> clearError()
             FeedbackAction.ClearRelease -> clearRelease()
         }
@@ -102,6 +106,15 @@ class FeedbackViewModel(
             _state.update { it.copy(release = result.release) }
         } else {
             doUploadFeedback(_state.value.message, handle)
+        }
+    }
+
+    private fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
+        launchWithProgress {
+            _state.update { it.copy(release = null) }
+            withContext(Dispatchers.IO) {
+                downloadLatestRelease.execute(release)
+            }
         }
     }
 

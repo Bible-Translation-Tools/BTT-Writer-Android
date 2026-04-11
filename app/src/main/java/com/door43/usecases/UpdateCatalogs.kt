@@ -11,14 +11,10 @@ class UpdateCatalogs(
 
     suspend fun execute(
         updateCatalogs: Boolean,
-        message: String,
         progressListener: OnProgressListener? = null
     ): Result {
         var addedCount = 0
         var success = false
-        var maxProgress = 100
-
-        progressListener?.onProgress(-1f, message)
 
         var targetLanguages = library.index.getTargetLanguages()
         val initialLanguages = HashSet<String>()
@@ -34,10 +30,8 @@ class UpdateCatalogs(
 
         try {
             library.updateCatalogs(updateCatalogs) { tag, max, complete ->
-                maxProgress = max
-                val details = "$message $tag"
-                val progress = complete / maxProgress.toFloat()
-                progressListener?.onProgress(progress, details)
+                val progress = complete / max.toFloat()
+                progressListener?.onProgress(progress, tag)
                 true
             }
             success = true
