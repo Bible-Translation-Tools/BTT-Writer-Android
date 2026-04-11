@@ -50,16 +50,14 @@ class UpdateCatalogsTest {
 
         every { index.getTargetLanguages() }.returns(listOf(targetLanguage))
 
-        val message = "Test"
         val result = runBlocking {
             UpdateCatalogs(library)
-                .execute(false, message, progressListener)
+                .execute(false, progressListener)
         }
 
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(false, any()) }
     }
@@ -82,16 +80,14 @@ class UpdateCatalogsTest {
             }
         }
 
-        val message = "Test"
         val result = runBlocking {
             UpdateCatalogs(library)
-                .execute(false, message, progressListener)
+                .execute(false, progressListener)
         }
 
         assertTrue(result.success)
         assertEquals(1, result.addedCount)
 
-        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(false, any()) }
     }
@@ -100,16 +96,14 @@ class UpdateCatalogsTest {
     fun `test update catalogs, force update`() {
         every { index.getTargetLanguages() }.returns(listOf())
 
-        val message = "Test"
         val result = runBlocking {
             UpdateCatalogs(library)
-                .execute(true, message, progressListener)
+                .execute(true, progressListener)
         }
 
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 2) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(true, any()) }
     }
@@ -119,16 +113,14 @@ class UpdateCatalogsTest {
         every { index.getTargetLanguages() }.returns(listOf())
         coEvery { library.updateCatalogs(any(), any()) }.throws(Exception("An error occurred."))
 
-        val message = "Test"
         val result = runBlocking {
             UpdateCatalogs(library)
-                .execute(true, message, progressListener)
+                .execute(true, progressListener)
         }
 
         assertFalse(result.success)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), message) }
         verify(exactly = 1) { index.getTargetLanguages() }
         coVerify { library.updateCatalogs(true, any()) }
     }

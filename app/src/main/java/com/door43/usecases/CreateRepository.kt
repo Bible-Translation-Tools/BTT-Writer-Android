@@ -17,8 +17,6 @@ class CreateRepository(
     private val prefRepo: IPreferenceRepository,
     private val profile: Profile
 ) {
-    private val max = 100
-
     fun execute(
         targetTranslation: TargetTranslation,
         progressListener: OnProgressListener? = null

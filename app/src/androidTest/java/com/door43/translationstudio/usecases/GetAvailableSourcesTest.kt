@@ -19,15 +19,14 @@ class GetAvailableSourcesTest : KoinAndroidTest() {
 
     @Test
     fun testAvailableResources() {
-        val prefixMessage = "test_prefix"
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, message ->
             progressMessage = message
         }
 
-        val result = getAvailableSources.execute(prefixMessage, progressListener)
+        val result = getAvailableSources.execute(progressListener)
 
-        assertEquals("Prefix message should be equal to progress message", prefixMessage, progressMessage)
+        assertEquals("Prefix message should be equal to progress message", null, progressMessage)
 
         // Test that some gateway languages exist
         assertTrue("English should be available", result.byLanguage.containsKey("en"))

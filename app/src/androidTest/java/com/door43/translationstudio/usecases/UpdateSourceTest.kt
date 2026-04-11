@@ -90,9 +90,8 @@ class UpdateSourceTest : KoinAndroidTest() {
         val url = server.url("/test")
         prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MEDIA_SERVER, url.toString())
 
-        val message = appContext.resources.getString(R.string.updating_sources)
         val result = runBlocking {
-            updateSource.execute(message)
+            updateSource.execute()
         }
 
         assertTrue("Update source succeeded", result.success)

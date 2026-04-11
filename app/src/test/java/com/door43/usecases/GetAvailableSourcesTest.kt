@@ -52,8 +52,7 @@ class GetAvailableSourcesTest {
                 )
             }
 
-        val result = GetAvailableSources(library)
-            .execute("test", progressListener)
+        val result = GetAvailableSources(library).execute(progressListener)
 
         assertEquals(4, result.sources.size)
         assertEquals(2, result.byLanguage.size)

@@ -20,8 +20,6 @@ class CloneRepository(
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider
 ) {
-    private val max = 100
-
     fun execute(
         cloneUrl: String,
         progressListener: OnProgressListener? = null

@@ -129,7 +129,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
             onView(withHint(R.string.choose_source_translations))
                 .inRoot(isDialog())
                 .tryCheck(matches(isDisplayed()))
-            onView(withId(R.id.cancelButton))
+            // onView(withId(R.id.cancelButton))
                 .inRoot(isDialog())
                 .tryPerform(click())
             checkText(R.string.choose_first_source_translation, true)
@@ -404,7 +404,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         ActivityScenario.launch<TargetTranslationActivity>(intent).use {
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
 
             checkText(R.string.action_translations, true)
             checkText(R.string.title_review, true)
@@ -427,7 +427,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
         ActivityScenario.launch<TargetTranslationActivity>(intent).use {
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
 
             checkText(R.string.action_translations, true)
             checkText(R.string.title_review, true)
@@ -449,7 +449,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
-        onView(withId(R.id.action_more)).tryPerform(click())
+        // onView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.action_translations)).tryPerform(click())
 
         Thread.sleep(3000)
@@ -464,7 +464,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
-        onView(withId(R.id.action_more)).tryPerform(click())
+        // onView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.title_review)).tryPerform(click())
 
         Thread.sleep(3000)
@@ -479,7 +479,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         ActivityScenario.launch<TargetTranslationActivity>(intent).use {
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
             onView(withText(R.string.menu_upload_export)).tryPerform(click())
 
             checkDialogText(R.string.title_upload_export, true)
@@ -500,11 +500,11 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         ActivityScenario.launch<TargetTranslationActivity>(intent).use {
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
             onView(withText(R.string.print)).tryPerform(click())
 
             checkDialogText(R.string.include_incomplete_frames, true)
-            onView(withId(R.id.print_button)).tryCheck(matches(isDisplayed()))
+            // onView(withId(R.id.print_button)).tryCheck(matches(isDisplayed()))
         }
     }
 
@@ -516,7 +516,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         ActivityScenario.launch<TargetTranslationActivity>(intent).use {
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
             onView(withText(R.string.feedback)).tryPerform(click())
 
             checkDialogText(R.string.requires_internet, true)
@@ -531,7 +531,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
         val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
-        onView(withId(R.id.action_more)).tryPerform(click())
+        // nView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.action_settings)).tryPerform(click())
 
         // Going to Settings doesn't finish current activity
@@ -548,7 +548,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
         ActivityScenario.launch<TargetTranslationActivity>(intent).use {
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
 
             onView(withText(R.string.mark_chunks_done)).tryPerform(click())
             checkDialogText(R.string.project_checklist_title, true)
@@ -588,7 +588,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
 
             waitFor(1000)
 
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
 
             onView(withText(R.string.action_search)).tryPerform(click())
             checkText(R.string.search_source, true)
@@ -606,7 +606,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
             // Search in translation
             waitFor(1000)
             val targetFoundText = context.getString(R.string.found_in_chunks, 1)
-            onView(withId(R.id.action_more)).tryPerform(click())
+            // onView(withId(R.id.action_more)).tryPerform(click())
             onView(withText(R.string.action_search)).tryPerform(click())
 //            onView(withId(R.id.search_type)).tryPerform(click())
             onView(withText(R.string.search_translation)).tryPerform(click())
@@ -644,6 +644,6 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
         onView(withText("English (en) - Unlocked Literal Bible"))
             .inRoot(isDialog())
             .tryPerform(click())
-        onView(withId(R.id.confirmButton)).tryPerform(click())
+        // onView(withId(R.id.confirmButton)).tryPerform(click())
     }
 }

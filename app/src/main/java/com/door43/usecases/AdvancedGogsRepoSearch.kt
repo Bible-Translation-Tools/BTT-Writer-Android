@@ -8,8 +8,6 @@ class AdvancedGogsRepoSearch(
     private val searchGogsUsers: SearchGogsUsers,
     private val searchGogsRepositories: SearchGogsRepositories
 ) {
-    private val max = 100
-
     fun execute(
         userQuery: String,
         repoQuery: String,

@@ -28,7 +28,6 @@ class SubmitNewLanguageRequests(
     private val translator: Translator
 ) {
     private val requests: ArrayList<NewLanguageRequest> = arrayListOf()
-    private val max = 100
 
     init {
         // load requests that have not been submitted

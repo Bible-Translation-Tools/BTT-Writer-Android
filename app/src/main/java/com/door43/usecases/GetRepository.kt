@@ -11,8 +11,6 @@ class GetRepository(
     private val searchRepository: SearchGogsRepositories,
     private val profile: Profile
 ) {
-    private val max = 100
-
     fun execute(
         translation: TargetTranslation,
         progressListener: OnProgressListener? = null

@@ -34,8 +34,6 @@ class PullTargetTranslation(
         val message: String?
     )
 
-    private val max = 100
-
     fun execute(
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy,

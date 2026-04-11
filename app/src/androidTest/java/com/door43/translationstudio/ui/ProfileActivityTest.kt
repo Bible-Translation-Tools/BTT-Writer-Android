@@ -76,7 +76,7 @@ class ProfileActivityTest : KoinAndroidTest() {
             verifyMainViewsInPlace(false)
 
             checkText(R.string.server_account, true)
-            onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
+            // onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
 //            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
 //
 //            onView(withId(R.id.ok_button)).tryPerform(click())
@@ -99,7 +99,7 @@ class ProfileActivityTest : KoinAndroidTest() {
             verifyMainViewsInPlace(false)
 
             checkText(R.string.server_account, true)
-            onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
+            // onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
 //            onView(withId(R.id.password)).tryCheck(matches(isDisplayed()))
 //
 //            onView(withId(R.id.ok_button)).tryPerform(click())

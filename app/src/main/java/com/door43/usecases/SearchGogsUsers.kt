@@ -13,8 +13,6 @@ class SearchGogsUsers(
     private val context: Context,
     private val prefRepository: IPreferenceRepository
 ) {
-    private val max = 100
-
     fun execute(
         userQuery: String,
         limit: Int,

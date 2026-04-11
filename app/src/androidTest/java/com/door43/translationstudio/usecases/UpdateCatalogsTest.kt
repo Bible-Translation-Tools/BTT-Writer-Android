@@ -75,9 +75,8 @@ class UpdateCatalogsTest : KoinAndroidTest() {
     fun testUpdateCatalogs() {
         prepareCatalogs()
 
-        val message = appContext.resources.getString(R.string.updating_languages)
         val result = runBlocking {
-            updateCatalogs.execute(false, message)
+            updateCatalogs.execute(false)
         }
 
         assertTrue("Update catalogs should succeed", result.success)

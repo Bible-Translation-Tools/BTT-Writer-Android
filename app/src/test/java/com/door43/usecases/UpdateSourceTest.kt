@@ -70,8 +70,6 @@ class UpdateSourceTest {
 
     @Test
     fun `test update source, nothing new`() {
-        val message = "Test"
-
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf(getTranslation("en", "mrk", "ulb")))
 
@@ -80,7 +78,7 @@ class UpdateSourceTest {
                 context,
                 library,
                 prefRepository
-            ).execute(message, progressListener)
+            ).execute(progressListener)
         }
 
         assertTrue(result.success)
@@ -92,8 +90,6 @@ class UpdateSourceTest {
 
     @Test
     fun `test update source, added new translation`() {
-        val message = "Test"
-
         val translation1 = getTranslation("en", "mrk", "ulb")
         val translation2 = getTranslation("id", "luk", "ayt")
 
@@ -110,7 +106,7 @@ class UpdateSourceTest {
                 context,
                 library,
                 prefRepository
-            ).execute(message, progressListener)
+            ).execute(progressListener)
         }
 
         assertTrue(result.success)
@@ -122,8 +118,6 @@ class UpdateSourceTest {
 
     @Test
     fun `test update source, updated old translation`() {
-        val message = "Test"
-
         val translation = getTranslation("en", "mrk", "ulb")
 
         var called = 0
@@ -142,7 +136,7 @@ class UpdateSourceTest {
                 context,
                 library,
                 prefRepository
-            ).execute(message, progressListener)
+            ).execute(progressListener)
         }
 
         assertTrue(result.success)
@@ -154,8 +148,6 @@ class UpdateSourceTest {
 
     @Test
     fun `test update source, throws exception`() {
-        val message = "Test"
-
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf(getTranslation("en", "mrk", "ulb")))
 
@@ -166,14 +158,13 @@ class UpdateSourceTest {
                 context,
                 library,
                 prefRepository
-            ).execute(message, progressListener)
+            ).execute(progressListener)
         }
 
         assertFalse(result.success)
         assertEquals(0, result.updatedCount)
         assertEquals(0, result.addedCount)
 
-        verify { progressListener.onProgress(any(), "Test") }
         verify(exactly = 1) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 1) { library.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }
@@ -181,7 +172,6 @@ class UpdateSourceTest {
     }
 
     private fun verifyCommonStuff() {
-        verify { progressListener.onProgress(any(), "Test") }
         verify(exactly = 2) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 2) { library.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }
