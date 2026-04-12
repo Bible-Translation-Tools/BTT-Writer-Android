@@ -97,8 +97,7 @@ fun UsfmImportDialog(
                 onNavigateBack = {
                     viewModel.onAction(UsfmAction.NavigateBack)
                 },
-                onSkip = { viewModel.onAction(UsfmAction.SkipBook) },
-                onDismiss = { viewModel.onAction(UsfmAction.SkipBook) }
+                onSkip = { viewModel.onAction(UsfmAction.SkipBook) }
             )
         }
 
