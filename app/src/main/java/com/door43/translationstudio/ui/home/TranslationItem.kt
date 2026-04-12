@@ -4,9 +4,8 @@ import com.door43.translationstudio.core.TargetTranslation
 import org.unfoldingword.resourcecontainer.Resource
 
 data class TranslationItem(
-    val name: String,
     val translation: TargetTranslation,
-    val progress: Double
+    val name: String
 ) {
     val formattedProjectName: String
         get() = if (translation.resourceSlug != Resource.REGULAR_SLUG && translation.resourceSlug != "obs") {

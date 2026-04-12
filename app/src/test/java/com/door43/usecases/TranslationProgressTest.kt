@@ -64,7 +64,7 @@ class TranslationProgressTest {
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
-        assertEquals(1.0, progress, 0.0)
+        assertEquals(1f, progress, 0f)
 
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
@@ -95,7 +95,7 @@ class TranslationProgressTest {
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
-        assertEquals(1.0, progress, 0.0)
+        assertEquals(1f, progress, 0f)
 
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
@@ -114,7 +114,7 @@ class TranslationProgressTest {
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
-        assertEquals(0.0, progress, 0.0)
+        assertEquals(0f, progress, 0f)
 
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
@@ -131,7 +131,7 @@ class TranslationProgressTest {
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
-        assertEquals(0.0, progress, 0.0)
+        assertEquals(0f, progress, 0f)
 
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { library.open(any()) }
@@ -160,7 +160,7 @@ class TranslationProgressTest {
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
-        assertEquals(0.5, progress, 0.0)
+        assertEquals(0.5f, progress, 0f)
 
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
@@ -191,7 +191,7 @@ class TranslationProgressTest {
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
-        assertEquals(1.0, progress, 0.0)
+        assertEquals(1f, progress, 0f)
 
         verify { rc.chapters() }
         verify { rc.chunks(any()) }
@@ -214,7 +214,7 @@ class TranslationProgressTest {
 
         val progress = TranslationProgress(library, translator).execute(targetTranslation)
 
-        assertEquals(0.0, progress, 0.0)
+        assertEquals(0f, progress, 0f)
 
         verify { rc.chapters() }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }

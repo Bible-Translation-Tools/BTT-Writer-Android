@@ -11,19 +11,18 @@ class TranslationProgress(
     private val library: Door43Client,
     private val translator: Translator
 ) {
-    fun execute(targetTranslation: TargetTranslation): Double {
-        var progress: Double
+    fun execute(targetTranslation: TargetTranslation): Float {
+        var progress: Float
 
         // find matching source
-        val sourceTranslation = getSourceTranslation(targetTranslation)
-            ?: return 0.0
+        val sourceTranslation = getSourceTranslation(targetTranslation) ?: return 0f
 
         // load source
         val container = try {
             library.open(sourceTranslation.resourceContainerSlug)
         } catch (e: Exception) {
             e.printStackTrace()
-            return 0.0
+            return 0f
         }
 
         // count chunks
@@ -31,13 +30,13 @@ class TranslationProgress(
         val numTargetChunks = countChunks(targetTranslation)
 
         progress = if (numSourceChunks == 0) {
-            0.0
+            0f
         } else {
-            numTargetChunks.toDouble() / numSourceChunks.toDouble()
+            numTargetChunks / numSourceChunks.toFloat()
         }
 
         // correct invalid values
-        if (progress > 1) progress = 1.0
+        if (progress > 1) progress = 1f
 
         return progress
     }

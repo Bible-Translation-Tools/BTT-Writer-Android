@@ -56,7 +56,7 @@ class TranslationProgressTest : KoinAndroidTest() {
         assertEquals("No finished chunks", 0, targetTranslation.numFinished)
         assertEquals(
             "Progress should be 0 because no chunks are marked as done",
-            0.0,
+            0f,
             progress
         )
 
@@ -67,7 +67,7 @@ class TranslationProgressTest : KoinAndroidTest() {
 
         assertEquals("Has one finished chunk", 1, targetTranslation.numFinished)
 
-        val expectedProgress = 1 / totalTranslated.toDouble()
+        val expectedProgress = 1 / totalTranslated.toFloat()
 
         assertEquals(286, totalTranslated)
         assertEquals(
@@ -88,7 +88,7 @@ class TranslationProgressTest : KoinAndroidTest() {
 
         assertEquals("Has five finished chunks", 5, targetTranslation.numFinished)
 
-        val expectedProgress2 = 5 / totalTranslated.toDouble()
+        val expectedProgress2 = 5 / totalTranslated.toFloat()
 
         assertEquals(286, totalTranslated)
         assertEquals(

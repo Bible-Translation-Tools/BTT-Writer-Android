@@ -51,6 +51,7 @@ import kotlin.math.roundToInt
 @Composable
 fun ProjectDetailsDialog(
     project: TranslationItem,
+    progress: Float,
     onDismiss: () -> Unit,
     onChangeLanguage: () -> Unit,
     onDelete: () -> Unit,
@@ -138,7 +139,7 @@ fun ProjectDetailsDialog(
 
                         DetailRow(
                             label = stringResource(R.string.progress),
-                            value = "${(project.progress * 100).roundToInt()}%"
+                            value = "${(progress * 100).roundToInt()}%"
                         )
 
                         Row(
