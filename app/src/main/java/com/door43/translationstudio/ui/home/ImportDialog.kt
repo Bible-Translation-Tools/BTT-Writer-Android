@@ -1,7 +1,5 @@
 package com.door43.translationstudio.ui.home
 
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -44,8 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.ImportUsfmActivity
-import com.door43.translationstudio.ui.ImportUsfmActivity.Companion.EXTRA_USFM_IMPORT_URI
 import org.koin.androidx.compose.koinViewModel
 
 private const val IMPORT_INFO_URL =
@@ -66,22 +61,13 @@ fun ImportDialog(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val uriHandler = LocalUriHandler.current
-    val context = LocalContext.current
+
+    var usfmUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
     val openUSFMContent = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            viewModel.onAction(ImportAction.ImportUsfm(it))
-        }
-    }
-
-    val importUSFMContent = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode != Activity.RESULT_CANCELED) {
-            onProjectImported()
-        }
+        uri?.let { usfmUri = it }
     }
 
     val openProjectContent = rememberLauncherForActivityResult(
@@ -108,11 +94,6 @@ fun ImportDialog(
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
             when (event) {
-                is ImportEvent.ImportUsfm -> {
-                    val intent = Intent(context, ImportUsfmActivity::class.java)
-                    intent.putExtra(EXTRA_USFM_IMPORT_URI, event.uri.toString())
-                    importUSFMContent.launch(intent)
-                }
                 is ImportEvent.ResolveMergeConflict -> {
                     onMergeConflict(event.translationId)
                 }
@@ -379,6 +360,15 @@ fun ImportDialog(
         _root_ide_package_.com.door43.translationstudio.ui.dialogs.ProgressDialog(
             message = it.message,
             progress = it.value
+        )
+    }
+
+    usfmUri?.let { uri ->
+        UsfmImportDialog(
+            uri = uri,
+            onProjectImported = onProjectImported,
+            onMergeConflict = onMergeConflict,
+            onDismiss = { usfmUri = null }
         )
     }
 }

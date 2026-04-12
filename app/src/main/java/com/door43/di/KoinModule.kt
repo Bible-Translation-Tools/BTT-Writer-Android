@@ -27,6 +27,7 @@ import com.door43.translationstudio.ui.devtools.DeveloperViewModel
 import com.door43.translationstudio.ui.dialogs.ExportViewModel
 import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
 import com.door43.translationstudio.ui.home.ImportViewModel
+import com.door43.translationstudio.ui.home.UsfmImportViewModel
 import com.door43.translationstudio.ui.draft.DraftViewModel
 import com.door43.translationstudio.ui.home.HomeViewModel
 import com.door43.translationstudio.ui.home.UpdateLibraryViewModel
@@ -41,7 +42,6 @@ import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewMode
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
 import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
-import com.door43.translationstudio.ui.viewmodels.ImportUsfmViewModel
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationModel
 import com.door43.translationstudio.ui.newlanguage.NewTempLanguageViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
@@ -148,9 +148,9 @@ val appModule = module {
     singleOf(::UpdateApp)
 
     viewModelOf(::ImportViewModel)
+    viewModelOf(::UsfmImportViewModel)
     viewModelOf(::TargetTranslationViewModel)
     viewModelOf(::CrashReporterViewModel)
-    viewModelOf(::ImportUsfmViewModel)
     viewModelOf(::SplashScreenViewModel)
     viewModelOf(::DeveloperViewModel)
     viewModelOf(::FeedbackViewModel)

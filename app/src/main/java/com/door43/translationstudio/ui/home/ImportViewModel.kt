@@ -56,7 +56,6 @@ data class ImportState(
 )
 
 sealed interface ImportAction {
-    data class ImportUsfm(val uri: Uri) : ImportAction
     data class ImportProject(val uri: Uri, val overwrite: Boolean) : ImportAction
     data class ImportSourceUri(val uri: Uri, val overwrite: Boolean) : ImportAction
     data class ImportBackup(val backup: File) : ImportAction
@@ -66,18 +65,17 @@ sealed interface ImportAction {
         val accepted: Boolean,
         val overwrite: Boolean
     ) : ImportAction
-    object RegisterKeys : ImportAction
-    object ClearResult : ImportAction
-    object ClearMergeConflict : ImportAction
-    object ClearSourceConflict : ImportAction
-    object ClearImportRepo : ImportAction
+    data object RegisterKeys : ImportAction
+    data object ClearResult : ImportAction
+    data object ClearMergeConflict : ImportAction
+    data object ClearSourceConflict : ImportAction
+    data object ClearImportRepo : ImportAction
 }
 
 sealed interface ImportEvent {
-    data class ImportUsfm(val uri: Uri) : ImportEvent
     data class ResolveMergeConflict(val translationId: String) : ImportEvent
-    object ProjectImported : ImportEvent
-    object AuthRequested : ImportEvent
+    data object ProjectImported : ImportEvent
+    data object AuthRequested : ImportEvent
 }
 
 class ImportViewModel(
@@ -115,7 +113,6 @@ class ImportViewModel(
 
     fun onAction(action: ImportAction) {
         when (action) {
-            is ImportAction.ImportUsfm -> importUsfm(action.uri)
             is ImportAction.ImportProject -> importProject(action.uri, action.overwrite)
             is ImportAction.ImportSourceUri -> importSource(action.uri, action.overwrite)
             is ImportAction.ImportBackup -> importBackup(action.backup)
@@ -135,21 +132,6 @@ class ImportViewModel(
             ImportAction.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
             ImportAction.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
             ImportAction.ClearImportRepo -> _state.update { it.copy(repoToImport = null) }
-        }
-    }
-
-    private fun importUsfm(uri: Uri) {
-        val filename = FileUtilities.getFileName(application, uri)
-        val isUsfm = filename.contains(Translator.USFM_EXTENSION, ignoreCase = true)
-        val isTxt = filename.contains(Translator.TXT_EXTENSION, ignoreCase = true)
-        val isZip = filename.contains(Translator.ZIP_EXTENSION, ignoreCase = true)
-        if (isUsfm || isTxt || isZip) {
-            _event.trySend(ImportEvent.ImportUsfm(uri))
-        } else {
-            updateResult(
-                application.getString(R.string.import_from_storage),
-                "${application.getString(R.string.invalid_file)}\n$filename"
-            )
         }
     }
 

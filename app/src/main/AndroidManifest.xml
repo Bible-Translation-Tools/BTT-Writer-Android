@@ -165,11 +165,6 @@
             android:name=".ui.profile.RegisterOfflineActivity"
             android:windowSoftInputMode="adjustResize"
         />
-        <activity
-            android:name=".ui.ImportUsfmActivity"
-            android:launchMode="singleTop"
-            android:label="@string/title_activity_import_usfm_language">
-        </activity>
     </application>
 
 </manifest>
