@@ -8,6 +8,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.MissingNameItem
 import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
@@ -246,7 +247,7 @@ class UsfmImportViewModel(
         val results = usfm.resultsString
         val message = "$languageLabel\n$results"
 
-        val conflicting = checkMergeConflict()
+        val conflicting = checkExistentTranslation()
 
         val infoMessage = if (!usfm.isProcessSuccess) {
             val title = application.getString(R.string.title_import_usfm_error)
@@ -266,7 +267,7 @@ class UsfmImportViewModel(
         }
     }
 
-    private fun checkMergeConflict(): TargetTranslation? {
+    private fun checkExistentTranslation(): TargetTranslation? {
         val imports = processUSFM?.importProjects ?: return null
         for (file in imports) {
             val conflicting = translator.getConflictingTargetTranslation(file)
@@ -285,11 +286,16 @@ class UsfmImportViewModel(
                 }
             }
 
-            val conflicting = result.conflictingTargetTranslation
-            if (conflicting != null) {
-                _event.trySend(UsfmEvent.ResolveMergeConflict(conflicting.id))
-                cleanup()
-                return@launchWithProgress
+            result.conflictingTargetTranslation?.let {
+                val hasConflicts = MergeConflictsHandler.isTranslationMergeConflicted(
+                    it.id,
+                    translator
+                )
+                if (hasConflicts) {
+                    _event.trySend(UsfmEvent.ResolveMergeConflict(it.id))
+                    cleanup()
+                    return@launchWithProgress
+                }
             }
 
             _state.update {

@@ -45,7 +45,7 @@ fun UsfmImportDialog(
     onDismiss: () -> Unit,
     viewModel: UsfmImportViewModel = koinViewModel()
 ) {
-    val usfmState by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     LaunchedEffect(uri) {
@@ -61,12 +61,12 @@ fun UsfmImportDialog(
         }
     }
 
-    if (!usfmState.active) return
+    if (!state.active) return
 
-    when (usfmState.step) {
+    when (state.step) {
         UsfmStep.LANGUAGE -> {
             UsfmLanguageSelectionDialog(
-                languages = usfmState.filteredLanguages,
+                languages = state.filteredLanguages,
                 onLanguageSelected = {
                     viewModel.onAction(UsfmAction.LanguageSelected(it))
                 },
@@ -79,9 +79,9 @@ fun UsfmImportDialog(
 
         UsfmStep.PROMPT_BOOK_NAME -> {
             UsfmBookNameDialog(
-                prompt = usfmState.missingNamePrompt ?: "",
-                description = usfmState.currentMissingDescription,
-                categories = usfmState.filteredCategories,
+                prompt = state.missingNamePrompt ?: "",
+                description = state.currentMissingDescription,
+                categories = state.filteredCategories,
                 onProjectSelected = {
                     viewModel.onAction(UsfmAction.BookSelected(it))
                 },
@@ -94,10 +94,10 @@ fun UsfmImportDialog(
         }
 
         UsfmStep.PROCESSED -> {
-            if (usfmState.hasMergeConflict) {
+            if (state.hasMergeConflict) {
                 UsfmMergeConflictDialog(
-                    message = usfmState.processedResult,
-                    conflictId = usfmState.conflictingTranslationId,
+                    message = state.processedResult,
+                    conflictId = state.conflictingTranslationId,
                     onMerge = {
                         viewModel.onAction(UsfmAction.MergeImport(false))
                     },
@@ -109,7 +109,7 @@ fun UsfmImportDialog(
             } else {
                 ConfirmDialog(
                     title = stringResource(R.string.title_processing_usfm_summary),
-                    message = usfmState.processedResult,
+                    message = state.processedResult,
                     onConfirm = { viewModel.onAction(UsfmAction.ConfirmImport) },
                     onDismiss = onDismiss,
                     confirmText = stringResource(R.string.label_continue),
@@ -121,15 +121,15 @@ fun UsfmImportDialog(
         UsfmStep.DONE -> {
             InfoDialog(
                 title = stringResource(
-                    if (usfmState.importSuccess) R.string.title_import_usfm_results
+                    if (state.importSuccess) R.string.title_import_usfm_results
                     else R.string.title_import_usfm_error
                 ),
                 message = stringResource(
-                    if (usfmState.importSuccess) R.string.import_usfm_success
+                    if (state.importSuccess) R.string.import_usfm_success
                     else R.string.import_usfm_failed
                 ),
                 onDismiss = {
-                    if (usfmState.importSuccess) {
+                    if (state.importSuccess) {
                         viewModel.onAction(UsfmAction.Finish)
                     } else {
                         onDismiss()
@@ -143,7 +143,7 @@ fun UsfmImportDialog(
         }
     }
 
-    usfmState.infoMessage?.let { (title, message) ->
+    state.infoMessage?.let { (title, message) ->
         InfoDialog(
             title = title,
             message = message,
@@ -314,16 +314,10 @@ private fun UsfmMergeConflictDialog(
         message = fullMessage,
         onDismiss = onCancel
     ) { onInfoDismiss ->
-        TextButton(onClick = {
-            onMerge()
-            onInfoDismiss()
-        }) {
+        TextButton(onClick = onMerge) {
             Text(stringResource(R.string.merge_projects_label))
         }
-        TextButton(onClick = {
-            onOverwrite()
-            onInfoDismiss()
-        }) {
+        TextButton(onClick = onOverwrite) {
             Text(stringResource(R.string.overwrite_projects_label))
         }
         TextButton(onClick = {

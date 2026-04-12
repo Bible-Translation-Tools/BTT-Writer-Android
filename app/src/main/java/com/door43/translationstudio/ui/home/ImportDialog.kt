@@ -366,8 +366,14 @@ fun ImportDialog(
     usfmUri?.let { uri ->
         UsfmImportDialog(
             uri = uri,
-            onProjectImported = onProjectImported,
-            onMergeConflict = onMergeConflict,
+            onProjectImported = {
+                onProjectImported()
+                onDismiss()
+            },
+            onMergeConflict = {
+                onMergeConflict(it)
+                onDismiss()
+            },
             onDismiss = { usfmUri = null }
         )
     }
