@@ -1,6 +1,6 @@
 package com.door43.data
 
-import com.door43.questionnaire.QuestionnairePager
+import com.door43.translationstudio.ui.questionnaire.QuestionnairePager
 import com.door43.translationstudio.core.NewLanguageRequest
 import java.io.File
 

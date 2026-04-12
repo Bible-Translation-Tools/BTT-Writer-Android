@@ -1,4 +1,4 @@
-package com.door43.questionnaire
+package com.door43.translationstudio.ui.questionnaire
 
 import android.app.Activity
 import android.content.Context

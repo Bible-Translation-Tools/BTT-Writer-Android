@@ -2,7 +2,7 @@ package com.door43.translationstudio.core
 
 import android.annotation.SuppressLint
 import android.content.Context
-import com.door43.questionnaire.QuestionnairePager
+import com.door43.translationstudio.ui.questionnaire.QuestionnairePager
 import com.door43.translationstudio.App
 import com.door43.util.FileUtilities
 import com.door43.util.Security

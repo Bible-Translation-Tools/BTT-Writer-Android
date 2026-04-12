@@ -3,7 +3,7 @@ package com.door43.translationstudio.ui.newlanguage
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.door43.data.ILanguageRequestRepository
-import com.door43.questionnaire.QuestionnairePager
+import com.door43.translationstudio.ui.questionnaire.QuestionnairePager
 import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.translationstudio.core.Profile
 import org.unfoldingword.door43client.Door43Client

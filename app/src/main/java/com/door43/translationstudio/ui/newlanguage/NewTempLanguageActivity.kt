@@ -2,13 +2,12 @@ package com.door43.translationstudio.ui.newlanguage
 
 import android.content.Intent
 import android.os.Bundle
-import com.door43.questionnaire.QuestionnaireActivity
-import com.door43.questionnaire.QuestionnairePage
-import com.door43.questionnaire.QuestionnairePager
+import com.door43.translationstudio.ui.questionnaire.QuestionnaireActivity
+import com.door43.translationstudio.ui.questionnaire.QuestionnairePage
+import com.door43.translationstudio.ui.questionnaire.QuestionnairePager
 import com.door43.translationstudio.App.Companion.closeKeyboard
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NewLanguageRequest
-import com.door43.translationstudio.ui.newlanguage.NewTempLanguageViewModel
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import org.koin.androidx.viewmodel.ext.android.viewModel

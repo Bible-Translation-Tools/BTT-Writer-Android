@@ -1,4 +1,4 @@
-package com.door43.questionnaire
+package com.door43.translationstudio.ui.questionnaire
 
 import org.unfoldingword.door43client.models.Question
 

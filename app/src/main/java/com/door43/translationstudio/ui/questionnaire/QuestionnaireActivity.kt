@@ -1,4 +1,4 @@
-package com.door43.questionnaire
+package com.door43.translationstudio.ui.questionnaire
 
 import android.os.Bundle
 import android.view.MenuItem

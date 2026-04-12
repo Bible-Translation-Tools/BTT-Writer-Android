@@ -3,7 +3,7 @@ package com.door43.repositories
 import android.content.Context
 import com.door43.data.IDirectoryProvider
 import com.door43.data.ILanguageRequestRepository
-import com.door43.questionnaire.QuestionnairePager
+import com.door43.translationstudio.ui.questionnaire.QuestionnairePager
 import com.door43.translationstudio.core.NewLanguageRequest
 import com.door43.util.FileUtilities
 import org.json.JSONException
