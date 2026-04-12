@@ -37,16 +37,16 @@ import java.util.Locale
 enum class UsfmStep {
     LANGUAGE,
     PROMPT_BOOK_NAME,
-    RESULTS,
-    IMPORT_RESULTS
+    PROCESSED,
+    DONE
 }
 
 data class UsfmImportState(
     val step: UsfmStep = UsfmStep.LANGUAGE,
     val uri: Uri? = null,
     val targetLanguage: TargetLanguage? = null,
-    val processSuccess: Boolean = false,
-    val resultsMessage: String = "",
+    val processedResult: String = "",
+    val infoMessage: Pair<String, String>? = null,
     val importSuccess: Boolean = false,
     val currentMissingItem: MissingNameItem? = null,
     val currentMissingDescription: String = "",
@@ -58,8 +58,7 @@ data class UsfmImportState(
     val categories: List<CategoryEntry> = emptyList(),
     val filteredCategories: List<CategoryEntry> = emptyList(),
     val categoryStack: List<Long> = listOf(0L),
-    val active: Boolean = false,
-    val invalidFileMessage: String? = null
+    val active: Boolean = false
 )
 
 sealed interface UsfmAction {
@@ -144,9 +143,13 @@ class UsfmImportViewModel(
                 }
             }
         } else {
+            val title = application.getString(R.string.title_import_usfm_error)
             val message = "${application.getString(R.string.invalid_file)}\n$filename"
             _state.update {
-                it.copy(active = true, invalidFileMessage = message)
+                it.copy(
+                    active = true,
+                    infoMessage = title to message
+                )
             }
         }
     }
@@ -245,11 +248,18 @@ class UsfmImportViewModel(
 
         val conflicting = checkMergeConflict()
 
+        val infoMessage = if (!usfm.isProcessSuccess) {
+            val title = application.getString(R.string.title_import_usfm_error)
+            title to message
+        } else null
+
+        val step = if (usfm.isProcessSuccess) UsfmStep.PROCESSED else UsfmStep.DONE
+
         _state.update {
             it.copy(
-                step = UsfmStep.RESULTS,
-                processSuccess = usfm.isProcessSuccess,
-                resultsMessage = message,
+                step = step,
+                infoMessage = infoMessage,
+                processedResult = message,
                 hasMergeConflict = conflicting != null,
                 conflictingTranslationId = conflicting?.id
             )
@@ -284,7 +294,7 @@ class UsfmImportViewModel(
 
             _state.update {
                 it.copy(
-                    step = UsfmStep.IMPORT_RESULTS,
+                    step = UsfmStep.DONE,
                     importSuccess = result.success
                 )
             }

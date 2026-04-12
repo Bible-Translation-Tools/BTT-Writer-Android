@@ -63,19 +63,6 @@ fun UsfmImportDialog(
 
     if (!usfmState.active) return
 
-    usfmState.invalidFileMessage?.let { message ->
-        InfoDialog(
-            title = stringResource(R.string.import_from_storage),
-            message = message,
-            onDismiss = onDismiss
-        ) { onInfoDismiss ->
-            TextButton(onClick = onInfoDismiss) {
-                Text(stringResource(R.string.dismiss))
-            }
-        }
-        return
-    }
-
     when (usfmState.step) {
         UsfmStep.LANGUAGE -> {
             UsfmLanguageSelectionDialog(
@@ -106,40 +93,32 @@ fun UsfmImportDialog(
             )
         }
 
-        UsfmStep.RESULTS -> {
-            if (usfmState.processSuccess) {
-                if (usfmState.hasMergeConflict) {
-                    UsfmMergeConflictDialog(
-                        message = usfmState.resultsMessage,
-                        conflictId = usfmState.conflictingTranslationId,
-                        onMerge = { viewModel.onAction(UsfmAction.MergeImport(false)) },
-                        onOverwrite = { viewModel.onAction(UsfmAction.MergeImport(true)) },
-                        onCancel = onDismiss
-                    )
-                } else {
-                    ConfirmDialog(
-                        title = stringResource(R.string.title_processing_usfm_summary),
-                        message = usfmState.resultsMessage,
-                        onConfirm = { viewModel.onAction(UsfmAction.ConfirmImport) },
-                        onDismiss = onDismiss,
-                        confirmText = stringResource(R.string.label_continue),
-                        dismissText = stringResource(R.string.menu_cancel)
-                    )
-                }
+        UsfmStep.PROCESSED -> {
+            if (usfmState.hasMergeConflict) {
+                UsfmMergeConflictDialog(
+                    message = usfmState.processedResult,
+                    conflictId = usfmState.conflictingTranslationId,
+                    onMerge = {
+                        viewModel.onAction(UsfmAction.MergeImport(false))
+                    },
+                    onOverwrite = {
+                        viewModel.onAction(UsfmAction.MergeImport(true))
+                    },
+                    onCancel = onDismiss
+                )
             } else {
-                InfoDialog(
-                    title = stringResource(R.string.title_import_usfm_error),
-                    message = usfmState.resultsMessage,
-                    onDismiss = onDismiss
-                ) { onInfoDismiss ->
-                    TextButton(onClick = onInfoDismiss) {
-                        Text(stringResource(R.string.dismiss))
-                    }
-                }
+                ConfirmDialog(
+                    title = stringResource(R.string.title_processing_usfm_summary),
+                    message = usfmState.processedResult,
+                    onConfirm = { viewModel.onAction(UsfmAction.ConfirmImport) },
+                    onDismiss = onDismiss,
+                    confirmText = stringResource(R.string.label_continue),
+                    dismissText = stringResource(R.string.menu_cancel)
+                )
             }
         }
 
-        UsfmStep.IMPORT_RESULTS -> {
+        UsfmStep.DONE -> {
             InfoDialog(
                 title = stringResource(
                     if (usfmState.importSuccess) R.string.title_import_usfm_results
@@ -162,8 +141,19 @@ fun UsfmImportDialog(
                 }
             }
         }
+    }
 
-        else -> {}
+    usfmState.infoMessage?.let { (title, message) ->
+        InfoDialog(
+            title = title,
+            message = message,
+            onDismiss = onDismiss
+        ) { onInfoDismiss ->
+            TextButton(onClick = onInfoDismiss) {
+                Text(stringResource(R.string.dismiss))
+            }
+        }
+        return
     }
 
     progress?.let {
@@ -268,8 +258,10 @@ private fun UsfmBookNameDialog(
                 TopAppBar(
                     title = {
                         Text(
-                            stringResource(R.string.title_activity_import_usfm_book) +
-                                    " $description"
+                            stringResource(
+                                R.string.title_activity_import_usfm_book,
+                                description
+                            )
                         )
                     },
                     navigationIcon = {
@@ -311,7 +303,10 @@ private fun UsfmMergeConflictDialog(
     onOverwrite: () -> Unit,
     onCancel: () -> Unit
 ) {
-    val warning = stringResource(R.string.import_merge_conflict_project_name, conflictId ?: "")
+    val warning = stringResource(
+        R.string.import_merge_conflict_project_name,
+        conflictId ?: ""
+    )
     val fullMessage = "$message\n$warning"
 
     InfoDialog(

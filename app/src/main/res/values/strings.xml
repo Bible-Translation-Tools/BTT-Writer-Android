@@ -703,7 +703,7 @@ Do you want to enable SD card access?  If so then:
     <string name="project_uploaded_to">Your project has been uploaded to:\n\n<xliff:g example="http:/test.com/test" id="destination_url">%1$s</xliff:g></string>
     <string name="label_open">Open</string>
     <string name="title_activity_import_usfm_language">Import USFM Project - Select Language</string>
-    <string name="title_activity_import_usfm_book">Import USFM Project - Select Book For: </string>
+    <string name="title_activity_import_usfm_book">Import USFM Project - Select Book For: <xliff:g example="Genesis" id="book">%1$s</xliff:g></string>
     <string name="label_import_usfm">Import USFM</string>
     <string name="import_usfm_success">USFM file Import Success</string>
     <string name="import_usfm_failed">USFM file Import Failed</string>
