@@ -103,7 +103,6 @@ fun HomeScreen(
     val newTranslationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        viewModel.onAction(HomeAction.LoadProjects)
 
         when(result.resultCode) {
             NewTargetTranslationActivity.RESULT_DUPLICATE -> {
@@ -173,6 +172,7 @@ fun HomeScreen(
 
     LifecycleResumeEffect(Unit) {
         profileUser = profile.currentUser
+        viewModel.onAction(HomeAction.LoadProjects)
         onPauseOrDispose {}
     }
 
@@ -262,7 +262,12 @@ fun HomeScreen(
                             )
                         } else {
                             TranslationListScreen(
-                                onProjectSelected = onOpenProject,
+                                onProjectSelected = {
+                                    onOpenProject(it)
+                                    viewModel.onAction(
+                                        HomeAction.InvalidateProgress(it.translation.id)
+                                    )
+                                },
                                 onChangeLanguage = launchChangeLanguage,
                                 onMergeConflict = onMergeConflict,
                                 onProjectPublish = onProjectPublish,
@@ -307,6 +312,8 @@ fun HomeScreen(
         ConfirmDialog(
             title = stringResource(R.string.exit),
             message = stringResource(R.string.exit_confirmation),
+            confirmText = stringResource(R.string.yes),
+            dismissText = stringResource(R.string.no),
             onConfirm = onAppExit,
             onDismiss = {
                 showExitConfirmation = false
