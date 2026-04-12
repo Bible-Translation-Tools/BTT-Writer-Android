@@ -59,7 +59,7 @@ data class UsfmImportState(
     val categories: List<CategoryEntry> = emptyList(),
     val filteredCategories: List<CategoryEntry> = emptyList(),
     val categoryStack: List<Long> = listOf(0L),
-    val active: Boolean = false
+    val started: Boolean = false
 )
 
 sealed interface UsfmAction {
@@ -67,11 +67,12 @@ sealed interface UsfmAction {
     data class BookSelected(val projectId: String) : UsfmAction
     data class Search(val query: String) : UsfmAction
     data class CategorySelected(val categoryId: Long) : UsfmAction
+    data object NavigateBack : UsfmAction
     data object SkipBook : UsfmAction
     data object ConfirmImport : UsfmAction
     data class MergeImport(val overwrite: Boolean) : UsfmAction
-    data object Dismiss : UsfmAction
-    data object Finish : UsfmAction
+    data object Cleanup : UsfmAction
+    data object ProjectImported : UsfmAction
 }
 
 sealed interface UsfmEvent {
@@ -112,18 +113,20 @@ class UsfmImportViewModel(
             is UsfmAction.BookSelected -> setBook(action.projectId)
             is UsfmAction.Search -> search(action.query)
             is UsfmAction.CategorySelected -> navigateToCategory(action.categoryId)
+            UsfmAction.NavigateBack -> navigateBack()
             UsfmAction.SkipBook -> promptNextName()
             UsfmAction.ConfirmImport -> doImport(false)
             is UsfmAction.MergeImport -> doImport(action.overwrite)
-            UsfmAction.Dismiss -> cleanup()
-            UsfmAction.Finish -> {
+            UsfmAction.ProjectImported -> {
                 _event.trySend(UsfmEvent.ProjectImported)
                 cleanup()
             }
+            UsfmAction.Cleanup -> cleanup()
         }
     }
 
     fun startImport(uri: Uri) {
+        if (_state.value.started) return
         val filename = FileUtilities.getFileName(application, uri)
         val isUsfm = filename.contains(Translator.USFM_EXTENSION, ignoreCase = true)
         val isTxt = filename.contains(Translator.TXT_EXTENSION, ignoreCase = true)
@@ -135,11 +138,11 @@ class UsfmImportViewModel(
                 }
                 _state.update {
                     UsfmImportState(
-                        step = UsfmStep.LANGUAGE,
+                        started = true,
                         uri = uri,
+                        step = UsfmStep.LANGUAGE,
                         languages = languages,
-                        filteredLanguages = languages,
-                        active = true
+                        filteredLanguages = languages
                     )
                 }
             }
@@ -148,7 +151,8 @@ class UsfmImportViewModel(
             val message = "${application.getString(R.string.invalid_file)}\n$filename"
             _state.update {
                 it.copy(
-                    active = true,
+                    started = true,
+                    step = UsfmStep.DONE,
                     infoMessage = title to message
                 )
             }
@@ -347,6 +351,22 @@ class UsfmImportViewModel(
                 categories = categories,
                 filteredCategories = categories,
                 categoryStack = it.categoryStack + categoryId
+            )
+        }
+    }
+
+    private fun navigateBack() {
+        val stack = _state.value.categoryStack
+        if (stack.size <= 1) return
+        val parentId = stack[stack.size - 2]
+        val categories = library.index.getProjectCategories(
+            parentId, deviceLanguageCode, "all"
+        )
+        _state.update {
+            it.copy(
+                categories = categories,
+                filteredCategories = categories,
+                categoryStack = stack.dropLast(1)
             )
         }
     }

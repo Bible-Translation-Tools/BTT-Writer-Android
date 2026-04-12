@@ -1,7 +1,10 @@
 package com.door43.translationstudio.ui.dialogs
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,10 +19,18 @@ fun InfoDialog(
     modifier: Modifier = Modifier,
     buttons: @Composable (onDismiss: () -> Unit) -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
-        text = { Text(message) },
+        text = {
+            Text(
+                text = message,
+                modifier = Modifier.heightIn(max = 400.dp)
+                    .verticalScroll(scrollState)
+            )
+        },
         shape = RoundedCornerShape(8.dp),
         confirmButton = {
             buttons {

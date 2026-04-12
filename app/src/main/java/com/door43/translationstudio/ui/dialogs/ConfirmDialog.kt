@@ -1,8 +1,10 @@
 package com.door43.translationstudio.ui.dialogs
 
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,20 +45,23 @@ fun ConfirmDialog(
     confirmText: String = stringResource(R.string.confirm),
     dismissText: String = stringResource(R.string.title_cancel)
 ) {
+    val scrollState = rememberScrollState()
+
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
         title = {
             Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall
+                text = title
             )
         },
         text = {
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium
+                modifier = Modifier
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(scrollState)
             )
         },
         confirmButton = {

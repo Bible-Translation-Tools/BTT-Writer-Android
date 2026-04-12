@@ -48,6 +48,11 @@ fun UsfmImportDialog(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
+    val onCloseDialog: () -> Unit = {
+        viewModel.onAction(UsfmAction.Cleanup)
+        onDismiss()
+    }
+
     LaunchedEffect(uri) {
         viewModel.startImport(uri)
     }
@@ -61,7 +66,7 @@ fun UsfmImportDialog(
         }
     }
 
-    if (!state.active) return
+    if (!state.started) return
 
     when (state.step) {
         UsfmStep.LANGUAGE -> {
@@ -73,7 +78,7 @@ fun UsfmImportDialog(
                 onSearch = {
                     viewModel.onAction(UsfmAction.Search(it))
                 },
-                onDismiss = onDismiss
+                onDismiss = onCloseDialog
             )
         }
 
@@ -82,11 +87,15 @@ fun UsfmImportDialog(
                 prompt = state.missingNamePrompt ?: "",
                 description = state.currentMissingDescription,
                 categories = state.filteredCategories,
+                isAtRootCategory = state.categoryStack.size <= 1,
                 onProjectSelected = {
                     viewModel.onAction(UsfmAction.BookSelected(it))
                 },
                 onCategorySelected = {
                     viewModel.onAction(UsfmAction.CategorySelected(it))
+                },
+                onNavigateBack = {
+                    viewModel.onAction(UsfmAction.NavigateBack)
                 },
                 onSkip = { viewModel.onAction(UsfmAction.SkipBook) },
                 onDismiss = { viewModel.onAction(UsfmAction.SkipBook) }
@@ -104,14 +113,14 @@ fun UsfmImportDialog(
                     onOverwrite = {
                         viewModel.onAction(UsfmAction.MergeImport(true))
                     },
-                    onCancel = onDismiss
+                    onCancel = onCloseDialog
                 )
             } else {
                 ConfirmDialog(
                     title = stringResource(R.string.title_processing_usfm_summary),
                     message = state.processedResult,
                     onConfirm = { viewModel.onAction(UsfmAction.ConfirmImport) },
-                    onDismiss = onDismiss,
+                    onDismiss = onCloseDialog,
                     confirmText = stringResource(R.string.label_continue),
                     dismissText = stringResource(R.string.menu_cancel)
                 )
@@ -130,9 +139,9 @@ fun UsfmImportDialog(
                 ),
                 onDismiss = {
                     if (state.importSuccess) {
-                        viewModel.onAction(UsfmAction.Finish)
+                        viewModel.onAction(UsfmAction.ProjectImported)
                     } else {
-                        onDismiss()
+                        onCloseDialog()
                     }
                 }
             ) { onInfoDismiss ->
@@ -147,7 +156,7 @@ fun UsfmImportDialog(
         InfoDialog(
             title = title,
             message = message,
-            onDismiss = onDismiss
+            onDismiss = onCloseDialog
         ) { onInfoDismiss ->
             TextButton(onClick = onInfoDismiss) {
                 Text(stringResource(R.string.dismiss))
@@ -231,10 +240,11 @@ private fun UsfmBookNameDialog(
     prompt: String,
     description: String,
     categories: List<CategoryEntry>,
+    isAtRootCategory: Boolean,
     onProjectSelected: (String) -> Unit,
     onCategorySelected: (Long) -> Unit,
-    onSkip: () -> Unit,
-    onDismiss: () -> Unit
+    onNavigateBack: () -> Unit,
+    onSkip: () -> Unit
 ) {
     var showProjectList by rememberSaveable { mutableStateOf(false) }
 
@@ -249,7 +259,13 @@ private fun UsfmBookNameDialog(
         )
     } else {
         OverlayDialog(
-            onDismiss = onDismiss,
+            onDismiss = {
+                if (isAtRootCategory) {
+                    showProjectList = false
+                } else {
+                    onNavigateBack()
+                }
+            },
             maxWidth = 900.dp,
             maxHeight = 900.dp,
             contentPadding = 0.dp
@@ -265,7 +281,13 @@ private fun UsfmBookNameDialog(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { showProjectList = false }) {
+                        IconButton(onClick = {
+                            if (isAtRootCategory) {
+                                showProjectList = false
+                            } else {
+                                onNavigateBack()
+                            }
+                        }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "back"
