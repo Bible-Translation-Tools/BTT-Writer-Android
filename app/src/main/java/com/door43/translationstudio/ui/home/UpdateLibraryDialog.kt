@@ -55,6 +55,7 @@ private const val UPDATE_OPTIONS_HELP_URL =
 @Composable
 fun UpdateLibraryDialog(
     modifier: Modifier = Modifier,
+    triggerUpdate: Boolean = false,
     onDismiss: () -> Unit
 ) {
     val viewModel: UpdateLibraryViewModel = koinViewModel()
@@ -80,6 +81,12 @@ fun UpdateLibraryDialog(
             when (event) {
                 is UpdateEvent.IndexUpdated -> showIndexUpdatedDialog = true
             }
+        }
+    }
+
+    LaunchedEffect(triggerUpdate) {
+        if (triggerUpdate) {
+            viewModel.onAction(UpdateAction.UpdateSource)
         }
     }
 

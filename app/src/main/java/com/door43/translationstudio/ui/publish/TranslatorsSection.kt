@@ -103,7 +103,7 @@ fun TranslatorsSection(
                 shape = RoundedCornerShape(4.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.add_contributor).uppercase()
+                    text = stringResource(R.string.add_contributor)
                 )
             }
             onNextClick?.let { onNext ->
@@ -113,7 +113,7 @@ fun TranslatorsSection(
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = stringResource(id = R.string.next).uppercase(),
+                        text = stringResource(id = R.string.next),
                         fontSize = 14.sp
                     )
                 }

@@ -208,7 +208,7 @@ private fun UsfmLanguageSelectionDialog(
                             searchQuery = it
                             onSearch(it)
                         },
-                        placeholder = stringResource(R.string.choose_target_language)
+                        placeholder = stringResource(R.string.search_for_language)
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

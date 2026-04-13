@@ -17,6 +17,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,65 +40,69 @@ fun ProfileScreen(
 ) {
     val uriHandler = LocalUriHandler.current
 
-    Row(modifier = Modifier.fillMaxSize()) {
-        
-        HomeSidebar(
-            listOf(
-                SidebarAction(
-                    title = stringResource(R.string.action_settings),
-                    icon = Icons.Default.Settings,
-                    onClick = onSettings
+    Surface(
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Row(modifier = Modifier.fillMaxSize()) {
+
+            HomeSidebar(
+                listOf(
+                    SidebarAction(
+                        title = stringResource(R.string.action_settings),
+                        icon = Icons.Default.Settings,
+                        onClick = onSettings
+                    )
                 )
             )
-        )
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Text(
-                text = stringResource(R.string.create_account_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 16.dp, start = 4.dp)
-            )
-
-            ProfileOptionCard(
-                title = stringResource(R.string.login_doo43),
-                subtitle = stringResource(R.string.requires_internet),
-                onClick = onLogin
-            )
-
-            ProfileOptionCard(
-                title = stringResource(R.string.register_door43),
-                subtitle = stringResource(R.string.requires_internet),
-                onClick = {
-                    uriHandler.openUri(registerUrl)
-                }
-            )
-
-            ProfileOptionCard(
-                title = stringResource(R.string.create_offline_profile),
-                subtitle = stringResource(R.string.still_possible_to_register_door43),
-                onClick = onRegisterOffline
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = onCancel,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
+            Column(
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(top = 24.dp)
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Text(stringResource(R.string.title_cancel))
+                Text(
+                    text = stringResource(R.string.create_account_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp, start = 4.dp)
+                )
+
+                ProfileOptionCard(
+                    title = stringResource(R.string.login_doo43),
+                    subtitle = stringResource(R.string.requires_internet),
+                    onClick = onLogin
+                )
+
+                ProfileOptionCard(
+                    title = stringResource(R.string.register_door43),
+                    subtitle = stringResource(R.string.requires_internet),
+                    onClick = {
+                        uriHandler.openUri(registerUrl)
+                    }
+                )
+
+                ProfileOptionCard(
+                    title = stringResource(R.string.create_offline_profile),
+                    subtitle = stringResource(R.string.still_possible_to_register_door43),
+                    onClick = onRegisterOffline
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Button(
+                    onClick = onCancel,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 24.dp)
+                ) {
+                    Text(stringResource(R.string.title_cancel))
+                }
             }
         }
     }
@@ -109,7 +114,7 @@ fun ProfileOptionCard(title: String, subtitle: String, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier

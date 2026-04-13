@@ -65,14 +65,14 @@ fun TermsOfUseScreen(
                     onClick = onReject,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.license_deny).uppercase())
+                    Text(stringResource(R.string.license_deny))
                 }
                 
                 Button(
                     onClick = onAccept,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.license_accept).uppercase())
+                    Text(stringResource(R.string.license_accept))
                 }
             }
         }
@@ -97,21 +97,21 @@ fun TermsOfUseScreen(
                 onClick = { openLegalDocumentId = R.string.license_pdf },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             ) {
-                Text(stringResource(R.string.view_license_agreement).uppercase())
+                Text(stringResource(R.string.view_license_agreement))
             }
 
             Button(
                 onClick = { openLegalDocumentId = R.string.translation_guidlines },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
             ) {
-                Text(stringResource(R.string.view_translation_guidelines).uppercase())
+                Text(stringResource(R.string.view_translation_guidelines))
             }
 
             Button(
                 onClick = { openLegalDocumentId = R.string.statement_of_faith },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.view_statement_of_faith).uppercase())
+                Text(stringResource(R.string.view_statement_of_faith))
             }
         }
     }

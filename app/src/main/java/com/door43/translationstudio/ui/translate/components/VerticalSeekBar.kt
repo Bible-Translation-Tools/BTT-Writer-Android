@@ -153,7 +153,7 @@ fun VerticalSeekBar(
                 ) {
                     Text(
                         text = tooltipLabel,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )

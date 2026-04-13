@@ -145,7 +145,7 @@
             android:windowSoftInputMode="adjustResize"
         />
         <activity
-            android:name=".ui.profile.RegisterOfflineActivity"
+            android:name=".ui.profile.LoginOfflineActivity"
             android:windowSoftInputMode="adjustResize"
         />
     </application>

@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +46,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
@@ -52,6 +54,8 @@ import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
+import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.RESULT_DO_UPDATE
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -61,7 +65,6 @@ import java.io.File
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onSettings: () -> Unit,
-    onOpenProject: (TranslationItem) -> Unit,
     onShareApp: (File) -> Unit,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
@@ -82,6 +85,7 @@ fun HomeScreen(
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
     var showImportDialog by rememberSaveable { mutableStateOf(false) }
     var showUpdateLibraryDialog by rememberSaveable { mutableStateOf(false) }
+    var triggerUpdateLibrary by rememberSaveable { mutableStateOf(false) }
 
     var projectToImport by remember { mutableStateOf<Uri?>(null) }
     var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
@@ -100,6 +104,15 @@ fun HomeScreen(
         },
         onSettings = onSettings
     )
+
+    val openProjectLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_DO_UPDATE) {
+            showUpdateLibraryDialog = true
+            triggerUpdateLibrary = true
+        }
+    }
 
     val newTranslationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -129,6 +142,18 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    val openProject: (TranslationItem) -> Unit = {
+        val intent = Intent(
+            context,
+            TargetTranslationActivity::class.java
+        )
+        intent.putExtra(
+            Translator.EXTRA_TARGET_TRANSLATION_ID,
+            it.translation.id
+        )
+        openProjectLauncher.launch(intent)
     }
 
     val launchNewTranslation: () -> Unit = {
@@ -240,14 +265,13 @@ fun HomeScreen(
                                 textAlign = TextAlign.End
                             )
 
-                            ElevatedButton(
-                                onClick = {
-                                    viewModel.onAction(HomeAction.Logout)
-                                },
+                            TextButton(
+                                onClick = { viewModel.onAction(HomeAction.Logout) },
                                 colors = ButtonDefaults.elevatedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    containerColor = MaterialTheme.colorScheme.background,
                                     contentColor = MaterialTheme.colorScheme.primary
                                 ),
+                                shape = RoundedCornerShape(4.dp),
                                 modifier = Modifier.padding(start = 8.dp)
                             ) {
                                 Text(
@@ -272,7 +296,7 @@ fun HomeScreen(
                             }
                         } else {
                             TranslationListScreen(
-                                onProjectSelected = onOpenProject,
+                                onProjectSelected = openProject,
                                 onChangeLanguage = launchChangeLanguage,
                                 onMergeConflict = onMergeConflict,
                                 onProjectPublish = onProjectPublish,
@@ -309,7 +333,11 @@ fun HomeScreen(
 
     if (showUpdateLibraryDialog) {
         UpdateLibraryDialog(
-            onDismiss = { showUpdateLibraryDialog = false }
+            triggerUpdate = triggerUpdateLibrary,
+            onDismiss = {
+                showUpdateLibraryDialog = false
+                triggerUpdateLibrary = false
+            }
         )
     }
 

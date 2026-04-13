@@ -128,7 +128,11 @@ fun TranslateSidebar(
                     DropdownMenuItem(
                         text = { Text(text = action.title) },
                         leadingIcon = {
-                            Icon(imageVector = action.icon, contentDescription = action.title)
+                            Icon(
+                                imageVector = action.icon,
+                                contentDescription = action.title,
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         },
                         onClick = {
                             showMenu = false

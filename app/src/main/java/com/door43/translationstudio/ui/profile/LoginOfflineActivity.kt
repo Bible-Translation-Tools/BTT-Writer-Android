@@ -7,7 +7,7 @@ import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
 import org.koin.android.ext.android.inject
 
-class RegisterOfflineActivity : BaseActivity() {
+class LoginOfflineActivity : BaseActivity() {
     val profile: Profile by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -15,7 +15,7 @@ class RegisterOfflineActivity : BaseActivity() {
 
         setContent {
             AppTheme(darkTheme = isDarkTheme) {
-                RegisterOfflineScreen(
+                LoginOfflineScreen(
                     onCancel = { finish() },
                     onContinue = { fullName ->
                         profile.login(fullName)

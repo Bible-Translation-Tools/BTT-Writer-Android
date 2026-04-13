@@ -38,12 +38,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.InfoDialog
 import kotlinx.coroutines.launch
 
 enum class PrivacyDialogMode { INFO, CONFIRM }
 
 @Composable
-fun RegisterOfflineScreen(
+fun LoginOfflineScreen(
     onCancel: () -> Unit,
     onContinue: (String) -> Unit
 ) {
@@ -69,6 +70,7 @@ fun RegisterOfflineScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
@@ -78,7 +80,6 @@ fun RegisterOfflineScreen(
                 .padding(16.dp)
                 .imePadding()
         ) {
-            
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -89,14 +90,12 @@ fun RegisterOfflineScreen(
             ) {
                 Text(
                     text = stringResource(R.string.names_will_be_public),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     imageVector = Icons.Filled.Info,
-                    contentDescription = "Info",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentDescription = "Info"
                 )
             }
 

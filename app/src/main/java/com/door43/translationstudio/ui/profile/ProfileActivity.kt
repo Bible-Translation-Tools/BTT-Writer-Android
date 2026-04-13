@@ -3,8 +3,6 @@ package com.door43.translationstudio.ui.profile
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -34,38 +32,36 @@ class ProfileActivity : BaseActivity() {
 
         setContent {
             AppTheme(darkTheme = isDarkTheme) {
-                Surface(color = MaterialTheme.colorScheme.background) {
-                    ProfileScreen(
-                        registerUrl = registerUrl,
-                        onLogin = {
-                            startActivity(
-                                Intent(
-                                    this@ProfileActivity,
-                                    LoginDoor43Activity::class.java
-                                )
+                ProfileScreen(
+                    registerUrl = registerUrl,
+                    onLogin = {
+                        startActivity(
+                            Intent(
+                                this@ProfileActivity,
+                                LoginDoor43Activity::class.java
                             )
-                        },
-                        onRegisterOffline = {
-                            startActivity(
-                                Intent(
-                                    this@ProfileActivity,
-                                    RegisterOfflineActivity::class.java
-                                )
+                        )
+                    },
+                    onRegisterOffline = {
+                        startActivity(
+                            Intent(
+                                this@ProfileActivity,
+                                LoginOfflineActivity::class.java
                             )
-                        },
-                        onSettings = {
-                            startActivity(
-                                Intent(
-                                    this@ProfileActivity,
-                                    SettingsActivity::class.java
-                                )
+                        )
+                    },
+                    onSettings = {
+                        startActivity(
+                            Intent(
+                                this@ProfileActivity,
+                                SettingsActivity::class.java
                             )
-                        },
-                        onCancel = {
-                            finishAffinity()
-                        }
-                    )
-                }
+                        )
+                    },
+                    onCancel = {
+                        finishAffinity()
+                    }
+                )
             }
         }
     }

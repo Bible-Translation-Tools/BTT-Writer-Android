@@ -1,7 +1,9 @@
 package com.door43.translationstudio.ui.profile
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
@@ -13,6 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 data class LoginState(
     val result: GogsLogin.LoginResult? = null
@@ -20,7 +24,9 @@ data class LoginState(
 
 class LoginViewModel(
     private val gogsLogin: GogsLogin
-) : ViewModel(), ProgressOwner {
+) : ViewModel(), KoinComponent, ProgressOwner {
+
+    private val application: Application by inject()
 
     private val progressManager = ProgressManager(viewModelScope)
     override val progress get() = progressManager.progress
@@ -33,7 +39,9 @@ class LoginViewModel(
     }
 
     fun login(username: String, password: String, fullName: String?) {
-        launchWithProgress {
+        launchWithProgress(
+            application.getString(R.string.logging_in)
+        ) {
             val result = withContext(Dispatchers.IO) {
                 gogsLogin.execute(username, password, fullName)
             }

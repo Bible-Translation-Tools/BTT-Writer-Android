@@ -239,7 +239,7 @@ fun PublishButton(
         )
     ) {
         Text(
-            text = text.uppercase(),
+            text = text,
             fontSize = 18.sp,
             textAlign = TextAlign.Center,
             maxLines = 1

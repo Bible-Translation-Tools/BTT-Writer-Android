@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,7 +32,10 @@ fun ProgressDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 message?.let {
-                    Text(text = it)
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
 
                 if (progress == -1f) {
@@ -48,6 +52,7 @@ fun ProgressDialog(
                 details?.let {
                     Text(
                         text = it,
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth()
                     )

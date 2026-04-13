@@ -31,16 +31,16 @@ val AccentGreenDark = Color(0xFF52A588)
 val AccentLightGreenDark = Color(0xFF8EA89E)
 
 // --- Tertiary Colors ---
-val TertiaryBlueLight = Color(0xFFA5E4FF)
+val TertiaryBlueLight = Color(0xFF00BAFF)
 val TertiaryLightBlueLight = Color(0xFFE2F0FF)
 val TertiaryBlueDark = Color(0xFF51AFC7)
 val TertiaryLightBlueDark = Color(0xFF92B4CE)
 val TertiaryTextLight = Color(0xFF272727)
 
 // --- Backgrounds & Surfaces ---
-val BackgroundLight = Color(0xFFEFEFEF)
+val BackgroundLight = Color(0xFFE0E0E0)
 val BackgroundDark = Color(0xFF1C1C1C)
-val SurfaceLight = Color(0xFFF2F2F2)
+val SurfaceLight = Color(0xFFE9E9E9)
 val SurfaceDark = Color(0xFF272727)
 
 // --- Text Colors ---

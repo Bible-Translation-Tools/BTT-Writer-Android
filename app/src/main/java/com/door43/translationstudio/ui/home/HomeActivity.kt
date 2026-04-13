@@ -50,7 +50,6 @@ class HomeActivity : BaseActivity() {
                             SettingsActivity::class.java
                         ))
                     },
-                    onOpenProject = ::openProject,
                     onShareApp = ::shareApp,
                     onLogin = ::door43Login,
                     onProjectPublish = ::publishProject,
@@ -67,12 +66,6 @@ class HomeActivity : BaseActivity() {
             val backupIntent = Intent(baseContext, BackupService::class.java)
             baseContext.startService(backupIntent)
         }
-    }
-
-    private fun openProject(item: TranslationItem) {
-        val intent = Intent(this, TargetTranslationActivity::class.java)
-        intent.putExtra(Translator.EXTRA_TARGET_TRANSLATION_ID, item.translation.id)
-        startActivity(intent)
     }
 
     private fun logout() {

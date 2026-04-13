@@ -2,8 +2,6 @@ package com.door43.translationstudio.ui.profile
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import com.door43.translationstudio.App
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.AppTheme
@@ -19,20 +17,18 @@ class LoginDoor43Activity : BaseActivity() {
 
         setContent {
             AppTheme(darkTheme = isDarkTheme) {
-                Surface(color = MaterialTheme.colorScheme.background) {
-                    LoginScreen(
-                        profileFullName = profile.fullName,
-                        isNetworkAvailable = App.Companion.isNetworkAvailable,
-                        onLoginSuccess = { user ->
-                            if (user.fullName.isNullOrEmpty()) {
-                                user.fullName = user.username
-                            }
-                            profile.login(user.fullName, user)
-                            finish()
-                        },
-                        onCancel = { finish() }
-                    )
-                }
+                LoginScreen(
+                    profileFullName = profile.fullName,
+                    isNetworkAvailable = App.Companion.isNetworkAvailable,
+                    onLoginSuccess = { user ->
+                        if (user.fullName.isNullOrEmpty()) {
+                            user.fullName = user.username
+                        }
+                        profile.login(user.fullName, user)
+                        finish()
+                    },
+                    onCancel = { finish() }
+                )
             }
         }
     }

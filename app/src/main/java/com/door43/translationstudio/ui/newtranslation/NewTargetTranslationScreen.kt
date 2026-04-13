@@ -46,11 +46,6 @@ fun NewTargetTranslationScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
-    val searchPlaceholder = when (state.screenStep) {
-        ScreenStep.LANGUAGE -> stringResource(R.string.choose_target_language)
-        ScreenStep.PROJECT -> stringResource(R.string.choose_a_project)
-    }
-
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -98,7 +93,7 @@ fun NewTargetTranslationScreen(
                         onQueryChanged = {
                             viewModel.onAction(NewTranslationAction.OnSearch(it))
                         },
-                        placeholder = searchPlaceholder
+                        placeholder = stringResource(R.string.search_hint)
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
