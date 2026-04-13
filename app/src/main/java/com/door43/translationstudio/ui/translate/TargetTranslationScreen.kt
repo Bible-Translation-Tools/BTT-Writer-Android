@@ -102,7 +102,7 @@ fun TargetTranslationScreen(
         viewModel.event.collect { event ->
             when (event) {
                 is TargetEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
-                TargetEvent.RestartAutoCommitTimer -> onRestartAutoCommitTimer()
+                is TargetEvent.RestartAutoCommitTimer -> onRestartAutoCommitTimer()
             }
         }
     }

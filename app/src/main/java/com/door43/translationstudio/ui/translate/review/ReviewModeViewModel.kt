@@ -132,7 +132,7 @@ data class SearchState(
 }
 
 sealed class MarkAllDialogState {
-    object Confirm : MarkAllDialogState()
+    data object Confirm : MarkAllDialogState()
     data class Result(val marked: Int, val total: Int) : MarkAllDialogState()
 }
 
@@ -156,19 +156,19 @@ sealed interface ReviewAction : ModeAction {
     data class ToggleEdit(val item: ReviewItem) : ReviewAction
     data class ToggleDoneClicked(val item: ReviewItem) : ReviewAction
     data class ToggleDoneConfirmed(val confirm: Boolean) : ReviewAction
-    object MarkAllDoneClicked : ReviewAction
+    data object MarkAllDoneClicked : ReviewAction
     data class MarkAllDoneConfirmed(val confirm: Boolean) : ReviewAction
     data class Undo(val item: ReviewItem) : ReviewAction
     data class Redo(val item: ReviewItem) : ReviewAction
     data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : ReviewAction
-    object ClearHelp : ReviewAction
-    object CleanUrl : ReviewAction
-    object OpenSearch : ReviewAction
-    object CloseSearch : ReviewAction
+    data object ClearHelp : ReviewAction
+    data object CleanUrl : ReviewAction
+    data object OpenSearch : ReviewAction
+    data object CloseSearch : ReviewAction
     data class UpdateSearchQuery(val query: String) : ReviewAction
     data class SetSearchSubject(val subject: SearchSubject) : ReviewAction
-    object NextMatch : ReviewAction
-    object PrevMatch : ReviewAction
+    data object NextMatch : ReviewAction
+    data object PrevMatch : ReviewAction
     data class DragDropVerse(
         val item: ReviewItem,
         val machineReadable: String,
@@ -274,13 +274,13 @@ class ReviewModeViewModel(
             is ReviewAction.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
             is ReviewAction.SelectConflict -> selectConflict(action.item, action.index)
             is ReviewAction.SetMergeConflictFilterOn -> setMergeConflictFilterOn(action.value)
-            ReviewAction.MarkAllDoneClicked -> markAllDoneClicked()
-            ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
-            ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
-            ReviewAction.OpenSearch -> openSearch()
-            ReviewAction.CloseSearch -> closeSearch()
-            ReviewAction.NextMatch -> navigateMatch(forward = true)
-            ReviewAction.PrevMatch -> navigateMatch(forward = false)
+            is ReviewAction.MarkAllDoneClicked -> markAllDoneClicked()
+            is ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
+            is ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
+            is ReviewAction.OpenSearch -> openSearch()
+            is ReviewAction.CloseSearch -> closeSearch()
+            is ReviewAction.NextMatch -> navigateMatch(forward = true)
+            is ReviewAction.PrevMatch -> navigateMatch(forward = false)
         }
     }
 

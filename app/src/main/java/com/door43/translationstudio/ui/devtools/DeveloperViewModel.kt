@@ -40,9 +40,9 @@ data class DeveloperState(
 )
 
 sealed class DeveloperEvent {
-    object ReadLog : DeveloperEvent()
-    object CheckSystemResources : DeveloperEvent()
-    object DeleteLibrary : DeveloperEvent()
+    data object ReadLog : DeveloperEvent()
+    data object CheckSystemResources : DeveloperEvent()
+    data object DeleteLibrary : DeveloperEvent()
 }
 
 class DeveloperViewModel(

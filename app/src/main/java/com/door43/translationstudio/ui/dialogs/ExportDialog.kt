@@ -128,8 +128,8 @@ fun ExportDialog(
                     snackbarHostState.showSnackbar(event.message)
                 }
                 is ExportEvent.AppExport -> onExportToApp(event.file)
-                ExportEvent.OnLogout -> onLogout()
-                ExportEvent.AuthRequested -> showAuthDialog = true
+                is ExportEvent.OnLogout -> onLogout()
+                is ExportEvent.AuthRequested -> showAuthDialog = true
             }
         }
     }

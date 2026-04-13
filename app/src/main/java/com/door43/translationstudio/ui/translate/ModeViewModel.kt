@@ -47,8 +47,8 @@ interface ModeAction {
     data class DeleteNote(val note: Footnote) : ModeAction
     data class OpenFootnoteEditor(val note: Footnote) : ModeAction
     data class SaveFootnote(val note: Footnote) : ModeAction
-    object ClearFootnote : ModeAction
-    object ClearFootnoteToEdit : ModeAction
+    data object ClearFootnote : ModeAction
+    data object ClearFootnoteToEdit : ModeAction
 }
 
 abstract class ModeViewModel<ITEM: TranslateItem>(
@@ -87,8 +87,8 @@ abstract class ModeViewModel<ITEM: TranslateItem>(
             is ModeAction.DeleteNote -> onDeleteFootnote(action.note)
             is ModeAction.OpenFootnoteEditor -> onOpenFootnoteEditor(action.note)
             is ModeAction.SaveFootnote -> onSaveFootnote(action.note)
-            ModeAction.ClearFootnote -> { _modeState.update { it.copy(footnote = null) } }
-            ModeAction.ClearFootnoteToEdit -> {
+            is ModeAction.ClearFootnote -> { _modeState.update { it.copy(footnote = null) } }
+            is ModeAction.ClearFootnoteToEdit -> {
                 _modeState.update { it.copy(footnoteToEdit = null) }
             }
         }

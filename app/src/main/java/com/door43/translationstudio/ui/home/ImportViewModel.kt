@@ -74,7 +74,7 @@ sealed interface ImportAction {
 
 sealed interface ImportEvent {
     data class ResolveMergeConflict(val translationId: String) : ImportEvent
-    data object ProjectImported : ImportEvent
+    data class ProjectImported(val translationId: String) : ImportEvent
     data object AuthRequested : ImportEvent
 }
 
@@ -102,7 +102,7 @@ class ImportViewModel(
 
     init {
         viewModelScope.launch {
-            val backups = getBackupTranslations()
+            val backups = getBackupTranslations().sorted()
             _state.update { it.copy(backups = backups) }
         }
     }
@@ -125,13 +125,13 @@ class ImportViewModel(
                 action.accepted,
                 action.overwrite
             )
-            ImportAction.RegisterKeys -> forceRegisterSSHKeys()
-            ImportAction.ClearResult -> _state.update {
+            is ImportAction.RegisterKeys -> forceRegisterSSHKeys()
+            is ImportAction.ClearResult -> _state.update {
                 it.copy(resultMessage = null, repositories = emptyList())
             }
-            ImportAction.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
-            ImportAction.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
-            ImportAction.ClearImportRepo -> _state.update { it.copy(repoToImport = null) }
+            is ImportAction.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
+            is ImportAction.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
+            is ImportAction.ClearImportRepo -> _state.update { it.copy(repoToImport = null) }
         }
     }
 
@@ -158,7 +158,9 @@ class ImportViewModel(
                     result.success && result.alreadyExists && !overwrite -> {
                         _state.update {
                             it.copy(mergeConflict = MergeConflict(
-                                translation = getTargetTranslation(result.importedSlug!!),
+                                translation = getTargetTranslation(
+                                    result.importedSlug!!
+                                ),
                                 hasMergeConflict = result.hasMergeConflict,
                                 isFromServer = false,
                                 onResolve = { resolveMergeConflict() },
@@ -176,7 +178,9 @@ class ImportViewModel(
                         }
                     }
                     result.success -> {
-                        _event.trySend(ImportEvent.ProjectImported)
+                        _event.trySend(ImportEvent.ProjectImported(
+                            result.importedSlug!!
+                        ))
                         updateResult(
                             application.getString(R.string.import_from_storage),
                             application.getString(R.string.import_success) +
@@ -406,6 +410,9 @@ class ImportViewModel(
                                 // restore the new target translation
                                 try {
                                     translator.restoreTargetTranslation(tempTargetTranslation)
+                                    _event.trySend(ImportEvent.ProjectImported(
+                                        tempTargetTranslation.id
+                                    ))
                                     updateResult(
                                         title = application.getString(R.string.import_from_door43),
                                         message = application.getString(R.string.title_import_success)

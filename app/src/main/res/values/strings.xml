@@ -843,6 +843,7 @@ Do you want to enable SD card access?  If so then:
     <string name="merge_conflict_title">Project Already Exists</string>
     <string name="import_merge_conflict_project_name">This project (<xliff:g example="en_ulb_reg" id="translation">%1$s</xliff:g>) already exists locally with differences in some chunks. How would you like to proceed?</string>
     <string name="import_merge_conflict">This project already exists locally with differences in some chunks.\nHow would you like to proceed?</string>
+    <string name="import_merge_conflicts">Multiple projects already exist locally with differences in some chunks.\nHow would you like to proceed?</string>
     <string name="label_change">change</string>
     <string name="update_languages">Update List of Available Target Languages</string>
     <string name="update_source">Update List of Available Source Texts</string>

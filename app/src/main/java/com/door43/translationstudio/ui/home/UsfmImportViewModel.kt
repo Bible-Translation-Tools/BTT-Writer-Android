@@ -49,11 +49,11 @@ data class UsfmImportState(
     val processedResult: String = "",
     val infoMessage: Pair<String, String>? = null,
     val importSuccess: Boolean = false,
+    val importedTranslationIds: List<String> = emptyList(),
     val currentMissingItem: MissingNameItem? = null,
     val currentMissingDescription: String = "",
     val missingNamePrompt: String? = null,
-    val hasMergeConflict: Boolean = false,
-    val conflictingTranslationId: String? = null,
+    val existentTranslations: List<TargetTranslation> = emptyList(),
     val languages: List<TargetLanguage> = emptyList(),
     val filteredLanguages: List<TargetLanguage> = emptyList(),
     val categories: List<CategoryEntry> = emptyList(),
@@ -72,11 +72,11 @@ sealed interface UsfmAction {
     data object ConfirmImport : UsfmAction
     data class MergeImport(val overwrite: Boolean) : UsfmAction
     data object Cleanup : UsfmAction
-    data object ProjectImported : UsfmAction
+    data class ProjectsImported(val translationIds: List<String>) : UsfmAction
 }
 
 sealed interface UsfmEvent {
-    data object ProjectImported : UsfmEvent
+    data class ProjectsImported(val translationIds: List<String>) : UsfmEvent
     data class ResolveMergeConflict(val translationId: String) : UsfmEvent
 }
 
@@ -113,15 +113,15 @@ class UsfmImportViewModel(
             is UsfmAction.BookSelected -> setBook(action.projectId)
             is UsfmAction.Search -> search(action.query)
             is UsfmAction.CategorySelected -> navigateToCategory(action.categoryId)
-            UsfmAction.NavigateBack -> navigateBack()
-            UsfmAction.SkipBook -> promptNextName()
-            UsfmAction.ConfirmImport -> doImport(false)
+            is UsfmAction.NavigateBack -> navigateBack()
+            is UsfmAction.SkipBook -> promptNextName()
+            is UsfmAction.ConfirmImport -> doImport(false)
             is UsfmAction.MergeImport -> doImport(action.overwrite)
-            UsfmAction.ProjectImported -> {
-                _event.trySend(UsfmEvent.ProjectImported)
+            is UsfmAction.ProjectsImported -> {
+                _event.trySend(UsfmEvent.ProjectsImported(action.translationIds))
                 cleanup()
             }
-            UsfmAction.Cleanup -> cleanup()
+            is UsfmAction.Cleanup -> cleanup()
         }
     }
 
@@ -251,7 +251,7 @@ class UsfmImportViewModel(
         val results = usfm.resultsString
         val message = "$languageLabel\n$results"
 
-        val conflicting = checkExistentTranslation()
+        val existentTranslations = checkExistentTranslations()
 
         val infoMessage = if (!usfm.isProcessSuccess) {
             val title = application.getString(R.string.title_import_usfm_error)
@@ -265,19 +265,20 @@ class UsfmImportViewModel(
                 step = step,
                 infoMessage = infoMessage,
                 processedResult = message,
-                hasMergeConflict = conflicting != null,
-                conflictingTranslationId = conflicting?.id
+                existentTranslations = existentTranslations
             )
         }
     }
 
-    private fun checkExistentTranslation(): TargetTranslation? {
-        val imports = processUSFM?.importProjects ?: return null
+    private fun checkExistentTranslations(): List<TargetTranslation> {
+        val imports = processUSFM?.importProjects ?: return emptyList()
+        val translations = arrayListOf<TargetTranslation>()
+
         for (file in imports) {
-            val conflicting = translator.getConflictingTargetTranslation(file)
-            if (conflicting != null) return conflicting
+            val existent = translator.getConflictingTargetTranslation(file)
+            if (existent != null) translations.add(existent)
         }
-        return null
+        return translations
     }
 
     private fun doImport(overwrite: Boolean) {
@@ -290,7 +291,8 @@ class UsfmImportViewModel(
                 }
             }
 
-            result.conflictingTargetTranslation?.let {
+            // Show merge conflict if there is a single one
+            result.conflictingTargetTranslations.singleOrNull()?.let {
                 val hasConflicts = MergeConflictsHandler.isTranslationMergeConflicted(
                     it.id,
                     translator
@@ -305,7 +307,8 @@ class UsfmImportViewModel(
             _state.update {
                 it.copy(
                     step = UsfmStep.DONE,
-                    importSuccess = result.success
+                    importSuccess = result.success,
+                    importedTranslationIds = result.targetTranslations.map { t -> t.id }
                 )
             }
         }

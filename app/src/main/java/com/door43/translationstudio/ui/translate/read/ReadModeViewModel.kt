@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
-object ReadState : ModeState
+data object ReadState : ModeState
 
 sealed interface ReadAction : ModeAction
 

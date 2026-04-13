@@ -41,6 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.InfoDialog
+import com.door43.translationstudio.ui.dialogs.OverlayDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
 
 private const val IMPORT_INFO_URL =
@@ -51,7 +55,7 @@ fun ImportDialog(
     viewModel: ImportViewModel = koinViewModel(),
     onDismiss: () -> Unit,
     onMergeConflict: (String) -> Unit,
-    onProjectImported: () -> Unit,
+    onProjectsImported: (List<String>) -> Unit,
     projectImportUri: Uri? = null,
     onProjectUriConsumed: () -> Unit
 ) {
@@ -97,8 +101,8 @@ fun ImportDialog(
                 is ImportEvent.ResolveMergeConflict -> {
                     onMergeConflict(event.translationId)
                 }
-                ImportEvent.ProjectImported -> onProjectImported()
-                ImportEvent.AuthRequested -> showAuthDialog = true
+                is ImportEvent.ProjectImported -> onProjectsImported(listOf(event.translationId))
+                is ImportEvent.AuthRequested -> showAuthDialog = true
             }
         }
     }
@@ -110,7 +114,7 @@ fun ImportDialog(
         }
     }
 
-    _root_ide_package_.com.door43.translationstudio.ui.dialogs.OverlayDialog(
+    OverlayDialog(
         snackbarHostState = snackbarHostState,
         onDismiss = onDismiss,
         contentPadding = 0.dp
@@ -224,18 +228,14 @@ fun ImportDialog(
             backups = state.backups,
             onBackupSelected = {
                 showImportBackupDialog = false
-                viewModel.onAction(
-                    ImportAction.ImportBackup(
-                        it
-                    )
-                )
+                viewModel.onAction(ImportAction.ImportBackup(it))
             },
             onDismiss = { showImportBackupDialog = false }
         )
     }
 
     if (showAuthDialog) {
-        _root_ide_package_.com.door43.translationstudio.ui.dialogs.ConfirmDialog(
+        ConfirmDialog(
             title = stringResource(R.string.error),
             message = stringResource(R.string.auth_failure_retry),
             onDismiss = { showAuthDialog = false },
@@ -248,9 +248,12 @@ fun ImportDialog(
 
     state.repoToImport?.let { repo ->
         if (!repo.isSupported && !unsupportedRepoAccepted) {
-            _root_ide_package_.com.door43.translationstudio.ui.dialogs.ConfirmDialog(
+            ConfirmDialog(
                 title = stringResource(R.string.import_from_door43),
-                message = stringResource(R.string.import_warning, repo.projectNameAlt),
+                message = stringResource(
+                    R.string.import_warning,
+                    repo.projectNameAlt
+                ),
                 onConfirm = {
                     unsupportedRepoAccepted = true
                     viewModel.onAction(
@@ -278,7 +281,7 @@ fun ImportDialog(
             },
             result.translation.id
         )
-        _root_ide_package_.com.door43.translationstudio.ui.dialogs.InfoDialog(
+        InfoDialog(
             title = stringResource(R.string.merge_conflict_title),
             message = message,
             onDismiss = {
@@ -319,17 +322,12 @@ fun ImportDialog(
     }
 
     state.sourceConflict?.let { result ->
-        _root_ide_package_.com.door43.translationstudio.ui.dialogs.ConfirmDialog(
+        ConfirmDialog(
             title = stringResource(R.string.confirm),
             message = result.error ?: "Unknown error",
             onConfirm = {
                 result.uri?.let { uri ->
-                    viewModel.onAction(
-                        ImportAction.ImportSourceUri(
-                            uri,
-                            true
-                        )
-                    )
+                    viewModel.onAction(ImportAction.ImportSourceUri(uri, true))
                 }
                 viewModel.onAction(ImportAction.ClearSourceConflict)
             },
@@ -340,7 +338,7 @@ fun ImportDialog(
     }
 
     state.resultMessage?.let { (title, message) ->
-        _root_ide_package_.com.door43.translationstudio.ui.dialogs.InfoDialog(
+        InfoDialog(
             title = title,
             message = message,
             onDismiss = {
@@ -357,7 +355,7 @@ fun ImportDialog(
     }
 
     progress?.let {
-        _root_ide_package_.com.door43.translationstudio.ui.dialogs.ProgressDialog(
+        ProgressDialog(
             message = it.message,
             progress = it.value
         )
@@ -366,8 +364,8 @@ fun ImportDialog(
     usfmUri?.let { uri ->
         UsfmImportDialog(
             uri = uri,
-            onProjectImported = {
-                onProjectImported()
+            onProjectsImported = {
+                onProjectsImported(it)
                 onDismiss()
             },
             onMergeConflict = {

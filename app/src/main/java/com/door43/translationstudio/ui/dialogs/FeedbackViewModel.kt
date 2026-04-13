@@ -33,8 +33,8 @@ sealed interface FeedbackAction {
     data class ReportBug(val message: String) : FeedbackAction
     data class UploadFeedback(val message: String) : FeedbackAction
     data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : FeedbackAction
-    object ClearError : FeedbackAction
-    object ClearRelease : FeedbackAction
+    data object ClearError : FeedbackAction
+    data object ClearRelease : FeedbackAction
 }
 
 sealed interface FeedbackEvent {
@@ -63,8 +63,8 @@ class FeedbackViewModel(
             is FeedbackAction.ReportBug -> reportBug(action.message)
             is FeedbackAction.UploadFeedback -> uploadFeedback(action.message)
             is FeedbackAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
-            FeedbackAction.ClearError -> clearError()
-            FeedbackAction.ClearRelease -> clearRelease()
+            is FeedbackAction.ClearError -> clearError()
+            is FeedbackAction.ClearRelease -> clearRelease()
         }
     }
 

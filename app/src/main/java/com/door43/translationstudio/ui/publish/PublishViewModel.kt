@@ -42,11 +42,11 @@ data class ValidationItem(
 
 sealed interface PublishAction {
     data class OpenReview(val item: Validation.InvalidFrame) : PublishAction
-    object RefreshContributors : PublishAction
+    data object RefreshContributors : PublishAction
 }
 
 sealed interface PublishEvent {
-    object OpenReview : PublishEvent
+    data object OpenReview : PublishEvent
 }
 
 class PublishViewModel(
@@ -92,7 +92,7 @@ class PublishViewModel(
     fun onAction(event: PublishAction) {
         when (event) {
             is PublishAction.OpenReview -> onOpenReview(event.item)
-            PublishAction.RefreshContributors -> viewModelScope.launch {
+            is PublishAction.RefreshContributors -> viewModelScope.launch {
                 loadTranslators()
             }
         }

@@ -67,7 +67,7 @@ sealed interface TargetAction {
 
 sealed interface TargetEvent {
     data class ShowMessage(val message: String) : TargetEvent
-    object RestartAutoCommitTimer : TargetEvent
+    data object RestartAutoCommitTimer : TargetEvent
 }
 
 class TargetTranslationViewModel(

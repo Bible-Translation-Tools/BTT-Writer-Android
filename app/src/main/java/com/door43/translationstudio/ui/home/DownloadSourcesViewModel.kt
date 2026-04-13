@@ -85,10 +85,10 @@ sealed interface DownloadAction {
     data class NavigateStep(val index: Int) : DownloadAction
     data class SelectAll(val shouldSelectAll: Boolean) : DownloadAction
     data class ToggleSelection(val id: String) : DownloadAction
-    object DownloadSources : DownloadAction
-    object NavigateBack : DownloadAction
-    object ClearState : DownloadAction
-    object Initialize : DownloadAction
+    data object DownloadSources : DownloadAction
+    data object NavigateBack : DownloadAction
+    data object ClearState : DownloadAction
+    data object Initialize : DownloadAction
 }
 
 class DownloadSourcesViewModel(
@@ -120,9 +120,9 @@ class DownloadSourcesViewModel(
             is DownloadAction.NavigateForward -> onNavigateForward(action.item)
             is DownloadAction.NavigateStep -> onNavigateStep(action.index)
             is DownloadAction.SelectAll -> setSelectAll(action.shouldSelectAll)
-            DownloadAction.NavigateBack -> onNavigateBack()
-            DownloadAction.DownloadSources -> downloadSources()
-            DownloadAction.ClearState -> resetState()
+            is DownloadAction.NavigateBack -> onNavigateBack()
+            is DownloadAction.DownloadSources -> downloadSources()
+            is DownloadAction.ClearState -> resetState()
         }
     }
 

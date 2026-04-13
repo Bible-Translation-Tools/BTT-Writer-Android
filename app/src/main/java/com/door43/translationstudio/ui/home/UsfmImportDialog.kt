@@ -40,7 +40,7 @@ import org.unfoldingword.door43client.models.TargetLanguage
 @Composable
 fun UsfmImportDialog(
     uri: Uri,
-    onProjectImported: () -> Unit,
+    onProjectsImported: (List<String>) -> Unit,
     onMergeConflict: (String) -> Unit,
     onDismiss: () -> Unit,
     viewModel: UsfmImportViewModel = koinViewModel()
@@ -60,7 +60,7 @@ fun UsfmImportDialog(
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
             when (event) {
-                UsfmEvent.ProjectImported -> onProjectImported()
+                is UsfmEvent.ProjectsImported -> onProjectsImported(event.translationIds)
                 is UsfmEvent.ResolveMergeConflict -> onMergeConflict(event.translationId)
             }
         }
@@ -102,10 +102,10 @@ fun UsfmImportDialog(
         }
 
         UsfmStep.PROCESSED -> {
-            if (state.hasMergeConflict) {
+            if (state.existentTranslations.isNotEmpty()) {
                 UsfmMergeConflictDialog(
                     message = state.processedResult,
-                    conflictId = state.conflictingTranslationId,
+                    conflictIds = state.existentTranslations.map { it.id },
                     onMerge = {
                         viewModel.onAction(UsfmAction.MergeImport(false))
                     },
@@ -138,7 +138,7 @@ fun UsfmImportDialog(
                 ),
                 onDismiss = {
                     if (state.importSuccess) {
-                        viewModel.onAction(UsfmAction.ProjectImported)
+                        viewModel.onAction(UsfmAction.ProjectsImported(state.importedTranslationIds))
                     } else {
                         onCloseDialog()
                     }
@@ -319,15 +319,18 @@ private fun UsfmBookNameDialog(
 @Composable
 private fun UsfmMergeConflictDialog(
     message: String,
-    conflictId: String?,
+    conflictIds: List<String>,
     onMerge: () -> Unit,
     onOverwrite: () -> Unit,
     onCancel: () -> Unit
 ) {
-    val warning = stringResource(
-        R.string.import_merge_conflict_project_name,
-        conflictId ?: ""
-    )
+    val warning = conflictIds.singleOrNull()?.let { conflictId ->
+        stringResource(
+            R.string.import_merge_conflict_project_name,
+            conflictId
+        )
+    } ?: stringResource(R.string.import_merge_conflicts)
+
     val fullMessage = "$message\n$warning"
 
     InfoDialog(

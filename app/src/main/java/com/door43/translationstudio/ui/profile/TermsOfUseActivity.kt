@@ -8,6 +8,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.home.HomeActivity
+import com.door43.translationstudio.ui.legal.NavigationEvent
 import com.door43.translationstudio.ui.legal.TermsOfUseScreen
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -42,7 +43,7 @@ class TermsOfUseActivity : BaseActivity() {
             LaunchedEffect(Unit) {
                 viewModel.navigationEvent.collect { event ->
                     when (event) {
-                        is TermsOfUseViewModel.NavigationEvent.NavigateToHome -> {
+                        is NavigationEvent.NavigateToHome -> {
                             startActivity(
                                 Intent(
                                     this@TermsOfUseActivity,
@@ -52,7 +53,7 @@ class TermsOfUseActivity : BaseActivity() {
                             finish()
                         }
 
-                        is TermsOfUseViewModel.NavigationEvent.NavigateToLogin -> {
+                        is NavigationEvent.NavigateToLogin -> {
                             startActivity(
                                 Intent(
                                     this@TermsOfUseActivity,

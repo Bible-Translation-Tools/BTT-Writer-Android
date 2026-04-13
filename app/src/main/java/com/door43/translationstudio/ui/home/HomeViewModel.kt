@@ -67,14 +67,15 @@ data class HomeState(
     val translations: List<TranslationItem> = emptyList(),
     val projectSort: ProjectSort = ProjectSort.ProjectThenLanguage,
     val bookSort: BookSort = BookSort.BibleOrder,
-    val projectInfo: TranslationItem? = null
+    val projectInfo: TranslationItem? = null,
+    val scrollToTopTrigger: Int = 0
 )
 
 sealed interface HomeEvent {
     data class SnackbarMessage(val message: String) : HomeEvent
     data class ShareApp(val file: File) : HomeEvent
     data class ImportProject(val uri: Uri) : HomeEvent
-    object OnLogout : HomeEvent
+    data object OnLogout : HomeEvent
 }
 
 sealed interface HomeAction {
@@ -84,12 +85,19 @@ sealed interface HomeAction {
     data class BookSortChanged(val sort: BookSort) : HomeAction
     data class ShowProjectInfo(val item: TranslationItem) : HomeAction
     data class ImportProject(val uri: Uri) : HomeAction
-    object HideProjectInfo : HomeAction
-    object Logout : HomeAction
-    object ShareApp: HomeAction
-    object LoadProjects : HomeAction
+    data object LoadProjects : HomeAction
+    data class LoadWithProgress(val translationIds: List<String>) : HomeAction
+    data object HideProjectInfo : HomeAction
+    data object Logout : HomeAction
+    data object ShareApp: HomeAction
 
 }
+
+private data class SortTrigger(
+    val projectSort: ProjectSort,
+    val bookSort: BookSort,
+    val translations: List<TranslationItem>
+)
 
 class HomeViewModel(
     private val translator: Translator,
@@ -142,12 +150,12 @@ class HomeViewModel(
     init {
         viewModelScope.launch {
             state
-                .map {
-                    Triple(it.projectSort, it.bookSort, it.translations)
+                .map { s ->
+                    SortTrigger(s.projectSort, s.bookSort, s.translations)
                 }
                 .distinctUntilChanged()
-                .collect { (projectSort, bookSort, _) ->
-                    sortTranslations(projectSort, bookSort)
+                .collect { trigger ->
+                    sortTranslations(trigger.projectSort, trigger.bookSort)
                 }
         }
 
@@ -172,10 +180,11 @@ class HomeViewModel(
             is HomeAction.ImportProject -> viewModelScope.launch {
                 _event.trySend(HomeEvent.ImportProject(action.uri))
             }
-            HomeAction.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
-            HomeAction.Logout -> logout()
-            HomeAction.ShareApp -> shareApp()
-            HomeAction.LoadProjects -> loadProjects()
+            is HomeAction.LoadProjects -> loadProjects()
+            is HomeAction.LoadWithProgress -> loadWithProgress(action.translationIds)
+            is HomeAction.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
+            is HomeAction.Logout -> logout()
+            is HomeAction.ShareApp -> shareApp()
         }
     }
 
@@ -187,16 +196,49 @@ class HomeViewModel(
         launchWithProgress(
             application.getString(R.string.loading)
         ) {
+            val existingProgress = _state.value.translations.associate {
+                it.translation.id to it.progress
+            }
             val items = withContext(Dispatchers.IO) {
                 translator.targetTranslations.map {
                     TranslationItem(
                         name = getProject(it)?.name ?: "Unknown",
                         translation = it,
-                        progress = calculateProgress.execute(it)
+                        progress = existingProgress[it.id] ?: calculateProgress.execute(it)
                     )
                 }
             }
             _state.update { it.copy(translations = items) }
+        }
+    }
+
+    private fun loadWithProgress(translationIds: List<String>) {
+        viewModelScope.launch {
+            val newUpdates = translationIds.mapNotNull { id ->
+                getTargetTranslation(id)?.let { translation ->
+                    val progress = calculateProgress.execute(translation)
+
+                    id to TranslationItem(
+                        name = getProject(translation)?.name ?: "Unknown",
+                        translation = translation,
+                        progress = progress
+                    )
+                }
+            }.toMap()
+
+            if (newUpdates.isEmpty()) return@launch
+
+            _state.update { state ->
+                val currentItemsMap = state.translations.associateBy {
+                    it.translation.id
+                }.toMutableMap()
+
+                newUpdates.forEach { (id, newItem) ->
+                    currentItemsMap[id] = newItem
+                }
+
+                state.copy(translations = currentItemsMap.values.toList())
+            }
         }
     }
 
@@ -218,6 +260,7 @@ class HomeViewModel(
             prefRepository.setDefaultPref(SORT_BY_PROJECT, sort.ordinal)
         }
         _state.update { it.copy(projectSort = sort) }
+        _state.update { it.copy(scrollToTopTrigger = it.scrollToTopTrigger + 1) }
     }
 
     private fun onBookSortChanged(sort: BookSort) {
@@ -225,25 +268,30 @@ class HomeViewModel(
             prefRepository.setDefaultPref(SORT_BY_BOOK, sort.ordinal)
         }
         _state.update { it.copy(bookSort = sort) }
+        _state.update { it.copy(scrollToTopTrigger = it.scrollToTopTrigger + 1) }
     }
 
-    private fun sortTranslations(projectSort: ProjectSort, bookSort: BookSort) {
-        val sortedTranslations =
+    private suspend fun sortTranslations(projectSort: ProjectSort, bookSort: BookSort) {
+        val sortedTranslations = withContext(Dispatchers.Default) {
             _state.value.translations.sortedWith { lhs: TranslationItem, rhs: TranslationItem ->
                 var compare: Int
                 when (projectSort) {
                     ProjectSort.ProjectThenLanguage -> {
                         compare = compareProject(lhs, rhs, bookSort)
                         if (compare == 0) {
-                            compare = lhs.translation.targetLanguageName
-                                .compareTo(rhs.translation.targetLanguageName, ignoreCase = true)
+                            compare = lhs.translation.targetLanguageName.compareTo(
+                                rhs.translation.targetLanguageName,
+                                ignoreCase = true
+                            )
                         }
                         return@sortedWith compare
                     }
 
                     ProjectSort.LanguageThenProject -> {
-                        compare = lhs.translation.targetLanguageName
-                            .compareTo(rhs.translation.targetLanguageName, ignoreCase = true)
+                        compare = lhs.translation.targetLanguageName.compareTo(
+                            rhs.translation.targetLanguageName,
+                            ignoreCase = true
+                        )
                         if (compare == 0) {
                             compare = compareProject(lhs, rhs, bookSort)
                         }
@@ -251,7 +299,7 @@ class HomeViewModel(
                     }
 
                     ProjectSort.ProgressThenProject -> {
-                        compare = ((rhs.progress - lhs.progress) * 100).toInt()
+                        compare = rhs.progress.compareTo(lhs.progress)
 
                         if (compare == 0) {
                             compare = compareProject(lhs, rhs, bookSort)
@@ -259,7 +307,9 @@ class HomeViewModel(
                         return@sortedWith compare
                     }
                 }
+            }
         }
+
         _state.update { it.copy(translations = sortedTranslations) }
     }
 
@@ -327,8 +377,6 @@ class HomeViewModel(
     private suspend fun getProject(targetTranslation: TargetTranslation): Project? {
         return withContext(Dispatchers.IO) {
             val existingSources = targetTranslation.sourceTranslations
-
-            // Gets an existing source project or default if none selected
             if (existingSources.isNotEmpty()) {
                 val lastSource = existingSources[existingSources.size - 1]
                 library.index.getTranslation(lastSource)?.project
@@ -376,4 +424,5 @@ class HomeViewModel(
     private fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
     }
+
 }

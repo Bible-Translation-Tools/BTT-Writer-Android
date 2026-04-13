@@ -47,7 +47,7 @@ import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
-import com.door43.translationstudio.ui.home.RepositoryItem
+import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import org.koin.compose.koinInject
 
 @Composable
@@ -66,7 +66,7 @@ fun ImportFromServerDialog(
     val translationIdFocus = remember { FocusRequester() }
     val searchButtonFocus = remember { FocusRequester() }
 
-    _root_ide_package_.com.door43.translationstudio.ui.dialogs.OverlayDialog(
+    OverlayDialog(
         onDismiss = onDismiss,
         maxWidth = 1000.dp,
         maxHeight = 1000.dp,

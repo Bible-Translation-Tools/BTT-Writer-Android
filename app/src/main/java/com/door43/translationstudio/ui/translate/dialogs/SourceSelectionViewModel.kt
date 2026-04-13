@@ -57,7 +57,7 @@ sealed interface SourceEvent {
 }
 
 sealed interface SourceAction {
-    object LoadSources : SourceAction
+    data object LoadSources : SourceAction
     data class ToggleSelection(val source: RCItem) : SourceAction
     data class DownloadSource(val source: RCItem) : SourceAction
     data class DeleteSource(val source: RCItem) : SourceAction

@@ -9,6 +9,11 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
+sealed class NavigationEvent {
+    data object NavigateToHome : NavigationEvent()
+    data object NavigateToLogin : NavigationEvent()
+}
+
 class TermsOfUseViewModel(
     private val profile: Profile,
     private val logoutUseCase: GogsLogout,
@@ -42,10 +47,5 @@ class TermsOfUseViewModel(
 
     private fun emitNavigation(event: NavigationEvent) {
         viewModelScope.launch { _navigationEvent.send(event) }
-    }
-
-    sealed class NavigationEvent {
-        object NavigateToHome : NavigationEvent()
-        object NavigateToLogin : NavigationEvent()
     }
 }

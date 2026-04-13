@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.home
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -103,8 +104,10 @@ fun HomeScreen(
     val newTranslationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-
         when(result.resultCode) {
+            Activity.RESULT_OK -> {
+                viewModel.onAction(HomeAction.LoadProjects)
+            }
             NewTargetTranslationActivity.RESULT_DUPLICATE -> {
                 result.data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
@@ -116,6 +119,7 @@ fun HomeScreen(
                 result.data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
                 )?.let {
+                    viewModel.onAction(HomeAction.LoadProjects)
                     onMergeConflict(it)
                 }
             }
@@ -172,7 +176,11 @@ fun HomeScreen(
 
     LifecycleResumeEffect(Unit) {
         profileUser = profile.currentUser
-        viewModel.onAction(HomeAction.LoadProjects)
+        viewModel.lastFocusTargetTranslation?.let { translationId ->
+            viewModel.onAction(HomeAction.LoadWithProgress(listOf(translationId)))
+            viewModel.lastFocusTargetTranslation = null
+        }
+
         onPauseOrDispose {}
     }
 
@@ -257,17 +265,14 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         if (state.translations.isEmpty()) {
-                            WelcomeScreen(
-                                onStartNewTranslation = launchNewTranslation
-                            )
+                            if (progress == null) {
+                                WelcomeScreen(
+                                    onStartNewTranslation = launchNewTranslation
+                                )
+                            }
                         } else {
                             TranslationListScreen(
-                                onProjectSelected = {
-                                    onOpenProject(it)
-                                    viewModel.onAction(
-                                        HomeAction.InvalidateProgress(it.translation.id)
-                                    )
-                                },
+                                onProjectSelected = onOpenProject,
                                 onChangeLanguage = launchChangeLanguage,
                                 onMergeConflict = onMergeConflict,
                                 onProjectPublish = onProjectPublish,
@@ -294,8 +299,8 @@ fun HomeScreen(
                 showImportDialog = false
                 onMergeConflict(it)
             },
-            onProjectImported = {
-                viewModel.onAction(HomeAction.LoadProjects)
+            onProjectsImported = {
+                viewModel.onAction(HomeAction.LoadWithProgress(it))
             },
             projectImportUri = projectToImport,
             onProjectUriConsumed = { projectToImport = null }

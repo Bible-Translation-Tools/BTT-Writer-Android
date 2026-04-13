@@ -64,8 +64,8 @@ data class ExportState(
 sealed interface ExportEvent {
     data class SnackbarMessage(val message: String) : ExportEvent
     data class AppExport(val file: File) : ExportEvent
-    object OnLogout : ExportEvent
-    object AuthRequested : ExportEvent
+    data object OnLogout : ExportEvent
+    data object AuthRequested : ExportEvent
 }
 
 sealed interface ExportAction {
@@ -76,16 +76,16 @@ sealed interface ExportAction {
     ) : ExportAction
     data class ExportUsfm(val uri: Uri) : ExportAction
     data class ExportProject(val uri: Uri) : ExportAction
-    object ClearExport : ExportAction
-    object ExportToApp : ExportAction
-    object ExportToCloud : ExportAction
-    object Logout : ExportAction
-    object RegisterKeys : ExportAction
-    object ClearInfoMessage : ExportAction
-    object ClearErrorMessage : ExportAction
-    object ClearUploadSuccess : ExportAction
-    object ResetToMaster : ExportAction
-    object ClearMergeConflict : ExportAction
+    data object ClearExport : ExportAction
+    data object ExportToApp : ExportAction
+    data object ExportToCloud : ExportAction
+    data object Logout : ExportAction
+    data object RegisterKeys : ExportAction
+    data object ClearInfoMessage : ExportAction
+    data object ClearErrorMessage : ExportAction
+    data object ClearUploadSuccess : ExportAction
+    data object ResetToMaster : ExportAction
+    data object ClearMergeConflict : ExportAction
 }
 
 class ExportViewModel(
@@ -136,16 +136,16 @@ class ExportViewModel(
             )
             is ExportAction.ExportUsfm -> exportUSFM(action.uri)
             is ExportAction.ExportProject -> exportProject(action.uri)
-            ExportAction.ExportToApp -> exportToApp()
-            ExportAction.ExportToCloud -> exportToCloud()
-            ExportAction.ClearExport -> clearInfo()
-            ExportAction.Logout -> logout()
-            ExportAction.RegisterKeys -> forceRegisterSSHKeys()
-            ExportAction.ClearInfoMessage -> clearInfo()
-            ExportAction.ClearUploadSuccess -> clearUploadSuccess()
-            ExportAction.ResetToMaster -> resetToMaster()
-            ExportAction.ClearMergeConflict -> clearMergeConflict()
-            ExportAction.ClearErrorMessage -> clearError()
+            is ExportAction.ExportToApp -> exportToApp()
+            is ExportAction.ExportToCloud -> exportToCloud()
+            is ExportAction.ClearExport -> clearInfo()
+            is ExportAction.Logout -> logout()
+            is ExportAction.RegisterKeys -> forceRegisterSSHKeys()
+            is ExportAction.ClearInfoMessage -> clearInfo()
+            is ExportAction.ClearUploadSuccess -> clearUploadSuccess()
+            is ExportAction.ResetToMaster -> resetToMaster()
+            is ExportAction.ClearMergeConflict -> clearMergeConflict()
+            is ExportAction.ClearErrorMessage -> clearError()
         }
     }
 

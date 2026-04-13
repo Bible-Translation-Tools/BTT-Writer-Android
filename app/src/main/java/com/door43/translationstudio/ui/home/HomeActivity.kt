@@ -149,7 +149,6 @@ class HomeActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.lastFocusTargetTranslation = null
     }
 
     companion object {

@@ -32,7 +32,7 @@ class ImportProjects(
     fun importProject(
         project: File,
         overwrite: Boolean = false
-    ): ImportResults? {
+    ): ImportFileResult? {
         return try {
             importArchive(project, overwrite)
         } catch (e: Exception) {
@@ -100,7 +100,7 @@ class ImportProjects(
         projects: List<File>,
         overwrite: Boolean,
         progressListener: OnProgressListener? = null
-    ): ImportUsfmResult {
+    ): ImportFilesResult {
         progressListener?.onProgress(-1f, context.getString(R.string.importing_file))
 
         var count = 0
@@ -108,7 +108,9 @@ class ImportProjects(
         val numSteps = 4
         val subStepSize = 1f / numSteps / size.toFloat()
         var success = true
-        var conflictingTargetTranslation: TargetTranslation? = null
+
+        val importedTargetTranslations = arrayListOf<TargetTranslation>()
+        val conflictingTargetTranslations = arrayListOf<TargetTranslation>()
 
         try {
             for (project in projects) {
@@ -128,8 +130,9 @@ class ImportProjects(
 
                     val destTargetTranslationDir = File(translator.path, newTargetTranslation.id)
 
-                    conflictingTargetTranslation =
+                    val conflictingTargetTranslation =
                         translator.getConflictingTargetTranslation(project)
+
                     if (conflictingTargetTranslation != null && !overwrite) {
                         // commit local changes to history
                         conflictingTargetTranslation.commitSync()
@@ -139,6 +142,7 @@ class ImportProjects(
                         // merge translations
                         try {
                             conflictingTargetTranslation.merge(project, null)
+                            conflictingTargetTranslations.add(conflictingTargetTranslation)
                         } catch (e: Exception) {
                             Logger.e(this::class.simpleName, "Failed to merge import folder $project", e)
                             success = false
@@ -151,6 +155,7 @@ class ImportProjects(
                     }
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
                     TargetTranslation.open(destTargetTranslationDir)?.let { targetTranslation ->
+                        importedTargetTranslations.add(targetTranslation)
                         TargetTranslation.updateGenerator(context, targetTranslation)
                     }
                 }
@@ -162,7 +167,11 @@ class ImportProjects(
             success = false
         }
 
-        return ImportUsfmResult(success, conflictingTargetTranslation)
+        return ImportFilesResult(
+            success = success,
+            targetTranslations = importedTargetTranslations,
+            conflictingTargetTranslations = conflictingTargetTranslations
+        )
     }
 
     suspend fun importSource(uri: Uri, overwrite: Boolean): ImportSourceResult {
@@ -235,7 +244,7 @@ class ImportProjects(
     }
 
     @Throws(Exception::class)
-    private fun importArchive(file: File, overwrite: Boolean = false): ImportResults {
+    private fun importArchive(file: File, overwrite: Boolean = false): ImportFileResult {
         return when {
             file.isDirectory -> importArchiveDir(file, overwrite)
             else -> importArchiveFile(file, overwrite)
@@ -243,7 +252,7 @@ class ImportProjects(
     }
 
     @Throws(Exception::class)
-    private fun importArchiveFile(archiveFile: File, overwrite: Boolean = false): ImportResults {
+    private fun importArchiveFile(archiveFile: File, overwrite: Boolean = false): ImportFileResult {
         return FileInputStream(archiveFile).use {
             val archiveDir = unzipFromStream(it)
             importArchiveDir(archiveDir, overwrite)
@@ -251,7 +260,7 @@ class ImportProjects(
     }
 
     @Throws(Exception::class)
-    private fun importArchiveDir(dir: File, overwrite: Boolean = false): ImportResults {
+    private fun importArchiveDir(dir: File, overwrite: Boolean = false): ImportFileResult {
         var importedSlug: String? = null
         var mergeConflict = false
         var alreadyExists = false
@@ -331,7 +340,7 @@ class ImportProjects(
             FileUtilities.deleteQuietly(dir)
         }
 
-        return ImportResults(importedSlug, mergeConflict, alreadyExists)
+        return ImportFileResult(importedSlug, mergeConflict, alreadyExists)
     }
 
     @Throws(Exception::class)
@@ -345,7 +354,7 @@ class ImportProjects(
         return dir
     }
 
-    data class ImportResults(
+    data class ImportFileResult(
         val importedSlug: String?,
         val mergeConflict: Boolean,
         val alreadyExists: Boolean
@@ -357,9 +366,10 @@ class ImportProjects(
             }
     }
 
-    data class ImportUsfmResult(
+    data class ImportFilesResult(
         val success: Boolean,
-        val conflictingTargetTranslation: TargetTranslation? = null
+        val targetTranslations: List<TargetTranslation>,
+        val conflictingTargetTranslations: List<TargetTranslation>
     )
 
     data class ImportSourceResult(

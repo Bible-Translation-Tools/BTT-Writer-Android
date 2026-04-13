@@ -78,7 +78,7 @@ fun UpdateLibraryDialog(
     LaunchedEffect(viewModel) {
         viewModel.event.collect { event ->
             when (event) {
-                UpdateEvent.IndexUpdated -> showIndexUpdatedDialog = true
+                is UpdateEvent.IndexUpdated -> showIndexUpdatedDialog = true
             }
         }
     }

@@ -16,9 +16,6 @@ import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import com.door43.util.sortNumerically
 import com.door43.util.sortNumericallyComparator
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.ChunkMarker
 import org.unfoldingword.door43client.models.TargetLanguage
@@ -166,39 +163,6 @@ class ProcessUSFM {
         readResourceFile(rcPath)
     }
 
-    @Throws(Exception::class)
-    private constructor(
-        context: Context,
-        directoryProvider: IDirectoryProvider,
-        profile: Profile,
-        library: Door43Client,
-        assetsProvider: AssetsProvider,
-        json: JSONObject
-    ): this(context, directoryProvider, profile, library, assetsProvider, null, null) {
-        this.targetLanguage = getOptJsonObject(json, "TargetLanguage")?.let { TargetLanguage.fromJSON(it) }
-        this.tempDir = getOptFile(json, "TempDir")
-        this.projectsFolder = getOptFile(json, "TempOutput")
-        this.tempDest = getOptFile(json, "TempDest")
-        this.tempSrc = getOptFile(json, "TempSrc")
-        this.projectFolder = getOptFile(json, "ProjectFolder")
-        this.chapter = getOptString(json, "Chapter")
-        this.sourceFiles.addAll(fromJsonArrayToFiles(getOptJsonArray(json, "SourceFiles")!!))
-
-        this.importProjects as ArrayList
-        this.importProjects.addAll(fromJsonArrayToFiles(getOptJsonArray(json, "ImportProjects")!!))
-        this.errors.addAll(fromJsonArrayToStrings(getOptJsonArray(json, "Errors")!!))
-        this.foundBooks.addAll(fromJsonArrayToStrings(getOptJsonArray(json, "FoundBooks")!!))
-        this.currentBook = getOptInteger(json, "CurrentBook")!!
-        this.bookName = getOptString(json, "BookName")
-        this.bookShortName = getOptString(json, "BookShortName")
-        this.isProcessSuccess = getOptBoolean(json, "Success")!!
-        this.currentChapter = getOptInteger(json, "CurrentChapter")!!
-        this.chapterCount = getOptInteger(json, "ChapterCount")!!
-
-        this.booksMissingNames as ArrayList
-        this.booksMissingNames.addAll(MissingNameItem.fromJsonArray(getOptJsonArray(json, "MissingNames")!!))
-    }
-
     class Builder(
         private val context: Context,
         private val directoryProvider: IDirectoryProvider,
@@ -208,7 +172,6 @@ class ProcessUSFM {
     ) {
         private var progressListener: OnProgressListener? = null
         private var targetLanguage: TargetLanguage? = null
-        private var json: JSONObject? = null
         private var file: File? = null
         private var uri: Uri? = null
         private var rcPath: String? = null
@@ -246,28 +209,7 @@ class ProcessUSFM {
             return this
         }
 
-        /**
-         * rebuild object from JSON string
-         * @param jsonStr
-         * @return
-         */
-        fun fromJsonString(jsonStr: String): Builder {
-            this.json = stringToJson(jsonStr)
-            return this
-        }
-
-        /**
-         * rebuild object from JSON
-         * @param json
-         * @return
-         */
-        fun fromJson(json: JSONObject): Builder {
-            this.json = json
-            return this
-        }
-
         fun build(): ProcessUSFM? {
-            val currentJson = json
             val currentLang = targetLanguage
             val currentFile = file
             val currentUri = uri
@@ -275,14 +217,6 @@ class ProcessUSFM {
 
             return try {
                 when {
-                    currentJson != null -> ProcessUSFM(
-                        context,
-                        directoryProvider,
-                        profile,
-                        library,
-                        assetsProvider,
-                        currentJson
-                    )
                     currentLang != null && currentFile != null -> ProcessUSFM(
                         context,
                         directoryProvider,
@@ -322,39 +256,6 @@ class ProcessUSFM {
                 )
                 null
             }
-        }
-    }
-
-    /**
-     * generate JSON from object
-     * @return
-     */
-    fun toJson(): JSONObject? {
-        try {
-            val json = JSONObject()
-            json.putOpt("TempDir", tempDir)
-            json.putOpt("TempOutput", projectsFolder)
-            json.putOpt("TempDest", tempDest)
-            json.putOpt("TempSrc", tempSrc)
-            json.putOpt("ProjectFolder", projectFolder)
-            json.putOpt("SourceFiles", toJsonFileArray(sourceFiles))
-            json.putOpt("ImportProjects", toJsonFileArray(importProjects))
-            json.putOpt("Errors", toJsonStringArray(errors))
-            json.putOpt("FoundBooks", toJsonStringArray(foundBooks))
-            json.putOpt("TargetLanguage", targetLanguage!!.toJSON())
-            json.putOpt("CurrentBook", currentBook)
-            json.putOpt("Success", isProcessSuccess)
-            json.putOpt("MissingNames", MissingNameItem.toJsonArray(booksMissingNames))
-            json.putOpt("CurrentChapter", currentChapter)
-            json.putOpt("ChapterCount", chapterCount)
-            json.putOpt("BookName", bookName)
-            json.putOpt("BookShortName", bookShortName)
-            json.putOpt("Chapter", chapter)
-
-            return json
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return null
         }
     }
 
@@ -859,10 +760,7 @@ class ProcessUSFM {
 
     /**
      * create the manifest for a project
-     *
-     * @throws JSONException
      */
-    @Throws(JSONException::class)
     private fun buildManifest(): Boolean {
         val pInfo: PackageInfo
         try {
@@ -1357,7 +1255,7 @@ class ProcessUSFM {
         return VerseSplitResults(verseStr, "")
     }
 
-    internal inner class VerseSplitResults(val verse: String, val extra: String)
+    internal class VerseSplitResults(val verse: String, val extra: String)
 
     /**
      * get verse range
@@ -1702,123 +1600,5 @@ class ProcessUSFM {
         val PATTERN_CHAPTER_NUMBER_MARKER: Pattern = Pattern.compile(CHAPTER_NUMBER_MARKER)
         val PATTERN_USFM_VERSE_SPAN: Pattern = Pattern.compile(USFMVerseSpan.PATTERN)
         const val END_MARKER: Int = 999999
-
-        private fun getOptInteger(json: JSONObject, key: String): Int? {
-            return getOpt(json, key) as Int?
-        }
-
-        private fun getOptBoolean(json: JSONObject, key: String): Boolean? {
-            return getOpt(json, key) as Boolean?
-        }
-
-        private fun getOptFile(json: JSONObject, key: String): File? {
-            val path = getOptString(json, key)
-            if (path != null) {
-                return File(path)
-            }
-            return null
-        }
-
-        private fun getOptString(json: JSONObject, key: String): String? {
-            return getOpt(json, key) as String?
-        }
-
-        private fun getOptJsonObject(json: JSONObject, key: String): JSONObject? {
-            try {
-                val obj = getOpt(json, key)
-                return obj as JSONObject?
-            } catch (e: Exception) {
-                return JSONObject()
-            }
-        }
-
-        private fun getOptJsonArray(json: JSONObject, key: String): JSONArray? {
-            try {
-                val obj = getOpt(json, key)
-                return obj as JSONArray?
-            } catch (e: Exception) {
-                return JSONArray()
-            }
-        }
-
-        private fun getOpt(json: JSONObject, key: String): Any? {
-            try {
-                if (json.has(key)) {
-                    val obj = json[key]
-                    return obj
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            return null
-        }
-
-        private fun toJsonFileArray(array: List<File>): JSONArray {
-            val jsonArray = JSONArray()
-            for (item in array) {
-                jsonArray.put(item.toString())
-            }
-            return jsonArray
-        }
-
-        private fun fromJsonArrayToFiles(jsonStr: String): List<File> {
-            try {
-                val jsonArray = JSONArray(jsonStr)
-                return fromJsonArrayToFiles(jsonArray)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            return listOf()
-        }
-
-        @Throws(JSONException::class)
-        private fun fromJsonArrayToFiles(jsonArray: JSONArray): List<File> {
-            val array = arrayListOf<File>()
-
-            for (i in 0 until jsonArray.length()) {
-                val path = jsonArray.getString(i)
-                val file = File(path)
-                array.add(file)
-            }
-            return array
-        }
-
-        private fun toJsonStringArray(array: List<String>): JSONArray {
-            val jsonArray = JSONArray()
-            for (item in array) {
-                jsonArray.put(item)
-            }
-            return jsonArray
-        }
-
-        private fun fromJsonArrayToStrings(jsonStr: String): List<String> {
-            try {
-                val jsonArray = JSONArray(jsonStr)
-                return fromJsonArrayToStrings(jsonArray)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            return listOf()
-        }
-
-        @Throws(JSONException::class)
-        private fun fromJsonArrayToStrings(jsonArray: JSONArray): List<String> {
-            val array = arrayListOf<String>()
-
-            for (i in 0 until jsonArray.length()) {
-                val text = jsonArray.getString(i)
-                array.add(text)
-            }
-            return array
-        }
-
-        private fun stringToJson(jsonStr: String): JSONObject? {
-            return try {
-                JSONObject(jsonStr)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
     }
 }

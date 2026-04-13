@@ -32,19 +32,19 @@ data class UpdateState(
 )
 
 sealed interface UpdateAction {
-    object UpdateSource : UpdateAction
+    data object UpdateSource : UpdateAction
     data class ImportIndex(val uri: Uri) : UpdateAction
-    object DownloadIndex : UpdateAction
-    object UpdateLanguages : UpdateAction
-    object CheckAppUpdate : UpdateAction
+    data object DownloadIndex : UpdateAction
+    data object UpdateLanguages : UpdateAction
+    data object CheckAppUpdate : UpdateAction
     data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : UpdateAction
-    object ClearResult : UpdateAction
-    object ClearLatestRelease : UpdateAction
-    object ClearUpdateSourceResult : UpdateAction
+    data object ClearResult : UpdateAction
+    data object ClearLatestRelease : UpdateAction
+    data object ClearUpdateSourceResult : UpdateAction
 }
 
 sealed interface UpdateEvent {
-    object IndexUpdated : UpdateEvent
+    data object IndexUpdated : UpdateEvent
 }
 
 class UpdateLibraryViewModel(
@@ -74,13 +74,13 @@ class UpdateLibraryViewModel(
         when (action) {
             is UpdateAction.ImportIndex -> importIndex(action.uri)
             is UpdateAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
-            UpdateAction.UpdateSource -> updateSource()
-            UpdateAction.DownloadIndex -> downloadIndex()
-            UpdateAction.UpdateLanguages -> updateLanguages()
-            UpdateAction.CheckAppUpdate -> checkAppUpdate()
-            UpdateAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
-            UpdateAction.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
-            UpdateAction.ClearUpdateSourceResult -> _state.update {
+            is UpdateAction.UpdateSource -> updateSource()
+            is UpdateAction.DownloadIndex -> downloadIndex()
+            is UpdateAction.UpdateLanguages -> updateLanguages()
+            is UpdateAction.CheckAppUpdate -> checkAppUpdate()
+            is UpdateAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
+            is UpdateAction.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
+            is UpdateAction.ClearUpdateSourceResult -> _state.update {
                 it.copy(updateSourceResult = null)
             }
         }
