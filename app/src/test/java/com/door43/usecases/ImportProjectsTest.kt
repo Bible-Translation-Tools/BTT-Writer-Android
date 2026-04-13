@@ -424,7 +424,7 @@ class ImportProjectsTest {
         )
 
         assertTrue(result.success)
-        assertEquals(localTranslation, result.conflictingTargetTranslation)
+        assertEquals(localTranslation, result.conflictingTargetTranslations.first())
 
         verifySequence {
             progressListener.onProgress(any(), "Importing file")
@@ -468,7 +468,7 @@ class ImportProjectsTest {
         )
 
         assertFalse(result.success)
-        assertEquals(localTranslation, result.conflictingTargetTranslation)
+        assertEquals(true, result.conflictingTargetTranslations.isEmpty())
 
         verifySequence {
             progressListener.onProgress(any(), "Importing file")

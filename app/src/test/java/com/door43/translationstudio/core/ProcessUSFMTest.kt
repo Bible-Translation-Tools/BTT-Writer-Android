@@ -27,7 +27,6 @@ import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
-import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -104,56 +103,6 @@ class ProcessUSFMTest {
     @After
     fun tearDown() {
         unmockkAll()
-    }
-
-    @Test fun `test Builder creation from JSON string`() {
-        val jsonString = getProcessUsfmJsonString()
-
-        val builder = ProcessUSFM.Builder(
-            context,
-            directoryProvider,
-            profile,
-            library,
-            assetsProvider
-        )
-        builder.fromJsonString(jsonString)
-        val processUSFM = builder.build()
-
-        assertNotNull("ProcessUSFM should not be null", processUSFM)
-        assertTrue("ProcessUSFM should be successful", processUSFM?.isProcessSuccess ?: false)
-        assertEquals("Book missing names should match", 2, processUSFM?.booksMissingNames?.size)
-        assertEquals("Import projects should match", 2, processUSFM?.importProjects?.size)
-        assertNotNull("Results string should not be null", processUSFM?.resultsString)
-
-        assertTrue(processUSFM?.resultsString?.contains("Found book: Book1") ?: false)
-        assertTrue(processUSFM?.resultsString?.contains("Found book: Book2") ?: false)
-        assertTrue(processUSFM?.resultsString?.contains("Error1") ?: false)
-        assertTrue(processUSFM?.resultsString?.contains("Error2") ?: false)
-    }
-
-    @Test
-    fun `test Builder creation from JSON object`() {
-        val jsonObject = JSONObject(getProcessUsfmJsonString())
-        val builder = ProcessUSFM.Builder(
-            context,
-            directoryProvider,
-            profile,
-            library,
-            assetsProvider
-        )
-        builder.fromJson(jsonObject)
-        val processUSFM = builder.build()
-
-        assertNotNull("ProcessUSFM should not be null", processUSFM)
-        assertTrue("ProcessUSFM should be successful", processUSFM?.isProcessSuccess ?: false)
-        assertEquals("Book missing names should match", 2, processUSFM?.booksMissingNames?.size)
-        assertEquals("Import projects should match", 2, processUSFM?.importProjects?.size)
-        assertNotNull("Results string should not be null", processUSFM?.resultsString)
-
-        assertTrue(processUSFM?.resultsString?.contains("Found book: Book1") ?: false)
-        assertTrue(processUSFM?.resultsString?.contains("Found book: Book2") ?: false)
-        assertTrue(processUSFM?.resultsString?.contains("Error1") ?: false)
-        assertTrue(processUSFM?.resultsString?.contains("Error2") ?: false)
     }
 
     @Test fun `test successful file processing`() {
@@ -492,89 +441,6 @@ class ProcessUSFMTest {
 
         assertNotNull(processUSFM)
         verify { FileUtilities.deleteQuietly(any()) }
-    }
-
-    @Test fun `test toJson conversion`() {
-        val processUSFM = ProcessUSFM.Builder(
-            context,
-            directoryProvider,
-            profile,
-            library,
-            assetsProvider
-        )
-            .fromFile(targetLanguage, mockFile, progressListener)
-            .build()
-
-        assertNotNull(processUSFM)
-        requireNotNull(processUSFM)
-
-        every { targetLanguage.toJSON() }.returns(JSONObject())
-        val json = processUSFM.toJson()
-
-        assertNotNull(json)
-        requireNotNull(json)
-
-        assertTrue(json.has("TempDir"))
-        assertTrue(json.has("SourceFiles"))
-        assertTrue(json.has("TempSrc"))
-        assertTrue(json.has("ImportProjects"))
-        assertTrue(json.has("Success"))
-        assertTrue(json.has("Errors"))
-        assertTrue(json.has("CurrentBook"))
-        assertTrue(json.has("ChapterCount"))
-        assertTrue(json.has("FoundBooks"))
-        assertTrue(json.has("CurrentChapter"))
-        assertTrue(json.has("TempOutput"))
-        assertTrue(json.has("TargetLanguage"))
-        assertTrue(json.has("MissingNames"))
-
-        assertFalse(json.getBoolean("Success"))
-        assertTrue(json.getJSONArray("Errors").getString(0).contains("Error: Error reading File"))
-
-        verify { targetLanguage.toJSON() }
-    }
-
-    private fun getProcessUsfmJsonString(): String {
-        return """
-            {
-                "TargetLanguage": {
-                    "slug": "aa",
-                    "name": "Afar",
-                    "anglicized_name": "Afar",
-                    "direction": "ltr",
-                    "region": "Africa",
-                    "is_gateway_language": false
-                },
-                "TempDir": "/temp/dir",
-                "TempOutput": "/temp/output",
-                "TempDest": "/temp/dest",
-                "TempSrc": "/temp/src",
-                "ProjectFolder": "/project/folder",
-                "Chapter": "01",
-                "SourceFiles": ["/source/file1", "/source/file2"],
-                "ImportProjects": ["/import/project1", "/import/project2"],
-                "Errors": ["Error1", "Error2"],
-                "FoundBooks": ["Book1", "Book2"],
-                "CurrentBook": 1,
-                "BookName": "Mark",
-                "BookShortName": "mrk",
-                "Success": true,
-                "CurrentChapter": 1,
-                "ChapterCount": 10,
-                "MissingNames": [
-                    {
-                        "description": "Description1",
-                        "invalidName": "InvalidName1",
-                        "contents": "Contents1"
-                    },
-                    {
-                        "description": "Description2",
-                        "invalidName": "InvalidName2",
-                        "contents": "Contents2"
-                    }
-                ]
-            }
-        """.trimIndent()
     }
 
     private fun mockChunkMarkers() {

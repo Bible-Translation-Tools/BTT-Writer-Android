@@ -24,12 +24,12 @@ import androidx.test.espresso.matcher.ViewMatchers.withHint
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import com.door43.questionnaire.QuestionnaireActivity
-import com.door43.questionnaire.QuestionnairePager
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.UiTestUtils.rotateScreen
 import com.door43.translationstudio.ui.newlanguage.NewTempLanguageActivity
+import com.door43.translationstudio.ui.questionnaire.QuestionnaireActivity
+import com.door43.translationstudio.ui.questionnaire.QuestionnairePager
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Description
 import org.hamcrest.Matcher

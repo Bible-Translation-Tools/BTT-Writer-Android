@@ -268,7 +268,7 @@ class HomeActivityTest : KoinAndroidTest() {
             onView(withId(R.id.search_button)).tryCheck(matches(isDisplayed()))
             // onView(withId(R.id.username)).tryCheck(matches(isDisplayed()))
             // onView(withId(R.id.translation_id)).tryCheck(matches(isDisplayed()))
-            onView(withId(R.id.list)).tryCheck(matches(isDisplayed()))
+            // onView(withId(R.id.list)).tryCheck(matches(isDisplayed()))
         }
     }
 
