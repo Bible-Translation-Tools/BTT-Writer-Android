@@ -55,7 +55,7 @@ fun NewTargetTranslationScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is NewTranslationEvent.FinishOk,
-                NewTranslationEvent.OnMergeSuccess -> onFinishOk()
+                is NewTranslationEvent.OnMergeSuccess -> onFinishOk()
                 is NewTranslationEvent.FinishCanceled -> onCancel()
                 is NewTranslationEvent.FinishDuplicate -> {
                     onDuplicate(event.targetTranslationId)

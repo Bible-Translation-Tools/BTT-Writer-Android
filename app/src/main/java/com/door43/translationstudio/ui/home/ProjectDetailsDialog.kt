@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.window.Dialog
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NativeSpeaker
@@ -46,12 +47,10 @@ import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ExportDialog
 import org.koin.compose.koinInject
-import kotlin.math.roundToInt
 
 @Composable
 fun ProjectDetailsDialog(
     project: TranslationItem,
-    progress: Float,
     onDismiss: () -> Unit,
     onChangeLanguage: () -> Unit,
     onDelete: () -> Unit,
@@ -139,7 +138,7 @@ fun ProjectDetailsDialog(
 
                         DetailRow(
                             label = stringResource(R.string.progress),
-                            value = "${(progress * 100).roundToInt()}%"
+                            value = "${(project.progress * 100).fastRoundToInt()}%"
                         )
 
                         Row(

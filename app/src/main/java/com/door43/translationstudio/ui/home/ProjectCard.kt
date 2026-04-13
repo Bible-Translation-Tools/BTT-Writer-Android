@@ -40,7 +40,6 @@ import com.door43.translationstudio.getComposeTextStyle
 fun ProjectCard(
     item: TranslationItem,
     typography: Typography,
-    progress: Float,
     onItemClick: () -> Unit,
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -108,7 +107,7 @@ fun ProjectCard(
                     horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.End)
                 ) {
                     PieProgressBar(
-                        progress = progress,
+                        progress = item.progress,
                         modifier = Modifier.size(36.dp)
                     )
 

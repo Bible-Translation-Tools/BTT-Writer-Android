@@ -5,7 +5,8 @@ import org.unfoldingword.resourcecontainer.Resource
 
 data class TranslationItem(
     val translation: TargetTranslation,
-    val name: String
+    val name: String,
+    val progress: Float = 0f
 ) {
     val formattedProjectName: String
         get() = if (translation.resourceSlug != Resource.REGULAR_SLUG && translation.resourceSlug != "obs") {

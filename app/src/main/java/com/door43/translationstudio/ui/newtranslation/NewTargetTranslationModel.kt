@@ -276,13 +276,13 @@ class NewTargetTranslationModel(
 
         val translationId = targetTranslationId
         if (translationId == null) {
-            _event.trySend(NewTranslationEvent.FinishOk)
+            _event.trySend(NewTranslationEvent.FinishError)
             return
         }
 
         val sourceTranslation = translator.getTargetTranslation(translationId)
         if (sourceTranslation == null) {
-            _event.trySend(NewTranslationEvent.FinishOk)
+            _event.trySend(NewTranslationEvent.FinishError)
             return
         }
 
@@ -370,7 +370,9 @@ class NewTargetTranslationModel(
 
             when (result.status) {
                 MergeTargetTranslation.Status.MERGE_CONFLICTS -> {
-                    translator.clearTargetTranslationSettings(result.sourceTranslation.id)
+                    translator.clearTargetTranslationSettings(
+                        result.sourceTranslation.id
+                    )
                     val hasConflicts = MergeConflictsHandler.isTranslationMergeConflicted(
                         result.destinationTranslation.id,
                         translator
@@ -384,7 +386,9 @@ class NewTargetTranslationModel(
                     }
                 }
                 MergeTargetTranslation.Status.SUCCESS -> {
-                    translator.clearTargetTranslationSettings(result.sourceTranslation.id)
+                    translator.clearTargetTranslationSettings(
+                        result.sourceTranslation.id
+                    )
                     _event.trySend(NewTranslationEvent.OnMergeSuccess)
                 }
                 else -> {
