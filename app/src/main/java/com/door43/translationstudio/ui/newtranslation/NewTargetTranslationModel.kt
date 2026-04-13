@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.newtranslation
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.door43.data.ILanguageRequestRepository
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
@@ -31,7 +30,6 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.CategoryEntry
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.tools.logger.Logger
 import java.util.Locale
 
 enum class ScreenStep {
@@ -80,7 +78,6 @@ sealed interface NewTranslationEvent {
 
 class NewTargetTranslationModel(
     private val mergeTargetTranslation: MergeTargetTranslation,
-    private val languageRequestRepository: ILanguageRequestRepository,
     private val prefRepository: IPreferenceRepository,
     private val library: Door43Client,
     private val translator: Translator,
@@ -93,10 +90,6 @@ class NewTargetTranslationModel(
     override val progress get() = progressManager.progress
 
     var selectedTargetLanguage: TargetLanguage? = null
-        private set
-    var newTargetTranslationId: String? = null
-        private set
-    var createdNewLanguage = false
         private set
     var changeTargetLanguageOnly = false
         private set
@@ -300,7 +293,6 @@ class NewTargetTranslationModel(
         )
 
         if (existingTranslation != null) {
-            newTargetTranslationId = existingTranslation.id
             val message = application.getString(
                 R.string.warn_existing_target_translation,
                 getProject(existingTranslation)?.name,
@@ -339,7 +331,6 @@ class NewTargetTranslationModel(
                 projectId, ResourceType.TEXT, resourceSlug, format
             )
             if (targetTranslation != null) {
-                newTargetTranslationId = targetTranslation.id
                 _event.trySend(NewTranslationEvent.FinishOk)
             } else {
                 deleteTargetTranslation(projectId, resourceSlug)
@@ -400,23 +391,6 @@ class NewTargetTranslationModel(
         }
     }
 
-    fun registerTempLanguage(jsonString: String?): Boolean {
-        val request = jsonString?.let { languageRequestRepository.requestFromJson(it) }
-        if (request != null) {
-            val questionnaire = library.index.getQuestionnaire(request.questionnaireId)
-            if (questionnaire != null && languageRequestRepository.addNewLanguageRequest(request)) {
-                selectedTargetLanguage = request.tempTargetLanguage
-                createdNewLanguage = true
-                return true
-            }
-        }
-        return false
-    }
-
-    fun getTargetLanguage(languageId: String): TargetLanguage? {
-        return library.index.getTargetLanguage(languageId)
-    }
-
     private fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
     }
@@ -458,21 +432,6 @@ class NewTargetTranslationModel(
                 resourceSlug,
                 format
             )
-
-            languageRequestRepository.getNewLanguageRequest(
-                targetLanguage.slug
-            )?.let { request ->
-                try {
-                    targetTranslation.setNewLanguageRequest(request)
-                } catch (e: Exception) {
-                    Logger.e(
-                        this.javaClass.name,
-                        "Failed to deploy the new language code request",
-                        e
-                    )
-                }
-            }
-
             targetTranslation
         }
     }

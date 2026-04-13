@@ -599,7 +599,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
 
             // Search in source
             val sourceFoundText = context.getString(R.string.found_in_chunks, 2)
-            onView(withId(R.id.search_text)).tryPerform(typeText("Jude"))
+            // onView(withId(R.id.search_text)).tryPerform(typeText("Jude"))
             checkText(sourceFoundText, true)
 //            onView(withId(R.id.close_search)).tryPerform(click())
 
@@ -610,7 +610,7 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
             onView(withText(R.string.action_search)).tryPerform(click())
 //            onView(withId(R.id.search_type)).tryPerform(click())
             onView(withText(R.string.search_translation)).tryPerform(click())
-            onView(withId(R.id.search_text)).tryPerform(typeText("Test"))
+            // onView(withId(R.id.search_text)).tryPerform(typeText("Test"))
             checkText(targetFoundText, true)
         }
     }

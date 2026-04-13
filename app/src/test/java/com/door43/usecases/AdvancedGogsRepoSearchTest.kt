@@ -2,11 +2,11 @@ package com.door43.usecases
 
 import com.door43.OnProgressListener
 import io.mockk.MockKAnnotations
-import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -19,7 +19,6 @@ import org.unfoldingword.gogsclient.User
 
 class AdvancedGogsRepoSearchTest {
 
-    @MockK private lateinit var submitNewLanguageRequests: SubmitNewLanguageRequests
     @MockK private lateinit var searchGogsUsers: SearchGogsUsers
     @MockK private lateinit var searchGogsRepositories: SearchGogsRepositories
     @MockK private lateinit var progressListener: OnProgressListener
@@ -29,7 +28,6 @@ class AdvancedGogsRepoSearchTest {
         MockKAnnotations.init(this)
 
         every { progressListener.onProgress(any(), any()) } just runs
-        every { submitNewLanguageRequests.execute(progressListener) } just runs
     }
 
     @After
@@ -56,7 +54,6 @@ class AdvancedGogsRepoSearchTest {
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
-            submitNewLanguageRequests,
             searchGogsUsers,
             searchGogsRepositories
         ).execute(userQuery, repoQuery, limit, progressListener)
@@ -64,7 +61,6 @@ class AdvancedGogsRepoSearchTest {
         assertEquals(1, repositories.size)
 
         verify { user.id }
-        verify { submitNewLanguageRequests.execute(progressListener) }
         verify { searchGogsUsers.execute(userQuery, limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }
@@ -90,7 +86,6 @@ class AdvancedGogsRepoSearchTest {
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
-            submitNewLanguageRequests,
             searchGogsUsers,
             searchGogsRepositories
         ).execute(userQuery, repoQuery, limit, progressListener)
@@ -99,7 +94,6 @@ class AdvancedGogsRepoSearchTest {
         assertEquals("Empty repo query should be replaced with _", "_", repoQuerySlot.captured)
 
         verify { user.id }
-        verify { submitNewLanguageRequests.execute(progressListener) }
         verify { searchGogsUsers.execute(userQuery, limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }
@@ -117,14 +111,12 @@ class AdvancedGogsRepoSearchTest {
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
-            submitNewLanguageRequests,
             searchGogsUsers,
             searchGogsRepositories
         ).execute("", repoQuery, limit, progressListener)
 
         assertEquals(1, repositories.size)
 
-        verify { submitNewLanguageRequests.execute(progressListener) }
         verify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }
@@ -144,7 +136,6 @@ class AdvancedGogsRepoSearchTest {
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
-            submitNewLanguageRequests,
             searchGogsUsers,
             searchGogsRepositories
         ).execute(userQuery, repoQuery, limit, progressListener)
@@ -152,7 +143,6 @@ class AdvancedGogsRepoSearchTest {
         assertEquals(1, repositories.size)
         assertEquals("Empty repo query should be replaced with _", "_", repoQuerySlot.captured)
 
-        verify { submitNewLanguageRequests.execute(progressListener) }
         verify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
         verify { searchGogsRepositories.execute(any(), any(), limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }

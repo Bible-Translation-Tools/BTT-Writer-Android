@@ -3,10 +3,8 @@ package com.door43.di
 import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.data.ILanguageRequestRepository
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.repositories.LanguageRequestRepository
 import com.door43.repositories.PreferenceRepository
 import com.door43.translationstudio.DirectoryProvider
 import com.door43.translationstudio.MainAssetsProvider
@@ -26,12 +24,14 @@ import com.door43.translationstudio.ui.crash.CrashReporterViewModel
 import com.door43.translationstudio.ui.devtools.DeveloperViewModel
 import com.door43.translationstudio.ui.dialogs.ExportViewModel
 import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
-import com.door43.translationstudio.ui.home.ImportViewModel
-import com.door43.translationstudio.ui.home.UsfmImportViewModel
 import com.door43.translationstudio.ui.draft.DraftViewModel
+import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
 import com.door43.translationstudio.ui.home.HomeViewModel
+import com.door43.translationstudio.ui.home.ImportViewModel
 import com.door43.translationstudio.ui.home.UpdateLibraryViewModel
+import com.door43.translationstudio.ui.home.UsfmImportViewModel
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
+import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationModel
 import com.door43.translationstudio.ui.profile.LoginViewModel
 import com.door43.translationstudio.ui.publish.PublishViewModel
 import com.door43.translationstudio.ui.settings.SettingsViewModel
@@ -41,9 +41,6 @@ import com.door43.translationstudio.ui.translate.chunk.ChunkModeViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.translationstudio.ui.translate.read.ReadModeViewModel
 import com.door43.translationstudio.ui.translate.review.ReviewModeViewModel
-import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
-import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationModel
-import com.door43.translationstudio.ui.newlanguage.NewTempLanguageViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
@@ -67,7 +64,6 @@ import com.door43.usecases.RegisterSSHKeys
 import com.door43.usecases.RenderHelps
 import com.door43.usecases.SearchGogsRepositories
 import com.door43.usecases.SearchGogsUsers
-import com.door43.usecases.SubmitNewLanguageRequests
 import com.door43.usecases.TranslationProgress
 import com.door43.usecases.UpdateAll
 import com.door43.usecases.UpdateApp
@@ -104,7 +100,6 @@ val appModule = module {
     }
 
     singleOf(::PreferenceRepository).bind<IPreferenceRepository>()
-    singleOf(::LanguageRequestRepository).bind<ILanguageRequestRepository>()
 
     singleOf(::UpdateSource)
     singleOf(::PushTargetTranslation)
@@ -112,7 +107,6 @@ val appModule = module {
     singleOf(::CreateRepository)
     singleOf(::SearchGogsRepositories)
     singleOf(::SearchGogsUsers)
-    singleOf(::SubmitNewLanguageRequests)
     singleOf(::AdvancedGogsRepoSearch)
     singleOf(::GogsLogin)
     singleOf(::PullTargetTranslation)
@@ -161,7 +155,6 @@ val appModule = module {
     viewModelOf(::NewTargetTranslationModel)
     viewModelOf(::SettingsViewModel)
     viewModelOf(::LoginViewModel)
-    viewModelOf(::NewTempLanguageViewModel)
     viewModelOf(::TermsOfUseViewModel)
     viewModelOf(::ReadModeViewModel)
     viewModelOf(::ChunkModeViewModel)

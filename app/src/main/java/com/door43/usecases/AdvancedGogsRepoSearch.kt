@@ -4,7 +4,6 @@ import com.door43.OnProgressListener
 import org.unfoldingword.gogsclient.Repository
 
 class AdvancedGogsRepoSearch(
-    private val submitNewLanguageRequests: SubmitNewLanguageRequests,
     private val searchGogsUsers: SearchGogsUsers,
     private val searchGogsRepositories: SearchGogsRepositories
 ) {
@@ -15,9 +14,6 @@ class AdvancedGogsRepoSearch(
         progressListener: OnProgressListener? = null
     ): List<Repository> {
         val repositories = arrayListOf<Repository>()
-
-        // submit new language requests
-        submitNewLanguageRequests.execute(progressListener)
 
         progressListener?.onProgress(-1f, "Searching for repositories")
 

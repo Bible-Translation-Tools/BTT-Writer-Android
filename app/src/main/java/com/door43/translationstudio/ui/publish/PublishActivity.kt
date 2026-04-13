@@ -17,7 +17,6 @@ import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.profile.LoginDoor43Activity
 import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.door43.translationstudio.ui.translate.TargetTranslationActivity
-import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
@@ -61,10 +60,6 @@ class PublishActivity : BaseActivity() {
             snack.setAction(R.string.label_ok) {
                 finish()
             }
-            ViewUtil.setSnackBarTextColor(
-                snack,
-                resources.getColor(R.color.light_primary_text)
-            )
             snack.show()
 
             Handler(Looper.getMainLooper()).postDelayed({

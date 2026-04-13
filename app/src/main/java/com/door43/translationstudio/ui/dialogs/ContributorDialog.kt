@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,10 +64,11 @@ fun ContributorDialog(
     ) {
         Text(
             text = stringResource(id = R.string.add_contributor),
-            fontSize = dimensionResource(id = R.dimen.headline).value.sp,
-            color = colorResource(id = R.color.dark_primary_text),
-            modifier = Modifier.padding(bottom = dimensionResource(id = R.dimen.dialog_content_margin))
+            fontSize = 24.sp,
+            modifier = Modifier
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         Column(modifier = Modifier.fillMaxWidth()) {
             TextField(
@@ -101,8 +101,7 @@ fun ContributorDialog(
                 )
                 Text(
                     text = stringResource(id = R.string.person_agrees_with_licenses),
-                    fontSize = dimensionResource(id = R.dimen.body).value.sp,
-                    color = colorResource(id = R.color.dark_primary_text),
+                    fontSize = 16.sp,
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
@@ -111,7 +110,7 @@ fun ContributorDialog(
                 FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = dimensionResource(id = R.dimen.card_margin)),
+                        .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -131,10 +130,10 @@ fun ContributorDialog(
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = dimensionResource(id = R.dimen.dialog_controls_margin)),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!isNew) {

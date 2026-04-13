@@ -23,7 +23,6 @@ import java.io.IOException
 
 class PullTargetTranslation(
     private val context: Context,
-    private val submitNewLanguageRequests: SubmitNewLanguageRequests,
     private val getRepository: GetRepository,
     private val profile: Profile,
     private val prefRepository: IPreferenceRepository,
@@ -40,8 +39,6 @@ class PullTargetTranslation(
         sourceURL: String? = null,
         progressListener: OnProgressListener? = null
     ): Result {
-        submitNewLanguageRequests.execute(progressListener)
-
         if (profile.gogsUser != null) {
             try {
                 targetTranslation.commitSync()

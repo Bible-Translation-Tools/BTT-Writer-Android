@@ -631,21 +631,6 @@ class TargetTranslation private constructor(
         return result.mergeStatus != MergeResult.MergeStatus.CONFLICTING
     }
 
-    fun getNewLanguageRequest(context: Context): NewLanguageRequest? {
-        val requestFile = File(path, "new_language.json")
-        return NewLanguageRequest.Builder(context).fromFile(requestFile).build()
-    }
-
-    @Throws(IOException::class)
-    fun setNewLanguageRequest(request: NewLanguageRequest?) {
-        val requestFile = File(path, "new_language.json")
-        if (request != null) {
-            request.toJson()?.let { FileUtilities.writeStringToFile(requestFile, it) }
-        } else if (requestFile.exists()) {
-            FileUtilities.safeDelete(requestFile)
-        }
-    }
-
     fun changeTargetLanguage(targetLanguage: TargetLanguage) {
         val languageJson = this.manifest.getJSONObject("target_language")
         try {

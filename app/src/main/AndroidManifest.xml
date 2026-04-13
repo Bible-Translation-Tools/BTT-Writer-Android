@@ -33,17 +33,14 @@
 
         <activity
             android:name=".ui.profile.TermsOfUseActivity"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:launchMode="singleTop" />
         <activity
             android:name=".ui.splash.SplashScreenActivity"
             android:launchMode="singleTop"
             android:alwaysRetainTaskState="true"
-            android:theme="@style/AppTheme.NoActionBar"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -68,7 +65,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.activity.DeveloperToolsActivity" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
@@ -81,10 +77,8 @@
             android:launchMode="singleTask"
             android:alwaysRetainTaskState="true"
             android:label="@string/title_activity_target_translations"
-            android:theme="@style/AppTheme.NoActionBar"
             android:exported="true">
 
-            <!-- this does not work to register file extension -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -116,8 +110,7 @@
             android:launchMode="singleTop"
             android:alwaysRetainTaskState="true"
             android:parentActivityName=".ui.home.HomeActivity"
-            android:windowSoftInputMode="stateHidden|adjustPan"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:windowSoftInputMode="stateHidden|adjustPan">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.home.HomeActivity" />
@@ -125,31 +118,21 @@
         <activity
             android:name=".ui.publish.PublishActivity"
             android:label="@string/title_activity_publish"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".ui.newlanguage.NewTempLanguageActivity"
-            android:label="@string/title_activity_new_language"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:exported="false"/>
+            android:launchMode="singleTop" />
         <activity
             android:name=".ui.legal.LegalDocumentActivity"
             android:label=""
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Transparent"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.activity.LegalDocumentActivity" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
         <activity
             android:name=".ui.profile.ProfileActivity"
             android:label="@string/title_activity_profile"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:launchMode="singleTop" />
         <activity
             android:name=".ui.draft.DraftActivity"
             android:label="@string/preview">

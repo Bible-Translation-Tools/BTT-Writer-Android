@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -94,14 +94,14 @@ fun ProjectDetailsDialog(
                 modifier = Modifier.fillMaxSize()
             ) {
                 Column(
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
                     modifier = Modifier
                         .weight(1f)
                         .padding(24.dp)
                 ) {
                     Text(
                         text = project.name + " - " + project.translation.targetLanguageName,
-                        style = titleStyle,
-                        modifier = Modifier.padding(bottom = dimensionResource(R.dimen.dialog_content_margin))
+                        style = titleStyle
                     )
 
                     Column(modifier = Modifier.fillMaxWidth()) {
@@ -141,13 +141,16 @@ fun ProjectDetailsDialog(
                             value = "${(project.progress * 100).fastRoundToInt()}%"
                         )
 
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.Top
                         ) {
                             Text(
-                                text = stringResource(R.string.translators)
+                                text = stringResource(R.string.translators),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = getTranslatorNames(contributors),
@@ -255,9 +258,8 @@ private fun getTranslatorNames(contributors: List<NativeSpeaker>): String {
 @Composable
 private fun DetailRow(label: String, value: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = dimensionResource(R.dimen.dialog_controls_margin)),
+        modifier = Modifier.fillMaxWidth()
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(

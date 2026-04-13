@@ -17,7 +17,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -43,7 +42,6 @@ import java.io.IOException
 class PullTargetTranslationTest {
 
     @MockK private lateinit var context: Context
-    @MockK private lateinit var submitNewLanguageRequests: SubmitNewLanguageRequests
     @MockK private lateinit var getRepository: GetRepository
     @MockK private lateinit var profile: Profile
     @MockK private lateinit var prefRepository: IPreferenceRepository
@@ -77,7 +75,6 @@ class PullTargetTranslationTest {
             )
         }.returns("22")
 
-        every { submitNewLanguageRequests.execute(progressListener) }.just(runs)
         every { targetTranslation.commitSync() }.returns(true)
 
         every { progressListener.onProgress(any(), any()) }.just(runs)
@@ -139,7 +136,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -175,7 +171,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -203,7 +198,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -244,7 +238,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -300,7 +293,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -352,7 +344,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -396,7 +387,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -439,7 +429,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -479,7 +468,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,
@@ -519,7 +507,6 @@ class PullTargetTranslationTest {
 
         val result = PullTargetTranslation(
             context,
-            submitNewLanguageRequests,
             getRepository,
             profile,
             prefRepository,

@@ -3,7 +3,6 @@ package com.door43.translationstudio.core
 import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.data.ILanguageRequestRepository
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
 import com.door43.util.FileUtilities.copyInputStreamToFile
 import com.door43.util.FileUtilities.deleteQuietly
@@ -16,7 +15,6 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
@@ -31,7 +29,6 @@ import java.util.Locale
 class TargetTranslationMigrator(
     private val context: Context,
     private val directoryProvider: IDirectoryProvider,
-    private val languageRequestRepository: ILanguageRequestRepository,
     private val library: Door43Client,
     private val assetProvider: AssetsProvider
 ) {
@@ -135,92 +132,6 @@ class TargetTranslationMigrator(
         } catch (e: Exception) {
             e.printStackTrace()
             migratedDir = null
-        }
-        if (migratedDir != null) {
-            // import new language requests
-            val tt = TargetTranslation.open(targetTranslationDir)
-            if (tt != null) {
-                val newRequest = tt.getNewLanguageRequest(context)
-                if (newRequest != null) {
-                    val approvedTargetLanguage = library.index.getApprovedTargetLanguage(
-                        newRequest.tempLanguageCode
-                    )
-                    if (approvedTargetLanguage != null) {
-                        // this language request has already been approved so let's migrate it
-                        try {
-                            tt.setNewLanguageRequest(null)
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
-                        val originalTargetLanguage = tt.targetLanguage
-                        tt.changeTargetLanguage(approvedTargetLanguage)
-                        if (tt.normalizePath()) {
-                            Logger.i(
-                                TAG,
-                                "Migrated target language of target translation " + tt.id + " to " + approvedTargetLanguage.slug
-                            )
-                        } else {
-                            // revert if normalization failed
-                            tt.changeTargetLanguage(originalTargetLanguage)
-                        }
-                    } else {
-                        val existingRequest = languageRequestRepository.getNewLanguageRequest(newRequest.tempLanguageCode)
-                        if (existingRequest == null) {
-                            // we don't have this language request
-                            Logger.i(
-                                TAG,
-                                "Importing language request " + newRequest.tempLanguageCode + " from " + tt.id
-                            )
-                            languageRequestRepository.addNewLanguageRequest(newRequest)
-                        } else {
-                            // we already have this language request
-                            if (existingRequest.submittedAt > 0 && newRequest.submittedAt == 0L) {
-                                // indicated this language request has been submitted
-                                newRequest.submittedAt = existingRequest.submittedAt
-                                try {
-                                    tt.setNewLanguageRequest(newRequest)
-                                } catch (e: IOException) {
-                                    e.printStackTrace()
-                                }
-                            } else if (existingRequest.submittedAt == 0L && newRequest.submittedAt > 0) {
-                                // indicate global language request has been submitted
-                                existingRequest.submittedAt = newRequest.submittedAt
-                                languageRequestRepository.addNewLanguageRequest(existingRequest)
-                                // TODO: 6/15/16 technically we need to look through all the existing target translations and update ones using this language.
-                                // if we don't then they should get updated the next time the restart the app.
-                            }
-                        }
-                        // store the temp language in the index so we can use it
-                        try {
-                            library.index.addTempTargetLanguage(newRequest.tempTargetLanguage)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-                } else {
-                    // make missing language codes usable even if we can't find the new language request
-                    val tl = library.index.getTargetLanguage(tt.targetLanguageId)
-                    if (tl == null) {
-                        Logger.i(
-                            TAG,
-                            "Importing missing language code " + tt.targetLanguageId + " from " + tt.id
-                        )
-                        val tempLanguage = TargetLanguage(
-                            tt.targetLanguageId,
-                            tt.targetLanguageName,
-                            "",
-                            tt.targetLanguageDirection,
-                            tt.targetLanguageRegion,
-                            false
-                        )
-                        try {
-                            library.index.addTempTargetLanguage(tempLanguage)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-                }
-            }
         }
         return migratedDir
     }

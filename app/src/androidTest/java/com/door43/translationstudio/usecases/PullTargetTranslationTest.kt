@@ -251,7 +251,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             result.status
         )
         assertNotNull("Message should not be null", result.message)
-        assertNotNull("Progress message should not be null", progressMessage)
+        assertNull("Progress message should be null", progressMessage)
     }
 
     @Test
