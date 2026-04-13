@@ -121,7 +121,7 @@ fun ValidationCard(
                                 ),
                                 shape = RoundedCornerShape(4.dp)
                             ) {
-                                Text(stringResource(R.string.review).uppercase())
+                                Text(stringResource(R.string.review))
                             }
                         }
                     }

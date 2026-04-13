@@ -94,7 +94,8 @@ class PublishActivity : BaseActivity() {
                         onExportToApp = ::exportToApp,
                         onLoginClick = ::door43Login,
                         onLogout = ::logout,
-                        onMergeConflict = ::openMergeConflict
+                        onMergeConflict = ::openMergeConflict,
+                        onNavigateBack = ::onBackPressedHandler
                     )
                 }
             }

@@ -56,7 +56,7 @@ fun ValidationSection(
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = stringResource(id = R.string.next).uppercase(),
+                            text = stringResource(id = R.string.next),
                             fontSize = 14.sp
                         )
                     }

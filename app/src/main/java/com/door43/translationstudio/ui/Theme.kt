@@ -57,7 +57,7 @@ val BorderDark = Color(0xFF333333)
 val ErrorLight = Color(0xFFFF0000)
 val ErrorDark = Color(0xFFFF8080)
 val WarningLight = Color(0xFFFF9800)
-val WarningDark = Color(0xFFFFCB80)
+val WarningDark = Color(0xFFC49C54)
 
 private val LightColors = lightColorScheme(
     primary = PrimaryBlueLight,
