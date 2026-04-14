@@ -30,7 +30,7 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
     protected open val isBootActivity: Boolean = false
 
     private var foreground: Foreground? = null
-    var isDarkTheme by mutableStateOf(false)
+    var isDarkTheme by mutableStateOf<Boolean?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,7 +101,7 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
         val (isDark, nightMode) = when (theme) {
             lightValue -> false to AppCompatDelegate.MODE_NIGHT_NO
             darkValue -> true to AppCompatDelegate.MODE_NIGHT_YES
-            systemValue -> true to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            systemValue -> null to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             else -> true to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         }
 

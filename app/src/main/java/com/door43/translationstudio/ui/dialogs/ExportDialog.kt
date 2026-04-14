@@ -253,7 +253,7 @@ fun ExportDialog(
     }
 
     state.info?.let {
-        InfoDialog(
+        ActionDialog(
             title = it.title,
             message = it.message,
             onDismiss = {
@@ -268,7 +268,7 @@ fun ExportDialog(
     }
 
     state.uploadError?.let {
-        InfoDialog(
+        ActionDialog(
             title = it.title,
             message = it.message,
             onDismiss = {
@@ -372,7 +372,7 @@ fun ExportDialog(
     }
 
     state.mergeConflict?.let { conflict ->
-        InfoDialog(
+        ActionDialog(
             title = conflict.title,
             message = conflict.message,
             onDismiss = { viewModel.onAction(ExportAction.ClearMergeConflict) },
@@ -465,7 +465,7 @@ private fun UploadSuccessDialog(
     var showUploadDetailsDialog by rememberSaveable { mutableStateOf(false) }
 
     if (!showUploadDetailsDialog) {
-        InfoDialog(
+        ActionDialog(
             onDismiss = onDismiss,
             title = stringResource(R.string.upload_complete),
             message = stringResource(R.string.project_uploaded_to, info.url)
@@ -497,7 +497,7 @@ private fun UploadSuccessDialog(
             }
         }
     } else {
-        InfoDialog(
+        ActionDialog(
             onDismiss = {
                 showUploadDetailsDialog = false
                 onDismiss()

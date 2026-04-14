@@ -118,7 +118,7 @@ fun FeedbackDialog(
     }
 
     state.uploadError?.let { error ->
-        InfoDialog(
+        ActionDialog(
             title = stringResource(R.string.upload_failed),
             message = error,
             onDismiss = { viewModel.onAction(FeedbackAction.ClearError) }

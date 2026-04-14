@@ -334,9 +334,9 @@ fun HomeScreen(
     if (showUpdateLibraryDialog) {
         UpdateLibraryDialog(
             triggerUpdate = triggerUpdateLibrary,
+            triggerUpdateConsumed = { triggerUpdateLibrary = false },
             onDismiss = {
                 showUpdateLibraryDialog = false
-                triggerUpdateLibrary = false
             }
         )
     }

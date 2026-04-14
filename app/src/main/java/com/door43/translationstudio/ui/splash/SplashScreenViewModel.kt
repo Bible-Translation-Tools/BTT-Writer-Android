@@ -12,9 +12,9 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
-import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.MigrateTranslations
 import com.door43.usecases.UpdateApp
 import com.door43.util.RuntimeWrapper
@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -39,7 +38,7 @@ data class SplashState(
 sealed interface SplashEvent {
     data object NavigateToProfile : SplashEvent
     data object NavigateToCrashReporter : SplashEvent
-    data object LaunchDirectoryPicker : SplashEvent
+    data object OpenDirToMigrate : SplashEvent
 }
 
 class SplashScreenViewModel(
@@ -80,7 +79,7 @@ class SplashScreenViewModel(
 
     fun onMigrationAccepted() {
         _state.update { it.copy(showMigrationDialog = false) }
-        viewModelScope.launch { _events.send(SplashEvent.LaunchDirectoryPicker) }
+        _events.trySend(SplashEvent.OpenDirToMigrate)
     }
 
     fun onMigrationDeclined() {
@@ -88,7 +87,7 @@ class SplashScreenViewModel(
         startAppLogic()
     }
 
-    fun onDirectoryPicked(uri: Uri?) {
+    fun performMigrate(uri: Uri?) {
         if (uri != null) {
             migrateOldAppdataFolder(uri)
         } else {
@@ -124,9 +123,7 @@ class SplashScreenViewModel(
     private fun startAppLogic() {
         val files = Logger.listStacktraces()
         if (files.isNotEmpty()) {
-            viewModelScope.launch {
-                _events.send(SplashEvent.NavigateToCrashReporter)
-            }
+            _events.trySend(SplashEvent.NavigateToCrashReporter)
             return
         }
 
@@ -138,7 +135,7 @@ class SplashScreenViewModel(
     }
 
     private fun onUpdateFinished() {
-        viewModelScope.launch { _events.send(SplashEvent.NavigateToProfile) }
+        _events.trySend(SplashEvent.NavigateToProfile)
     }
 
     private fun updateApp() {

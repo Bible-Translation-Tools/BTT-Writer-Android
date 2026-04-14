@@ -15,8 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +37,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.InfoDialog
+import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
 import org.unfoldingword.gogsclient.User
@@ -166,7 +164,7 @@ fun LoginScreen(
     }
 
     errorMessageId?.let {
-        InfoDialog(
+        ActionDialog(
             onDismiss = { errorMessageId = null },
             title = stringResource(R.string.error),
             message = stringResource(it)

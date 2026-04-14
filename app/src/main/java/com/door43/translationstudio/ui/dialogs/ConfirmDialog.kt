@@ -1,18 +1,11 @@
 package com.door43.translationstudio.ui.dialogs
 
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
 
 @Composable
@@ -46,35 +39,17 @@ fun ConfirmDialog(
     confirmText: String = stringResource(R.string.confirm),
     dismissText: String = stringResource(R.string.title_cancel)
 ) {
-    val scrollState = rememberScrollState()
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    ActionDialog(
+        onDismiss = onDismiss,
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        title = {
-            Text(
-                text = title
-            )
-        },
-        text = {
-            Text(
-                text = message,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .heightIn(max = 400.dp)
-                    .verticalScroll(scrollState)
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(text = confirmText)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = dismissText)
-            }
+        title = title,
+        message = message
+    ) {
+        TextButton(onClick = onDismiss) {
+            Text(text = dismissText)
         }
-    )
+        TextButton(onClick = onConfirm) {
+            Text(text = confirmText)
+        }
+    }
 }

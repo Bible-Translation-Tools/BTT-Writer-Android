@@ -27,7 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.dialogs.InfoDialog
+import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.TargetAction
@@ -174,7 +174,7 @@ fun ReviewModeSection(
                             )
                         }
                         is MarkAllDialogState.Result -> {
-                            InfoDialog(
+                            ActionDialog(
                                 onDismiss = {
                                     viewModel.onAction(
                                         ReviewAction.MarkAllDoneConfirmed(false)

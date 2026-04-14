@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.dialogs.InfoDialog
+import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
@@ -281,7 +281,7 @@ fun ImportDialog(
             },
             result.translation.id
         )
-        InfoDialog(
+        ActionDialog(
             title = stringResource(R.string.merge_conflict_title),
             message = message,
             onDismiss = {
@@ -338,7 +338,7 @@ fun ImportDialog(
     }
 
     state.resultMessage?.let { (title, message) ->
-        InfoDialog(
+        ActionDialog(
             title = title,
             message = message,
             onDismiss = {

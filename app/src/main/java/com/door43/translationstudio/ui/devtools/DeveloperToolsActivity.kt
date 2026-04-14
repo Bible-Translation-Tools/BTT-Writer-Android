@@ -33,7 +33,7 @@ class DeveloperToolsActivity : BaseActivity() {
         val versionCode = BuildConfig.VERSION_CODE
 
         setContent {
-            AppTheme {
+            AppTheme(darkTheme = isDarkTheme) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     DeveloperToolsScreen(
                         versionName = versionName,
@@ -42,7 +42,8 @@ class DeveloperToolsActivity : BaseActivity() {
                         systemResourcesMessage = systemResourcesMessage,
                         onDismissSystemResources = { systemResourcesMessage = null },
                         onDeleteLibrary = ::handleDeleteLibrary,
-                        onCalculateSystemResources = ::calculateSystemResources
+                        onCalculateSystemResources = ::calculateSystemResources,
+                        onNavigateBack = { finish() }
                     )
                 }
             }

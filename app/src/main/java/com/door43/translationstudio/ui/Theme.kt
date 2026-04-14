@@ -164,11 +164,13 @@ val AppTypography = Typography(
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean? = null,
     content: @Composable () -> Unit
 ) {
+    val isDark = darkTheme ?: isSystemInDarkTheme()
+
     val colorScheme = when {
-        darkTheme -> DarkColors
+        isDark -> DarkColors
         else -> LightColors
     }
 
@@ -177,7 +179,7 @@ fun AppTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
         }
     }
 

@@ -10,15 +10,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,11 +41,13 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.unfoldingword.tools.logger.Logger
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeveloperToolsScreen(
     viewModel: DeveloperViewModel = koinViewModel(),
@@ -50,7 +57,8 @@ fun DeveloperToolsScreen(
     systemResourcesMessage: String?,
     onDismissSystemResources: () -> Unit,
     onDeleteLibrary: () -> Unit,
-    onCalculateSystemResources: () -> Unit
+    onCalculateSystemResources: () -> Unit,
+    onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -97,6 +105,27 @@ fun DeveloperToolsScreen(
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.title_activity_developer))
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "back",
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { paddingValues ->
@@ -147,16 +176,15 @@ fun DeveloperToolsScreen(
     }
 
     if (state.keysRegenerated == true) {
-        AlertDialog(
-            onDismissRequest = viewModel::clearKeysRegenerated,
-            title = { Text(stringResource(R.string.success)) },
-            text = { Text("The SSH keys have been regenerated") },
-            confirmButton = {
-                TextButton(onClick = viewModel::clearKeysRegenerated) {
-                    Text(stringResource(R.string.dismiss))
-                }
+        ActionDialog(
+            onDismiss = viewModel::clearKeysRegenerated,
+            title = stringResource(R.string.success),
+            message = stringResource(R.string.ssh_keys_generated)
+        ) {
+            TextButton(onClick = viewModel::clearKeysRegenerated) {
+                Text(stringResource(R.string.dismiss))
             }
-        )
+        }
     }
 
     if (showLogDialog && state.logs.isNotEmpty()) {
@@ -171,16 +199,15 @@ fun DeveloperToolsScreen(
     }
 
     systemResourcesMessage?.let { message ->
-        AlertDialog(
-            onDismissRequest = onDismissSystemResources,
-            title = { Text(stringResource(R.string.system_resources_check)) },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(onClick = onDismissSystemResources) {
-                    Text(stringResource(R.string.label_close))
-                }
+        ActionDialog(
+            onDismiss = onDismissSystemResources,
+            title = stringResource(R.string.system_resources_check),
+            message = message
+        ) {
+            TextButton(onClick = onDismissSystemResources) {
+                Text(stringResource(R.string.label_close))
             }
-        )
+        }
     }
 
     progress?.let { progress ->

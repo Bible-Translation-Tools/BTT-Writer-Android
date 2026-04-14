@@ -16,7 +16,7 @@ import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.ResourceProvider
 import com.door43.translationstudio.core.TaskHandle
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_ALWAYS_SHARE
+import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_BACKUP_INTERVAL
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_COLOR_THEME
@@ -35,7 +35,6 @@ import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_P
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TRANSLATION_TYPEFACE
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TRANSLATION_TYPEFACE_SIZE
-import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.GogsLogout
@@ -62,7 +61,6 @@ data class SettingsState(
     val themeValues: List<String> = emptyList(),
     val currentThemeValue: String = "",
     val currentThemeName: String = "",
-    val alwaysShareEnabled: Boolean = false,
 
     // Font Data
     val isFontsLoading: Boolean = true,
@@ -177,11 +175,6 @@ class SettingsViewModel(
             val sourceSizeIndex = sizeValues.indexOf(sourceSizeValue).takeIf { it >= 0 } ?: 1
             val sourceSizeName = sizeNames.getOrNull(sourceSizeIndex) ?: sourceSizeValue
 
-            val alwaysShare = prefRepository.getDefaultPref(
-                KEY_PREF_ALWAYS_SHARE,
-                resourceProvider.getString(R.string.pref_default_always_share).toBoolean()
-            )
-
             // Server
 
             val serverNames = resourceProvider.getStringArray(R.array.content_server_names_array)
@@ -281,7 +274,6 @@ class SettingsViewModel(
                     languagesUrl = languagesUrl,
                     indexSqliteUrl = indexSqliteUrl,
                     tmLinksUrl = tmLinksUrl,
-                    alwaysShareEnabled = alwaysShare,
                     checkHardwareEnabled = checkHardwareEnabled,
                     tmLinksEnabled = tmLinksEnabled,
                     backupIntervalNames = intervalNames,
@@ -410,11 +402,6 @@ class SettingsViewModel(
         }
     }
 
-    fun setAlwaysShare(enabled: Boolean) {
-        prefRepository.setDefaultPref(KEY_PREF_ALWAYS_SHARE, enabled)
-        _state.update { it.copy(alwaysShareEnabled = enabled) }
-    }
-
     fun checkForLatestRelease() {
         launchWithProgress(
             resourceProvider.getString(R.string.checking_for_updates)
@@ -445,10 +432,6 @@ class SettingsViewModel(
                 it.copy(migrationFinished = true)
             }
         }
-    }
-
-    fun dismissMigrationFinishedDialog() {
-        _state.update { it.copy(migrationFinished = false) }
     }
 
     fun updateGitServerPort(newPort: String) {

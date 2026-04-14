@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.door43.translationstudio.App
 import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.AppTheme
@@ -24,11 +25,11 @@ class SettingsActivity : BaseActivity() {
 
         setContent {
             val viewModel: SettingsViewModel = koinViewModel()
-            val model by viewModel.state.collectAsStateWithLifecycle()
+            val state by viewModel.state.collectAsStateWithLifecycle()
 
             val lightValue = resources.getString(R.string.theme_value_light)
             val darkValue = resources.getString(R.string.theme_value_dark)
-            val isDark = when (model.currentThemeValue) {
+            val isDark = when (state.currentThemeValue) {
                 lightValue -> false
                 darkValue -> true
                 else -> isSystemInDarkTheme()
@@ -45,7 +46,8 @@ class SettingsActivity : BaseActivity() {
                     onNavigateToDeveloperTools = {
                         val intent = Intent(this, DeveloperToolsActivity::class.java)
                         startActivity(intent)
-                    }
+                    },
+                    onMigrationFinished = { App.restart() }
                 )
             }
         }

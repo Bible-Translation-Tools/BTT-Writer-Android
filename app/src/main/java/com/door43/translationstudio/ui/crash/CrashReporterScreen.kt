@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.dialogs.InfoDialog
+import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
 
@@ -130,7 +130,7 @@ fun CrashReporterScreen(
     }
 
     if (showUpdateAvailableDialog) {
-        InfoDialog(
+        ActionDialog(
             title = stringResource(R.string.apk_update_available),
             message = stringResource(R.string.upload_report_or_download_latest_apk),
             onDismiss = { showUpdateAvailableDialog = false }
@@ -171,7 +171,7 @@ fun CrashReporterScreen(
             R.string.internet_not_available
         }
         
-        InfoDialog(
+        ActionDialog(
             onDismiss = { showUploadErrorDialog = false },
             title = stringResource(R.string.upload_failed),
             message = stringResource(messageId)

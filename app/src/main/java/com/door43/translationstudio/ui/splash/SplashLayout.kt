@@ -27,15 +27,10 @@ fun SplashLayout(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.surface),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-//         Image(
-//             painter = painterResource(id = R.drawable.logo),
-//             contentDescription = null
-//         )
-
         Text(
             text = stringResource(id = R.string.welcome),
             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -61,7 +56,7 @@ fun SplashLayout(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = progress?.message?.let { stringResource(id = R.string.loading) } ?: "",
+            text = progress?.message ?: stringResource(R.string.loading),
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 2,

@@ -10,26 +10,45 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun InfoDialog(
-    title: String,
-    message: String,
+fun ActionDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String? = null,
+    message: String,
+    buttons: @Composable (onDismiss: () -> Unit) -> Unit
+) {
+    ActionDialog(
+        title = title,
+        message = AnnotatedString(message),
+        onDismiss = onDismiss,
+        modifier = modifier,
+        buttons = buttons
+    )
+}
+
+@Composable
+fun ActionDialog(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    message: AnnotatedString,
     buttons: @Composable (onDismiss: () -> Unit) -> Unit
 ) {
     val scrollState = rememberScrollState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = title?.let { { Text(it) } },
         text = {
             Text(
                 text = message,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.heightIn(max = 400.dp)
+                modifier = Modifier
+                    .heightIn(max = 400.dp)
                     .verticalScroll(scrollState)
             )
         },
@@ -39,6 +58,6 @@ fun InfoDialog(
                 onDismiss()
             }
         },
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(0.8f)
     )
 }

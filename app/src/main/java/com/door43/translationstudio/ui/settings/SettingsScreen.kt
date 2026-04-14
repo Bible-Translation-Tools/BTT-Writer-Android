@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,6 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.legal.LegalDocumentDialog
 import org.koin.androidx.compose.koinViewModel
@@ -42,7 +42,8 @@ fun SettingsScreen(
     appVersion: String,
     onNavigateBack: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToDeveloperTools: () -> Unit
+    onNavigateToDeveloperTools: () -> Unit,
+    onMigrationFinished: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -153,17 +154,6 @@ fun SettingsScreen(
                     title = stringResource(R.string.pref_title_source_typeface_size),
                     summary = state.currentSourceFontSizeName,
                     onClick = { showSourceFontSizeDialog = true }
-                )
-            }
-
-            item { HorizontalDivider() }
-
-            item {
-                CheckboxPreference(
-                    title = stringResource(R.string.pref_title_always_share),
-                    summary = stringResource(R.string.pref_description_always_share),
-                    checked = state.alwaysShareEnabled,
-                    onCheckedChange = { viewModel.setAlwaysShare(it) }
                 )
             }
 
@@ -378,66 +368,43 @@ fun SettingsScreen(
         }
     }
 
-    progress?.let { progressObj ->
-        ProgressDialog(
-            message = progressObj.message,
-            progress = progressObj.value
-        )
-    }
-
     state.releaseResult?.let { resultObj ->
         if (resultObj.release != null) {
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissUpdateResultDialog() },
-                title = { Text(stringResource(R.string.apk_update_available)) },
-                text = { Text(stringResource(R.string.download_latest_apk)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            viewModel.downloadLatestRelease(resultObj.release)
-                            viewModel.dismissUpdateResultDialog()
-                        }
-                    ) {
-                        Text(stringResource(R.string.label_ok))
-                    }
+            ConfirmDialog(
+                title = stringResource(R.string.apk_update_available),
+                message = stringResource(R.string.download_latest_apk),
+                onConfirm = {
+                    viewModel.downloadLatestRelease(resultObj.release)
+                    viewModel.dismissUpdateResultDialog()
                 },
-                dismissButton = {
-                    TextButton(
-                        onClick = { viewModel.dismissUpdateResultDialog() }
-                    ) {
-                        Text(stringResource(R.string.title_cancel))
-                    }
-                }
+                onDismiss = { viewModel.dismissUpdateResultDialog() },
+                confirmText = stringResource(R.string.label_ok)
             )
         } else {
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissUpdateResultDialog() },
-                title = { Text(stringResource(R.string.check_for_updates)) },
-                text = { Text(stringResource(R.string.have_latest_app_update)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = { viewModel.dismissUpdateResultDialog() }
-                    ) {
-                        Text(stringResource(R.string.label_ok))
-                    }
-                }
-            )
-        }
-    }
-
-    if (state.migrationFinished) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissMigrationFinishedDialog() },
-            title = {},
-            text = { Text(stringResource(R.string.migrating_complete)) },
-            confirmButton = {
+            ActionDialog(
+                onDismiss = { viewModel.dismissUpdateResultDialog() },
+                title = stringResource(R.string.check_for_updates),
+                message = stringResource(R.string.have_latest_app_update)
+            ) {
                 TextButton(
-                    onClick = { viewModel.dismissMigrationFinishedDialog() }
+                    onClick = { viewModel.dismissUpdateResultDialog() }
                 ) {
                     Text(stringResource(R.string.label_ok))
                 }
             }
-        )
+        }
+    }
+
+    if (state.migrationFinished) {
+        ActionDialog(
+            onDismiss = onMigrationFinished,
+            title = "",
+            message = stringResource(R.string.migrating_complete)
+        ) {
+            TextButton(onClick = onMigrationFinished) {
+                Text(stringResource(R.string.label_ok))
+            }
+        }
     }
 
     if (showThemeDialog) {
@@ -457,11 +424,10 @@ fun SettingsScreen(
     if (showTranslationFontDialog) {
         if (state.isFontsLoading) {
             // Show a simple loading dialog if they click it before IO finishes
-            AlertDialog(
-                onDismissRequest = { showTranslationFontDialog = false },
-                text = { CircularProgressIndicator() },
-                confirmButton = {}
-            )
+            ActionDialog(
+                onDismiss = { showTranslationFontDialog = false },
+                message = stringResource(R.string.loading)
+            ){}
         } else {
             ListPreferenceDialog(
                 title = stringResource(R.string.pref_title_translation_typeface),
@@ -494,11 +460,10 @@ fun SettingsScreen(
     if (showSourceFontDialog) {
         if (state.isFontsLoading) {
             // Show a simple loading dialog if they click it before IO finishes
-            AlertDialog(
-                onDismissRequest = { showSourceFontDialog = false },
-                text = { CircularProgressIndicator() },
-                confirmButton = {}
-            )
+            ActionDialog(
+                onDismiss = { showSourceFontDialog = false },
+                message = stringResource(R.string.loading)
+            ){}
         } else {
             ListPreferenceDialog(
                 title = stringResource(R.string.pref_title_source_typeface),
@@ -669,6 +634,13 @@ fun SettingsScreen(
         LegalDocumentDialog(
             htmlResourceId = resourceId,
             onDismissRequest = { openLegalDocumentId = null }
+        )
+    }
+
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
         )
     }
 }

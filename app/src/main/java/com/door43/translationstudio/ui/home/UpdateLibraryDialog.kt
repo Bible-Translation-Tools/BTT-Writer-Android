@@ -45,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.dialogs.InfoDialog
+import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.androidx.compose.koinViewModel
 
@@ -56,6 +56,7 @@ private const val UPDATE_OPTIONS_HELP_URL =
 fun UpdateLibraryDialog(
     modifier: Modifier = Modifier,
     triggerUpdate: Boolean = false,
+    triggerUpdateConsumed: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val viewModel: UpdateLibraryViewModel = koinViewModel()
@@ -86,6 +87,7 @@ fun UpdateLibraryDialog(
 
     LaunchedEffect(triggerUpdate) {
         if (triggerUpdate) {
+            triggerUpdateConsumed()
             viewModel.onAction(UpdateAction.UpdateSource)
         }
     }
@@ -219,7 +221,7 @@ fun UpdateLibraryDialog(
     }
 
     state.resultMessage?.let { (title, message) ->
-        InfoDialog(
+        ActionDialog(
             title = title,
             message = message,
             onDismiss = { viewModel.onAction(UpdateAction.ClearResult) }

@@ -28,7 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.SearchBar
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.dialogs.InfoDialog
+import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.LanguagesList
@@ -127,7 +127,7 @@ fun UsfmImportDialog(
         }
 
         UsfmStep.DONE -> {
-            InfoDialog(
+            ActionDialog(
                 title = stringResource(
                     if (state.importSuccess) R.string.title_import_usfm_results
                     else R.string.title_import_usfm_error
@@ -152,7 +152,7 @@ fun UsfmImportDialog(
     }
 
     state.infoMessage?.let { (title, message) ->
-        InfoDialog(
+        ActionDialog(
             title = title,
             message = message,
             onDismiss = onCloseDialog
@@ -333,7 +333,7 @@ private fun UsfmMergeConflictDialog(
 
     val fullMessage = "$message\n$warning"
 
-    InfoDialog(
+    ActionDialog(
         title = stringResource(R.string.merge_conflict_title),
         message = fullMessage,
         onDismiss = onCancel
