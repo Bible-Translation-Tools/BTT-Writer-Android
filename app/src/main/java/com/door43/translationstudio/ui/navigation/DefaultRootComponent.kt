@@ -106,10 +106,6 @@ class DefaultRootComponent(
             }
             is ProfileComponent.Result.LoggedIn -> {
                 navigation.replaceAll(Config.Home())
-
-                if (result.showTerms) {
-                    _events.trySend(RootComponent.Event.OpenTermsOfUse)
-                }
             }
         }
     }

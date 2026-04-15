@@ -2,12 +2,12 @@ package com.door43.translationstudio.ui.profile
 
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
-import com.arkivanov.decompose.DelicateDecomposeApi
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
-import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -19,7 +19,7 @@ import org.koin.core.component.inject
 
 class DefaultProfileComponent(
     componentContext: ComponentContext,
-    private val result: (ProfileComponent.Result) -> Unit,
+    private val result: (ProfileComponent.Result) -> Unit
 ) : ProfileComponent,
     ComponentContext by componentContext, KoinComponent {
 
@@ -44,7 +44,7 @@ class DefaultProfileComponent(
 
     init {
         if (profile.loggedIn) {
-            result(ProfileComponent.Result.LoggedIn(false))
+            result(ProfileComponent.Result.LoggedIn)
         }
     }
 
@@ -55,7 +55,7 @@ class DefaultProfileComponent(
         ProfileComponent.Config.Index -> ProfileComponent.Child.Index(
             component = DefaultProfileIndexComponent()
         )
-        ProfileComponent.Config.LoginDoor43 -> ProfileComponent.Child.LoginOnline(
+        ProfileComponent.Config.LoginOnline -> ProfileComponent.Child.LoginOnline(
             component = DefaultLoginOnlineComponent(
                 componentContext = componentContext,
                 result = ::onLoginOnlineResult,
@@ -67,34 +67,49 @@ class DefaultProfileComponent(
                 result = ::onLoginOfflineResult,
             )
         )
+        ProfileComponent.Config.TermsOfUse -> ProfileComponent.Child.TermsOfUse(
+            component = DefaultTermsOfUseComponent(
+                componentContext = componentContext,
+                result = ::onTermsOfUseResult,
+            )
+        )
     }
 
-    private fun onLoginOnlineResult(childResult: LoginOnlineComponent.Result) {
-        when (childResult) {
+    private fun onLoginOnlineResult(result: LoginOnlineComponent.Result) {
+        when (result) {
             LoginOnlineComponent.Result.Back -> navigation.pop()
             LoginOnlineComponent.Result.LoggedIn -> {
-                result(ProfileComponent.Result.LoggedIn(true))
+                navigation.bringToFront(ProfileComponent.Config.TermsOfUse)
             }
         }
     }
 
-    private fun onLoginOfflineResult(childResult: LoginOfflineComponent.Result) {
-        when (childResult) {
+    private fun onLoginOfflineResult(result: LoginOfflineComponent.Result) {
+        when (result) {
             LoginOfflineComponent.Result.Back -> navigation.pop()
             LoginOfflineComponent.Result.LoggedIn -> {
-                result(ProfileComponent.Result.LoggedIn(true))
+                navigation.bringToFront(ProfileComponent.Config.TermsOfUse)
             }
         }
     }
 
-    @OptIn(DelicateDecomposeApi::class)
-    override fun onLoginOnline() {
-        navigation.push(ProfileComponent.Config.LoginDoor43)
+    private fun onTermsOfUseResult(result: TermsOfUseComponent.Result) {
+        when (result) {
+            TermsOfUseComponent.Result.Rejected -> {
+                navigation.replaceAll(ProfileComponent.Config.Index)
+            }
+            TermsOfUseComponent.Result.Accepted -> {
+                result(ProfileComponent.Result.LoggedIn)
+            }
+        }
     }
 
-    @OptIn(DelicateDecomposeApi::class)
+    override fun onLoginOnline() {
+        navigation.bringToFront(ProfileComponent.Config.LoginOnline)
+    }
+
     override fun onLoginOffline() {
-        navigation.push(ProfileComponent.Config.LoginOffline)
+        navigation.bringToFront(ProfileComponent.Config.LoginOffline)
     }
 
     override fun onSettings() {
@@ -103,5 +118,13 @@ class DefaultProfileComponent(
 
     override fun onCancel() {
         result(ProfileComponent.Result.Back)
+    }
+
+    override fun onTermsAccepted() {
+        TODO("Not yet implemented")
+    }
+
+    override fun onTermsRejected() {
+        TODO("Not yet implemented")
     }
 }

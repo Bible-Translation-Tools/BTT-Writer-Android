@@ -21,8 +21,10 @@ class GogsLogout(
     fun execute() {
         // local user (non-server account)
         val user = profile.gogsUser ?: return
-        val tokenName = user.token.name
-        val tokenSha1 = user.token.toString()
+        val token = user.token ?: return
+
+        val tokenName = token.name
+        val tokenSha1 = token.toString()
 
         // uses Basic authorization scheme, token should be null
         user.password = tokenSha1

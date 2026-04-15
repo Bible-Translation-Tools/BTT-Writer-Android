@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.legal
+package com.door43.translationstudio.ui.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,15 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
+import com.door43.translationstudio.ui.legal.LegalDocumentDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TermsOfUseScreen(
-    onAccept: () -> Unit,
-    onReject: () -> Unit
-) {
+fun TermsOfUseScreen(component: TermsOfUseComponent) {
     var openLegalDocumentId by remember { mutableStateOf<Int?>(null) }
+
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -62,14 +64,14 @@ fun TermsOfUseScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = onReject,
+                    onClick = component::rejectTerms,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(stringResource(R.string.license_deny))
                 }
                 
                 Button(
-                    onClick = onAccept,
+                    onClick = component::acceptTerms,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(stringResource(R.string.license_accept))
@@ -120,6 +122,13 @@ fun TermsOfUseScreen(
         LegalDocumentDialog(
             htmlResourceId = resourceId,
             onDismissRequest = { openLegalDocumentId = null }
+        )
+    }
+
+    progress?.let { progress ->
+        ProgressDialog(
+            message = progress.message,
+            progress = progress.value
         )
     }
 }

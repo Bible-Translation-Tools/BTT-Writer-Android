@@ -17,7 +17,6 @@ import com.door43.translationstudio.ui.crash.CrashReporterActivity
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.home.HomeScreen
 import com.door43.translationstudio.ui.profile.ProfileRouter
-import com.door43.translationstudio.ui.profile.TermsOfUseActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.splash.SplashScreen
@@ -39,8 +38,6 @@ fun RootContent(
                     context.startActivity(Intent(context, CrashReporterActivity::class.java))
                 RootComponent.Event.OpenSettings ->
                     context.startActivity(Intent(context, SettingsActivity::class.java))
-                RootComponent.Event.OpenTermsOfUse ->
-                    context.startActivity(Intent(context, TermsOfUseActivity::class.java))
                 RootComponent.Event.ExitApp ->
                     activity?.finishAffinity()
                 is RootComponent.Event.OpenDraft -> {

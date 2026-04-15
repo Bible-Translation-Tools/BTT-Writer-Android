@@ -29,7 +29,6 @@ import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
 import com.door43.translationstudio.ui.home.ImportViewModel
 import com.door43.translationstudio.ui.home.UpdateLibraryViewModel
 import com.door43.translationstudio.ui.home.UsfmImportViewModel
-import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationModel
 import com.door43.translationstudio.ui.publish.PublishViewModel
 import com.door43.translationstudio.ui.settings.SettingsViewModel
@@ -144,7 +143,6 @@ val appModule = module {
     viewModelOf(::DownloadSourcesViewModel)
     viewModelOf(::NewTargetTranslationModel)
     viewModelOf(::SettingsViewModel)
-    viewModelOf(::TermsOfUseViewModel)
     viewModelOf(::SourceSelectionViewModel)
     viewModelOf(::PublishViewModel)
     viewModelOf(::UpdateLibraryViewModel)

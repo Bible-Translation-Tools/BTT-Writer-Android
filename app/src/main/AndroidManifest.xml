@@ -35,7 +35,6 @@
             android:name=".MainActivity"
             android:launchMode="singleTask"
             android:alwaysRetainTaskState="true"
-            android:label="@string/title_activity_target_translations"
             android:windowSoftInputMode="stateHidden|adjustPan"
             android:exported="true">
             <intent-filter>
@@ -58,9 +57,6 @@
                 <data android:host="*" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.profile.TermsOfUseActivity"
-            android:launchMode="singleTop" />
         <activity
             android:name=".ui.settings.SettingsActivity"
             android:launchMode="singleTop"

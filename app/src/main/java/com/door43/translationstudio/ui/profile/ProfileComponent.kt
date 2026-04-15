@@ -12,19 +12,22 @@ interface ProfileComponent {
 
     fun onLoginOnline()
     fun onLoginOffline()
+    fun onTermsAccepted()
+    fun onTermsRejected()
     fun onSettings()
     fun onCancel()
 
     sealed interface Result {
         data object Back : Result
         data object OpenSettings : Result
-        data class LoggedIn(val showTerms: Boolean) : Result
+        data object LoggedIn : Result
     }
 
     sealed interface Child {
         data class Index(val component: ProfileIndexComponent) : Child
         data class LoginOnline(val component: LoginOnlineComponent) : Child
         data class LoginOffline(val component: LoginOfflineComponent) : Child
+        data class TermsOfUse(val component: TermsOfUseComponent) : Child
     }
 
     @Serializable
@@ -33,9 +36,12 @@ interface ProfileComponent {
         data object Index : Config
 
         @Serializable
-        data object LoginDoor43 : Config
+        data object LoginOnline : Config
 
         @Serializable
         data object LoginOffline : Config
+
+        @Serializable
+        data object TermsOfUse : Config
     }
 }

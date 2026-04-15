@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui.profile
 
 import androidx.compose.runtime.Composable
 import com.arkivanov.decompose.extensions.compose.stack.Children
-import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 
@@ -18,13 +17,16 @@ fun ProfileRouter(component: ProfileComponent) {
                 onLoginOnline = component::onLoginOnline,
                 onLoginOffline = component::onLoginOffline,
                 onSettings = component::onSettings,
-                onCancel = component::onCancel,
+                onCancel = component::onCancel
             )
             is ProfileComponent.Child.LoginOnline -> LoginScreen(
-                component = instance.component,
+                component = instance.component
             )
             is ProfileComponent.Child.LoginOffline -> LoginOfflineScreen(
-                component = instance.component,
+                component = instance.component
+            )
+            is ProfileComponent.Child.TermsOfUse -> TermsOfUseScreen(
+                component = instance.component
             )
         }
     }
