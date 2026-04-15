@@ -53,7 +53,10 @@ class DefaultProfileComponent(
         componentContext: ComponentContext,
     ): ProfileComponent.Child = when (config) {
         ProfileComponent.Config.Index -> ProfileComponent.Child.Index(
-            component = DefaultProfileIndexComponent()
+            component = DefaultProfileIndexComponent(
+                componentContext = componentContext,
+                onResult = ::onProfileIndexResult
+            )
         )
         ProfileComponent.Config.LoginOnline -> ProfileComponent.Child.LoginOnline(
             component = DefaultLoginOnlineComponent(
@@ -73,6 +76,23 @@ class DefaultProfileComponent(
                 result = ::onTermsOfUseResult,
             )
         )
+    }
+
+    private fun onProfileIndexResult(result: ProfileIndexComponent.Result) {
+        when (result) {
+            ProfileIndexComponent.Result.LoginOnline -> {
+                navigation.bringToFront(ProfileComponent.Config.LoginOnline)
+            }
+            ProfileIndexComponent.Result.LoginOffline -> {
+                navigation.bringToFront(ProfileComponent.Config.LoginOffline)
+            }
+            ProfileIndexComponent.Result.Settings -> {
+                result(ProfileComponent.Result.OpenSettings)
+            }
+            ProfileIndexComponent.Result.Cancel -> {
+                result(ProfileComponent.Result.Back)
+            }
+        }
     }
 
     private fun onLoginOnlineResult(result: LoginOnlineComponent.Result) {
@@ -102,29 +122,5 @@ class DefaultProfileComponent(
                 result(ProfileComponent.Result.LoggedIn)
             }
         }
-    }
-
-    override fun onLoginOnline() {
-        navigation.bringToFront(ProfileComponent.Config.LoginOnline)
-    }
-
-    override fun onLoginOffline() {
-        navigation.bringToFront(ProfileComponent.Config.LoginOffline)
-    }
-
-    override fun onSettings() {
-        result(ProfileComponent.Result.OpenSettings)
-    }
-
-    override fun onCancel() {
-        result(ProfileComponent.Result.Back)
-    }
-
-    override fun onTermsAccepted() {
-        TODO("Not yet implemented")
-    }
-
-    override fun onTermsRejected() {
-        TODO("Not yet implemented")
     }
 }

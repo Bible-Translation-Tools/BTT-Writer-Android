@@ -32,11 +32,8 @@ import com.door43.translationstudio.ui.components.SidebarAction
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    registerUrl: String,
-    onLoginOnline: () -> Unit,
-    onLoginOffline: () -> Unit,
-    onSettings: () -> Unit,
-    onCancel: () -> Unit
+    component: ProfileIndexComponent,
+    registerUrl: String
 ) {
     val uriHandler = LocalUriHandler.current
 
@@ -49,7 +46,7 @@ fun ProfileScreen(
                     SidebarAction(
                         title = stringResource(R.string.action_settings),
                         icon = Icons.Default.Settings,
-                        onClick = onSettings
+                        onClick = component::settings
                     )
                 )
             )
@@ -71,7 +68,7 @@ fun ProfileScreen(
                 ProfileOptionCard(
                     title = stringResource(R.string.login_doo43),
                     subtitle = stringResource(R.string.requires_internet),
-                    onClick = onLoginOnline
+                    onClick = component::loginOnline
                 )
 
                 ProfileOptionCard(
@@ -85,13 +82,13 @@ fun ProfileScreen(
                 ProfileOptionCard(
                     title = stringResource(R.string.create_offline_profile),
                     subtitle = stringResource(R.string.still_possible_to_register_door43),
-                    onClick = onLoginOffline
+                    onClick = component::loginOffline
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
 
                 Button(
-                    onClick = onCancel,
+                    onClick = component::cancel,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         contentColor = MaterialTheme.colorScheme.onSurface

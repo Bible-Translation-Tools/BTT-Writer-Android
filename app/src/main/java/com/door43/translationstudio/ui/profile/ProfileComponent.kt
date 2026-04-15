@@ -10,13 +10,6 @@ interface ProfileComponent {
 
     val registerUrl: String
 
-    fun onLoginOnline()
-    fun onLoginOffline()
-    fun onTermsAccepted()
-    fun onTermsRejected()
-    fun onSettings()
-    fun onCancel()
-
     sealed interface Result {
         data object Back : Result
         data object OpenSettings : Result

@@ -13,11 +13,8 @@ fun ProfileRouter(component: ProfileComponent) {
     ) { child ->
         when (val instance = child.instance) {
             is ProfileComponent.Child.Index -> ProfileScreen(
-                registerUrl = component.registerUrl,
-                onLoginOnline = component::onLoginOnline,
-                onLoginOffline = component::onLoginOffline,
-                onSettings = component::onSettings,
-                onCancel = component::onCancel
+                component = instance.component,
+                registerUrl = component.registerUrl
             )
             is ProfileComponent.Child.LoginOnline -> LoginScreen(
                 component = instance.component
