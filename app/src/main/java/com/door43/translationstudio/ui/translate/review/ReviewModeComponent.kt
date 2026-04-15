@@ -2,7 +2,7 @@ package com.door43.translationstudio.ui.translate.review
 
 import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
@@ -20,6 +20,7 @@ import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.LinkData
+import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.spannables.ArticleLinkSpan
 import com.door43.translationstudio.rendering.spannables.PassageLinkSpan
 import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
@@ -27,23 +28,23 @@ import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
-import com.door43.translationstudio.ui.translate.ModeAction
-import com.door43.translationstudio.ui.translate.ModeState
-import com.door43.translationstudio.ui.translate.ModeViewModel
+import com.door43.translationstudio.ui.translate.FootnoteAction
+import com.door43.translationstudio.ui.translate.ModeComponent
+import com.door43.translationstudio.ui.translate.ModeComponent.Action
 import com.door43.translationstudio.ui.translate.ReviewItem
-import com.door43.translationstudio.ui.translate.SharedTranslationState
-import com.door43.translationstudio.ui.translate.TargetEvent
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.SEARCH_SOURCE
+import com.door43.translationstudio.ui.translate.TranslateComponent
+import com.door43.translationstudio.ui.translate.TranslateComponent.Companion.SEARCH_SOURCE
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.RenderHelps
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -136,69 +137,82 @@ sealed class MarkAllDialogState {
     data class Result(val marked: Int, val total: Int) : MarkAllDialogState()
 }
 
-data class ReviewState(
-    val resourcesOpen: Boolean = false,
-    val help: Help? = null,
-    val url: String? = null,
-    val chunkToDone: ReviewItem? = null,
-    val search: SearchState? = null,
-    val markAllDoneState: MarkAllDialogState? = null,
-    val mergeConflictFilterOn: Boolean = false
-) : ModeState
+interface ReviewModeComponent : ModeComponent<ReviewItem> {
 
-sealed interface ReviewAction : ModeAction {
-    data class ItemTextChanged(val item: ReviewItem, val text: String) : ReviewAction
-    data class OpenResources(val value: Boolean) : ReviewAction
-    data class RenderHelps(val item: ReviewItem) : ReviewAction
-    data class OpenHelp(val item: HelpItem) : ReviewAction
-    data class OpenIndex(val rcSlug: String) : ReviewAction
-    data class OpenWord(val rcSlug: String, val slug: String) : ReviewAction
-    data class ToggleEdit(val item: ReviewItem) : ReviewAction
-    data class ToggleDoneClicked(val item: ReviewItem) : ReviewAction
-    data class ToggleDoneConfirmed(val confirm: Boolean) : ReviewAction
-    data object MarkAllDoneClicked : ReviewAction
-    data class MarkAllDoneConfirmed(val confirm: Boolean) : ReviewAction
-    data class Undo(val item: ReviewItem) : ReviewAction
-    data class Redo(val item: ReviewItem) : ReviewAction
-    data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : ReviewAction
-    data object ClearHelp : ReviewAction
-    data object CleanUrl : ReviewAction
-    data object OpenSearch : ReviewAction
-    data object CloseSearch : ReviewAction
-    data class UpdateSearchQuery(val query: String) : ReviewAction
-    data class SetSearchSubject(val subject: SearchSubject) : ReviewAction
-    data object NextMatch : ReviewAction
-    data object PrevMatch : ReviewAction
-    data class DragDropVerse(
-        val item: ReviewItem,
-        val machineReadable: String,
-        val verseRawStart: Int,
-        val verseRawEnd: Int,
-        val targetRawPosition: Int
-    ) : ReviewAction
-    data class SelectConflict(val item: ReviewItem, val index: Int) : ReviewAction
-    data class SetMergeConflictFilterOn(val value: Boolean) : ReviewAction
+    override val state: StateFlow<State>
+    val filteredItems: StateFlow<List<ReviewItem>>
+
+    data class State(
+        val resourcesOpen: Boolean = false,
+        val help: Help? = null,
+        val url: String? = null,
+        val chunkToDone: ReviewItem? = null,
+        val search: SearchState? = null,
+        val markAllDoneState: MarkAllDialogState? = null,
+        val mergeConflictFilterOn: Boolean = false,
+        override val footnote: Footnote? = null
+    ) : ModeComponent.State
+
+    sealed interface Action : ModeComponent.Action {
+        data class ItemTextChanged(val item: ReviewItem, val text: String) : Action
+        data class OpenResources(val value: Boolean) : Action
+        data class RenderHelps(val item: ReviewItem) : Action
+        data class OpenHelp(val item: HelpItem) : Action
+        data class OpenIndex(val rcSlug: String) : Action
+        data class OpenWord(val rcSlug: String, val slug: String) : Action
+        data class ToggleEdit(val item: ReviewItem) : Action
+        data class ToggleDoneClicked(val item: ReviewItem) : Action
+        data class ToggleDoneConfirmed(val confirm: Boolean) : Action
+        data object MarkAllDoneClicked : Action
+        data class MarkAllDoneConfirmed(val confirm: Boolean) : Action
+        data class Undo(val item: ReviewItem) : Action
+        data class Redo(val item: ReviewItem) : Action
+        data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : Action
+        data object ClearHelp : Action
+        data object CleanUrl : Action
+        data object OpenSearch : Action
+        data object CloseSearch : Action
+        data class UpdateSearchQuery(val query: String) : Action
+        data class SetSearchSubject(val subject: SearchSubject) : Action
+        data object NextMatch : Action
+        data object PrevMatch : Action
+        data class DragDropVerse(
+            val item: ReviewItem,
+            val machineReadable: String,
+            val verseRawStart: Int,
+            val verseRawEnd: Int,
+            val targetRawPosition: Int
+        ) : Action
+        data class SelectConflict(val item: ReviewItem, val index: Int) : Action
+        data class SetMergeConflictFilterOn(val value: Boolean) : Action
+    }
 }
 
-class ReviewModeViewModel(
-    sharedState: StateFlow<SharedTranslationState>,
-    eventSender: SendChannel<TargetEvent>,
-    private val prefRepository: IPreferenceRepository,
-    private val renderHelps: RenderHelps,
-    private val renderingProvider: RenderingProvider,
-    private val library: Door43Client,
-) : ModeViewModel<ReviewItem>(
-    sharedState,
-    eventSender,
-    TranslationViewMode.REVIEW
-), KoinComponent, ProgressOwner {
+class DefaultReviewModeComponent(
+    componentContext: ComponentContext,
+    private val sharedState: StateFlow<TranslateComponent.SharedState>,
+    private val eventSender: SendChannel<TranslateComponent.Event>,
+    private val loadChunks: suspend (TranslationViewMode) -> List<Chunk>
+) : ReviewModeComponent,
+    ComponentContext by componentContext,
+    KoinComponent, ComponentScope,
+    ProgressOwner, ModeComponent<ReviewItem> {
 
     private val application: Application by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val renderHelps: RenderHelps by inject()
+    private val renderingProvider: RenderingProvider by inject()
+    private val library: Door43Client by inject()
 
-    private val _state = MutableStateFlow(ReviewState())
-    val state: StateFlow<ReviewState> = _state
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-    private val progressManager = ProgressManager(viewModelScope)
+    private val _state = MutableStateFlow(ReviewModeComponent.State())
+    override val state: StateFlow<ReviewModeComponent.State> = _state
+
+    private val _items = MutableStateFlow<List<ReviewItem>>(emptyList())
+    override val items: StateFlow<List<ReviewItem>> = _items
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
     private val sourceContainer: ResourceContainer?
@@ -209,7 +223,7 @@ class ReviewModeViewModel(
     }.distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val filteredItems: StateFlow<List<ReviewItem>> =
+    override val filteredItems: StateFlow<List<ReviewItem>> =
         combine(items, searchConfig) { items, config ->
             items to config
         }
@@ -219,7 +233,7 @@ class ReviewModeViewModel(
             .onEach(::updateSearchMetadata)
             .flowOn(Dispatchers.Default)
             .stateIn(
-                scope = viewModelScope,
+                scope = coroutineScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
@@ -228,59 +242,95 @@ class ReviewModeViewModel(
         sharedState
             .map { it.resourceContainer }
             .distinctUntilChanged()
-            .onEach {
-                if (_state.value.resourcesOpen) {
-                    _state.update { it.copy(help = null) }
-                }
-            }
-            .launchIn(viewModelScope)
+            .onEach { handleResourceChange() }
+            .launchIn(coroutineScope)
+    }
+
+    override suspend fun handleResourceChange() {
+        if (_state.value.resourcesOpen && _state.value.help != null) {
+            _state.update { it.copy(help = null) }
+        }
+        val chunks = loadChunks(TranslationViewMode.REVIEW)
+        mapChunksToItems(chunks)
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    override fun mapToChildType(chunks: List<Chunk>) {
-        viewModelScope.launch {
-            val items = withContext(Dispatchers.Default) {
-                chunks
-                    .chunked(5)
-                    .flatMap { batch ->
-                        batch.map { async { prepareItem(it) } }
-                    }.awaitAll()
-            }
-            updateItems(items)
+    override fun onAction(action: Action) {
+        when (action) {
+            is Action.OpenFootnote -> onShowFootnote(action.note)
+            is Action.DeleteNote -> onDeleteFootnote(action.note)
+            is Action.SaveFootnote -> onSaveFootnote(action.note)
+            is Action.ClearFootnote -> { _state.update { it.copy(footnote = null) } }
+            is ReviewModeComponent.Action.OpenResources -> openResources(action.value)
+            is ReviewModeComponent.Action.RenderHelps -> onRenderHelps(action.item)
+            is ReviewModeComponent.Action.OpenHelp -> onOpenHelpItem(action.item)
+            is ReviewModeComponent.Action.OpenIndex -> openIndex(action.rcSlug)
+            is ReviewModeComponent.Action.OpenWord -> renderWord(action.rcSlug, action.slug)
+            is ReviewModeComponent.Action.ToggleEdit -> toggleEdit(action.item)
+            is ReviewModeComponent.Action.ToggleDoneClicked -> toggleDoneClicked(action.item)
+            is ReviewModeComponent.Action.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
+            is ReviewModeComponent.Action.MarkAllDoneConfirmed -> markAllDoneConfirmed(action.confirm)
+            is ReviewModeComponent.Action.ItemTextChanged -> onItemTextChanged(action.item, action.text)
+            is ReviewModeComponent.Action.Undo -> onUndo(action.item)
+            is ReviewModeComponent.Action.Redo -> onRedo(action.item)
+            is ReviewModeComponent.Action.AddNoteClicked -> onAddNoteClicked(action.item, action.caretPosition)
+            is ReviewModeComponent.Action.DragDropVerse -> onDragDropVerse(action)
+            is ReviewModeComponent.Action.UpdateSearchQuery -> updateSearchQuery(action.query)
+            is ReviewModeComponent.Action.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
+            is ReviewModeComponent.Action.SelectConflict -> selectConflict(action.item, action.index)
+            is ReviewModeComponent.Action.SetMergeConflictFilterOn -> setMergeConflictFilterOn(action.value)
+            is ReviewModeComponent.Action.MarkAllDoneClicked -> markAllDoneClicked()
+            is ReviewModeComponent.Action.ClearHelp -> _state.update { it.copy(help = null) }
+            is ReviewModeComponent.Action.CleanUrl -> _state.update { it.copy(url = null) }
+            is ReviewModeComponent.Action.OpenSearch -> openSearch()
+            is ReviewModeComponent.Action.CloseSearch -> closeSearch()
+            is ReviewModeComponent.Action.NextMatch -> navigateMatch(forward = true)
+            is ReviewModeComponent.Action.PrevMatch -> navigateMatch(forward = false)
         }
     }
 
-    override fun onAction(action: ModeAction) {
-        super.onAction(action)
-        when (action) {
-            is ReviewAction.OpenResources -> openResources(action.value)
-            is ReviewAction.RenderHelps -> onRenderHelps(action.item)
-            is ReviewAction.OpenHelp -> onOpenHelpItem(action.item)
-            is ReviewAction.OpenIndex -> openIndex(action.rcSlug)
-            is ReviewAction.OpenWord -> renderWord(action.rcSlug, action.slug)
-            is ReviewAction.ToggleEdit -> toggleEdit(action.item)
-            is ReviewAction.ToggleDoneClicked -> toggleDoneClicked(action.item)
-            is ReviewAction.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
-            is ReviewAction.MarkAllDoneConfirmed -> markAllDoneConfirmed(action.confirm)
-            is ReviewAction.ItemTextChanged -> onItemTextChanged(action.item, action.text)
-            is ReviewAction.Undo -> onUndo(action.item)
-            is ReviewAction.Redo -> onRedo(action.item)
-            is ReviewAction.AddNoteClicked -> onAddNoteClicked(action.item, action.caretPosition)
-            is ReviewAction.DragDropVerse -> onDragDropVerse(action)
-            is ReviewAction.UpdateSearchQuery -> updateSearchQuery(action.query)
-            is ReviewAction.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
-            is ReviewAction.SelectConflict -> selectConflict(action.item, action.index)
-            is ReviewAction.SetMergeConflictFilterOn -> setMergeConflictFilterOn(action.value)
-            is ReviewAction.MarkAllDoneClicked -> markAllDoneClicked()
-            is ReviewAction.ClearHelp -> _state.update { it.copy(help = null) }
-            is ReviewAction.CleanUrl -> _state.update { it.copy(url = null) }
-            is ReviewAction.OpenSearch -> openSearch()
-            is ReviewAction.CloseSearch -> closeSearch()
-            is ReviewAction.NextMatch -> navigateMatch(forward = true)
-            is ReviewAction.PrevMatch -> navigateMatch(forward = false)
+    override fun updateItem(item: ReviewItem) {
+        _items.value =  _items.value.map {
+            if (it.id == item.id) item else it
+        }
+    }
+
+    override fun updateItems(items: List<ReviewItem>) {
+        _items.value = items
+    }
+
+    override fun onNoteClicked(
+        note: RenderNode.Note,
+        chunkId: String,
+        action: FootnoteAction
+    ) {
+        _state.update {
+            it.copy(
+                footnote = Footnote(
+                    text = note.notes,
+                    machineReadable = note.machineReadable,
+                    chunkId = chunkId,
+                    start = note.startPos,
+                    end = note.endPos,
+                    action = action
+                )
+            )
+        }
+    }
+
+    override fun onShowFootnote(note: Footnote) {
+        _state.update { it.copy(footnote = note) }
+    }
+
+    private fun mapChunksToItems(chunks: List<Chunk>) {
+        launchWithProgress(application.getString(R.string.loading_sources)) {
+            val items = withContext(Dispatchers.Default) {
+                chunks.map { prepareItem(it) }
+            }
+            updateItems(items)
         }
     }
 
@@ -366,7 +416,9 @@ class ReviewModeViewModel(
             translationFormat = chunk.targetTranslationFormat,
             targetText = text,
             verseDisplay = verseDisplay,
-            footnoteEditable = targetMode != TargetMode.COMPLETE,
+            footnoteAction = if (targetMode != TargetMode.COMPLETE) {
+                FootnoteAction.ACTIONS
+            } else FootnoteAction.VIEW,
             searchQuery = searchQuery,
             onVerseClick = {
                 showSnackBar(application.getString(R.string.long_click_to_drag))
@@ -374,9 +426,9 @@ class ReviewModeViewModel(
         )
     }
 
-    private fun onDragDropVerse(action: ReviewAction.DragDropVerse) {
+    private fun onDragDropVerse(action: ReviewModeComponent.Action.DragDropVerse) {
         val item = action.item
-        viewModelScope.launch {
+        coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 val originalText = fetchTargetText(
                     item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
@@ -516,7 +568,9 @@ class ReviewModeViewModel(
             translationFormat = item.chunk.targetTranslationFormat,
             targetText = item.targetText,
             verseDisplay = verseDisplay,
-            footnoteEditable = item.targetMode != TargetMode.COMPLETE,
+            footnoteAction = if (item.targetMode != TargetMode.COMPLETE) {
+                FootnoteAction.ACTIONS
+            } else FootnoteAction.VIEW,
             searchQuery = if (!searchSource) query else null,
             onVerseClick = {
                 showSnackBar(application.getString(R.string.long_click_to_drag))
@@ -560,7 +614,7 @@ class ReviewModeViewModel(
     }
 
     private fun selectConflict(item: ReviewItem, index: Int) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 item.mergeItems.getOrNull(index)?.let { conflict ->
                     item.saveTranslation(conflict.toString())
@@ -583,7 +637,7 @@ class ReviewModeViewModel(
     private fun onRenderHelps(item: ReviewItem) {
         if (!item.helps.isEmpty()) return
 
-        viewModelScope.launch {
+        coroutineScope.launch {
             val helps = withContext(Dispatchers.IO) {
                 renderHelps.execute(item.chunk)
             }
@@ -610,7 +664,7 @@ class ReviewModeViewModel(
     }
 
     private fun renderWord(rcSlug: String, chapterSlug: String) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 getResourceContainer(rcSlug)?.let { twRc ->
                     val word = twRc.readChunk(chapterSlug, "01")
@@ -732,7 +786,7 @@ class ReviewModeViewModel(
     }
 
     private fun openIndex(rcSlug: String) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             val words = withContext(Dispatchers.IO) {
                 getResourceContainer(rcSlug)?.let { rc ->
                     val chapters = rc.chapters()
@@ -752,7 +806,7 @@ class ReviewModeViewModel(
     }
 
     private fun toggleEdit(item: ReviewItem) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             doToggleEdit(item)
         }
     }
@@ -832,7 +886,7 @@ class ReviewModeViewModel(
     }
 
     private fun toggleDoneClicked(item: ReviewItem) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             val shouldComplete = item.targetMode != TargetMode.COMPLETE
             if (shouldComplete) {
                 _state.value = _state.value.copy(chunkToDone = item)
@@ -843,7 +897,7 @@ class ReviewModeViewModel(
     }
 
     private fun toggleDoneConfirmed(confirm: Boolean) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             if (confirm) {
                 _state.value.chunkToDone?.let { item ->
                     updateDoneStatus(item, true)
@@ -901,7 +955,7 @@ class ReviewModeViewModel(
                 }
 
                 val chunks = items.value.map { it.chunk }
-                mapToChildType(chunks)
+                mapChunksToItems(chunks)
 
                 marked
             }
@@ -1037,7 +1091,7 @@ class ReviewModeViewModel(
     }
 
     private fun onItemTextChanged(item: ReviewItem, text: String) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             item.saveTranslation(text)
         }
     }
@@ -1064,7 +1118,7 @@ class ReviewModeViewModel(
         item: ReviewItem,
         navigate: (FileHistory) -> RevCommit?
     ) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 val history = item.fileHistory ?: return@withContext
                 val commit = navigate(history) ?: return@withContext
@@ -1073,14 +1127,14 @@ class ReviewModeViewModel(
                     history.read(commit)
                 } catch (e: IllegalStateException) {
                     Logger.w(
-                        this@ReviewModeViewModel::class.simpleName,
+                        this@DefaultReviewModeComponent::class.simpleName,
                         "History navigation past end of file history",
                         e
                     )
                     ""
                 } catch (e: Exception) {
                     Logger.w(
-                        this@ReviewModeViewModel::class.simpleName,
+                        this@DefaultReviewModeComponent::class.simpleName,
                         "History read exception",
                         e
                     )
@@ -1095,7 +1149,7 @@ class ReviewModeViewModel(
                     translationFormat = item.chunk.targetTranslationFormat,
                     targetText = text,
                     verseDisplay = VerseDisplay.RAW,
-                    footnoteEditable = true
+                    footnoteAction = FootnoteAction.ACTIONS
                 )
                 updateItem(item.copy(
                     targetText = text,
@@ -1106,13 +1160,13 @@ class ReviewModeViewModel(
     }
 
     private fun onAddNoteClicked(item: ReviewItem, caretPosition: Int = -1) {
-        showFootnoteEditor(
+        onShowFootnote(
             Footnote(
                 text = "",
                 machineReadable = "",
                 chunkId = item.id,
-                editable = true,
-                insertPosition = caretPosition
+                insertPosition = caretPosition,
+                action = FootnoteAction.EDIT
             )
         )
     }
@@ -1131,18 +1185,13 @@ class ReviewModeViewModel(
         }
     }
 
-    override fun onDeleteFootnote(note: Footnote) {
-        super.onDeleteFootnote(note)
+    private fun onDeleteFootnote(note: Footnote) {
+        _state.update { it.copy(footnote = null) }
         replaceFootnoteInTarget(note, replacement = "")
     }
 
-    override fun onOpenFootnoteEditor(note: Footnote) {
-        super.onOpenFootnoteEditor(note)
-        showFootnoteEditor(note)
-    }
-
-    override fun onSaveFootnote(note: Footnote) {
-        super.onSaveFootnote(note)
+    private fun onSaveFootnote(note: Footnote) {
+        _state.update { it.copy(footnote = null) }
         val newCode = if (note.text.isNotEmpty()) {
             USFMNoteSpan.generateFootnote(note.text).machineReadable
         } else ""
@@ -1196,7 +1245,7 @@ class ReviewModeViewModel(
     }
 
     private fun saveAndRefreshItem(item: ReviewItem, newText: String) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 item.saveTranslation(newText)
                 updateItem(prepareItem(item.chunk, item.targetMode))
@@ -1215,5 +1264,13 @@ class ReviewModeViewModel(
 
     private fun getResourceContainer(slug: String): ResourceContainer? {
         return ContainerCache.get(slug)
+    }
+
+    private fun showSnackBar(message: String) {
+        eventSender.trySend(TranslateComponent.Event.ShowMessage(message))
+    }
+
+    private fun restartAutoCommitTimer() {
+        eventSender.trySend(TranslateComponent.Event.RestartAutoCommitTimer)
     }
 }

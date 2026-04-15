@@ -12,29 +12,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ActionDialog
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SplashScreen(
-    viewModel: SplashScreenViewModel = koinViewModel(),
-    onNavigateToProfile: () -> Unit,
-    onNavigateToCrashReporter: () -> Unit
+    component: SplashComponent,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val openDirToMigrateLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
-        viewModel.performMigrate(uri)
+        component.performMigrate(uri)
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+    LaunchedEffect(component) {
+        component.event.collect { event ->
             when (event) {
-                is SplashEvent.NavigateToProfile -> onNavigateToProfile()
-                is SplashEvent.NavigateToCrashReporter -> onNavigateToCrashReporter()
-                is SplashEvent.OpenDirToMigrate -> openDirToMigrateLauncher.launch(null)
+                is SplashComponent.Event.OpenDirToMigrate -> {
+                    openDirToMigrateLauncher.launch(null)
+                }
             }
         }
     }
@@ -47,10 +44,10 @@ fun SplashScreen(
             title = stringResource(R.string.slow_device),
             message = stringResource(R.string.min_hardware_req_not_met),
         ) {
-            TextButton(onClick = viewModel::onHardwareWarningDismissedAndSaved) {
+            TextButton(onClick = component::onHardwareWarningDismissedAndSaved) {
                 Text(stringResource(R.string.do_not_show_again))
             }
-            TextButton(onClick = viewModel::onHardwareWarningContinued) {
+            TextButton(onClick = component::onHardwareWarningContinued) {
                 Text(stringResource(R.string.label_continue))
             }
         }
@@ -62,10 +59,10 @@ fun SplashScreen(
             title = stringResource(R.string.migrate_from_old_app),
             message = stringResource(R.string.migrate_from_old_app_description)
         ) {
-            TextButton(onClick = viewModel::onMigrationDeclined) {
+            TextButton(onClick = component::onMigrationDeclined) {
                 Text(stringResource(R.string.no))
             }
-            TextButton(onClick = viewModel::onMigrationAccepted) {
+            TextButton(onClick = component::onMigrationAccepted) {
                 Text(stringResource(R.string.yes))
             }
         }

@@ -1,19 +1,13 @@
 package com.door43.translationstudio
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.Application
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Process
 import android.text.TextUtils
-import android.view.View
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.preference.PreferenceManager
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
@@ -84,14 +78,9 @@ class App : Application() {
         PreferenceManager.setDefaultValues(this, R.xml.server_preferences, false)
         PreferenceManager.setDefaultValues(this, R.xml.sharing_preferences, false)
         PreferenceManager.setDefaultValues(this, R.xml.advanced_preferences, false)
-
-        val defaultColorTheme = resources.getString(R.string.pref_default_color_theme)
-        val colorTheme = prefRepository.getDefaultPref(SettingsActivity.KEY_PREF_COLOR_THEME, defaultColorTheme)
-        updateColorTheme(colorTheme)
     }
 
     companion object {
-        const val PUBLIC_DATA_DIR: String = "BTT-Writer"
         const val TAG: String = "App"
         const val MIN_CHECKING_LEVEL: Int = 3
         // 96 MB, Minimum RAM needed for reliable operation
@@ -147,15 +136,6 @@ class App : Application() {
                 return !TextUtils.isEmpty(installer)
             }
 
-        val isTablet: Boolean
-            /**
-             * Checks if the device is a tablet
-             * @return
-             */
-            get() = ((instance.resources.configuration.screenLayout
-                    and Configuration.SCREENLAYOUT_SIZE_MASK)
-                    >= Configuration.SCREENLAYOUT_SIZE_LARGE)
-
         /**
          * Returns the unique device id for this device
          * @return
@@ -163,38 +143,6 @@ class App : Application() {
         @SuppressLint("HardwareIds")
         fun udid(): String {
             return Build.MODEL.lowercase().replace(" ", "_")
-        }
-
-        /**
-         * shows the keyboard in the given activity and view
-         * @param activity
-         * @param view
-         */
-        fun showKeyboard(activity: Activity?, view: View?) {
-            if (activity != null && view != null) {
-                val controller = WindowCompat.getInsetsController(activity.window, view)
-                controller.show(WindowInsetsCompat.Type.ime())
-            }
-        }
-
-        /**
-         * Closes the keyboard in the given activity
-         * @param activity
-         */
-        fun closeKeyboard(activity: Activity?) {
-            if (activity != null && activity.window != null) {
-                val decorView: View = activity.window.decorView
-                val controller = WindowCompat.getInsetsController(activity.window, decorView)
-                controller.hide(WindowInsetsCompat.Type.ime())
-            }
-        }
-
-        fun updateColorTheme(theme: Int) {
-            AppCompatDelegate.setDefaultNightMode(theme)
-        }
-
-        fun updateColorTheme(theme: String?) {
-            updateColorTheme(getColorThemeId(theme))
         }
 
         fun restart() {
@@ -205,15 +153,6 @@ class App : Application() {
                 Process.killProcess(Process.myPid())
                 RuntimeWrapper.exit(0)
             }
-        }
-
-        private fun getColorThemeId(theme: String?): Int {
-            val colorTheme = when (theme) {
-                "Light" -> AppCompatDelegate.MODE_NIGHT_NO
-                "Dark" -> AppCompatDelegate.MODE_NIGHT_YES
-                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-            }
-            return colorTheme
         }
     }
 }

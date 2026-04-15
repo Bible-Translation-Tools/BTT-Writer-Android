@@ -60,8 +60,8 @@ fun OverlayDialog(
         val scope = rememberCoroutineScope()
 
         val dismissWithKeyboard: (() -> Unit) -> Unit = { action ->
-            focusManager.clearFocus()
             scope.launch {
+                focusManager.clearFocus()
                 delay(100)
                 action()
             }

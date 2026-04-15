@@ -5,6 +5,8 @@ kotlin = "2.1.0"
 dexcount = "4.0.0"
 composeBom = "2026.02.01"
 activityCompose = "1.9.3"
+decompose = "3.5.0"
+kotlinxSerialization = "1.7.3"
 
 # AndroidX Core
 koin-bom = "4.1.1"
@@ -86,6 +88,13 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntime" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 
+# Decompose
+decompose = { group = "com.arkivanov.decompose", name = "decompose", version.ref = "decompose" }
+decompose-extensions-compose = { group = "com.arkivanov.decompose", name = "extensions-compose", version.ref = "decompose" }
+
+# Kotlinx Serialization
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+
 # Koin
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-android-compat = { module = "io.insert-koin:koin-android-compat" }
@@ -164,3 +173,4 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 dexcount = { id = "com.getkeepsafe.dexcount", version.ref = "dexcount" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

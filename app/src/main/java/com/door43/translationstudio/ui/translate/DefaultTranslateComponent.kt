@@ -1,8 +1,15 @@
 package com.door43.translationstudio.ui.translate
 
 import android.graphics.Typeface
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.stack.ChildStack
+import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.replaceAll
+import com.arkivanov.decompose.value.Value
+import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
@@ -19,80 +26,83 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.ui.translate.chunk.DefaultChunkModeComponent
 import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
 import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
+import com.door43.translationstudio.ui.translate.read.DefaultReadModeComponent
+import com.door43.translationstudio.ui.translate.review.DefaultReviewModeComponent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONException
-import org.koin.core.component.KoinComponent
+import org.koin.core.component.KoinScopeComponent
+import org.koin.core.component.createScope
+import org.koin.core.component.inject
+import org.koin.core.scope.Scope
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.util.Locale
+import java.util.Timer
+import java.util.TimerTask
 
-data class TargetTranslationState(
-    val viewMode: TranslationViewMode = TranslationViewMode.READ,
-    val draftAvailable: Boolean = false,
-    val showDraftAvailable: Boolean = false,
-    val lastFocusChapterId: String? = null,
-    val lastFocusFrameId: String? = null,
-    val projectTitle: String? = null,
-)
+class DefaultTranslateComponent(
+    componentContext: ComponentContext,
+    targetTranslationId: String,
+    initialViewMode: TranslationViewMode? = null,
+    override val startWithMergeFilter: Boolean,
+    private val result: (TranslateComponent.Result) -> Unit,
+) : TranslateComponent,
+    ComponentContext by componentContext,
+    ComponentScope, ProgressOwner,
+    KoinScopeComponent {
 
-data class SharedTranslationState(
-    val chunks: List<Chunk> = emptyList(),
-    val sourceTabs: List<SourceTabItem> = emptyList(),
-    val resourceContainer: ResourceContainer? = null
-)
+    private val translator: Translator by inject()
+    private val library: Door43Client by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val typography: Typography by inject()
+    private val assetsProvider: AssetsProvider by inject()
 
-sealed interface TargetAction {
-    data class RemoveSource(val sourceId: String) : TargetAction
-    data class SelectSource(val sourceId: String) : TargetAction
-    data class SaveLastViewMode(val viewMode: TranslationViewMode) : TargetAction
-    data object OpenSourceTranslations : TargetAction
-    data class SaveLastFocus(val chapterId: String, val frameId: String?) : TargetAction
-    data class ConfirmSelectedSources(val selectedItems: List<RCItem>) : TargetAction
-}
+    private val navigation = StackNavigation<TranslateComponent.Config>()
 
-sealed interface TargetEvent {
-    data class ShowMessage(val message: String) : TargetEvent
-    data object RestartAutoCommitTimer : TargetEvent
-}
+    override val scope: Scope = createScope<DefaultTranslateComponent>()
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-class TargetTranslationViewModel(
-    private val translator: Translator,
-    private val library: Door43Client,
-    private val prefRepository: IPreferenceRepository,
-    private val typography: Typography,
-    private val assetsProvider: AssetsProvider
-) : ViewModel(), KoinComponent, ProgressOwner {
-
-    private val progressManager = ProgressManager(viewModelScope)
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    lateinit var targetTranslation: TargetTranslation
+    private val commitOnDestroy = instanceKeeper.getOrCreate {
+        CommitOnDestroyInstance()
+    }
+
+    override lateinit var targetTranslation: TargetTranslation
         private set
 
-    private val _state = MutableStateFlow(TargetTranslationState())
-    val state: StateFlow<TargetTranslationState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(TranslateComponent.State())
+    override val state: StateFlow<TranslateComponent.State> = _state.asStateFlow()
 
-    private val _sharedState = MutableStateFlow(SharedTranslationState())
-    val sharedState: StateFlow<SharedTranslationState> = _sharedState.asStateFlow()
+    private val _sharedState = MutableStateFlow(TranslateComponent.SharedState())
+    override val sharedState: StateFlow<TranslateComponent.SharedState> = _sharedState.asStateFlow()
 
-    private val _event = Channel<TargetEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
-    val eventSender: SendChannel<TargetEvent> = _event
+    private val _event = Channel<TranslateComponent.Event>(Channel.BUFFERED)
+    override val event = _event.receiveAsFlow()
+    override val eventSender: SendChannel<TranslateComponent.Event> = _event
 
     private val sourceContainer: ResourceContainer?
         get() = _sharedState.value.resourceContainer
@@ -100,75 +110,139 @@ class TargetTranslationViewModel(
     val initialized: Boolean
         get() = this::targetTranslation.isInitialized
 
-    fun initialize(targetTranslationId: String, viewMode: TranslationViewMode? = null) {
-        val translation = translator.getTargetTranslation(targetTranslationId) ?: return
+    override val stack: Value<ChildStack<*, TranslateComponent.Child>> = childStack(
+        source = navigation,
+        serializer = TranslateComponent.Config.serializer(),
+        initialConfiguration = TranslateComponent.Config.Loading,
+        handleBackButton = true,
+        childFactory = ::child
+    )
 
-        targetTranslation = translation
+    init {
+        translator.getTargetTranslation(targetTranslationId)?.let { translation ->
+            targetTranslation = translation
 
-        val draftAvailable = draftIsAvailable()
-        val lastViewMode = viewMode?.let {
-            translator.setLastViewMode(targetTranslation.id, it)
-            it
-        } ?: translator.getLastViewMode(targetTranslation.id)
+            val draftAvailable = draftIsAvailable()
+            val lastViewMode = initialViewMode?.let {
+                translator.setLastViewMode(targetTranslation.id, it)
+                it
+            } ?: translator.getLastViewMode(targetTranslation.id)
 
-        val projectTitle = "${getProject()?.name} - ${targetTranslation.targetLanguageName}"
+            val projectTitle = "${getProject()?.name} - ${targetTranslation.targetLanguageName}"
 
-        _state.update {
-            it.copy(
-                viewMode = lastViewMode,
-                draftAvailable = draftAvailable,
-                showDraftAvailable = draftAvailable && targetTranslation.numTranslated == 0,
-                projectTitle = projectTitle
+            commitOnDestroy.scheduleAutoCommit()
+
+            state
+                .map { it.viewMode }
+                .distinctUntilChanged()
+                .onEach {
+                    val config = when (it) {
+                        TranslationViewMode.LOADING -> TranslateComponent.Config.Loading
+                        TranslationViewMode.READ -> TranslateComponent.Config.Read
+                        TranslationViewMode.CHUNK -> TranslateComponent.Config.Chunk
+                        TranslationViewMode.REVIEW -> TranslateComponent.Config.Review
+                    }
+                    navigation.replaceAll(config)
+                }
+                .launchIn(coroutineScope)
+
+            _state.update {
+                it.copy(
+                    viewMode = lastViewMode,
+                    draftAvailable = draftAvailable,
+                    showDraftAvailable = draftAvailable && targetTranslation.numTranslated == 0,
+                    projectTitle = projectTitle
+                )
+            }
+
+            launchWithProgress {
+                ContainerCache.empty()
+                initLastFocus()
+                openUsedSourceTranslations()
+                refreshSelectedResourceContainer()
+            }
+        } ?: run {
+            Logger.e(
+                this::class.simpleName,
+                "A valid target translation id is required. " +
+                        "Received $targetTranslationId but the translation could not be found"
             )
+            result(TranslateComponent.Result.Back(didUpdate = false))
         }
 
-        launchWithProgress {
-            ContainerCache.empty()
-            initLastFocus()
-            refreshSelectedResourceContainer()
+        lifecycle.doOnDestroy {
+            scope.close()
         }
     }
 
-    fun onAction(action: TargetAction) {
-        when (action) {
-            is TargetAction.RemoveSource -> launchWithProgress {
-                removeOpenSourceTranslation(action.sourceId)
-            }
-            is TargetAction.SelectSource -> launchWithProgress {
-                setSelectedResourceContainer(action.sourceId)
-            }
-            is TargetAction.SaveLastViewMode -> setLastViewMode(action.viewMode)
-            is TargetAction.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
-            is TargetAction.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
-            TargetAction.OpenSourceTranslations -> openUsedSourceTranslations()
-        }
+    private fun child(
+        config: TranslateComponent.Config,
+        componentContext: ComponentContext,
+    ): TranslateComponent.Child = when (config) {
+        is TranslateComponent.Config.Read -> TranslateComponent.Child.Read(
+            component = DefaultReadModeComponent(
+                componentContext = componentContext,
+                sharedState = sharedState,
+                loadChunks = ::loadChunks
+            )
+        )
+        is TranslateComponent.Config.Chunk -> TranslateComponent.Child.Chunk(
+            component = DefaultChunkModeComponent(
+                componentContext = componentContext,
+                sharedState = sharedState,
+                loadChunks = ::loadChunks
+            )
+        )
+        is TranslateComponent.Config.Review -> TranslateComponent.Child.Review(
+            component = DefaultReviewModeComponent(
+                componentContext = componentContext,
+                sharedState = sharedState,
+                eventSender = eventSender,
+                loadChunks = ::loadChunks
+            )
+        )
+        is TranslateComponent.Config.Loading -> TranslateComponent.Child.Loading(
+            component = DefaultLoadingComponent()
+        )
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
+    override fun restartAutoCommitTimer() {
+        commitOnDestroy.scheduleAutoCommit()
+    }
+
+    override fun onAction(action: TranslateComponent.Action) {
+        when (action) {
+            is TranslateComponent.Action.RemoveSource -> launchWithProgress {
+                removeOpenSourceTranslation(action.sourceId)
+            }
+            is TranslateComponent.Action.SelectSource -> launchWithProgress {
+                setSelectedResourceContainer(action.sourceId)
+            }
+            is TranslateComponent.Action.SaveLastViewMode -> setLastViewMode(action.viewMode)
+            is TranslateComponent.Action.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
+            is TranslateComponent.Action.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
+        }
+    }
+
     private fun openUsedSourceTranslations() {
-        launchWithProgress {
-            val opened = prefRepository.getOpenSourceTranslations(
-                targetTranslation.id
-            )
-            if (opened.isEmpty()) {
-                val resourceContainerSlugs = targetTranslation.sourceTranslations
-                for (slug in resourceContainerSlugs) {
-                    prefRepository.addOpenSourceTranslation(
-                        targetTranslation.id,
-                        slug
-                    )
-                }
+        val opened = prefRepository.getOpenSourceTranslations(
+            targetTranslation.id
+        )
+        if (opened.isEmpty()) {
+            val resourceContainerSlugs = targetTranslation.sourceTranslations
+            for (slug in resourceContainerSlugs) {
+                prefRepository.addOpenSourceTranslation(
+                    targetTranslation.id,
+                    slug
+                )
             }
         }
     }
 
-    /**
-     * Selects the currently selected source translation or the first available
-     * If no source available, sets list items to empty list
-     */
     private suspend fun refreshSelectedResourceContainer() {
         getSelectedSourceTranslationId()?.let { sourceTranslationSlug ->
             setSelectedResourceContainer(sourceTranslationSlug)
@@ -180,10 +254,6 @@ class TargetTranslationViewModel(
         refreshSourceTranslationTabs()
     }
 
-    /**
-     * Checks if a draft is available
-     * @return
-     */
     private fun draftIsAvailable(): Boolean {
         return library.index.findTranslations(
             targetTranslation.targetLanguage.slug,
@@ -196,8 +266,7 @@ class TargetTranslationViewModel(
         ).any { it.resource.slug != "udb" }
     }
 
-    private suspend fun loadChunks() {
-        val viewMode = _state.value.viewMode
+    private suspend fun loadChunks(viewMode: TranslationViewMode): List<Chunk> {
         val isReadMode = viewMode == TranslationViewMode.READ
         val chunks = withContext(Dispatchers.IO) {
             val chunks = mutableListOf<Chunk>()
@@ -215,7 +284,7 @@ class TargetTranslationViewModel(
             }
             chunks
         }
-        _sharedState.update { it.copy(chunks = chunks) }
+        return chunks
     }
 
     private fun setLastViewMode(mode: TranslationViewMode) {
@@ -226,16 +295,13 @@ class TargetTranslationViewModel(
                 targetTranslationId = targetTranslation.id,
                 viewMode = mode
             )
-            loadChunks()
         }
     }
 
     private fun initLastFocus() {
-        viewModelScope.launch {
-            val chapter = translator.getLastFocusChapterId(targetTranslation.id)
-            val frame = translator.getLastFocusFrameId(targetTranslation.id)
-            _state.update { it.copy(lastFocusChapterId = chapter, lastFocusFrameId = frame) }
-        }
+        val chapter = translator.getLastFocusChapterId(targetTranslation.id)
+        val frame = translator.getLastFocusFrameId(targetTranslation.id)
+        _state.update { it.copy(lastFocusChapterId = chapter, lastFocusFrameId = frame) }
     }
 
     private fun saveLastFocus(chapterId: String, frameId: String?) {
@@ -316,8 +382,6 @@ class TargetTranslationViewModel(
                 )
                 _sharedState.update { it.copy(resourceContainer = rc) }
             }
-
-            loadChunks()
         }
     }
 
@@ -453,5 +517,54 @@ class TargetTranslationViewModel(
         }
 
         return null to null
+    }
+
+    // TODO User use lambda functions???
+    override fun onHomeClick() = result(TranslateComponent.Result.Back(didUpdate = false))
+    override fun onNavigateToDraft() = result(TranslateComponent.Result.OpenDraft(targetTranslation.id))
+    override fun onProjectPreview() = result(TranslateComponent.Result.OpenPublish(targetTranslation.id))
+    override fun onSettings() = result(TranslateComponent.Result.OpenSettings)
+    override fun onLoginClick() = result(TranslateComponent.Result.OpenLogin)
+    override fun onLogout() = result(TranslateComponent.Result.OpenLogout)
+    override fun onUpdateSources() = result(TranslateComponent.Result.Back(didUpdate = true))
+    override fun onExportToApp(file: java.io.File) = result(TranslateComponent.Result.ExportFile(file))
+
+    private inner class CommitOnDestroyInstance : InstanceKeeper.Instance {
+        private val commitInterval = 2 * 60 * 1000L
+        private var commitTimer: Timer = Timer()
+
+        fun scheduleAutoCommit() {
+            commitTimer.cancel()
+            commitTimer = Timer()
+            commitTimer.schedule(object : TimerTask() {
+                override fun run() {
+                    if (!initialized) return
+                    try {
+                        targetTranslation.commit()
+                    } catch (e: Exception) {
+                        Logger.e(
+                            this::class.simpleName,
+                            "Failed to commit the latest translation of " +
+                                    targetTranslation.id,
+                            e
+                        )
+                    }
+                }
+            }, commitInterval, commitInterval)
+        }
+
+        override fun onDestroy() {
+            commitTimer.cancel()
+            if (!initialized) return
+            try {
+                targetTranslation.commit()
+            } catch (e: Exception) {
+                Logger.e(
+                    this::class.simpleName,
+                    "Failed to commit changes before closing translation",
+                    e
+                )
+            }
+        }
     }
 }

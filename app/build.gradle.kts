@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.dexcount)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -170,6 +171,13 @@ dependencies {
     implementation(libs.koin.core.coroutines)
     implementation(libs.koin.android.compat)
     implementation(libs.koin.androidx.compose)
+
+    // Decompose
+    implementation(libs.decompose)
+    implementation(libs.decompose.extensions.compose)
+
+    // Kotlinx Serialization
+    implementation(libs.kotlinx.serialization.core)
 
     // Ktor
     implementation(libs.ktor.core)

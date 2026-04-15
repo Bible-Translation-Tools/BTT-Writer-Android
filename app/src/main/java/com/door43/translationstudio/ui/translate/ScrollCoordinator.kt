@@ -14,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import com.door43.translationstudio.core.Chunk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -22,7 +23,7 @@ data class PendingScrollItem(val chapterId: String, val chunkId: String? = null)
 @Stable
 class ScrollCoordinator(
     val listState: LazyListState,
-    private val scope: kotlinx.coroutines.CoroutineScope
+    private val scope: CoroutineScope
 ) {
     var lastViewedChunk by mutableStateOf<Chunk?>(null)
         internal set
@@ -77,7 +78,7 @@ fun rememberScrollCoordinator(
     chunks: List<Chunk>,
     lastFocusChapterId: String?,
     lastFocusFrameId: String?,
-    viewModel: TargetTranslationViewModel
+    component: TranslateComponent
 ): ScrollCoordinator {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -159,8 +160,11 @@ fun rememberScrollCoordinator(
             val safeIndex = dominantIndex.coerceIn(0, maxOf(0, chunks.size - 1))
             val item = chunks[safeIndex]
             coordinator.lastViewedChunk = item
-            viewModel.onAction(
-                TargetAction.SaveLastFocus(item.chapterSlug, item.chunkSlug)
+            component.onAction(
+                TranslateComponent.Action.SaveLastFocus(
+                    item.chapterSlug,
+                    item.chunkSlug
+                )
             )
         }
     }

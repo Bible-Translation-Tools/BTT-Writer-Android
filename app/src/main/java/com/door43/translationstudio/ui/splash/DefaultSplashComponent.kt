@@ -2,8 +2,8 @@ package com.door43.translationstudio.ui.splash
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
@@ -13,12 +13,16 @@ import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
 import com.door43.usecases.MigrateTranslations
 import com.door43.usecases.UpdateApp
 import com.door43.util.RuntimeWrapper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,68 +30,72 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import org.koin.core.component.KoinComponent
+import org.koin.core.component.KoinScopeComponent
+import org.koin.core.component.createScope
 import org.koin.core.component.inject
+import org.koin.core.scope.Scope
 import org.unfoldingword.tools.logger.Logger
 
-data class SplashState(
-    val showHardwareWarning: Boolean = false,
-    val showMigrationDialog: Boolean = false
-)
+class DefaultSplashComponent(
+    componentContext: ComponentContext,
+    private val result: (SplashComponent.Result) -> Unit,
+) : SplashComponent,
+    ComponentContext by componentContext,
+    ComponentScope, ProgressOwner,
+    KoinScopeComponent{
 
-sealed interface SplashEvent {
-    data object NavigateToProfile : SplashEvent
-    data object NavigateToCrashReporter : SplashEvent
-    data object OpenDirToMigrate : SplashEvent
-}
-
-class SplashScreenViewModel(
-    private val updateApp: UpdateApp,
-    private val prefRepository: IPreferenceRepository,
-    private val migrateTranslations: MigrateTranslations
-) : ViewModel(), KoinComponent, ProgressOwner {
+    override val scope: Scope = createScope<DefaultSplashComponent>()
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
     private val application: Application by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val migrateTranslations: MigrateTranslations by inject()
+    private val updateApp: UpdateApp by inject()
 
-    private val _state = MutableStateFlow(SplashState())
-    val state: StateFlow<SplashState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(SplashComponent.State())
+    override val state: StateFlow<SplashComponent.State> = _state.asStateFlow()
 
-    private val _events = Channel<SplashEvent>()
-    val events = _events.receiveAsFlow()
+    private val _event = Channel<SplashComponent.Event>()
+    override val event = _event.receiveAsFlow()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
     init {
         evaluateStartupPath()
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+            scope.close()
+        }
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    fun onHardwareWarningContinued() {
+    override fun onHardwareWarningContinued() {
         _state.update { it.copy(showHardwareWarning = false) }
         checkMigration()
     }
 
-    fun onHardwareWarningDismissedAndSaved() {
+    override fun onHardwareWarningDismissedAndSaved() {
         _state.update { it.copy(showHardwareWarning = false) }
         saveHardwareCheck(false)
         checkMigration()
     }
 
-    fun onMigrationAccepted() {
+    override fun onMigrationAccepted() {
         _state.update { it.copy(showMigrationDialog = false) }
-        _events.trySend(SplashEvent.OpenDirToMigrate)
+        _event.trySend(SplashComponent.Event.OpenDirToMigrate)
     }
 
-    fun onMigrationDeclined() {
+    override fun onMigrationDeclined() {
         _state.update { it.copy(showMigrationDialog = false) }
         startAppLogic()
     }
 
-    fun performMigrate(uri: Uri?) {
+    override fun performMigrate(uri: Uri?) {
         if (uri != null) {
             migrateOldAppdataFolder(uri)
         } else {
@@ -111,6 +119,13 @@ class SplashScreenViewModel(
         }
     }
 
+    private fun checkHardware(): Boolean {
+        return prefRepository.getDefaultPref(
+            KEY_PREF_CHECK_HARDWARE,
+            true
+        )
+    }
+
     private fun checkMigration() {
         if (!checkMigrationShown()) {
             setMigrationShown(true)
@@ -120,22 +135,28 @@ class SplashScreenViewModel(
         }
     }
 
+    private fun checkMigrationShown(): Boolean {
+        return prefRepository.getDefaultPref(
+            SettingsActivity.KEY_PREF_MIGRATE_OLD_APP,
+            false
+        )
+    }
+
+    private fun setMigrationShown(shown: Boolean) {
+        prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MIGRATE_OLD_APP, shown)
+    }
+
+    private fun saveHardwareCheck(check: Boolean) {
+        prefRepository.setDefaultPref(KEY_PREF_CHECK_HARDWARE, check)
+    }
+
     private fun startAppLogic() {
         val files = Logger.listStacktraces()
         if (files.isNotEmpty()) {
-            _events.trySend(SplashEvent.NavigateToCrashReporter)
+            result(SplashComponent.Result.NavigateToCrashReporter)
             return
         }
-
         updateApp()
-    }
-
-    private fun onMigrationFinished() {
-        startAppLogic()
-    }
-
-    private fun onUpdateFinished() {
-        _events.trySend(SplashEvent.NavigateToProfile)
     }
 
     private fun updateApp() {
@@ -144,11 +165,20 @@ class SplashScreenViewModel(
         ) { handle ->
             withContext(Dispatchers.IO) {
                 updateApp.execute { progress, message ->
+                    println("Update in progress $progress")
                     handle.update(progress, message)
                 }
             }
             onUpdateFinished()
         }
+    }
+
+    private fun onUpdateFinished() {
+        result(SplashComponent.Result.NavigateToProfile)
+    }
+
+    private fun onMigrationFinished() {
+        startAppLogic()
     }
 
     private fun migrateOldAppdataFolder(appDataFolder: Uri) {
@@ -162,27 +192,5 @@ class SplashScreenViewModel(
             }
             onMigrationFinished()
         }
-    }
-
-    private fun checkHardware(): Boolean {
-        return prefRepository.getDefaultPref(
-            KEY_PREF_CHECK_HARDWARE,
-            true
-        )
-    }
-
-    private fun saveHardwareCheck(check: Boolean) {
-        prefRepository.setDefaultPref(KEY_PREF_CHECK_HARDWARE, check)
-    }
-
-    private fun checkMigrationShown(): Boolean {
-        return prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_MIGRATE_OLD_APP,
-            false
-        )
-    }
-
-    private fun setMigrationShown(shown: Boolean) {
-        prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MIGRATE_OLD_APP, shown)
     }
 }

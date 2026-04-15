@@ -46,7 +46,7 @@ import com.door43.translationstudio.ui.UiTestUtils.checkRecyclerViewChild
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.clickItemWithId
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity
+import com.door43.translationstudio.MainActivity
 import com.door43.usecases.ImportProjects
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
@@ -94,10 +94,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
 
     @Test
     fun testWrongTranslationLoaded() {
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, "1")
 
-        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        val scenario = ActivityScenario.launch<MainActivity>(intent)
         Thread.sleep(3000)
         assertEquals(Lifecycle.State.DESTROYED, scenario.state)
     }
@@ -106,10 +106,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testNoSource() {
         val targetTranslation = getTargetTranslationWithoutSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText(R.string.choose_first_source_translation, true)
         }
     }
@@ -118,10 +118,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testSelectSource() {
         val targetTranslation = getTargetTranslationWithoutSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText(R.string.choose_first_source_translation, true)
 
             // Don't select any source translation
@@ -145,10 +145,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testReadMode() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
@@ -163,10 +163,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testChunkMode() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
@@ -194,10 +194,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testReviewMode() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
@@ -261,11 +261,11 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testReviewModeMarkDoneCancel() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
@@ -298,11 +298,11 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testReviewModeMarkDoneConfirmValid() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
@@ -353,12 +353,12 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testConflictMode() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
         intent.putExtra(EXTRA_START_WITH_MERGE_FILTER, true)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             checkText("Jude", true)
             checkText("Chapter 1", true)
 
@@ -370,11 +370,11 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testSwipeForHelps() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
 //            val onList = onView(withId(R.id.translation_cards))
 //            onList.tryPerform(scrollToPosition<ViewHolder>(2))
 //
@@ -400,10 +400,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testOpenActionMenu() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             // onView(withId(R.id.action_more)).tryPerform(click())
 
             checkText(R.string.action_translations, true)
@@ -422,11 +422,11 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testOpenActionMenuExtended() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             // onView(withId(R.id.action_more)).tryPerform(click())
 
             checkText(R.string.action_translations, true)
@@ -445,10 +445,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testGoHome() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        val scenario = ActivityScenario.launch<MainActivity>(intent)
         // onView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.action_translations)).tryPerform(click())
 
@@ -460,10 +460,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testPublishTranslation() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        val scenario = ActivityScenario.launch<MainActivity>(intent)
         // onView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.title_review)).tryPerform(click())
 
@@ -475,10 +475,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testUploadTranslationDialog() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             // onView(withId(R.id.action_more)).tryPerform(click())
             onView(withText(R.string.menu_upload_export)).tryPerform(click())
 
@@ -496,10 +496,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testPrintTranslationDialog() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             // onView(withId(R.id.action_more)).tryPerform(click())
             onView(withText(R.string.print)).tryPerform(click())
 
@@ -512,10 +512,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testFeedbackDialog() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             // onView(withId(R.id.action_more)).tryPerform(click())
             onView(withText(R.string.feedback)).tryPerform(click())
 
@@ -527,10 +527,10 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testGoSettings() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
 
-        val scenario = ActivityScenario.launch<TargetTranslationActivity>(intent)
+        val scenario = ActivityScenario.launch<MainActivity>(intent)
         // nView(withId(R.id.action_more)).tryPerform(click())
         onView(withText(R.string.action_settings)).tryPerform(click())
 
@@ -543,11 +543,11 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testMarkAllChunkDoneDialog() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
             // onView(withId(R.id.action_more)).tryPerform(click())
 
             onView(withText(R.string.mark_chunks_done)).tryPerform(click())
@@ -561,11 +561,11 @@ class TargetTranslationActivityTest : KoinAndroidTest() {
     fun testOpenSearchBar() {
         val targetTranslation = getTargetTranslationWithSource()
 
-        val intent = Intent(context, TargetTranslationActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java)
         intent.putExtra(EXTRA_TARGET_TRANSLATION_ID, targetTranslation.id)
         intent.putExtra(EXTRA_VIEW_MODE, TranslationViewMode.REVIEW.ordinal)
 
-        ActivityScenario.launch<TargetTranslationActivity>(intent).use {
+        ActivityScenario.launch<MainActivity>(intent).use {
 //            val onList = onView(withId(R.id.translation_cards))
 //            onList.tryPerform(
 //                actionOnItemAtPosition<ReviewHolder>(

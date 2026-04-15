@@ -23,7 +23,7 @@ import com.door43.translationstudio.ui.UiTestUtils.checkContainsText
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
 import com.door43.translationstudio.ui.UiTestUtils.checkText
 import com.door43.translationstudio.ui.UiTestUtils.waitFor
-import com.door43.translationstudio.ui.home.HomeActivity
+import com.door43.translationstudio.MainActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import io.mockk.mockkStatic
@@ -61,7 +61,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testNoTranslations() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
         }
@@ -69,7 +69,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testCreateTranslation() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -84,7 +84,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testShowTranslationInfo() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -102,7 +102,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testShowBackupDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -123,7 +123,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testShowPrintDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -139,7 +139,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testShowDeleteDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -154,7 +154,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testPublishTranslation() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             intending(hasComponent(PublishActivity::class.java.name)).respondWith(
                 Instrumentation.ActivityResult(0, null)
             )
@@ -173,7 +173,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testShowContributorsDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -193,7 +193,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testUpdateLanguage() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -214,7 +214,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testOptionMenu() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -231,7 +231,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testUpdateDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -250,7 +250,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testImportDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -274,7 +274,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testImportBackupDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -289,7 +289,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testFeedbackDialog() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -302,7 +302,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testLogout() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             verifyMainViewsInPlace(true)
             checkText(R.string.translations_welcome, true)
 
@@ -317,7 +317,7 @@ class HomeActivityTest : KoinAndroidTest() {
 
     @Test
     fun testOpenSettings() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             intending(hasComponent(SettingsActivity::class.java.name)).respondWith(
                 Instrumentation.ActivityResult(0, null)
             )

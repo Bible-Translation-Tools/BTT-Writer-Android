@@ -10,7 +10,7 @@ import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.R
 import com.door43.translationstudio.UITest
 import com.door43.translationstudio.ui.UiTestUtils.checkDialogText
-import com.door43.translationstudio.ui.splash.SplashScreenActivity
+import com.door43.translationstudio.MainActivity
 import com.door43.util.RuntimeWrapper
 import io.mockk.MockKAnnotations
 import io.mockk.every
@@ -45,7 +45,7 @@ class SplashScreenActivityTest : KoinAndroidTest() {
         every { RuntimeWrapper.maxMemory }
             .returns(App.MINIMUM_REQUIRED_RAM - 100)
 
-        ActivityScenario.launch(SplashScreenActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             checkDialogText(R.string.slow_device, true)
             onView(withText(R.string.label_continue)).tryPerform(click())
 
@@ -60,7 +60,7 @@ class SplashScreenActivityTest : KoinAndroidTest() {
         every { RuntimeWrapper.maxMemory }
             .returns(App.MINIMUM_REQUIRED_RAM + 100)
 
-        ActivityScenario.launch(SplashScreenActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             checkDialogText(R.string.slow_device, false)
         }
     }
@@ -72,7 +72,7 @@ class SplashScreenActivityTest : KoinAndroidTest() {
         every { RuntimeWrapper.maxMemory }
             .returns(App.MINIMUM_REQUIRED_RAM + 100)
 
-        ActivityScenario.launch(SplashScreenActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use {
             checkDialogText(R.string.migrate_from_old_app, true)
             checkDialogText(R.string.migrate_from_old_app_description, true)
         }

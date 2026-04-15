@@ -8,7 +8,7 @@ import androidx.compose.material3.Surface
 import com.door43.translationstudio.App
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.splash.SplashScreenActivity
+import com.door43.translationstudio.MainActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
 
@@ -43,7 +43,9 @@ class CrashReporterActivity : BaseActivity() {
     }
 
     private fun openSplash() {
-        val intent = Intent(this, SplashScreenActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
         startActivity(intent)
         finish()
     }

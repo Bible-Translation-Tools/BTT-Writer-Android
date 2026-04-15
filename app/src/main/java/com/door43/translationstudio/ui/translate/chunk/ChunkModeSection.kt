@@ -9,29 +9,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.translate.ModeAction
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
+import com.door43.translationstudio.ui.translate.ModeComponent
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
-import com.door43.translationstudio.ui.translate.TargetAction
-import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
+import com.door43.translationstudio.ui.translate.TranslateComponent
 
 @Composable
 fun ChunkModeSection(
-    viewModel: TargetTranslationViewModel,
+    component: ChunkModeComponent,
+    parentComponent: TranslateComponent,
     typography: Typography,
     listState: LazyListState,
     onSourceDialogOpen: () -> Unit,
     onHasMergeConflicts: (Boolean) -> Unit,
     onConflictClick: (String, String) -> Unit
 ) {
-    val chunkVm: ChunkModeViewModel = koinViewModel {
-        parametersOf(viewModel.sharedState, viewModel.eventSender)
-    }
-
-    val sharedState by viewModel.sharedState.collectAsStateWithLifecycle()
-    val chunkState by chunkVm.state.collectAsStateWithLifecycle()
-    val items by chunkVm.items.collectAsStateWithLifecycle()
+    val sharedState by parentComponent.sharedState.collectAsStateWithLifecycle()
+    val chunkState by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
+    val items by component.items.collectAsStateWithLifecycle()
 
     val hasConflicts = items.any { it.hasMergeConflict }
 
@@ -40,7 +36,7 @@ fun ChunkModeSection(
     }
 
     ModeScreenTemplate(
-        viewModel = chunkVm,
+        component = component,
         items = items,
         listState = listState,
         dialogs = {
@@ -49,10 +45,10 @@ fun ChunkModeSection(
                     title = stringResource(R.string.chunk_done_title),
                     message = stringResource(R.string.chunk_done_prompt),
                     onDismiss = {
-                        chunkVm.onAction(ChunkAction.ReopenChunkConfirmed(false))
+                        component.onAction(ChunkModeComponent.Action.ReopenChunkConfirmed(false))
                     },
                     onConfirm = {
-                        chunkVm.onAction(ChunkAction.ReopenChunkConfirmed(true))
+                        component.onAction(ChunkModeComponent.Action.ReopenChunkConfirmed(true))
                     },
                     confirmText = stringResource(R.string.edit)
                 )
@@ -64,24 +60,31 @@ fun ChunkModeSection(
             sourceTabs = sharedState.sourceTabs,
             typography = typography,
             selectedSource = sharedState.resourceContainer,
-            targetTranslation = viewModel.targetTranslation,
+            targetTranslation = parentComponent.targetTranslation,
             onSourceTabClick = {
-                viewModel.onAction(TargetAction.SelectSource(it))
+                parentComponent.onAction(TranslateComponent.Action.SelectSource(it))
             },
             onAddNewSourceClick = onSourceDialogOpen,
             onRemoveSourceClick = {
-                viewModel.onAction(TargetAction.RemoveSource(it))
+                parentComponent.onAction(TranslateComponent.Action.RemoveSource(it))
             },
             onTextChange = {
-                chunkVm.onAction(ChunkAction.ItemTextChanged(item, it))
+                component.onAction(ChunkModeComponent.Action.ItemTextChanged(item, it))
             },
             onCardsSwiped = { sourceOnTop ->
-                chunkVm.onAction(ModeAction.CardsSwiped(item, sourceOnTop))
+                component.onAction(ModeComponent.Action.CardsSwiped(item, sourceOnTop))
             },
             onOpenChunkClick = {
-                chunkVm.onAction(ChunkAction.ReopenChunkClicked(item))
+                component.onAction(ChunkModeComponent.Action.ReopenChunkClicked(item))
             },
             onConflictClick = onConflictClick
+        )
+    }
+
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
         )
     }
 }

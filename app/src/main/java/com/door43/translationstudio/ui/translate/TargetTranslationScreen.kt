@@ -20,6 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arkivanov.decompose.extensions.compose.stack.Children
+import com.arkivanov.decompose.extensions.compose.stack.animation.fade
+import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Typography
@@ -36,13 +39,12 @@ import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.read.ReadModeSection
 import com.door43.translationstudio.ui.translate.review.ReviewModeSection
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import java.io.File
 
 @Composable
 fun TargetTranslationScreen(
-    viewModel: TargetTranslationViewModel = koinViewModel(),
+    component: TranslateComponent,
     startWithMergeFilter: Boolean,
     onHomeClick: () -> Unit,
     onNavigateToDraft: () -> Unit,
@@ -55,9 +57,9 @@ fun TargetTranslationScreen(
     onLogout: () -> Unit
 ) {
     val typography: Typography = koinInject()
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val sharedState by viewModel.sharedState.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val sharedState by component.sharedState.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -77,7 +79,7 @@ fun TargetTranslationScreen(
         chunks = sharedState.chunks,
         lastFocusChapterId = state.lastFocusChapterId,
         lastFocusFrameId = state.lastFocusFrameId,
-        viewModel = viewModel
+        component = component
     )
 
     val menuItems = rememberTranslateMenuItems(
@@ -98,11 +100,13 @@ fun TargetTranslationScreen(
     )
 
     // Collect one-shot events
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
+    LaunchedEffect(component) {
+        component.event.collect { event ->
             when (event) {
-                is TargetEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
-                is TargetEvent.RestartAutoCommitTimer -> onRestartAutoCommitTimer()
+                is TranslateComponent.Event.ShowMessage -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+                is TranslateComponent.Event.RestartAutoCommitTimer -> onRestartAutoCommitTimer()
             }
         }
     }
@@ -139,25 +143,33 @@ fun TargetTranslationScreen(
                     onReadClick = {
                         mergeConflictFilterOn = false
                         if (state.viewMode != TranslationViewMode.READ) {
-                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.READ))
+                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
+                                TranslationViewMode.READ
+                            ))
                         }
                     },
                     onChunkClick = {
                         mergeConflictFilterOn = false
                         if (state.viewMode != TranslationViewMode.CHUNK) {
-                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK))
+                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
+                                TranslationViewMode.CHUNK
+                            ))
                         }
                     },
                     onReviewClick = {
                         mergeConflictFilterOn = false
                         if (state.viewMode != TranslationViewMode.REVIEW) {
-                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
+                                TranslationViewMode.REVIEW
+                            ))
                         }
                     },
                     onMergeConflictClick = {
                         mergeConflictFilterOn = !mergeConflictFilterOn
                         if (state.viewMode != TranslationViewMode.REVIEW) {
-                            viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
+                                TranslationViewMode.REVIEW
+                            ))
                         }
                     },
                     onSliderValueChange = {
@@ -175,51 +187,62 @@ fun TargetTranslationScreen(
                             onAddSourceClick = { showSelectSourceDialog = true }
                         )
                     } else {
-                        when (state.viewMode) {
-                            TranslationViewMode.READ -> ReadModeSection(
-                                viewModel = viewModel,
-                                typography = typography,
-                                listState = scrollCoordinator.listState,
-                                onSourceDialogOpen = { showSelectSourceDialog = true },
-                                onHasMergeConflicts = { hasMergeConflicts = it },
-                                onBeginTranslation = {
-                                    scrollCoordinator.pendingScrollChapter = PendingScrollItem(
-                                        chapterId = it
-                                    )
-                                    viewModel.onAction(
-                                        TargetAction.SaveLastViewMode(TranslationViewMode.CHUNK)
-                                    )
-                                }
-                            )
-                            TranslationViewMode.CHUNK -> ChunkModeSection(
-                                viewModel = viewModel,
-                                typography = typography,
-                                listState = scrollCoordinator.listState,
-                                onSourceDialogOpen = { showSelectSourceDialog = true },
-                                onHasMergeConflicts = { hasMergeConflicts = it },
-                                onConflictClick = { chapterId, chunkId ->
-                                    scrollCoordinator.pendingScrollChapter = PendingScrollItem(
-                                        chapterId = chapterId,
-                                        chunkId = chunkId
-                                    )
-                                    viewModel.onAction(
-                                        TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW)
-                                    )
-                                }
-                            )
-                            TranslationViewMode.REVIEW -> ReviewModeSection(
-                                translationViewModel = viewModel,
-                                typography = typography,
-                                listState = scrollCoordinator.listState,
-                                searchRequested = searchRequested,
-                                onSearchConsumed = { searchRequested = false },
-                                onSourceDialogOpen = { showSelectSourceDialog = true },
-                                onHasMergeConflicts = { hasMergeConflicts = it },
-                                mergeConflictFilterOn = mergeConflictFilterOn,
-                                onMergeConflictFilterReset = { mergeConflictFilterOn = false },
-                                chunksDoneRequested = chunksDoneRequested,
-                                onChunksDoneConsumed = { chunksDoneRequested = false }
-                            )
+                        Children(
+                            stack = component.stack,
+                            animation = stackAnimation(fade()),
+                        ) { child ->
+                            when (val instance = child.instance) {
+                                is TranslateComponent.Child.Loading -> LoadingScreen()
+                                is TranslateComponent.Child.Read -> ReadModeSection(
+                                    component = instance.component,
+                                    parentComponent = component,
+                                    typography = typography,
+                                    listState = scrollCoordinator.listState,
+                                    onSourceDialogOpen = { showSelectSourceDialog = true },
+                                    onHasMergeConflicts = { hasMergeConflicts = it },
+                                    onBeginTranslation = {
+                                        scrollCoordinator.pendingScrollChapter = PendingScrollItem(
+                                            chapterId = it
+                                        )
+                                        component.onAction(
+                                            TranslateComponent.Action.SaveLastViewMode(
+                                                TranslationViewMode.CHUNK
+                                            )
+                                        )
+                                    }
+                                )
+                                is TranslateComponent.Child.Chunk -> ChunkModeSection(
+                                    component = instance.component,
+                                    parentComponent = component,
+                                    typography = typography,
+                                    listState = scrollCoordinator.listState,
+                                    onSourceDialogOpen = { showSelectSourceDialog = true },
+                                    onHasMergeConflicts = { hasMergeConflicts = it },
+                                    onConflictClick = { chapterId, chunkId ->
+                                        scrollCoordinator.pendingScrollChapter = PendingScrollItem(
+                                            chapterId = chapterId,
+                                            chunkId = chunkId
+                                        )
+                                        component.onAction(
+                                            TranslateComponent.Action.SaveLastViewMode(TranslationViewMode.REVIEW)
+                                        )
+                                    }
+                                )
+                                is TranslateComponent.Child.Review -> ReviewModeSection(
+                                    component = instance.component,
+                                    parentComponent = component,
+                                    typography = typography,
+                                    listState = scrollCoordinator.listState,
+                                    searchRequested = searchRequested,
+                                    onSearchConsumed = { searchRequested = false },
+                                    onSourceDialogOpen = { showSelectSourceDialog = true },
+                                    onHasMergeConflicts = { hasMergeConflicts = it },
+                                    mergeConflictFilterOn = mergeConflictFilterOn,
+                                    onMergeConflictFilterReset = { mergeConflictFilterOn = false },
+                                    chunksDoneRequested = chunksDoneRequested,
+                                    onChunksDoneConsumed = { chunksDoneRequested = false }
+                                )
+                            }
                         }
                     }
                 }
@@ -229,11 +252,11 @@ fun TargetTranslationScreen(
         // Dialogs
         if (showSelectSourceDialog) {
             SourceSelectionDialog(
-                targetTranslation = viewModel.targetTranslation,
+                targetTranslation = component.targetTranslation,
                 onDismissRequest = { showSelectSourceDialog = false },
                 onConfirm = {
                     showSelectSourceDialog = false
-                    viewModel.onAction(TargetAction.ConfirmSelectedSources(it))
+                    component.onAction(TranslateComponent.Action.ConfirmSelectedSources(it))
                 },
                 onUpdateSources = { showUpdateSourcesDialog = true }
             )
@@ -253,13 +276,15 @@ fun TargetTranslationScreen(
 
         if (showExportDialog) {
             ExportDialog(
-                targetTranslation = viewModel.targetTranslation,
+                targetTranslation = component.targetTranslation,
                 openPrint = showPrintDialog,
                 onExportToApp = onExportToApp,
                 onLogout = onLogout,
                 onMergeConflict = {
                     mergeConflictFilterOn = true
-                    viewModel.onAction(TargetAction.SaveLastViewMode(TranslationViewMode.REVIEW))
+                    component.onAction(TranslateComponent.Action.SaveLastViewMode(
+                        TranslationViewMode.REVIEW
+                    ))
                 },
                 onLoginClick = onLoginClick,
                 onDismiss = {

@@ -16,24 +16,21 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.CardsSkeletonList
 import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialog
-import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialogType
 
 @Composable
 fun <ITEM : TranslateItem> ModeScreenTemplate(
-    viewModel: ModeViewModel<ITEM>,
+    component: ModeComponent<ITEM>,
     items: List<ITEM>,
     listState: LazyListState,
     dialogs: @Composable () -> Unit = {},
     itemContent: @Composable (ITEM) -> Unit
 ) {
-    val modeState by viewModel.modeState.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
 
     var settingsVersion by remember { mutableIntStateOf(0) }
 
@@ -66,34 +63,19 @@ fun <ITEM : TranslateItem> ModeScreenTemplate(
         }
     }
 
-    modeState.footnote?.let { note ->
+    state.footnote?.let { note ->
         FootnoteDialog(
-            title = stringResource(R.string.title_footnote),
             text = note.text,
-            type = if (note.editable) FootnoteDialogType.ACT else FootnoteDialogType.VIEW,
+            action = note.action,
             onDismissRequest = {
-                viewModel.onAction(ModeAction.ClearFootnote)
+                component.onAction(ModeComponent.Action.ClearFootnote)
             },
             onDeleteNote = {
-                viewModel.onAction(ModeAction.DeleteNote(note))
-            },
-            onEditNote = {
-                viewModel.onAction(ModeAction.OpenFootnoteEditor(note))
-            }
-        )
-    }
-
-    modeState.footnoteToEdit?.let { note ->
-        FootnoteDialog(
-            title = stringResource(R.string.title_add_footnote),
-            text = note.text,
-            type = FootnoteDialogType.EDIT,
-            onDismissRequest = {
-                viewModel.onAction(ModeAction.ClearFootnoteToEdit)
+                component.onAction(ModeComponent.Action.DeleteNote(note))
             },
             onSaveText = { newText ->
                 val newNote = note.copy(text = newText)
-                viewModel.onAction(ModeAction.SaveFootnote(newNote))
+                component.onAction(ModeComponent.Action.SaveFootnote(newNote))
             }
         )
     }

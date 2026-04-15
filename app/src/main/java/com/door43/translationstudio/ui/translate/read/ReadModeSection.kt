@@ -6,28 +6,24 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.ui.translate.ModeAction
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
+import com.door43.translationstudio.ui.translate.ModeComponent
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
-import com.door43.translationstudio.ui.translate.TargetAction
-import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
+import com.door43.translationstudio.ui.translate.TranslateComponent
 
 @Composable
 fun ReadModeSection(
-    viewModel: TargetTranslationViewModel,
+    component: ReadModeComponent,
+    parentComponent: TranslateComponent,
     typography: Typography,
     listState: LazyListState,
     onSourceDialogOpen: () -> Unit,
     onHasMergeConflicts: (Boolean) -> Unit,
     onBeginTranslation: (chapterSlug: String) -> Unit
 ) {
-    val readVm: ReadModeViewModel = koinViewModel {
-        parametersOf(viewModel.sharedState, viewModel.eventSender)
-    }
-
-    val sharedState by viewModel.sharedState.collectAsStateWithLifecycle()
-    val items by readVm.items.collectAsStateWithLifecycle()
+    val sharedState by parentComponent.sharedState.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
+    val items by component.items.collectAsStateWithLifecycle()
     val hasConflicts = items.any { it.hasMergeConflict }
 
     LaunchedEffect(hasConflicts) {
@@ -35,7 +31,7 @@ fun ReadModeSection(
     }
 
     ModeScreenTemplate(
-        viewModel = readVm,
+        component = component,
         items = items,
         listState = listState
     ) { item ->
@@ -44,18 +40,31 @@ fun ReadModeSection(
             sourceTabs = sharedState.sourceTabs,
             typography = typography,
             selectedSource = sharedState.resourceContainer,
-            targetTranslation = viewModel.targetTranslation,
+            targetTranslation = parentComponent.targetTranslation,
             onSourceTabClick = {
-                viewModel.onAction(TargetAction.SelectSource(it))
+                parentComponent.onAction(
+                    TranslateComponent.Action.SelectSource(it)
+                )
             },
             onAddNewSourceClick = onSourceDialogOpen,
             onRemoveSourceClick = {
-                viewModel.onAction(TargetAction.RemoveSource(it))
+                parentComponent.onAction(
+                    TranslateComponent.Action.RemoveSource(it)
+                )
             },
             onCardsSwiped = {
-                readVm.onAction(ModeAction.CardsSwiped(item, it))
+                component.onAction(
+                    ModeComponent.Action.CardsSwiped(item, it)
+                )
             },
             onBeginTranslation = onBeginTranslation
+        )
+    }
+
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
         )
     }
 }

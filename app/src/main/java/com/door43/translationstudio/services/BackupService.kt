@@ -16,7 +16,7 @@ import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.settings.SettingsActivity
-import com.door43.translationstudio.ui.home.HomeActivity
+import com.door43.translationstudio.MainActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.RepoUtils
 import org.eclipse.jgit.api.errors.JGitInternalException
@@ -177,7 +177,7 @@ class BackupService : Service(), Foreground.Listener {
 
         // activity to open when clicked
         // TODO: instead of the home activity we need a backup activity where the user can view their backups.
-        val notificationIntent = Intent(applicationContext, HomeActivity::class.java)
+        val notificationIntent = Intent(applicationContext, MainActivity::class.java)
         notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         val intent = PendingIntent.getActivity(
             applicationContext,

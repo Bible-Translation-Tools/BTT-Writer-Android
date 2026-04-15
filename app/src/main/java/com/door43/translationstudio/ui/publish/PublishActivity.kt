@@ -15,8 +15,8 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.profile.LoginDoor43Activity
+import com.door43.translationstudio.MainActivity
 import com.door43.translationstudio.ui.profile.ProfileActivity
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity
 import com.google.android.material.snackbar.Snackbar
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
@@ -107,7 +107,7 @@ class PublishActivity : BaseActivity() {
             if (callingActivity == ACTIVITY_TRANSLATION) {
                 // TRICKY: the translation activity is finished after opening the publish activity
                 // because we may have to go back and forth and don't want to fill up the stack
-                val intent = Intent(this, TargetTranslationActivity::class.java)
+                val intent = Intent(this, MainActivity::class.java)
                 val args = Bundle()
                 args.putString(
                     Translator.EXTRA_TARGET_TRANSLATION_ID,
@@ -125,7 +125,7 @@ class PublishActivity : BaseActivity() {
         // TRICKY: the translation activity is finished after opening the publish activity
         // because we may have to go back and forth and don't want to fill up the stack
         if (callingActivity == ACTIVITY_TRANSLATION) {
-            val intent = Intent(this, TargetTranslationActivity::class.java)
+            val intent = Intent(this, MainActivity::class.java)
             val args = Bundle()
             args.putString(Translator.EXTRA_TARGET_TRANSLATION_ID, viewModel.targetTranslation.id)
             intent.putExtras(args)
@@ -135,7 +135,7 @@ class PublishActivity : BaseActivity() {
     }
 
     private fun openReview(mergeConflict: Boolean = false) {
-        val intent = Intent(this, TargetTranslationActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java)
         val args = Bundle()
         args.putString(
             Translator.EXTRA_TARGET_TRANSLATION_ID,

@@ -3,15 +3,14 @@ package com.door43.translationstudio.ui
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
+import com.door43.translationstudio.MainActivity
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.settings.SettingsActivity
-import com.door43.translationstudio.ui.splash.SplashScreenActivity
 import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.foreground.Foreground
@@ -64,7 +63,7 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
             val crashFiles = Logger.listStacktraces()
 
             if (crashFiles.isNotEmpty()) {
-                val intent = Intent(this, SplashScreenActivity::class.java).apply {
+                val intent = Intent(this, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
                 startActivity(intent)
@@ -77,7 +76,7 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
         if (!isBootActivity && !library.isLibraryDeployed) {
             Logger.w(this.javaClass.name, "The library was not deployed.")
 
-            val intent = Intent(this, SplashScreenActivity::class.java).apply {
+            val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
             startActivity(intent)
@@ -98,14 +97,13 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
         val darkValue = resources.getString(R.string.theme_value_dark)
         val systemValue = resources.getString(R.string.theme_value_system)
 
-        val (isDark, nightMode) = when (theme) {
-            lightValue -> false to AppCompatDelegate.MODE_NIGHT_NO
-            darkValue -> true to AppCompatDelegate.MODE_NIGHT_YES
-            systemValue -> null to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-            else -> true to AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        val isDark = when (theme) {
+            lightValue -> false
+            darkValue -> true
+            systemValue -> null
+            else -> null
         }
 
-        AppCompatDelegate.setDefaultNightMode(nightMode)
         isDarkTheme = isDark
     }
 }

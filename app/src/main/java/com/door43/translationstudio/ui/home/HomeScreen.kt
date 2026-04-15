@@ -46,7 +46,6 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
@@ -54,33 +53,31 @@ import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity
-import com.door43.translationstudio.ui.translate.TargetTranslationActivity.Companion.RESULT_DO_UPDATE
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import java.io.File
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = koinViewModel(),
+    component: HomeComponent,
     onSettings: () -> Unit,
     onShareApp: (File) -> Unit,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onProjectPublish: (String) -> Unit,
     onMergeConflict: (String) -> Unit,
+    onOpenTranslate: (String) -> Unit,
     onAppExit: () -> Unit
 ) {
     val profile: Profile = koinInject()
     var profileUser by remember { mutableStateOf(profile.currentUser) }
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
     var showImportDialog by rememberSaveable { mutableStateOf(false) }
@@ -97,42 +94,33 @@ fun HomeScreen(
         onImport = { showImportDialog = true },
         onFeedback = { showFeedbackDialog = true },
         onShareApp = {
-            viewModel.onAction(HomeAction.ShareApp)
+            component.onAction(HomeComponent.Action.ShareApp)
         },
         onLogout = {
-            viewModel.onAction(HomeAction.Logout)
+            component.onAction(HomeComponent.Action.Logout)
         },
         onSettings = onSettings
     )
-
-    val openProjectLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_DO_UPDATE) {
-            showUpdateLibraryDialog = true
-            triggerUpdateLibrary = true
-        }
-    }
 
     val newTranslationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         when(result.resultCode) {
             Activity.RESULT_OK -> {
-                viewModel.onAction(HomeAction.LoadProjects)
+                component.onAction(HomeComponent.Action.LoadProjects)
             }
             NewTargetTranslationActivity.RESULT_DUPLICATE -> {
                 result.data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
                 )?.let {
-                    viewModel.onAction(HomeAction.ShowProjectExists(it))
+                    component.onAction(HomeComponent.Action.ShowProjectExists(it))
                 }
             }
             NewTargetTranslationActivity.RESULT_MERGE_CONFLICT -> {
                 result.data?.getStringExtra(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
                 )?.let {
-                    viewModel.onAction(HomeAction.LoadProjects)
+                    component.onAction(HomeComponent.Action.LoadProjects)
                     onMergeConflict(it)
                 }
             }
@@ -142,18 +130,6 @@ fun HomeScreen(
                 }
             }
         }
-    }
-
-    val openProject: (TranslationItem) -> Unit = {
-        val intent = Intent(
-            context,
-            TargetTranslationActivity::class.java
-        )
-        intent.putExtra(
-            Translator.EXTRA_TARGET_TRANSLATION_ID,
-            it.translation.id
-        )
-        openProjectLauncher.launch(intent)
     }
 
     val launchNewTranslation: () -> Unit = {
@@ -185,25 +161,35 @@ fun HomeScreen(
         newTranslationLauncher.launch(intent)
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
+    LaunchedEffect(component) {
+        component.lastOpened?.let { onOpenTranslate(it.id) }
+    }
+
+    LaunchedEffect(component) {
+        component.event.collect { event ->
             when (event) {
-                is HomeEvent.SnackbarMessage -> snackbarHostState.showSnackbar(event.message)
-                is HomeEvent.ShareApp -> onShareApp(event.file)
-                is HomeEvent.ImportProject -> {
+                is HomeComponent.Event.SnackbarMessage -> snackbarHostState.showSnackbar(event.message)
+                is HomeComponent.Event.ShareApp -> onShareApp(event.file)
+                is HomeComponent.Event.ImportProject -> {
                     showImportDialog = true
                     projectToImport = event.uri
                 }
-                HomeEvent.OnLogout -> onLogout()
+                HomeComponent.Event.OnLogout -> onLogout()
+                HomeComponent.Event.OpenUpdateLibrary -> {
+                    showUpdateLibraryDialog = true
+                    triggerUpdateLibrary = true
+                }
             }
         }
     }
 
     LifecycleResumeEffect(Unit) {
         profileUser = profile.currentUser
-        viewModel.lastFocusTargetTranslation?.let { translationId ->
-            viewModel.onAction(HomeAction.LoadWithProgress(listOf(translationId)))
-            viewModel.lastFocusTargetTranslation = null
+        component.lastFocusTargetTranslation?.let { translationId ->
+            component.onAction(
+                HomeComponent.Action.LoadWithProgress(listOf(translationId))
+            )
+            component.lastFocusTargetTranslation = null
         }
 
         onPauseOrDispose {}
@@ -266,7 +252,7 @@ fun HomeScreen(
                             )
 
                             TextButton(
-                                onClick = { viewModel.onAction(HomeAction.Logout) },
+                                onClick = { component.onAction(HomeComponent.Action.Logout) },
                                 colors = ButtonDefaults.elevatedButtonColors(
                                     containerColor = MaterialTheme.colorScheme.background,
                                     contentColor = MaterialTheme.colorScheme.primary
@@ -296,7 +282,8 @@ fun HomeScreen(
                             }
                         } else {
                             TranslationListScreen(
-                                onProjectSelected = openProject,
+                                component = component,
+                                onProjectSelected = { onOpenTranslate(it.translation.id) },
                                 onChangeLanguage = launchChangeLanguage,
                                 onMergeConflict = onMergeConflict,
                                 onProjectPublish = onProjectPublish,
@@ -324,7 +311,7 @@ fun HomeScreen(
                 onMergeConflict(it)
             },
             onProjectsImported = {
-                viewModel.onAction(HomeAction.LoadWithProgress(it))
+                component.onAction(HomeComponent.Action.LoadWithProgress(it))
             },
             projectImportUri = projectToImport,
             onProjectUriConsumed = { projectToImport = null }

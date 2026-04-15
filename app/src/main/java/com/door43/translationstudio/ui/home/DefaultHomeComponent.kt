@@ -1,9 +1,8 @@
 package com.door43.translationstudio.ui.home
 
 import android.app.Application
-import android.net.Uri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -17,11 +16,14 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.BackupRC
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.TranslationProgress
 import com.door43.util.FileUtilities
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,8 +33,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.core.component.KoinComponent
+import org.koin.core.component.KoinScopeComponent
+import org.koin.core.component.createScope
 import org.koin.core.component.inject
+import org.koin.core.scope.Scope
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 import java.io.File
@@ -40,118 +44,62 @@ import java.io.File
 private const val SORT_BY_PROJECT: String = "sort_by_project"
 private const val SORT_BY_BOOK: String = "sort_by_book"
 
-enum class ProjectSort {
-    ProjectThenLanguage,
-    LanguageThenProject,
-    ProgressThenProject;
-
-    companion object {
-        fun of(i: Int): ProjectSort {
-            return entries.getOrNull(i) ?: ProjectThenLanguage
-        }
-    }
-}
-
-enum class BookSort(val value: Int) {
-    BibleOrder(0),
-    Alphabetical(1);
-
-    companion object {
-        fun of(i: Int): BookSort {
-            return entries.getOrNull(i) ?: BibleOrder
-        }
-    }
-}
-
-data class HomeState(
-    val translations: List<TranslationItem> = emptyList(),
-    val projectSort: ProjectSort = ProjectSort.ProjectThenLanguage,
-    val bookSort: BookSort = BookSort.BibleOrder,
-    val projectInfo: TranslationItem? = null,
-    val scrollToTopTrigger: Int = 0
-)
-
-sealed interface HomeEvent {
-    data class SnackbarMessage(val message: String) : HomeEvent
-    data class ShareApp(val file: File) : HomeEvent
-    data class ImportProject(val uri: Uri) : HomeEvent
-    data object OnLogout : HomeEvent
-}
-
-sealed interface HomeAction {
-    data class ShowProjectExists(val translationId: String) : HomeAction
-    data class DeleteProject(val project: TranslationItem): HomeAction
-    data class ProjectSortChanged(val sort: ProjectSort) : HomeAction
-    data class BookSortChanged(val sort: BookSort) : HomeAction
-    data class ShowProjectInfo(val item: TranslationItem) : HomeAction
-    data class ImportProject(val uri: Uri) : HomeAction
-    data object LoadProjects : HomeAction
-    data class LoadWithProgress(val translationIds: List<String>) : HomeAction
-    data object HideProjectInfo : HomeAction
-    data object Logout : HomeAction
-    data object ShareApp: HomeAction
-
-}
-
-private data class SortTrigger(
-    val projectSort: ProjectSort,
-    val bookSort: BookSort,
-    val translations: List<TranslationItem>
-)
-
-class HomeViewModel(
-    private val translator: Translator,
-    private val profile: Profile,
-    private val gogsLogout: GogsLogout,
-    private val directoryProvider: IDirectoryProvider,
-    private val backupRC: BackupRC,
-    private val library: Door43Client,
-    private val calculateProgress: TranslationProgress,
-    private val prefRepository: IPreferenceRepository
-) : ViewModel(), KoinComponent, ProgressOwner {
+class DefaultHomeComponent(
+    componentContext: ComponentContext,
+) : HomeComponent,
+    ComponentContext by componentContext,
+    ComponentScope, ProgressOwner,
+    KoinScopeComponent {
 
     private val application: Application by inject()
+    private val translator: Translator by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val calculateProgress: TranslationProgress by inject()
+    private val profile: Profile by inject()
+    private val gogsLogout: GogsLogout by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val backupRC: BackupRC by inject()
+    private val library: Door43Client by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val scope: Scope = createScope<DefaultHomeComponent>()
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(HomeState())
-    val state = _state.asStateFlow()
+    private val _state = MutableStateFlow(HomeComponent.HomeState())
+    override val state = _state.asStateFlow()
 
-    private val _event = Channel<HomeEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
+    private val _event = Channel<HomeComponent.Event>(Channel.BUFFERED)
+    override val event = _event.receiveAsFlow()
 
-    val projectSortOptions: List<ProjectSort> = buildList {
+    override val projectSortOptions: List<ProjectSort> = buildList {
         add(ProjectSort.ProjectThenLanguage)
         add(ProjectSort.LanguageThenProject)
         add(ProjectSort.ProgressThenProject)
     }
 
-    val bookSortOptions: List<BookSort> = buildList {
+    override val bookSortOptions: List<BookSort> = buildList {
         add(BookSort.BibleOrder)
         add(BookSort.Alphabetical)
     }
 
     private val bookList = BibleCodes.getBibleBooks()
 
-    var lastFocusTargetTranslation: String?
+    override var lastFocusTargetTranslation: String?
         get() = translator.lastFocusTargetTranslation
         set(value) { translator.lastFocusTargetTranslation = value }
 
-    /**
-     * get last project opened and make sure it is still present
-     * @return
-     */
-    val lastOpened: TargetTranslation?
+    override val lastOpened: TargetTranslation?
         get() = translator.lastFocusTargetTranslation?.let { lastTarget ->
             translator.getTargetTranslation(lastTarget)
         }
 
     init {
-        viewModelScope.launch {
+        coroutineScope.launch {
             state
                 .map { s ->
-                    SortTrigger(s.projectSort, s.bookSort, s.translations)
+                    HomeComponent.SortTrigger(s.projectSort, s.bookSort, s.translations)
                 }
                 .distinctUntilChanged()
                 .collect { trigger ->
@@ -168,28 +116,35 @@ class HomeViewModel(
         _state.update { it.copy(projectSort = projectSort, bookSort = bookSort) }
 
         loadProjects()
-    }
 
-    fun onAction(action: HomeAction) {
-        when (action) {
-            is HomeAction.ShowProjectExists -> showProjectExists(action.translationId)
-            is HomeAction.DeleteProject -> deleteProject(action.project)
-            is HomeAction.ProjectSortChanged -> onProjectSortChanged(action.sort)
-            is HomeAction.BookSortChanged -> onBookSortChanged(action.sort)
-            is HomeAction.ShowProjectInfo -> _state.update { it.copy(projectInfo = action.item) }
-            is HomeAction.ImportProject -> viewModelScope.launch {
-                _event.trySend(HomeEvent.ImportProject(action.uri))
-            }
-            is HomeAction.LoadProjects -> loadProjects()
-            is HomeAction.LoadWithProgress -> loadWithProgress(action.translationIds)
-            is HomeAction.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
-            is HomeAction.Logout -> logout()
-            is HomeAction.ShareApp -> shareApp()
-        }
+        lifecycle.doOnDestroy { scope.close() }
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
+    }
+
+    override fun onAction(action: HomeComponent.Action) {
+        when (action) {
+            is HomeComponent.Action.ShowProjectExists -> showProjectExists(action.translationId)
+            is HomeComponent.Action.DeleteProject -> deleteProject(action.project)
+            is HomeComponent.Action.ProjectSortChanged -> onProjectSortChanged(action.sort)
+            is HomeComponent.Action.BookSortChanged -> onBookSortChanged(action.sort)
+            is HomeComponent.Action.ShowProjectInfo -> {
+                _state.update { it.copy(projectInfo = action.item) }
+            }
+            is HomeComponent.Action.ImportProject -> coroutineScope.launch {
+                _event.trySend(HomeComponent.Event.ImportProject(action.uri))
+            }
+            is HomeComponent.Action.LoadProjects -> loadProjects()
+            is HomeComponent.Action.LoadWithProgress -> loadWithProgress(action.translationIds)
+            is HomeComponent.Action.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
+            is HomeComponent.Action.Logout -> logout()
+            is HomeComponent.Action.ShareApp -> shareApp()
+            is HomeComponent.Action.RequestUpdateLibrary -> {
+                _event.trySend(HomeComponent.Event.OpenUpdateLibrary)
+            }
+        }
     }
 
     private fun loadProjects() {
@@ -213,7 +168,7 @@ class HomeViewModel(
     }
 
     private fun loadWithProgress(translationIds: List<String>) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             val newUpdates = translationIds.mapNotNull { id ->
                 getTargetTranslation(id)?.let { translation ->
                     val progress = calculateProgress.execute(translation)
@@ -251,12 +206,12 @@ class HomeViewModel(
                 profile.logout()
             }
 
-            _event.trySend(HomeEvent.OnLogout)
+            _event.trySend(HomeComponent.Event.OnLogout)
         }
     }
 
     private fun onProjectSortChanged(sort: ProjectSort) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             prefRepository.setDefaultPref(SORT_BY_PROJECT, sort.ordinal)
         }
         _state.update { it.copy(projectSort = sort) }
@@ -264,7 +219,7 @@ class HomeViewModel(
     }
 
     private fun onBookSortChanged(sort: BookSort) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             prefRepository.setDefaultPref(SORT_BY_BOOK, sort.ordinal)
         }
         _state.update { it.copy(bookSort = sort) }
@@ -350,7 +305,7 @@ class HomeViewModel(
                     exportFile
                 }
             }
-            file?.let { _event.trySend(HomeEvent.ShareApp(it)) }
+            file?.let { _event.trySend(HomeComponent.Event.ShareApp(it)) }
         }
     }
 
@@ -370,7 +325,7 @@ class HomeViewModel(
                 project.name,
                 translation.targetLanguageName
             )
-            _event.trySend(HomeEvent.SnackbarMessage(message))
+            _event.trySend(HomeComponent.Event.SnackbarMessage(message))
         }
     }
 
@@ -424,5 +379,4 @@ class HomeViewModel(
     private fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
     }
-
 }

@@ -26,19 +26,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
-import com.door43.translationstudio.ui.translate.TargetAction
-import com.door43.translationstudio.ui.translate.TargetTranslationViewModel
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
+import com.door43.translationstudio.ui.translate.TranslateComponent
 import org.unfoldingword.resourcecontainer.Language
 
 @Composable
 fun ReviewModeSection(
-    translationViewModel: TargetTranslationViewModel,
+    component: ReviewModeComponent,
+    parentComponent: TranslateComponent,
     typography: Typography,
     listState: LazyListState,
     searchRequested: Boolean,
@@ -50,15 +48,11 @@ fun ReviewModeSection(
     chunksDoneRequested: Boolean,
     onChunksDoneConsumed: () -> Unit
 ) {
-    val viewModel: ReviewModeViewModel = koinViewModel {
-        parametersOf(translationViewModel.sharedState, translationViewModel.eventSender)
-    }
-
-    val sharedState by translationViewModel.sharedState.collectAsStateWithLifecycle()
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val items by viewModel.items.collectAsStateWithLifecycle()
-    val filteredItems by viewModel.filteredItems.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val sharedState by parentComponent.sharedState.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val items by component.items.collectAsStateWithLifecycle()
+    val filteredItems by component.filteredItems.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
 
     val hasConflicts = items.any { it.hasMergeConflict }
@@ -68,12 +62,13 @@ fun ReviewModeSection(
         onHasMergeConflicts(hasConflicts)
         if (items.isNotEmpty() && !hasConflicts && mergeConflictFilterOn) {
             onMergeConflictFilterReset()
-            viewModel.onAction(ReviewAction.SetMergeConflictFilterOn(false))
+            component.onAction(ReviewModeComponent.Action.SetMergeConflictFilterOn(false))
         }
     }
 
     LaunchedEffect(mergeConflictFilterOn) {
-        viewModel.onAction(ReviewAction.SetMergeConflictFilterOn(
+        component.onAction(
+            ReviewModeComponent.Action.SetMergeConflictFilterOn(
             mergeConflictFilterOn
         ))
     }
@@ -81,7 +76,7 @@ fun ReviewModeSection(
     // Open search when requested from sidebar
     LaunchedEffect(searchRequested) {
         if (searchRequested) {
-            viewModel.onAction(ReviewAction.OpenSearch)
+            component.onAction(ReviewModeComponent.Action.OpenSearch)
             onSearchConsumed()
         }
     }
@@ -97,7 +92,7 @@ fun ReviewModeSection(
 
     LaunchedEffect(chunksDoneRequested) {
         if (chunksDoneRequested) {
-            viewModel.onAction(ReviewAction.MarkAllDoneClicked)
+            component.onAction(ReviewModeComponent.Action.MarkAllDoneClicked)
             onChunksDoneConsumed()
         }
     }
@@ -108,24 +103,24 @@ fun ReviewModeSection(
                 SearchBar(
                     searchState = search,
                     onQueryChange = {
-                        viewModel.onAction(ReviewAction.UpdateSearchQuery(it))
+                        component.onAction(ReviewModeComponent.Action.UpdateSearchQuery(it))
                     },
                     onSubjectChange = {
-                        viewModel.onAction(ReviewAction.SetSearchSubject(it))
+                        component.onAction(ReviewModeComponent.Action.SetSearchSubject(it))
                     },
                     onNext = {
-                        viewModel.onAction(ReviewAction.NextMatch)
+                        component.onAction(ReviewModeComponent.Action.NextMatch)
                     },
                     onPrev = {
-                        viewModel.onAction(ReviewAction.PrevMatch)
+                        component.onAction(ReviewModeComponent.Action.PrevMatch)
                     },
                     onClose = {
-                        viewModel.onAction(ReviewAction.CloseSearch)
+                        component.onAction(ReviewModeComponent.Action.CloseSearch)
                     }
                 )
             }
             ModeScreenTemplate(
-                viewModel = viewModel,
+                component = component,
                 items = filteredItems,
                 listState = listState,
                 dialogs = {
@@ -133,7 +128,7 @@ fun ReviewModeSection(
                     LaunchedEffect(state.url) {
                         if (state.url != null) {
                             urlHandler.openUri(state.url!!)
-                            viewModel.onAction(ReviewAction.CleanUrl)
+                            component.onAction(ReviewModeComponent.Action.CleanUrl)
                         }
                     }
 
@@ -145,10 +140,10 @@ fun ReviewModeSection(
                                 stringResource(R.string.chunk_checklist_body)
                             ),
                             onDismiss = {
-                                viewModel.onAction(ReviewAction.ToggleDoneConfirmed(false))
+                                component.onAction(ReviewModeComponent.Action.ToggleDoneConfirmed(false))
                             },
                             onConfirm = {
-                                viewModel.onAction(ReviewAction.ToggleDoneConfirmed(true))
+                                component.onAction(ReviewModeComponent.Action.ToggleDoneConfirmed(true))
                             }
                         )
                     }
@@ -162,13 +157,13 @@ fun ReviewModeSection(
                                     stringResource(R.string.project_checklist_body)
                                 ),
                                 onDismiss = {
-                                    viewModel.onAction(
-                                        ReviewAction.MarkAllDoneConfirmed(false)
+                                    component.onAction(
+                                        ReviewModeComponent.Action.MarkAllDoneConfirmed(false)
                                     )
                                 },
                                 onConfirm = {
-                                    viewModel.onAction(
-                                        ReviewAction.MarkAllDoneConfirmed(true)
+                                    component.onAction(
+                                        ReviewModeComponent.Action.MarkAllDoneConfirmed(true)
                                     )
                                 }
                             )
@@ -176,8 +171,8 @@ fun ReviewModeSection(
                         is MarkAllDialogState.Result -> {
                             ActionDialog(
                                 onDismiss = {
-                                    viewModel.onAction(
-                                        ReviewAction.MarkAllDoneConfirmed(false)
+                                    component.onAction(
+                                        ReviewModeComponent.Action.MarkAllDoneConfirmed(false)
                                     )
                                 },
                                 title = stringResource(R.string.result),
@@ -205,49 +200,49 @@ fun ReviewModeSection(
                     typography = typography,
                     resourcesOpen = state.resourcesOpen,
                     onSourceTabClick = {
-                        translationViewModel.onAction(TargetAction.SelectSource(it))
+                        parentComponent.onAction(TranslateComponent.Action.SelectSource(it))
                     },
                     onAddNewSourceClick = onSourceDialogOpen,
                     onRemoveSourceClick = {
-                        translationViewModel.onAction(TargetAction.RemoveSource(it))
+                        parentComponent.onAction(TranslateComponent.Action.RemoveSource(it))
                     },
                     onTextChange = {
-                        viewModel.onAction(ReviewAction.ItemTextChanged(item, it))
+                        component.onAction(ReviewModeComponent.Action.ItemTextChanged(item, it))
                     },
                     onExpandedChange = { expanded ->
-                        viewModel.onAction(ReviewAction.OpenResources(expanded))
-                        if (!expanded) viewModel.onAction(ReviewAction.ClearHelp)
+                        component.onAction(ReviewModeComponent.Action.OpenResources(expanded))
+                        if (!expanded) component.onAction(ReviewModeComponent.Action.ClearHelp)
                     },
                     onRenderHelps = {
-                        viewModel.onAction(ReviewAction.RenderHelps(item))
+                        component.onAction(ReviewModeComponent.Action.RenderHelps(item))
                     },
                     onHelpClick = {
-                        viewModel.onAction(ReviewAction.OpenHelp(it))
+                        component.onAction(ReviewModeComponent.Action.OpenHelp(it))
                     },
                     onEditToggle = {
-                        viewModel.onAction(ReviewAction.ToggleEdit(item))
+                        component.onAction(ReviewModeComponent.Action.ToggleEdit(item))
                     },
                     onDoneToggle = {
-                        viewModel.onAction(ReviewAction.ToggleDoneClicked(item))
+                        component.onAction(ReviewModeComponent.Action.ToggleDoneClicked(item))
                     },
                     onUndoClick = {
-                        viewModel.onAction(ReviewAction.Undo(item))
+                        component.onAction(ReviewModeComponent.Action.Undo(item))
                     },
                     onRedoClick = {
-                        viewModel.onAction(ReviewAction.Redo(item))
+                        component.onAction(ReviewModeComponent.Action.Redo(item))
                     },
                     onAddNoteClick = { caretPos ->
-                        viewModel.onAction(ReviewAction.AddNoteClicked(item, caretPos))
+                        component.onAction(ReviewModeComponent.Action.AddNoteClicked(item, caretPos))
                     },
                     onDragDropVerse = { machineReadable, verseRawStart, verseRawEnd, targetRawPosition ->
-                        viewModel.onAction(
-                            ReviewAction.DragDropVerse(
+                        component.onAction(
+                            ReviewModeComponent.Action.DragDropVerse(
                                 item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
                             )
                         )
                     },
                     onConflictSelected = {
-                        viewModel.onAction(ReviewAction.SelectConflict(item, it))
+                        component.onAction(ReviewModeComponent.Action.SelectConflict(item, it))
                     },
                     searchQuery = state.search?.let { search ->
                         if (search.query.length >= 2 && search.subject == SearchSubject.TARGET) {
@@ -263,10 +258,10 @@ fun ReviewModeSection(
             help = state.help,
             typography = typography,
             sourceLanguage = sharedState.resourceContainer?.language,
-            onClearHelp = { viewModel.onAction(ReviewAction.ClearHelp) },
-            onOpenIndex = { viewModel.onAction(ReviewAction.OpenIndex(it)) },
+            onClearHelp = { component.onAction(ReviewModeComponent.Action.ClearHelp) },
+            onOpenIndex = { component.onAction(ReviewModeComponent.Action.OpenIndex(it)) },
             onOpenWord = { rcSlug, slug ->
-                viewModel.onAction(ReviewAction.OpenWord(rcSlug, slug))
+                component.onAction(ReviewModeComponent.Action.OpenWord(rcSlug, slug))
             },
             modifier = Modifier
                 .fillMaxHeight()

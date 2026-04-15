@@ -36,12 +36,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
-import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
 @Composable
 fun TranslationListScreen(
-    viewModel: HomeViewModel = koinViewModel(),
+    component: HomeComponent,
     onProjectSelected: (TranslationItem) -> Unit,
     onChangeLanguage: (TranslationItem) -> Unit,
     onMergeConflict: (String) -> Unit,
@@ -50,7 +49,7 @@ fun TranslationListScreen(
     onLogout: () -> Unit,
 ) {
     val typography: Typography = koinInject()
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
 
@@ -70,10 +69,10 @@ fun TranslationListScreen(
         ) {
             SortDropdown(
                 label = stringResource(R.string.sort_column),
-                options = viewModel.projectSortOptions,
+                options = component.projectSortOptions,
                 selectedOption = state.projectSort,
                 onOptionSelected = {
-                    viewModel.onAction(HomeAction.ProjectSortChanged(it))
+                    component.onAction(HomeComponent.Action.ProjectSortChanged(it))
                 },
                 labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
@@ -81,10 +80,10 @@ fun TranslationListScreen(
 
             SortDropdown(
                 label = stringResource(R.string.sort_projects),
-                options = viewModel.bookSortOptions,
+                options = component.bookSortOptions,
                 selectedOption = state.bookSort,
                 onOptionSelected = {
-                    viewModel.onAction(HomeAction.BookSortChanged(it))
+                    component.onAction(HomeComponent.Action.BookSortChanged(it))
                 },
                 labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
@@ -136,7 +135,7 @@ fun TranslationListScreen(
                     typography = typography,
                     onItemClick = { onProjectSelected(project) },
                     onInfoClick = {
-                        viewModel.onAction(HomeAction.ShowProjectInfo(project))
+                        component.onAction(HomeComponent.Action.ShowProjectInfo(project))
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -152,23 +151,23 @@ fun TranslationListScreen(
         ProjectDetailsDialog(
             project = project,
             onDismiss = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
+                component.onAction(HomeComponent.Action.HideProjectInfo)
             },
             onChangeLanguage = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
+                component.onAction(HomeComponent.Action.HideProjectInfo)
                 onChangeLanguage(project)
             },
             onDelete = {
-                viewModel.onAction(HomeAction.DeleteProject(project))
+                component.onAction(HomeComponent.Action.DeleteProject(project))
             },
             onPublish = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
+                component.onAction(HomeComponent.Action.HideProjectInfo)
                 onProjectPublish(project.translation.id)
             },
             onLogin = onLogin,
             onLogout = onLogout,
             onMergeConflict = {
-                viewModel.onAction(HomeAction.HideProjectInfo)
+                component.onAction(HomeComponent.Action.HideProjectInfo)
                 onMergeConflict(project.translation.id)
             }
         )

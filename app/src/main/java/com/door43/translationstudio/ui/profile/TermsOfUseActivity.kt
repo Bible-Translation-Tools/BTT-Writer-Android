@@ -7,7 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.home.HomeActivity
+import com.door43.translationstudio.MainActivity
 import com.door43.translationstudio.ui.legal.NavigationEvent
 import com.door43.translationstudio.ui.legal.TermsOfUseScreen
 import com.door43.translationstudio.ui.legal.TermsOfUseViewModel
@@ -27,7 +27,7 @@ class TermsOfUseActivity : BaseActivity() {
 
         when (viewModel.initialState) {
             TermsOfUseViewModel.InitialState.GO_HOME -> {
-                startActivity(Intent(this, HomeActivity::class.java))
+                startActivity(Intent(this, MainActivity::class.java))
                 finish()
                 return
             }
@@ -47,7 +47,7 @@ class TermsOfUseActivity : BaseActivity() {
                             startActivity(
                                 Intent(
                                     this@TermsOfUseActivity,
-                                    HomeActivity::class.java
+                                    MainActivity::class.java
                                 )
                             )
                             finish()
