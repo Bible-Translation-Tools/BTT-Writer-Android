@@ -14,9 +14,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
-import com.door43.translationstudio.ui.profile.LoginDoor43Activity
 import com.door43.translationstudio.MainActivity
-import com.door43.translationstudio.ui.profile.ProfileActivity
 import com.google.android.material.snackbar.Snackbar
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.unfoldingword.tools.logger.Logger
@@ -166,12 +164,14 @@ class PublishActivity : BaseActivity() {
     }
 
     private fun door43Login() {
-        val intent = Intent(this, LoginDoor43Activity::class.java)
+        val intent = Intent(this, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_OPEN_PROFILE, true)
         startActivity(intent)
     }
 
     private fun logout() {
-        val logoutIntent = Intent(this, ProfileActivity::class.java)
+        val logoutIntent = Intent(this, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_OPEN_PROFILE, true)
         startActivity(logoutIntent)
         finish()
     }

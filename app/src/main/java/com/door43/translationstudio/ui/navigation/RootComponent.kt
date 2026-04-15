@@ -4,6 +4,7 @@ import android.net.Uri
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.door43.translationstudio.ui.home.HomeComponent
+import com.door43.translationstudio.ui.profile.ProfileComponent
 import com.door43.translationstudio.ui.splash.SplashComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent
 import kotlinx.coroutines.flow.Flow
@@ -19,13 +20,21 @@ interface RootComponent {
     fun onBackPressed()
     fun onDeepLink(uri: Uri)
 
+    fun openHome(withUpdate: Boolean = false)
     fun openTranslate(translationId: String, startWithMergeFilter: Boolean = false)
+    fun openProfile()
+    fun openDraft(translationId: String)
+    fun openPublishPreview(translationId: String)
+    fun openSettings()
+
+    fun exportToApp(file: File)
 
     sealed interface Child {
         data object Placeholder : Child
         data class Splash(val component: SplashComponent) : Child
         data class Home(val component: HomeComponent) : Child
         data class Translate(val component: TranslateComponent) : Child
+        data class Profile(val component: ProfileComponent) : Child
         // Real children land in later milestones:
         // data class NewTranslation(val component: NewTranslationComponent) : Child
         // ...
@@ -84,10 +93,10 @@ interface RootComponent {
     }
 
     sealed interface Event {
-        data object OpenProfile : Event
         data object OpenCrashReporter : Event
         data object OpenSettings : Event
-        data object OpenLoginDoor43 : Event
+        data object OpenTermsOfUse : Event
+        data object ExitApp : Event
         data class OpenDraft(val translationId: String) : Event
         data class OpenPublishFromTranslate(val translationId: String) : Event
         data class ExportFile(val file: File) : Event

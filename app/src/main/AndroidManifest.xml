@@ -113,24 +113,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.profile.ProfileActivity"
-            android:label="@string/title_activity_profile"
-            android:launchMode="singleTop" />
-        <activity
             android:name=".ui.draft.DraftActivity"
             android:label="@string/preview">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
-        <activity
-            android:name=".ui.profile.LoginDoor43Activity"
-            android:windowSoftInputMode="adjustResize"
-        />
-        <activity
-            android:name=".ui.profile.LoginOfflineActivity"
-            android:windowSoftInputMode="adjustResize"
-        />
     </application>
 
 </manifest>

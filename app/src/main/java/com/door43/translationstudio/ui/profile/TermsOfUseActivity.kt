@@ -57,8 +57,8 @@ class TermsOfUseActivity : BaseActivity() {
                             startActivity(
                                 Intent(
                                     this@TermsOfUseActivity,
-                                    ProfileActivity::class.java
-                                )
+                                    MainActivity::class.java
+                                ).putExtra(MainActivity.EXTRA_OPEN_PROFILE, true)
                             )
                             finish()
                         }

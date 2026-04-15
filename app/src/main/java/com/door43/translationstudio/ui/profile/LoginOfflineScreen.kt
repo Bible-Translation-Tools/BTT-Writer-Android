@@ -44,15 +44,14 @@ enum class PrivacyDialogMode { INFO, CONFIRM }
 
 @Composable
 fun LoginOfflineScreen(
-    onCancel: () -> Unit,
-    onContinue: (String) -> Unit
+    component: LoginOfflineComponent
 ) {
     var fullName by rememberSaveable { mutableStateOf("") }
     var dialogMode by rememberSaveable { mutableStateOf<PrivacyDialogMode?>(null) }
-    
+
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    
+
     val keyboardController = LocalSoftwareKeyboardController.current
     val errorMessage = stringResource(R.string.complete_required_fields)
 
@@ -121,7 +120,7 @@ fun LoginOfflineScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(
-                    onClick = onCancel,
+                    onClick = component::onCancel,
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Text(
@@ -129,9 +128,7 @@ fun LoginOfflineScreen(
                     )
                 }
 
-                Button(
-                    onClick = submitForm
-                ) {
+                Button(onClick = submitForm) {
                     Text(stringResource(R.string.label_continue))
                 }
             }
@@ -141,7 +138,7 @@ fun LoginOfflineScreen(
     dialogMode?.let { mode ->
         PrivacyNoticeDialog(
             onConfirm = if (mode == PrivacyDialogMode.CONFIRM) {
-                { onContinue(fullName.trim()) }
+                { component.onContinue(fullName.trim()) }
             } else null,
             onDismissRequest = { dialogMode = null }
         )

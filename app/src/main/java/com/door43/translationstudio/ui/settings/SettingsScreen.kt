@@ -41,9 +41,9 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
     appVersion: String,
     onNavigateBack: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     onNavigateToDeveloperTools: () -> Unit,
-    onMigrationFinished: () -> Unit
+    onMigrationFinished: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -75,9 +75,11 @@ fun SettingsScreen(
         uri?.let { viewModel.migrateOldAppData(it) }
     }
 
-    LaunchedEffect(state.loggedOut) {
-        if (state.loggedOut) {
-            onNavigateToProfile()
+    LaunchedEffect(viewModel) {
+        viewModel.event.collect {
+            when (it) {
+                is SettingEvent.OnLogout -> onLogout()
+            }
         }
     }
 

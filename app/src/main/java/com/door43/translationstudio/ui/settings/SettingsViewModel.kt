@@ -41,9 +41,11 @@ import com.door43.usecases.GogsLogout
 import com.door43.usecases.MigrateTranslations
 import com.door43.util.TTFAnalyzer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.unfoldingword.door43client.Door43Client
@@ -103,9 +105,12 @@ data class SettingsState(
     val currentLoggingLevelName: String = "",
 
     val releaseResult: CheckForLatestRelease.Result? = null,
-    val migrationFinished: Boolean = false,
-    val loggedOut: Boolean = false
+    val migrationFinished: Boolean = false
 )
+
+sealed interface SettingEvent {
+    data object OnLogout : SettingEvent
+}
 
 class SettingsViewModel(
     private val checkForLatestRelease: CheckForLatestRelease,
@@ -126,6 +131,9 @@ class SettingsViewModel(
 
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state.asStateFlow()
+
+    private val _event = Channel<SettingEvent>(Channel.BUFFERED)
+    val event = _event.receiveAsFlow()
 
     init {
         loadInitialPreferences()
@@ -570,7 +578,7 @@ class SettingsViewModel(
                     logout.execute()
                     profile.logout()
                 }
-                _state.update { it.copy(loggedOut = true) }
+                _event.trySend(SettingEvent.OnLogout)
             }
         }
     }

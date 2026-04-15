@@ -8,11 +8,11 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.App
 import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.MainActivity
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.AppTheme
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.devtools.DeveloperToolsActivity
-import com.door43.translationstudio.ui.profile.ProfileActivity
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -39,8 +39,9 @@ class SettingsActivity : BaseActivity() {
                 SettingsScreen(
                     appVersion = "${BuildConfig.VERSION_NAME} - ${BuildConfig.VERSION_CODE}",
                     onNavigateBack = { finish() },
-                    onNavigateToProfile = {
-                        val intent = Intent(this, ProfileActivity::class.java)
+                    onLogout = {
+                        val intent = Intent(this, MainActivity::class.java)
+                            .putExtra(MainActivity.EXTRA_OPEN_PROFILE, true)
                         startActivity(intent)
                     },
                     onNavigateToDeveloperTools = {
@@ -56,7 +57,6 @@ class SettingsActivity : BaseActivity() {
     companion object {
         const val KEY_PREF_CONTENT_SERVER = "content_server"
         const val KEY_PREF_GIT_SERVER_PORT = "git_server_port"
-        const val KEY_PREF_ALWAYS_SHARE = "always_share"
         const val KEY_PREF_MEDIA_SERVER = "media_server"
         const val KEY_PREF_READER_SERVER = "reader_server"
         const val KEY_PREF_CREATE_ACCOUNT_URL = "create_account_url"
@@ -71,7 +71,6 @@ class SettingsActivity : BaseActivity() {
 
         const val KEY_PREF_LOGGING_LEVEL = "logging_level"
         const val KEY_PREF_BACKUP_INTERVAL = "backup_interval"
-        const val KEY_PREF_DEVICE_ALIAS = "device_name"
         const val KEY_PREF_GOGS_API = "gogs_api"
         const val KEY_PREF_CHECK_HARDWARE = "check_hardware_requirements"
 

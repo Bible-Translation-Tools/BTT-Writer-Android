@@ -22,6 +22,10 @@ import com.door43.translationstudio.ui.navigation.RootContent
  */
 class MainActivity : BaseActivity() {
 
+    companion object {
+        const val EXTRA_OPEN_PROFILE = "open_profile"
+    }
+
     override val isBootActivity: Boolean = true
 
     private lateinit var root: RootComponent
@@ -65,6 +69,11 @@ class MainActivity : BaseActivity() {
             intent.removeExtra(Translator.EXTRA_TARGET_TRANSLATION_ID)
             intent.removeExtra(Translator.EXTRA_START_WITH_MERGE_FILTER)
             root.openTranslate(translationId, mergeConflict)
+        }
+
+        if (intent.getBooleanExtra(EXTRA_OPEN_PROFILE, false)) {
+            intent.removeExtra(EXTRA_OPEN_PROFILE)
+            root.openProfile()
         }
     }
 

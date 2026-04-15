@@ -13,13 +13,15 @@ import com.arkivanov.decompose.value.Value
 import com.door43.translationstudio.ui.home.DefaultHomeComponent
 import com.door43.translationstudio.ui.home.HomeComponent
 import com.door43.translationstudio.ui.navigation.RootComponent.Config
+import com.door43.translationstudio.ui.profile.DefaultProfileComponent
+import com.door43.translationstudio.ui.profile.ProfileComponent
 import com.door43.translationstudio.ui.splash.DefaultSplashComponent
 import com.door43.translationstudio.ui.splash.SplashComponent
 import com.door43.translationstudio.ui.translate.DefaultTranslateComponent
-import com.door43.translationstudio.ui.translate.TranslateComponent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import java.io.File
 
 class DefaultRootComponent(
     componentContext: ComponentContext,
@@ -66,8 +68,13 @@ class DefaultRootComponent(
             component = DefaultTranslateComponent(
                 componentContext = componentContext,
                 targetTranslationId = config.translationId,
-                startWithMergeFilter = config.startWithMergeFilter,
-                result = ::onTranslateResult,
+                startWithMergeFilter = config.startWithMergeFilter
+            ),
+        )
+        is Config.Profile -> RootComponent.Child.Profile(
+            component = DefaultProfileComponent(
+                componentContext = componentContext,
+                result = ::onProfileResult,
             ),
         )
         else -> RootComponent.Child.Placeholder
@@ -76,8 +83,7 @@ class DefaultRootComponent(
     private fun onSplashResult(result: SplashComponent.Result) {
         when (result) {
             SplashComponent.Result.NavigateToProfile -> {
-                navigation.replaceAll(Config.Home())
-                _events.trySend(RootComponent.Event.OpenProfile)
+                navigation.replaceAll(Config.Profile)
             }
             SplashComponent.Result.NavigateToCrashReporter -> {
                 navigation.replaceAll(Config.Home())
@@ -86,29 +92,25 @@ class DefaultRootComponent(
         }
     }
 
-    private fun onTranslateResult(result: TranslateComponent.Result) {
+    private fun onProfileResult(result: ProfileComponent.Result) {
         when (result) {
-            is TranslateComponent.Result.Back -> {
-                navigation.pop {
-                    if (result.didUpdate) signalHomeUpdateLibrary()
+            is ProfileComponent.Result.Back -> {
+                if (stack.value.backStack.isEmpty()) {
+                    _events.trySend(RootComponent.Event.ExitApp)
+                } else {
+                    navigation.pop()
                 }
             }
-            is TranslateComponent.Result.OpenDraft ->
-                _events.trySend(RootComponent.Event.OpenDraft(result.translationId))
-            is TranslateComponent.Result.OpenPublish -> {
-                _events.trySend(RootComponent.Event.OpenPublishFromTranslate(result.translationId))
-                navigation.pop()
-            }
-            TranslateComponent.Result.OpenSettings ->
+            is ProfileComponent.Result.OpenSettings -> {
                 _events.trySend(RootComponent.Event.OpenSettings)
-            TranslateComponent.Result.OpenLogin ->
-                _events.trySend(RootComponent.Event.OpenLoginDoor43)
-            TranslateComponent.Result.OpenLogout -> {
-                _events.trySend(RootComponent.Event.OpenProfile)
-                navigation.pop()
             }
-            is TranslateComponent.Result.ExportFile ->
-                _events.trySend(RootComponent.Event.ExportFile(result.file))
+            is ProfileComponent.Result.LoggedIn -> {
+                navigation.replaceAll(Config.Home())
+
+                if (result.showTerms) {
+                    _events.trySend(RootComponent.Event.OpenTermsOfUse)
+                }
+            }
         }
     }
 
@@ -116,6 +118,12 @@ class DefaultRootComponent(
         val active = stack.value.active.instance
         if (active is RootComponent.Child.Home) {
             active.component.onAction(HomeComponent.Action.RequestUpdateLibrary)
+        }
+    }
+
+    override fun openHome(withUpdate: Boolean) {
+        navigation.pop {
+            if (withUpdate) signalHomeUpdateLibrary()
         }
     }
 
@@ -127,5 +135,31 @@ class DefaultRootComponent(
                 startWithMergeFilter = startWithMergeFilter,
             )
         )
+    }
+
+    @OptIn(DelicateDecomposeApi::class)
+    override fun openProfile() {
+        navigation.push(Config.Profile)
+    }
+
+    override fun openDraft(translationId: String) {
+        // TODO Replace with navigation
+        _events.trySend(RootComponent.Event.OpenDraft(translationId))
+    }
+
+    override fun openPublishPreview(translationId: String) {
+        // TODO Replace with navigation
+        _events.trySend(RootComponent.Event.OpenPublishFromTranslate(translationId))
+        navigation.pop()
+    }
+
+    override fun openSettings() {
+        // TODO Replace with navigation
+        _events.trySend(RootComponent.Event.OpenSettings)
+    }
+
+    override fun exportToApp(file: File) {
+        // TODO Replace with navigation
+        _events.trySend(RootComponent.Event.ExportFile(file))
     }
 }

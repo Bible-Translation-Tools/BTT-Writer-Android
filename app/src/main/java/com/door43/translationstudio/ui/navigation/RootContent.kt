@@ -16,8 +16,8 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.crash.CrashReporterActivity
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.home.HomeScreen
-import com.door43.translationstudio.ui.profile.LoginDoor43Activity
-import com.door43.translationstudio.ui.profile.ProfileActivity
+import com.door43.translationstudio.ui.profile.ProfileRouter
+import com.door43.translationstudio.ui.profile.TermsOfUseActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.ui.splash.SplashScreen
@@ -35,14 +35,14 @@ fun RootContent(
     LaunchedEffect(component) {
         component.events.collect { event ->
             when (event) {
-                RootComponent.Event.OpenProfile ->
-                    context.startActivity(Intent(context, ProfileActivity::class.java))
                 RootComponent.Event.OpenCrashReporter ->
                     context.startActivity(Intent(context, CrashReporterActivity::class.java))
                 RootComponent.Event.OpenSettings ->
                     context.startActivity(Intent(context, SettingsActivity::class.java))
-                RootComponent.Event.OpenLoginDoor43 ->
-                    context.startActivity(Intent(context, LoginDoor43Activity::class.java))
+                RootComponent.Event.OpenTermsOfUse ->
+                    context.startActivity(Intent(context, TermsOfUseActivity::class.java))
+                RootComponent.Event.ExitApp ->
+                    activity?.finishAffinity()
                 is RootComponent.Event.OpenDraft -> {
                     val intent = Intent(context, DraftActivity::class.java).apply {
                         putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, event.translationId)
@@ -79,13 +79,8 @@ fun RootContent(
                     context.startActivity(Intent(context, SettingsActivity::class.java))
                 }, // TODO Use router when migrated
                 onShareApp = {},
-                onLogin = {
-                    context.startActivity(Intent(context, LoginDoor43Activity::class.java))
-                },
-                onLogout = {
-                    context.startActivity(Intent(context, ProfileActivity::class.java))
-                    activity?.finish()
-                },
+                onLogin = component::openProfile,
+                onLogout = component::openProfile,
                 onProjectPublish = {
                     val intent = Intent(context, PublishActivity::class.java).apply {
                         putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, it)
@@ -102,15 +97,16 @@ fun RootContent(
             is RootComponent.Child.Translate -> TargetTranslationScreen(
                 component = instance.component,
                 startWithMergeFilter = false,
-                onHomeClick = {},
-                onNavigateToDraft = {},
-                onProjectPreview = {},
-                onSettings = {},
-                onRestartAutoCommitTimer = {},
-                onUpdateSources = {},
-                onExportToApp = {},
-                onLoginClick = {},
-                onLogout = {}
+                onHome = component::openHome,
+                onNavigateToDraft = component::openDraft,
+                onProjectPreview = component::openPublishPreview,
+                onSettings = component::openSettings,
+                onExportToApp = component::exportToApp,
+                onLogin = component::openProfile,
+                onLogout = component::openProfile
+            )
+            is RootComponent.Child.Profile -> ProfileRouter(
+                component = instance.component
             )
             is RootComponent.Child.Placeholder -> Unit
         }

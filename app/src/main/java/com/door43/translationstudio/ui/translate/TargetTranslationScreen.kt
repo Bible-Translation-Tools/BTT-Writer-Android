@@ -46,14 +46,12 @@ import java.io.File
 fun TargetTranslationScreen(
     component: TranslateComponent,
     startWithMergeFilter: Boolean,
-    onHomeClick: () -> Unit,
-    onNavigateToDraft: () -> Unit,
-    onProjectPreview: () -> Unit,
+    onHome: (Boolean) -> Unit,
+    onNavigateToDraft: (String) -> Unit,
+    onProjectPreview: (String) -> Unit,
     onSettings: () -> Unit,
-    onRestartAutoCommitTimer: () -> Unit,
-    onUpdateSources: () -> Unit,
     onExportToApp: (File) -> Unit,
-    onLoginClick: () -> Unit,
+    onLogin: () -> Unit,
     onLogout: () -> Unit
 ) {
     val typography: Typography = koinInject()
@@ -85,9 +83,13 @@ fun TargetTranslationScreen(
     val menuItems = rememberTranslateMenuItems(
         viewMode = state.viewMode,
         draftAvailable = state.draftAvailable,
-        onHomeClick = onHomeClick,
-        onNavigateToDraft = onNavigateToDraft,
-        onProjectPreview = onProjectPreview,
+        onHomeClick = { onHome(false) },
+        onNavigateToDraft = {
+            onNavigateToDraft(component.targetTranslation.id)
+        },
+        onProjectPreview = {
+            onProjectPreview(component.targetTranslation.id)
+        },
         onUploadExport = { showExportDialog = true },
         onPrint = {
             showExportDialog = true
@@ -106,7 +108,9 @@ fun TargetTranslationScreen(
                 is TranslateComponent.Event.ShowMessage -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
-                is TranslateComponent.Event.RestartAutoCommitTimer -> onRestartAutoCommitTimer()
+                is TranslateComponent.Event.RestartAutoCommitTimer -> {
+                    component.restartAutoCommitTimer()
+                }
             }
         }
     }
@@ -123,7 +127,7 @@ fun TargetTranslationScreen(
                     duration = SnackbarDuration.Long
                 )
                 if (result == SnackbarResult.ActionPerformed) {
-                    onNavigateToDraft()
+                    onNavigateToDraft(component.targetTranslation.id)
                 }
             }
         }
@@ -268,7 +272,7 @@ fun TargetTranslationScreen(
                 message = stringResource(R.string.update_warning),
                 onConfirm = {
                     showUpdateSourcesDialog = false
-                    onUpdateSources()
+                    onHome(true)
                 },
                 onDismiss = { showUpdateSourcesDialog = false }
             )
@@ -286,7 +290,7 @@ fun TargetTranslationScreen(
                         TranslationViewMode.REVIEW
                     ))
                 },
-                onLoginClick = onLoginClick,
+                onLoginClick = onLogin,
                 onDismiss = {
                     showExportDialog = false
                     showPrintDialog = false

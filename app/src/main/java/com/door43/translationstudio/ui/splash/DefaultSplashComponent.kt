@@ -30,10 +30,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import org.koin.core.component.KoinScopeComponent
-import org.koin.core.component.createScope
+import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.koin.core.scope.Scope
 import org.unfoldingword.tools.logger.Logger
 
 class DefaultSplashComponent(
@@ -41,10 +39,8 @@ class DefaultSplashComponent(
     private val result: (SplashComponent.Result) -> Unit,
 ) : SplashComponent,
     ComponentContext by componentContext,
-    ComponentScope, ProgressOwner,
-    KoinScopeComponent{
+    ComponentScope, ProgressOwner, KoinComponent {
 
-    override val scope: Scope = createScope<DefaultSplashComponent>()
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
     private val application: Application by inject()
@@ -66,7 +62,6 @@ class DefaultSplashComponent(
 
         lifecycle.doOnDestroy {
             coroutineScope.cancel()
-            scope.close()
         }
     }
 

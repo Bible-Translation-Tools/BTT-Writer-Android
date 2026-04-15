@@ -39,45 +39,32 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import org.koin.androidx.compose.koinViewModel
-import org.unfoldingword.gogsclient.User
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = koinViewModel(),
-    profileFullName: String?,
-    isNetworkAvailable: Boolean,
-    onLoginSuccess: (user: User) -> Unit,
-    onCancel: () -> Unit
+    component: LoginOnlineComponent
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
-    
+
     var errorMessageId by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    LaunchedEffect(state.result) {
-        state.result?.let { result ->
-            if (result.user != null) {
-                onLoginSuccess(result.user)
-            } else {
-                errorMessageId = if (isNetworkAvailable) {
-                    R.string.double_check_credentials
-                } else {
-                    R.string.internet_not_available
-                }
+    LaunchedEffect(component) {
+        component.event.collect { event ->
+            when (event) {
+                is LoginOnlineComponent.Event.ShowError -> errorMessageId = event.errorResId
             }
         }
     }
 
     val submitLogin = {
         keyboardController?.hide()
-        viewModel.login(username.trim(), password, profileFullName)
+        component.onLogin(username.trim(), password)
     }
 
     Surface(
@@ -138,7 +125,7 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(
-                    onClick = onCancel,
+                    onClick = component::onCancel,
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Text(

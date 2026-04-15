@@ -33,8 +33,8 @@ import com.door43.translationstudio.ui.components.SidebarAction
 @Composable
 fun ProfileScreen(
     registerUrl: String,
-    onLogin: () -> Unit,
-    onRegisterOffline: () -> Unit,
+    onLoginOnline: () -> Unit,
+    onLoginOffline: () -> Unit,
     onSettings: () -> Unit,
     onCancel: () -> Unit
 ) {
@@ -44,7 +44,6 @@ fun ProfileScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
-
             HomeSidebar(
                 listOf(
                     SidebarAction(
@@ -72,7 +71,7 @@ fun ProfileScreen(
                 ProfileOptionCard(
                     title = stringResource(R.string.login_doo43),
                     subtitle = stringResource(R.string.requires_internet),
-                    onClick = onLogin
+                    onClick = onLoginOnline
                 )
 
                 ProfileOptionCard(
@@ -86,7 +85,7 @@ fun ProfileScreen(
                 ProfileOptionCard(
                     title = stringResource(R.string.create_offline_profile),
                     subtitle = stringResource(R.string.still_possible_to_register_door43),
-                    onClick = onRegisterOffline
+                    onClick = onLoginOffline
                 )
 
                 Spacer(modifier = Modifier.weight(1f))

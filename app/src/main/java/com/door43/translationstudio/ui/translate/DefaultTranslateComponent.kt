@@ -36,6 +36,7 @@ import com.door43.translationstudio.ui.translate.review.DefaultReviewModeCompone
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,10 +50,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.json.JSONException
-import org.koin.core.component.KoinScopeComponent
-import org.koin.core.component.createScope
+import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.koin.core.scope.Scope
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
@@ -66,12 +65,10 @@ class DefaultTranslateComponent(
     componentContext: ComponentContext,
     targetTranslationId: String,
     initialViewMode: TranslationViewMode? = null,
-    override val startWithMergeFilter: Boolean,
-    private val result: (TranslateComponent.Result) -> Unit,
+    override val startWithMergeFilter: Boolean
 ) : TranslateComponent,
     ComponentContext by componentContext,
-    ComponentScope, ProgressOwner,
-    KoinScopeComponent {
+    ComponentScope, ProgressOwner, KoinComponent {
 
     private val translator: Translator by inject()
     private val library: Door43Client by inject()
@@ -81,7 +78,6 @@ class DefaultTranslateComponent(
 
     private val navigation = StackNavigation<TranslateComponent.Config>()
 
-    override val scope: Scope = createScope<DefaultTranslateComponent>()
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
     private val progressManager = ProgressManager(coroutineScope)
@@ -167,11 +163,11 @@ class DefaultTranslateComponent(
                 "A valid target translation id is required. " +
                         "Received $targetTranslationId but the translation could not be found"
             )
-            result(TranslateComponent.Result.Back(didUpdate = false))
+            // TODO Show error message with callback to go home
         }
 
         lifecycle.doOnDestroy {
-            scope.close()
+            coroutineScope.cancel()
         }
     }
 
@@ -518,16 +514,6 @@ class DefaultTranslateComponent(
 
         return null to null
     }
-
-    // TODO User use lambda functions???
-    override fun onHomeClick() = result(TranslateComponent.Result.Back(didUpdate = false))
-    override fun onNavigateToDraft() = result(TranslateComponent.Result.OpenDraft(targetTranslation.id))
-    override fun onProjectPreview() = result(TranslateComponent.Result.OpenPublish(targetTranslation.id))
-    override fun onSettings() = result(TranslateComponent.Result.OpenSettings)
-    override fun onLoginClick() = result(TranslateComponent.Result.OpenLogin)
-    override fun onLogout() = result(TranslateComponent.Result.OpenLogout)
-    override fun onUpdateSources() = result(TranslateComponent.Result.Back(didUpdate = true))
-    override fun onExportToApp(file: java.io.File) = result(TranslateComponent.Result.ExportFile(file))
 
     private inner class CommitOnDestroyInstance : InstanceKeeper.Instance {
         private val commitInterval = 2 * 60 * 1000L

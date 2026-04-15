@@ -24,6 +24,7 @@ import com.door43.util.FileUtilities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,10 +34,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.core.component.KoinScopeComponent
-import org.koin.core.component.createScope
+import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.koin.core.scope.Scope
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
 import java.io.File
@@ -48,8 +47,7 @@ class DefaultHomeComponent(
     componentContext: ComponentContext,
 ) : HomeComponent,
     ComponentContext by componentContext,
-    ComponentScope, ProgressOwner,
-    KoinScopeComponent {
+    ComponentScope, ProgressOwner, KoinComponent {
 
     private val application: Application by inject()
     private val translator: Translator by inject()
@@ -61,7 +59,6 @@ class DefaultHomeComponent(
     private val backupRC: BackupRC by inject()
     private val library: Door43Client by inject()
 
-    override val scope: Scope = createScope<DefaultHomeComponent>()
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
     private val progressManager = ProgressManager(coroutineScope)
@@ -117,7 +114,9 @@ class DefaultHomeComponent(
 
         loadProjects()
 
-        lifecycle.doOnDestroy { scope.close() }
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
