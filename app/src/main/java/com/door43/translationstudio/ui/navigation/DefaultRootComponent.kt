@@ -5,10 +5,12 @@ import android.net.Uri
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.backStack
 import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.replaceAll
+import com.arkivanov.decompose.router.stack.replaceCurrent
 import com.arkivanov.decompose.value.Value
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -25,6 +27,8 @@ import com.door43.translationstudio.ui.newtranslation.DefaultNewTranslationCompo
 import com.door43.translationstudio.ui.newtranslation.NewTranslationComponent
 import com.door43.translationstudio.ui.profile.DefaultProfileComponent
 import com.door43.translationstudio.ui.profile.ProfileComponent
+import com.door43.translationstudio.ui.publish.DefaultPublishComponent
+import com.door43.translationstudio.ui.publish.PublishComponent
 import com.door43.translationstudio.ui.settings.DefaultSettingsComponent
 import com.door43.translationstudio.ui.settings.SettingsComponent
 import com.door43.translationstudio.ui.splash.DefaultSplashComponent
@@ -117,8 +121,9 @@ class DefaultRootComponent(
         is Config.Translate -> RootComponent.Child.Translate(
             component = DefaultTranslateComponent(
                 componentContext = componentContext,
-                targetTranslationId = config.translationId,
+                translationId = config.translationId,
                 startWithMergeFilter = config.startWithMergeFilter,
+                sharedFlow = sharedFlow,
                 onResult = ::onTranslateResult
             )
         )
@@ -147,6 +152,13 @@ class DefaultRootComponent(
                 componentContext = componentContext,
                 translationId = config.translationId,
                 onResult = ::onDraftResult
+            )
+        )
+        is Config.Publish -> RootComponent.Child.Publish(
+            component = DefaultPublishComponent(
+                componentContext = componentContext,
+                translationId = config.translationId,
+                onResult = ::onPublishResult
             )
         )
         else -> RootComponent.Child.Placeholder
@@ -213,6 +225,7 @@ class DefaultRootComponent(
             is TranslateComponent.Result.Logout -> openProfile(false)
             is TranslateComponent.Result.OpenSettings -> openSettings()
             is TranslateComponent.Result.ExportToApp -> exportToApp(result.file)
+            is TranslateComponent.Result.Error -> exitAndShowError(result.message)
         }
     }
 
@@ -252,6 +265,30 @@ class DefaultRootComponent(
         }
     }
 
+    private fun onPublishResult(result: PublishComponent.Result) {
+        when (result) {
+            is PublishComponent.Result.Error -> exitAndShowError(result.message)
+            is PublishComponent.Result.OpenReview -> {
+                val last = stack.backStack.lastOrNull()?.instance
+                if (last is RootComponent.Child.Home) {
+                    navigation.replaceCurrent(
+                        Config.Translate(result.translationId, false)
+                    )
+                } else {
+                    navigation.pop()
+                    openTranslate(result.translationId, false)
+                }
+            }
+            is PublishComponent.Result.ExportToApp -> onExportToApp(result.file)
+            is PublishComponent.Result.Login -> openProfile(true)
+            is PublishComponent.Result.Logout -> openProfile(false)
+            is PublishComponent.Result.MergeConflict -> {
+                openTranslate(result.translationId, true)
+            }
+            is PublishComponent.Result.NavigateBack -> navigation.pop()
+        }
+    }
+
     override fun openTranslate(translationId: String, startWithMergeFilter: Boolean) {
         navigation.bringToFront(
             Config.Translate(
@@ -263,6 +300,11 @@ class DefaultRootComponent(
 
     override fun openProfile(thenLogin: Boolean) {
         navigation.replaceAll(Config.Profile(thenLogin))
+    }
+
+    private fun exitAndShowError(error: String) {
+        navigation.pop()
+        _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(error))
     }
 
     private fun exportToApp(file: File) {
@@ -284,9 +326,7 @@ class DefaultRootComponent(
     }
 
     private fun openPublishPreview(translationId: String) {
-        // TODO Replace with navigation
-        _event.trySend(RootComponent.Event.PublishProject(translationId))
-        navigation.pop()
+        navigation.bringToFront(Config.Publish(translationId))
     }
 
     private fun openSettings() {

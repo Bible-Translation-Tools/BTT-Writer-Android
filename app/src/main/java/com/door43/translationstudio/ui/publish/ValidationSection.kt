@@ -25,8 +25,8 @@ import com.door43.translationstudio.core.Validation
 fun ValidationSection(
     items: List<ValidationItem>,
     typography: Typography,
-    onNextClick: () -> Unit,
-    onReviewClick: (Validation.InvalidFrame) -> Unit,
+    onNext: () -> Unit,
+    onReview: (Validation.InvalidFrame) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -41,7 +41,7 @@ fun ValidationSection(
                 ValidationCard(
                     item = item,
                     typography = typography,
-                    onReviewClick = onReviewClick
+                    onReviewClick = onReview
                 )
             }
 
@@ -51,7 +51,7 @@ fun ValidationSection(
                     horizontalArrangement = Arrangement.End
                 ) {
                     Button(
-                        onClick = onNextClick,
+                        onClick = onNext,
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                         shape = RoundedCornerShape(4.dp)
                     ) {

@@ -1265,7 +1265,7 @@ class DefaultReviewModeComponent(
     }
 
     private fun showSnackBar(message: String) {
-        eventSender.trySend(TranslateComponent.Event.ShowMessage(message))
+        eventSender.trySend(TranslateComponent.Event.SnackbarMessage(message))
     }
 
     private fun restartAutoCommitTimer() {

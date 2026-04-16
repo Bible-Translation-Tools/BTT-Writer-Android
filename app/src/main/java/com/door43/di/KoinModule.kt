@@ -27,7 +27,6 @@ import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
 import com.door43.translationstudio.ui.home.ImportViewModel
 import com.door43.translationstudio.ui.home.UpdateLibraryViewModel
 import com.door43.translationstudio.ui.home.UsfmImportViewModel
-import com.door43.translationstudio.ui.publish.PublishViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC
@@ -136,7 +135,6 @@ val appModule = module {
     viewModelOf(::ExportViewModel)
     viewModelOf(::DownloadSourcesViewModel)
     viewModelOf(::SourceSelectionViewModel)
-    viewModelOf(::PublishViewModel)
     viewModelOf(::UpdateLibraryViewModel)
 }
 

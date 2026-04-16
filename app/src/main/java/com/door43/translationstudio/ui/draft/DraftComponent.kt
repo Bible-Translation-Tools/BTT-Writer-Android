@@ -42,7 +42,7 @@ data class ChapterContent(
 
 interface DraftComponent {
 
-    val state: StateFlow<DraftState>
+    val state: StateFlow<State>
     val progress: StateFlow<Progress?>
 
     fun getResourceContainer(rcSlug: String): ResourceContainer?
@@ -56,7 +56,7 @@ interface DraftComponent {
 
     fun onFinish()
 
-    data class DraftState(
+    data class State(
         val draftTranslations: List<Translation> = emptyList(),
         val importResult: ImportDraft.Result? = null,
         val chapterContent: ChapterContent? = null
@@ -85,8 +85,8 @@ class DefaultDraftComponent(
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(DraftComponent.DraftState())
-    override val state: StateFlow<DraftComponent.DraftState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(DraftComponent.State())
+    override val state: StateFlow<DraftComponent.State> = _state.asStateFlow()
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)

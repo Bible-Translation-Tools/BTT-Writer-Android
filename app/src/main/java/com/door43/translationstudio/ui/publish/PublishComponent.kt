@@ -1,9 +1,10 @@
 package com.door43.translationstudio.ui.publish
 
+import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NativeSpeaker
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -13,89 +14,149 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Validation
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.usecases.ValidateProject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
-
-data class PublishState(
-    val isLoading: Boolean = false,
-    val validations: List<ValidationItem> = emptyList(),
-    val translators: List<NativeSpeaker> = emptyList()
-)
+import java.io.File
 
 data class ValidationItem(
     val validation: Validation,
     val rendered: AnnotatedString = AnnotatedString("")
 )
 
-sealed interface PublishAction {
-    data class OpenReview(val item: Validation.InvalidFrame) : PublishAction
-    data object RefreshContributors : PublishAction
+interface PublishComponent {
+
+    val state: StateFlow<PublishState>
+
+    val targetTranslation: TargetTranslation
+
+    data class PublishState(
+        val isLoading: Boolean = false,
+        val validations: List<ValidationItem> = emptyList(),
+        val translators: List<NativeSpeaker> = emptyList()
+    )
+
+    fun openReview(item: Validation.InvalidFrame)
+    fun refreshContributors()
+
+    fun exportToApp(file: File)
+    fun onLogin()
+    fun onLogout()
+    fun onMergeConflict(translationId: String)
+    fun navigateBack()
+
+    sealed interface Result {
+        data class Error(val message: String) : Result
+        data class OpenReview(val translationId: String) : Result
+        data class ExportToApp(val file: File) : Result
+        data object Login : Result
+        data object Logout : Result
+        data class MergeConflict(val translationId: String) : Result
+        data object NavigateBack : Result
+    }
 }
 
-sealed interface PublishEvent {
-    data object OpenReview : PublishEvent
-}
+class DefaultPublishComponent(
+    componentContext: ComponentContext,
+    translationId: String,
+    private val onResult: (PublishComponent.Result) -> Unit
+) : PublishComponent,
+    ComponentContext by componentContext,
+    KoinComponent, ComponentScope {
 
-class PublishViewModel(
-    private val translator: Translator,
-    private val library: Door43Client,
-    private val validateProject: ValidateProject,
-    private val profile: Profile
-) : ViewModel() {
+    private val application: Application by inject()
+    private val translator: Translator by inject()
+    private val library: Door43Client by inject()
+    private val validateProject: ValidateProject by inject()
+    private val profile: Profile by inject()
 
-    lateinit var sourceTranslationId: String
+    private lateinit var sourceTranslationId: String
+
+    override lateinit var targetTranslation: TargetTranslation
         private set
 
-    lateinit var targetTranslation: TargetTranslation
-        private set
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-    val sourceInitialized: Boolean
-        get() = this::sourceTranslationId.isInitialized
+    private val _state = MutableStateFlow(PublishComponent.PublishState())
+    override val state: StateFlow<PublishComponent.PublishState> = _state.asStateFlow()
 
-    val targetInitialized: Boolean
-        get() = this::targetTranslation.isInitialized
+    init {
+        translator.getTargetTranslation(translationId)?.let { translation ->
+            targetTranslation = translation
 
-    private val _state = MutableStateFlow(PublishState())
-    val state: StateFlow<PublishState> = _state.asStateFlow()
+            (getSelectedSourceTranslationId() ?: getDefaultSourceTranslation())?.let { sourceId ->
+                sourceTranslationId = sourceId
 
-    private val _event = Channel<PublishEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
+                coroutineScope.launch {
+                    validateProject(sourceId)
+                    loadTranslators()
+                }
+            } ?: run {
+                val error = application.getString(R.string.choose_source_translations)
+                onResult(PublishComponent.Result.Error(error))
+            }
+        } ?: run {
+            val error = application.getString(R.string.target_translation_not_found, translationId)
+            onResult(PublishComponent.Result.Error(error))
+        }
+    }
 
-    fun initialize(targetTranslationId: String) {
-        val translation = translator.getTargetTranslation(targetTranslationId) ?: return
-        targetTranslation = translation
+    override fun openReview(item: Validation.InvalidFrame) {
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                translator.setLastViewMode(
+                    targetTranslationId = item.targetTranslationId,
+                    viewMode = TranslationViewMode.REVIEW
+                )
+                translator.setLastFocus(
+                    targetTranslationId = item.targetTranslationId,
+                    chapterId = item.chapterId,
+                    frameId = item.frameId
+                )
+            }
+            onResult(PublishComponent.Result.OpenReview(item.targetTranslationId))
+        }
+    }
 
-        val sourceId = getSelectedSourceTranslationId()
-            ?: getDefaultSourceTranslation()
-            ?: return
-        sourceTranslationId = sourceId
-
-        viewModelScope.launch {
-            validateProject(sourceId)
+    override fun refreshContributors() {
+        coroutineScope.launch {
             loadTranslators()
         }
     }
 
-    fun onAction(event: PublishAction) {
-        when (event) {
-            is PublishAction.OpenReview -> onOpenReview(event.item)
-            is PublishAction.RefreshContributors -> viewModelScope.launch {
-                loadTranslators()
-            }
-        }
+    override fun exportToApp(file: File) {
+        onResult(PublishComponent.Result.ExportToApp(file))
+    }
+
+    override fun onLogin() {
+        onResult(PublishComponent.Result.Login)
+    }
+
+    override fun onLogout() {
+        onResult(PublishComponent.Result.Logout)
+    }
+
+    override fun onMergeConflict(translationId: String) {
+        onResult(PublishComponent.Result.MergeConflict(translationId))
+    }
+
+    override fun navigateBack() {
+        onResult(PublishComponent.Result.NavigateBack)
     }
 
     private suspend fun validateProject(sourceTranslationId: String) {
@@ -183,23 +244,6 @@ class PublishViewModel(
             )
         } catch (_: Exception) {
             AnnotatedString(text)
-        }
-    }
-
-    private fun onOpenReview(item: Validation.InvalidFrame) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                translator.setLastViewMode(
-                    targetTranslationId = item.targetTranslationId,
-                    viewMode = TranslationViewMode.REVIEW
-                )
-                translator.setLastFocus(
-                    targetTranslationId = item.targetTranslationId,
-                    chapterId = item.chapterId,
-                    frameId = item.frameId
-                )
-            }
-            _event.trySend(PublishEvent.OpenReview)
         }
     }
 }

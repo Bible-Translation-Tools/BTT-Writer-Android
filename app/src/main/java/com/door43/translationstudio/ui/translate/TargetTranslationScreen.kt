@@ -88,7 +88,7 @@ fun TargetTranslationScreen(
     LaunchedEffect(component) {
         component.event.collect { event ->
             when (event) {
-                is TranslateComponent.Event.ShowMessage -> {
+                is TranslateComponent.Event.SnackbarMessage -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
                 is TranslateComponent.Event.RestartAutoCommitTimer -> {

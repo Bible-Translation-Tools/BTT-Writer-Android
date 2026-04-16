@@ -15,7 +15,7 @@ import com.door43.translationstudio.ui.draft.DraftScreen
 import com.door43.translationstudio.ui.home.HomeScreen
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationScreen
 import com.door43.translationstudio.ui.profile.ProfileRouter
-import com.door43.translationstudio.ui.publish.PublishActivity
+import com.door43.translationstudio.ui.publish.PublishScreen
 import com.door43.translationstudio.ui.settings.SettingsScreen
 import com.door43.translationstudio.ui.splash.SplashScreen
 import com.door43.translationstudio.ui.translate.TargetTranslationScreen
@@ -32,16 +32,6 @@ fun RootContent(
             when (event) {
                 RootComponent.Event.OpenCrashReporter ->
                     context.startActivity(Intent(context, CrashReporterActivity::class.java))
-                is RootComponent.Event.PublishProject -> {
-                    val intent = Intent(context, PublishActivity::class.java).apply {
-                        putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, event.translationId)
-                        putExtra(
-                            PublishActivity.EXTRA_CALLING_ACTIVITY,
-                            PublishActivity.ACTIVITY_TRANSLATION,
-                        )
-                    }
-                    context.startActivity(intent)
-                }
             }
         }
     }
@@ -73,6 +63,9 @@ fun RootContent(
                 component = instance.component
             )
             is RootComponent.Child.Draft -> DraftScreen(
+                component = instance.component
+            )
+            is RootComponent.Child.Publish -> PublishScreen(
                 component = instance.component
             )
             is RootComponent.Child.Placeholder -> Unit

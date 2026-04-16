@@ -8,6 +8,7 @@ import com.door43.translationstudio.ui.draft.DraftComponent
 import com.door43.translationstudio.ui.home.HomeComponent
 import com.door43.translationstudio.ui.newtranslation.NewTranslationComponent
 import com.door43.translationstudio.ui.profile.ProfileComponent
+import com.door43.translationstudio.ui.publish.PublishComponent
 import com.door43.translationstudio.ui.settings.SettingsComponent
 import com.door43.translationstudio.ui.splash.SplashComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent
@@ -39,6 +40,7 @@ interface RootComponent {
         data class DevTools(val component: DevToolsComponent) : Child
         data class NewTranslation(val component: NewTranslationComponent) : Child
         data class Draft(val component: DraftComponent) : Child
+        data class Publish(val component: PublishComponent) : Child
     }
 
     @Serializable
@@ -82,7 +84,6 @@ interface RootComponent {
 
     sealed interface Event {
         data object OpenCrashReporter : Event
-        data class PublishProject(val translationId: String) : Event
     }
 
     sealed interface SharedEvent {

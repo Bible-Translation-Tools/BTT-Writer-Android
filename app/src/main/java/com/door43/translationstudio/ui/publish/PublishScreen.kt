@@ -25,7 +25,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,8 +47,6 @@ import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.dialogs.ExportDialog
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
-import java.io.File
 
 private enum class PublishSection {
     VALIDATION,
@@ -59,17 +56,11 @@ private enum class PublishSection {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PublishScreen(
-    viewModel: PublishViewModel = koinViewModel(),
-    onOpenReview: () -> Unit,
-    onExportToApp: (File) -> Unit,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit,
-    onMergeConflict: () -> Unit,
-    onNavigateBack: () -> Unit
+    component: PublishComponent
 ) {
     val typography: Typography = koinInject()
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
 
     var publishSection by rememberSaveable {
         mutableStateOf(PublishSection.VALIDATION)
@@ -83,14 +74,6 @@ fun PublishScreen(
 
     val noTranslatorsMessage = stringResource(R.string.need_translator_notice)
 
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
-            when (event) {
-                is PublishEvent.OpenReview -> onOpenReview()
-            }
-        }
-    }
-
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         Scaffold(
             topBar = {
@@ -99,7 +82,7 @@ fun PublishScreen(
                         Text(stringResource(R.string.publish_translation))
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(onClick = component::navigateBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "back",
@@ -174,14 +157,12 @@ fun PublishScreen(
                             PublishSection.VALIDATION -> ValidationSection(
                                 items = state.validations,
                                 typography = typography,
-                                onNextClick = { publishSection = PublishSection.TRANSLATORS },
-                                onReviewClick = {
-                                    viewModel.onAction(PublishAction.OpenReview(it))
-                                }
+                                onNext = { publishSection = PublishSection.TRANSLATORS },
+                                onReview = component::openReview
                             )
                             PublishSection.TRANSLATORS -> TranslatorsSection(
                                 translators = state.translators,
-                                targetTranslation = viewModel.targetTranslation,
+                                targetTranslation = component.targetTranslation,
                                 onNextClick = {
                                     if (state.translators.isNotEmpty()) {
                                         showExportDialog = true
@@ -193,9 +174,7 @@ fun PublishScreen(
                                         }
                                     }
                                 },
-                                onContributorsChanged = {
-                                    viewModel.onAction(PublishAction.RefreshContributors)
-                                }
+                                onContributorsChanged = component::refreshContributors
                             )
                         }
                     }
@@ -205,15 +184,21 @@ fun PublishScreen(
 
         if (showExportDialog) {
             ExportDialog(
-                targetTranslation = viewModel.targetTranslation,
+                targetTranslation = component.targetTranslation,
                 openPrint = false,
-                onExportToApp = onExportToApp,
+                onExportToApp = component::exportToApp,
                 onLogin = {
                     showExportDialog = false
-                    onLogin()
+                    component.onLogin()
                 },
-                onLogout = onLogout,
-                onMergeConflict = onMergeConflict,
+                onLogout = {
+                    showExportDialog = false
+                    component.onLogout()
+                },
+                onMergeConflict = {
+                    showExportDialog = false
+                    component.onMergeConflict(component.targetTranslation.id)
+                },
                 onDismiss = { showExportDialog = false }
             )
         }

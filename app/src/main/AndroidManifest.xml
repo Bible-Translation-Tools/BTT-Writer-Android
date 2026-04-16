@@ -62,10 +62,6 @@
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
             android:label="@string/title_activity_crash_reporter" />
-        <activity
-            android:name=".ui.publish.PublishActivity"
-            android:label="@string/title_activity_publish"
-            android:launchMode="singleTop" />
     </application>
 
 </manifest>

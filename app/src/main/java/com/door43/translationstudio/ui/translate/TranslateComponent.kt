@@ -70,7 +70,7 @@ interface TranslateComponent {
     }
 
     sealed interface Event {
-        data class ShowMessage(val message: String) : Event
+        data class SnackbarMessage(val message: String) : Event
         data object RestartAutoCommitTimer : Event
     }
 
@@ -89,6 +89,7 @@ interface TranslateComponent {
         data object OpenLogin : Result
         data object OpenSettings : Result
         data class ExportToApp(val file: File) : Result
+        data class Error(val message: String) : Result
     }
 
     @Serializable

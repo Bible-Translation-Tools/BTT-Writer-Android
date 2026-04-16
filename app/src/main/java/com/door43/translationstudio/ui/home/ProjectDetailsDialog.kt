@@ -230,7 +230,11 @@ fun ProjectDetailsDialog(
                 onDismiss()
                 onLogin()
             },
-            onLogout = onLogout,
+            onLogout = {
+                showExportDialog = false
+                onDismiss()
+                onLogout()
+            },
             onMergeConflict = {
                 showExportDialog = false
                 onDismiss()

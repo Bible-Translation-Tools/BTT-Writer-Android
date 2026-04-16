@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.translate
 
+import android.app.Application
 import android.graphics.Typeface
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
@@ -13,6 +14,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.ProgressManager
@@ -27,6 +29,7 @@ import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.translationstudio.ui.translate.chunk.DefaultChunkModeComponent
 import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.translate.dialogs.RCItem
@@ -40,14 +43,17 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONException
 import org.koin.core.component.KoinComponent
@@ -64,14 +70,16 @@ import java.util.TimerTask
 
 class DefaultTranslateComponent(
     componentContext: ComponentContext,
-    targetTranslationId: String,
+    translationId: String,
     initialViewMode: TranslationViewMode? = null,
     override val startWithMergeFilter: Boolean,
+    private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (TranslateComponent.Result) -> Unit
 ) : TranslateComponent,
     ComponentContext by componentContext,
     ComponentScope, ProgressOwner, KoinComponent {
 
+    private val application: Application by inject()
     private val translator: Translator by inject()
     private val library: Door43Client by inject()
     private val prefRepository: IPreferenceRepository by inject()
@@ -117,7 +125,7 @@ class DefaultTranslateComponent(
     )
 
     init {
-        translator.getTargetTranslation(targetTranslationId)?.let { translation ->
+        translator.getTargetTranslation(translationId)?.let { translation ->
             targetTranslation = translation
 
             val draftAvailable = draftIsAvailable()
@@ -163,9 +171,21 @@ class DefaultTranslateComponent(
             Logger.e(
                 this::class.simpleName,
                 "A valid target translation id is required. " +
-                        "Received $targetTranslationId but the translation could not be found"
+                        "Received $translationId but the translation could not be found"
             )
-            // TODO Show error message with callback to go home
+            val error = application.getString(R.string.target_translation_not_found, translationId)
+            onResult(TranslateComponent.Result.Error(error))
+        }
+
+        coroutineScope.launch {
+            sharedFlow.collectLatest { event ->
+                when (event) {
+                    is RootComponent.SharedEvent.SnackbarMessage -> {
+                        _event.trySend(TranslateComponent.Event.SnackbarMessage(event.message))
+                    }
+                    else -> {}
+                }
+            }
         }
 
         lifecycle.doOnDestroy {

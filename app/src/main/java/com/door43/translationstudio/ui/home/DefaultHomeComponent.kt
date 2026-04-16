@@ -29,6 +29,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -107,7 +108,7 @@ class DefaultHomeComponent(
         }
 
         coroutineScope.launch {
-            sharedFlow.collect { event ->
+            sharedFlow.collectLatest { event ->
                 when (event) {
                     is RootComponent.SharedEvent.LoadProjects -> loadProjects()
                     is RootComponent.SharedEvent.DuplicateProject -> {
