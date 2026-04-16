@@ -42,8 +42,8 @@ interface DevToolsComponent {
     val versionCode: Int
     val udid: String
 
-    val state: StateFlow<DeveloperState>
-    val event: Flow<DeveloperEvent>
+    val state: StateFlow<State>
+    val event: Flow<Event>
     val progress: StateFlow<Progress?>
 
     fun loadTools()
@@ -53,7 +53,7 @@ interface DevToolsComponent {
 
     fun navigateBack()
 
-    data class DeveloperState(
+    data class State(
         val versionName: String = "",
         val versionCode: String = "",
         val udid: String = "",
@@ -62,9 +62,9 @@ interface DevToolsComponent {
         val keysRegenerated: Boolean? = null,
     )
 
-    sealed class DeveloperEvent {
-        data object ReadLog : DeveloperEvent()
-        data object CheckSystemResources : DeveloperEvent()
+    sealed class Event {
+        data object ReadLog : Event()
+        data object CheckSystemResources : Event()
     }
 
     sealed interface Result {
@@ -89,10 +89,10 @@ class DefaultDevToolsComponent(
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(DevToolsComponent.DeveloperState())
-    override val state: StateFlow<DevToolsComponent.DeveloperState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(DevToolsComponent.State())
+    override val state: StateFlow<DevToolsComponent.State> = _state.asStateFlow()
 
-    private val _event = Channel<DevToolsComponent.DeveloperEvent>()
+    private val _event = Channel<DevToolsComponent.Event>()
     override val event = _event.receiveAsFlow()
 
     override val versionName = BuildConfig.VERSION_NAME
@@ -157,7 +157,7 @@ class DefaultDevToolsComponent(
             Icons.Outlined.Description
         ) {
             coroutineScope.launch {
-                _event.send(DevToolsComponent.DeveloperEvent.ReadLog)
+                _event.send(DevToolsComponent.Event.ReadLog)
             }
         }
     }
@@ -179,7 +179,7 @@ class DefaultDevToolsComponent(
             Icons.Outlined.Description
         ) {
             coroutineScope.launch {
-                _event.send(DevToolsComponent.DeveloperEvent.CheckSystemResources)
+                _event.send(DevToolsComponent.Event.CheckSystemResources)
             }
         }
     }

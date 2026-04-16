@@ -48,7 +48,7 @@ import org.unfoldingword.tools.logger.Logger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeveloperToolsScreen(
+fun DevToolsScreen(
     component: DevToolsComponent
 ) {
     val state by component.state.collectAsStateWithLifecycle()
@@ -79,11 +79,11 @@ fun DeveloperToolsScreen(
     LaunchedEffect(Unit) {
         component.event.collect { event ->
             when (event) {
-                is DevToolsComponent.DeveloperEvent.ReadLog -> {
+                is DevToolsComponent.Event.ReadLog -> {
                     showLogDialog = true
                     component.readErrorLog()
                 }
-                is DevToolsComponent.DeveloperEvent.CheckSystemResources -> {
+                is DevToolsComponent.Event.CheckSystemResources -> {
                     systemResourcesMessage = component.calculateSystemResources()
                 }
             }

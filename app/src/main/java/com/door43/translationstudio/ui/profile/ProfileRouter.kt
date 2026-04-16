@@ -12,7 +12,7 @@ fun ProfileRouter(component: ProfileComponent) {
         animation = stackAnimation(slide()),
     ) { child ->
         when (val instance = child.instance) {
-            is ProfileComponent.Child.Index -> ProfileScreen(
+            is ProfileComponent.Child.Profile -> ProfileScreen(
                 component = instance.component,
                 registerUrl = component.registerUrl
             )

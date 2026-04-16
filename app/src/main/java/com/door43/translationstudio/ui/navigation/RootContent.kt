@@ -10,7 +10,7 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.door43.translationstudio.ui.crash.CrashReporterActivity
-import com.door43.translationstudio.ui.devtools.DeveloperToolsScreen
+import com.door43.translationstudio.ui.devtools.DevToolsScreen
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.home.HomeScreen
 import com.door43.translationstudio.ui.profile.ProfileRouter
@@ -71,7 +71,7 @@ fun RootContent(
             is RootComponent.Child.Settings -> SettingsScreen(
                 component = instance.component
             )
-            is RootComponent.Child.DevTools -> DeveloperToolsScreen(
+            is RootComponent.Child.DevTools -> DevToolsScreen(
                 component = instance.component
             )
             is RootComponent.Child.Placeholder -> Unit

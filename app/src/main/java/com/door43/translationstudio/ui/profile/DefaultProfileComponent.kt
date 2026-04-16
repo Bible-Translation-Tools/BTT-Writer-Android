@@ -19,7 +19,7 @@ import org.koin.core.component.inject
 class DefaultProfileComponent(
     componentContext: ComponentContext,
     private val goLogin: Boolean,
-    private val result: (ProfileComponent.Result) -> Unit
+    private val onResult: (ProfileComponent.Result) -> Unit
 ) : ProfileComponent,
     ComponentContext by componentContext, KoinComponent {
 
@@ -39,7 +39,7 @@ class DefaultProfileComponent(
         serializer = ProfileComponent.Config.serializer(),
         initialStack = {
             buildList {
-                add(ProfileComponent.Config.Index)
+                add(ProfileComponent.Config.Profile)
                 if (goLogin) {
                     add(ProfileComponent.Config.LoginOnline)
                 }
@@ -51,7 +51,7 @@ class DefaultProfileComponent(
 
     init {
         if (profile.loggedIn) {
-            result(ProfileComponent.Result.LoggedIn)
+            onResult(ProfileComponent.Result.LoggedIn)
         }
     }
 
@@ -59,7 +59,7 @@ class DefaultProfileComponent(
         config: ProfileComponent.Config,
         componentContext: ComponentContext,
     ): ProfileComponent.Child = when (config) {
-        ProfileComponent.Config.Index -> ProfileComponent.Child.Index(
+        ProfileComponent.Config.Profile -> ProfileComponent.Child.Profile(
             component = DefaultProfileIndexComponent(
                 componentContext = componentContext,
                 onResult = ::onProfileIndexResult
@@ -94,10 +94,10 @@ class DefaultProfileComponent(
                 navigation.bringToFront(ProfileComponent.Config.LoginOffline)
             }
             ProfileIndexComponent.Result.Settings -> {
-                result(ProfileComponent.Result.OpenSettings)
+                onResult(ProfileComponent.Result.OpenSettings)
             }
             ProfileIndexComponent.Result.Cancel -> {
-                result(ProfileComponent.Result.Back)
+                onResult(ProfileComponent.Result.Back)
             }
         }
     }
@@ -123,10 +123,10 @@ class DefaultProfileComponent(
     private fun onTermsOfUseResult(result: TermsOfUseComponent.Result) {
         when (result) {
             TermsOfUseComponent.Result.Rejected -> {
-                navigation.replaceAll(ProfileComponent.Config.Index)
+                navigation.replaceAll(ProfileComponent.Config.Profile)
             }
             TermsOfUseComponent.Result.Accepted -> {
-                result(ProfileComponent.Result.LoggedIn)
+                onResult(ProfileComponent.Result.LoggedIn)
             }
         }
     }

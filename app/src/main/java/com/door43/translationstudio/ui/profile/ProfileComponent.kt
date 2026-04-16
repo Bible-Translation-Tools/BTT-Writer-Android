@@ -17,7 +17,7 @@ interface ProfileComponent {
     }
 
     sealed interface Child {
-        data class Index(val component: ProfileIndexComponent) : Child
+        data class Profile(val component: ProfileIndexComponent) : Child
         data class LoginOnline(val component: LoginOnlineComponent) : Child
         data class LoginOffline(val component: LoginOfflineComponent) : Child
         data class TermsOfUse(val component: TermsOfUseComponent) : Child
@@ -26,7 +26,7 @@ interface ProfileComponent {
     @Serializable
     sealed interface Config {
         @Serializable
-        data object Index : Config
+        data object Profile : Config
 
         @Serializable
         data object LoginOnline : Config
