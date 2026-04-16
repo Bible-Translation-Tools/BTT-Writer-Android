@@ -11,7 +11,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.door43.translationstudio.ui.crash.CrashReporterActivity
 import com.door43.translationstudio.ui.devtools.DevToolsScreen
-import com.door43.translationstudio.ui.draft.DraftActivity
+import com.door43.translationstudio.ui.draft.DraftScreen
 import com.door43.translationstudio.ui.home.HomeScreen
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationScreen
 import com.door43.translationstudio.ui.profile.ProfileRouter
@@ -32,12 +32,6 @@ fun RootContent(
             when (event) {
                 RootComponent.Event.OpenCrashReporter ->
                     context.startActivity(Intent(context, CrashReporterActivity::class.java))
-                is RootComponent.Event.OpenDraft -> {
-                    val intent = Intent(context, DraftActivity::class.java).apply {
-                        putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, event.translationId)
-                    }
-                    context.startActivity(intent)
-                }
                 is RootComponent.Event.PublishProject -> {
                     val intent = Intent(context, PublishActivity::class.java).apply {
                         putExtra(PublishActivity.EXTRA_TARGET_TRANSLATION_ID, event.translationId)
@@ -48,7 +42,6 @@ fun RootContent(
                     }
                     context.startActivity(intent)
                 }
-                else -> {}
             }
         }
     }
@@ -77,6 +70,9 @@ fun RootContent(
                 component = instance.component
             )
             is RootComponent.Child.DevTools -> DevToolsScreen(
+                component = instance.component
+            )
+            is RootComponent.Child.Draft -> DraftScreen(
                 component = instance.component
             )
             is RootComponent.Child.Placeholder -> Unit

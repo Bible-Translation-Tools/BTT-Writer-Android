@@ -16,6 +16,8 @@ import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.devtools.DefaultDevToolsComponent
 import com.door43.translationstudio.ui.devtools.DevToolsComponent
+import com.door43.translationstudio.ui.draft.DefaultDraftComponent
+import com.door43.translationstudio.ui.draft.DraftComponent
 import com.door43.translationstudio.ui.home.DefaultHomeComponent
 import com.door43.translationstudio.ui.home.HomeComponent
 import com.door43.translationstudio.ui.navigation.RootComponent.Config
@@ -140,6 +142,13 @@ class DefaultRootComponent(
                 onResult = ::onDevToolsResult
             )
         )
+        is Config.Draft -> RootComponent.Child.Draft(
+            component = DefaultDraftComponent(
+                componentContext = componentContext,
+                translationId = config.translationId,
+                onResult = ::onDraftResult
+            )
+        )
         else -> RootComponent.Child.Placeholder
     }
 
@@ -237,6 +246,12 @@ class DefaultRootComponent(
         }
     }
 
+    private fun onDraftResult(result: DraftComponent.Result) {
+        when (result) {
+            is DraftComponent.Result.NavigateBack -> navigation.pop()
+        }
+    }
+
     override fun openTranslate(translationId: String, startWithMergeFilter: Boolean) {
         navigation.bringToFront(
             Config.Translate(
@@ -263,8 +278,9 @@ class DefaultRootComponent(
     }
 
     private fun openDraft(translationId: String) {
-        // TODO Replace with navigation
-        _event.trySend(RootComponent.Event.OpenDraft(translationId))
+        navigation.pop {
+            navigation.bringToFront(Config.Draft(translationId))
+        }
     }
 
     private fun openPublishPreview(translationId: String) {

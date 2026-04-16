@@ -26,21 +26,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.util.sortNumerically
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun DraftScreen(
-    viewModel: DraftViewModel = koinViewModel(),
-    typography: Typography,
-    renderingProvider: RenderingProvider,
-    onFinish: () -> Unit
+    component: DraftComponent
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val typography: Typography = koinInject()
+    val renderingProvider: RenderingProvider = koinInject()
+
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
@@ -48,8 +48,8 @@ fun DraftScreen(
 
     val draftData = remember(state.draftTranslations) {
         state.draftTranslations.firstOrNull()?.let { draft ->
-            val container = viewModel.getResourceContainer(draft.resourceContainerSlug)
-            val language = container?.let { viewModel.getSourceLanguage(it) }
+            val container = component.getResourceContainer(draft.resourceContainerSlug)
+            val language = container?.let { component.getSourceLanguage(it) }
             if (container != null && language != null) {
                 Pair(container, language)
             } else null
@@ -59,7 +59,7 @@ fun DraftScreen(
     LaunchedEffect(state.importResult) {
         state.importResult?.let { result ->
             if (result.targetTranslation != null) {
-                onFinish()
+                component.onFinish()
             } else {
                 showErrorDialog = true
             }
@@ -68,7 +68,7 @@ fun DraftScreen(
 
     LaunchedEffect(state.draftTranslations) {
         if (state.draftTranslations.isEmpty()) {
-            onFinish()
+            component.onFinish()
         }
     }
 
@@ -104,7 +104,7 @@ fun DraftScreen(
                     var chapterContent by remember { mutableStateOf<ChapterContent?>(null) }
 
                     LaunchedEffect(chapterSlug) {
-                        chapterContent = viewModel.parseChapterContent(
+                        chapterContent = component.parseChapterContent(
                             chapterSlug = chapterSlug,
                             container = container,
                             renderingProvider = renderingProvider
@@ -128,7 +128,7 @@ fun DraftScreen(
             message = stringResource(R.string.import_draft_confirmation),
             onConfirm = {
                 showConfirmDialog = false
-                viewModel.importDraft(draftData.first)
+                component.importDraft(draftData.first)
             },
             onDismiss = { showConfirmDialog = false },
             confirmText = stringResource(R.string.label_import)

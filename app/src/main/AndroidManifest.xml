@@ -66,13 +66,6 @@
             android:name=".ui.publish.PublishActivity"
             android:label="@string/title_activity_publish"
             android:launchMode="singleTop" />
-        <activity
-            android:name=".ui.draft.DraftActivity"
-            android:label="@string/preview">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
     </application>
 
 </manifest>
