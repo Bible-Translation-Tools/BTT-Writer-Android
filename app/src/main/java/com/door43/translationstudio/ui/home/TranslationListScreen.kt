@@ -73,9 +73,7 @@ fun TranslationListScreen(
                 label = stringResource(R.string.sort_column),
                 options = component.projectSortOptions,
                 selectedOption = state.projectSort,
-                onOptionSelected = {
-                    component.onAction(HomeComponent.Action.ProjectSortChanged(it))
-                },
+                onOptionSelected = component::changeProjectSort,
                 labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
             )
@@ -84,9 +82,7 @@ fun TranslationListScreen(
                 label = stringResource(R.string.sort_projects),
                 options = component.bookSortOptions,
                 selectedOption = state.bookSort,
-                onOptionSelected = {
-                    component.onAction(HomeComponent.Action.BookSortChanged(it))
-                },
+                onOptionSelected = component::changeBookSort,
                 labelTransformer = { it.localize() },
                 modifier = Modifier.weight(1f)
             )
@@ -137,7 +133,7 @@ fun TranslationListScreen(
                     typography = typography,
                     onItemClick = { onProjectSelected(project) },
                     onInfoClick = {
-                        component.onAction(HomeComponent.Action.ShowProjectInfo(project))
+                        component.showProjectInfo(project)
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -152,24 +148,22 @@ fun TranslationListScreen(
     state.projectInfo?.let { project ->
         ProjectDetailsDialog(
             project = project,
-            onDismiss = {
-                component.onAction(HomeComponent.Action.HideProjectInfo)
-            },
+            onDismiss = component::hideProjectInfo,
             onChangeLanguage = {
-                component.onAction(HomeComponent.Action.HideProjectInfo)
+                component.hideProjectInfo()
                 onChangeLanguage(project)
             },
             onDelete = {
-                component.onAction(HomeComponent.Action.DeleteProject(project))
+                component.deleteProject(project)
             },
             onPublish = {
-                component.onAction(HomeComponent.Action.HideProjectInfo)
+                component.hideProjectInfo()
                 onProjectPublish(project.translation.id)
             },
             onLogin = onLogin,
             onLogout = onLogout,
             onMergeConflict = {
-                component.onAction(HomeComponent.Action.HideProjectInfo)
+                component.hideProjectInfo()
                 onMergeConflict(project.translation.id)
             },
             onExportToApp = onExportToApp

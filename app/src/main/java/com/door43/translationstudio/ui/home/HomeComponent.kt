@@ -3,9 +3,7 @@ package com.door43.translationstudio.ui.home
 import android.net.Uri
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.ui.navigation.RootComponent
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 
@@ -35,7 +33,6 @@ enum class BookSort(val value: Int) {
 interface HomeComponent {
     val state: StateFlow<HomeState>
     val event: Flow<Event>
-    val sharedFlow: SharedFlow<RootComponent.SharedEvent>
     val progress: StateFlow<Progress?>
 
     val projectSortOptions: List<ProjectSort>
@@ -44,7 +41,14 @@ interface HomeComponent {
     var lastFocusTargetTranslation: String?
     val lastOpened: TargetTranslation?
 
-    fun onAction(action: Action)
+    fun deleteProject(project: TranslationItem)
+    fun changeProjectSort(sort: ProjectSort)
+    fun changeBookSort(sort: BookSort)
+    fun showProjectInfo(item: TranslationItem)
+    fun importProject(uri: Uri)
+    fun loadWithProgress(translationIds: List<String>)
+    fun hideProjectInfo()
+    fun requestUpdateLibrary()
 
     fun onNewTranslation()
     fun onChangeTranslationLanguage(
@@ -78,19 +82,6 @@ interface HomeComponent {
         data class SnackbarMessage(val message: String) : Event
         data class ImportProject(val uri: Uri) : Event
         data object OpenUpdateLibrary : Event
-    }
-
-    sealed interface Action {
-        data class ShowProjectExists(val translationId: String) : Action
-        data class DeleteProject(val project: TranslationItem): Action
-        data class ProjectSortChanged(val sort: ProjectSort) : Action
-        data class BookSortChanged(val sort: BookSort) : Action
-        data class ShowProjectInfo(val item: TranslationItem) : Action
-        data class ImportProject(val uri: Uri) : Action
-        data object LoadProjects : Action
-        data class LoadWithProgress(val translationIds: List<String>) : Action
-        data object HideProjectInfo : Action
-        data object RequestUpdateLibrary : Action
     }
 
     sealed interface Result {

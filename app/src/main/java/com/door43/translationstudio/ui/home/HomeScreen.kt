@@ -28,7 +28,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,7 +46,6 @@ import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.navigation.RootComponent
 import org.koin.compose.koinInject
 
 @Composable
@@ -79,8 +77,6 @@ fun HomeScreen(
         onSettings = component::openSettings
     )
 
-    val coroutineScope = rememberCoroutineScope()
-
     LaunchedEffect(component) {
         component.lastOpened?.let {
             component.openProject(it.id, false)
@@ -105,28 +101,10 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        component.sharedFlow.collect { event ->
-            when (event) {
-                is RootComponent.SharedEvent.SnackbarMessage -> {
-                    snackbarHostState.showSnackbar(event.message)
-                }
-                is RootComponent.SharedEvent.DuplicateProject -> {
-                    component.onAction(HomeComponent.Action.ShowProjectExists(event.translationId))
-                }
-                is RootComponent.SharedEvent.LoadProjects -> {
-                    component.onAction(HomeComponent.Action.LoadProjects)
-                }
-            }
-        }
-    }
-
     LifecycleResumeEffect(Unit) {
         profileUser = profile.currentUser
         component.lastFocusTargetTranslation?.let { translationId ->
-            component.onAction(
-                HomeComponent.Action.LoadWithProgress(listOf(translationId))
-            )
+            component.loadWithProgress(listOf(translationId))
             component.lastFocusTargetTranslation = null
         }
 
@@ -258,9 +236,7 @@ fun HomeScreen(
                 showImportDialog = false
                 component.openProject(it, true)
             },
-            onProjectsImported = {
-                component.onAction(HomeComponent.Action.LoadWithProgress(it))
-            },
+            onProjectsImported = component::loadWithProgress,
             projectImportUri = projectToImport,
             onProjectUriConsumed = { projectToImport = null }
         )

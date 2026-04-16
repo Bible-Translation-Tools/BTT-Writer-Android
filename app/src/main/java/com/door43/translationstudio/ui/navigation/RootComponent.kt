@@ -88,5 +88,7 @@ interface RootComponent {
         data object LoadProjects : SharedEvent
         data class SnackbarMessage(val message: String) : SharedEvent
         data class DuplicateProject(val translationId: String) : SharedEvent
+        data object RequestLibraryUpdate : SharedEvent
+        data class ImportProject(val uri: Uri) : SharedEvent
     }
 }

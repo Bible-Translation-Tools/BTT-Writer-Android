@@ -34,7 +34,7 @@ import org.unfoldingword.tools.logger.Logger
 
 class DefaultSplashComponent(
     componentContext: ComponentContext,
-    private val result: (SplashComponent.Result) -> Unit,
+    private val onResult: (SplashComponent.Result) -> Unit,
 ) : SplashComponent,
     ComponentContext by componentContext,
     ComponentScope, ProgressOwner, KoinComponent {
@@ -146,7 +146,7 @@ class DefaultSplashComponent(
     private fun startAppLogic() {
         val files = Logger.listStacktraces()
         if (files.isNotEmpty()) {
-            result(SplashComponent.Result.NavigateToCrashReporter)
+            onResult(SplashComponent.Result.NavigateToCrashReporter)
             return
         }
         updateApp()
@@ -167,7 +167,7 @@ class DefaultSplashComponent(
     }
 
     private fun onUpdateFinished() {
-        result(SplashComponent.Result.NavigateToProfile)
+        onResult(SplashComponent.Result.NavigateToProfile)
     }
 
     private fun onMigrationFinished() {

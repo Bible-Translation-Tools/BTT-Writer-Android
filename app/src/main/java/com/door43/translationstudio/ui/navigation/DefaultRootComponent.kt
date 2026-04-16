@@ -84,11 +84,7 @@ class DefaultRootComponent(
     }
 
     override fun onDeepLink(uri: Uri) {
-        val active = stack.value.active.instance
-        if (active is RootComponent.Child.Home) {
-            active.component.onAction(HomeComponent.Action.ImportProject(uri))
-            // TODO Replace with state flow
-        }
+        _sharedFlow.tryEmit(RootComponent.SharedEvent.ImportProject(uri))
     }
 
     private fun child(
@@ -98,7 +94,7 @@ class DefaultRootComponent(
         is Config.Splash -> RootComponent.Child.Splash(
             component = DefaultSplashComponent(
                 componentContext = componentContext,
-                result = ::onSplashResult,
+                onResult = ::onSplashResult,
             )
         )
         is Config.Home -> RootComponent.Child.Home(
@@ -180,19 +176,20 @@ class DefaultRootComponent(
         when (result) {
             is NewTranslationComponent.Result.NavigateBack -> navigation.pop()
             is NewTranslationComponent.Result.Success -> {
-                _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
                 navigation.pop()
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
             }
             is NewTranslationComponent.Result.Error -> {
-                _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(result.text))
                 navigation.pop()
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(result.text))
             }
             is NewTranslationComponent.Result.Duplicate -> {
-                _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(result.translationId))
                 navigation.pop()
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.DuplicateProject(result.translationId))
             }
             is NewTranslationComponent.Result.MergeConflict -> {
                 _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
+                navigation.pop()
                 openTranslate(result.translationId, true)
             }
         }
@@ -259,7 +256,9 @@ class DefaultRootComponent(
 
     private fun openHome(withUpdate: Boolean = false) {
         navigation.replaceAll(Config.Home()) {
-            if (withUpdate) signalHomeUpdateLibrary()
+            if (withUpdate) {
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.RequestLibraryUpdate)
+            }
         }
     }
 
@@ -290,12 +289,5 @@ class DefaultRootComponent(
             disabledLanguages = disabledLanguages,
             translationId = translationId
         ))
-    }
-
-    private fun signalHomeUpdateLibrary() {
-        val active = stack.value.active.instance
-        if (active is RootComponent.Child.Home) {
-            active.component.onAction(HomeComponent.Action.RequestUpdateLibrary)
-        }
     }
 }

@@ -1,6 +1,7 @@
 package com.door43.translationstudio.ui.home
 
 import android.app.Application
+import android.net.Uri
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
@@ -25,7 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,7 +46,7 @@ private const val SORT_BY_BOOK: String = "sort_by_book"
 
 class DefaultHomeComponent(
     componentContext: ComponentContext,
-    override val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
+    private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (HomeComponent.Result) -> Unit
 ) : HomeComponent,
     ComponentContext by componentContext,
@@ -90,7 +90,7 @@ class DefaultHomeComponent(
         set(value) { translator.lastFocusTargetTranslation = value }
 
     override val lastOpened: TargetTranslation?
-        get() = translator.lastFocusTargetTranslation?.let { lastTarget ->
+        get() = lastFocusTargetTranslation?.let { lastTarget ->
             translator.getTargetTranslation(lastTarget)
         }
 
@@ -104,6 +104,22 @@ class DefaultHomeComponent(
                 .collect { trigger ->
                     sortTranslations(trigger.projectSort, trigger.bookSort)
                 }
+        }
+
+        coroutineScope.launch {
+            sharedFlow.collect { event ->
+                when (event) {
+                    is RootComponent.SharedEvent.LoadProjects -> loadProjects()
+                    is RootComponent.SharedEvent.DuplicateProject -> {
+                        showProjectExists(event.translationId)
+                    }
+                    is RootComponent.SharedEvent.SnackbarMessage -> {
+                        _event.trySend(HomeComponent.Event.SnackbarMessage(event.message))
+                    }
+                    is RootComponent.SharedEvent.RequestLibraryUpdate -> requestUpdateLibrary()
+                    is RootComponent.SharedEvent.ImportProject -> importProject(event.uri)
+                }
+            }
         }
 
         val projectSort = ProjectSort.of(
@@ -125,25 +141,82 @@ class DefaultHomeComponent(
         progressManager.runTask(message, block)
     }
 
-    override fun onAction(action: HomeComponent.Action) {
-        when (action) {
-            is HomeComponent.Action.ShowProjectExists -> showProjectExists(action.translationId)
-            is HomeComponent.Action.DeleteProject -> deleteProject(action.project)
-            is HomeComponent.Action.ProjectSortChanged -> onProjectSortChanged(action.sort)
-            is HomeComponent.Action.BookSortChanged -> onBookSortChanged(action.sort)
-            is HomeComponent.Action.ShowProjectInfo -> {
-                _state.update { it.copy(projectInfo = action.item) }
-            }
-            is HomeComponent.Action.ImportProject -> coroutineScope.launch {
-                _event.trySend(HomeComponent.Event.ImportProject(action.uri))
-            }
-            is HomeComponent.Action.LoadProjects -> loadProjects()
-            is HomeComponent.Action.LoadWithProgress -> loadWithProgress(action.translationIds)
-            is HomeComponent.Action.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
-            is HomeComponent.Action.RequestUpdateLibrary -> {
-                _event.trySend(HomeComponent.Event.OpenUpdateLibrary)
+    override fun deleteProject(project: TranslationItem) {
+        launchWithProgress {
+            deleteProject(project, false)
+
+            _state.update { state ->
+                state.copy(
+                    translations = state.translations.filter {
+                        it.translation.id != project.translation.id
+                    }
+                )
             }
         }
+    }
+
+    override fun changeProjectSort(sort: ProjectSort) {
+        coroutineScope.launch {
+            prefRepository.setDefaultPref(SORT_BY_PROJECT, sort.ordinal)
+        }
+        _state.update { it.copy(projectSort = sort) }
+        _state.update { it.copy(scrollToTopTrigger = it.scrollToTopTrigger + 1) }
+    }
+
+    override fun changeBookSort(sort: BookSort) {
+        coroutineScope.launch {
+            prefRepository.setDefaultPref(SORT_BY_BOOK, sort.ordinal)
+        }
+        _state.update { it.copy(bookSort = sort) }
+        _state.update { it.copy(scrollToTopTrigger = it.scrollToTopTrigger + 1) }
+    }
+
+    override fun showProjectInfo(item: TranslationItem) {
+        _state.update { it.copy(projectInfo = item) }
+    }
+
+    override fun importProject(uri: Uri) {
+        coroutineScope.launch {
+            _event.trySend(HomeComponent.Event.ImportProject(uri))
+        }
+    }
+
+    override fun loadWithProgress(translationIds: List<String>) {
+        coroutineScope.launch {
+            val newUpdates = translationIds.mapNotNull { id ->
+                getTargetTranslation(id)?.let { translation ->
+                    val progress = calculateProgress.execute(translation)
+
+                    id to TranslationItem(
+                        name = getProject(translation)?.name ?: "Unknown",
+                        translation = translation,
+                        progress = progress
+                    )
+                }
+            }.toMap()
+
+            if (newUpdates.isEmpty()) return@launch
+
+            _state.update { state ->
+                val currentItemsMap = state.translations.associateBy {
+                    it.translation.id
+                }.toMutableMap()
+
+                newUpdates.forEach { (id, newItem) ->
+                    currentItemsMap[id] = newItem
+                }
+
+                state.copy(translations = currentItemsMap.values.toList())
+            }
+        }
+    }
+
+    override fun hideProjectInfo() {
+        _state.update { it.copy(projectInfo = null) }
+    }
+
+    override fun requestUpdateLibrary() {
+        _event.trySend(HomeComponent.Event.OpenUpdateLibrary)
     }
 
     override fun logout() {
@@ -168,6 +241,7 @@ class DefaultHomeComponent(
     }
 
     override fun openProject(translationId: String, mergeConflictFilterOn: Boolean) {
+        lastFocusTargetTranslation = translationId
         onResult(HomeComponent.Result.OpenProject(translationId, mergeConflictFilterOn))
     }
 
@@ -219,52 +293,6 @@ class DefaultHomeComponent(
             }
             _state.update { it.copy(translations = items) }
         }
-    }
-
-    private fun loadWithProgress(translationIds: List<String>) {
-        coroutineScope.launch {
-            val newUpdates = translationIds.mapNotNull { id ->
-                getTargetTranslation(id)?.let { translation ->
-                    val progress = calculateProgress.execute(translation)
-
-                    id to TranslationItem(
-                        name = getProject(translation)?.name ?: "Unknown",
-                        translation = translation,
-                        progress = progress
-                    )
-                }
-            }.toMap()
-
-            if (newUpdates.isEmpty()) return@launch
-
-            _state.update { state ->
-                val currentItemsMap = state.translations.associateBy {
-                    it.translation.id
-                }.toMutableMap()
-
-                newUpdates.forEach { (id, newItem) ->
-                    currentItemsMap[id] = newItem
-                }
-
-                state.copy(translations = currentItemsMap.values.toList())
-            }
-        }
-    }
-
-    private fun onProjectSortChanged(sort: ProjectSort) {
-        coroutineScope.launch {
-            prefRepository.setDefaultPref(SORT_BY_PROJECT, sort.ordinal)
-        }
-        _state.update { it.copy(projectSort = sort) }
-        _state.update { it.copy(scrollToTopTrigger = it.scrollToTopTrigger + 1) }
-    }
-
-    private fun onBookSortChanged(sort: BookSort) {
-        coroutineScope.launch {
-            prefRepository.setDefaultPref(SORT_BY_BOOK, sort.ordinal)
-        }
-        _state.update { it.copy(bookSort = sort) }
-        _state.update { it.copy(scrollToTopTrigger = it.scrollToTopTrigger + 1) }
     }
 
     private suspend fun sortTranslations(projectSort: ProjectSort, bookSort: BookSort) {
@@ -367,20 +395,6 @@ class DefaultHomeComponent(
                     targetTranslation.targetLanguageName,
                     targetTranslation.projectId,
                     true
-                )
-            }
-        }
-    }
-
-    private fun deleteProject(project: TranslationItem) {
-        launchWithProgress {
-            deleteProject(project, false)
-
-            _state.update { state ->
-                state.copy(
-                    translations = state.translations.filter {
-                        it.translation.id != project.translation.id
-                    }
                 )
             }
         }
