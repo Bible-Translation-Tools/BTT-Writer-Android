@@ -32,14 +32,11 @@ import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSidebar
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
 import kotlinx.coroutines.launch
-import java.io.File
 
 @Composable
 fun TargetTranslationScreen(
     component: TranslateComponent,
-    startWithMergeFilter: Boolean,
-    onSettings: () -> Unit,
-    onExportToApp: (File) -> Unit
+    startWithMergeFilter: Boolean
 ) {
     val state by component.state.collectAsStateWithLifecycle()
     val sharedState by component.sharedState.collectAsStateWithLifecycle()
@@ -69,12 +66,12 @@ fun TargetTranslationScreen(
     val menuItems = rememberTranslateMenuItems(
         viewMode = state.viewMode,
         draftAvailable = state.draftAvailable,
-        onHomeClick = { component.onHome(false) },
+        onHomeClick = { component.openHome(false) },
         onNavigateToDraft = {
-            component.onDraft(component.targetTranslation.id)
+            component.openDraft(component.targetTranslation.id)
         },
         onProjectPreview = {
-            component.onPublishProject(component.targetTranslation.id)
+            component.openPublishProject(component.targetTranslation.id)
         },
         onUploadExport = { showExportDialog = true },
         onPrint = {
@@ -83,7 +80,7 @@ fun TargetTranslationScreen(
         },
         onFeedback = { showFeedbackDialog = true },
         onChunksDone = { chunksDoneRequested = true },
-        onSettings = onSettings,
+        onSettings = component::openSettings,
         onSearchRequested = { searchRequested = true }
     )
 
@@ -113,7 +110,7 @@ fun TargetTranslationScreen(
                     duration = SnackbarDuration.Long
                 )
                 if (result == SnackbarResult.ActionPerformed) {
-                    component.onDraft(component.targetTranslation.id)
+                    component.openDraft(component.targetTranslation.id)
                 }
             }
         }
@@ -213,7 +210,7 @@ fun TargetTranslationScreen(
                 message = stringResource(R.string.update_warning),
                 onConfirm = {
                     showUpdateSourcesDialog = false
-                    component.onHome(true)
+                    component.openHome(true)
                 },
                 onDismiss = { showUpdateSourcesDialog = false }
             )
@@ -223,12 +220,15 @@ fun TargetTranslationScreen(
             ExportDialog(
                 targetTranslation = component.targetTranslation,
                 openPrint = showPrintDialog,
-                onExportToApp = onExportToApp,
+                onExportToApp = component::exportToApp,
                 onLogin = {
                     showExportDialog = false
                     component.openLogin()
                 },
-                onLogout = component::logout,
+                onLogout = {
+                    showExportDialog = false
+                    component.logout()
+                },
                 onMergeConflict = {
                     mergeConflictFilterOn = true
                     component.onAction(TranslateComponent.Action.SaveLastViewMode(

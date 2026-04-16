@@ -1,5 +1,6 @@
 package com.door43.translationstudio
 
+import android.content.ClipData
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -121,8 +122,12 @@ class MainActivity : BaseActivity() {
             file,
         )
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/zip"
+            setDataAndType(uri, "application/zip")
+
             putExtra(Intent.EXTRA_STREAM, uri)
+
+            clipData = ClipData.newRawUri(null, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         startActivity(
             Intent.createChooser(intent, getString(R.string.send_to)),

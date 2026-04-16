@@ -115,11 +115,13 @@ class DefaultRootComponent(
 
     private fun onTranslateResult(result: TranslateComponent.Result) {
         when (result) {
-            is TranslateComponent.Result.OnHome -> openHome(result.withUpdate)
-            is TranslateComponent.Result.OnDraft -> openDraft(result.translationId)
-            is TranslateComponent.Result.OnPublishProject -> openPublishPreview(result.translationId)
+            is TranslateComponent.Result.OpenHome -> openHome(result.withUpdate)
+            is TranslateComponent.Result.OpenDraft -> openDraft(result.translationId)
+            is TranslateComponent.Result.OpenPublishProject -> openPublishPreview(result.translationId)
             is TranslateComponent.Result.OpenLogin -> openProfile(true)
             is TranslateComponent.Result.Logout -> openProfile(false)
+            is TranslateComponent.Result.OpenSettings -> openSettings()
+            is TranslateComponent.Result.ExportToApp -> exportToApp(result.file)
         }
     }
 
@@ -150,17 +152,12 @@ class DefaultRootComponent(
         navigation.replaceAll(Config.Profile(thenLogin))
     }
 
-    override fun openSettings() {
-        // TODO Replace with navigation
-        _events.trySend(RootComponent.Event.OpenSettings)
-    }
-
-    override fun exportToApp(file: File) {
+    private fun exportToApp(file: File) {
         onExportToApp(file)
     }
 
     private fun openHome(withUpdate: Boolean = false) {
-        navigation.replaceAll {
+        navigation.replaceAll(Config.Home()) {
             if (withUpdate) signalHomeUpdateLibrary()
         }
     }
@@ -174,6 +171,11 @@ class DefaultRootComponent(
         // TODO Replace with navigation
         _events.trySend(RootComponent.Event.PublishProject(translationId))
         navigation.pop()
+    }
+
+    private fun openSettings() {
+        // TODO Replace with navigation
+        _events.trySend(RootComponent.Event.OpenSettings)
     }
 
     private fun signalHomeUpdateLibrary() {

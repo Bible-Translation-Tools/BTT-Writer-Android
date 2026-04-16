@@ -64,9 +64,7 @@ fun RootContent(
             )
             is RootComponent.Child.Translate -> TargetTranslationScreen(
                 component = instance.component,
-                startWithMergeFilter = false,
-                onSettings = component::openSettings,
-                onExportToApp = component::exportToApp
+                startWithMergeFilter = false
             )
             is RootComponent.Child.Profile -> ProfileRouter(
                 component = instance.component

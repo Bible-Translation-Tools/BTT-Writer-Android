@@ -57,6 +57,7 @@ import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
@@ -225,16 +226,16 @@ class DefaultTranslateComponent(
         }
     }
 
-    override fun onHome(withUpdate: Boolean) {
-        onResult(TranslateComponent.Result.OnHome(withUpdate))
+    override fun openHome(withUpdate: Boolean) {
+        onResult(TranslateComponent.Result.OpenHome(withUpdate))
     }
 
-    override fun onDraft(translationId: String) {
-        onResult(TranslateComponent.Result.OnDraft(translationId))
+    override fun openDraft(translationId: String) {
+        onResult(TranslateComponent.Result.OpenDraft(translationId))
     }
 
-    override fun onPublishProject(translationId: String) {
-        onResult(TranslateComponent.Result.OnPublishProject(translationId))
+    override fun openPublishProject(translationId: String) {
+        onResult(TranslateComponent.Result.OpenPublishProject(translationId))
     }
 
     override fun openLogin() {
@@ -243,6 +244,14 @@ class DefaultTranslateComponent(
 
     override fun logout() {
         onResult(TranslateComponent.Result.Logout)
+    }
+
+    override fun openSettings() {
+        onResult(TranslateComponent.Result.OpenSettings)
+    }
+
+    override fun exportToApp(file: File) {
+        onResult(TranslateComponent.Result.ExportToApp(file))
     }
 
     private fun openUsedSourceTranslations() {

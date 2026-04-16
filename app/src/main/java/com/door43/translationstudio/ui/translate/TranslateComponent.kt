@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import org.unfoldingword.resourcecontainer.ResourceContainer
+import java.io.File
 
 interface TranslateComponent {
 
@@ -33,11 +34,13 @@ interface TranslateComponent {
     fun restartAutoCommitTimer()
     fun onAction(action: Action)
 
-    fun onHome(withUpdate: Boolean)
-    fun onDraft(translationId: String)
-    fun onPublishProject(translationId: String)
+    fun openHome(withUpdate: Boolean)
+    fun openDraft(translationId: String)
+    fun openPublishProject(translationId: String)
     fun openLogin()
     fun logout()
+    fun openSettings()
+    fun exportToApp(file: File)
 
     companion object {
         const val SEARCH_SOURCE = "search_source"
@@ -79,11 +82,13 @@ interface TranslateComponent {
     }
 
     sealed interface Result {
-        data class OnHome(val withUpdate: Boolean) : Result
-        data class OnDraft(val translationId: String) : Result
-        data class OnPublishProject(val translationId: String) : Result
+        data class OpenHome(val withUpdate: Boolean) : Result
+        data class OpenDraft(val translationId: String) : Result
+        data class OpenPublishProject(val translationId: String) : Result
         data object Logout : Result
         data object OpenLogin : Result
+        data object OpenSettings : Result
+        data class ExportToApp(val file: File) : Result
     }
 
     @Serializable

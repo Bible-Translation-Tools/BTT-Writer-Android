@@ -9,7 +9,6 @@ import com.door43.translationstudio.ui.splash.SplashComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
-import java.io.File
 
 interface RootComponent {
 
@@ -22,9 +21,6 @@ interface RootComponent {
 
     fun openTranslate(translationId: String, startWithMergeFilter: Boolean)
     fun openProfile(thenLogin: Boolean)
-    fun openSettings()
-
-    fun exportToApp(file: File)
 
     sealed interface Child {
         data object Placeholder : Child
