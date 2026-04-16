@@ -47,6 +47,7 @@ import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ExportDialog
 import org.koin.compose.koinInject
+import java.io.File
 
 @Composable
 fun ProjectDetailsDialog(
@@ -57,7 +58,8 @@ fun ProjectDetailsDialog(
     onPublish: () -> Unit,
     onLogout: () -> Unit,
     onLogin: () -> Unit,
-    onMergeConflict: () -> Unit
+    onMergeConflict: () -> Unit,
+    onExportToApp: (File) -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -222,14 +224,18 @@ fun ProjectDetailsDialog(
         ExportDialog(
             targetTranslation = project.translation,
             openPrint = showPrintDialog,
-            onExportToApp = {},
+            onExportToApp = onExportToApp,
+            onLogin = {
+                showExportDialog = false
+                onDismiss()
+                onLogin()
+            },
             onLogout = onLogout,
             onMergeConflict = {
                 showExportDialog = false
                 onDismiss()
                 onMergeConflict()
             },
-            onLoginClick = onLogin,
             onDismiss = {
                 showExportDialog = false
                 showPrintDialog = false

@@ -71,7 +71,7 @@ interface RootComponent {
         data object Settings : Config
 
         @Serializable
-        data object Profile : Config
+        data class Profile(val thenLogin: Boolean = false) : Config
 
         @Serializable
         data object LoginDoor43 : Config
@@ -95,9 +95,7 @@ interface RootComponent {
     sealed interface Event {
         data object OpenCrashReporter : Event
         data object OpenSettings : Event
-        data object ExitApp : Event
         data class OpenDraft(val translationId: String) : Event
-        data class OpenPublishFromTranslate(val translationId: String) : Event
-        data class ExportFile(val file: File) : Event
+        data class PublishProject(val translationId: String) : Event
     }
 }

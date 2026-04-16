@@ -20,7 +20,6 @@ import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.BackupRC
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.TranslationProgress
-import com.door43.util.FileUtilities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -45,6 +44,7 @@ private const val SORT_BY_BOOK: String = "sort_by_book"
 
 class DefaultHomeComponent(
     componentContext: ComponentContext,
+    private val onResult: (HomeComponent.Result) -> Unit
 ) : HomeComponent,
     ComponentContext by componentContext,
     ComponentScope, ProgressOwner, KoinComponent {
@@ -138,12 +138,51 @@ class DefaultHomeComponent(
             is HomeComponent.Action.LoadProjects -> loadProjects()
             is HomeComponent.Action.LoadWithProgress -> loadWithProgress(action.translationIds)
             is HomeComponent.Action.HideProjectInfo -> _state.update { it.copy(projectInfo = null) }
-            is HomeComponent.Action.Logout -> logout()
-            is HomeComponent.Action.ShareApp -> shareApp()
             is HomeComponent.Action.RequestUpdateLibrary -> {
                 _event.trySend(HomeComponent.Event.OpenUpdateLibrary)
             }
         }
+    }
+
+    override fun logout() {
+        launchWithProgress(
+            application.getString(R.string.log_out)
+        ) {
+            withContext(Dispatchers.IO) {
+                gogsLogout.execute()
+                profile.logout()
+            }
+
+            onResult(HomeComponent.Result.Logout)
+        }
+    }
+
+    override fun openSettings() {
+        onResult(HomeComponent.Result.OpenSettings)
+    }
+
+    override fun publishProject(translationId: String) {
+        onResult(HomeComponent.Result.PublishProject(translationId))
+    }
+
+    override fun openProject(translationId: String, mergeConflictFilterOn: Boolean) {
+        onResult(HomeComponent.Result.OpenProject(translationId, mergeConflictFilterOn))
+    }
+
+    override fun exitApp() {
+        onResult(HomeComponent.Result.ExitApp)
+    }
+
+    override fun shareApp() {
+        onResult(HomeComponent.Result.ShareApp)
+    }
+
+    override fun exportToApp(file: File) {
+        onResult(HomeComponent.Result.ExportToApp(file))
+    }
+
+    override fun openLogin() {
+        onResult(HomeComponent.Result.OpenLogin)
     }
 
     private fun loadProjects() {
@@ -193,19 +232,6 @@ class DefaultHomeComponent(
 
                 state.copy(translations = currentItemsMap.values.toList())
             }
-        }
-    }
-
-    private fun logout() {
-        launchWithProgress(
-            application.getString(R.string.log_out)
-        ) {
-            withContext(Dispatchers.IO) {
-                gogsLogout.execute()
-                profile.logout()
-            }
-
-            _event.trySend(HomeComponent.Event.OnLogout)
         }
     }
 
@@ -287,25 +313,6 @@ class DefaultHomeComponent(
 
         // compare project names
         return lhs.formattedProjectName.compareTo(rhs.formattedProjectName, ignoreCase = true)
-    }
-
-    private fun shareApp() {
-        launchWithProgress {
-            val file = withContext(Dispatchers.IO) {
-                val pInfo = application.packageManager.getPackageInfo(application.packageName, 0)
-                pInfo.applicationInfo?.let { info ->
-                    val apkFile = File(info.publicSourceDir)
-                    val exportFile = File(
-                        directoryProvider.sharingDir, info.loadLabel(
-                            application.packageManager
-                        ).toString() + "_" + pInfo.versionName + ".apk"
-                    )
-                    FileUtilities.copyFile(apkFile, exportFile)
-                    exportFile
-                }
-            }
-            file?.let { _event.trySend(HomeComponent.Event.ShareApp(it)) }
-        }
     }
 
     private fun showProjectExists(translationId: String) {

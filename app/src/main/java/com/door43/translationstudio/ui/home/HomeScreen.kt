@@ -55,19 +55,10 @@ import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import java.io.File
 
 @Composable
 fun HomeScreen(
-    component: HomeComponent,
-    onSettings: () -> Unit,
-    onShareApp: (File) -> Unit,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit,
-    onProjectPublish: (String) -> Unit,
-    onMergeConflict: (String) -> Unit,
-    onOpenTranslate: (String) -> Unit,
-    onAppExit: () -> Unit
+    component: HomeComponent
 ) {
     val profile: Profile = koinInject()
     var profileUser by remember { mutableStateOf(profile.currentUser) }
@@ -93,13 +84,9 @@ fun HomeScreen(
         onUpdateClick = { showUpdateLibraryDialog = true },
         onImport = { showImportDialog = true },
         onFeedback = { showFeedbackDialog = true },
-        onShareApp = {
-            component.onAction(HomeComponent.Action.ShareApp)
-        },
-        onLogout = {
-            component.onAction(HomeComponent.Action.Logout)
-        },
-        onSettings = onSettings
+        onShareApp = component::shareApp,
+        onLogout = component::logout,
+        onSettings = component::openSettings
     )
 
     val newTranslationLauncher = rememberLauncherForActivityResult(
@@ -121,7 +108,7 @@ fun HomeScreen(
                     NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
                 )?.let {
                     component.onAction(HomeComponent.Action.LoadProjects)
-                    onMergeConflict(it)
+                    component.openProject(it, true)
                 }
             }
             NewTargetTranslationActivity.RESULT_ERROR -> {
@@ -162,19 +149,19 @@ fun HomeScreen(
     }
 
     LaunchedEffect(component) {
-        component.lastOpened?.let { onOpenTranslate(it.id) }
+        component.lastOpened?.let {
+            component.openProject(it.id, false)
+        }
     }
 
     LaunchedEffect(component) {
         component.event.collect { event ->
             when (event) {
                 is HomeComponent.Event.SnackbarMessage -> snackbarHostState.showSnackbar(event.message)
-                is HomeComponent.Event.ShareApp -> onShareApp(event.file)
                 is HomeComponent.Event.ImportProject -> {
                     showImportDialog = true
                     projectToImport = event.uri
                 }
-                HomeComponent.Event.OnLogout -> onLogout()
                 HomeComponent.Event.OpenUpdateLibrary -> {
                     showUpdateLibraryDialog = true
                     triggerUpdateLibrary = true
@@ -252,7 +239,7 @@ fun HomeScreen(
                             )
 
                             TextButton(
-                                onClick = { component.onAction(HomeComponent.Action.Logout) },
+                                onClick = component::logout,
                                 colors = ButtonDefaults.elevatedButtonColors(
                                     containerColor = MaterialTheme.colorScheme.background,
                                     contentColor = MaterialTheme.colorScheme.primary
@@ -283,12 +270,17 @@ fun HomeScreen(
                         } else {
                             TranslationListScreen(
                                 component = component,
-                                onProjectSelected = { onOpenTranslate(it.translation.id) },
+                                onProjectSelected = {
+                                    component.openProject(it.translation.id, false)
+                                },
                                 onChangeLanguage = launchChangeLanguage,
-                                onMergeConflict = onMergeConflict,
-                                onProjectPublish = onProjectPublish,
-                                onLogin = onLogin,
-                                onLogout = onLogout
+                                onMergeConflict = {
+                                    component.openProject(it, true)
+                                },
+                                onProjectPublish = component::publishProject,
+                                onLogin = component::openLogin,
+                                onLogout = component::logout,
+                                onExportToApp = component::exportToApp
                             )
                         }
                     }
@@ -308,7 +300,7 @@ fun HomeScreen(
             onDismiss = { showImportDialog = false },
             onMergeConflict = {
                 showImportDialog = false
-                onMergeConflict(it)
+                component.openProject(it, true)
             },
             onProjectsImported = {
                 component.onAction(HomeComponent.Action.LoadWithProgress(it))
@@ -334,7 +326,7 @@ fun HomeScreen(
             message = stringResource(R.string.exit_confirmation),
             confirmText = stringResource(R.string.yes),
             dismissText = stringResource(R.string.no),
-            onConfirm = onAppExit,
+            onConfirm = component::exitApp,
             onDismiss = {
                 showExitConfirmation = false
             }

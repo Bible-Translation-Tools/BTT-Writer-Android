@@ -90,7 +90,7 @@ class PublishActivity : BaseActivity() {
                     PublishScreen(
                         onOpenReview = ::openReview,
                         onExportToApp = ::exportToApp,
-                        onLoginClick = ::door43Login,
+                        onLogin = ::door43Login,
                         onLogout = ::logout,
                         onMergeConflict = ::openMergeConflict,
                         onNavigateBack = ::onBackPressedHandler

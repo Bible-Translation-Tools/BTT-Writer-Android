@@ -34,7 +34,7 @@ interface TermsOfUseComponent {
 
 class DefaultTermsOfUseComponent(
     componentContext: ComponentContext,
-    private val result: (TermsOfUseComponent.Result) -> Unit
+    private val onResult: (TermsOfUseComponent.Result) -> Unit
 ) : TermsOfUseComponent,
     ComponentContext by componentContext,
     KoinComponent, ComponentScope, ProgressOwner {
@@ -54,7 +54,7 @@ class DefaultTermsOfUseComponent(
 
     override fun acceptTerms() {
         profile.termsOfUseLastAccepted = application.resources.getInteger(R.integer.terms_of_use_version)
-        result(TermsOfUseComponent.Result.Accepted)
+        onResult(TermsOfUseComponent.Result.Accepted)
     }
 
     override fun rejectTerms() {
@@ -65,7 +65,7 @@ class DefaultTermsOfUseComponent(
                 logoutUseCase.execute()
                 profile.logout()
             }
-            result(TermsOfUseComponent.Result.Rejected)
+            onResult(TermsOfUseComponent.Result.Rejected)
         }
     }
 }

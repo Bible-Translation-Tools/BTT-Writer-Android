@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import org.koin.compose.koinInject
+import java.io.File
 
 @Composable
 fun TranslationListScreen(
@@ -47,6 +48,7 @@ fun TranslationListScreen(
     onProjectPublish: (String) -> Unit,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    onExportToApp: (File) -> Unit
 ) {
     val typography: Typography = koinInject()
     val state by component.state.collectAsStateWithLifecycle()
@@ -169,7 +171,8 @@ fun TranslationListScreen(
             onMergeConflict = {
                 component.onAction(HomeComponent.Action.HideProjectInfo)
                 onMergeConflict(project.translation.id)
-            }
+            },
+            onExportToApp = onExportToApp
         )
     }
 }

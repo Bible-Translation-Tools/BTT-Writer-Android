@@ -58,7 +58,7 @@ fun ExportDialog(
     openPrint: Boolean,
     onDismiss: () -> Unit,
     onExportToApp: (File) -> Unit,
-    onLoginClick: () -> Unit,
+    onLogin: () -> Unit,
     onLogout: () -> Unit,
     onMergeConflict: () -> Unit
 ) {
@@ -128,6 +128,7 @@ fun ExportDialog(
                     snackbarHostState.showSnackbar(event.message)
                 }
                 is ExportEvent.AppExport -> onExportToApp(event.file)
+                is ExportEvent.OnLogin -> onLogin()
                 is ExportEvent.OnLogout -> onLogout()
                 is ExportEvent.AuthRequested -> showAuthDialog = true
             }
@@ -179,7 +180,7 @@ fun ExportDialog(
                 )
                 TextButton(
                     onClick = {
-                        viewModel.onAction(ExportAction.Logout)
+                        viewModel.onAction(ExportAction.Logout(false))
                     },
                     shape = RoundedCornerShape(4.dp)
                 ) {
@@ -353,8 +354,10 @@ fun ExportDialog(
     }
 
     if (showLoginDialog) {
-        Door43LoginDialog(
-            onLoginClick = onLoginClick,
+        LoginOnlineDialog(
+            onLogin = {
+                viewModel.onAction(ExportAction.Logout(true))
+            },
             onDismiss = { showLoginDialog = false }
         )
     }

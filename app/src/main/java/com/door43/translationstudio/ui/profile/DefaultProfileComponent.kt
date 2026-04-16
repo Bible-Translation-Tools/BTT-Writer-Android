@@ -19,6 +19,7 @@ import org.koin.core.component.inject
 
 class DefaultProfileComponent(
     componentContext: ComponentContext,
+    private val goLogin: Boolean,
     private val result: (ProfileComponent.Result) -> Unit
 ) : ProfileComponent,
     ComponentContext by componentContext, KoinComponent {
@@ -37,7 +38,14 @@ class DefaultProfileComponent(
     override val stack: Value<ChildStack<*, ProfileComponent.Child>> = childStack(
         source = navigation,
         serializer = ProfileComponent.Config.serializer(),
-        initialConfiguration = ProfileComponent.Config.Index,
+        initialStack = {
+            buildList {
+                add(ProfileComponent.Config.Index)
+                if (goLogin) {
+                    add(ProfileComponent.Config.LoginOnline)
+                }
+            }
+        },
         handleBackButton = true,
         childFactory = ::child,
     )
@@ -61,19 +69,19 @@ class DefaultProfileComponent(
         ProfileComponent.Config.LoginOnline -> ProfileComponent.Child.LoginOnline(
             component = DefaultLoginOnlineComponent(
                 componentContext = componentContext,
-                result = ::onLoginOnlineResult,
+                onResult = ::onLoginOnlineResult,
             )
         )
         ProfileComponent.Config.LoginOffline -> ProfileComponent.Child.LoginOffline(
             component = DefaultLoginOfflineComponent(
                 componentContext = componentContext,
-                result = ::onLoginOfflineResult,
+                onResult = ::onLoginOfflineResult,
             )
         )
         ProfileComponent.Config.TermsOfUse -> ProfileComponent.Child.TermsOfUse(
             component = DefaultTermsOfUseComponent(
                 componentContext = componentContext,
-                result = ::onTermsOfUseResult,
+                onResult = ::onTermsOfUseResult,
             )
         )
     }

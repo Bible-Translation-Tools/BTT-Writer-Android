@@ -30,8 +30,8 @@ import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.koin.compose.koinInject
 
 @Composable
-fun Door43LoginDialog(
-    onLoginClick: () -> Unit,
+fun LoginOnlineDialog(
+    onLogin: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val prefRepository: IPreferenceRepository = koinInject()
@@ -48,7 +48,7 @@ fun Door43LoginDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(scrollState),
-            color = MaterialTheme.colorScheme.surface,
+            color = MaterialTheme.colorScheme.background,
             shape = RoundedCornerShape(8.dp)
         ) {
             Column(
@@ -74,7 +74,7 @@ fun Door43LoginDialog(
                     title = stringResource(R.string.login_doo43),
                     subtitle = stringResource(R.string.requires_internet),
                     onClick = {
-                        onLoginClick()
+                        onLogin()
                         onDismiss()
                     }
                 )

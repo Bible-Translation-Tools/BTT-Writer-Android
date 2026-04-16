@@ -43,6 +43,15 @@ interface HomeComponent {
 
     fun onAction(action: Action)
 
+    fun logout()
+    fun openSettings()
+    fun publishProject(translationId: String)
+    fun openProject(translationId: String, mergeConflictFilterOn: Boolean)
+    fun exitApp()
+    fun shareApp()
+    fun exportToApp(file: File)
+    fun openLogin()
+
     data class SortTrigger(
         val projectSort: ProjectSort,
         val bookSort: BookSort,
@@ -59,9 +68,7 @@ interface HomeComponent {
 
     sealed interface Event {
         data class SnackbarMessage(val message: String) : Event
-        data class ShareApp(val file: File) : Event
         data class ImportProject(val uri: Uri) : Event
-        data object OnLogout : Event
         data object OpenUpdateLibrary : Event
     }
 
@@ -75,8 +82,20 @@ interface HomeComponent {
         data object LoadProjects : Action
         data class LoadWithProgress(val translationIds: List<String>) : Action
         data object HideProjectInfo : Action
-        data object Logout : Action
-        data object ShareApp: Action
         data object RequestUpdateLibrary : Action
+    }
+
+    sealed interface Result {
+        data object Logout : Result
+        data object OpenLogin : Result
+        data object OpenSettings : Result
+        data class PublishProject(val translationId: String) : Result
+        data class OpenProject(
+            val translationId: String,
+            val mergeConflictFilterOn: Boolean
+        ) : Result
+        data object ExitApp : Result
+        data object ShareApp : Result
+        data class ExportToApp(val file: File) : Result
     }
 }

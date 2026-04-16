@@ -283,6 +283,10 @@ fun TargetTranslationScreen(
                 targetTranslation = component.targetTranslation,
                 openPrint = showPrintDialog,
                 onExportToApp = onExportToApp,
+                onLogin = {
+                    showExportDialog = false
+                    onLogin()
+                },
                 onLogout = onLogout,
                 onMergeConflict = {
                     mergeConflictFilterOn = true
@@ -290,7 +294,6 @@ fun TargetTranslationScreen(
                         TranslationViewMode.REVIEW
                     ))
                 },
-                onLoginClick = onLogin,
                 onDismiss = {
                     showExportDialog = false
                     showPrintDialog = false

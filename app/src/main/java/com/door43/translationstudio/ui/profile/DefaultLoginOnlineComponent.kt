@@ -24,7 +24,7 @@ import org.koin.core.component.inject
 
 class DefaultLoginOnlineComponent(
     componentContext: ComponentContext,
-    private val result: (LoginOnlineComponent.Result) -> Unit,
+    private val onResult: (LoginOnlineComponent.Result) -> Unit,
 ) : LoginOnlineComponent,
     ComponentContext by componentContext,
     ComponentScope, ProgressOwner, KoinComponent {
@@ -69,7 +69,7 @@ class DefaultLoginOnlineComponent(
                     user.fullName = user.username
                 }
                 profile.login(user.fullName, user)
-                result(LoginOnlineComponent.Result.LoggedIn)
+                onResult(LoginOnlineComponent.Result.LoggedIn)
             } else {
                 val errorRes = if (App.isNetworkAvailable) {
                     R.string.double_check_credentials
@@ -82,6 +82,6 @@ class DefaultLoginOnlineComponent(
     }
 
     override fun onCancel() {
-        result(LoginOnlineComponent.Result.Back)
+        onResult(LoginOnlineComponent.Result.Back)
     }
 }

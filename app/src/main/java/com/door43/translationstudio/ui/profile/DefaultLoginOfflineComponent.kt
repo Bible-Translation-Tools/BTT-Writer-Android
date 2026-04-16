@@ -7,7 +7,7 @@ import org.koin.core.component.inject
 
 class DefaultLoginOfflineComponent(
     componentContext: ComponentContext,
-    private val result: (LoginOfflineComponent.Result) -> Unit,
+    private val onResult: (LoginOfflineComponent.Result) -> Unit,
 ) : LoginOfflineComponent,
     ComponentContext by componentContext,
     KoinComponent {
@@ -16,10 +16,10 @@ class DefaultLoginOfflineComponent(
 
     override fun onContinue(fullName: String) {
         profile.login(fullName)
-        result(LoginOfflineComponent.Result.LoggedIn)
+        onResult(LoginOfflineComponent.Result.LoggedIn)
     }
 
     override fun onCancel() {
-        result(LoginOfflineComponent.Result.Back)
+        onResult(LoginOfflineComponent.Result.Back)
     }
 }

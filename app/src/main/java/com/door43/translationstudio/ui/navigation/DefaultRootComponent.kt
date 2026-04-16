@@ -5,6 +5,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DelicateDecomposeApi
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
@@ -25,6 +26,9 @@ import java.io.File
 
 class DefaultRootComponent(
     componentContext: ComponentContext,
+    private val onExportToApp: (File) -> Unit,
+    private val onShareApp: () -> Unit,
+    private val onExitApp: () -> Unit
 ) : RootComponent, ComponentContext by componentContext {
 
     private val navigation = StackNavigation<Config>()
@@ -62,7 +66,10 @@ class DefaultRootComponent(
             ),
         )
         is Config.Home -> RootComponent.Child.Home(
-            component = DefaultHomeComponent(componentContext),
+            component = DefaultHomeComponent(
+                componentContext = componentContext,
+                onResult = ::onHomeResult
+            )
         )
         is Config.Translate -> RootComponent.Child.Translate(
             component = DefaultTranslateComponent(
@@ -74,6 +81,7 @@ class DefaultRootComponent(
         is Config.Profile -> RootComponent.Child.Profile(
             component = DefaultProfileComponent(
                 componentContext = componentContext,
+                goLogin = config.thenLogin,
                 result = ::onProfileResult,
             ),
         )
@@ -83,7 +91,7 @@ class DefaultRootComponent(
     private fun onSplashResult(result: SplashComponent.Result) {
         when (result) {
             SplashComponent.Result.NavigateToProfile -> {
-                navigation.replaceAll(Config.Profile)
+                navigation.replaceAll(Config.Profile())
             }
             SplashComponent.Result.NavigateToCrashReporter -> {
                 navigation.replaceAll(Config.Home())
@@ -92,11 +100,37 @@ class DefaultRootComponent(
         }
     }
 
+    private fun onHomeResult(result: HomeComponent.Result) {
+        when (result) {
+            is HomeComponent.Result.OpenLogin -> {
+                navigation.replaceAll(Config.Profile(true))
+            }
+            is HomeComponent.Result.Logout -> {
+                navigation.replaceAll(Config.Profile())
+            }
+            is HomeComponent.Result.OpenSettings -> {
+                _events.trySend(RootComponent.Event.OpenSettings)
+            }
+            is HomeComponent.Result.PublishProject -> {
+                _events.trySend(RootComponent.Event.PublishProject(result.translationId))
+            }
+            is HomeComponent.Result.OpenProject -> {
+                navigation.bringToFront(Config.Translate(
+                    result.translationId,
+                    result.mergeConflictFilterOn
+                ))
+            }
+            is HomeComponent.Result.ExitApp -> onExitApp()
+            is HomeComponent.Result.ShareApp -> onShareApp()
+            is HomeComponent.Result.ExportToApp -> onExportToApp(result.file)
+        }
+    }
+
     private fun onProfileResult(result: ProfileComponent.Result) {
         when (result) {
             is ProfileComponent.Result.Back -> {
                 if (stack.value.backStack.isEmpty()) {
-                    _events.trySend(RootComponent.Event.ExitApp)
+                    onExitApp()
                 } else {
                     navigation.pop()
                 }
@@ -123,9 +157,8 @@ class DefaultRootComponent(
         }
     }
 
-    @OptIn(DelicateDecomposeApi::class)
     override fun openTranslate(translationId: String, startWithMergeFilter: Boolean) {
-        navigation.push(
+        navigation.bringToFront(
             Config.Translate(
                 translationId = translationId,
                 startWithMergeFilter = startWithMergeFilter,
@@ -133,9 +166,8 @@ class DefaultRootComponent(
         )
     }
 
-    @OptIn(DelicateDecomposeApi::class)
     override fun openProfile() {
-        navigation.push(Config.Profile)
+        navigation.bringToFront(Config.Profile())
     }
 
     override fun openDraft(translationId: String) {
@@ -145,7 +177,7 @@ class DefaultRootComponent(
 
     override fun openPublishPreview(translationId: String) {
         // TODO Replace with navigation
-        _events.trySend(RootComponent.Event.OpenPublishFromTranslate(translationId))
+        _events.trySend(RootComponent.Event.PublishProject(translationId))
         navigation.pop()
     }
 
@@ -155,7 +187,6 @@ class DefaultRootComponent(
     }
 
     override fun exportToApp(file: File) {
-        // TODO Replace with navigation
-        _events.trySend(RootComponent.Event.ExportFile(file))
+        onExportToApp(file)
     }
 }

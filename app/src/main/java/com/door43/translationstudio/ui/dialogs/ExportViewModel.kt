@@ -64,6 +64,7 @@ data class ExportState(
 sealed interface ExportEvent {
     data class SnackbarMessage(val message: String) : ExportEvent
     data class AppExport(val file: File) : ExportEvent
+    data object OnLogin : ExportEvent
     data object OnLogout : ExportEvent
     data object AuthRequested : ExportEvent
 }
@@ -79,7 +80,7 @@ sealed interface ExportAction {
     data object ClearExport : ExportAction
     data object ExportToApp : ExportAction
     data object ExportToCloud : ExportAction
-    data object Logout : ExportAction
+    data class Logout(val thenLogin: Boolean) : ExportAction
     data object RegisterKeys : ExportAction
     data object ClearInfoMessage : ExportAction
     data object ClearErrorMessage : ExportAction
@@ -139,7 +140,7 @@ class ExportViewModel(
             is ExportAction.ExportToApp -> exportToApp()
             is ExportAction.ExportToCloud -> exportToCloud()
             is ExportAction.ClearExport -> clearInfo()
-            is ExportAction.Logout -> logout()
+            is ExportAction.Logout -> logout(action.thenLogin)
             is ExportAction.RegisterKeys -> forceRegisterSSHKeys()
             is ExportAction.ClearInfoMessage -> clearInfo()
             is ExportAction.ClearUploadSuccess -> clearUploadSuccess()
@@ -428,7 +429,7 @@ class ExportViewModel(
         }
     }
 
-    private fun logout() {
+    private fun logout(thenLogin: Boolean) {
         launchWithProgress(
             application.getString(R.string.log_out)
         ) {
@@ -437,7 +438,11 @@ class ExportViewModel(
                 profile.logout()
             }
 
-            _event.trySend(ExportEvent.OnLogout)
+            if (thenLogin) {
+                _event.trySend(ExportEvent.OnLogin)
+            } else {
+                _event.trySend(ExportEvent.OnLogout)
+            }
         }
     }
 

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -63,7 +62,7 @@ fun PublishScreen(
     viewModel: PublishViewModel = koinViewModel(),
     onOpenReview: () -> Unit,
     onExportToApp: (File) -> Unit,
-    onLoginClick: () -> Unit,
+    onLogin: () -> Unit,
     onLogout: () -> Unit,
     onMergeConflict: () -> Unit,
     onNavigateBack: () -> Unit
@@ -75,7 +74,7 @@ fun PublishScreen(
     var publishSection by rememberSaveable {
         mutableStateOf(PublishSection.VALIDATION)
     }
-    var showUploadDialog by rememberSaveable {
+    var showExportDialog by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -158,7 +157,7 @@ fun PublishScreen(
                             text = stringResource(id = R.string.menu_upload_export),
                             selected = false,
                             modifier = buttonModifier,
-                            onClick = { showUploadDialog = true }
+                            onClick = { showExportDialog = true }
                         )
                     }
                 }
@@ -185,7 +184,7 @@ fun PublishScreen(
                                 targetTranslation = viewModel.targetTranslation,
                                 onNextClick = {
                                     if (state.translators.isNotEmpty()) {
-                                        showUploadDialog = true
+                                        showExportDialog = true
                                     } else {
                                         coroutineScope.launch {
                                             snackbarHostState.showSnackbar(
@@ -204,15 +203,18 @@ fun PublishScreen(
             }
         }
 
-        if (showUploadDialog) {
+        if (showExportDialog) {
             ExportDialog(
                 targetTranslation = viewModel.targetTranslation,
                 openPrint = false,
                 onExportToApp = onExportToApp,
+                onLogin = {
+                    showExportDialog = false
+                    onLogin()
+                },
                 onLogout = onLogout,
                 onMergeConflict = onMergeConflict,
-                onLoginClick = onLoginClick,
-                onDismiss = { showUploadDialog = false }
+                onDismiss = { showExportDialog = false }
             )
         }
     }
