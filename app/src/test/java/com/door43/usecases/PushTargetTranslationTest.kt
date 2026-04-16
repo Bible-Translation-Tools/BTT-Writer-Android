@@ -9,7 +9,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -63,7 +62,7 @@ class PushTargetTranslationTest {
 
         every {
             prefRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_GIT_SERVER_PORT,
+                IPreferenceRepository.KEY_PREF_GIT_SERVER_PORT,
                 any(),
                 String::class.java
             )

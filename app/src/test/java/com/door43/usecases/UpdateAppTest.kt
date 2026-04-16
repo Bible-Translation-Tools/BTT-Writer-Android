@@ -18,7 +18,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -83,15 +82,15 @@ class UpdateAppTest {
         every { prefRepository.setPrivatePref(any(), any<Int>()) }.just(runs)
         every { prefRepository.setDefaultPref(any(), any<String>()) }.just(runs)
         every { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_LANGUAGES_URL,
+            IPreferenceRepository.KEY_PREF_LANGUAGES_URL,
             any<String>()
         ) }.returns("/lang_names.jsom")
         every { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
             any<String>()
         ) }.returns("font.ttf")
         every { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE,
             any<String>()
         ) }.returns("font.ttf")
 
@@ -272,7 +271,7 @@ class UpdateAppTest {
         verifyNoSourceTranslations()
 
         verify { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_LANGUAGES_URL,
+            IPreferenceRepository.KEY_PREF_LANGUAGES_URL,
             any<String>()
         ) }
         verify { library.updateLanguageUrl(any()) }
@@ -577,7 +576,7 @@ class UpdateAppTest {
 
     private fun verifyUpgradePre87(called: Boolean = true) {
         verify(inverse = !called) { prefRepository.setDefaultPref(
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
             any<String>()
         ) }
     }
@@ -606,11 +605,11 @@ class UpdateAppTest {
     private fun verifyUpgradePre175(called: Boolean = true) {
         verify(inverse = !called) { progressListener.onProgress(any(), "Updating fonts") }
         verify(inverse = !called) { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
             any<String>()
         ) }
         verify(inverse = !called) { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE,
             any<String>()
         ) }
     }

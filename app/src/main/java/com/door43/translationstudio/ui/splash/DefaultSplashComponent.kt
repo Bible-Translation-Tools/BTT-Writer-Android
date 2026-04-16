@@ -14,8 +14,6 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
-import com.door43.translationstudio.ui.settings.SettingsActivity
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
 import com.door43.usecases.MigrateTranslations
 import com.door43.usecases.UpdateApp
 import com.door43.util.RuntimeWrapper
@@ -116,7 +114,7 @@ class DefaultSplashComponent(
 
     private fun checkHardware(): Boolean {
         return prefRepository.getDefaultPref(
-            KEY_PREF_CHECK_HARDWARE,
+            IPreferenceRepository.KEY_PREF_CHECK_HARDWARE,
             true
         )
     }
@@ -132,17 +130,17 @@ class DefaultSplashComponent(
 
     private fun checkMigrationShown(): Boolean {
         return prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_MIGRATE_OLD_APP,
+            IPreferenceRepository.KEY_PREF_MIGRATE_OLD_APP,
             false
         )
     }
 
     private fun setMigrationShown(shown: Boolean) {
-        prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MIGRATE_OLD_APP, shown)
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_MIGRATE_OLD_APP, shown)
     }
 
     private fun saveHardwareCheck(check: Boolean) {
-        prefRepository.setDefaultPref(KEY_PREF_CHECK_HARDWARE, check)
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_CHECK_HARDWARE, check)
     }
 
     private fun startAppLogic() {

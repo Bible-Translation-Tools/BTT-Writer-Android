@@ -1,14 +1,14 @@
 package com.door43.translationstudio.ui.settings
 
 import android.net.Uri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App
+import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.BackupController
 import com.door43.translationstudio.core.Profile
@@ -17,30 +17,15 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.ResourceProvider
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_BACKUP_INTERVAL
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CHECK_HARDWARE
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_COLOR_THEME
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CONTENT_SERVER
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_CREATE_ACCOUNT_URL
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_GIT_SERVER_PORT
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_GOGS_API
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_INDEX_SQLITE_URL
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_LANGUAGES_URL
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_LOGGING_LEVEL
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_MEDIA_SERVER
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_READER_SERVER
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_SOURCE_TYPEFACE
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_SOURCE_TYPEFACE_SIZE
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TM_URL
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TRANSLATION_TYPEFACE
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TRANSLATION_TYPEFACE_SIZE
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.MigrateTranslations
 import com.door43.util.TTFAnalyzer
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,92 +33,43 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
 
-data class TypefaceOption(
-    val displayName: String,
-    val fileName: String
-)
+class DefaultSettingsComponent(
+    componentContext: ComponentContext,
+    private val onResult: (SettingsComponent.Result) -> Unit
+) : SettingsComponent, ComponentContext by componentContext,
+    KoinComponent, ProgressOwner, ComponentScope {
 
-data class SettingsState(
-    // General Prefs
-    val themeNames: List<String> = emptyList(),
-    val themeValues: List<String> = emptyList(),
-    val currentThemeValue: String = "",
-    val currentThemeName: String = "",
+    private val checkForLatestRelease: CheckForLatestRelease by inject()
+    private val downloadLatestRelease: DownloadLatestRelease by inject()
+    private val library: Door43Client by inject()
+    private val profile: Profile by inject()
+    private val logout: GogsLogout by inject()
+    private val migrateTranslations: MigrateTranslations by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val resourceProvider: ResourceProvider by inject()
+    private val backupController: BackupController by inject()
 
-    // Font Data
-    val isFontsLoading: Boolean = true,
-    val availableFonts: List<TypefaceOption> = emptyList(),
-    val fontSizeNames: List<String> = emptyList(),
-    val fontSizeValues: List<String> = emptyList(),
-    val currentTranslationTypefaceValue: String = "",
-    val currentTranslationFontName: String = "",
-    val currentTranslationFontSizeValue: String = "",
-    val currentTranslationFontSizeName: String = "",
-    val currentSourceTypefaceValue: String = "",
-    val currentSourceFontName: String = "",
-    val currentSourceFontSizeValue: String = "",
-    val currentSourceFontSizeName: String = "",
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-    // Server Prefs
-    val contentServerNames: List<String> = emptyList(),
-    val contentServerValues: List<String> = emptyList(),
-    val currentGogsApiUrl: String = "",
-    val currentContentServerValue: String = "",
-    val currentContentServerName: String = "",
-    val gitServerPort: String = "",
-    val mediaServerUrl: String = "",
-    val readerServerUrl: String = "",
-    val accountCreationUrl: String = "",
-    val languagesUrl: String = "",
-    val indexSqliteUrl: String = "",
-    val tmLinksUrl: String = "",
-
-    // Advanced Prefs
-    val checkHardwareEnabled: Boolean = false,
-    val tmLinksEnabled: Boolean = false,
-    val backupIntervalNames: List<String> = emptyList(),
-    val backupIntervalValues: List<String> = emptyList(),
-    val currentBackupIntervalValue: String = "",
-    val currentBackupIntervalName: String = "",
-    val loggingLevelNames: List<String> = emptyList(),
-    val loggingLevelValues: List<String> = emptyList(),
-    val currentLoggingLevelValue: String = "",
-    val currentLoggingLevelName: String = "",
-
-    val releaseResult: CheckForLatestRelease.Result? = null,
-    val migrationFinished: Boolean = false
-)
-
-sealed interface SettingEvent {
-    data object OnLogout : SettingEvent
-}
-
-class SettingsViewModel(
-    private val checkForLatestRelease: CheckForLatestRelease,
-    private val downloadLatestRelease: DownloadLatestRelease,
-    private val library: Door43Client,
-    private val profile: Profile,
-    private val logout: GogsLogout,
-    private val migrateTranslations: MigrateTranslations,
-    private val prefRepository: IPreferenceRepository,
-    private val directoryProvider: IDirectoryProvider,
-    private val assetsProvider: AssetsProvider,
-    private val resourceProvider: ResourceProvider,
-    private val backupController: BackupController
-) : ViewModel(), ProgressOwner {
-
-    private val progressManager = ProgressManager(viewModelScope)
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(SettingsState())
-    val state: StateFlow<SettingsState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(SettingsComponent.State())
+    override val state: StateFlow<SettingsComponent.State> = _state.asStateFlow()
 
-    private val _event = Channel<SettingEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
+    private val _event = Channel<SettingsComponent.Event>(Channel.BUFFERED)
+    override val event = _event.receiveAsFlow()
+
+    override val appVersion: String
+        get() = "${BuildConfig.VERSION_NAME} - ${BuildConfig.VERSION_CODE}"
 
     init {
         loadInitialPreferences()
@@ -149,7 +85,7 @@ class SettingsViewModel(
             val themeNames = resourceProvider.getStringArray(R.array.pref_color_theme_titles)
             val themeValues = resourceProvider.getStringArray(R.array.pref_color_theme_values)
             val themeValue = prefRepository.getDefaultPref(
-                KEY_PREF_COLOR_THEME,
+                IPreferenceRepository.KEY_PREF_COLOR_THEME,
                 resourceProvider.getString(R.string.pref_default_color_theme)
             )
             val themeIndex = themeValues.indexOf(themeValue).takeIf { it >= 0 } ?: 1
@@ -158,11 +94,11 @@ class SettingsViewModel(
             // Fonts
 
             val targetFontValue = prefRepository.getDefaultPref(
-                KEY_PREF_TRANSLATION_TYPEFACE,
+                IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
                 resourceProvider.getString(R.string.pref_default_translation_typeface)
             )
             val sourceFontValue = prefRepository.getDefaultPref(
-                KEY_PREF_SOURCE_TYPEFACE,
+                IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE,
                 resourceProvider.getString(R.string.pref_default_translation_typeface)
             )
 
@@ -170,11 +106,11 @@ class SettingsViewModel(
             val sizeValues = resourceProvider.getStringArray(R.array.pref_typeface_size_values)
 
             val translationSizeValue = prefRepository.getDefaultPref(
-                KEY_PREF_TRANSLATION_TYPEFACE_SIZE,
+                IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE_SIZE,
                 resourceProvider.getString(R.string.pref_default_typeface_size)
             )
             val sourceSizeValue = prefRepository.getDefaultPref(
-                KEY_PREF_SOURCE_TYPEFACE_SIZE,
+                IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE_SIZE,
                 resourceProvider.getString(R.string.pref_default_typeface_size)
             )
 
@@ -189,59 +125,59 @@ class SettingsViewModel(
             val serverValues = resourceProvider.getStringArray(R.array.content_server_values_array)
 
             val savedServerValue = prefRepository.getDefaultPref(
-                KEY_PREF_CONTENT_SERVER,
+                IPreferenceRepository.KEY_PREF_CONTENT_SERVER,
                 serverValues.firstOrNull() ?: "wacs_value"
             )
             val savedIndex = serverValues.indexOf(savedServerValue).takeIf { it >= 0 } ?: 0
             val savedServerName = serverNames.getOrNull(savedIndex) ?: ""
             val gitPort = prefRepository.getDefaultPref(
-                KEY_PREF_GIT_SERVER_PORT,
+                IPreferenceRepository.KEY_PREF_GIT_SERVER_PORT,
                 resourceProvider.getString(R.string.pref_default_git_server_port)
             )
             val gogsApiUrl = prefRepository.getDefaultPref(
-                KEY_PREF_GOGS_API,
+                IPreferenceRepository.KEY_PREF_GOGS_API,
                 resourceProvider.getString(R.string.pref_default_gogs_api)
             )
             val mediaServerUrl = prefRepository.getDefaultPref(
-                KEY_PREF_MEDIA_SERVER,
+                IPreferenceRepository.KEY_PREF_MEDIA_SERVER,
                 resourceProvider.getString(R.string.pref_default_media_server)
             )
             val readerServerUrl = prefRepository.getDefaultPref(
-                KEY_PREF_READER_SERVER,
+                IPreferenceRepository.KEY_PREF_READER_SERVER,
                 resourceProvider.getString(R.string.pref_default_reader_server)
             )
             val accountCreationUrl = prefRepository.getDefaultPref(
-                KEY_PREF_CREATE_ACCOUNT_URL,
+                IPreferenceRepository.KEY_PREF_CREATE_ACCOUNT_URL,
                 resourceProvider.getString(R.string.pref_default_create_account_url)
             )
             val languagesUrl = prefRepository.getDefaultPref(
-                KEY_PREF_LANGUAGES_URL,
+                IPreferenceRepository.KEY_PREF_LANGUAGES_URL,
                 resourceProvider.getString(R.string.pref_default_language_url)
             )
             val indexSqliteUrl = prefRepository.getDefaultPref(
-                KEY_PREF_INDEX_SQLITE_URL,
+                IPreferenceRepository.KEY_PREF_INDEX_SQLITE_URL,
                 resourceProvider.getString(R.string.pref_default_index_sqlite_url)
             )
             val tmLinksUrl = prefRepository.getDefaultPref(
-                KEY_PREF_TM_URL,
+                IPreferenceRepository.KEY_PREF_TM_URL,
                 resourceProvider.getString(R.string.pref_default_tm_url)
             )
 
             // Advanced
 
             val checkHardwareEnabled = prefRepository.getDefaultPref(
-                KEY_PREF_CHECK_HARDWARE,
+                IPreferenceRepository.KEY_PREF_CHECK_HARDWARE,
                 true
             )
             val tmLinksEnabled = prefRepository.getDefaultPref(
-                KEY_PREF_ENABLE_TM_LINKS,
+                IPreferenceRepository.KEY_PREF_ENABLE_TM_LINKS,
                 false
             )
 
             val intervalNames = resourceProvider.getStringArray(R.array.pref_backup_interval_titles)
             val intervalValues = resourceProvider.getStringArray(R.array.pref_backup_interval_values)
             val savedIntervalValue = prefRepository.getDefaultPref(
-                KEY_PREF_BACKUP_INTERVAL,
+                IPreferenceRepository.KEY_PREF_BACKUP_INTERVAL,
                 resourceProvider.getString(R.string.pref_default_backup_interval)
             )
             val intervalIndex = intervalValues.indexOf(savedIntervalValue).takeIf { it >= 0 } ?: 1
@@ -250,7 +186,7 @@ class SettingsViewModel(
             val loggingNames = resourceProvider.getStringArray(R.array.pref_logging_level_titles)
             val loggingValues = resourceProvider.getStringArray(R.array.pref_logging_level_values)
             val savedLoggingValue = prefRepository.getDefaultPref(
-                KEY_PREF_LOGGING_LEVEL,
+                IPreferenceRepository.KEY_PREF_LOGGING_LEVEL,
                 resourceProvider.getString(R.string.pref_default_logging_level)
             )
             val loggingIndex = loggingValues.indexOf(savedLoggingValue).takeIf { it >= 0 } ?: 2
@@ -338,8 +274,8 @@ class SettingsViewModel(
         }
     }
 
-    fun updateColorTheme(newValue: String) {
-        prefRepository.setDefaultPref(KEY_PREF_COLOR_THEME, newValue)
+    override fun updateColorTheme(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_COLOR_THEME, newValue)
 
         val index = _state.value.themeValues.indexOf(newValue)
         val newName = _state.value.themeNames.getOrNull(index) ?: newValue
@@ -350,10 +286,12 @@ class SettingsViewModel(
                 currentThemeName = newName
             )
         }
+
+        onResult(SettingsComponent.Result.ThemeUpdated(newValue))
     }
 
-    fun updateTranslationTypeface(newFileName: String) {
-        prefRepository.setDefaultPref(KEY_PREF_TRANSLATION_TYPEFACE, newFileName)
+    override fun updateTranslationTypeface(newFileName: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE, newFileName)
 
         val newName = _state.value.availableFonts.find {
             it.fileName == newFileName
@@ -367,8 +305,8 @@ class SettingsViewModel(
         }
     }
 
-    fun updateTranslationFontSize(newValue: String) {
-        prefRepository.setDefaultPref(KEY_PREF_TRANSLATION_TYPEFACE_SIZE, newValue)
+    override fun updateTranslationFontSize(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE_SIZE, newValue)
 
         val index = _state.value.fontSizeValues.indexOf(newValue)
         val newName = _state.value.fontSizeNames.getOrNull(index) ?: newValue
@@ -381,8 +319,8 @@ class SettingsViewModel(
         }
     }
 
-    fun updateSourceFontSize(newValue: String) {
-        prefRepository.setDefaultPref(KEY_PREF_SOURCE_TYPEFACE_SIZE, newValue)
+    override fun updateSourceFontSize(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE_SIZE, newValue)
 
         val index = _state.value.fontSizeValues.indexOf(newValue)
         val newName = _state.value.fontSizeNames.getOrNull(index) ?: newValue
@@ -395,22 +333,22 @@ class SettingsViewModel(
         }
     }
 
-    fun updateSourceTypeface(newFileName: String) {
-        prefRepository.setDefaultPref(KEY_PREF_SOURCE_TYPEFACE, newFileName)
+    override fun updateSourceTypeface(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE, newValue)
 
         val newName = _state.value.availableFonts.find {
-            it.fileName == newFileName
+            it.fileName == newValue
         }?.displayName ?: "Default"
 
         _state.update {
             it.copy(
-                currentSourceTypefaceValue = newFileName,
+                currentSourceTypefaceValue = newValue,
                 currentSourceFontName = newName
             )
         }
     }
 
-    fun checkForLatestRelease() {
+    override fun checkForLatestRelease() {
         launchWithProgress(
             resourceProvider.getString(R.string.checking_for_updates)
         ) {
@@ -423,16 +361,16 @@ class SettingsViewModel(
         }
     }
 
-    fun dismissUpdateResultDialog() {
+    override fun dismissUpdateResultDialog() {
         _state.update { it.copy(releaseResult = null) }
     }
 
-    fun migrateOldAppData(appDataFolder: Uri) {
+    override fun migrateOldAppData(uri: Uri) {
         launchWithProgress(
             resourceProvider.getString(R.string.migrating_translations)
         ) { handle ->
             withContext(Dispatchers.IO) {
-                migrateTranslations.execute(appDataFolder) { progress, message ->
+                migrateTranslations.execute(uri) { progress, message ->
                     handle.update(progress, message)
                 }
             }
@@ -442,59 +380,59 @@ class SettingsViewModel(
         }
     }
 
-    fun updateGitServerPort(newPort: String) {
-        prefRepository.setDefaultPref(KEY_PREF_GIT_SERVER_PORT, newPort)
-        _state.update { it.copy(gitServerPort = newPort) }
+    override fun updateGitServerPort(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_GIT_SERVER_PORT, newValue)
+        _state.update { it.copy(gitServerPort = newValue) }
     }
 
-    fun updateGogsApiUrl(newUrl: String) {
-        prefRepository.setDefaultPref(KEY_PREF_GOGS_API, newUrl)
-        _state.update { it.copy(currentGogsApiUrl = newUrl) }
+    override fun updateGogsApiUrl(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_GOGS_API, newValue)
+        _state.update { it.copy(currentGogsApiUrl = newValue) }
     }
 
-    fun updateMediaServerUrl(newUrl: String) {
-        prefRepository.setDefaultPref(KEY_PREF_MEDIA_SERVER, newUrl)
-        _state.update { it.copy(mediaServerUrl = newUrl) }
+    override fun updateMediaServerUrl(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_MEDIA_SERVER, newValue)
+        _state.update { it.copy(mediaServerUrl = newValue) }
     }
 
-    fun updateReaderServerUrl(newUrl: String) {
-        prefRepository.setDefaultPref(KEY_PREF_READER_SERVER, newUrl)
-        _state.update { it.copy(readerServerUrl = newUrl) }
+    override fun updateReaderServerUrl(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_READER_SERVER, newValue)
+        _state.update { it.copy(readerServerUrl = newValue) }
     }
 
-    fun updateAccountCreationUrl(newUrl: String) {
-        prefRepository.setDefaultPref(KEY_PREF_CREATE_ACCOUNT_URL, newUrl)
-        _state.update { it.copy(accountCreationUrl = newUrl) }
+    override fun updateAccountCreationUrl(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_CREATE_ACCOUNT_URL, newValue)
+        _state.update { it.copy(accountCreationUrl = newValue) }
     }
 
-    fun updateLanguageUrl(newUrl: String) {
-        prefRepository.setDefaultPref(KEY_PREF_LANGUAGES_URL, newUrl)
-        _state.update { it.copy(languagesUrl = newUrl) }
-        library.updateLanguageUrl(newUrl)
+    override fun updateLanguageUrl(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_LANGUAGES_URL, newValue)
+        _state.update { it.copy(languagesUrl = newValue) }
+        library.updateLanguageUrl(newValue)
     }
 
-    fun updateIndexSqliteUrl(newUrl: String) {
-        prefRepository.setDefaultPref(KEY_PREF_INDEX_SQLITE_URL, newUrl)
-        _state.update { it.copy(indexSqliteUrl = newUrl) }
+    override fun updateIndexSqliteUrl(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_INDEX_SQLITE_URL, newValue)
+        _state.update { it.copy(indexSqliteUrl = newValue) }
     }
 
-    fun updateTmLinksUrl(newUrl: String) {
-        prefRepository.setDefaultPref(KEY_PREF_TM_URL, newUrl)
-        _state.update { it.copy(tmLinksUrl = newUrl) }
+    override fun updateTmLinksUrl(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_TM_URL, newValue)
+        _state.update { it.copy(tmLinksUrl = newValue) }
     }
 
-    fun setCheckHardwareEnabled(enabled: Boolean) {
-        prefRepository.setDefaultPref(KEY_PREF_CHECK_HARDWARE, enabled)
+    override fun setCheckHardwareEnabled(enabled: Boolean) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_CHECK_HARDWARE, enabled)
         _state.update { it.copy(checkHardwareEnabled = enabled) }
     }
 
-    fun setTmLinksEnabled(enabled: Boolean) {
-        prefRepository.setDefaultPref(KEY_PREF_ENABLE_TM_LINKS, enabled)
+    override fun setTmLinksEnabled(enabled: Boolean) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_ENABLE_TM_LINKS, enabled)
         _state.update { it.copy(tmLinksEnabled = enabled) }
     }
 
-    fun updateBackupInterval(newValue: String) {
-        prefRepository.setDefaultPref(KEY_PREF_BACKUP_INTERVAL, newValue)
+    override fun updateBackupInterval(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_BACKUP_INTERVAL, newValue)
 
         val index = _state.value.backupIntervalValues.indexOf(newValue)
         val newName = _state.value.backupIntervalNames.getOrNull(index) ?: newValue
@@ -509,8 +447,8 @@ class SettingsViewModel(
         backupController.restartServiceIfRunning()
     }
 
-    fun updateLoggingLevel(newValue: String) {
-        prefRepository.setDefaultPref(KEY_PREF_LOGGING_LEVEL, newValue)
+    override fun updateLoggingLevel(newValue: String) {
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_LOGGING_LEVEL, newValue)
 
         val index = _state.value.loggingLevelValues.indexOf(newValue)
         val newName = _state.value.loggingLevelNames.getOrNull(index) ?: newValue
@@ -525,11 +463,11 @@ class SettingsViewModel(
         App.configureLogger(newValue.toInt())
     }
 
-    fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
+    override fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
         downloadLatestRelease.execute(release)
     }
 
-    fun onContentServerChanged(newValue: String) {
+    override fun onContentServerChanged(newValue: String) {
         val serverValues = resourceProvider.getStringArray(R.array.content_server_values_array)
         val serverNames = resourceProvider.getStringArray(R.array.content_server_names_array)
         val gitPorts = resourceProvider.getStringArray(R.array.content_server_git_server_port_values_array)
@@ -543,14 +481,14 @@ class SettingsViewModel(
         val index = serverValues.indexOf(newValue)
         if (index == -1) return
 
-        prefRepository.setDefaultPref(KEY_PREF_CONTENT_SERVER, newValue)
-        prefRepository.setDefaultPref(KEY_PREF_GIT_SERVER_PORT, gitPorts[index])
-        prefRepository.setDefaultPref(KEY_PREF_GOGS_API, gitApiUrls[index])
-        prefRepository.setDefaultPref(KEY_PREF_MEDIA_SERVER, mediaUrls[index])
-        prefRepository.setDefaultPref(KEY_PREF_READER_SERVER, readerUrls[index])
-        prefRepository.setDefaultPref(KEY_PREF_CREATE_ACCOUNT_URL, createAccountUrls[index])
-        prefRepository.setDefaultPref(KEY_PREF_LANGUAGES_URL, langNameUrls[index])
-        prefRepository.setDefaultPref(KEY_PREF_INDEX_SQLITE_URL, indexSqliteUrls[index])
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_CONTENT_SERVER, newValue)
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_GIT_SERVER_PORT, gitPorts[index])
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_GOGS_API, gitApiUrls[index])
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_MEDIA_SERVER, mediaUrls[index])
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_READER_SERVER, readerUrls[index])
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_CREATE_ACCOUNT_URL, createAccountUrls[index])
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_LANGUAGES_URL, langNameUrls[index])
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_INDEX_SQLITE_URL, indexSqliteUrls[index])
 
         _state.update { state ->
             state.copy(
@@ -569,7 +507,23 @@ class SettingsViewModel(
         logout()
     }
 
-    fun logout() {
+    override fun onNavigateBack() {
+        onResult(SettingsComponent.Result.NavigateBack)
+    }
+
+    override fun openDeveloperTools() {
+        onResult(SettingsComponent.Result.OpenDeveloperTools)
+    }
+
+    override fun onMigrationFinished() {
+        onResult(SettingsComponent.Result.MigrationFinished)
+    }
+
+    override fun onLogout() {
+        onResult(SettingsComponent.Result.Logout)
+    }
+
+    private fun logout() {
         if (profile.gogsUser != null) {
             launchWithProgress(
                 resourceProvider.getString(R.string.log_out)
@@ -578,7 +532,7 @@ class SettingsViewModel(
                     logout.execute()
                     profile.logout()
                 }
-                _event.trySend(SettingEvent.OnLogout)
+                _event.trySend(SettingsComponent.Event.OnLogout)
             }
         }
     }

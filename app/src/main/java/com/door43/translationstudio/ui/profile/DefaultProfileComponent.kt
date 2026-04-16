@@ -13,7 +13,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -31,7 +30,7 @@ class DefaultProfileComponent(
     private val navigation = StackNavigation<ProfileComponent.Config>()
 
     override val registerUrl: String = prefRepository.getDefaultPref(
-        SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
+        IPreferenceRepository.KEY_PREF_CREATE_ACCOUNT_URL,
         application.getString(R.string.pref_default_create_account_url)
     )
 

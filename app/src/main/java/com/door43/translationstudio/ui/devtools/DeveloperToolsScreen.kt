@@ -44,31 +44,20 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 import org.unfoldingword.tools.logger.Logger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeveloperToolsScreen(
-    viewModel: DeveloperViewModel = koinViewModel(),
-    versionName: String,
-    versionCode: Int,
-    udid: String,
-    systemResourcesMessage: String?,
-    onDismissSystemResources: () -> Unit,
-    onDeleteLibrary: () -> Unit,
-    onCalculateSystemResources: () -> Unit,
-    onNavigateBack: () -> Unit
+    component: DevToolsComponent
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val clipboardManager = LocalClipboard.current
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val copiedMessage = stringResource(R.string.copied_to_clipboard)
-
-    var showLogDialog by rememberSaveable { mutableStateOf(false) }
 
     val copyToClipboard: (String) -> Unit = { text ->
         val clipData = ClipData.newPlainText("text", AnnotatedString(text))
@@ -80,19 +69,23 @@ fun DeveloperToolsScreen(
 
     val noLogsString = stringResource(R.string.no_logs)
 
+    var showLogDialog by rememberSaveable { mutableStateOf(false) }
+    var systemResourcesMessage by rememberSaveable { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) {
-        viewModel.loadTools()
+        component.loadTools()
     }
 
     LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
+        component.event.collect { event ->
             when (event) {
-                is DeveloperEvent.ReadLog -> {
+                is DevToolsComponent.DeveloperEvent.ReadLog -> {
                     showLogDialog = true
-                    viewModel.readErrorLog()
+                    component.readErrorLog()
                 }
-                is DeveloperEvent.CheckSystemResources -> onCalculateSystemResources()
-                is DeveloperEvent.DeleteLibrary -> onDeleteLibrary()
+                is DevToolsComponent.DeveloperEvent.CheckSystemResources -> {
+                    systemResourcesMessage = component.calculateSystemResources()
+                }
             }
         }
     }
@@ -111,7 +104,7 @@ fun DeveloperToolsScreen(
                     Text(stringResource(R.string.title_activity_developer))
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = component::navigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "back",
@@ -142,27 +135,27 @@ fun DeveloperToolsScreen(
             ) {
                 Row(modifier = Modifier.padding(bottom = 8.dp)) {
                     Text(
-                        text = stringResource(R.string.app_version_name, versionName),
+                        text = stringResource(R.string.app_version_name, component.versionName),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { copyToClipboard(versionName) }
+                            .clickable { copyToClipboard(component.versionName) }
                     )
                     Text(
-                        text = stringResource(R.string.app_version_code, versionCode),
+                        text = stringResource(R.string.app_version_code, component.versionCode),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { copyToClipboard(versionCode.toString()) }
+                            .clickable { copyToClipboard(component.versionCode.toString()) }
                     )
                 }
                 Text(
-                    text = stringResource(R.string.app_udid, udid),
+                    text = stringResource(R.string.app_udid, component.udid),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.clickable { copyToClipboard(udid) }
+                    modifier = Modifier.clickable { copyToClipboard(component.udid) }
                 )
             }
 
@@ -177,11 +170,11 @@ fun DeveloperToolsScreen(
 
     if (state.keysRegenerated == true) {
         ActionDialog(
-            onDismiss = viewModel::clearKeysRegenerated,
+            onDismiss = component::clearKeysRegenerated,
             title = stringResource(R.string.success),
             message = stringResource(R.string.ssh_keys_generated)
         ) {
-            TextButton(onClick = viewModel::clearKeysRegenerated) {
+            TextButton(onClick = component::clearKeysRegenerated) {
                 Text(stringResource(R.string.dismiss))
             }
         }
@@ -200,11 +193,11 @@ fun DeveloperToolsScreen(
 
     systemResourcesMessage?.let { message ->
         ActionDialog(
-            onDismiss = onDismissSystemResources,
+            onDismiss = { systemResourcesMessage = null },
             title = stringResource(R.string.system_resources_check),
             message = message
-        ) {
-            TextButton(onClick = onDismissSystemResources) {
+        ) { onActionDismiss ->
+            TextButton(onClick = onActionDismiss) {
                 Text(stringResource(R.string.label_close))
             }
         }

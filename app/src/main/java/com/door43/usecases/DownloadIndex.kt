@@ -7,7 +7,6 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.net.HttpURLConnection
@@ -29,7 +28,7 @@ class DownloadIndex(
             library.tearDown()
 
             val url = prefRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_INDEX_SQLITE_URL,
+                IPreferenceRepository.KEY_PREF_INDEX_SQLITE_URL,
                 context.resources.getString(R.string.pref_default_index_sqlite_url)
             )
             val downloadUrl = URL(url)

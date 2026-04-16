@@ -8,7 +8,6 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.tasks.io.OkHttpRequest
 import com.door43.translationstudio.tasks.io.RequestAPI
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.json.JSONArray
 import org.json.JSONException
 import org.unfoldingword.gogsclient.GogsAPI
@@ -26,7 +25,7 @@ class GogsLogin(
         fullName: String? = null
     ): LoginResult {
         val apiUrl = prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_GOGS_API,
+            IPreferenceRepository.KEY_PREF_GOGS_API,
             context.getString(R.string.pref_default_gogs_api)
         )
         val api = GogsAPI(apiUrl, context.getString(R.string.gogs_user_agent))

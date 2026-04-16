@@ -10,7 +10,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.MainActivity
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.foreground.Foreground
@@ -36,7 +35,7 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
 
         updateIsDarkTheme(
             preRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_COLOR_THEME,
+                IPreferenceRepository.KEY_PREF_COLOR_THEME,
                 getString(R.string.pref_default_color_theme)
             )
         )
@@ -54,7 +53,7 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
 
         updateIsDarkTheme(
             preRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_COLOR_THEME,
+                IPreferenceRepository.KEY_PREF_COLOR_THEME,
                 getString(R.string.pref_default_color_theme)
             )
         )

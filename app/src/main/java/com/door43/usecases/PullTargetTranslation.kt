@@ -10,7 +10,6 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.Manifest
 import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.Git
@@ -107,7 +106,7 @@ class PullTargetTranslation(
 
         // TODO: we might want to get some progress feedback for the user
         val port = prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_GIT_SERVER_PORT,
+            IPreferenceRepository.KEY_PREF_GIT_SERVER_PORT,
             context.resources.getString(R.string.pref_default_git_server_port)
         ).toInt()
         val pullCommand = git.pull()

@@ -10,11 +10,12 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.door43.translationstudio.ui.crash.CrashReporterActivity
+import com.door43.translationstudio.ui.devtools.DeveloperToolsScreen
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.home.HomeScreen
 import com.door43.translationstudio.ui.profile.ProfileRouter
 import com.door43.translationstudio.ui.publish.PublishActivity
-import com.door43.translationstudio.ui.settings.SettingsActivity
+import com.door43.translationstudio.ui.settings.SettingsScreen
 import com.door43.translationstudio.ui.splash.SplashScreen
 import com.door43.translationstudio.ui.translate.TargetTranslationScreen
 
@@ -30,8 +31,6 @@ fun RootContent(
             when (event) {
                 RootComponent.Event.OpenCrashReporter ->
                     context.startActivity(Intent(context, CrashReporterActivity::class.java))
-                RootComponent.Event.OpenSettings ->
-                    context.startActivity(Intent(context, SettingsActivity::class.java))
                 is RootComponent.Event.OpenDraft -> {
                     val intent = Intent(context, DraftActivity::class.java).apply {
                         putExtra(DraftActivity.EXTRA_TARGET_TRANSLATION_ID, event.translationId)
@@ -67,6 +66,12 @@ fun RootContent(
                 startWithMergeFilter = false
             )
             is RootComponent.Child.Profile -> ProfileRouter(
+                component = instance.component
+            )
+            is RootComponent.Child.Settings -> SettingsScreen(
+                component = instance.component
+            )
+            is RootComponent.Child.DevTools -> DeveloperToolsScreen(
                 component = instance.component
             )
             is RootComponent.Child.Placeholder -> Unit

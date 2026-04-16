@@ -7,7 +7,6 @@ import com.door43.TestUtils
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -54,7 +53,7 @@ class UpdateSourceTest {
         coEvery { library.updateSources(any(), any()) }.just(runs)
 
         every { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_MEDIA_SERVER,
+            IPreferenceRepository.KEY_PREF_MEDIA_SERVER,
             any<String>()
         ) }.returns("/api")
         every { prefRepository.getRootCatalogApi() }.returns("/catalog")

@@ -58,33 +58,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.settings.SettingsActivity"
-            android:launchMode="singleTop"
-            android:label="@string/title_activity_settings"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.door43.translationstudio.MainActivity" />
-        </activity>
-        <activity
             android:name=".ui.crash.CrashReporterActivity"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
             android:label="@string/title_activity_crash_reporter" />
-        <activity
-            android:name=".ui.devtools.DeveloperToolsActivity"
-            android:launchMode="singleTop"
-            android:label="@string/title_activity_developer"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.activity.DeveloperToolsActivity" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.door43.translationstudio.ui.settings.SettingsActivity" />
-        </activity>
         <activity
             android:name=".ui.newtranslation.NewTargetTranslationActivity"
             android:label="@string/title_activity_new_target_translation"
@@ -98,16 +75,6 @@
             android:name=".ui.publish.PublishActivity"
             android:label="@string/title_activity_publish"
             android:launchMode="singleTop" />
-        <activity
-            android:name=".ui.legal.LegalDocumentActivity"
-            android:label=""
-            android:launchMode="singleTop"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.activity.LegalDocumentActivity" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
         <activity
             android:name=".ui.draft.DraftActivity"
             android:label="@string/preview">

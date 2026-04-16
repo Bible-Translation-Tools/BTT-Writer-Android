@@ -6,16 +6,23 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Warning
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.App
+import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,44 +35,75 @@ import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.LogEntry
 import org.unfoldingword.tools.logger.Logger
-import java.io.RandomAccessFile
 
-data class DeveloperState(
-    val versionName: String = "",
-    val versionCode: String = "",
-    val udid: String = "",
-    val tools: List<ToolItem> = emptyList(),
-    val logs: List<LogEntry> = emptyList(),
-    val keysRegenerated: Boolean? = null,
-)
+interface DevToolsComponent {
 
-sealed class DeveloperEvent {
-    data object ReadLog : DeveloperEvent()
-    data object CheckSystemResources : DeveloperEvent()
-    data object DeleteLibrary : DeveloperEvent()
+    val versionName: String
+    val versionCode: Int
+    val udid: String
+
+    val state: StateFlow<DeveloperState>
+    val event: Flow<DeveloperEvent>
+    val progress: StateFlow<Progress?>
+
+    fun loadTools()
+    fun readErrorLog()
+    fun clearKeysRegenerated()
+    fun calculateSystemResources(): String
+
+    fun navigateBack()
+
+    data class DeveloperState(
+        val versionName: String = "",
+        val versionCode: String = "",
+        val udid: String = "",
+        val tools: List<ToolItem> = emptyList(),
+        val logs: List<LogEntry> = emptyList(),
+        val keysRegenerated: Boolean? = null,
+    )
+
+    sealed class DeveloperEvent {
+        data object ReadLog : DeveloperEvent()
+        data object CheckSystemResources : DeveloperEvent()
+    }
+
+    sealed interface Result {
+        data object NavigateBack : Result
+    }
 }
 
-class DeveloperViewModel(
-    private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client
-) : ViewModel(), KoinComponent, ProgressOwner {
+class DefaultDevToolsComponent(
+    componentContext: ComponentContext,
+    private val platform: Platform,
+    private val onResult: (DevToolsComponent.Result) -> Unit
+) : DevToolsComponent,
+    ComponentContext by componentContext,
+    KoinComponent, ProgressOwner, ComponentScope {
 
     private val application: Application by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(DeveloperState())
-    val state: StateFlow<DeveloperState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(DevToolsComponent.DeveloperState())
+    override val state: StateFlow<DevToolsComponent.DeveloperState> = _state.asStateFlow()
 
-    private val _events = Channel<DeveloperEvent>()
-    val events = _events.receiveAsFlow()
+    private val _event = Channel<DevToolsComponent.DeveloperEvent>()
+    override val event = _event.receiveAsFlow()
+
+    override val versionName = BuildConfig.VERSION_NAME
+    override val versionCode = BuildConfig.VERSION_CODE
+    override val udid: String get() = App.udid()
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    fun loadTools() {
+    override fun loadTools() {
         launchWithProgress(
             application.getString(R.string.please_wait)
         ) {
@@ -80,38 +118,7 @@ class DeveloperViewModel(
         }
     }
 
-    fun getTotalRam(): Long {
-        var lastValue: Long = 0
-        try {
-            RandomAccessFile("/proc/meminfo", "r").use { reader ->
-                val load = reader.readLine()
-
-                val parts = load.trim().split("\\s+".toRegex())
-                val value = parts[1]
-                val units = parts[2]
-                val unitsFirst = units.substring(0, 1)
-
-                var totalRam = value.toDouble()
-
-                if ("T".equals(unitsFirst, ignoreCase = true)) {
-                    totalRam *= TB.toDouble()
-                } else if ("G".equals(unitsFirst, ignoreCase = true)) {
-                    totalRam *= GB.toDouble()
-                } else if ("M".equals(unitsFirst, ignoreCase = true)) {
-                    totalRam *= MB.toDouble()
-                } else if ("K".equals(unitsFirst, ignoreCase = true)) {
-                    totalRam *= KB.toDouble()
-                }
-                lastValue = totalRam.toLong()
-            }
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        }
-
-        return lastValue
-    }
-
-    fun readErrorLog() {
+    override fun readErrorLog() {
         launchWithProgress(
             application.getString(R.string.reading_logs)
         ) {
@@ -122,8 +129,16 @@ class DeveloperViewModel(
         }
     }
 
-    fun clearKeysRegenerated() {
+    override fun clearKeysRegenerated() {
         _state.update { it.copy(keysRegenerated = null) }
+    }
+
+    override fun calculateSystemResources(): String {
+        return platform.calculateSystemResources()
+    }
+
+    override fun navigateBack() {
+        onResult(DevToolsComponent.Result.NavigateBack)
     }
 
     private fun getGenerateSSHKeysItem(): ToolItem {
@@ -141,8 +156,8 @@ class DeveloperViewModel(
             application.getString(R.string.read_debug_log_hint),
             Icons.Outlined.Description
         ) {
-            viewModelScope.launch {
-                _events.send(DeveloperEvent.ReadLog)
+            coroutineScope.launch {
+                _event.send(DevToolsComponent.DeveloperEvent.ReadLog)
             }
         }
     }
@@ -163,8 +178,8 @@ class DeveloperViewModel(
             application.getString(R.string.check_system_resources_hint),
             Icons.Outlined.Description
         ) {
-            viewModelScope.launch {
-                _events.send(DeveloperEvent.CheckSystemResources)
+            coroutineScope.launch {
+                _event.send(DevToolsComponent.DeveloperEvent.CheckSystemResources)
             }
         }
     }
@@ -203,14 +218,7 @@ class DeveloperViewModel(
                     e.printStackTrace()
                 }
             }
-            _events.send(DeveloperEvent.DeleteLibrary)
+            platform.restartApp()
         }
-    }
-
-    companion object {
-        const val KB: Long = 1024
-        const val MB: Long = KB * KB
-        const val GB: Long = MB * KB
-        const val TB: Long = GB * KB
     }
 }

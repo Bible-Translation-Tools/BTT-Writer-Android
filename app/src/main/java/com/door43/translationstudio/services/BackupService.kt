@@ -15,7 +15,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.translationstudio.MainActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.RepoUtils
@@ -73,7 +72,7 @@ class BackupService : Service(), Foreground.Listener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startid: Int): Int {
         val backupIntervalMinutes = prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_BACKUP_INTERVAL,
+            IPreferenceRepository.KEY_PREF_BACKUP_INTERVAL,
             resources.getString(R.string.pref_default_backup_interval)
         ).toInt()
 

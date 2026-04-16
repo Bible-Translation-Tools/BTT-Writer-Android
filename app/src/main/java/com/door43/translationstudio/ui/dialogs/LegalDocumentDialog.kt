@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.legal
+package com.door43.translationstudio.ui.dialogs
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize

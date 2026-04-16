@@ -31,22 +31,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ActionDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.LegalDocumentDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.legal.LegalDocumentDialog
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel(),
-    appVersion: String,
-    onNavigateBack: () -> Unit,
-    onNavigateToDeveloperTools: () -> Unit,
-    onMigrationFinished: () -> Unit,
-    onLogout: () -> Unit
+    component: SettingsComponent
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     var showGogsApiDialog by rememberSaveable { mutableStateOf(false) }
@@ -72,13 +66,13 @@ fun SettingsScreen(
     val openDirectoryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
-        uri?.let { viewModel.migrateOldAppData(it) }
+        uri?.let { component.migrateOldAppData(it) }
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect {
+    LaunchedEffect(component) {
+        component.event.collect {
             when (it) {
-                is SettingEvent.OnLogout -> onLogout()
+                is SettingsComponent.Event.OnLogout -> component.onLogout()
             }
         }
     }
@@ -90,7 +84,7 @@ fun SettingsScreen(
                     Text(stringResource(R.string.menu_settings))
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = component::onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "back",
@@ -164,7 +158,7 @@ fun SettingsScreen(
             item {
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.version)) },
-                    supportingContent = { Text(appVersion) }
+                    supportingContent = { Text(component.appVersion) }
                 )
             }
 
@@ -174,7 +168,7 @@ fun SettingsScreen(
                 ClickablePreference(
                     title = stringResource(R.string.check_for_updates),
                     summary = stringResource(R.string.check_for_app_updates),
-                    onClick = { viewModel.checkForLatestRelease() }
+                    onClick = { component.checkForLatestRelease() }
                 )
             }
 
@@ -324,7 +318,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.pref_title_check_hardware_requirements),
                     summary = stringResource(R.string.pref_description_check_hardware_requirements),
                     checked = state.checkHardwareEnabled,
-                    onCheckedChange = { viewModel.setCheckHardwareEnabled(it) }
+                    onCheckedChange = { component.setCheckHardwareEnabled(it) }
                 )
             }
 
@@ -335,7 +329,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.pref_title_enable_tm_links),
                     summary = stringResource(R.string.pref_description_enable_tm_links),
                     checked = state.tmLinksEnabled,
-                    onCheckedChange = { viewModel.setTmLinksEnabled(it) }
+                    onCheckedChange = { component.setTmLinksEnabled(it) }
                 )
             }
 
@@ -364,7 +358,7 @@ fun SettingsScreen(
             item {
                 ClickablePreference(
                     title = stringResource(R.string.pref_title_developer_tools),
-                    onClick = onNavigateToDeveloperTools
+                    onClick = component::openDeveloperTools
                 )
             }
         }
@@ -376,20 +370,20 @@ fun SettingsScreen(
                 title = stringResource(R.string.apk_update_available),
                 message = stringResource(R.string.download_latest_apk),
                 onConfirm = {
-                    viewModel.downloadLatestRelease(resultObj.release)
-                    viewModel.dismissUpdateResultDialog()
+                    component.downloadLatestRelease(resultObj.release)
+                    component.dismissUpdateResultDialog()
                 },
-                onDismiss = { viewModel.dismissUpdateResultDialog() },
+                onDismiss = { component.dismissUpdateResultDialog() },
                 confirmText = stringResource(R.string.label_ok)
             )
         } else {
             ActionDialog(
-                onDismiss = { viewModel.dismissUpdateResultDialog() },
+                onDismiss = { component.dismissUpdateResultDialog() },
                 title = stringResource(R.string.check_for_updates),
                 message = stringResource(R.string.have_latest_app_update)
             ) {
                 TextButton(
-                    onClick = { viewModel.dismissUpdateResultDialog() }
+                    onClick = { component.dismissUpdateResultDialog() }
                 ) {
                     Text(stringResource(R.string.label_ok))
                 }
@@ -399,11 +393,11 @@ fun SettingsScreen(
 
     if (state.migrationFinished) {
         ActionDialog(
-            onDismiss = onMigrationFinished,
+            onDismiss = component::onMigrationFinished,
             title = "",
             message = stringResource(R.string.migrating_complete)
-        ) {
-            TextButton(onClick = onMigrationFinished) {
+        ) { onActionDismiss ->
+            TextButton(onClick = onActionDismiss) {
                 Text(stringResource(R.string.label_ok))
             }
         }
@@ -417,7 +411,7 @@ fun SettingsScreen(
             selectedValue = state.currentThemeValue,
             onValueSelected = { newValue ->
                 showThemeDialog = false
-                viewModel.updateColorTheme(newValue)
+                component.updateColorTheme(newValue)
             },
             onDismissRequest = { showThemeDialog = false }
         )
@@ -437,7 +431,7 @@ fun SettingsScreen(
                 entryValues = state.availableFonts.map { it.fileName },
                 selectedValue = state.currentTranslationTypefaceValue,
                 onValueSelected = { newFileName ->
-                    viewModel.updateTranslationTypeface(newFileName)
+                    component.updateTranslationTypeface(newFileName)
                     showTranslationFontDialog = false
                 },
                 onDismissRequest = { showTranslationFontDialog = false }
@@ -452,7 +446,7 @@ fun SettingsScreen(
             entryValues = state.fontSizeValues,
             selectedValue = state.currentTranslationFontSizeValue,
             onValueSelected = { newSizeValue ->
-                viewModel.updateTranslationFontSize(newSizeValue)
+                component.updateTranslationFontSize(newSizeValue)
                 showTranslationFontSizeDialog = false
             },
             onDismissRequest = { showTranslationFontSizeDialog = false }
@@ -473,7 +467,7 @@ fun SettingsScreen(
                 entryValues = state.availableFonts.map { it.fileName },
                 selectedValue = state.currentSourceTypefaceValue,
                 onValueSelected = { newFileName ->
-                    viewModel.updateSourceTypeface(newFileName)
+                    component.updateSourceTypeface(newFileName)
                     showSourceFontDialog = false
                 },
                 onDismissRequest = { showSourceFontDialog = false }
@@ -488,7 +482,7 @@ fun SettingsScreen(
             entryValues = state.fontSizeValues,
             selectedValue = state.currentSourceFontSizeValue,
             onValueSelected = { newSizeValue ->
-                viewModel.updateSourceFontSize(newSizeValue)
+                component.updateSourceFontSize(newSizeValue)
                 showSourceFontSizeDialog = false
             },
             onDismissRequest = { showSourceFontSizeDialog = false }
@@ -502,7 +496,7 @@ fun SettingsScreen(
             entryValues = state.contentServerValues,
             selectedValue = state.currentContentServerValue,
             onValueSelected = { newServerValue ->
-                viewModel.onContentServerChanged(newServerValue)
+                component.onContentServerChanged(newServerValue)
                 showContentServerDialog = false
             },
             onDismissRequest = { showContentServerDialog = false }
@@ -514,7 +508,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_git_server_port),
             initialValue = state.gitServerPort,
             onValueSaved = { newValue ->
-                viewModel.updateGitServerPort(newValue)
+                component.updateGitServerPort(newValue)
                 showGitPortDialog = false
             },
             onDismissRequest = { showGitPortDialog = false }
@@ -526,7 +520,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_gogs_api),
             initialValue = state.currentGogsApiUrl,
             onValueSaved = { newValue ->
-                viewModel.updateGogsApiUrl(newValue)
+                component.updateGogsApiUrl(newValue)
             },
             onDismissRequest = { showGogsApiDialog = false }
         )
@@ -537,7 +531,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_media_server),
             initialValue = state.mediaServerUrl,
             onValueSaved = { newValue ->
-                viewModel.updateMediaServerUrl(newValue)
+                component.updateMediaServerUrl(newValue)
                 showMediaServerUrlDialog = false
             },
             onDismissRequest = { showMediaServerUrlDialog = false }
@@ -549,7 +543,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_reader_server),
             initialValue = state.readerServerUrl,
             onValueSaved = { newValue ->
-                viewModel.updateReaderServerUrl(newValue)
+                component.updateReaderServerUrl(newValue)
                 showReaderServerUrlDialog = false
             },
             onDismissRequest = { showReaderServerUrlDialog = false }
@@ -561,7 +555,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_create_account_url),
             initialValue = state.accountCreationUrl,
             onValueSaved = { newValue ->
-                viewModel.updateAccountCreationUrl(newValue)
+                component.updateAccountCreationUrl(newValue)
                 showAccountCreationUrlDialog = false
             },
             onDismissRequest = { showAccountCreationUrlDialog = false }
@@ -573,7 +567,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_language_url),
             initialValue = state.languagesUrl,
             onValueSaved = { newValue ->
-                viewModel.updateLanguageUrl(newValue)
+                component.updateLanguageUrl(newValue)
                 showLanguageUrlDialog = false
             },
             onDismissRequest = { showLanguageUrlDialog = false }
@@ -585,7 +579,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_index_sqlite_url),
             initialValue = state.indexSqliteUrl,
             onValueSaved = { newValue ->
-                viewModel.updateIndexSqliteUrl(newValue)
+                component.updateIndexSqliteUrl(newValue)
                 showIndexSqliteUrlDialog = false
             },
             onDismissRequest = { showIndexSqliteUrlDialog = false }
@@ -597,7 +591,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_title_tm_url),
             initialValue = state.tmLinksUrl,
             onValueSaved = { newValue ->
-                viewModel.updateTmLinksUrl(newValue)
+                component.updateTmLinksUrl(newValue)
                 showTmLinksUrlDialog = false
             },
             onDismissRequest = { showTmLinksUrlDialog = false }
@@ -611,7 +605,7 @@ fun SettingsScreen(
             entryValues = state.backupIntervalValues,
             selectedValue = state.currentBackupIntervalValue,
             onValueSelected = { newIntervalValue ->
-                viewModel.updateBackupInterval(newIntervalValue)
+                component.updateBackupInterval(newIntervalValue)
                 showBackupIntervalDialog = false
             },
             onDismissRequest = { showBackupIntervalDialog = false }
@@ -625,7 +619,7 @@ fun SettingsScreen(
             entryValues = state.loggingLevelValues,
             selectedValue = state.currentLoggingLevelValue,
             onValueSelected = { newLevelValue ->
-                viewModel.updateLoggingLevel(newLevelValue)
+                component.updateLoggingLevel(newLevelValue)
                 showLoggingLevelDialog = false
             },
             onDismissRequest = { showLoggingLevelDialog = false }

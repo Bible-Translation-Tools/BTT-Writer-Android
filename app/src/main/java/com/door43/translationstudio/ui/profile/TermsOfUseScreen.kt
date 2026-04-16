@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.legal.LegalDocumentDialog
+import com.door43.translationstudio.ui.dialogs.LegalDocumentDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

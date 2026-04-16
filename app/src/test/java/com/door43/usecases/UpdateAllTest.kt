@@ -6,7 +6,6 @@ import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -41,7 +40,7 @@ class UpdateAllTest {
 
         every { prefRepository.getRootCatalogApi() }.returns("/api")
         every { prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_MEDIA_SERVER,
+            IPreferenceRepository.KEY_PREF_MEDIA_SERVER,
             any<String>()
         ) }.returns("/api")
 

@@ -8,7 +8,6 @@ import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.FileUtilities
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.PublicKey
@@ -28,7 +27,7 @@ class RegisterSSHKeys(
 
         val api = GogsAPI(
             prefRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_GOGS_API,
+                IPreferenceRepository.KEY_PREF_GOGS_API,
                 context.getString(R.string.pref_default_gogs_api)
             ),
             context.getString(R.string.gogs_user_agent)

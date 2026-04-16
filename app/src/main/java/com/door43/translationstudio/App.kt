@@ -14,7 +14,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.di.appModule
 import com.door43.di.prodDataModule
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
 import com.door43.util.RuntimeWrapper
@@ -56,7 +55,7 @@ class App : Application() {
         Foreground.init(this)
 
         prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_LOGGING_LEVEL,
+            IPreferenceRepository.KEY_PREF_LOGGING_LEVEL,
             resources.getString(R.string.pref_default_logging_level)
         ).let { minLogLevel ->
             configureLogger(minLogLevel.toInt())

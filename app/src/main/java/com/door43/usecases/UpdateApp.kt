@@ -16,7 +16,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.util.FileUtilities
 import kotlinx.io.IOException
 import org.unfoldingword.door43client.Door43Client
@@ -117,7 +116,7 @@ class UpdateApp(
         // initialize the language url (langnames) from preference
         try {
             val languageUrl = prefRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_LANGUAGES_URL,
+                IPreferenceRepository.KEY_PREF_LANGUAGES_URL,
                 context.resources.getString(R.string.pref_default_language_url)
             )
             library.updateLanguageUrl(languageUrl)
@@ -311,7 +310,7 @@ class UpdateApp(
         Logger.i(this.javaClass.name, "Upgrading fonts from pre 87")
 
         prefRepository.setDefaultPref(
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
             context.getString(R.string.pref_default_translation_typeface)
         )
     }
@@ -326,23 +325,23 @@ class UpdateApp(
         val oldDefault = "NotoSans-Regular.ttf"
 
         var fontName = prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
             context.getString(R.string.pref_default_translation_typeface)
         )
         if (oldDefault.equals(fontName, ignoreCase = true)) {
             prefRepository.setDefaultPref(
-                SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE,
+                IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
                 context.getString(R.string.pref_default_translation_typeface)
             )
         }
 
         fontName = prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE,
+            IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE,
             context.getString(R.string.pref_default_translation_typeface)
         )
         if (oldDefault.equals(fontName, ignoreCase = true)) {
             prefRepository.setDefaultPref(
-                SettingsActivity.KEY_PREF_SOURCE_TYPEFACE,
+                IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE,
                 context.getString(R.string.pref_default_translation_typeface)
             )
         }

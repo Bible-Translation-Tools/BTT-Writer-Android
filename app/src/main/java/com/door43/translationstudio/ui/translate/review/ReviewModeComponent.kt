@@ -29,8 +29,6 @@ import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_ENABLE_TM_LINKS
-import com.door43.translationstudio.ui.settings.SettingsActivity.Companion.KEY_PREF_TM_URL
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.FootnoteAction
@@ -691,7 +689,7 @@ class DefaultReviewModeComponent(
         twRc: ResourceContainer? = null
     ): AnnotatedString {
         val enableTmLinks = prefRepository.getDefaultPref(
-            KEY_PREF_ENABLE_TM_LINKS,
+            IPreferenceRepository.KEY_PREF_ENABLE_TM_LINKS,
             false
         )
 
@@ -766,7 +764,7 @@ class DefaultReviewModeComponent(
                     }
                     is LinkData.Article -> {
                         val baseUrl = prefRepository.getDefaultPref(
-                            KEY_PREF_TM_URL,
+                            IPreferenceRepository.KEY_PREF_TM_URL,
                             application.getString(R.string.pref_default_tm_url),
                             String::class.javaObjectType
                         )

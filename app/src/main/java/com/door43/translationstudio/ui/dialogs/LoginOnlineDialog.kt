@@ -26,7 +26,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.profile.ProfileOptionCard
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import org.koin.compose.koinInject
 
 @Composable
@@ -84,7 +83,7 @@ fun LoginOnlineDialog(
                     subtitle = stringResource(R.string.requires_internet),
                     onClick = {
                         val registerUrl = prefRepository.getDefaultPref(
-                            SettingsActivity.KEY_PREF_CREATE_ACCOUNT_URL,
+                            IPreferenceRepository.KEY_PREF_CREATE_ACCOUNT_URL,
                             defaultRegisterUrl
                         )
                         uriHandler.openUri(registerUrl)

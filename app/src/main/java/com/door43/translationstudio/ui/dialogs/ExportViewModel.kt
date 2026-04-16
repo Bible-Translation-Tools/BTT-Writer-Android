@@ -20,7 +20,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.CreateRepository
 import com.door43.usecases.ExportProjects
 import com.door43.usecases.GogsLogout
@@ -510,7 +509,7 @@ class ExportViewModel(
 
     private fun reportUploadSuccess(details: String?) {
         val apiURL = prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_READER_SERVER,
+            IPreferenceRepository.KEY_PREF_READER_SERVER,
             application.getString(R.string.pref_default_reader_server)
         )
         val url = (apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id).toUri()

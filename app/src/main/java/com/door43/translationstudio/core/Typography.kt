@@ -2,7 +2,6 @@ package com.door43.translationstudio.core
 
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.ui.settings.SettingsActivity
 
 /**
  * Created by mxaln on 2/25/2026.
@@ -51,9 +50,9 @@ class Typography(
 
     fun getFontSize(translationType: TranslationType): Float {
         val prefKey = if (translationType == TranslationType.SOURCE) {
-            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE_SIZE
+            IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE_SIZE
         } else {
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE_SIZE
+            IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE_SIZE
         }
         return prefRepository.getDefaultPref(
             prefKey,
@@ -63,9 +62,9 @@ class Typography(
 
     private fun getFontName(translationType: TranslationType): String {
         val prefKey = if (translationType == TranslationType.SOURCE) {
-            SettingsActivity.KEY_PREF_SOURCE_TYPEFACE
+            IPreferenceRepository.KEY_PREF_SOURCE_TYPEFACE
         } else {
-            SettingsActivity.KEY_PREF_TRANSLATION_TYPEFACE
+            IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE
         }
         return prefRepository.getDefaultPref(prefKey, defaultTranslationTypeface)
     }
