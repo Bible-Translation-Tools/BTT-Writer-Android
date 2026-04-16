@@ -8,7 +8,6 @@ import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.RegisterSSHKeys
 import com.door43.util.FileUtilities
 import junit.framework.TestCase.assertFalse
@@ -42,7 +41,7 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
         deleteSSHKeys()
 
         prefRepository.setDefaultPref(
-            SettingsActivity.KEY_PREF_GOGS_API,
+            IPreferenceRepository.KEY_PREF_GOGS_API,
             server.url("/api").toString()
         )
 

@@ -8,8 +8,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
-import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.settings.SettingsActivity
 import com.door43.usecases.UpdateSource
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
@@ -88,7 +86,7 @@ class UpdateSourceTest : KoinAndroidTest() {
     @Test
     fun testUpdateSource() {
         val url = server.url("/test")
-        prefRepository.setDefaultPref(SettingsActivity.KEY_PREF_MEDIA_SERVER, url.toString())
+        prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_MEDIA_SERVER, url.toString())
 
         val result = runBlocking {
             updateSource.execute()
