@@ -5,18 +5,21 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.door43.translationstudio.ui.devtools.DevToolsComponent
 import com.door43.translationstudio.ui.home.HomeComponent
+import com.door43.translationstudio.ui.newtranslation.NewTranslationComponent
 import com.door43.translationstudio.ui.profile.ProfileComponent
 import com.door43.translationstudio.ui.settings.SettingsComponent
 import com.door43.translationstudio.ui.splash.SplashComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
 interface RootComponent {
 
     val stack: Value<ChildStack<*, Child>>
-    val events: Flow<Event>
+    val event: Flow<Event>
+    val sharedFlow: SharedFlow<SharedEvent>
     val currentTheme: StateFlow<String>
 
     fun onBackPressed()
@@ -33,6 +36,7 @@ interface RootComponent {
         data class Profile(val component: ProfileComponent) : Child
         data class Settings(val component: SettingsComponent) : Child
         data class DevTools(val component: DevToolsComponent) : Child
+        data class NewTranslation(val component: NewTranslationComponent) : Child
     }
 
     @Serializable
@@ -52,8 +56,7 @@ interface RootComponent {
         @Serializable
         data class NewTranslation(
             val translationId: String? = null,
-            val disabledLanguages: List<String> = emptyList(),
-            val changeTargetLanguageOnly: Boolean = false,
+            val disabledLanguages: List<String> = emptyList()
         ) : Config
 
         @Serializable
@@ -79,5 +82,11 @@ interface RootComponent {
         data object OpenCrashReporter : Event
         data class OpenDraft(val translationId: String) : Event
         data class PublishProject(val translationId: String) : Event
+    }
+
+    sealed interface SharedEvent {
+        data object LoadProjects : SharedEvent
+        data class SnackbarMessage(val message: String) : SharedEvent
+        data class DuplicateProject(val translationId: String) : SharedEvent
     }
 }

@@ -19,6 +19,8 @@ import com.door43.translationstudio.ui.devtools.DevToolsComponent
 import com.door43.translationstudio.ui.home.DefaultHomeComponent
 import com.door43.translationstudio.ui.home.HomeComponent
 import com.door43.translationstudio.ui.navigation.RootComponent.Config
+import com.door43.translationstudio.ui.newtranslation.DefaultNewTranslationComponent
+import com.door43.translationstudio.ui.newtranslation.NewTranslationComponent
 import com.door43.translationstudio.ui.profile.DefaultProfileComponent
 import com.door43.translationstudio.ui.profile.ProfileComponent
 import com.door43.translationstudio.ui.settings.DefaultSettingsComponent
@@ -29,8 +31,10 @@ import com.door43.translationstudio.ui.translate.DefaultTranslateComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -50,8 +54,11 @@ class DefaultRootComponent(
 
     private val navigation = StackNavigation<Config>()
 
-    private val _events = Channel<RootComponent.Event>(capacity = Channel.BUFFERED)
-    override val events: Flow<RootComponent.Event> = _events.receiveAsFlow()
+    private val _event = Channel<RootComponent.Event>(capacity = Channel.BUFFERED)
+    override val event: Flow<RootComponent.Event> = _event.receiveAsFlow()
+
+    private val _sharedFlow = MutableSharedFlow<RootComponent.SharedEvent>(extraBufferCapacity = 1)
+    override val sharedFlow = _sharedFlow.asSharedFlow()
 
     private val _currentTheme = MutableStateFlow("")
     override val currentTheme: StateFlow<String> = _currentTheme
@@ -80,6 +87,7 @@ class DefaultRootComponent(
         val active = stack.value.active.instance
         if (active is RootComponent.Child.Home) {
             active.component.onAction(HomeComponent.Action.ImportProject(uri))
+            // TODO Replace with state flow
         }
     }
 
@@ -96,7 +104,16 @@ class DefaultRootComponent(
         is Config.Home -> RootComponent.Child.Home(
             component = DefaultHomeComponent(
                 componentContext = componentContext,
+                sharedFlow = sharedFlow,
                 onResult = ::onHomeResult
+            )
+        )
+        is Config.NewTranslation -> RootComponent.Child.NewTranslation(
+            component = DefaultNewTranslationComponent(
+                componentContext = componentContext,
+                disabledLanguages = config.disabledLanguages,
+                translationId = config.translationId,
+                onResult = ::onNewTranslationResult
             )
         )
         is Config.Translate -> RootComponent.Child.Translate(
@@ -111,7 +128,7 @@ class DefaultRootComponent(
             component = DefaultProfileComponent(
                 componentContext = componentContext,
                 goLogin = config.thenLogin,
-                result = ::onProfileResult,
+                onResult = ::onProfileResult,
             )
         )
         is Config.Settings -> RootComponent.Child.Settings(
@@ -135,7 +152,7 @@ class DefaultRootComponent(
             SplashComponent.Result.NavigateToProfile -> openProfile(false)
             SplashComponent.Result.NavigateToCrashReporter -> {
                 navigation.replaceAll(Config.Home())
-                _events.trySend(RootComponent.Event.OpenCrashReporter)
+                _event.trySend(RootComponent.Event.OpenCrashReporter)
             }
         }
     }
@@ -152,6 +169,32 @@ class DefaultRootComponent(
             is HomeComponent.Result.ExitApp -> onExitApp()
             is HomeComponent.Result.ShareApp -> onShareApp()
             is HomeComponent.Result.ExportToApp -> onExportToApp(result.file)
+            is HomeComponent.Result.OpenNewTranslation -> openNewTranslation()
+            is HomeComponent.Result.ChangeTranslationLanguage -> {
+                openNewTranslation(result.disabledLanguages, result.translationId)
+            }
+        }
+    }
+
+    private fun onNewTranslationResult(result: NewTranslationComponent.Result) {
+        when (result) {
+            is NewTranslationComponent.Result.NavigateBack -> navigation.pop()
+            is NewTranslationComponent.Result.Success -> {
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
+                navigation.pop()
+            }
+            is NewTranslationComponent.Result.Error -> {
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(result.text))
+                navigation.pop()
+            }
+            is NewTranslationComponent.Result.Duplicate -> {
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(result.translationId))
+                navigation.pop()
+            }
+            is NewTranslationComponent.Result.MergeConflict -> {
+                _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
+                openTranslate(result.translationId, true)
+            }
         }
     }
 
@@ -222,12 +265,12 @@ class DefaultRootComponent(
 
     private fun openDraft(translationId: String) {
         // TODO Replace with navigation
-        _events.trySend(RootComponent.Event.OpenDraft(translationId))
+        _event.trySend(RootComponent.Event.OpenDraft(translationId))
     }
 
     private fun openPublishPreview(translationId: String) {
         // TODO Replace with navigation
-        _events.trySend(RootComponent.Event.PublishProject(translationId))
+        _event.trySend(RootComponent.Event.PublishProject(translationId))
         navigation.pop()
     }
 
@@ -237,6 +280,16 @@ class DefaultRootComponent(
 
     private fun openDevTools() {
         navigation.bringToFront(Config.DevTools)
+    }
+
+    private fun openNewTranslation(
+        disabledLanguages: List<String> = emptyList(),
+        translationId: String? = null
+    ) {
+        navigation.bringToFront(Config.NewTranslation(
+            disabledLanguages = disabledLanguages,
+            translationId = translationId
+        ))
     }
 
     private fun signalHomeUpdateLibrary() {

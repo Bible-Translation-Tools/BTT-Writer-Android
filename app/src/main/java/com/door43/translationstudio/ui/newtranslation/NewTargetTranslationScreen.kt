@@ -19,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,39 +29,14 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.SearchBar
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewTargetTranslationScreen(
-    onNavigateBack: () -> Unit,
-    onFinishOk: () -> Unit,
-    onCancel: () -> Unit,
-    onDuplicate: (String) -> Unit,
-    onFinishError: () -> Unit,
-    onMergeConflict: (String) -> Unit
+    component: NewTranslationComponent
 ) {
-    val viewModel: NewTargetTranslationModel = koinViewModel()
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
-
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is NewTranslationEvent.FinishOk,
-                is NewTranslationEvent.OnMergeSuccess -> onFinishOk()
-                is NewTranslationEvent.FinishCanceled -> onCancel()
-                is NewTranslationEvent.FinishDuplicate -> {
-                    onDuplicate(event.targetTranslationId)
-                }
-                is NewTranslationEvent.OnMergeError,
-                is NewTranslationEvent.FinishError -> onFinishError()
-                is NewTranslationEvent.OnMergeConflict -> {
-                    onMergeConflict(event.translationId)
-                }
-            }
-        }
-    }
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -74,9 +48,9 @@ fun NewTargetTranslationScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         when (state.screenStep) {
-                            ScreenStep.LANGUAGE -> onNavigateBack()
-                            ScreenStep.PROJECT -> viewModel.onAction(
-                                NewTranslationAction.CategoryBack
+                            ScreenStep.LANGUAGE -> component.navigateBack()
+                            ScreenStep.PROJECT -> component.onAction(
+                                NewTranslationComponent.Action.CategoryBack
                             )
                         }
                     }) {
@@ -91,7 +65,7 @@ fun NewTargetTranslationScreen(
                     SearchBar(
                         query = state.searchQuery,
                         onQueryChanged = {
-                            viewModel.onAction(NewTranslationAction.OnSearch(it))
+                            component.onAction(NewTranslationComponent.Action.OnSearch(it))
                         },
                         placeholder = stringResource(R.string.search_hint)
                     )
@@ -133,8 +107,8 @@ fun NewTargetTranslationScreen(
                             languages = state.filteredLanguages,
                             disabledLanguages = state.disabledLanguages,
                             onLanguageSelected = {
-                                viewModel.onAction(
-                                    NewTranslationAction.LanguageSelected(it)
+                                component.onAction(
+                                    NewTranslationComponent.Action.LanguageSelected(it)
                                 )
                             },
                             modifier = Modifier.width(800.dp)
@@ -144,13 +118,13 @@ fun NewTargetTranslationScreen(
                         ProjectList(
                             categories = state.filteredCategories,
                             onProjectSelected = {
-                                viewModel.onAction(
-                                    NewTranslationAction.ProjectSelected(it)
+                                component.onAction(
+                                    NewTranslationComponent.Action.ProjectSelected(it)
                                 )
                             },
                             onCategorySelected = {
-                                viewModel.onAction(
-                                    NewTranslationAction.CategorySelected(it)
+                                component.onAction(
+                                    NewTranslationComponent.Action.CategorySelected(it)
                                 )
                             },
                             modifier = Modifier.width(800.dp)
@@ -166,10 +140,10 @@ fun NewTargetTranslationScreen(
             title = stringResource(R.string.warn_existing_target_translation_label),
             message = conflict.message,
             onDismiss = {
-                viewModel.onAction(NewTranslationAction.ClearMergeConflict)
+                component.onAction(NewTranslationComponent.Action.ClearMergeConflict)
             },
             onConfirm = {
-                viewModel.onAction(NewTranslationAction.MergeTranslation(conflict))
+                component.onAction(NewTranslationComponent.Action.MergeTranslation(conflict))
             },
             confirmText = stringResource(R.string.yes),
             dismissText = stringResource(R.string.no)

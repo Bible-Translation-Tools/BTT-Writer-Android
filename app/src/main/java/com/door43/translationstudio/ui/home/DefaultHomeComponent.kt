@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.home
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
@@ -17,6 +16,7 @@ import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.usecases.BackupRC
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.TranslationProgress
@@ -25,7 +25,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -44,6 +46,7 @@ private const val SORT_BY_BOOK: String = "sort_by_book"
 
 class DefaultHomeComponent(
     componentContext: ComponentContext,
+    override val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (HomeComponent.Result) -> Unit
 ) : HomeComponent,
     ComponentContext by componentContext,
@@ -55,7 +58,6 @@ class DefaultHomeComponent(
     private val calculateProgress: TranslationProgress by inject()
     private val profile: Profile by inject()
     private val gogsLogout: GogsLogout by inject()
-    private val directoryProvider: IDirectoryProvider by inject()
     private val backupRC: BackupRC by inject()
     private val library: Door43Client by inject()
 
@@ -183,6 +185,20 @@ class DefaultHomeComponent(
 
     override fun openLogin() {
         onResult(HomeComponent.Result.OpenLogin)
+    }
+
+    override fun onNewTranslation() {
+        onResult(HomeComponent.Result.OpenNewTranslation)
+    }
+
+    override fun onChangeTranslationLanguage(
+        disabledLanguages: List<String>,
+        translationId: String?
+    ) {
+        onResult(HomeComponent.Result.ChangeTranslationLanguage(
+            disabledLanguages = disabledLanguages,
+            translationId = translationId
+        ))
     }
 
     private fun loadProjects() {

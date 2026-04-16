@@ -3,7 +3,9 @@ package com.door43.translationstudio.ui.home
 import android.net.Uri
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.ui.navigation.RootComponent
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 
@@ -33,6 +35,7 @@ enum class BookSort(val value: Int) {
 interface HomeComponent {
     val state: StateFlow<HomeState>
     val event: Flow<Event>
+    val sharedFlow: SharedFlow<RootComponent.SharedEvent>
     val progress: StateFlow<Progress?>
 
     val projectSortOptions: List<ProjectSort>
@@ -43,6 +46,11 @@ interface HomeComponent {
 
     fun onAction(action: Action)
 
+    fun onNewTranslation()
+    fun onChangeTranslationLanguage(
+        disabledLanguages: List<String> = emptyList(),
+        translationId: String? = null
+    )
     fun openSettings()
     fun publishProject(translationId: String)
     fun openProject(translationId: String, mergeConflictFilterOn: Boolean)
@@ -97,5 +105,10 @@ interface HomeComponent {
         data object ExitApp : Result
         data object ShareApp : Result
         data class ExportToApp(val file: File) : Result
+        data class ChangeTranslationLanguage(
+            val disabledLanguages: List<String>,
+            val translationId: String?
+        ) : Result
+        data object OpenNewTranslation : Result
     }
 }

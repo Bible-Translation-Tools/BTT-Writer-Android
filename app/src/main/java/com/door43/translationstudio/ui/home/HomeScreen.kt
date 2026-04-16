@@ -1,11 +1,7 @@
 package com.door43.translationstudio.ui.home
 
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,7 +33,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -52,8 +47,7 @@ import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
-import kotlinx.coroutines.launch
+import com.door43.translationstudio.ui.navigation.RootComponent
 import org.koin.compose.koinInject
 
 @Composable
@@ -64,9 +58,7 @@ fun HomeScreen(
     var profileUser by remember { mutableStateOf(profile.currentUser) }
 
     val state by component.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
 
     val progress by component.progress.collectAsStateWithLifecycle()
 
@@ -78,8 +70,6 @@ fun HomeScreen(
     var projectToImport by remember { mutableStateOf<Uri?>(null) }
     var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
 
-    val errorString = stringResource(R.string.error)
-
     val menuItems = rememberHomeMenuItems(
         onUpdateClick = { showUpdateLibraryDialog = true },
         onImport = { showImportDialog = true },
@@ -89,64 +79,7 @@ fun HomeScreen(
         onSettings = component::openSettings
     )
 
-    val newTranslationLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        when(result.resultCode) {
-            Activity.RESULT_OK -> {
-                component.onAction(HomeComponent.Action.LoadProjects)
-            }
-            NewTargetTranslationActivity.RESULT_DUPLICATE -> {
-                result.data?.getStringExtra(
-                    NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
-                )?.let {
-                    component.onAction(HomeComponent.Action.ShowProjectExists(it))
-                }
-            }
-            NewTargetTranslationActivity.RESULT_MERGE_CONFLICT -> {
-                result.data?.getStringExtra(
-                    NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID
-                )?.let {
-                    component.onAction(HomeComponent.Action.LoadProjects)
-                    component.openProject(it, true)
-                }
-            }
-            NewTargetTranslationActivity.RESULT_ERROR -> {
-                coroutineScope.launch {
-                    snackbarHostState.showSnackbar(errorString)
-                }
-            }
-        }
-    }
-
-    val launchNewTranslation: () -> Unit = {
-        val intent = Intent(
-            context,
-            NewTargetTranslationActivity::class.java
-        )
-        newTranslationLauncher.launch(intent)
-    }
-
-    val launchChangeLanguage: (TranslationItem) -> Unit = {
-        val intent = Intent(
-            context,
-            NewTargetTranslationActivity::class.java
-        )
-        intent.putExtra(
-            NewTargetTranslationActivity.EXTRA_TARGET_TRANSLATION_ID,
-            it.translation.id
-        )
-        intent.putExtra(
-            NewTargetTranslationActivity.EXTRA_DISABLED_LANGUAGES, arrayOf(
-                it.translation.targetLanguage.slug
-            )
-        )
-        intent.putExtra(
-            NewTargetTranslationActivity.EXTRA_CHANGE_TARGET_LANGUAGE_ONLY,
-            true
-        )
-        newTranslationLauncher.launch(intent)
-    }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(component) {
         component.lastOpened?.let {
@@ -154,17 +87,35 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(component) {
+    LaunchedEffect(Unit) {
         component.event.collect { event ->
             when (event) {
-                is HomeComponent.Event.SnackbarMessage -> snackbarHostState.showSnackbar(event.message)
+                is HomeComponent.Event.SnackbarMessage -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
                 is HomeComponent.Event.ImportProject -> {
                     showImportDialog = true
                     projectToImport = event.uri
                 }
-                HomeComponent.Event.OpenUpdateLibrary -> {
+                is HomeComponent.Event.OpenUpdateLibrary -> {
                     showUpdateLibraryDialog = true
                     triggerUpdateLibrary = true
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        component.sharedFlow.collect { event ->
+            when (event) {
+                is RootComponent.SharedEvent.SnackbarMessage -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+                is RootComponent.SharedEvent.DuplicateProject -> {
+                    component.onAction(HomeComponent.Action.ShowProjectExists(event.translationId))
+                }
+                is RootComponent.SharedEvent.LoadProjects -> {
+                    component.onAction(HomeComponent.Action.LoadProjects)
                 }
             }
         }
@@ -191,7 +142,7 @@ fun HomeScreen(
             containerColor = MaterialTheme.colorScheme.background,
             floatingActionButton = {
                 FloatingActionButton(
-                    onClick = launchNewTranslation,
+                    onClick = component::onNewTranslation,
                     shape = CircleShape,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -264,7 +215,7 @@ fun HomeScreen(
                         if (state.translations.isEmpty()) {
                             if (progress == null) {
                                 WelcomeScreen(
-                                    onStartNewTranslation = launchNewTranslation
+                                    onStartNewTranslation = component::onNewTranslation
                                 )
                             }
                         } else {
@@ -273,7 +224,12 @@ fun HomeScreen(
                                 onProjectSelected = {
                                     component.openProject(it.translation.id, false)
                                 },
-                                onChangeLanguage = launchChangeLanguage,
+                                onChangeLanguage = {
+                                    component.onChangeTranslationLanguage(
+                                        disabledLanguages = listOf(it.translation.targetLanguage.slug),
+                                        translationId = it.translation.id
+                                    )
+                                },
                                 onMergeConflict = {
                                     component.openProject(it, true)
                                 },

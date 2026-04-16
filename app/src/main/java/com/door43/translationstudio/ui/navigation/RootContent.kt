@@ -13,6 +13,7 @@ import com.door43.translationstudio.ui.crash.CrashReporterActivity
 import com.door43.translationstudio.ui.devtools.DevToolsScreen
 import com.door43.translationstudio.ui.draft.DraftActivity
 import com.door43.translationstudio.ui.home.HomeScreen
+import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationScreen
 import com.door43.translationstudio.ui.profile.ProfileRouter
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.settings.SettingsScreen
@@ -27,7 +28,7 @@ fun RootContent(
     val context = LocalContext.current
 
     LaunchedEffect(component) {
-        component.events.collect { event ->
+        component.event.collect { event ->
             when (event) {
                 RootComponent.Event.OpenCrashReporter ->
                     context.startActivity(Intent(context, CrashReporterActivity::class.java))
@@ -47,6 +48,7 @@ fun RootContent(
                     }
                     context.startActivity(intent)
                 }
+                else -> {}
             }
         }
     }
@@ -59,6 +61,9 @@ fun RootContent(
         when (val instance = child.instance) {
             is RootComponent.Child.Splash -> SplashScreen(component = instance.component)
             is RootComponent.Child.Home -> HomeScreen(
+                component = instance.component
+            )
+            is RootComponent.Child.NewTranslation -> NewTargetTranslationScreen(
                 component = instance.component
             )
             is RootComponent.Child.Translate -> TargetTranslationScreen(

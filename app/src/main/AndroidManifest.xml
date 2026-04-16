@@ -63,15 +63,6 @@
             android:windowSoftInputMode="adjustResize"
             android:label="@string/title_activity_crash_reporter" />
         <activity
-            android:name=".ui.newtranslation.NewTargetTranslationActivity"
-            android:label="@string/title_activity_new_target_translation"
-            android:launchMode="singleTop"
-            android:parentActivityName=".MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
-        <activity
             android:name=".ui.publish.PublishActivity"
             android:label="@string/title_activity_publish"
             android:launchMode="singleTop" />
