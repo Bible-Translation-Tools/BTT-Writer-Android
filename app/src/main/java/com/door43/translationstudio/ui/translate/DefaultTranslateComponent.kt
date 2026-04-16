@@ -65,7 +65,8 @@ class DefaultTranslateComponent(
     componentContext: ComponentContext,
     targetTranslationId: String,
     initialViewMode: TranslationViewMode? = null,
-    override val startWithMergeFilter: Boolean
+    override val startWithMergeFilter: Boolean,
+    private val onResult: (TranslateComponent.Result) -> Unit
 ) : TranslateComponent,
     ComponentContext by componentContext,
     ComponentScope, ProgressOwner, KoinComponent {
@@ -222,6 +223,26 @@ class DefaultTranslateComponent(
             is TranslateComponent.Action.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
             is TranslateComponent.Action.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
         }
+    }
+
+    override fun onHome(withUpdate: Boolean) {
+        onResult(TranslateComponent.Result.OnHome(withUpdate))
+    }
+
+    override fun onDraft(translationId: String) {
+        onResult(TranslateComponent.Result.OnDraft(translationId))
+    }
+
+    override fun onPublishProject(translationId: String) {
+        onResult(TranslateComponent.Result.OnPublishProject(translationId))
+    }
+
+    override fun openLogin() {
+        onResult(TranslateComponent.Result.OpenLogin)
+    }
+
+    override fun logout() {
+        onResult(TranslateComponent.Result.Logout)
     }
 
     private fun openUsedSourceTranslations() {

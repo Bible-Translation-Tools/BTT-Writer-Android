@@ -77,7 +77,8 @@ class MainActivity : BaseActivity() {
 
         if (intent.getBooleanExtra(EXTRA_OPEN_PROFILE, false)) {
             intent.removeExtra(EXTRA_OPEN_PROFILE)
-            root.openProfile()
+            // TODO Check it!!!
+            // root.openProfile(false)
         }
     }
 

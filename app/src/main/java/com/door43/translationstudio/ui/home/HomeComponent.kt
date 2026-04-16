@@ -43,7 +43,6 @@ interface HomeComponent {
 
     fun onAction(action: Action)
 
-    fun logout()
     fun openSettings()
     fun publishProject(translationId: String)
     fun openProject(translationId: String, mergeConflictFilterOn: Boolean)
@@ -51,6 +50,7 @@ interface HomeComponent {
     fun shareApp()
     fun exportToApp(file: File)
     fun openLogin()
+    fun logout()
 
     data class SortTrigger(
         val projectSort: ProjectSort,

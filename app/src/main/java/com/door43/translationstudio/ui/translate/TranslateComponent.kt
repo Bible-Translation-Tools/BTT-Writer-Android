@@ -33,6 +33,12 @@ interface TranslateComponent {
     fun restartAutoCommitTimer()
     fun onAction(action: Action)
 
+    fun onHome(withUpdate: Boolean)
+    fun onDraft(translationId: String)
+    fun onPublishProject(translationId: String)
+    fun openLogin()
+    fun logout()
+
     companion object {
         const val SEARCH_SOURCE = "search_source"
     }
@@ -70,6 +76,14 @@ interface TranslateComponent {
         data class Read(val component: ReadModeComponent) : Child
         data class Chunk(val component: ChunkModeComponent) : Child
         data class Review(val component: ReviewModeComponent) : Child
+    }
+
+    sealed interface Result {
+        data class OnHome(val withUpdate: Boolean) : Result
+        data class OnDraft(val translationId: String) : Result
+        data class OnPublishProject(val translationId: String) : Result
+        data object Logout : Result
+        data object OpenLogin : Result
     }
 
     @Serializable

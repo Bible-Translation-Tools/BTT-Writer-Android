@@ -20,41 +20,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.arkivanov.decompose.extensions.compose.stack.Children
-import com.arkivanov.decompose.extensions.compose.stack.animation.fade
-import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationViewMode
-import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ExportDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.translate.chunk.ChunkModeSection
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSidebar
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
-import com.door43.translationstudio.ui.translate.read.ReadModeSection
-import com.door43.translationstudio.ui.translate.review.ReviewModeSection
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import java.io.File
 
 @Composable
 fun TargetTranslationScreen(
     component: TranslateComponent,
     startWithMergeFilter: Boolean,
-    onHome: (Boolean) -> Unit,
-    onNavigateToDraft: (String) -> Unit,
-    onProjectPreview: (String) -> Unit,
     onSettings: () -> Unit,
-    onExportToApp: (File) -> Unit,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit
+    onExportToApp: (File) -> Unit
 ) {
-    val typography: Typography = koinInject()
     val state by component.state.collectAsStateWithLifecycle()
     val sharedState by component.sharedState.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
@@ -83,12 +69,12 @@ fun TargetTranslationScreen(
     val menuItems = rememberTranslateMenuItems(
         viewMode = state.viewMode,
         draftAvailable = state.draftAvailable,
-        onHomeClick = { onHome(false) },
+        onHomeClick = { component.onHome(false) },
         onNavigateToDraft = {
-            onNavigateToDraft(component.targetTranslation.id)
+            component.onDraft(component.targetTranslation.id)
         },
         onProjectPreview = {
-            onProjectPreview(component.targetTranslation.id)
+            component.onPublishProject(component.targetTranslation.id)
         },
         onUploadExport = { showExportDialog = true },
         onPrint = {
@@ -127,7 +113,7 @@ fun TargetTranslationScreen(
                     duration = SnackbarDuration.Long
                 )
                 if (result == SnackbarResult.ActionPerformed) {
-                    onNavigateToDraft(component.targetTranslation.id)
+                    component.onDraft(component.targetTranslation.id)
                 }
             }
         }
@@ -191,63 +177,18 @@ fun TargetTranslationScreen(
                             onAddSourceClick = { showSelectSourceDialog = true }
                         )
                     } else {
-                        Children(
-                            stack = component.stack,
-                            animation = stackAnimation(fade()),
-                        ) { child ->
-                            when (val instance = child.instance) {
-                                is TranslateComponent.Child.Loading -> LoadingScreen()
-                                is TranslateComponent.Child.Read -> ReadModeSection(
-                                    component = instance.component,
-                                    parentComponent = component,
-                                    typography = typography,
-                                    listState = scrollCoordinator.listState,
-                                    onSourceDialogOpen = { showSelectSourceDialog = true },
-                                    onHasMergeConflicts = { hasMergeConflicts = it },
-                                    onBeginTranslation = {
-                                        scrollCoordinator.pendingScrollChapter = PendingScrollItem(
-                                            chapterId = it
-                                        )
-                                        component.onAction(
-                                            TranslateComponent.Action.SaveLastViewMode(
-                                                TranslationViewMode.CHUNK
-                                            )
-                                        )
-                                    }
-                                )
-                                is TranslateComponent.Child.Chunk -> ChunkModeSection(
-                                    component = instance.component,
-                                    parentComponent = component,
-                                    typography = typography,
-                                    listState = scrollCoordinator.listState,
-                                    onSourceDialogOpen = { showSelectSourceDialog = true },
-                                    onHasMergeConflicts = { hasMergeConflicts = it },
-                                    onConflictClick = { chapterId, chunkId ->
-                                        scrollCoordinator.pendingScrollChapter = PendingScrollItem(
-                                            chapterId = chapterId,
-                                            chunkId = chunkId
-                                        )
-                                        component.onAction(
-                                            TranslateComponent.Action.SaveLastViewMode(TranslationViewMode.REVIEW)
-                                        )
-                                    }
-                                )
-                                is TranslateComponent.Child.Review -> ReviewModeSection(
-                                    component = instance.component,
-                                    parentComponent = component,
-                                    typography = typography,
-                                    listState = scrollCoordinator.listState,
-                                    searchRequested = searchRequested,
-                                    onSearchConsumed = { searchRequested = false },
-                                    onSourceDialogOpen = { showSelectSourceDialog = true },
-                                    onHasMergeConflicts = { hasMergeConflicts = it },
-                                    mergeConflictFilterOn = mergeConflictFilterOn,
-                                    onMergeConflictFilterReset = { mergeConflictFilterOn = false },
-                                    chunksDoneRequested = chunksDoneRequested,
-                                    onChunksDoneConsumed = { chunksDoneRequested = false }
-                                )
-                            }
-                        }
+                        TranslateRouter(
+                            component = component,
+                            scrollCoordinator = scrollCoordinator,
+                            onSourceDialogOpen = { showSelectSourceDialog = true },
+                            onHasMergeConflicts = { hasMergeConflicts = it },
+                            searchRequested = searchRequested,
+                            onSearchConsumed = { searchRequested = false },
+                            mergeConflictFilterOn = mergeConflictFilterOn,
+                            onMergeConflictFilterReset = { mergeConflictFilterOn = false },
+                            chunksDoneRequested = chunksDoneRequested,
+                            onChunksDoneConsumed = { chunksDoneRequested = false }
+                        )
                     }
                 }
             }
@@ -272,7 +213,7 @@ fun TargetTranslationScreen(
                 message = stringResource(R.string.update_warning),
                 onConfirm = {
                     showUpdateSourcesDialog = false
-                    onHome(true)
+                    component.onHome(true)
                 },
                 onDismiss = { showUpdateSourcesDialog = false }
             )
@@ -285,9 +226,9 @@ fun TargetTranslationScreen(
                 onExportToApp = onExportToApp,
                 onLogin = {
                     showExportDialog = false
-                    onLogin()
+                    component.openLogin()
                 },
-                onLogout = onLogout,
+                onLogout = component::logout,
                 onMergeConflict = {
                     mergeConflictFilterOn = true
                     component.onAction(TranslateComponent.Action.SaveLastViewMode(

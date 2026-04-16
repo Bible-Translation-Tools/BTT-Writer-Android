@@ -20,11 +20,8 @@ interface RootComponent {
     fun onBackPressed()
     fun onDeepLink(uri: Uri)
 
-    fun openHome(withUpdate: Boolean = false)
-    fun openTranslate(translationId: String, startWithMergeFilter: Boolean = false)
-    fun openProfile()
-    fun openDraft(translationId: String)
-    fun openPublishPreview(translationId: String)
+    fun openTranslate(translationId: String, startWithMergeFilter: Boolean)
+    fun openProfile(thenLogin: Boolean)
     fun openSettings()
 
     fun exportToApp(file: File)
