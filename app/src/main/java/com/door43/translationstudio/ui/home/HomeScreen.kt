@@ -44,6 +44,7 @@ import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.ExportDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.compose.koinInject
@@ -196,13 +197,7 @@ fun HomeScreen(
                                         translationId = it.translation.id
                                     )
                                 },
-                                onMergeConflict = {
-                                    component.openProject(it, true)
-                                },
-                                onProjectPublish = component::publishProject,
-                                onLogin = component::openLogin,
-                                onLogout = component::logout,
-                                onExportToApp = component::exportToApp
+                                onProjectPublish = component::publishProject
                             )
                         }
                     }
@@ -213,36 +208,30 @@ fun HomeScreen(
 
     dialogSlot.child?.instance?.let { child ->
         when (child) {
-            is HomeComponent.DialogChild.Feedback -> {
-                FeedbackDialog(
-                    component = child.component,
-                    onDismiss = component::dismissDialog
-                )
-            }
-            is HomeComponent.DialogChild.Import -> {
-                ImportDialog(
-                    component = child.component,
-                    onDismiss = component::dismissDialog
-                )
-            }
-            is HomeComponent.DialogChild.UpdateLibrary -> {
-                UpdateLibraryDialog(
-                    component = child.component,
-                    onDismiss = component::dismissDialog
-                )
-            }
-            is HomeComponent.DialogChild.ImportUsfm -> {
-                ImportUsfmDialog(
-                    component = child.component,
-                    onDismiss = component::dismissDialog
-                )
-            }
-            is HomeComponent.DialogChild.DownloadSources -> {
-                DownloadSourcesDialog(
-                    component = child.component,
-                    onDismiss = component::dismissDialog
-                )
-            }
+            is HomeComponent.DialogChild.Feedback -> FeedbackDialog(
+                component = child.component,
+                onDismiss = component::dismissDialog
+            )
+            is HomeComponent.DialogChild.Import -> ImportDialog(
+                component = child.component,
+                onDismiss = component::dismissDialog
+            )
+            is HomeComponent.DialogChild.UpdateLibrary -> UpdateLibraryDialog(
+                component = child.component,
+                onDismiss = component::dismissDialog
+            )
+            is HomeComponent.DialogChild.ImportUsfm -> ImportUsfmDialog(
+                component = child.component,
+                onDismiss = component::dismissDialog
+            )
+            is HomeComponent.DialogChild.DownloadSources -> DownloadSourcesDialog(
+                component = child.component,
+                onDismiss = component::dismissDialog
+            )
+            is HomeComponent.DialogChild.Export -> ExportDialog(
+                component = child.component,
+                onDismiss = component::dismissDialog
+            )
         }
     }
 

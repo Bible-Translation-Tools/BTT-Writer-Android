@@ -35,8 +35,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TargetTranslationScreen(
-    component: TranslateComponent,
-    startWithMergeFilter: Boolean
+    component: TranslateComponent
 ) {
     val state by component.state.collectAsStateWithLifecycle()
     val sharedState by component.sharedState.collectAsStateWithLifecycle()
@@ -48,7 +47,6 @@ fun TargetTranslationScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var searchRequested by remember { mutableStateOf(false) }
-    var mergeConflictFilterOn by rememberSaveable { mutableStateOf(startWithMergeFilter) }
     var chunksDoneRequested by rememberSaveable { mutableStateOf(false) }
 
     var hasMergeConflicts by remember { mutableStateOf(false) }
@@ -122,9 +120,9 @@ fun TargetTranslationScreen(
                 TranslateSidebar(
                     currentViewMode = state.viewMode,
                     showMergeConflict = hasMergeConflicts,
-                    mergeConflictFilterOn = mergeConflictFilterOn,
+                    mergeConflictFilterOn = state.mergeFilterOn,
                     onReadClick = {
-                        mergeConflictFilterOn = false
+                        component.updateMergeFilter(false)
                         if (state.viewMode != TranslationViewMode.READ) {
                             component.onAction(TranslateComponent.Action.SaveLastViewMode(
                                 TranslationViewMode.READ
@@ -132,7 +130,7 @@ fun TargetTranslationScreen(
                         }
                     },
                     onChunkClick = {
-                        mergeConflictFilterOn = false
+                        component.updateMergeFilter(false)
                         if (state.viewMode != TranslationViewMode.CHUNK) {
                             component.onAction(TranslateComponent.Action.SaveLastViewMode(
                                 TranslationViewMode.CHUNK
@@ -140,7 +138,7 @@ fun TargetTranslationScreen(
                         }
                     },
                     onReviewClick = {
-                        mergeConflictFilterOn = false
+                        component.updateMergeFilter(false)
                         if (state.viewMode != TranslationViewMode.REVIEW) {
                             component.onAction(TranslateComponent.Action.SaveLastViewMode(
                                 TranslationViewMode.REVIEW
@@ -148,7 +146,7 @@ fun TargetTranslationScreen(
                         }
                     },
                     onMergeConflictClick = {
-                        mergeConflictFilterOn = !mergeConflictFilterOn
+                        component.updateMergeFilter(!state.mergeFilterOn)
                         if (state.viewMode != TranslationViewMode.REVIEW) {
                             component.onAction(TranslateComponent.Action.SaveLastViewMode(
                                 TranslationViewMode.REVIEW
@@ -177,8 +175,8 @@ fun TargetTranslationScreen(
                             onHasMergeConflicts = { hasMergeConflicts = it },
                             searchRequested = searchRequested,
                             onSearchConsumed = { searchRequested = false },
-                            mergeConflictFilterOn = mergeConflictFilterOn,
-                            onMergeConflictFilterReset = { mergeConflictFilterOn = false },
+                            mergeConflictFilterOn = state.mergeFilterOn,
+                            onMergeConflictFilterReset = { component.updateMergeFilter(false) },
                             chunksDoneRequested = chunksDoneRequested,
                             onChunksDoneConsumed = { chunksDoneRequested = false }
                         )
@@ -189,24 +187,18 @@ fun TargetTranslationScreen(
 
         dialogSlot.child?.instance?.let { child ->
             when (child) {
-                is TranslateComponent.DialogChild.Feedback -> {
-                    FeedbackDialog(
-                        component = child.component,
-                        onDismiss = component::dismissDialog
-                    )
-                }
-                is TranslateComponent.DialogChild.SelectSources -> {
-                    SourceSelectionDialog(
-                        component = child.component,
-                        onDismiss = component::dismissDialog
-                    )
-                }
-                is TranslateComponent.DialogChild.Export -> {
-                    ExportDialog(
-                        component = child.component,
-                        onDismiss = component::dismissDialog
-                    )
-                }
+                is TranslateComponent.DialogChild.Feedback -> FeedbackDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+                is TranslateComponent.DialogChild.SelectSources -> SourceSelectionDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+                is TranslateComponent.DialogChild.Export -> ExportDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
             }
         }
 

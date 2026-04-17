@@ -67,7 +67,6 @@ import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
-import java.io.File
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
@@ -246,6 +245,10 @@ class DefaultTranslateComponent(
         commitOnDestroy.scheduleAutoCommit()
     }
 
+    override fun updateMergeFilter(on: Boolean) {
+        _state.update { it.copy(mergeFilterOn = on) }
+    }
+
     override fun onAction(action: TranslateComponent.Action) {
         when (action) {
             is TranslateComponent.Action.RemoveSource -> launchWithProgress {
@@ -271,20 +274,8 @@ class DefaultTranslateComponent(
         onResult(TranslateComponent.Result.OpenPublishProject(translationId))
     }
 
-    override fun openLogin() {
-        onResult(TranslateComponent.Result.OpenLogin)
-    }
-
-    override fun logout() {
-        onResult(TranslateComponent.Result.Logout)
-    }
-
     override fun openSettings() {
         onResult(TranslateComponent.Result.OpenSettings)
-    }
-
-    override fun exportToApp(file: File) {
-        onResult(TranslateComponent.Result.ExportToApp(file))
     }
 
     override fun showFeedbackDialog() {
@@ -621,7 +612,7 @@ class DefaultTranslateComponent(
             component = DefaultExportComponent(
                 componentContext = componentContext,
                 translationId = config.translationId,
-                startFromPrint = config.startFromPrint,
+                showPrint = config.startFromPrint,
                 onResult = ::onExportResult
             )
         )

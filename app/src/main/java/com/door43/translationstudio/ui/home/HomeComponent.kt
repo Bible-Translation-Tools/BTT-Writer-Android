@@ -5,6 +5,7 @@ import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.value.Value
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.ui.dialogs.ExportComponent
 import com.door43.translationstudio.ui.dialogs.FeedbackComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +59,7 @@ interface HomeComponent {
     fun showFeedbackDialog()
     fun showImportDialog(projectUri: Uri? = null)
     fun showUpdateLibraryDialog(triggerUpdate: Boolean = false)
+    fun showExportDialog(translationId: String, showPrint: Boolean)
     fun dismissDialog()
 
     fun onNewTranslation()
@@ -108,6 +110,9 @@ interface HomeComponent {
 
         @Serializable
         data object DownloadSources : DialogConfig
+
+        @Serializable
+        data class Export(val translationId: String, val showPrint: Boolean) : DialogConfig
     }
 
     sealed interface DialogChild {
@@ -116,6 +121,7 @@ interface HomeComponent {
         data class UpdateLibrary(val component: UpdateLibraryComponent) : DialogChild
         data class ImportUsfm(val component: ImportUsfmComponent) : DialogChild
         data class DownloadSources(val component: DownloadSourcesComponent) : DialogChild
+        data class Export(val component: ExportComponent) : DialogChild
     }
 
     sealed interface Result {

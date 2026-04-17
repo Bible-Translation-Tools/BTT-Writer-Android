@@ -45,9 +45,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.dialogs.ExportDialog
 import org.koin.compose.koinInject
-import java.io.File
 
 @Composable
 fun ProjectDetailsDialog(
@@ -56,10 +54,7 @@ fun ProjectDetailsDialog(
     onChangeLanguage: () -> Unit,
     onDelete: () -> Unit,
     onPublish: () -> Unit,
-    onLogout: () -> Unit,
-    onLogin: () -> Unit,
-    onMergeConflict: () -> Unit,
-    onExportToApp: (File) -> Unit
+    onExport: (Boolean) -> Unit
 ) {
     val typography: Typography = koinInject()
 
@@ -80,8 +75,6 @@ fun ProjectDetailsDialog(
         mutableStateOf(project.translation.contributors.sortedBy { it.name.lowercase() })
     }
     var showContributorsDialog by rememberSaveable { mutableStateOf(false) }
-    var showExportDialog by rememberSaveable { mutableStateOf(false) }
-    var showPrintDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -186,10 +179,7 @@ fun ProjectDetailsDialog(
                         ActionIconButton(
                             imageVector = Icons.Default.Print,
                             contentDesc = stringResource(R.string.print),
-                            onClick = {
-                                showExportDialog = true
-                                showPrintDialog = true
-                            }
+                            onClick = { onExport(true) }
                         )
                         ActionIconButton(
                             imageVector = Icons.Default.DoneAll,
@@ -199,7 +189,7 @@ fun ProjectDetailsDialog(
                         ActionIconButton(
                             imageVector = Icons.Default.Upload,
                             contentDesc = stringResource(R.string.backup),
-                            onClick = { showExportDialog = true }
+                            onClick = { onExport(false) }
                         )
                     }
                 }
@@ -218,33 +208,6 @@ fun ProjectDetailsDialog(
             },
             onDismiss = { showContributorsDialog = false }
         )
-    }
-
-    if (showExportDialog) {
-//        ExportDialog(
-//            targetTranslation = project.translation,
-//            openPrint = showPrintDialog,
-//            onExportToApp = onExportToApp,
-//            onLogin = {
-//                showExportDialog = false
-//                onDismiss()
-//                onLogin()
-//            },
-//            onLogout = {
-//                showExportDialog = false
-//                onDismiss()
-//                onLogout()
-//            },
-//            onMergeConflict = {
-//                showExportDialog = false
-//                onDismiss()
-//                onMergeConflict()
-//            },
-//            onDismiss = {
-//                showExportDialog = false
-//                showPrintDialog = false
-//            }
-//        )
     }
 
     if (showDeleteDialog) {

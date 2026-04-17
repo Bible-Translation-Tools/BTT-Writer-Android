@@ -20,7 +20,9 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.dialogs.DefaultExportComponent
 import com.door43.translationstudio.ui.dialogs.DefaultFeedbackComponent
+import com.door43.translationstudio.ui.dialogs.ExportComponent
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.navigation.RootComponent
@@ -248,6 +250,15 @@ class DefaultHomeComponent(
     override fun showUpdateLibraryDialog(triggerUpdate: Boolean) {
         dialogNavigation.activate(
             HomeComponent.DialogConfig.UpdateLibrary(triggerUpdate)
+        )
+    }
+
+    override fun showExportDialog(translationId: String, showPrint: Boolean) {
+        dialogNavigation.activate(
+            HomeComponent.DialogConfig.Export(
+                translationId = translationId,
+                showPrint = showPrint
+            )
         )
     }
 
@@ -487,6 +498,14 @@ class DefaultHomeComponent(
                 componentContext = componentContext
             )
         )
+        is HomeComponent.DialogConfig.Export -> HomeComponent.DialogChild.Export(
+            DefaultExportComponent(
+                componentContext = componentContext,
+                translationId = config.translationId,
+                showPrint = config.showPrint,
+                onResult = ::onExportResult
+            )
+        )
     }
 
     private fun onImportResult(result: ImportComponent.Result) {
@@ -522,6 +541,28 @@ class DefaultHomeComponent(
                 loadWithProgress(result.translationIds)
             }
             is ImportUsfmComponent.Result.MergeConflict -> {
+                dismissDialog()
+                openProject(result.translationId, true)
+            }
+        }
+    }
+
+    private fun onExportResult(result: ExportComponent.Result) {
+        when (result) {
+            is ExportComponent.Result.Error -> {}
+            is ExportComponent.Result.ExportToApp -> {
+                dismissDialog()
+                exportToApp(result.file)
+            }
+            is ExportComponent.Result.OpenLogin -> {
+                dismissDialog()
+                openLogin()
+            }
+            is ExportComponent.Result.Logout -> {
+                dismissDialog()
+                logout()
+            }
+            is ExportComponent.Result.MergeConflict -> {
                 dismissDialog()
                 openProject(result.translationId, true)
             }

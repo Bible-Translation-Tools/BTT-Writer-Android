@@ -33,15 +33,13 @@ interface TranslateComponent {
     val targetTranslation: TargetTranslation
 
     fun restartAutoCommitTimer()
+    fun updateMergeFilter(on: Boolean)
     fun onAction(action: Action)
 
     fun openHome(withUpdate: Boolean = false)
     fun openDraft(translationId: String)
     fun openPublishProject(translationId: String)
-    fun openLogin()
-    fun logout()
     fun openSettings()
-    fun exportToApp(file: File)
 
     fun showFeedbackDialog()
     fun showSelectSourcesDialog()

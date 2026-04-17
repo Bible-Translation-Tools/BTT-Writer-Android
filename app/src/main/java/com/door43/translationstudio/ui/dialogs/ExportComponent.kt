@@ -68,7 +68,7 @@ interface ExportComponent {
     val targetTranslation: TargetTranslation
     val projectName: String
     val projectTitle: String
-    val startFromPrint: Boolean
+    val showPrint: Boolean
 
     fun onMergeConflict()
     fun onAction(action: Action)
@@ -117,7 +117,7 @@ interface ExportComponent {
 class DefaultExportComponent(
     componentContext: ComponentContext,
     translationId: String,
-    override val startFromPrint: Boolean,
+    override val showPrint: Boolean,
     private val onResult: (ExportComponent.Result) -> Unit
 ) : ExportComponent,
     ComponentContext by componentContext,

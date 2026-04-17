@@ -60,7 +60,7 @@ fun ExportDialog(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var showPrintDialog by rememberSaveable { mutableStateOf(component.startFromPrint) }
+    var showPrintDialog by rememberSaveable { mutableStateOf(component.showPrint) }
     var showInternetUsageDialog by rememberSaveable { mutableStateOf(false) }
     var showAuthDialog by rememberSaveable { mutableStateOf(false) }
     var showLoginDialog by rememberSaveable { mutableStateOf(false) }
@@ -296,7 +296,7 @@ fun ExportDialog(
             isObs = component.targetTranslation.isObsProject,
             onDismiss = {
                 showPrintDialog = false
-                if (component.startFromPrint) onDismiss()
+                if (component.showPrint) onDismiss()
             },
             onPrint = { includeImages, includeIncomplete ->
                 incompleteToInclude = includeIncomplete
