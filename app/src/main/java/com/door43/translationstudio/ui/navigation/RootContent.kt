@@ -1,15 +1,12 @@
 package com.door43.translationstudio.ui.navigation
 
-import android.content.Intent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
-import com.door43.translationstudio.ui.crash.CrashReporterActivity
+import com.door43.translationstudio.ui.crash.CrashReporterScreen
 import com.door43.translationstudio.ui.devtools.DevToolsScreen
 import com.door43.translationstudio.ui.draft.DraftScreen
 import com.door43.translationstudio.ui.home.HomeScreen
@@ -25,17 +22,6 @@ fun RootContent(
     component: RootComponent,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-
-    LaunchedEffect(component) {
-        component.event.collect { event ->
-            when (event) {
-                RootComponent.Event.OpenCrashReporter ->
-                    context.startActivity(Intent(context, CrashReporterActivity::class.java))
-            }
-        }
-    }
-
     Children(
         stack = component.stack,
         modifier = modifier.fillMaxSize(),
@@ -68,7 +54,9 @@ fun RootContent(
             is RootComponent.Child.Publish -> PublishScreen(
                 component = instance.component
             )
-            is RootComponent.Child.Placeholder -> Unit
+            is RootComponent.Child.Crash -> CrashReporterScreen(
+                component = instance.component
+            )
         }
     }
 }

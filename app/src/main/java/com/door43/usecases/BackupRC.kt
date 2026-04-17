@@ -1,6 +1,6 @@
 package com.door43.usecases
 
-import android.content.Context
+import android.app.Application
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.core.ArchiveDetails
 import com.door43.translationstudio.core.Profile
@@ -17,7 +17,7 @@ import java.util.Date
 import java.util.Locale
 
 class BackupRC (
-    private val context: Context,
+    private val application: Application,
     private val directoryProvider: IDirectoryProvider,
     private val migrator: TargetTranslationMigrator,
     private val exportProjects: ExportProjects,
@@ -60,7 +60,7 @@ class BackupRC (
 
             // check if we need to backup
             if (!orphaned) {
-                val details = ArchiveDetails.Builder(context, directoryProvider, migrator, library)
+                val details = ArchiveDetails.Builder(application, directoryProvider, migrator, library)
                     .fromFile(backup, "en")
                     .build()
 

@@ -16,6 +16,8 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.crash.CrashComponent
+import com.door43.translationstudio.ui.crash.DefaultCrashComponent
 import com.door43.translationstudio.ui.devtools.DefaultDevToolsComponent
 import com.door43.translationstudio.ui.devtools.DevToolsComponent
 import com.door43.translationstudio.ui.draft.DefaultDraftComponent
@@ -35,13 +37,10 @@ import com.door43.translationstudio.ui.splash.DefaultSplashComponent
 import com.door43.translationstudio.ui.splash.SplashComponent
 import com.door43.translationstudio.ui.translate.DefaultTranslateComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.io.File
@@ -59,9 +58,6 @@ class DefaultRootComponent(
     private val prefRepository: IPreferenceRepository by inject()
 
     private val navigation = StackNavigation<Config>()
-
-    private val _event = Channel<RootComponent.Event>(capacity = Channel.BUFFERED)
-    override val event: Flow<RootComponent.Event> = _event.receiveAsFlow()
 
     private val _sharedFlow = MutableSharedFlow<RootComponent.SharedEvent>(extraBufferCapacity = 1)
     override val sharedFlow = _sharedFlow.asSharedFlow()
@@ -161,16 +157,18 @@ class DefaultRootComponent(
                 onResult = ::onPublishResult
             )
         )
-        else -> RootComponent.Child.Placeholder
+        is Config.Crash -> RootComponent.Child.Crash(
+            component = DefaultCrashComponent(
+                componentContext = componentContext,
+                onResult = ::onCrashResult
+            )
+        )
     }
 
     private fun onSplashResult(result: SplashComponent.Result) {
         when (result) {
             SplashComponent.Result.NavigateToProfile -> openProfile(false)
-            SplashComponent.Result.NavigateToCrashReporter -> {
-                navigation.replaceAll(Config.Home())
-                _event.trySend(RootComponent.Event.OpenCrashReporter)
-            }
+            SplashComponent.Result.NavigateToCrashReporter -> openCrashReporter()
         }
     }
 
@@ -247,7 +245,7 @@ class DefaultRootComponent(
         when (result) {
             is SettingsComponent.Result.NavigateBack -> navigation.pop()
             is SettingsComponent.Result.OpenDeveloperTools -> openDevTools()
-            is SettingsComponent.Result.MigrationFinished -> platform.restartApp()
+            is SettingsComponent.Result.MigrationFinished -> platform.restart()
             is SettingsComponent.Result.Logout -> openProfile(false)
             is SettingsComponent.Result.ThemeUpdated -> _currentTheme.value = result.theme
         }
@@ -286,6 +284,13 @@ class DefaultRootComponent(
                 openTranslate(result.translationId, true)
             }
             is PublishComponent.Result.NavigateBack -> navigation.pop()
+        }
+    }
+
+    private fun onCrashResult(result: CrashComponent.Result) {
+        when (result) {
+            CrashComponent.Result.Restart -> platform.restart()
+            CrashComponent.Result.Exit -> platform.exit()
         }
     }
 
@@ -345,5 +350,9 @@ class DefaultRootComponent(
             disabledLanguages = disabledLanguages,
             translationId = translationId
         ))
+    }
+
+    private fun openCrashReporter() {
+        navigation.replaceAll(Config.Crash)
     }
 }

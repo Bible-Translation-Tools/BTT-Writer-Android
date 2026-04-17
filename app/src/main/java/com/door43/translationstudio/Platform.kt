@@ -1,5 +1,6 @@
 package com.door43.translationstudio
 
+import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Context.ACTIVITY_SERVICE
@@ -17,7 +18,8 @@ import java.io.RandomAccessFile
 import java.text.DecimalFormat
 
 interface Platform {
-    fun restartApp()
+    fun restart()
+    fun exit()
 
     fun calculateSystemResources(): String
     fun getTotalRam(): Long
@@ -44,7 +46,7 @@ interface Platform {
 
 class AndroidPlatform(private val context: Context) : Platform {
 
-    override fun restartApp() {
+    override fun restart() {
         val backupIntent = Intent(context, BackupService::class.java)
         context.stopService(backupIntent)
 
@@ -55,6 +57,10 @@ class AndroidPlatform(private val context: Context) : Platform {
             Process.killProcess(Process.myPid())
             RuntimeWrapper.exit(0)
         }
+    }
+
+    override fun exit() {
+        (context as? Activity)?.finishAffinity()
     }
 
     override fun calculateSystemResources(): String {

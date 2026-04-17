@@ -20,7 +20,6 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.crash.CrashReporterViewModel
 import com.door43.translationstudio.ui.dialogs.ExportViewModel
 import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
 import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
@@ -130,7 +129,6 @@ val appModule = module {
 
     viewModelOf(::ImportViewModel)
     viewModelOf(::UsfmImportViewModel)
-    viewModelOf(::CrashReporterViewModel)
     viewModelOf(::FeedbackViewModel)
     viewModelOf(::ExportViewModel)
     viewModelOf(::DownloadSourcesViewModel)

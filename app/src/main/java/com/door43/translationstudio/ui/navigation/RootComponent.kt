@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.navigation
 import android.net.Uri
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.door43.translationstudio.ui.crash.CrashComponent
 import com.door43.translationstudio.ui.devtools.DevToolsComponent
 import com.door43.translationstudio.ui.draft.DraftComponent
 import com.door43.translationstudio.ui.home.HomeComponent
@@ -12,7 +13,6 @@ import com.door43.translationstudio.ui.publish.PublishComponent
 import com.door43.translationstudio.ui.settings.SettingsComponent
 import com.door43.translationstudio.ui.splash.SplashComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
@@ -20,7 +20,6 @@ import kotlinx.serialization.Serializable
 interface RootComponent {
 
     val stack: Value<ChildStack<*, Child>>
-    val event: Flow<Event>
     val sharedFlow: SharedFlow<SharedEvent>
     val currentTheme: StateFlow<String>
 
@@ -31,7 +30,6 @@ interface RootComponent {
     fun openProfile(thenLogin: Boolean)
 
     sealed interface Child {
-        data object Placeholder : Child
         data class Splash(val component: SplashComponent) : Child
         data class Home(val component: HomeComponent) : Child
         data class Translate(val component: TranslateComponent) : Child
@@ -41,6 +39,7 @@ interface RootComponent {
         data class NewTranslation(val component: NewTranslationComponent) : Child
         data class Draft(val component: DraftComponent) : Child
         data class Publish(val component: PublishComponent) : Child
+        data class Crash(val component: CrashComponent) : Child
     }
 
     @Serializable
@@ -79,11 +78,7 @@ interface RootComponent {
         data class Profile(val thenLogin: Boolean = false) : Config
 
         @Serializable
-        data object CrashReporter : Config
-    }
-
-    sealed interface Event {
-        data object OpenCrashReporter : Event
+        data object Crash : Config
     }
 
     sealed interface SharedEvent {

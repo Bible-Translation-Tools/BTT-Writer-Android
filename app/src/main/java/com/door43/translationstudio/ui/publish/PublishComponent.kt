@@ -41,11 +41,11 @@ data class ValidationItem(
 
 interface PublishComponent {
 
-    val state: StateFlow<PublishState>
+    val state: StateFlow<State>
 
     val targetTranslation: TargetTranslation
 
-    data class PublishState(
+    data class State(
         val isLoading: Boolean = false,
         val validations: List<ValidationItem> = emptyList(),
         val translators: List<NativeSpeaker> = emptyList()
@@ -92,8 +92,8 @@ class DefaultPublishComponent(
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-    private val _state = MutableStateFlow(PublishComponent.PublishState())
-    override val state: StateFlow<PublishComponent.PublishState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(PublishComponent.State())
+    override val state: StateFlow<PublishComponent.State> = _state.asStateFlow()
 
     init {
         translator.getTargetTranslation(translationId)?.let { translation ->

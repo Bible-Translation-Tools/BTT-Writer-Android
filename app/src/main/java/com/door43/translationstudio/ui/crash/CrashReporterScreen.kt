@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -27,43 +26,30 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun CrashReporterScreen(
-    viewModel: CrashReporterViewModel = koinViewModel(),
-    isNetworkAvailable: Boolean,
-    onFlushAndSplash: () -> Unit,
-    onDownloadUpdate: () -> Unit
+    component: CrashComponent
 ) {
-    var notes by rememberSaveable { mutableStateOf("") }
-    
-    var showConfirmDialog by remember { mutableStateOf(false) }
-    var showUpdateAvailableDialog by remember { mutableStateOf(false) }
-    var showUploadErrorDialog by remember { mutableStateOf(false) }
+    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showUpdateAvailableDialog by rememberSaveable { mutableStateOf(false) }
+    var showUploadErrorDialog by rememberSaveable { mutableStateOf(false) }
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.result) {
-        state.result?.let { result ->
-            if (result.release != null) {
-                showUpdateAvailableDialog = true
-            } else {
-                viewModel.uploadCrashReport(notes.trim())
-            }
-        }
-    }
-
-    LaunchedEffect(state.crashReportUploaded) {
-        state.crashReportUploaded?.let { uploaded ->
-            if (uploaded) {
-                onFlushAndSplash()
-            } else {
-                showUploadErrorDialog = true
+    LaunchedEffect(component) {
+        component.event.collect { event ->
+            when (event) {
+                is CrashComponent.Event.UpdateAvailable -> {
+                    showUpdateAvailableDialog = true
+                }
+                is CrashComponent.Event.UploadError -> {
+                    showUploadErrorDialog = true
+                }
             }
         }
     }
@@ -75,9 +61,11 @@ fun CrashReporterScreen(
             .imePadding()
     ) {
         OutlinedTextField(
-            value = notes,
-            onValueChange = { notes = it },
-            placeholder = { Text(stringResource(R.string.crash_details)) },
+            value = state.notes,
+            onValueChange = component::updateNotes,
+            placeholder = {
+                Text(stringResource(R.string.crash_details))
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -89,7 +77,7 @@ fun CrashReporterScreen(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(
-                onClick = onFlushAndSplash,
+                onClick = component::flushAndRestart,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 4.dp),
@@ -118,11 +106,11 @@ fun CrashReporterScreen(
             message = stringResource(R.string.use_internet_confirmation),
             onConfirm = {
                 showConfirmDialog = false
-                viewModel.checkForLatestRelease()
+                component.checkForLatestRelease()
             },
             onDismiss = {
                 showConfirmDialog = false
-                onFlushAndSplash()
+                component.flushAndRestart()
             },
             confirmText = stringResource(R.string.label_continue),
             dismissText = stringResource(R.string.label_close)
@@ -141,13 +129,13 @@ fun CrashReporterScreen(
             ) {
                 TextButton(onClick = {
                     showUpdateAvailableDialog = false
-                    onFlushAndSplash()
+                    component.flushAndRestart()
                 }) {
                     Text(stringResource(R.string.title_cancel))
                 }
                 TextButton(onClick = {
                     showUpdateAvailableDialog = false
-                    onDownloadUpdate()
+                    component.downloadLatestRelease()
                 }) {
                     Text(stringResource(R.string.download_update))
                 }
@@ -156,7 +144,7 @@ fun CrashReporterScreen(
 
                 Button(onClick = {
                     showUpdateAvailableDialog = false
-                    viewModel.uploadCrashReport(notes.trim())
+                    component.uploadCrashReport()
                 }) {
                     Text(stringResource(R.string.label_continue))
                 }
@@ -165,7 +153,7 @@ fun CrashReporterScreen(
     }
 
     if (showUploadErrorDialog) {
-        val messageId = if (isNetworkAvailable) {
+        val messageId = if (component.isNetworkAvailable) {
             R.string.upload_crash_report_failed
         } else {
             R.string.internet_not_available

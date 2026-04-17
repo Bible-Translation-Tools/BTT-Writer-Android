@@ -218,7 +218,7 @@ class DefaultDevToolsComponent(
                     e.printStackTrace()
                 }
             }
-            platform.restartApp()
+            platform.restart()
         }
     }
 }
