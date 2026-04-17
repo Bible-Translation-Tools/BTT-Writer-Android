@@ -44,7 +44,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 
@@ -201,13 +201,13 @@ fun UpdateLibraryDialog(
     }
 
     state.resultMessage?.let { (title, message) ->
-        ActionDialog(
+        BaseDialog(
             title = title,
             message = message,
             onDismiss = component::clearResult
-        ) { onInfoDismiss ->
+        ) { onBaseDismiss ->
             TextButton(
-                onClick = onInfoDismiss
+                onClick = onBaseDismiss
             ) {
                 Text(stringResource(R.string.dismiss))
             }

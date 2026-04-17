@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
@@ -242,14 +242,14 @@ fun ImportDialog(
             },
             result.translation.id
         )
-        ActionDialog(
+        BaseDialog(
             title = stringResource(R.string.merge_conflict_title),
             message = message,
             onDismiss = {
                 unsupportedRepoAccepted = false
                 component.clearMergeConflict()
             },
-        ) { onInfoDismiss ->
+        ) { onBaseDismiss ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -257,7 +257,7 @@ fun ImportDialog(
                 TextButton(
                     onClick = {
                         result.onResolve()
-                        onInfoDismiss()
+                        onBaseDismiss()
                     }
                 ) {
                     Text(stringResource(R.string.merge_projects_label))
@@ -265,7 +265,7 @@ fun ImportDialog(
                 TextButton(
                     onClick = {
                         result.onOverwrite()
-                        onInfoDismiss()
+                        onBaseDismiss()
                     }
                 ) {
                     Text(stringResource(R.string.overwrite_projects_label))
@@ -273,7 +273,7 @@ fun ImportDialog(
                 TextButton(
                     onClick = {
                         result.onCancel()
-                        onInfoDismiss()
+                        onBaseDismiss()
                     }
                 ) {
                     Text(stringResource(R.string.title_cancel))
@@ -297,16 +297,16 @@ fun ImportDialog(
     }
 
     state.resultMessage?.let { (title, message) ->
-        ActionDialog(
+        BaseDialog(
             title = title,
             message = message,
             onDismiss = {
                 component.clearResult()
                 showImportServerDialog = false
             }
-        ) { onInfoDismiss ->
+        ) { onBaseDismiss ->
             TextButton(
-                onClick = onInfoDismiss
+                onClick = onBaseDismiss
             ) {
                 Text(stringResource(R.string.dismiss))
             }

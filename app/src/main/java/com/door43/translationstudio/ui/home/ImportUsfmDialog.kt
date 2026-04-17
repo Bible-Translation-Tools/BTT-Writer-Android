@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.SearchBar
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
@@ -89,7 +89,7 @@ fun ImportUsfmDialog(
         }
 
         UsfmStep.DONE -> {
-            ActionDialog(
+            BaseDialog(
                 title = stringResource(
                     if (state.importSuccess) R.string.title_import_usfm_results
                     else R.string.title_import_usfm_error
@@ -105,8 +105,8 @@ fun ImportUsfmDialog(
                         onDismiss()
                     }
                 }
-            ) { onInfoDismiss ->
-                TextButton(onClick = onInfoDismiss) {
+            ) { onBaseDismiss ->
+                TextButton(onClick = onBaseDismiss) {
                     Text(stringResource(R.string.label_continue))
                 }
             }
@@ -114,12 +114,12 @@ fun ImportUsfmDialog(
     }
 
     state.infoMessage?.let { (title, message) ->
-        ActionDialog(
+        BaseDialog(
             title = title,
             message = message,
             onDismiss = onDismiss
-        ) { onInfoDismiss ->
-            TextButton(onClick = onInfoDismiss) {
+        ) { onBaseDismiss ->
+            TextButton(onClick = onBaseDismiss) {
                 Text(stringResource(R.string.dismiss))
             }
         }
@@ -295,11 +295,11 @@ private fun UsfmMergeConflictDialog(
 
     val fullMessage = "$message\n$warning"
 
-    ActionDialog(
+    BaseDialog(
         title = stringResource(R.string.merge_conflict_title),
         message = fullMessage,
         onDismiss = onCancel
-    ) { onInfoDismiss ->
+    ) { onBaseDismiss ->
         TextButton(onClick = onMerge) {
             Text(stringResource(R.string.merge_projects_label))
         }
@@ -308,7 +308,7 @@ private fun UsfmMergeConflictDialog(
         }
         TextButton(onClick = {
             onCancel()
-            onInfoDismiss()
+            onBaseDismiss()
         }) {
             Text(stringResource(R.string.title_cancel))
         }

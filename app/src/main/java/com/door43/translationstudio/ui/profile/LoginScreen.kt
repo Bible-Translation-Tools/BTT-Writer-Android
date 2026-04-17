@@ -37,7 +37,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 
 @Composable
@@ -151,7 +151,7 @@ fun LoginScreen(
     }
 
     errorMessageId?.let {
-        ActionDialog(
+        BaseDialog(
             onDismiss = { errorMessageId = null },
             title = stringResource(R.string.error),
             message = stringResource(it)

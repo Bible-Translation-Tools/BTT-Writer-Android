@@ -41,7 +41,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import kotlinx.coroutines.launch
 import org.unfoldingword.tools.logger.Logger
@@ -169,7 +169,7 @@ fun DevToolsScreen(
     }
 
     if (state.keysRegenerated == true) {
-        ActionDialog(
+        BaseDialog(
             onDismiss = component::clearKeysRegenerated,
             title = stringResource(R.string.success),
             message = stringResource(R.string.ssh_keys_generated)
@@ -192,12 +192,12 @@ fun DevToolsScreen(
     }
 
     systemResourcesMessage?.let { message ->
-        ActionDialog(
+        BaseDialog(
             onDismiss = { systemResourcesMessage = null },
             title = stringResource(R.string.system_resources_check),
             message = message
-        ) { onActionDismiss ->
-            TextButton(onClick = onActionDismiss) {
+        ) { onBaseDismiss ->
+            TextButton(onClick = onBaseDismiss) {
                 Text(stringResource(R.string.label_close))
             }
         }

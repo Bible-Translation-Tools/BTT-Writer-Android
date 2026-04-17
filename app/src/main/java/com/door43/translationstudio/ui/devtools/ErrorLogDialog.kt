@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import org.unfoldingword.tools.logger.LogEntry
 
@@ -78,7 +78,7 @@ fun ErrorLogDialog(
     }
 
     selectedLogDetails?.let { details ->
-        ActionDialog(
+        BaseDialog(
             onDismiss = { selectedLogDetails = null },
             title = stringResource(R.string.log_details),
             message = details

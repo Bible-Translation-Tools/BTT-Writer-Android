@@ -29,7 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.LegalDocumentDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
@@ -377,7 +377,7 @@ fun SettingsScreen(
                 confirmText = stringResource(R.string.label_ok)
             )
         } else {
-            ActionDialog(
+            BaseDialog(
                 onDismiss = { component.dismissUpdateResultDialog() },
                 title = stringResource(R.string.check_for_updates),
                 message = stringResource(R.string.have_latest_app_update)
@@ -392,12 +392,12 @@ fun SettingsScreen(
     }
 
     if (state.migrationFinished) {
-        ActionDialog(
+        BaseDialog(
             onDismiss = component::onMigrationFinished,
             title = "",
             message = stringResource(R.string.migrating_complete)
-        ) { onActionDismiss ->
-            TextButton(onClick = onActionDismiss) {
+        ) { onBaseDismiss ->
+            TextButton(onClick = onBaseDismiss) {
                 Text(stringResource(R.string.label_ok))
             }
         }
@@ -420,7 +420,7 @@ fun SettingsScreen(
     if (showTranslationFontDialog) {
         if (state.isFontsLoading) {
             // Show a simple loading dialog if they click it before IO finishes
-            ActionDialog(
+            BaseDialog(
                 onDismiss = { showTranslationFontDialog = false },
                 message = stringResource(R.string.loading)
             ){}
@@ -456,7 +456,7 @@ fun SettingsScreen(
     if (showSourceFontDialog) {
         if (state.isFontsLoading) {
             // Show a simple loading dialog if they click it before IO finishes
-            ActionDialog(
+            BaseDialog(
                 onDismiss = { showSourceFontDialog = false },
                 message = stringResource(R.string.loading)
             ){}

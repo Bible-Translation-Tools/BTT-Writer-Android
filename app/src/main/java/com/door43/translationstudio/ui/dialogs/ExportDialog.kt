@@ -238,7 +238,7 @@ fun ExportDialog(
     }
 
     state.info?.let {
-        ActionDialog(
+        BaseDialog(
             title = it.title,
             message = it.message,
             onDismiss = {
@@ -253,7 +253,7 @@ fun ExportDialog(
     }
 
     state.uploadError?.let {
-        ActionDialog(
+        BaseDialog(
             title = it.title,
             message = it.message,
             onDismiss = {
@@ -351,18 +351,18 @@ fun ExportDialog(
     }
 
     state.mergeConflict?.let { conflict ->
-        ActionDialog(
+        BaseDialog(
             title = conflict.title,
             message = conflict.message,
             onDismiss = { component.onAction(ExportComponent.Action.ClearMergeConflict) },
-            buttons = { onInfoDismiss ->
+            buttons = { onBaseDismiss ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(
                         onClick = {
-                            onInfoDismiss()
+                            onBaseDismiss()
                             onDismiss()
                             component.onMergeConflict()
                         }
@@ -371,7 +371,7 @@ fun ExportDialog(
                     }
                     TextButton(
                         onClick = {
-                            onInfoDismiss()
+                            onBaseDismiss()
                             component.onAction(ExportComponent.Action.ResetToMaster)
                         }
                     ) {
@@ -444,7 +444,7 @@ private fun UploadSuccessDialog(
     var showUploadDetailsDialog by rememberSaveable { mutableStateOf(false) }
 
     if (!showUploadDetailsDialog) {
-        ActionDialog(
+        BaseDialog(
             onDismiss = onDismiss,
             title = stringResource(R.string.upload_complete),
             message = stringResource(R.string.project_uploaded_to, info.url)
@@ -476,7 +476,7 @@ private fun UploadSuccessDialog(
             }
         }
     } else {
-        ActionDialog(
+        BaseDialog(
             onDismiss = {
                 showUploadDetailsDialog = false
                 onDismiss()

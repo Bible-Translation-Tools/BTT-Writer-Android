@@ -14,14 +14,14 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ActionDialog(
+fun BaseDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
     message: String,
     buttons: @Composable (onDismiss: () -> Unit) -> Unit
 ) {
-    ActionDialog(
+    BaseDialog(
         title = title,
         message = AnnotatedString(message),
         onDismiss = onDismiss,
@@ -31,7 +31,7 @@ fun ActionDialog(
 }
 
 @Composable
-fun ActionDialog(
+fun BaseDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,

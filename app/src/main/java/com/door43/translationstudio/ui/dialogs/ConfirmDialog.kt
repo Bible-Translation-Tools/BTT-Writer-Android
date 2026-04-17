@@ -39,7 +39,7 @@ fun ConfirmDialog(
     confirmText: String = stringResource(R.string.confirm),
     dismissText: String = stringResource(R.string.title_cancel)
 ) {
-    ActionDialog(
+    BaseDialog(
         onDismiss = onDismiss,
         modifier = modifier,
         title = title,

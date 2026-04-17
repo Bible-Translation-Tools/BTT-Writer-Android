@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 
 @Composable
 fun SplashScreen(
@@ -39,7 +39,7 @@ fun SplashScreen(
     SplashLayout(progress = progress)
 
     if (state.showHardwareWarning) {
-        ActionDialog(
+        BaseDialog(
             onDismiss = { /* Cannot cancel */ },
             title = stringResource(R.string.slow_device),
             message = stringResource(R.string.min_hardware_req_not_met),
@@ -54,7 +54,7 @@ fun SplashScreen(
     }
 
     if (state.showMigrationDialog) {
-        ActionDialog(
+        BaseDialog(
             onDismiss = { /* Cannot cancel */ },
             title = stringResource(R.string.migrate_from_old_app),
             message = stringResource(R.string.migrate_from_old_app_description)

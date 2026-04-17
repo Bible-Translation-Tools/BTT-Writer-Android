@@ -26,7 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.util.sortNumerically
@@ -136,7 +136,7 @@ fun DraftScreen(
     }
 
     if (showErrorDialog) {
-        ActionDialog(
+        BaseDialog(
             onDismiss = { showErrorDialog = false },
             title = stringResource(R.string.error),
             message = stringResource(R.string.translation_import_failed)
@@ -148,7 +148,7 @@ fun DraftScreen(
     }
 
     showNoteDialog?.let { notes ->
-        ActionDialog(
+        BaseDialog(
             onDismiss = { showNoteDialog = null },
             title = stringResource(R.string.title_footnote),
             message = notes
