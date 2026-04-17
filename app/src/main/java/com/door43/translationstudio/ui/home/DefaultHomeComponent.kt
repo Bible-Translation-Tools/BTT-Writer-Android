@@ -566,6 +566,10 @@ class DefaultHomeComponent(
                 dismissDialog()
                 openProject(result.translationId, true)
             }
+            is ExportComponent.Result.OpenFeedback -> {
+                dismissDialog()
+                showFeedbackDialog()
+            }
         }
     }
 }

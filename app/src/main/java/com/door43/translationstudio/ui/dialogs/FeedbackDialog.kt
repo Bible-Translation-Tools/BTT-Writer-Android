@@ -26,32 +26,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import org.koin.androidx.compose.koinViewModel
-
-/**
- * Convenience overload for callers that don't have a [FeedbackComponent].
- * Uses a Koin ViewModel as the backing component.
- */
-@Composable
-fun FeedbackDialog(
-    feedbackText: String = "",
-    onDismiss: () -> Unit
-) {
-    val viewModel: FeedbackViewModel = koinViewModel()
-    FeedbackDialog(
-        component = viewModel,
-        feedbackText = feedbackText,
-        onDismiss = onDismiss
-    )
-}
 
 @Composable
 fun FeedbackDialog(
     component: FeedbackComponent,
-    feedbackText: String = "",
     onDismiss: () -> Unit
 ) {
-    var text by remember { mutableStateOf(feedbackText) }
+    var text by remember { mutableStateOf(component.initialMessage) }
     val progress by component.progress.collectAsStateWithLifecycle()
 
     val state by component.state.collectAsStateWithLifecycle()
@@ -61,7 +42,7 @@ fun FeedbackDialog(
     LaunchedEffect(component) {
         component.event.collect { event ->
             when (event) {
-                is FeedbackEvent.SnackbarMessage -> {
+                is FeedbackComponent.FeedbackEvent.SnackbarMessage -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
             }
@@ -123,7 +104,7 @@ fun FeedbackDialog(
             }
             TextButton(
                 onClick = {
-                    component.onAction(FeedbackAction.ReportBug(text))
+                    component.onAction(FeedbackComponent.FeedbackAction.ReportBug(text))
                 }
             ) {
                 Text(
@@ -138,7 +119,7 @@ fun FeedbackDialog(
         ActionDialog(
             title = stringResource(R.string.upload_failed),
             message = error,
-            onDismiss = { component.onAction(FeedbackAction.ClearError) }
+            onDismiss = { component.onAction(FeedbackComponent.FeedbackAction.ClearError) }
         ) { onDismiss ->
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -150,7 +131,7 @@ fun FeedbackDialog(
                 TextButton(
                     onClick = {
                         onDismiss()
-                        component.onAction(FeedbackAction.ReportBug(text))
+                        component.onAction(FeedbackComponent.FeedbackAction.ReportBug(text))
                     }
                 ) {
                     Text(stringResource(R.string.retry_label))
@@ -164,10 +145,10 @@ fun FeedbackDialog(
             title = stringResource(R.string.apk_update_available),
             message = stringResource(R.string.download_latest_apk),
             onDismiss = {
-                component.onAction(FeedbackAction.ClearRelease)
+                component.onAction(FeedbackComponent.FeedbackAction.ClearRelease)
             },
             onConfirm = {
-                component.onAction(FeedbackAction.DownloadLatestRelease(release))
+                component.onAction(FeedbackComponent.FeedbackAction.DownloadLatestRelease(release))
             }
         )
     }

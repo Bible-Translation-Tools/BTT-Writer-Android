@@ -20,7 +20,6 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
@@ -54,7 +53,6 @@ import com.door43.usecases.UploadFeedback
 import com.door43.usecases.ValidateProject
 import org.json.JSONObject
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.unfoldingword.door43client.Door43Client
@@ -120,8 +118,6 @@ val appModule = module {
     }
     singleOf(::DownloadImages)
     singleOf(::UpdateApp)
-
-    viewModelOf(::FeedbackViewModel)
 }
 
 val prodDataModule = module {

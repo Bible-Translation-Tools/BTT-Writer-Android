@@ -64,7 +64,6 @@ fun ExportDialog(
     var showInternetUsageDialog by rememberSaveable { mutableStateOf(false) }
     var showAuthDialog by rememberSaveable { mutableStateOf(false) }
     var showLoginDialog by rememberSaveable { mutableStateOf(false) }
-    var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
 
     var imagesToInclude by rememberSaveable { mutableStateOf(false) }
     var incompleteToInclude by rememberSaveable { mutableStateOf(false) }
@@ -271,7 +270,11 @@ fun ExportDialog(
                     TextButton(
                         onClick = {
                             onDismiss()
-                            showFeedbackDialog = true
+                            val message = "Failed to upload the translation of ${component.projectName}" +
+                                    "into ${component.targetTranslation.targetLanguageName}.\n" +
+                                    "targetTranslation: ${component.targetTranslation.id}" +
+                                    "\n--------\n\n"
+                            component.showFeedbackDialog(message)
                         }
                     ) {
                         Text(stringResource(R.string.menu_bug))
@@ -344,18 +347,6 @@ fun ExportDialog(
                 component.onAction(ExportComponent.Action.Logout(true))
             },
             onDismiss = { showLoginDialog = false }
-        )
-    }
-
-    if (showFeedbackDialog) {
-        val message = "Failed to upload the translation of ${component.projectName}" +
-                "into ${component.targetTranslation.targetLanguageName}.\n" +
-                "targetTranslation: ${component.targetTranslation.id}" +
-                "\n--------\n\n"
-
-        FeedbackDialog(
-            feedbackText = message,
-            onDismiss = { showFeedbackDialog = false }
         )
     }
 

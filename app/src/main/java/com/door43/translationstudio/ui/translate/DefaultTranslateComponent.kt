@@ -655,6 +655,10 @@ class DefaultTranslateComponent(
                     it.copy(viewMode = TranslationViewMode.REVIEW, mergeFilterOn = true) // TODO Revise navigation for merge conflict
                 }
             }
+            is ExportComponent.Result.OpenFeedback -> {
+                dismissDialog()
+                showFeedbackDialog()
+            }
         }
     }
 

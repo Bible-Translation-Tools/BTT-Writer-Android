@@ -71,6 +71,7 @@ interface ExportComponent {
     val showPrint: Boolean
 
     fun onMergeConflict()
+    fun showFeedbackDialog(message: String)
     fun onAction(action: Action)
 
     data class State(
@@ -111,6 +112,7 @@ interface ExportComponent {
         data object OpenLogin : Result
         data object Logout : Result
         data class MergeConflict(val translationId: String) : Result
+        data class OpenFeedback(val message: String) : Result
     }
 }
 
@@ -173,6 +175,10 @@ class DefaultExportComponent(
 
     override fun onMergeConflict() {
         onResult(ExportComponent.Result.MergeConflict(targetTranslation.id))
+    }
+
+    override fun showFeedbackDialog(message: String) {
+        onResult(ExportComponent.Result.OpenFeedback(message))
     }
 
     override fun onAction(action: ExportComponent.Action) {
